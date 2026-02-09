@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
-            DataTable sourceData = new();
+            using DataTable sourceData = new();
             sourceData.Columns.Add("col1", typeof(int));
             sourceData.Columns.Add("col2", typeof(string));
             sourceData.Columns.Add("col3", typeof(string));
@@ -267,6 +267,78 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 
+    public class CacheMetadataColumnMappingsChange
+    {
+        private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50), col3 nvarchar(50))";
+
+        // Test that changing ColumnMappings between WriteToServer calls works correctly with CacheMetadata.
+        // The cached metadata describes the destination table schema, not the column mappings,
+        // so modifying mappings between calls should work without cache invalidation.
+        public static void Test(string dstConstr, string dstTable)
+        {
+            string initialQuery = string.Format(initialQueryTemplate, dstTable);
+
+            using DataTable sourceData = new DataTable();
+            sourceData.Columns.Add("id", typeof(int));
+            sourceData.Columns.Add("firstName", typeof(string));
+            sourceData.Columns.Add("lastName", typeof(string));
+            sourceData.Rows.Add(1, "Alice", "Smith");
+            sourceData.Rows.Add(2, "Bob", "Jones");
+
+            using SqlConnection dstConn = new(dstConstr);
+            using SqlCommand dstCmd = dstConn.CreateCommand();
+            dstConn.Open();
+
+            try
+            {
+                Helpers.TryExecute(dstCmd, initialQuery);
+
+                using SqlBulkCopy bulkcopy = new(dstConn, SqlBulkCopyOptions.CacheMetadata, null);
+                bulkcopy.DestinationTableName = dstTable;
+
+                // First write: map firstName -> col2, lastName -> col3.
+                bulkcopy.ColumnMappings.Add("id", "col1");
+                bulkcopy.ColumnMappings.Add("firstName", "col2");
+                bulkcopy.ColumnMappings.Add("lastName", "col3");
+                bulkcopy.WriteToServer(sourceData);
+                Helpers.VerifyResults(dstConn, dstTable, 3, 2);
+
+                // Verify first mapping: col2 should contain firstName values.
+                using (SqlCommand verifyCmd = new("select col2 from " + dstTable + " where col1 = 1", dstConn))
+                {
+                    object result = verifyCmd.ExecuteScalar();
+                    Assert.Equal("Alice", result);
+                }
+
+                // Change mappings: swap col2 and col3 targets.
+                bulkcopy.ColumnMappings.Clear();
+                bulkcopy.ColumnMappings.Add("id", "col1");
+                bulkcopy.ColumnMappings.Add("firstName", "col3");
+                bulkcopy.ColumnMappings.Add("lastName", "col2");
+                bulkcopy.WriteToServer(sourceData);
+                Helpers.VerifyResults(dstConn, dstTable, 3, 4);
+
+                // Verify second mapping: col3 should now contain firstName values for the new rows.
+                using (SqlCommand verifyCmd = new("select col3 from " + dstTable + " where col1 = 1 order by col2", dstConn))
+                {
+                    using SqlDataReader reader = verifyCmd.ExecuteReader();
+
+                    // First row (from first write): col3 = "Smith" (lastName).
+                    Assert.True(reader.Read());
+                    Assert.Equal("Smith", reader.GetString(0));
+
+                    // Second row (from second write): col3 = "Alice" (firstName).
+                    Assert.True(reader.Read());
+                    Assert.Equal("Alice", reader.GetString(0));
+                }
+            }
+            finally
+            {
+                Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+            }
+        }
+    }
+
     public class CacheMetadataCombinedWithKeepNulls
     {
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50) default 'DefaultVal', col3 nvarchar(50))";
@@ -276,7 +348,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
-            DataTable sourceData = new();
+            using DataTable sourceData = new();
             sourceData.Columns.Add("col1", typeof(int));
             sourceData.Columns.Add("col2", typeof(string));
             sourceData.Columns.Add("col3", typeof(string));

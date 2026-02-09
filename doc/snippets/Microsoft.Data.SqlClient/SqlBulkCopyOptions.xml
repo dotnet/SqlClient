@@ -78,6 +78,7 @@ To see how the option changes the way the bulk load works, run the sample with t
         </para>
         <para>
           The cache is automatically invalidated when <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is changed to a different table.
+          Changing <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> between operations does not require cache invalidation because the cached metadata describes only the destination table schema, not the source-to-destination column mapping.
         </para>
       </summary>
     </CacheMetadata>

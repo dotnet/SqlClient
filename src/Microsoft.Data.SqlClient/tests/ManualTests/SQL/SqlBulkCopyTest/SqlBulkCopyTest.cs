@@ -340,6 +340,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataColumnMappingsChangeTest()
+        {
+            CacheMetadataColumnMappingsChange.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataColMap"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CacheMetadataCombinedWithKeepNullsTest()
         {
             CacheMetadataCombinedWithKeepNulls.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataKeepNulls"));
