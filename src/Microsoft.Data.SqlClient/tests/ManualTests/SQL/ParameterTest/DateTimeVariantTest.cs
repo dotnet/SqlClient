@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    VerifyReaderTypeAndValue("Test Simple Parameter [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0]);
+                    VerifyReaderTypeAndValue("Test Simple Parameter [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], string.Empty);
                 }
             }
             finally
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    VerifyReaderTypeAndValue("Test SqlDataRecord Parameter To TVP [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0]);
+                    VerifyReaderTypeAndValue("Test SqlDataRecord Parameter To TVP [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], string.Empty);
                 }
             }
             finally
@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (SqlDataReader dr = cmd.ExecuteReader())
                         {
                             dr.Read();
-                            VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0]);
+                            VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], string.Empty);
                         }
                     }
                 }
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlDataReader dr = cmd2.ExecuteReader())
                     {
                         dr.Read();
-                        VerifyReaderTypeAndValue("Test SqlDataReader TVP [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0]);
+                        VerifyReaderTypeAndValue("Test SqlDataReader TVP [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], string.Empty);
                     }
                 }
             }
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    VerifyReaderTypeAndValue("Test Simple Data Reader [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0]);
+                    VerifyReaderTypeAndValue("Test Simple Data Reader [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, dr[0], string.Empty);
                 }
             }
             finally
@@ -581,7 +581,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlDataReader drVerify = cmd.ExecuteReader())
                     {
                         drVerify.Read();
-                        VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0]);
+                        VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0], string.Empty);
                     }
                 }
                 connInput.Close();
@@ -692,7 +692,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader drVerify = cmd.ExecuteReader())
                 {
                     drVerify.Read();
-                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Table [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0]);
+                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Table [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0], string.Empty);
                 }
             }
             finally
@@ -767,7 +767,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader drVerify = cmd.ExecuteReader())
                 {
                     drVerify.Read();
-                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Row [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0]);
+                    VerifyReaderTypeAndValue("SqlBulkCopy From Data Row [Data Type]", expectedBaseTypeName, expectedTypeName, paramValue, drVerify[0], string.Empty);
                 }
             }
             finally
@@ -852,61 +852,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             xsql(conn, string.Format("if exists(select 1 from sys.types where name='{0}') begin drop type {1} end", typeName.Substring(1, typeName.Length - 2), typeName));
         }
 
-        // NOTE: Checking and Verification
-        private static void VerifyReaderTypeAndValue(string tag, string expectedBaseTypeName, string expectedTypeName, object expectedValue, object actualValue)
-        {
-            string actualTypeName = actualValue.GetType().ToString();
-
-            LogValues(expectedTypeName, string.Empty, expectedValue, actualTypeName, string.Empty, actualValue);
-
-            if (!actualTypeName.Equals(expectedTypeName))
-            {
-                string ErrorMessage = string.Format(">>> ERROR: TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualTypeName,
-                    expectedTypeName);
-
-                LogMessage(tag, ErrorMessage);
-            }
-            if (!actualValue.Equals(expectedValue))
-            {
-                string ErrorMessage;
-                bool isExpected;
-                switch (expectedBaseTypeName)
-                {
-                    case "date":
-                        isExpected = ((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy"));
-                        break;
-                    case "datetime":
-                        isExpected = (((DateTime)expectedValue).Ticks == 3155378975999999999) &&
-                            (((DateTime)actualValue).Ticks == 3155378975999970000);
-                        break;
-                    default:
-                        isExpected = false;
-                        break;
-                }
-
-                if (isExpected)
-                {
-                    ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
-                }
-                else
-                {
-                    ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
-                }
-
-                LogMessage(tag, ErrorMessage);
-            }
-        }
-
         private static void VerifyReaderTypeAndValue(string tag, string expectedBaseTypeName, string expectedTypeName, object expectedValue, object actualValue, string actualBaseTypeName)
         {
             string actualTypeName = actualValue.GetType().ToString();
 
-            LogValues(expectedTypeName, expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
+            LogValues(expectedTypeName, string.IsNullOrEmpty(actualBaseTypeName) ? string.Empty : expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
 
             if (!actualTypeName.Equals(expectedTypeName))
             {
@@ -915,7 +865,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     expectedTypeName);
                 LogMessage(tag, ErrorMessage);
             }
-            if (!actualBaseTypeName.Equals(expectedBaseTypeName))
+            if (!string.IsNullOrEmpty(actualBaseTypeName) && 
+                !string.IsNullOrEmpty(expectedBaseTypeName) && 
+                !actualBaseTypeName.Equals(expectedBaseTypeName))
             {
                 if (((actualTypeName.ToLowerInvariant() != "system.datetime") || (actualTypeName.ToLowerInvariant() != "system.datetimeoffset"))
                     && (actualBaseTypeName != "datetime2"))
