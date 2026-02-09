@@ -870,7 +870,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!actualValue.Equals(expectedValue))
             {
                 string ErrorMessage;
-                if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
+                bool isExpected;
+                switch (expectedBaseTypeName)
+                {
+                    case "date":
+                        isExpected = ((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy"));
+                        break;
+                    case "datetime":
+                        isExpected = (((DateTime)expectedValue).Ticks == 3155378975999999999) &&
+                            (((DateTime)actualValue).Ticks == 3155378975999970000);
+                        break;
+                    default:
+                        isExpected = false;
+                        break;
+                }
+
+                if (isExpected)
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
                     DataTestUtility.GetValueString(actualValue),
@@ -882,6 +897,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.GetValueString(actualValue),
                     DataTestUtility.GetValueString(expectedValue));
                 }
+
                 LogMessage(tag, ErrorMessage);
             }
         }
@@ -915,7 +931,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!actualValue.Equals(expectedValue))
             {
                 string ErrorMessage;
-                if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
+                bool isExpected;
+                switch (expectedBaseTypeName)
+                {
+                    case "date":
+                        isExpected = ((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy"));
+                        break;
+                    case "datetime":
+                        isExpected = (((DateTime)expectedValue).Ticks == 3155378975999999999) &&
+                            (((DateTime)actualValue).Ticks == 3155378975999970000);
+                        break;
+                    default:
+                        isExpected = false;
+                        break;
+                }
+                        
+                if (isExpected)
                 {
                     ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
                     DataTestUtility.GetValueString(actualValue),
@@ -928,34 +959,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.GetValueString(expectedValue));
                 }
                 LogMessage(tag, ErrorMessage);
-            }
-        }
-
-        private static bool IsValueCorrectForType(string expectedBaseTypeName, object expectedValue, object actualValue)
-        {
-            switch (expectedBaseTypeName)
-            {
-                case "date":
-                    if (((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((DateTime)actualValue).ToString("M/d/yyyy")))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                case "datetime":
-                    if ((((DateTime)expectedValue).Ticks == 3155378975999999999) &&
-                        (((DateTime)actualValue).Ticks == 3155378975999970000))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                default:
-                    return false;
             }
         }
 
