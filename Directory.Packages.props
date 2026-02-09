@@ -87,7 +87,6 @@
   <!-- MDS Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.17.0" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
@@ -117,6 +116,9 @@
   <!-- Azure Dependencies -->
 
   <!-- None -->
+  <ItemGroup>
+    <PackageVersion Include="Azure.Identity" Version="1.17.0" />
+  </ItemGroup>
 
   <!-- ===================================================================== -->
   <!-- AKV Dependencies -->

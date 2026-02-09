@@ -2864,6 +2864,20 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     // Fall through to retry...
                 }
+                // If the provider throws anything else, it's an API violation, which we must
+                // consume to avoid breaking our API promise.
+                catch (Exception ex)
+                {
+                    throw ADP.CreateSqlException(
+                        new ProviderApiViolationException(
+                            message:
+                                "API violation; provider threw unexpected exception " +
+                                ex.GetType().FullName + ": " + ex.Message,
+                            causedBy: ex),
+                        ConnectionOptions,
+                        this,
+                        username);
+                }
             }
 
             // Nullable context has exposed that _fedAuthToken may be null here,
@@ -2889,6 +2903,15 @@ namespace Microsoft.Data.SqlClient.Connection
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
             return _fedAuthToken;
+        }
+
+        // Thrown when an authentication provider violates the expected API contract.
+        private class ProviderApiViolationException : SqlAuthenticationProviderException
+        {
+            public ProviderApiViolationException(string message, Exception causedBy)
+                : base(message, causedBy)
+            {
+            }
         }
 
         #nullable disable
