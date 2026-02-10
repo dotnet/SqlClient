@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
                 expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
                 expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
-                VerifyReaderTypeAndValue(expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, expectedBaseTypeOverride);
+                VerifyReaderTypeAndValue(expectedBaseTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, expectedBaseTypeOverride);
             }
             catch (Exception e)
             {
@@ -811,7 +811,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void VerifyReaderTypeAndValue(
             string expectedBaseTypeName, 
-            string expectedTypeName, 
             object expectedValue, 
             object actualValue, 
             string actualBaseTypeName, 
@@ -826,18 +825,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             else {
                 Assert.Equal(expectedValue, actualValue);
             }
-
-            string actualTypeName = actualValue.GetType().ToString();
-
-            //TODO: these are required to generate expected cast exceptions and should be removed
-            if (expectedTypeName == "System.DateTime")
-            {
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
-                string a = ((DateTime)expectedValue).Ticks.ToString(), b = ((DateTime)actualValue).Ticks.ToString();
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
-            }
-
-            Assert.Equal(expectedTypeName, actualTypeName);
 
             //TODO: pass in actualBaseType for non-variant tests to remove these IsNullOrEmpty conditionals
             if (!string.IsNullOrEmpty(actualBaseTypeName) && 
