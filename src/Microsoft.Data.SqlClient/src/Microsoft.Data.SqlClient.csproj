@@ -28,29 +28,17 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- Target Frameworks =============================================== -->
-  <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
-  </PropertyGroup>
-
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
-    <!-- @TODO: Move to directory.build.props? -->
-    <!--
-      If a target OS was not specified, we must choose a reasonable default.
-
-      For .NET Framework targets, we can assume a target OS of Windows, since
-      we don't support .NET Framework on any other OS.
-
-      For .NET targets, we will use the host OS, since that is where the
-      resulting artifacts are likely to be executed (i.e. tests).
-
-      Official builds should always explicitly specify a target OS.
-    -->
-    <TargetOs Condition="'$(TargetOs)' == '' AND '$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">Windows_NT</TargetOs>
+    <!-- If the TargetOs was not specified (as is the case during IDE development), the build     -->
+    <!-- should target the host OS.                                                               -->
     <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
-    <!-- Uncomment the following line to override the OS you are developing for -->
+    <!-- The following lines are provided for developer convenience. Many IDEs will automatically -->
+    <!-- hide code that is excluded via pre-compiler directives, making it difficult to edit in   -->
+    <!-- the IDE when on the wrong OS. To ease this, uncomment one of the following lines to      -->
+    <!-- force one OS or another. This is only for development usage. Do not commit these lines   -->
+    <!-- uncommented. -->
     <!--<TargetOs>Unix</TargetOs>-->
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
@@ -60,6 +48,15 @@
     <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
     <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
     <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+
+    <!-- We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if -->
+    <!-- we are building for Windows.                                                              -->
+    <TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Build Output ==================================================== -->
