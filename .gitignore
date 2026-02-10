@@ -41,7 +41,8 @@ Generated\ Files/
 **/.AssemblyAttributes
 
 # Visual Studio Code settings
-.vscode/
+.vscode/*
+!.vscode/mcp.json
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

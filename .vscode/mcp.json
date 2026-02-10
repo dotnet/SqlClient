@@ -1,0 +1,32 @@
+{
+	"servers": {
+		"eng-copilot": {
+			"url": "https://sql-mcp.eng-copilot.net/default/mcp/",
+			"type": "http"
+		},
+		"icm": {
+			"url": "https://icm-mcp-prod.azure-api.net/v1/",
+			"type": "http"
+		},
+		"github": {
+			"type": "http",
+			"url": "https://api.githubcopilot.com/mcp/"
+		},
+		"ado": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"-y",
+				"@azure-devops/mcp",
+				"${input:ado_org}"
+			]
+		}
+	},
+	"inputs": [
+		{
+			"id": "ado_org",
+			"type": "promptString",
+			"description": "Azure DevOps organization name  (e.g. 'contoso')"
+		}
+	]
+}
