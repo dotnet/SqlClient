@@ -21,6 +21,12 @@
 
 parameters:
 
+  # The Azure package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  - name: azurePackageVersion
+    displayName: Azure Package Version
+    type: string
+
   # The type of build to produce (Debug or Release)
   - name: buildConfiguration
     type: string
@@ -51,11 +57,9 @@ parameters:
     type: string
     default: MDS.Artifacts
 
-  # The MDS package version to stress test.  This version must be available in
-  # one of the configured NuGet sources.
+  # The MDS package version found in the pipeline artifacts we will download.
   - name: mdsPackageVersion
     type: string
-    default: ''
 
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
@@ -92,6 +96,7 @@ stages:
           --verbosity ${{parameters.dotnetVerbosity}}
           --artifacts-path $(dotnetArtifactsDir)
           -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+          -p:AzurePackageVersion=${{parameters.azurePackageVersion}}
 
       # dotnet CLI arguments for build/run commands.
       - name: buildArguments
@@ -130,12 +135,12 @@ stages:
         jobNameSuffix: linux
         displayNamePrefix: Linux
         poolName: $(ci_var_defaultPoolName)
-        vmImage: ADO-UB20-SQL22
+        vmImage: ADO-UB22-SQL22
         sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments)
+        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         configContent: $(ConfigContent)
@@ -155,7 +160,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments)
+        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         # Note that we include the .NET Framework runtimes for test runs on
@@ -178,7 +183,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments)
+        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         configContent: $(ConfigContent)

@@ -107,7 +107,7 @@ parameters:
   # This is used when the referenceType is 'Package'.
   - name: mdsPackageVersion
     type: string
-  
+
   # The reference type to use:
   #
   # Project - dependent projects are referenced directly.
@@ -123,9 +123,9 @@ stages:
 
   - stage: build_azure_package_stage
     displayName: Build Azure Package
-    
+
     dependsOn: ${{ parameters.dependsOn }}
-    
+
     jobs:
 
       # ------------------------------------------------------------------------
@@ -171,9 +171,6 @@ stages:
                 # Override the template's default step condition.  We always
                 # want this step to run.
                 condition: true
-                # Use the Azure DevOps Library variable "password" for the SA
-                # password.
-                password: $(password)
           vmImage: ADO-UB22-SQL22
 
       # ------------------------------------------------------------------------
@@ -225,7 +222,6 @@ stages:
                 # These variables are from an Azure DevOps Library variable
                 # group.
                 fileStreamDirectory: $(FileStreamDirectory)
-                password: $(password)
                 sqlRootPath: $(SQL22RootPath)
           # The ADO-MMS22-SQL22 image includes a local SQL Server that supports
           # integrated security.

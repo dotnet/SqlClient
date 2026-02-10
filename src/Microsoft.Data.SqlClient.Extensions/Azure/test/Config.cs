@@ -63,10 +63,8 @@ internal static class Config
     internal static bool HasUserManagedIdentityClientId() => !UserManagedIdentityClientId.IsEmpty();
     internal static bool HasWorkloadIdentityFederationServiceConnectionId() => !WorkloadIdentityFederationServiceConnectionId.IsEmpty();
 
-    // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
-    // Uncomment this once the MDS Azure files have been removed.
-    // internal static bool IsAzureSqlServer() =>
-    //     Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TcpConnectionString).DataSource);
+    internal static bool IsAzureSqlServer() =>
+        Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TcpConnectionString).DataSource);
 
     internal static bool OnAdoPool() => AdoPool;
     internal static bool OnLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);

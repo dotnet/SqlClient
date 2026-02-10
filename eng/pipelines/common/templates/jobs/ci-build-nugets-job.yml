@@ -23,14 +23,18 @@ parameters:
     type: string
     default: ADO-MMS22-SQL19
 
+  - name: abstractionsArtifactsName
+    type: string
+    default: Abstractions.Artifacts
+
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
-  
+
   - name: platform
     type: string
     default: $(Platform)
-  
+
   - name: buildConfiguration
     type: string
     values:
@@ -40,6 +44,9 @@ parameters:
   - name: prebuildSteps
     type: stepList
     default: []
+
+  - name: abstractionsPackageVersion
+    type: string
 
   - name: mdsPackageVersion
     type: string
@@ -68,14 +75,13 @@ jobs:
      # configuration
     - ${{ parameters.prebuildSteps }}
 
-  # If we're testing in Package mode, create the packages/ directory and then
-  # setup the top-level NuGet.config to look in packages/ for local NuGet
-  # dependencies.
+  # If we're testing in Package mode, then we must download the Abstractions package artifacts.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
-    - pwsh: New-Item -Path "$(Build.SourcesDirectory)/packages" -ItemType Directory -Force
-      displayName: Create packages/ directory
-    - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-      displayName: Use local NuGet packages
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(packagePath)
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -99,6 +105,7 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
@@ -106,9 +113,10 @@ jobs:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       displayName: 'Create MDS NuGet Package'
       generateSymbolsPackage: false
-      packageVersion: ${{ parameters.mdsPackageVersion }}
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       outputDirectory: $(packagePath)
+      packageVersion: ${{ parameters.mdsPackageVersion }}
+      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
