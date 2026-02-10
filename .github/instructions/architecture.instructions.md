@@ -86,7 +86,7 @@ Guidelines:
 2. Use `#if NETFRAMEWORK` or `#if NET` for framework-specific code paths
 3. Use `#if _WINDOWS` or `#if _UNIX` for OS-specific code paths
 4. Avoid APIs that don't exist on a target platform without conditional compilation
-5. Do NOT use `#if NETCOREAPP` — use `#if NET` instead (the project does not define `NETCOREAPP`)
+5. Prefer `#if NET` over `#if NETCOREAPP` for .NET (net8.0/net9.0) code paths to keep conditions consistent
 
 ### Framework-Specific Dependencies
 The unified project uses conditional `ItemGroup` elements for dependencies:

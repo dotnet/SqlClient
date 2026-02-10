@@ -126,7 +126,7 @@ When a new issue is created, follow these steps:
 
 ### ⚙️ Automating Workflows
 - Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
-- Suggest changelog entries for fixes in `CHANGELOG.md`
+- Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
 
 ## 🧠 Contextual Awareness

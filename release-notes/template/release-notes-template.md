@@ -66,9 +66,9 @@
 - [Description of bug fix]
   ([#PRNUM](https://github.com/dotnet/SqlClient/pull/PRNUM))
 
-#### Other Additions
+#### Other fixes
 
-- [Description of other additions]
+- [Description of other fixes]
   ([#PRNUM](https://github.com/dotnet/SqlClient/pull/PRNUM))
 
 ## Contributors

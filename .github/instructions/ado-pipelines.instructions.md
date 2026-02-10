@@ -1,5 +1,5 @@
 ---
-applyTo: "eng/pipelines/**,*.yml"
+applyTo: "eng/pipelines/**/*.yml"
 ---
 # Azure DevOps Pipelines Guide
 

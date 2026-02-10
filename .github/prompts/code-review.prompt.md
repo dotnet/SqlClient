@@ -28,7 +28,7 @@ Verify the change follows project architecture rules:
 - [ ] Code compiles for all target frameworks: `net462`, `net8.0`, `net9.0`
 - [ ] Platform-specific code uses correct file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`)
 - [ ] Conditional compilation uses correct directives (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`)
-- [ ] `#if NETCOREAPP` is NOT used (the project does not define this symbol)
+- [ ] Prefer `#if NET` over `#if NETCOREAPP` in this repo
 
 ## 3. Code Quality Review
 Check against `policy/coding-style.md` and `policy/coding-best-practices.md`:
