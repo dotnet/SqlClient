@@ -58,28 +58,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedBaseTypeOverrides)
         {
 
-            List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>, string>> testVariations = new() {
-                new(TestVariations.TestSimpleParameter_Type, _TestSimpleParameter_Type, "Test Simple Parameter [Data Type]"),
-                new(TestVariations.TestSimpleParameter_Variant, _TestSimpleParameter_Variant, "Test Simple Parameter [Variant Type]"),
-                new(TestVariations.TestSqlDataRecordParameterToTVP_Type, _TestSqlDataRecordParameterToTVP_Type, "Test SqlDataRecord Parameter To TVP [Data Type]"),
-                new(TestVariations.TestSqlDataRecordParameterToTVP_Variant, _TestSqlDataRecordParameterToTVP_Variant, "Test SqlDataRecord Parameter To TVP [Variant Type]"),
-                new(TestVariations.TestSqlDataReaderParameterToTVP_Type, _TestSqlDataReaderParameterToTVP_Type, "Test SqlDataReader Parameter To TVP [Data Type]"),
-                new(TestVariations.TestSqlDataReaderParameterToTVP_Variant, _TestSqlDataReaderParameterToTVP_Variant, "Test SqlDataReader Parameter To TVP [Variant Type]"),
-                new(TestVariations.TestSqlDataReader_TVP_Type, _TestSqlDataReader_TVP_Type, "Test SqlDataReader TVP [Data Type]"),
-                new(TestVariations.TestSqlDataReader_TVP_Variant, _TestSqlDataReader_TVP_Variant, "Test SqlDataReader TVP [Variant Type]"),
-                new(TestVariations.TestSimpleDataReader_Type, _TestSimpleDataReader_Type, "Test Simple Data Reader [Data Type]"),
-                new(TestVariations.TestSimpleDataReader_Variant, _TestSimpleDataReader_Variant, "Test Simple Data Reader [Variant Type]"),
-                new(TestVariations.SqlBulkCopySqlDataReader_Type, _SqlBulkCopySqlDataReader_Type, "SqlBulkCopy From SqlDataReader [Data Type]"),
-                new(TestVariations.SqlBulkCopySqlDataReader_Variant, _SqlBulkCopySqlDataReader_Variant, "SqlBulkCopy From SqlDataReader [Variant Type]"),
-                new(TestVariations.SqlBulkCopyDataTable_Type, _SqlBulkCopyDataTable_Type, "SqlBulkCopy From Data Table [Data Type]"),
-                new(TestVariations.SqlBulkCopyDataTable_Variant, _SqlBulkCopyDataTable_Variant, "SqlBulkCopy From Data Table [Variant Type]"),
-                new(TestVariations.SqlBulkCopyDataRow_Type, _SqlBulkCopyDataRow_Type, "SqlBulkCopy From Data Row [Data Type]"),
-                new(TestVariations.SqlBulkCopyDataRow_Variant, _SqlBulkCopyDataRow_Variant, "SqlBulkCopy From Data Row [Variant Type]")
+            List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>>> testVariations = new() {
+                new(TestVariations.TestSimpleParameter_Type, _TestSimpleParameter_Type),
+                new(TestVariations.TestSimpleParameter_Variant, _TestSimpleParameter_Variant),
+                new(TestVariations.TestSqlDataRecordParameterToTVP_Type, _TestSqlDataRecordParameterToTVP_Type),
+                new(TestVariations.TestSqlDataRecordParameterToTVP_Variant, _TestSqlDataRecordParameterToTVP_Variant),
+                new(TestVariations.TestSqlDataReaderParameterToTVP_Type, _TestSqlDataReaderParameterToTVP_Type),
+                new(TestVariations.TestSqlDataReaderParameterToTVP_Variant, _TestSqlDataReaderParameterToTVP_Variant),
+                new(TestVariations.TestSqlDataReader_TVP_Type, _TestSqlDataReader_TVP_Type),
+                new(TestVariations.TestSqlDataReader_TVP_Variant, _TestSqlDataReader_TVP_Variant),
+                new(TestVariations.TestSimpleDataReader_Type, _TestSimpleDataReader_Type),
+                new(TestVariations.TestSimpleDataReader_Variant, _TestSimpleDataReader_Variant),
+                new(TestVariations.SqlBulkCopySqlDataReader_Type, _SqlBulkCopySqlDataReader_Type),
+                new(TestVariations.SqlBulkCopySqlDataReader_Variant, _SqlBulkCopySqlDataReader_Variant),
+                new(TestVariations.SqlBulkCopyDataTable_Type, _SqlBulkCopyDataTable_Type),
+                new(TestVariations.SqlBulkCopyDataTable_Variant, _SqlBulkCopyDataTable_Variant),
+                new(TestVariations.SqlBulkCopyDataRow_Type, _SqlBulkCopyDataRow_Type),
+                new(TestVariations.SqlBulkCopyDataRow_Variant, _SqlBulkCopyDataRow_Variant)
             };
 
             foreach (var test in testVariations)
             {
-                (TestVariations tag, Func<object, string, string, string, string, TestResult> action, string description) = test;
+                (TestVariations tag, Func<object, string, string, string, string, TestResult> action) = test;
 
                 try
                 {
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
                     unexpectedValueOverrides.TryGetValue(tag, out var unexpectedValueOverride);
                     expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
-                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride, expectedBaseTypeOverride);
+                    VerifyReaderTypeAndValue(expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride, expectedBaseTypeOverride);
                 }
                 catch (Exception e)
                 {
@@ -845,7 +845,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         private static void VerifyReaderTypeAndValue(
-            string tag, 
             string expectedBaseTypeName, 
             string expectedTypeName, 
             object expectedValue, 
