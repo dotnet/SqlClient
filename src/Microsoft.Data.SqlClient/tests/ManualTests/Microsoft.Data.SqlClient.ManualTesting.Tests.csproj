@@ -198,6 +198,7 @@
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandExecuteScalarTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
     <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
     <Compile Include="SQL\SqlDependencyTest\SqlDependencyTest.cs" />
