@@ -74,7 +74,7 @@ steps:
       # Acquire a WMI handle.
       Import-Module "sqlps"
       $smo = 'Microsoft.SqlServer.Management.Smo.'
-      $wmi = new-object ($smo + 'Wmi.ManagedComputer').
+      $wmi = new-object ($smo + 'Wmi.ManagedComputer')
 
       # List the WMI, including the instance names.
       Write-Host "WMI Information:"
