@@ -897,26 +897,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static string AmendTheGivenMessageDateValueException(string message, object paramValue)
-        {
-            string value;
-            if (paramValue.GetType() == typeof(DateTimeOffset))
-            {
-                DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-            }
-            else if (paramValue.GetType() == typeof(TimeSpan))
-            {
-                value = ((TimeSpan)paramValue).ToString();
-            }
-            else
-            {
-                value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-            }
-
-            return message.Replace(paramValue.ToString(), value);
-        }
-
         // NOTE: Logging and Display
         private static void DisplayHeader(string tag, object paramValue, string expectedBaseTypeName)
         {
@@ -937,27 +917,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Console.WriteLine(string.Format("------------------------------ {0} [type: {1} value:{2}] ------------------------------", tag, expectedBaseTypeName, value));
-        }
-
-        private static void DisplayError(string tag, Exception e)
-        {
-            string ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), e.Message);
-
-            // InvalidCastException message is different between core and framework for this cast attempt.
-            // Make them the same for the purposes of comparing test output.
-            if (e is InvalidCastException &&
-                e.Message.Equals("Unable to cast object of type 'System.TimeSpan' to type 'System.DateTime'."))
-            {
-                ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "Specified cast is not valid.");
-            }
-
-            if (e is ArgumentOutOfRangeException &&
-                e.Message.Equals("The added or subtracted value results in an un-representable DateTime. (Parameter 'value')"))
-            {
-                ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "The added or subtracted value results in an un-representable DateTime.\nParameter name: value");
-            }
-
-            LogMessage(tag, ExceptionMessage);
         }
 
         private static void LogMessage(string tag, string message)
