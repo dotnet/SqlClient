@@ -42,10 +42,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             expectedValueOverrides ??= new Dictionary<TestVariations, object>();
             unexpectedValueOverrides ??= new Dictionary<TestVariations, object>();
             expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
-            RunTests(
+            
+            DateTimeVariantTest.SendInfo(
                 paramValue, 
                 expectedTypeName, 
                 expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
                 expectedInvalidOperationExceptions,
                 expectedButUncaughtExceptions,
@@ -376,32 +378,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static ExceptionChecker TdsRpcProtocolStreamIncorrect = (e, paramValue) =>
             (e.GetType() == typeof(SqlException)) &&
             e.Message.Contains("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect.");
-
-        private void RunTests(
-            object paramValue,
-            string expectedTypeName, 
-            string expectedBaseTypeName, 
-            Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
-            Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
-            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
-            Dictionary<TestVariations, object> expectedValueOverrides,
-            Dictionary<TestVariations, object> unexpectedValueOverrides,
-            Dictionary<TestVariations, object> expectedBaseTypeOverrides)
-        {
-
-            // Run Test - calls 16 methods for this parameter combination
-            DateTimeVariantTest.SendInfo(
-                paramValue, 
-                expectedTypeName, 
-                expectedBaseTypeName, 
-                DataTestUtility.TCPConnectionString, 
-                expectedExceptions, 
-                expectedInvalidOperationExceptions,
-                expectedButUncaughtExceptions,
-                expectedValueOverrides,
-                unexpectedValueOverrides,
-                expectedBaseTypeOverrides);
-        }
 
         /// <summary>
         /// Gets the baseline file for a specific parameter index and compares against output.
