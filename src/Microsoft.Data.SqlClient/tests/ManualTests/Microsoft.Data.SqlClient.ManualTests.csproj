@@ -28,9 +28,11 @@
     <Compile Include="DataCommon\ConnectionTestParametersData.cs" />
     <Compile Include="DataCommon\DataSourceBuilder.cs" />
     <Compile Include="DataCommon\DataTestUtility.cs" />
+    <Compile Include="DataCommon\ManagedIdentityProvider.cs" />
     <Compile Include="DataCommon\ProxyServer.cs" />
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
+    <Compile Include="DataCommon\UsernamePasswordProvider.cs" />
     <Compile Include="DataCommon\XEventScope.cs" />
     <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
