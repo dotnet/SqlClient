@@ -2845,7 +2845,10 @@ namespace Microsoft.Data.SqlClient.Connection
                     if (_timeout.IsExpired || _timeout.MillisecondsRemaining <= 0)
                     {
                         // No, so we throw.
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Attempt: {0}, Timeout: {1}", attempt, ex.FailureCode);
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            "<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Attempt: {0}, FailureCode: {1}",
+                            attempt,
+                            ex.FailureCode);
                         throw SQL.ActiveDirectoryTokenRetrievingTimeout(Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication), ex.FailureCode, ex);
                     }
 
