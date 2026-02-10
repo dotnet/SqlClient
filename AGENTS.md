@@ -31,7 +31,7 @@ The `.github/instructions/` directory contains comprehensive guides:
 
 ## Workflow Prompts
 
-This repository provides reusable prompts in `.github/prompts/` for common maintainer workflows. Use these to guide agents through multi-step operations.
+This repository provides 7 reusable prompts in `.github/prompts/` for common maintainer workflows. Use these to guide agents through multi-step operations.
 
 | Prompt | Purpose |
 |--------|---------|
