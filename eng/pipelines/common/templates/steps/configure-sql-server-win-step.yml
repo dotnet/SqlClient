@@ -96,7 +96,7 @@ steps:
         throw
     }
 
-    New-NetFirewallRule -DisplayName "SQL TCP Ports" -Direction Inbound –Protocol TCP –LocalPort 1433 -Action allow
+    New-NetFirewallRule -DisplayName "SQL TCP Ports" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action allow
     $sqlSrvPath = (Get-WmiObject win32_service | ?{$_.DisplayName -eq 'SQL Server (${{parameters.instanceName }})'} | select @{Name="Path"; Expression={$_.PathName.split('"')[1]}}).Path
     New-NetFirewallRule -DisplayName "sqlservr.exe" -Program "$sqlSrvPath"
   displayName: 'Enable TCP, NP & Firewall [Win]'

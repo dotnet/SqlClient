@@ -23,15 +23,15 @@ steps:
 
     # Password for the SA user (required)
 
-    MSSQL_SA_PW=$(Password)
+    MSSQL_SA_PW="$(Password)"
 
     # Product ID of the version of SQL server you're installing
     # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
-    MSSQL_PID='enterprise'
+    MSSQL_PID="enterprise"
 
     echo Running mssql-conf setup...
-    sudo MSSQL_SA_PASSWORD=$MSSQL_SA_PW\
-          MSSQL_PID=$MSSQL_PID \
+    sudo MSSQL_SA_PASSWORD="$MSSQL_SA_PW" \
+          MSSQL_PID="$MSSQL_PID" \
           /opt/mssql/bin/mssql-conf -n setup accept-eula
 
     # Connect to server and get the version:

@@ -4,7 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This step installs the latest SQL Server 2022 onto the macOS host and configures it for use.
+# This step installs the latest SQL Server 2022 onto the macOS host as a docker container and
+# configures it for use.
 #
 # The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
 # Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
@@ -39,7 +40,7 @@ steps:
     docker pull mcr.microsoft.com/mssql/server:2022-latest
 
     # Password for the SA user (required)
-    MSSQL_SA_PW=$(Password)
+    MSSQL_SA_PW="$(Password)"
 
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
 
