@@ -4,7 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  
+
+  - name: abstractionsPackageVersion
+    type: string
+
   - name: buildConfiguration
     type: string
     values:
@@ -30,7 +33,7 @@ parameters:
 
   - name: targetFramework
     type: string
-  
+
   - name: testSet
     type: string
 
@@ -47,6 +50,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 - ${{elseif eq(parameters.osGroup, '')}}: # .NET on Windows
   - task: MSBuild@1
@@ -60,6 +64,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
@@ -75,6 +80,7 @@ steps:
         -p:TF=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:OSGroup=${{ parameters.osGroup }}
         -p:platform=${{ parameters.platform }}

@@ -7,10 +7,6 @@
 // This file has intentionally not been tidied up or modernized.  Its content will be absorbed into
 // new unit and/or integration tests in the future.
 
-// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39233):
-// Enable this file once the MDS Azure files have been removed.
-#if false
-
 using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
@@ -401,5 +397,3 @@ public class AADConnectionTest
 
     #endregion
 }
-
-#endif

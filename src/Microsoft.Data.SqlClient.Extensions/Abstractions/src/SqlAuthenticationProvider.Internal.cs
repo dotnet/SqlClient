@@ -53,7 +53,8 @@ public abstract partial class SqlAuthenticationProvider
                     return;
                 }
 
-                // TODO(ADO-39845): Verify the assembly is signed by us?
+                // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39845):
+                // Verify the assembly is signed by us?
 
                 // Look for the manager class.
                 const string className = "Microsoft.Data.SqlClient.SqlAuthenticationProviderManager";

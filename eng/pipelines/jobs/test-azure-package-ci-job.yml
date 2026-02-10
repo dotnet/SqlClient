@@ -136,6 +136,13 @@ jobs:
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
 
+      # The NuGet.config file to use for restoring packages.
+      - name: nugetConfigFile
+        ${{ if eq(parameters.referenceType, 'Package') }}:
+          value: $(Build.SourcesDirectory)/NuGet.config.local
+        ${{ else }}:
+          value: $(Build.SourcesDirectory)/NuGet.config
+
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
@@ -198,10 +205,6 @@ jobs:
             artifactName: ${{ parameters.mdsArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
 
-        # Use the local NuGet.config that references the packages/ directory.
-        - pwsh: cp $(Build.SourcesDirectory)/NuGet.config.local $(Build.SourcesDirectory)/NuGet.config
-          displayName: Use local NuGet.config
-
       # Install the .NET SDK and Runtimes.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
         parameters:
@@ -257,7 +260,7 @@ jobs:
           command: custom
           custom: restore
           projects: $(project)
-          arguments: $(commonArguments)
+          arguments: $(commonArguments) --configfile $(nugetConfigFile)
 
       # Build the project.
       - task: DotNetCoreCLI@2
@@ -305,7 +308,7 @@ jobs:
               $(buildArguments)
               --no-build
               -f ${{ runtime }}
-              --filter '"category != failing & category != flaky"'
+              --filter "category != failing & category != flaky"
 
         - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
@@ -324,7 +327,7 @@ jobs:
               $(buildArguments)
               --no-build
               -f ${{ runtime }}
-              --filter '"category = flaky"'
+              --filter "category = flaky"
 
       # Run the tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
@@ -345,7 +348,7 @@ jobs:
               $(buildArguments)
               --no-build
               -f ${{ runtime }}
-              --filter '"category != failing & category != flaky"'
+              --filter "category != failing & category != flaky"
 
         - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
@@ -364,4 +367,4 @@ jobs:
               $(buildArguments)
               --no-build
               -f ${{ runtime }}
-              --filter '"category = flaky"'
+              --filter "category = flaky"
