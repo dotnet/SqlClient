@@ -869,10 +869,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (expectedBaseTypeOverride is not null)
                 {
                     Assert.Equal(expectedBaseTypeOverride, actualBaseTypeName);
-                    string ErrorMessage = string.Format(">>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                        actualBaseTypeName,
-                        expectedBaseTypeName);
-                    LogMessage(tag, ErrorMessage);
                 }
                 else
                 {
