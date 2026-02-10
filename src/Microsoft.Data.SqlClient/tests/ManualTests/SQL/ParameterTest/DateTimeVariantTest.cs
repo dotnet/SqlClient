@@ -916,7 +916,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void LogValues(string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
         {
-            Console.WriteLine(string.Format("Type        => Expected : Actual == {0} : {1}", expectedTypeName, actualTypeName));
             Console.WriteLine(string.Format("Base Type   => Expected : Actual == {0} : {1}", expectedBaseTypeName, actualBaseTypeName));
             if (expectedTypeName == "System.DateTimeOffset")
             {
