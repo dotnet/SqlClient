@@ -93,17 +93,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
                     {
                         Assert.True(isExpectedException(e, paramValue));
-                        LogMessage(tag.ToString(), "[EXPECTED EXCEPTION] " + e.Message);
                     }
                     else if (expectedInvalidOperationExceptions.TryGetValue(tag, out var isExpectedInvalidOperationException))
                     {
                         Assert.True(isExpectedInvalidOperationException(e, paramValue));
-                        LogMessage(tag.ToString(), "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
                     }
                     else if (expectedButUncaughtExceptions.TryGetValue(tag, out var isExpectedButUncaughtException))
                     {
                         Assert.True(isExpectedButUncaughtException(e, paramValue));
-                        DisplayError(tag.ToString(), e);
                     }
                     else {
                         Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
