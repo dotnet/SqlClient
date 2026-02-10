@@ -2,22 +2,44 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<!-- Build Parameters ============================================== -->
 	<PropertyGroup>
-		<!-- Configuration:  Which build configuration to build                                 -->
-		<!-- Allowed values: Debug, Release                                                     -->
-		<!-- Default value:  Debug                                                              -->
+		<!--
+		    Configuration
+		    Applies to:     All targets
+		    Description:    Which build configuration to build
+		    Default value:  Debug
+		    Allowed values: Debug, Release
+		-->
 		<Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
 
-		<!-- DotnetPath: Path to folder containing the `dotnet` binary. Override this if a      -->
-		<!--    specific version (eg, x86) is required. Otherwise, this defaults to using the   -->
-		<!--    dotnet binary in the PATH variable. The provided path should end with a `\` (or -->
-		<!--    `/`) character. Eg. C:\x86\                                                     -->
-		<DotnetPath Condition="'$(DotnetPath)' == ''" />
-    
-    <!-- NugetPath: Path to folder containing `nuget` binary. Override this if a specific   -->
-    <!--    version is required. Othrwise, this defaults to the `nuget` binary in the PATH  -->
-    <!--    variable. The provided path should end with a `\` (or `/` character. Eg,        -->
-    <!--    `C:\x86\`. In majority of cases, this is not necessary.                         -->
-    <!-- This argument is only used in Pack* targets                                        -->
+    <!--
+        DotnetPath
+        Applies to:  Build* and Test* targets
+        Description: Path to folder containing the `dotnet` binary. Override this if a specific
+                     version (eg, x86) is required. Otherwise, this defaults to using the dotnet
+                     binary in the PATH variable. The provided path should end with a `\` (or `/`)
+                     character.
+        Example:     C:\x86\
+    -->
+    <DotnetPath Condition="'$(DotnetPath)' == ''" />
+
+    <!--
+        MdsPackageVersion
+        Applies to:  PackMds
+        Description: Version to assign to the MDS package. Should follow
+                     `major.minor.patch[-previewstring]` formatting.
+        @TODO: is this necessary or should we always pull from a versions file?
+    -->
+    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''" />
+
+    <!--
+        NugetPath
+        Applies to:  Pack* targets
+        Description: Path to folder containing `nuget` binary. Override this if a specific version
+                     is required. Othrwise, this defaults to the `nuget` binary in the PATH
+                     variable. The provided path should end with a `\` (or `/`) character. In
+                     majority of cases, this is not necessary.
+        Example:     C:\x86\
+    -->
     <NugetPath Condition="'$(NugetPath)' == ''" />
 	</PropertyGroup>
 
@@ -27,6 +49,7 @@
   <!-- =============================================================== -->
 	<!-- Microsoft.Data.SqlClient Build Targets -->
 	<PropertyGroup>
+    <MdsArtifactsFolder>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</MdsArtifactsFolder>
     <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
     <MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
 	</PropertyGroup>
@@ -66,6 +89,10 @@
   
   <!-- PackMds: Packages MDS binaries into a NuGet package -->
   <Target Name="PackMds">
+    <!-- Verify that the appropriate build has ran -->
+    <Error Condition="!Exists('$(MdsArtifactsFolder)$(Configuration)')"
+           Text="Build output for $(MdsArtifactsFolder)$(Configuration) was not found. Run BuildMds target before running PackMds." />
+
     <PropertyGroup>
       <GitCommand>
         git rev-parse HEAD
@@ -78,9 +105,9 @@
     
     <PropertyGroup>
       <NugetCommand>
-        $(NugetPath)nuget pack $(MdsNuspecPath)
-          -OutputDirectory $ @TODO:
-          -Version $(MdsPackageVersion)
+        nuget pack &quot;$(MdsNuspecPath)&quot;
+          -OutputDirectory &quot;$(MdsArtifactsPath)&quot;
+          -Version &quot;$(MdsPackageVersion)&quot;
           -Properties &quot;COMMITID=$(CommitHash);Configuration=$(Configuration);&quot;
           -Symbols
           -SymbolPackageFormat snupkg
