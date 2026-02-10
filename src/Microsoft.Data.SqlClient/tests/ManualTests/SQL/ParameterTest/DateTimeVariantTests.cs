@@ -682,7 +682,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopySqlDataReader_Variant, InvalidCastNotValid },
                     { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
                     { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, 
-                null,
+                new Dictionary<TestVariations, object> {
+                    {TestVariations.SqlBulkCopySqlDataReader_Type, TimeSpan.Zero},
+                    {TestVariations.SqlBulkCopySqlDataReader_Variant, TimeSpan.Zero},
+                    {TestVariations.TestSqlDataReader_TVP_Type, TimeSpan.Zero},
+                    {TestVariations.TestSqlDataReader_TVP_Variant, TimeSpan.Zero},
+                    {TestVariations.TestSimpleDataReader_Type, TimeSpan.Zero},
+                    {TestVariations.TestSimpleDataReader_Variant, TimeSpan.Zero},
+                },
                 null};
             yield return new object?[] { DateTime.MaxValue, "System.DateTime", "time",
                 new Dictionary<TestVariations, ExceptionChecker> { 
@@ -698,6 +705,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopySqlDataReader_Type, InvalidCastNotValid },
                     { TestVariations.SqlBulkCopySqlDataReader_Variant, InvalidCastNotValid }}, 
                 new Dictionary<TestVariations, object> {
+                    {TestVariations.TestSqlDataReader_TVP_Variant, TimeSpan.Parse("23:59:59.9999999")},
+                    {TestVariations.SqlBulkCopySqlDataReader_Type, TimeSpan.Parse("23:59:59.9999999")},
+                    {TestVariations.SqlBulkCopySqlDataReader_Variant, TimeSpan.Parse("23:59:59.9999999")},
+                    {TestVariations.TestSqlDataReader_TVP_Type, TimeSpan.Parse("23:59:59.9999999")},
+                    {TestVariations.TestSimpleDataReader_Type, TimeSpan.Parse("23:59:59.9999999")},
+                    {TestVariations.TestSimpleDataReader_Variant, TimeSpan.Parse("23:59:59.9999999")},
                     {TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000)},
                     {TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000)},
                     {TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000)},

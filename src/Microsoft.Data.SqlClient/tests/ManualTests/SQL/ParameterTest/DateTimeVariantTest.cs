@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
                 {
-                    Assert.True(isExpectedException(e, paramValue));
+                    Assert.True(isExpectedException(e, paramValue), e.Message);
                 }
                 else {
                     Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
@@ -818,6 +818,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object expectedValueOverride, 
             object expectedBaseTypeOverride)
         {
+
+            if (expectedValueOverride is not null)
+            {
+                Assert.Equal(expectedValueOverride, actualValue);
+            }
+            else {
+                Assert.Equal(expectedValue, actualValue);
+            }
+
             string actualTypeName = actualValue.GetType().ToString();
 
             //TODO: these are required to generate expected cast exceptions and should be removed
@@ -842,17 +851,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 else
                 {
                     Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
-                }
-            }
-
-            if (!actualValue.Equals(expectedValue))
-            {                        
-                if (expectedValueOverride is not null)
-                {
-                    Assert.True(actualValue.Equals(expectedValueOverride));
-                }
-                else {
-                    Assert.Fail();
                 }
             }
         }
