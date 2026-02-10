@@ -5,13 +5,15 @@
 # This is the top-most EditorConfig file for our repo.
 root = true
 
+# =================================================================================================
 # Default settings for all file types.
+
 [*]
 
 # Use 2 spaces for indentation.
 indent_style = space
 indent_size = 2
-tab_width = unset
+# tab_width is irrelevant, and will default to indent_size.
 
 # Don't mess with line endings.
 end_of_line = unset
@@ -28,9 +30,25 @@ insert_final_newline = true
 # We're not enforcing a max line length via tooling because there are legitimate cases for longer
 # lines (e.g., long URLs in comments, long strings, etc).  However, we recommend keeping lines to
 # a maximum of 100 characters for readability.
-# max_line_length = 100
+#
+# See: https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#max_line_length
+#
+max_line_length = unset
 
-# C# files
+# =================================================================================================
+# Shell scripts typically require line endings that match the platform's native line endings.
+
+# Unix-like systems (Linux, macOS) use LF.
+[*.sh]
+end_of_line = lf
+
+# Windows uses CRLF.
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+# =================================================================================================
+# C# files.
+
 [*.cs]
 
 # We use 4 spaces for C# indentation.
