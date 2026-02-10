@@ -7,8 +7,8 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 variables:
+  - group: Release Variables
   - template: /eng/pipelines/libraries/common-variables.yml@self
-  - template: /eng/pipelines/libraries/mds-variables.yml@self
 
   - name: TempFolderName # extract the nuget package here
     value: temp

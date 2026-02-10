@@ -7,13 +7,13 @@ parameters:
   - name: platform
     type: string
     default: $(Platform)
-  
+
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
-  
+
   - name: referenceType
     type: string
     values:
@@ -23,7 +23,7 @@ parameters:
   - name: buildNumber
     type: string
     default: $(BuildNumber)
-  
+
   - name: operatingSystem
     type: string
     default: deferedToRuntime
@@ -32,7 +32,7 @@ parameters:
       - Linux
       - MacOS
       - deferedToRuntime
-    
+
   - name: build
     type: string
     default: MDS
@@ -41,8 +41,13 @@ parameters:
       - AKV
       - all
       - allNoDocs
-  
-  # Necessary when referenceType is Package.
+
+  # Necessary to build MDS when referenceType is Package
+  - name: abstractionsPackageVersion
+    type: string
+    default: ''
+
+  # Necessary to build AKV when referenceType is Package.
   - name: mdsPackageVersion
     type: string
     default: ''
@@ -59,6 +64,7 @@ steps:
         msbuildArguments: >-
           -t:restore
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       retryCountOnTaskFailure: 1
 
@@ -77,6 +83,7 @@ steps:
             -p:GenerateNuget=false
             -p:GenerateDocumentationFile=false
             -p:BuildNumber=${{ parameters.buildNumber }}
+            -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
     - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
@@ -88,11 +95,12 @@ steps:
           msbuildArchitecture: x64
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: 
+          msbuildArguments:
             -t:BuildAllConfigurations
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:GenerateNuget=false
             -p:BuildNumber=${{ parameters.buildNumber }}
+            -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -141,6 +149,7 @@ steps:
         -p:GenerateNuget=false
         -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       verbosityRestore: Detailed
       verbosityPack: Detailed

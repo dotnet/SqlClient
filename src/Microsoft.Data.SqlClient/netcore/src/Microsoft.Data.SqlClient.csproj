@@ -249,9 +249,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
       <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
@@ -654,17 +651,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs">
       <Link>Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatch.cs">
       <Link>Microsoft\Data\SqlClient\SqlBatch.cs</Link>
@@ -1049,9 +1040,10 @@
       <Link>Resources\ILLink.Substitutions.xml</Link>
     </EmbeddedResource>
 
+    <!-- Used by SqlMetaDataFactory to construct its DataSet -->
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
-      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName> <!-- @TODO: How necessary is this? -->
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
 
     <!-- Base strings in English -->
@@ -1080,8 +1072,6 @@
 
   <!-- Package References ============================================== -->
   <ItemGroup>
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
@@ -1090,6 +1080,17 @@
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

@@ -7,5 +7,5 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 variables:
+  - group: Release Variables
   - template: /eng/pipelines/libraries/common-variables.yml@self
-  - template: /eng/pipelines/libraries/mds-variables.yml@self

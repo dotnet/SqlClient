@@ -38,13 +38,13 @@ jobs:
     isCustom: true
     name: ADO-1ES-Pool
     vmImage: 'ADO-MMS22-SQL19'
-    
+
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
   - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
-  
+
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
-  
+
   - name: BuildType
     value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
@@ -62,20 +62,9 @@ jobs:
     displayName: 'Use NuGet'
 
   - powershell: |
-      # Sets the pipeline ASSEMBLY_VERSION variable.
-      
-      [Xml] $versionprops = Get-Content -Path ".\tools\props\Versions.props" 
-      Write-Host $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
-      
-      $AssemblyVersion =  $versionprops.Project.PropertyGroup[0].AssemblyVersion
-      
-      Write-Host "##vso[task.setvariable variable=ASSEMBLY_VERSION;]$AssemblyVersion"
-    displayName: 'Update assembly version property'
-
-  - powershell: |
       # Displays the paths of all the local cache directories
       nuget locals all -List
-      
+
       #Clears all files from all local cache directories
       nuget locals all -Clear
     displayName: 'Clear local cache'
@@ -99,7 +88,7 @@ jobs:
       Write-Host "--------------------------------------------------"
       Write-Host "This will verify the artifact signature" -ForegroundColor Green
       Write-Host "--------------------------------------------------"
-      
+
       if ($packageType -eq 'dll' -or $packageType -eq 'both')
       {
         nuget verify -All $(pathToDownloadedNuget)\*.nupkg
@@ -111,7 +100,7 @@ jobs:
     displayName: 'Verify nuget signature'
 
   - powershell: |
-      $buildType = [string]"$(BuildType)" 
+      $buildType = [string]"$(BuildType)"
 
       if($buildType -eq 'Official')
       {
@@ -119,7 +108,7 @@ jobs:
           # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
           $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
           $badDlls = @()
-          foreach ($file in $dllFiles) 
+          foreach ($file in $dllFiles)
           {
             # Run sn.k to verify the strong name on each dll
             $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
@@ -137,7 +126,7 @@ jobs:
             foreach($dll in $badDlls)
             {
               Write-Output $dll
-            }        
+            }
             Exit -1
         }
         Write-Host "Strong name has been verified for all dlls"
@@ -179,7 +168,7 @@ jobs:
             }
           }
         }
-    
+
         elseif ($_.Name -eq 'runtimes'){
           Get-ChildItem -Depth 3 -Path $_.FullName -Exclude $excludNamesFromRuntimeFolder -Directory | foreach{
             if('$(expectedDotnetVersions)'.Contains($_.Name)){
@@ -211,15 +200,15 @@ jobs:
 
   - powershell: |
       # list all the child items of created temp folder
-      
+
       #Verify all DLLs unzipped match "expected" hierarchy
-      
+
       foreach( $folderName in (Get-ChildItem -Path $(extractedNugetPath) -Directory).Name)
       {
         # List all Childerns of the Path
-        Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File 
-        $subFiles = Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File 
-      
+        Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File
+        $subFiles = Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File
+
         foreach($file in $subFiles)
         {
           if($subFiles[0].Name -like "*.dll" )
@@ -238,7 +227,7 @@ jobs:
                 Write-Host "Expected file pattern for localization did not match to *.dll" -ForegroundColor Red
                 Exit -1
               }
-            } 
+            }
           }
           else
           {
@@ -252,7 +241,7 @@ jobs:
     displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
   - powershell: |
       # Verify all dlls status are Valid
-      
+
       $dlls = Get-ChildItem -Path $(extractedNugetPath) -Recurse -Include *.dll
       foreach ($status in $dlls | Get-AuthenticodeSignature)
       {
@@ -274,18 +263,18 @@ jobs:
       # expected values.
       $failed = 0
 
-      foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo ) 
+      foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo )
       {
           if ($pVersion.ProductVersion -Like '$(mdsPackageVersion)*')
           {
               Write-Host -ForegroundColor Green "Correct ProductVersion detected for $($pVersion.FileName): $($pVersion.ProductVersion)"
           }
           else
-          { 
+          {
                 Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $(mdsPackageVersion); found: $($pVersion.ProductVersion)"
                 $failed = 1
           }
-      
+
           if ($pVersion.FileVersion -eq '$(mdsAssemblyFileVersion)')
           {
               Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
@@ -296,7 +285,7 @@ jobs:
               $failed = 1
           }
       }
-      
+
       if ($failed -ne 0)
       {
           Exit -1
@@ -314,10 +303,10 @@ jobs:
       # TODO: This also isn't checking the versions of the actual assemblies in
       # the package, so it isn't terribly useful.
 
-      [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
+      [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props"
       $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[2].AssemblyFileVersion
       $AssemblyVersion = $versionprops.Project.PropertyGroup[2].AssemblyVersion
-      
+
       if($AssemblyFileVersion -eq $AssemblyVersion)
       {
           Write-Host AssemblyFileVersion: $AssemblyFileVersion should not be equal to: $AssemblyVersion

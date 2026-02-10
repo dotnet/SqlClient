@@ -4,21 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: TargetNetFxVersion
+  - name: abstractionsPackageVersion
     type: string
-    default: $(TargetNetFxVersion)
-
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
-  - name: referenceType
-    default: Project
-    values:
-      - Project
-      - Package
+    default: $(abstractionsPackageVersion)
 
   - name: mdsPackageVersion
     type: string
@@ -28,6 +16,14 @@ parameters:
     type: string
     default: $(Platform)
 
+  - name: retryCountOnManualTests
+    type: number
+    default: 2
+
+  - name: TargetNetFxVersion
+    type: string
+    default: $(TargetNetFxVersion)
+
   - name: TestTargetOS
     type: string
     default: Windowsnetfx
@@ -36,10 +32,6 @@ parameters:
       - Windowsnetcoreapp
       - Unixnetcoreapp
 
-  - name: retryCountOnManualTests
-    type: number
-    default: 2
-
 steps:
 - task: MSBuild@1
   displayName: 'Build AKV Provider .NET Framework'
@@ -47,9 +39,10 @@ steps:
     solution: build.proj
     msbuildArchitecture: x64
     msbuildArguments: >-
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:Configuration=Release
       -t:BuildAKVNetFx
-      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:ReferenceType=Package
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
 - task: MSBuild@1
@@ -58,10 +51,11 @@ steps:
     solution: build.proj
     msbuildArguments: >-
       -t:BuildTestsNetFx
-      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:ReferenceType=Package
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:Configuration=Release
       -p:Platform=${{ parameters.platform }}
 
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
@@ -76,8 +70,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
@@ -97,8 +92,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
@@ -119,8 +115,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
@@ -141,8 +138,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n

@@ -149,6 +149,8 @@ stages:
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
+        abstractionsPackageVersion: $(abstractionsPackageVersion)
+        abstractionsArtifactsName: $(abstractionsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
         mdsArtifactsName: $(mdsArtifactsName)
         ${{if ne(parameters.SNIVersion, '')}}:
@@ -168,16 +170,15 @@ stages:
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
-      ${{if eq(parameters.debug, 'true')}}:
-        dotnetVerbosity: diagnostic
-      mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
       # When building via packages, we must depend on the Abstractions and MDS
       # packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      mdsArtifactsName: $(mdsArtifactsName)
+      mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
 
   # Run the stress tests, if desired.
@@ -187,8 +188,10 @@ stages:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         dependsOn:
           - build_mds_akv_packages_stage
+          - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
+        azurePackageVersion: $(azurePackageVersion)
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Run the MDS and AKV tests.
@@ -197,6 +200,8 @@ stages:
       debug: ${{ parameters.debug }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
@@ -220,10 +225,6 @@ stages:
         - ${{if eq(parameters.debug, true)}}:
           - pwsh: 'Get-ChildItem env: | Sort-Object Name'
             displayName: '[Debug] List Environment Variables'
-
-        - ${{if eq(parameters.referenceType, 'Package')}}:
-          - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-            displayName: Use local NuGet packages
 
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:
