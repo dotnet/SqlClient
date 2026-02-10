@@ -27,26 +27,57 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
                 connection.Open();
 
+                // Identify orphaned event sessions and generate DROP commands.
                 using SqlCommand command = new(
                     """
-                    DECLARE @sql NVARCHAR(MAX) = N'';
-
-                    -- Identify orphaned event sessions and generate DROP commands.
-                    SELECT @sql += N'DROP EVENT SESSION [' + s.name + N'] ON DATABASE;' + CHAR(13) + CHAR(10)
-                    FROM sys.database_event_sessions s
-                    LEFT JOIN sys.dm_xe_database_sessions t ON s.name = t.name
-                    WHERE t.name IS NULL;
-
-                    -- Execute the generated commands
-                    EXEC sys.sp_executesql @sql;
+                    SELECT Sessions.name
+                    FROM sys.database_event_sessions Sessions
+                    LEFT JOIN sys.dm_xe_database_sessions Active ON Sessions.name = Active.name
+                    WHERE Active.name IS NULL;
                     """,
                     connection);
 
-                int rowsAffected = command.ExecuteNonQuery();
-
-                if (rowsAffected > 0)
+                HashSet<string> orphanedSessions = new();
+                try
                 {
-                    Console.WriteLine($"Dropped {rowsAffected} orphaned XEvent sessions.");
+                    using SqlDataReader reader = command.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        string sessionName = reader.GetString(0);
+                        orphanedSessions.Add(sessionName);
+                    }
+                }
+                catch (SqlException)
+                {
+                    // Ignore exceptions - the next test run will attempt the cleanup.
+                }
+
+                if (orphanedSessions.Count == 0)
+                {
+                    return;
+                }
+
+                Console.WriteLine($"Identified {orphanedSessions.Count} orphaned XEvent sessions:");
+
+                // Drop them one at a time.
+                foreach (string sessionName in orphanedSessions)
+                {
+                    using SqlCommand dropCommand = new(
+                        $"DROP EVENT SESSION [{sessionName}] ON DATABASE;",
+                        connection);
+
+                    try
+                    {
+                        dropCommand.ExecuteNonQuery();
+                    }
+                    catch (SqlException)
+                    {
+                        // Ignore exceptions, as the session may have been cleaned up by another
+                        // test run at the same time.
+                    }
+
+                    Console.WriteLine($"  Dropped orphaned XEvent session: {sessionName}");
                 }
             }
         }
