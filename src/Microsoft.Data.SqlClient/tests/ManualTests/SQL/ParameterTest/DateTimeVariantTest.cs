@@ -862,6 +862,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Assert.Equal(expectedTypeName, actualTypeName);
 
+            //TODO: pass in actualBaseType for non-variant tests to remove these IsNullOrEmpty conditionals
             if (!string.IsNullOrEmpty(actualBaseTypeName) && 
                 !string.IsNullOrEmpty(expectedBaseTypeName) && 
                 !actualBaseTypeName.Equals(expectedBaseTypeName))
@@ -872,7 +873,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 else
                 {
-                    Assert.Fail();
+                    Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
                 }
             }
 
@@ -916,7 +917,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void LogValues(string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
         {
-            Console.WriteLine(string.Format("Base Type   => Expected : Actual == {0} : {1}", expectedBaseTypeName, actualBaseTypeName));
             if (expectedTypeName == "System.DateTimeOffset")
             {
                 Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));

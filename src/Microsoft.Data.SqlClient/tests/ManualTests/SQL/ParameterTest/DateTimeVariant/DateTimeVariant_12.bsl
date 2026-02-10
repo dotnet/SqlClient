@@ -6,7 +6,6 @@
 ------------------------------ TestSqlDataRecordParameterToTVP_Type [type: time value:-10675199.02:48:05.4775808] ------------------------------
 
 ------------------------------ TestSqlDataRecordParameterToTVP_Variant [type: time value:-10675199.02:48:05.4775808] ------------------------------
-Base Type   => Expected : Actual == time : time
 
 ------------------------------ TestSqlDataReaderParameterToTVP_Type [type: time value:-10675199.02:48:05.4775808] ------------------------------
 
