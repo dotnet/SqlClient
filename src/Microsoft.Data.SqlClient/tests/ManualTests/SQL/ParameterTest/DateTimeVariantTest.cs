@@ -52,7 +52,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
             Dictionary<TestVariations, object> expectedValueOverrides,
-            Dictionary<TestVariations, object> unexpectedValueOverrides,
             Dictionary<TestVariations, object> expectedBaseTypeOverrides)
         {
 
@@ -83,9 +82,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
                     expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
-                    unexpectedValueOverrides.TryGetValue(tag, out var unexpectedValueOverride);
                     expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
-                    VerifyReaderTypeAndValue(expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride, expectedBaseTypeOverride);
+                    VerifyReaderTypeAndValue(expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, expectedBaseTypeOverride);
                 }
                 catch (Exception e)
                 {
@@ -841,7 +839,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object actualValue, 
             string actualBaseTypeName, 
             object expectedValueOverride, 
-            object unexpectedValueOverride,
             object expectedBaseTypeOverride)
         {
             string actualTypeName = actualValue.GetType().ToString();
@@ -877,10 +874,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Assert.True(actualValue.Equals(expectedValueOverride));
                 }
-                else if (unexpectedValueOverride is not null)
-                {
-                    Assert.True(actualValue.Equals(unexpectedValueOverride));
-                } 
                 else {
                     Assert.Fail();
                 }
