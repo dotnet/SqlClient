@@ -23,7 +23,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSimpleParameter_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -37,7 +36,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleParameter_Type,
                 DateTimeVariantTest._TestSimpleParameter_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -49,7 +47,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSimpleParameter_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -63,7 +60,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleParameter_Variant,
                 DateTimeVariantTest._TestSimpleParameter_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -75,7 +71,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSqlDataRecordParameterToTVP_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -89,7 +84,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataRecordParameterToTVP_Type,
                 DateTimeVariantTest._TestSqlDataRecordParameterToTVP_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -101,7 +95,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSqlDataRecordParameterToTVP_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -115,7 +108,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataRecordParameterToTVP_Variant,
                 DateTimeVariantTest._TestSqlDataRecordParameterToTVP_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -127,7 +119,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSqlDataReaderParameterToTVP_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -141,7 +132,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReaderParameterToTVP_Type,
                 DateTimeVariantTest._TestSqlDataReaderParameterToTVP_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -153,7 +143,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSqlDataReaderParameterToTVP_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -167,7 +156,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReaderParameterToTVP_Variant,
                 DateTimeVariantTest._TestSqlDataReaderParameterToTVP_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -179,7 +167,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSqlDataReader_TVP_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -193,7 +180,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReader_TVP_Type,
                 DateTimeVariantTest._TestSqlDataReader_TVP_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -205,7 +191,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSqlDataReader_TVP_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -219,7 +204,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReader_TVP_Variant,
                 DateTimeVariantTest._TestSqlDataReader_TVP_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -231,7 +215,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSimpleDataReader_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -245,7 +228,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleDataReader_Type,
                 DateTimeVariantTest._TestSimpleDataReader_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -257,7 +239,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void TestSimpleDataReader_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -271,7 +252,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleDataReader_Variant,
                 DateTimeVariantTest._TestSimpleDataReader_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -283,7 +263,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void SqlBulkCopySqlDataReader_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -297,7 +276,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopySqlDataReader_Type,
                 DateTimeVariantTest._SqlBulkCopySqlDataReader_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -309,7 +287,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void SqlBulkCopySqlDataReader_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -323,7 +300,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopySqlDataReader_Variant,
                 DateTimeVariantTest._SqlBulkCopySqlDataReader_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -335,7 +311,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void SqlBulkCopyDataTable_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -349,7 +324,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataTable_Type,
                 DateTimeVariantTest._SqlBulkCopyDataTable_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -361,7 +335,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void SqlBulkCopyDataTable_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -375,7 +348,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataTable_Variant,
                 DateTimeVariantTest._SqlBulkCopyDataTable_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -387,7 +359,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void SqlBulkCopyDataRow_Type(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -401,7 +372,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataRow_Type,
                 DateTimeVariantTest._SqlBulkCopyDataRow_Type,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -413,7 +383,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetParameterCombinations))]
         public void SqlBulkCopyDataRow_Variant(
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
@@ -427,7 +396,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataRow_Variant,
                 DateTimeVariantTest._SqlBulkCopyDataRow_Variant,
                 paramValue, 
-                expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
@@ -441,7 +409,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         public static IEnumerable<object?[]> GetParameterCombinations()
         {
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "date",
+            yield return new object?[] { DateTime.MinValue, "date",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
                     { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
@@ -450,7 +418,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, 
                 null, 
                 null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "date", 
+            yield return new object?[] { DateTime.MaxValue, "date", 
                 null, 
                 new Dictionary<TestVariations, object>
                 {
@@ -480,7 +448,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
                 }
             };
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "datetime2",
+            yield return new object?[] { DateTime.MinValue, "datetime2",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
                     { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
@@ -489,7 +457,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, 
                 null,
                 null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "datetime2", 
+            yield return new object?[] { DateTime.MaxValue, "datetime2", 
                 null,
                 new Dictionary<TestVariations, object> {
                     {TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000)},
@@ -506,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
                     {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
                 }};
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "datetime", 
+            yield return new object?[] { DateTime.MinValue, "datetime", 
                 new Dictionary<TestVariations, ExceptionChecker> { 
                     { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
                     { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
@@ -526,7 +494,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow}},
                 null,
                 null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "datetime", 
+            yield return new object?[] { DateTime.MaxValue, "datetime", 
                 new Dictionary<TestVariations, ExceptionChecker> { 
                     { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime},
                     { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime},
@@ -554,10 +522,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
                 },
                 null};
-            yield return new object[] { DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset"};
-            yield return new object[] { DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset"};
-            yield return new object[] { DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset"};
-            yield return new object?[] { DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2",
+            yield return new object[] { DateTimeOffset.MinValue, "datetimeoffset"};
+            yield return new object[] { DateTimeOffset.MaxValue, "datetimeoffset"};
+            yield return new object[] { DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "datetimeoffset"};
+            yield return new object?[] { DateTime.Parse("1998-01-01 23:59:59.995"), "datetime2",
                 null,
                 new Dictionary<TestVariations, object>
                 {
@@ -575,7 +543,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
                     {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
                 }};
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "smalldatetime",
+            yield return new object?[] { DateTime.MinValue, "smalldatetime",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
                     { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
@@ -595,7 +563,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }},
                 null,
                 null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "smalldatetime",
+            yield return new object?[] { DateTime.MaxValue, "smalldatetime",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Type, UnRepresentableDateTime },
                     { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
@@ -623,7 +591,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
                     {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
                 }};
-            yield return new object?[] { TimeSpan.MinValue, "System.TimeSpan", "time",
+            yield return new object?[] { TimeSpan.MinValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Type, TimeOverflow },
                     { TestVariations.TestSimpleParameter_Variant, TimeOverflow },
@@ -644,7 +612,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.TestSqlDataRecordParameterToTVP_Variant, TimeSpan.Zero},
                 },
                 null};
-            yield return new object?[] { TimeSpan.MaxValue, "System.TimeSpan", "time",
+            yield return new object?[] { TimeSpan.MaxValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Type, TimeOverflow },
                     { TestVariations.TestSimpleParameter_Variant, TimeOverflow },
@@ -664,7 +632,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, TimeOverflow }},
                 null,
                 null};
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "time",
+            yield return new object?[] { DateTime.MinValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> { 
                     { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMinDateTimeToTime},
                     { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMinDateTimeToTime},
@@ -691,7 +659,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.TestSimpleDataReader_Variant, TimeSpan.Zero},
                 },
                 null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "time",
+            yield return new object?[] { DateTime.MaxValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> { 
                     { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMaxDateTimeToTime },
                     { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMaxDateTimeToTime },

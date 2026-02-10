@@ -47,9 +47,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static void SendInfo(
             TestVariations tag,
-            Func<object, string, string, string, string, TestResult> action,
+            Func<object, string, string, TestResult> action,
             object paramValue, 
-            string expectedTypeName, 
             string expectedBaseTypeName, 
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
@@ -58,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
+                TestResult result = action(paramValue, expectedBaseTypeName, connStr);
                 expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
                 expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
                 VerifyReaderTypeAndValue(expectedBaseTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, expectedBaseTypeOverride);
@@ -75,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSimpleParameter_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string procName = DataTestUtility.GetLongName("paramProc1");
             
             using SqlConnection conn = new(connStr);
@@ -102,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSimpleParameter_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string procName = DataTestUtility.GetLongName("paramProc2");
 
             using SqlConnection conn = new(connStr);
@@ -128,7 +127,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSqlDataRecordParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSqlDataRecordParameterToTVP_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
 
             using SqlConnection conn = new(connStr);
@@ -161,7 +160,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
 
             using SqlConnection conn = new(connStr);
@@ -194,7 +193,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSqlDataReaderParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSqlDataReaderParameterToTVP_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
 
             using SqlConnection conn = new(connStr);
@@ -230,7 +229,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
 
             using SqlConnection conn = new(connStr);
@@ -268,7 +267,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSqlDataReader_TVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSqlDataReader_TVP_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
             string InputTableName = DataTestUtility.GetLongName("InputTable");
             string OutputTableName = DataTestUtility.GetLongName("OutputTable");
@@ -338,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSqlDataReader_TVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSqlDataReader_TVP_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant_DRdrTVPVar");
             string InputTableName = DataTestUtility.GetLongName("InputTable");
             string OutputTableName = DataTestUtility.GetLongName("OutputTable");
@@ -408,7 +407,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSimpleDataReader_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string inputTable = DataTestUtility.GetLongName("inputTable");
             string procName = DataTestUtility.GetLongName("paramProc3");
 
@@ -453,7 +452,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _TestSimpleDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _TestSimpleDataReader_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string inputTable = DataTestUtility.GetLongName("inputTable");
             string procName = DataTestUtility.GetLongName("paramProc4");
 
@@ -498,7 +497,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _SqlBulkCopySqlDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _SqlBulkCopySqlDataReader_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
 
@@ -559,7 +558,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
 
@@ -624,7 +623,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _SqlBulkCopyDataTable_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _SqlBulkCopyDataTable_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
 
             using SqlConnection conn = new(connStr);
@@ -663,7 +662,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _SqlBulkCopyDataTable_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _SqlBulkCopyDataTable_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
 
             using SqlConnection conn = new(connStr);
@@ -702,7 +701,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _SqlBulkCopyDataRow_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _SqlBulkCopyDataRow_Type(object paramValue, string expectedBaseTypeName, string connStr) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
 
             using SqlConnection conn = new(connStr);
@@ -736,7 +735,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TestResult _SqlBulkCopyDataRow_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
+        public static TestResult _SqlBulkCopyDataRow_Variant(object paramValue, string expectedBaseTypeName, string connStr) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
 
             using SqlConnection conn = new(connStr);
