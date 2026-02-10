@@ -69,7 +69,7 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 3. Update reference assemblies if adding public APIs
 4. Implement with tests
 5. Add samples to `doc/samples/`
-6. Update CHANGELOG.md
+6. Do not edit `CHANGELOG.md` directly; instead, add a suggested release-note entry (per `.github/copilot-instructions.md`) in the PR description or via the release-notes workflow/prompt.
 
 ### Adding Connection String Keywords
 1. Add to `SqlConnectionStringBuilder`

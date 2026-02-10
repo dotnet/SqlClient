@@ -216,7 +216,9 @@ When creating samples for external documentation:
 
 ## Changelog Documentation
 
-When adding features, update CHANGELOG.md:
+Do not edit `CHANGELOG.md` directly. The changelog is updated as part of the release workflow based on the contents of `release-notes/` and the `release-notes` prompt.
+
+When adding features, fixes, or breaking changes, create or update the appropriate entry under `release-notes/` instead. For example:
 ```markdown
 ## [Unreleased]
 

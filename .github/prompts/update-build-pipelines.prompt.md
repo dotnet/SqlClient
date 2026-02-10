@@ -56,7 +56,7 @@ Follow this workflow step-by-step:
 ## 5. Validate
 - Verify YAML syntax is valid.
 - Ensure no hardcoded values that should be parameterized.
-- Check that variable references use the correct syntax (`$(variable)` for compile-time, `${{ parameters.param }}` for template parameters).
+- Check that variable and parameter references use the correct syntax (`$(variable)` for runtime/macro variables, `${{ parameters.param }}` for compile-time/template parameters).
 - Confirm template references use correct relative paths.
 
 ## 6. Checklist
