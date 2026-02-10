@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 
                 conn.Open();
                 DropStoredProcedure(conn, procName);
-                xsql(conn, string.Format("create proc {0} (@param {1}) as begin select @param end;", procName, expectedBaseTypeName));
+                xsql(conn, string.Format("create proc {0} (@param {1}) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName, expectedBaseTypeName));
 
                 using SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = procName;
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    return new TestResult(dr[0], string.Empty);
+                    return new TestResult(dr[0], dr.GetString(1));
                 }
             }
             finally
@@ -144,14 +144,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record[0].SetValue(0, paramValue);
 
                 using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select f1 from @tvpParam";
+                cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
                 SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", record);
                 p.SqlDbType = SqlDbType.Structured;
                 p.TypeName = string.Format("dbo.{0}", tvpTypeName);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    return new TestResult(dr[0], string.Empty);
+                    return new TestResult(dr[0], dr.GetString(1));
                 }
             }
             finally
@@ -211,14 +211,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmdInput.Parameters["@p1"].Value = paramValue;
                         using SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection);
                         using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = "select f1 from @tvpParam";
+                        cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
                         SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
                         p.SqlDbType = SqlDbType.Structured;
                         p.TypeName = string.Format("dbo.{0}", tvpTypeName);
                         using (SqlDataReader dr = cmd.ExecuteReader())
                         {
                             dr.Read();
-                            return new TestResult(dr[0], string.Empty);
+                            return new TestResult(dr[0], dr.GetString(1));
                         }
                     }
                 }
@@ -319,12 +319,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     p.TypeName = tvpTypeName;
                     cmd2.ExecuteNonQuery();
 
-                    cmd2.CommandText = string.Format("SELECT f1 FROM {0}", OutputTableName);
+                    cmd2.CommandText = string.Format("SELECT f1, sql_variant_property(f1,'BaseType') as BaseType FROM {0}", OutputTableName);
                     cmd2.CommandType = CommandType.Text;
                     using (SqlDataReader dr = cmd2.ExecuteReader())
                     {
                         dr.Read();
-                        return new TestResult(dr[0], string.Empty);
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 }
             }
@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 xsql(conn, string.Format("create table {0} (f1 {1})", inputTable, expectedBaseTypeName));
                 xsql(conn, string.Format("insert into {0}(f1) values('{1}');", inputTable, value));
-                xsql(conn, string.Format("create proc {0} as begin select f1 from {1} end;", procName, inputTable));
+                xsql(conn, string.Format("create proc {0} as begin select f1, sql_variant_property(f1,'BaseType') as BaseType from {1} end;", procName, inputTable));
 
                 using SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = procName;
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     dr.Read();
-                    return new TestResult(dr[0], string.Empty);
+                    return new TestResult(dr[0], dr.GetString(1));
                 }
             }
             finally
@@ -543,11 +543,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     // Verify target.
                     using SqlCommand cmd = conn.CreateCommand();
-                    cmd.CommandText = string.Format("select f1 from {0}", bulkCopyTableName);
+                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
                     using (SqlDataReader drVerify = cmd.ExecuteReader())
                     {
                         drVerify.Read();
-                        return new TestResult(drVerify[0], string.Empty);
+                        return new TestResult(drVerify[0], drVerify.GetString(1));
                     }
                 }
             }
@@ -649,11 +649,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Verify target.
                 using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = string.Format("select f1 from {0}", bulkCopyTableName);
+                cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
                 using (SqlDataReader drVerify = cmd.ExecuteReader())
                 {
                     drVerify.Read();
-                    return new TestResult(drVerify[0], string.Empty);
+                    return new TestResult(drVerify[0], drVerify.GetString(1));
                 }
             }
             finally
@@ -722,11 +722,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     bulkCopy.WriteToServer(rowToSend);
                 }
                 using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = string.Format("select f1 from {0}", bulkCopyTableName);
+                cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
                 using (SqlDataReader drVerify = cmd.ExecuteReader())
                 {
                     drVerify.Read();
-                    return new TestResult(drVerify[0], string.Empty);
+                    return new TestResult(drVerify[0], drVerify.GetString(1));
                 }
             }
             finally
@@ -826,18 +826,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             //TODO: pass in actualBaseType for non-variant tests to remove these IsNullOrEmpty conditionals
-            if (!string.IsNullOrEmpty(actualBaseTypeName) && 
-                !string.IsNullOrEmpty(expectedBaseTypeName) && 
-                !actualBaseTypeName.Equals(expectedBaseTypeName))
+            if (expectedBaseTypeOverride is not null)
             {
-                if (expectedBaseTypeOverride is not null)
-                {
-                    Assert.Equal(expectedBaseTypeOverride, actualBaseTypeName);
-                }
-                else
-                {
-                    Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
-                }
+                Assert.Equal(expectedBaseTypeOverride, actualBaseTypeName);
+            }
+            else
+            {
+                Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
             }
         }
     }
