@@ -27,7 +27,7 @@ The `.github/instructions/` directory contains comprehensive guides:
 | [api-design.instructions.md](.github/instructions/api-design.instructions.md) | Public API design principles |
 | [features.instructions.md](.github/instructions/features.instructions.md) | Feature reference, keywords |
 | [documentation.instructions.md](.github/instructions/documentation.instructions.md) | Documentation and samples |
-| [external-resources.instructions.md](.github/instructions/external-resources.instructions.md) | MCP tools, docs links, version matrix |
+| [external-resources.instructions.md](.github/instructions/external-resources.instructions.md) | Docs links, version matrix, external references |
 
 ## Workflow Prompts
 
@@ -93,18 +93,6 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 
 ## External Resources
 
-### MCP Tool Integration
-MCP servers are configured in [.vscode/mcp.json](.vscode/mcp.json) for shared team use:
-
-| Server | Purpose |
-|--------|---------|
-| **github** | GitHub repository operations — issues, PRs, code search |
-| **ado** | Azure DevOps — pipelines, work items, builds (org: `sqlclientdrivers`) |
-| **bluebird-sqlclient** | Engineering Copilot for the SqlClient ADO repo — code discovery, architecture search |
-| **bluebird-sni** | Engineering Copilot for the SNI repo — native SNI code search |
-
-Additional MCP tools provided by VS Code extensions (no mcp.json entry needed):
-- **Microsoft Learn Docs** — search and fetch official Microsoft documentation (from GitHub Copilot for Azure extension)
 
 ### Key Documentation Links
 - [Microsoft.Data.SqlClient on Microsoft Learn](https://learn.microsoft.com/sql/connect/ado-net/introduction-microsoft-data-sqlclient-namespace)
