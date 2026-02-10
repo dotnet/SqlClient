@@ -6,7 +6,6 @@ Type        => Expected : Actual == System.DateTime : System.DateTime
 Base Type   => Expected : Actual == smalldatetime : datetime
 Value       => Expected : Actual == 3155378975999999999 : 3155378975999970000
 Test Simple Parameter [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = datetime] [Expected = smalldatetime]
-Test Simple Parameter [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ TestSqlDataRecordParameterToTVP_Type [type: smalldatetime value:12/31/9999 23:59:59.9999999] ------------------------------
 
@@ -15,7 +14,6 @@ Type        => Expected : Actual == System.DateTime : System.DateTime
 Base Type   => Expected : Actual == smalldatetime : datetime
 Value       => Expected : Actual == 3155378975999999999 : 3155378975999970000
 Test SqlDataRecord Parameter To TVP [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = datetime] [Expected = smalldatetime]
-Test SqlDataRecord Parameter To TVP [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ TestSqlDataReaderParameterToTVP_Type [type: smalldatetime value:12/31/9999 23:59:59.9999999] ------------------------------
 
@@ -24,7 +22,6 @@ Type        => Expected : Actual == System.DateTime : System.DateTime
 Base Type   => Expected : Actual == smalldatetime : datetime
 Value       => Expected : Actual == 3155378975999999999 : 3155378975999970000
 Test SqlDataReader Parameter To TVP [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = datetime] [Expected = smalldatetime]
-Test SqlDataReader Parameter To TVP [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ TestSqlDataReader_TVP_Type [type: smalldatetime value:12/31/9999 23:59:59.9999999] ------------------------------
 
@@ -45,7 +42,6 @@ Type        => Expected : Actual == System.DateTime : System.DateTime
 Base Type   => Expected : Actual == smalldatetime : datetime
 Value       => Expected : Actual == 3155378975999999999 : 3155378975999970000
 SqlBulkCopy From Data Table [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = datetime] [Expected = smalldatetime]
-SqlBulkCopy From Data Table [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]
 
 ------------------------------ SqlBulkCopyDataRow_Type [type: smalldatetime value:12/31/9999 23:59:59.9999999] ------------------------------
 
@@ -54,4 +50,3 @@ Type        => Expected : Actual == System.DateTime : System.DateTime
 Base Type   => Expected : Actual == smalldatetime : datetime
 Value       => Expected : Actual == 3155378975999999999 : 3155378975999970000
 SqlBulkCopy From Data Row [Variant Type]>>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = datetime] [Expected = smalldatetime]
-SqlBulkCopy From Data Row [Variant Type]>>> ERROR: VALUE MISMATCH!!! [Actual = 12/31/9999 11:59:59 PM] [Expected = 12/31/9999 11:59:59 PM]

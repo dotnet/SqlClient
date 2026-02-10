@@ -876,24 +876,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             if (!actualValue.Equals(expectedValue))
-            {
-                string ErrorMessage = "";
-                        
-                if (expectedValueOverride is not null && actualValue.Equals(expectedValueOverride))
+            {                        
+                if (expectedValueOverride is not null)
                 {
-                    ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
+                    Assert.True(actualValue.Equals(expectedValueOverride));
                 }
-                else if (unexpectedValueOverride is not null && actualValue.Equals(unexpectedValueOverride))
+                else if (unexpectedValueOverride is not null)
                 {
-                    ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
-                } else {
+                    Assert.True(actualValue.Equals(unexpectedValueOverride));
+                } 
+                else {
                     Assert.Fail();
                 }
-                LogMessage(tag, ErrorMessage);
             }
         }
 
