@@ -67,7 +67,7 @@ Copy `config.default.json` to `config.json` and configure:
 ## Test Categories and Attributes
 
 ### Category Exclusions
-Use `[Category("...")]` (ManualTests) or `[Trait("Category", "...")]` (UnitTests) to mark test exclusions:
+Use `[Trait("Category", "...")]` (xUnit, used in both ManualTests and UnitTests) to mark test categories and exclusions:
 
 | Category | Excluded On | Description |
 |----------|-------------|-------------|
@@ -117,12 +117,12 @@ This can be overridden via MSBuild property: `msbuild -p:FilterStatement="your_f
 
 ### Test Attributes
 ```csharp
-// Platform-specific exclusion (ManualTests use [Category], UnitTests use [Trait])
-[Category("nonlinuxtests")]
+// Platform-specific exclusion
+[Trait("Category", "nonlinuxtests")]
 public void TestWindowsSpecificFeature() { ... }
 
 // Skip on .NET Framework
-[Category("nonnetfxtests")]
+[Trait("Category", "nonnetfxtests")]
 public void TestNetCoreOnlyFeature() { ... }
 
 // Conditional skip based on test configuration
