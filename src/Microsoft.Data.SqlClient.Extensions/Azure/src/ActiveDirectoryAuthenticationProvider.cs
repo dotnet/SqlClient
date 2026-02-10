@@ -362,15 +362,23 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 if (retryAfter is not null)
                 {
                     // Prefer the Delta value over Date.
-                    double totalMilliseconds =
-                        retryAfter.Delta.HasValue
-                        ? retryAfter.Delta.Value.TotalMilliseconds
-                        : retryAfter.Date.HasValue
-                            ? retryAfter.Date.Value.Offset.TotalMilliseconds
-                            : 0;
+                    double totalMilliseconds = 0;
+
+                    if (retryAfter.Delta.HasValue)
+                    {
+                        totalMilliseconds = retryAfter.Delta.Value.TotalMilliseconds;
+                    }
+                    else if (retryAfter.Date.HasValue)
+                    {
+                        var now = DateTimeOffset.UtcNow;
+                        if (retryAfter.Date.Value > now)
+                        {
+                            totalMilliseconds = (retryAfter.Date.Value - now).TotalMilliseconds;
+                        }
+                    }
 
                     int retryPeriod =
-                        // Ignore negative values.
+                        // Ignore nonsensical values.
                         totalMilliseconds <= 0
                         ? 0
                         // Avoid overflow when converting to an int.

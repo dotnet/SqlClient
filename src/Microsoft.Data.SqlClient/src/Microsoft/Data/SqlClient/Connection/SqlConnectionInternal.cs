@@ -2871,6 +2871,14 @@ namespace Microsoft.Data.SqlClient.Connection
                 // consume to avoid breaking our API promise.
                 catch (Exception ex)
                 {
+                    // Some exceptions should escape as-is.
+                    if (! ADP.IsCatchableExceptionType(ex))
+                    {
+                        throw;
+                    }
+
+                    // Wrap the exception in a SqlAuthenticationProviderException to maintain our
+                    // API promise.
                     throw ADP.CreateSqlException(
                         new ProviderApiViolationException(
                             message:

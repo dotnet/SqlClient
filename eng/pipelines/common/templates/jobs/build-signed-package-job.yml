@@ -45,9 +45,6 @@ jobs:
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
-  # Install the .NET SDK.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
-
   # Build our tooling, which is required by the analysis step below, but
   # shouldn't be analyzed itself.
   - task: MSBuild@1
@@ -83,7 +80,6 @@ jobs:
       packageVersion: $(mdsPackageVersion)
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
       referenceType: Package
-      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
 
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
