@@ -14,8 +14,8 @@ using Xunit.Abstractions;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     // XEvent sessions may become orphaned on the Azure SQL Server, which leads to poor performance
-    // (query timeouts, deadlocks, etc) over time.  This fixture is instantiated once per test run
-    // and drops these orphaned sessions as part of every run to help mitigate this issue.
+    // (query timeouts, deadlocks, etc) over time.  This class is instantiated once per test run and
+    // drops these orphaned sessions as part of every run to help mitigate this issue.
     public class XEventCleaner
     {
         public XEventCleaner()

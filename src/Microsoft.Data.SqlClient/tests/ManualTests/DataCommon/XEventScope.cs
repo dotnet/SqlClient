@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <remarks>
         /// Disposal isn't perfect - tests can abort without cleaning up the events they have
-        /// created.  See XEventsTracingTest.CleanupOrphanedXEventSessions() for an example.
+        /// created.  See XEventCleaner in XEventsTracingTest.cs for an example.
         /// </remarks>
         public void Dispose()
         {
