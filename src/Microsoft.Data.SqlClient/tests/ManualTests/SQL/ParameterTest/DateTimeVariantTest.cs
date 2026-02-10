@@ -54,7 +54,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
             Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
             Dictionary<TestVariations, object> expectedValueOverrides,
-            Dictionary<TestVariations, object> unexpectedValueOverrides)
+            Dictionary<TestVariations, object> unexpectedValueOverrides,
+            Dictionary<TestVariations, object> expectedBaseTypeOverrides)
         {
 
             List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>, string>> testVariations = new() {
@@ -86,7 +87,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
                     expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
                     unexpectedValueOverrides.TryGetValue(tag, out var unexpectedValueOverride);
-                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride);
+                    expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
+                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride, expectedBaseTypeOverride);
                 }
                 catch (Exception e)
                 {
@@ -851,7 +853,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object actualValue, 
             string actualBaseTypeName, 
             object expectedValueOverride, 
-            object unexpectedValueOverride)
+            object unexpectedValueOverride,
+            object expectedBaseTypeOverride)
         {
             string actualTypeName = actualValue.GetType().ToString();
 
@@ -863,10 +866,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 !string.IsNullOrEmpty(expectedBaseTypeName) && 
                 !actualBaseTypeName.Equals(expectedBaseTypeName))
             {
-                string ErrorMessage = string.Format(">>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualBaseTypeName,
-                    expectedBaseTypeName);
-                LogMessage(tag, ErrorMessage);
+                if (expectedBaseTypeOverride is not null)
+                {
+                    Assert.Equal(expectedBaseTypeOverride, actualBaseTypeName);
+                    string ErrorMessage = string.Format(">>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
+                        actualBaseTypeName,
+                        expectedBaseTypeName);
+                    LogMessage(tag, ErrorMessage);
+                }
+                else
+                {
+                    Assert.Fail();
+                }
             }
 
             if (!actualValue.Equals(expectedValue))
