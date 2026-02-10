@@ -857,13 +857,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string actualTypeName = actualValue.GetType().ToString();
 
             //TODO: these are required to generate expected cast exceptions and should be removed
-            if (expectedTypeName == "System.DateTimeOffset")
-            {
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
-                string a = ((DateTimeOffset)expectedValue).Ticks.ToString(), b = ((DateTimeOffset)actualValue).Ticks.ToString();
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
-            }
-            else if (expectedTypeName == "System.DateTime")
+            if (expectedTypeName == "System.DateTime")
             {
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
                 string a = ((DateTime)expectedValue).Ticks.ToString(), b = ((DateTime)actualValue).Ticks.ToString();
