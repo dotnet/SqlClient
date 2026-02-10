@@ -30,27 +30,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedTypeName, 
             string expectedBaseTypeName, 
             Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
-            Dictionary<TestVariations, ExceptionChecker>? expectedInvalidOperationExceptions = null,
-            Dictionary<TestVariations, ExceptionChecker>? expectedButUncaughtExceptions = null,
             Dictionary<TestVariations, object>? expectedValueOverrides = null,
             Dictionary<TestVariations, object>? unexpectedValueOverrides = null,
             Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
         {
             expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
-            expectedInvalidOperationExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
-            expectedButUncaughtExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
             expectedValueOverrides ??= new Dictionary<TestVariations, object>();
             unexpectedValueOverrides ??= new Dictionary<TestVariations, object>();
             expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
-            
+
             DateTimeVariantTest.SendInfo(
                 paramValue, 
                 expectedTypeName, 
                 expectedBaseTypeName, 
                 DataTestUtility.TCPConnectionString, 
                 expectedExceptions, 
-                expectedInvalidOperationExceptions,
-                expectedButUncaughtExceptions,
                 expectedValueOverrides,
                 unexpectedValueOverrides,
                 expectedBaseTypeOverrides);
@@ -62,269 +56,282 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         public static IEnumerable<object?[]> GetParameterCombinations()
         {
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "date", null, null,
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, null, null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "date", null, null, null, 
-            new Dictionary<TestVariations, object>
-            {
-                { TestVariations.TestSimpleParameter_Type, new DateTime(3155378112000000000) },
-                { TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, new DateTime(3155378112000000000) },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, new DateTime(3155378112000000000) },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReader_TVP_Type, new DateTime(3155378112000000000) },
-                { TestVariations.TestSqlDataReader_TVP_Variant, new DateTime(3155378112000000000) },
-                { TestVariations.TestSimpleDataReader_Type, new DateTime(3155378112000000000) },
-                { TestVariations.TestSimpleDataReader_Variant, new DateTime(3155378112000000000) },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, new DateTime(3155378112000000000) },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, new DateTime(3155378112000000000) },
-                { TestVariations.SqlBulkCopyDataTable_Type, new DateTime(3155378112000000000) },
-                { TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataRow_Type, new DateTime(3155378112000000000) },
-                { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
-            }, null,
-            new Dictionary<TestVariations, object>
-            {
-                {TestVariations.TestSimpleParameter_Variant, "datetime"},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
-            }
+            yield return new object?[] { DateTime.MinValue, "System.DateTime", "date",
+                new Dictionary<TestVariations, ExceptionChecker> {
+                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, 
+                null, 
+                null};
+            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "date", 
+                null, 
+                new Dictionary<TestVariations, object>
+                {
+                    { TestVariations.TestSimpleParameter_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReader_TVP_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, new DateTime(3155378112000000000) },
+                    { TestVariations.TestSimpleDataReader_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.TestSimpleDataReader_Variant, new DateTime(3155378112000000000) },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, new DateTime(3155378112000000000) },
+                    { TestVariations.SqlBulkCopyDataTable_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataRow_Type, new DateTime(3155378112000000000) },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
+                }, 
+                null,
+                new Dictionary<TestVariations, object>
+                {
+                    {TestVariations.TestSimpleParameter_Variant, "datetime"},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
+                }
             };
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "datetime2", null, null,
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, null, null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "datetime2", null, null, null, null,
-            new Dictionary<TestVariations, object> {
-                {TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000)}
-            },
-            new Dictionary<TestVariations, object>
-            {
-                {TestVariations.TestSimpleParameter_Variant, "datetime"},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
-            }
-            };
+            yield return new object?[] { DateTime.MinValue, "System.DateTime", "datetime2",
+                new Dictionary<TestVariations, ExceptionChecker> {
+                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, 
+                null,
+                null};
+            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "datetime2", 
+                null,
+                null,
+                new Dictionary<TestVariations, object> {
+                    {TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000)}
+                },
+                new Dictionary<TestVariations, object>
+                {
+                    {TestVariations.TestSimpleParameter_Variant, "datetime"},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
+                }};
             yield return new object?[] { DateTime.MinValue, "System.DateTime", "datetime", 
-            new Dictionary<TestVariations, ExceptionChecker> { 
-                { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
-                { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReader_TVP_Type, VarcharToDateTimeOutOfRange},
-                { TestVariations.TestSqlDataReader_TVP_Variant, VarcharToDateTimeOutOfRange},
-                { TestVariations.TestSimpleDataReader_Type, VarcharToDateTimeOutOfRange},
-                { TestVariations.TestSimpleDataReader_Variant, VarcharToDateTimeOutOfRange},
-                { TestVariations.SqlBulkCopySqlDataReader_Type, VarcharToDateTimeOutOfRange},
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, VarcharToDateTimeOutOfRange}, 
-                { TestVariations.SqlBulkCopyDataTable_Type, SqlDateTimeOverflow},
-                { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow},
-                { TestVariations.SqlBulkCopyDataRow_Type, SqlDateTimeOverflow},
-                { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow}}, null, null, null, null};
+                new Dictionary<TestVariations, ExceptionChecker> { 
+                    { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
+                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReader_TVP_Type, VarcharToDateTimeOutOfRange},
+                    { TestVariations.TestSqlDataReader_TVP_Variant, VarcharToDateTimeOutOfRange},
+                    { TestVariations.TestSimpleDataReader_Type, VarcharToDateTimeOutOfRange},
+                    { TestVariations.TestSimpleDataReader_Variant, VarcharToDateTimeOutOfRange},
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, VarcharToDateTimeOutOfRange},
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, VarcharToDateTimeOutOfRange}, 
+                    { TestVariations.SqlBulkCopyDataTable_Type, SqlDateTimeOverflow},
+                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow},
+                    { TestVariations.SqlBulkCopyDataRow_Type, SqlDateTimeOverflow},
+                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow}},
+                null,
+                null};
             yield return new object?[] { DateTime.MaxValue, "System.DateTime", "datetime", 
-            new Dictionary<TestVariations, ExceptionChecker> { 
-                { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime},
-                { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime},
-                { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime},
-                { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime},
-                { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime},
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime}}, 
-                null,
-                null,
-            new Dictionary<TestVariations, object>
-            {
-                { TestVariations.TestSimpleParameter_Type, new DateTime(3155378975999970000) },
-                { TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReader_TVP_Type, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReader_TVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSimpleDataReader_Type, new DateTime(3155378975999970000) },
-                { TestVariations.TestSimpleDataReader_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataTable_Type, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataRow_Type, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
-            }, null};
+                new Dictionary<TestVariations, ExceptionChecker> { 
+                    { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime},
+                    { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime},
+                    { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime},
+                    { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime},
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime},
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime}}, 
+                new Dictionary<TestVariations, object>
+                {
+                    { TestVariations.TestSimpleParameter_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReader_TVP_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSimpleDataReader_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSimpleDataReader_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataTable_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataRow_Type, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
+                },
+                null};
             yield return new object[] { DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset"};
             yield return new object[] { DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset"};
             yield return new object[] { DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset"};
-            yield return new object?[] { DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2", null, null, null, null,
-            new Dictionary<TestVariations, object>
-            {
-                {TestVariations.TestSimpleParameter_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
-                {TestVariations.SqlBulkCopyDataTable_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
-                {TestVariations.SqlBulkCopyDataRow_Variant, DateTime.Parse("1998-01-01 23:59:59.997")}
-            },
-            new Dictionary<TestVariations, object>
-            {
-                {TestVariations.TestSimpleParameter_Variant, "datetime"},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
-            }
-            };
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "smalldatetime", null, null,
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
-                { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReader_TVP_Type, VarcharToSmallDateTimeOutOfRange },
-                { TestVariations.TestSqlDataReader_TVP_Variant, VarcharToSmallDateTimeOutOfRange },
-                { TestVariations.TestSimpleDataReader_Type, VarcharToSmallDateTimeOutOfRange },
-                { TestVariations.TestSimpleDataReader_Variant, VarcharToSmallDateTimeOutOfRange },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, VarcharToSmallDateTimeOutOfRange },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, VarcharToSmallDateTimeOutOfRange },
-                { TestVariations.SqlBulkCopyDataTable_Type, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Type, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, null, null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "smalldatetime", null, null,
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Type, UnRepresentableDateTime },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, UnRepresentableDateTime },
-                { TestVariations.TestSqlDataReader_TVP_Type, ConversionFailedCharStringToSmallDateTime },
-                { TestVariations.TestSqlDataReader_TVP_Variant, ConversionFailedCharStringToSmallDateTime },
-                { TestVariations.TestSimpleDataReader_Type, ConversionFailedCharStringToSmallDateTime },
-                { TestVariations.TestSimpleDataReader_Variant, ConversionFailedCharStringToSmallDateTime },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, ConversionFailedCharStringToSmallDateTime },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, ConversionFailedCharStringToSmallDateTime },
-                { TestVariations.SqlBulkCopyDataTable_Type, UnRepresentableDateTime },
-                { TestVariations.SqlBulkCopyDataRow_Type, UnRepresentableDateTime }}, 
+            yield return new object?[] { DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2",
                 null,
-            new Dictionary<TestVariations, object> {
-                { TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000) },
-                { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
-            },
-            new Dictionary<TestVariations, object>
-            {
-                {TestVariations.TestSimpleParameter_Variant, "datetime"},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
-            }
-            };
-            yield return new object?[] { TimeSpan.MinValue, "System.TimeSpan", "time", null, null,
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Type, TimeOverflow },
-                { TestVariations.TestSimpleParameter_Variant, TimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, TimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, TimeOverflow },
-                { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.SqlBulkCopyDataTable_Type, TimeOverflow },
-                { TestVariations.SqlBulkCopyDataTable_Variant, TimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Type, TimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Variant, TimeOverflow }}, null, 
-            new Dictionary<TestVariations, object> {
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, TimeSpan.Zero},
-            }};
-            yield return new object?[] { TimeSpan.MaxValue, "System.TimeSpan", "time", null, null,
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Type, TimeOverflow },
-                { TestVariations.TestSimpleParameter_Variant, TimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, TdsRpcProtocolStreamIncorrect },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, TimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, TimeOverflow },
-                { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
-                { TestVariations.SqlBulkCopyDataTable_Type, TimeOverflow },
-                { TestVariations.SqlBulkCopyDataTable_Variant, TimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Type, TimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Variant, TimeOverflow }}, null, null};
-            yield return new object?[] { DateTime.MinValue, "System.DateTime", "time", null, 
-            new Dictionary<TestVariations, ExceptionChecker> { 
-                { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMinDateTimeToTime},
-                { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMinDateTimeToTime}},
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Type, InvalidCastDateTimeToTimeSpan },
-                { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidCastNotValid },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, InvalidCastDateTimeToTimeSpan },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                { TestVariations.TestSqlDataReader_TVP_Type, InvalidCastNotValid },
-                { TestVariations.TestSqlDataReader_TVP_Variant, InvalidCastNotValid },
-                { TestVariations.TestSimpleDataReader_Type, InvalidCastNotValid },
-                { TestVariations.TestSimpleDataReader_Variant, InvalidCastNotValid },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, InvalidCastNotValid },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, InvalidCastNotValid },
-                { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
-                { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, null, null};
-            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "time", null, 
-            new Dictionary<TestVariations, ExceptionChecker> { 
-                { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMaxDateTimeToTime },
-                { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMaxDateTimeToTime }},
-            new Dictionary<TestVariations, ExceptionChecker> {
-                { TestVariations.TestSimpleParameter_Type, InvalidCastDateTimeToTimeSpan },
-                { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidCastNotValid },
-                { TestVariations.TestSqlDataReaderParameterToTVP_Type, InvalidCastDateTimeToTimeSpan },
-                { TestVariations.TestSqlDataReader_TVP_Type, InvalidCastNotValid },
-                { TestVariations.TestSqlDataReader_TVP_Variant, InvalidCastNotValid },
-                { TestVariations.TestSimpleDataReader_Type, InvalidCastNotValid },
-                { TestVariations.TestSimpleDataReader_Variant, InvalidCastNotValid },
-                { TestVariations.SqlBulkCopySqlDataReader_Type, InvalidCastNotValid },
-                { TestVariations.SqlBulkCopySqlDataReader_Variant, InvalidCastNotValid }}, null, 
-            new Dictionary<TestVariations, object> {
-                {TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000)},
-                {TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000)}
-            },
-            new Dictionary<TestVariations, object>
-            {
-                {TestVariations.TestSimpleParameter_Variant, "datetime"},
-                {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
-                {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
-                {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
-            }
-            };
+                null,
+                new Dictionary<TestVariations, object>
+                {
+                    {TestVariations.TestSimpleParameter_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, DateTime.Parse("1998-01-01 23:59:59.997")},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, DateTime.Parse("1998-01-01 23:59:59.997")}
+                },
+                new Dictionary<TestVariations, object>
+                {
+                    {TestVariations.TestSimpleParameter_Variant, "datetime"},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
+                }};
+            yield return new object?[] { DateTime.MinValue, "System.DateTime", "smalldatetime",
+                new Dictionary<TestVariations, ExceptionChecker> {
+                    { TestVariations.TestSimpleParameter_Type, SqlDateTimeOverflow },
+                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReader_TVP_Type, VarcharToSmallDateTimeOutOfRange },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, VarcharToSmallDateTimeOutOfRange },
+                    { TestVariations.TestSimpleDataReader_Type, VarcharToSmallDateTimeOutOfRange },
+                    { TestVariations.TestSimpleDataReader_Variant, VarcharToSmallDateTimeOutOfRange },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, VarcharToSmallDateTimeOutOfRange },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, VarcharToSmallDateTimeOutOfRange },
+                    { TestVariations.SqlBulkCopyDataTable_Type, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Type, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }},
+                null,
+                null};
+            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "smalldatetime",
+                new Dictionary<TestVariations, ExceptionChecker> {
+                    { TestVariations.TestSimpleParameter_Type, UnRepresentableDateTime },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, UnRepresentableDateTime },
+                    { TestVariations.TestSqlDataReader_TVP_Type, ConversionFailedCharStringToSmallDateTime },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, ConversionFailedCharStringToSmallDateTime },
+                    { TestVariations.TestSimpleDataReader_Type, ConversionFailedCharStringToSmallDateTime },
+                    { TestVariations.TestSimpleDataReader_Variant, ConversionFailedCharStringToSmallDateTime },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, ConversionFailedCharStringToSmallDateTime },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, ConversionFailedCharStringToSmallDateTime },
+                    { TestVariations.SqlBulkCopyDataTable_Type, UnRepresentableDateTime },
+                    { TestVariations.SqlBulkCopyDataRow_Type, UnRepresentableDateTime }}, 
+                null,
+                new Dictionary<TestVariations, object> {
+                    { TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000) },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000) }
+                },
+                new Dictionary<TestVariations, object>
+                {
+                    {TestVariations.TestSimpleParameter_Variant, "datetime"},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
+                }};
+            yield return new object?[] { TimeSpan.MinValue, "System.TimeSpan", "time",
+                new Dictionary<TestVariations, ExceptionChecker> {
+                    { TestVariations.TestSimpleParameter_Type, TimeOverflow },
+                    { TestVariations.TestSimpleParameter_Variant, TimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, TimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, TimeOverflow },
+                    { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.SqlBulkCopyDataTable_Type, TimeOverflow },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, TimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Type, TimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, TimeOverflow }},
+                null, 
+                new Dictionary<TestVariations, object> {
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, TimeSpan.Zero},
+                },
+                null};
+            yield return new object?[] { TimeSpan.MaxValue, "System.TimeSpan", "time",
+                new Dictionary<TestVariations, ExceptionChecker> {
+                    { TestVariations.TestSimpleParameter_Type, TimeOverflow },
+                    { TestVariations.TestSimpleParameter_Variant, TimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidValueForMetadata },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, TdsRpcProtocolStreamIncorrect },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, TimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, TimeOverflow },
+                    { TestVariations.TestSqlDataReader_TVP_Type, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.TestSimpleDataReader_Type, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.TestSimpleDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, CannotConvertCharacterStringToDateOrTime },
+                    { TestVariations.SqlBulkCopyDataTable_Type, TimeOverflow },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, TimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Type, TimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, TimeOverflow }},
+                null,
+                null};
+            yield return new object?[] { DateTime.MinValue, "System.DateTime", "time",
+                new Dictionary<TestVariations, ExceptionChecker> { 
+                    { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMinDateTimeToTime},
+                    { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMinDateTimeToTime},
+                    { TestVariations.TestSimpleParameter_Type, InvalidCastDateTimeToTimeSpan },
+                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidCastNotValid },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, InvalidCastDateTimeToTimeSpan },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
+                    { TestVariations.TestSqlDataReader_TVP_Type, InvalidCastNotValid },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, InvalidCastNotValid },
+                    { TestVariations.TestSimpleDataReader_Type, InvalidCastNotValid },
+                    { TestVariations.TestSimpleDataReader_Variant, InvalidCastNotValid },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, InvalidCastNotValid },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, InvalidCastNotValid },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }}, 
+                null,
+                null};
+            yield return new object?[] { DateTime.MaxValue, "System.DateTime", "time",
+                new Dictionary<TestVariations, ExceptionChecker> { 
+                    { TestVariations.SqlBulkCopyDataTable_Type, CannotConvertMaxDateTimeToTime },
+                    { TestVariations.SqlBulkCopyDataRow_Type, CannotConvertMaxDateTimeToTime },
+                    { TestVariations.TestSimpleParameter_Type, InvalidCastDateTimeToTimeSpan },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, InvalidCastNotValid },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, InvalidCastDateTimeToTimeSpan },
+                    { TestVariations.TestSqlDataReader_TVP_Type, InvalidCastNotValid },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, InvalidCastNotValid },
+                    { TestVariations.TestSimpleDataReader_Type, InvalidCastNotValid },
+                    { TestVariations.TestSimpleDataReader_Variant, InvalidCastNotValid },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, InvalidCastNotValid },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, InvalidCastNotValid }}, null, 
+                new Dictionary<TestVariations, object> {
+                    {TestVariations.TestSimpleParameter_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, new DateTime(3155378975999970000)},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378975999970000)}
+                },
+                new Dictionary<TestVariations, object>
+                {
+                    {TestVariations.TestSimpleParameter_Variant, "datetime"},
+                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"},
+                    {TestVariations.TestSqlDataReaderParameterToTVP_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
+                    {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
+                }};
         }
 
         private static ExceptionChecker SqlDateTimeOverflow = (e, paramValue) =>

@@ -51,8 +51,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedBaseTypeName, 
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
-            Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
-            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, object> unexpectedValueOverrides,
             Dictionary<TestVariations, object> expectedBaseTypeOverrides)
@@ -94,14 +92,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
                     {
                         Assert.True(isExpectedException(e, paramValue));
-                    }
-                    else if (expectedInvalidOperationExceptions.TryGetValue(tag, out var isExpectedInvalidOperationException))
-                    {
-                        Assert.True(isExpectedInvalidOperationException(e, paramValue));
-                    }
-                    else if (expectedButUncaughtExceptions.TryGetValue(tag, out var isExpectedButUncaughtException))
-                    {
-                        Assert.True(isExpectedButUncaughtException(e, paramValue));
                     }
                     else {
                         Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
