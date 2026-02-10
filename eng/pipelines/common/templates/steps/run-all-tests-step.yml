@@ -4,6 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+
+  - name: abstractionsPackageVersion
+    type: string
+
   - name: debug
     type: boolean
     default: false
@@ -11,9 +15,8 @@ parameters:
   - name: targetFramework
     type: string
 
-  - name: nugetPackageVersion
+  - name: mdsPackageVersion
     type: string
-    default: $(NugetPackageVersion)
 
   - name: platform
     type: string
@@ -55,7 +58,7 @@ parameters:
 steps:
 - ${{ if parameters.debug }}:
   - powershell: 'dotnet sdk check'
-    displayName: '.NET sdk check [debug]'
+    displayName: '[Debug] .NET sdk check'
     condition: succeededOrFailed()
 
 - ${{if eq(parameters.operatingSystem, 'Windows')}}:
@@ -69,9 +72,16 @@ steps:
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+          msbuildArguments: >-
+            -t:RunUnitTests
+            -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
         ${{ else }}: # x86
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+          msbuildArguments: >-
+            -t:RunUnitTests
+            -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
     - task: MSBuild@1
       displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
@@ -82,9 +92,20 @@ steps:
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+          msbuildArguments: >-
+            -t:RunUnitTests
+            -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Filter="category=flaky"
+            -p:CollectCodeCoverage=false
         ${{ else }}: # x86
-          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+          msbuildArguments: >-
+            -t:RunUnitTests
+            -p:TF=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+            -p:Filter="category=flaky"
+            -p:CollectCodeCoverage=false
       continueOnError: true
 
   - task: MSBuild@1
@@ -96,9 +117,22 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+        msbuildArguments: >-
+          -t:RunFunctionalTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        msbuildArguments: >-
+          -t:RunFunctionalTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
   - task: MSBuild@1
     condition: succeededOrFailed()
@@ -109,9 +143,26 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+        msbuildArguments: >-
+          -t:RunFunctionalTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:Filter="category=flaky"
+          -p:CollectCodeCoverage=false
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+        msbuildArguments: >-
+          -t:RunFunctionalTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+          -p:Filter="category=flaky"
+          -p:CollectCodeCoverage=false
     continueOnError: true
 
   - task: MSBuild@1
@@ -123,9 +174,22 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+        msbuildArguments: >-
+          -t:RunManualTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        msbuildArguments: >-
+          -t:RunManualTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
   - task: MSBuild@1
@@ -137,9 +201,26 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+        msbuildArguments: >-
+          -t:RunManualTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:Filter="category=flaky"
+          -p:CollectCodeCoverage=false
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+        msbuildArguments: >-
+          -t:RunManualTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+          -p:Filter="category=flaky"
+          -p:CollectCodeCoverage=false
     continueOnError: true
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
@@ -152,7 +233,13 @@ steps:
         command: custom
         projects: build.proj
         custom: msbuild
-        arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
+        arguments: >-
+          -t:RunUnitTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:Platform=${{ parameters.platform }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
         verbosityRestore: Detailed
         verbosityPack: Detailed
 
@@ -163,7 +250,15 @@ steps:
         command: custom
         projects: build.proj
         custom: msbuild
-        arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+        arguments: >-
+          -t:RunUnitTests
+          -p:TF=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:Platform=${{ parameters.platform }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+          -p:Filter="category=flaky"
+          -p:CollectCodeCoverage=false
         verbosityRestore: Detailed
         verbosityPack: Detailed
       continueOnError: true
@@ -175,7 +270,15 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
+      arguments: >-
+        -t:RunFunctionalTests
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:Platform=${{ parameters.platform }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
 
@@ -186,7 +289,17 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+      arguments: >-
+        -t:RunFunctionalTests
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:Platform=${{ parameters.platform }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:Filter="category=flaky"
+        -p:CollectCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true
@@ -198,7 +311,15 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }}'
+      arguments: >-
+        -t:RunManualTests
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:platform=${{ parameters.platform }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
@@ -210,7 +331,17 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.buildConfiguration }} -p:Filter="category=flaky" -p:CollectCodeCoverage=false'
+      arguments: >-
+        -t:RunManualTests
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:Platform=${{ parameters.platform }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:Filter="category=flaky"
+        -p:CollectCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true

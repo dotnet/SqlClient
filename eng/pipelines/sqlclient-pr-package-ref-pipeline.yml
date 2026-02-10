@@ -30,7 +30,7 @@ pr:
   branches:
     include:
     # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/*
+    - dev/**/*
     - feat/*
     - main
 
@@ -119,11 +119,11 @@ parameters:
     default: [false, true]
 
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Package
+    referenceType: Package
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
