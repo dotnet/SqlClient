@@ -19,13 +19,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private const string BaselineDirectory = "DateTimeVariant";
 
-        /// <summary>
-        /// Parameterized test for DateTime variant parameters.
-        /// Each parameter combination runs 16 test methods and compares against 16 baseline files.
-        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations))]
-        public void DateTimeVariantParameterTest(
+        public void TestSimpleParameter_Type(
             object paramValue, 
             string expectedTypeName, 
             string expectedBaseTypeName, 
@@ -38,6 +34,398 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
 
             DateTimeVariantTest.SendInfo(
+                TestVariations.TestSimpleParameter_Type,
+                DateTimeVariantTest._TestSimpleParameter_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSimpleParameter_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSimpleParameter_Variant,
+                DateTimeVariantTest._TestSimpleParameter_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSqlDataRecordParameterToTVP_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSqlDataRecordParameterToTVP_Type,
+                DateTimeVariantTest._TestSqlDataRecordParameterToTVP_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSqlDataRecordParameterToTVP_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSqlDataRecordParameterToTVP_Variant,
+                DateTimeVariantTest._TestSqlDataRecordParameterToTVP_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSqlDataReaderParameterToTVP_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSqlDataReaderParameterToTVP_Type,
+                DateTimeVariantTest._TestSqlDataReaderParameterToTVP_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSqlDataReaderParameterToTVP_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSqlDataReaderParameterToTVP_Variant,
+                DateTimeVariantTest._TestSqlDataReaderParameterToTVP_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSqlDataReader_TVP_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSqlDataReader_TVP_Type,
+                DateTimeVariantTest._TestSqlDataReader_TVP_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSqlDataReader_TVP_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSqlDataReader_TVP_Variant,
+                DateTimeVariantTest._TestSqlDataReader_TVP_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSimpleDataReader_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSimpleDataReader_Type,
+                DateTimeVariantTest._TestSimpleDataReader_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void TestSimpleDataReader_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.TestSimpleDataReader_Variant,
+                DateTimeVariantTest._TestSimpleDataReader_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void SqlBulkCopySqlDataReader_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.SqlBulkCopySqlDataReader_Type,
+                DateTimeVariantTest._SqlBulkCopySqlDataReader_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void SqlBulkCopySqlDataReader_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.SqlBulkCopySqlDataReader_Variant,
+                DateTimeVariantTest._SqlBulkCopySqlDataReader_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void SqlBulkCopyDataTable_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.SqlBulkCopyDataTable_Type,
+                DateTimeVariantTest._SqlBulkCopyDataTable_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void SqlBulkCopyDataTable_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.SqlBulkCopyDataTable_Variant,
+                DateTimeVariantTest._SqlBulkCopyDataTable_Variant,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void SqlBulkCopyDataRow_Type(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.SqlBulkCopyDataRow_Type,
+                DateTimeVariantTest._SqlBulkCopyDataRow_Type,
+                paramValue, 
+                expectedTypeName, 
+                expectedBaseTypeName, 
+                DataTestUtility.TCPConnectionString, 
+                expectedExceptions, 
+                expectedValueOverrides,
+                expectedBaseTypeOverrides);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(GetParameterCombinations))]
+        public void SqlBulkCopyDataRow_Variant(
+            object paramValue, 
+            string expectedTypeName, 
+            string expectedBaseTypeName, 
+            Dictionary<TestVariations, ExceptionChecker>? expectedExceptions = null, 
+            Dictionary<TestVariations, object>? expectedValueOverrides = null,
+            Dictionary<TestVariations, object>? expectedBaseTypeOverrides = null)
+        {
+            expectedExceptions ??= new Dictionary<TestVariations, ExceptionChecker>();
+            expectedValueOverrides ??= new Dictionary<TestVariations, object>();
+            expectedBaseTypeOverrides ??= new Dictionary<TestVariations, object>();
+
+            DateTimeVariantTest.SendInfo(
+                TestVariations.SqlBulkCopyDataRow_Variant,
+                DateTimeVariantTest._SqlBulkCopyDataRow_Variant,
                 paramValue, 
                 expectedTypeName, 
                 expectedBaseTypeName, 
