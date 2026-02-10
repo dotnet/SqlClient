@@ -23,6 +23,10 @@ parameters:
 
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - task: PublishTestResults@2
@@ -52,7 +56,7 @@ steps:
   - powershell: |
       cd TestResults
       Get-ChildItem -Filter "*.coverage" -Recurse
-    displayName: 'List test result coverage files [debug]'
+    displayName: '[Debug] List test result coverage files'
 
 - task: PublishPipelineArtifact@1
   displayName: 'Publish Test Artifacts'

@@ -49,7 +49,11 @@ parameters:
 
   - name: operatingSystem
     type: string
-    default: 'Windows'
+    values:
+      - Linux
+      - Mac
+      - Windows
+    default: Windows
 
   - name: retryCountOnManualTests
     type: number
