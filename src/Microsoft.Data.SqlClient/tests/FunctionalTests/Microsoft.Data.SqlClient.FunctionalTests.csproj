@@ -22,8 +22,7 @@
 
   <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
-    <!-- This file sets some configuration setting that only apply to netfx. It cannot #if -->
-    <!-- included into the project, so it must be included via a condition attribute.      -->
+    <!-- This file applies runtime configuration to .NET Framework that is used by the tests. -->
     <None Update="app.config" Condition="'$(TargetFramework)' == 'net462'">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

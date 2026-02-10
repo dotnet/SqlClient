@@ -70,10 +70,6 @@ parameters:
     type: stepList
     default: []
 
-  - name: publishTestResults
-    type: boolean
-    default: false
-
   - name: referenceType
     type: string
     values:
@@ -316,10 +312,9 @@ jobs:
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  - ${{ if eq(parameters.publishTestResults, true) }}:
-    - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
-      parameters:
-        debug: ${{ parameters.debug }}
-        targetFramework: ${{ parameters.targetFramework }}
-        operatingSystem: ${{ parameters.operatingSystem }}
-        buildConfiguration: ${{ parameters.buildConfiguration }}
+  - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      targetFramework: ${{ parameters.targetFramework }}
+      operatingSystem: ${{ parameters.operatingSystem }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}

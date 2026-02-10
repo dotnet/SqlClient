@@ -25,7 +25,6 @@
             <EnableDynamicInstrumentationForNGen>True</EnableDynamicInstrumentationForNGen>
             <!-- Do not include test assemblies in coverage -->
             <IncludeTestAssembly>False</IncludeTestAssembly>
-            <!-- Use qualified names for functions -->
             <UseVerifiableInstrumentation>True</UseVerifiableInstrumentation>
             <AllowLowIntegrityProcesses>True</AllowLowIntegrityProcesses>
             <CollectFromChildProcesses>True</CollectFromChildProcesses>
