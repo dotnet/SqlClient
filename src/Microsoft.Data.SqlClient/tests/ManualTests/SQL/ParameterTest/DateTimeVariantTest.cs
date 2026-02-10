@@ -858,7 +858,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string actualTypeName = actualValue.GetType().ToString();
 
-            LogValues(expectedTypeName, string.IsNullOrEmpty(actualBaseTypeName) ? string.Empty : expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
+            //TODO: these are required to generate expected cast exceptions and should be removed
+            if (expectedTypeName == "System.DateTimeOffset")
+            {
+                Console.Error.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
+            }
+            else if (expectedTypeName == "System.DateTime")
+            {
+                Console.Error.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
+            }
 
             Assert.Equal(expectedTypeName, actualTypeName);
 
@@ -913,18 +921,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Console.WriteLine(string.Format("------------------------------ {0} [type: {1} value:{2}] ------------------------------", tag, expectedBaseTypeName, value));
-        }
-
-        private static void LogValues(string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
-        {
-            if (expectedTypeName == "System.DateTimeOffset")
-            {
-                Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
-            }
-            else if (expectedTypeName == "System.DateTime")
-            {
-                Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
-            }
         }
     }
 }
