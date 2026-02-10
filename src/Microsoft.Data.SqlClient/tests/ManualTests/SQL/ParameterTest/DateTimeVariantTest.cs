@@ -81,7 +81,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 (TestVariations tag, Func<object, string, string, string, string, TestResult> action, string description) = test;
 
-                DisplayHeader(tag.ToString(), paramValue, expectedBaseTypeName);
                 try
                 {
                     TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
@@ -899,28 +898,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Fail();
                 }
             }
-        }
-
-        // NOTE: Logging and Display
-        private static void DisplayHeader(string tag, object paramValue, string expectedBaseTypeName)
-        {
-            Console.WriteLine("");
-            string value;
-            if (paramValue.GetType() == typeof(DateTimeOffset))
-            {
-                DateTimeOffset dt = (DateTimeOffset)paramValue;
-                value = dt.DateTime.ToString("M/d/yyyy") + " " + dt.DateTime.TimeOfDay + " " + dt.Offset;
-            }
-            else if (paramValue.GetType() == typeof(TimeSpan))
-            {
-                value = ((TimeSpan)paramValue).ToString();
-            }
-            else
-            {
-                value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-            }
-
-            Console.WriteLine(string.Format("------------------------------ {0} [type: {1} value:{2}] ------------------------------", tag, expectedBaseTypeName, value));
         }
     }
 }
