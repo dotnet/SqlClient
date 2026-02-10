@@ -914,11 +914,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine(string.Format("------------------------------ {0} [type: {1} value:{2}] ------------------------------", tag, expectedBaseTypeName, value));
         }
 
-        private static void LogMessage(string tag, string message)
-        {
-            Console.WriteLine(string.Format("{0}{1}", tag, message));
-        }
-
         private static void LogValues(string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
         {
             Console.WriteLine(string.Format("Type        => Expected : Actual == {0} : {1}", expectedTypeName, actualTypeName));
