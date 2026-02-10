@@ -857,13 +857,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             LogValues(expectedTypeName, string.IsNullOrEmpty(actualBaseTypeName) ? string.Empty : expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
 
-            if (!actualTypeName.Equals(expectedTypeName))
-            {
-                string ErrorMessage = string.Format(">>> ERROR: TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualTypeName,
-                    expectedTypeName);
-                LogMessage(tag, ErrorMessage);
-            }
+            Assert.Equal(expectedTypeName, actualTypeName);
 
             if (!string.IsNullOrEmpty(actualBaseTypeName) && 
                 !string.IsNullOrEmpty(expectedBaseTypeName) && 
