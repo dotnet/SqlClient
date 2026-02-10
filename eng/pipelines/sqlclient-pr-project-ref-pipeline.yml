@@ -11,9 +11,6 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# NOTE: This pipeline only runs unit tests - tests that do not require external
-# resources (e.g. MDS Unit and Functional test suites).
-#
 # It is triggered by pushes to PRs that target dev/ and feature/ branches, and
 # the main branch in GitHub.
 #

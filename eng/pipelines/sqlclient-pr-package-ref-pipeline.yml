@@ -11,9 +11,6 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# NOTE: This pipeline only runs integration tests - tests that require external
-# resources (e.g. MDS Manual test suite).
-#
 # It is triggered by pushes to PRs that target dev/ and feature/ branches, and
 # the main branch in GitHub.
 #
