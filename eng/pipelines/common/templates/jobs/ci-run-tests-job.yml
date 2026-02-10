@@ -51,7 +51,11 @@ parameters:
 
   - name: operatingSystem
     type: string
-    default: ''
+    values:
+      - Linux
+      - Mac
+      - Windows
+    default: Windows
 
   - name: buildConfiguration
     type: string
@@ -145,22 +149,6 @@ jobs:
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
-
-  - powershell: |
-      $guid = [guid]::NewGuid().ToString()
-      Write-Host "##vso[task.setvariable variable=password;issecret=true]$guid"
-    displayName: 'Generate Password'
-
-  - powershell: |
-      Write-Host "Password: $(password)" # prints *** to logs when set
-
-      $variableValue = "$(password)"
-      if (-not [string]::IsNullOrEmpty($variableValue)) {
-          Write-Output "The password exists with a value."
-      } else {
-          Write-Output "The password does not exist or is empty."
-      }
-    displayName: 'Verify Password'
 
   - ${{ if eq(parameters.referenceType, 'Project') }}:
     - template: ../steps/ci-project-build-step.yml@self
