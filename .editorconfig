@@ -162,12 +162,14 @@ dotnet_diagnostic.xUnit1031.severity=none
 dotnet_diagnostic.xUnit1030.severity=none
 
 # Xml files
-[*.{xml,csproj,stylecop,resx,ruleset,props,targets,config,nuspec}]
+[*.{xml,slnx,proj,csproj,stylecop,resx,ruleset,props,targets,config,nuspec}]
 indent_size = 2
 
 # Shell scripts
 [*.sh]
+indent_size = 2
 end_of_line = lf
 
-[*.{cmd, bat}]
+[*.{bat,cmd,ps1}]
+indent_size = 2
 end_of_line = crlf

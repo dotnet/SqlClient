@@ -191,6 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData(CommandType.Text)]
         [InlineData(CommandType.StoredProcedure)]
@@ -285,6 +286,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData(CommandType.Text)]
         [InlineData(CommandType.StoredProcedure)]

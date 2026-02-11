@@ -4,7 +4,7 @@
 # file in the project root for more information.
 ################################################################################
 
-# This stage builds and runs stress tests against an MDS NuGet package available
+# This job builds and runs stress tests against an MDS NuGet package available
 # as a pipeline artifact.
 #
 # The stress tests are located here:
@@ -47,9 +47,8 @@ parameters:
     type: string
     default: ''
 
-  # The name of the pipeline artifact to download that contains the MDS package
-  # to stress test.
-  - name: pipelineArtifactName
+  # The name of the MDS pipeline artifacts to download.
+  - name: mdsArtifactsName
     type: string
     default: ''
 
@@ -131,27 +130,16 @@ jobs:
 
   steps:
 
-  # Install the .NET 9.0 SDK.
-  - task: UseDotNet@2
-    displayName: Install .NET 9.0 SDK
-    inputs:
-      packageType: sdk
-      version: 9.x
-
-  # Install the .NET 8.0 runtime.
-  - task: UseDotNet@2
-    displayName: Install .NET 8.0 Runtime
-    inputs:
-      packageType: runtime
-      version: 8.x
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+    parameters:
+      runtimes: [8.x, 9.x]
 
   # Download the pipeline artifact that contains the MDS package to test.
   - task: DownloadPipelineArtifact@2
-    displayName: Download Pipeline Artifact
+    displayName: Download MDS Artifacts
     inputs:
-      artifactName: ${{ parameters.pipelineArtifactName }}
-      # The stress tests solution has a NuGet.config file that configures
-      # sources to look in this packages/ directory.
+      artifactName: ${{ parameters.mdsArtifactsName }}
       targetPath: $(Build.SourcesDirectory)/packages
 
   # Setup the local SQL Server.

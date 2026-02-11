@@ -477,6 +477,8 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlStreamingXml
     {
+        private static readonly XmlWriterSettings s_writerSettings = new() { CloseOutput = true, ConformanceLevel = ConformanceLevel.Fragment };
+
         private readonly int _columnOrdinal;
         private SqlDataReader _reader;
         private XmlReader _xmlReader;
@@ -509,10 +511,7 @@ namespace Microsoft.Data.SqlClient
                 SqlStream sqlStream = new(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows:false, advanceReader:false);
                 _xmlReader = sqlStream.ToXmlReader();
                 _strWriter = new StringWriter((System.IFormatProvider)null);
-                XmlWriterSettings writerSettings = new();
-                writerSettings.CloseOutput = true;      // close the memory stream when done
-                writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
-                _xmlWriter = XmlWriter.Create(_strWriter, writerSettings);
+                _xmlWriter = XmlWriter.Create(_strWriter, s_writerSettings);
             }
 
             int charsToSkip = 0;

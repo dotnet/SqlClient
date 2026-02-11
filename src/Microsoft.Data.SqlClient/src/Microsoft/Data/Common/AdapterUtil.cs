@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
-using Microsoft.Identity.Client;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
 
@@ -69,24 +69,27 @@ namespace Microsoft.Data.Common
         internal const int MaxBufferAccessTokenExpiry = 600;
 
         #region UDT
-#if NETFRAMEWORK
-        private static readonly MethodInfo s_method = typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
-#endif
+
+        #if NETFRAMEWORK
+        private static readonly MethodInfo s_udtFactory =
+            typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
+        #endif
+
         /// <summary>
         /// Calls "InvalidUdtException.Create" method when an invalid UDT occurs.
         /// </summary>
         internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
         {
-            // @TODO: Can we adopt the netcore version?
-            InvalidUdtException e =
-#if NETFRAMEWORK
-                (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
-            ADP.TraceExceptionAsReturnValue(e);
-#else
-                InvalidUdtException.Create(udtType, resourceReasonName);
-#endif
+            #if NETFRAMEWORK
+            InvalidUdtException e = (InvalidUdtException)s_udtFactory.Invoke(null, [udtType, resourceReasonName]);
+            #else
+            InvalidUdtException e = InvalidUdtException.Create(udtType, resourceReasonName);
+            #endif
+
+            TraceExceptionAsReturnValue(e);
             return e;
         }
+
         #endregion
 
         static private void TraceException(string trace, Exception e)
@@ -497,7 +500,11 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        internal static Exception CreateSqlException(
+            SqlAuthenticationProviderException authException,
+            SqlConnectionString connectionOptions,
+            SqlConnectionInternal sender,
+            string username)
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();
@@ -505,20 +512,20 @@ namespace Microsoft.Data.Common
             sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
                                     connectionOptions.DataSource,
                                     StringsHelper.GetString(Strings.SQL_MSALFailure, username, connectionOptions.Authentication.ToString("G")),
-                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                    authException.Method.ToString(), 0));
 
             // Error[1]
-            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
+            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, authException.FailureCode);
             sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
-                                    connectionOptions.DataSource, errorMessage1, 
-                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                    connectionOptions.DataSource, errorMessage1,
+                                    authException.Method.ToString(), 0));
 
             // Error[2]
-            if (!string.IsNullOrEmpty(msalException.Message))
+            if (!string.IsNullOrEmpty(authException.Message))
             {
                 sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
-                                        connectionOptions.DataSource, msalException.Message,
-                                        ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                        connectionOptions.DataSource, authException.Message,
+                                        authException.Method.ToString(), 0));
             }
             return SqlException.CreateException(sqlErs, "", sender, innerException: null, batchCommand: null);
         }

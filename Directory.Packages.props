@@ -3,30 +3,47 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
+
   <!-- ===================================================================== -->
-  <!-- Shared Dependencies -->
-  <!-- Published -->
+  <!-- Driver Packages -->
+
   <ItemGroup>
-    <!-- MDS and AKV -->
+    <!--
+      We never reference this package via its project, so we always need a
+      version specified.
+    -->
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
+  </ItemGroup>
+
+  <!--
+    We only need other driver package versions specified when building via
+    package references.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient"
+      Version="$(MdsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+      Version="$(AbstractionsPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzurePackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+      Version="$(AkvPackageVersion)" />
+  </ItemGroup>
+
+  <!-- ===================================================================== -->
+  <!-- Dependencies shared by multiple projects -->
+
+  <ItemGroup>
     <PackageVersion Include="Azure.Core" Version="1.49.0" />
-    <PackageVersion Include="Microsoft.Identity.Client" Version="4.78.0" />
-  </ItemGroup>
-  <!-- Published - Target Framework Specific Dependencies -->
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <!-- MDS and AKV -->
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
-  </ItemGroup>
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">   
-    <!-- MDS and AKV -->
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-  </ItemGroup>
-  <!-- Internal -->
-  <ItemGroup>
-    <!-- MDS and AKV Tests -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageVersion Include="Microsoft.DotNet.PlatformAbstractions" Version="3.1.6" />
     <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="11.0.0-beta.25476.3" />
     <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="11.0.0-beta.25476.3" />
+    <PackageVersion Include="Microsoft.Identity.Client" Version="4.78.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
@@ -40,13 +57,14 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
-  <!-- Internal - Target Framework Specific Dependencies -->
+
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <!-- MDS and AKV Tests -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
   </ItemGroup>
+
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <!-- MDS and AKV Tests -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <!--
       We can't use a newer major version of this package because it pulls in
       a newer major version of System.Text.Json that conflicts with our
@@ -54,33 +72,26 @@
     -->
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
   </ItemGroup>
+
+  <!-- ===================================================================== -->
+  <!-- MSS Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
+  <!-- Abstractions Dependencies -->
+
+  <!-- None -->
+
   <!-- ===================================================================== -->
   <!-- MDS Dependencies -->
-  <!-- Common Dependencies (.NET and .NET Framework) -->
+
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.16.0" />
+    <PackageVersion Include="Azure.Identity" Version="1.17.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
-  </ItemGroup>
-  <!-- Common Target Framework Specific Dependencies -->
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">    
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.9" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.9" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.9" />
-  </ItemGroup>
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
-  </ItemGroup>
-  <!-- .NET Dependencies -->
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
-  </ItemGroup>
-  <!-- .NET Framework Dependencies -->
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
@@ -89,12 +100,28 @@
     <PackageVersion Include="System.ValueTuple" Version="4.6.1" />
     <PackageVersion Include="System.Threading.Channels" Version="8.0.0" />
   </ItemGroup>
-  <!-- =================================================================== -->
+
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.9" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.9" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+  </ItemGroup>
+
+  <!-- ===================================================================== -->
+  <!-- Azure Dependencies -->
+
+  <!-- None -->
+
+  <!-- ===================================================================== -->
   <!-- AKV Dependencies -->
+
   <ItemGroup>
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.8.0" />
   </ItemGroup>
-  <!-- =================================================================== -->
-  <!-- MSS Dependencies -->
-  <!-- None -->
 </Project>

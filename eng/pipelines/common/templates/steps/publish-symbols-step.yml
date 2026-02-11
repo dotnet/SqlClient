@@ -19,7 +19,7 @@ parameters:
   # Version of the symbols being published
   - name: symbolsVersion
     type: string
-    default: "$(NugetPackageVersion)"
+    default: '$(mdsPackageVersion)'
 
   # Symbol server name (without .trafficmanager.net)
   - name: symbolServer
@@ -44,10 +44,9 @@ parameters:
 
   # Type of reference for which symbols are being published
   - name: referenceType
-    default: project
     values:
-      - project
-      - package
+      - Project
+      - Package
 
   # Product name associated with the symbols
   # Symbols publishing Step is currently only configured for the MDS driver, as they are required to be published to 3 locations:
@@ -60,7 +59,6 @@ parameters:
     values:
       - MDS
       - MSS
-      - AKV
 
   # Azure subscription for publishing symbols to internal and public symbol servers
   - name: azureSubscription

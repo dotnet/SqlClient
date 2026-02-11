@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in AKV OneBranch Official pipelines.
+
 # @TODO: These seem to only really apply to official builds. Name should probably be adjusted to match.
 
 variables:
@@ -22,22 +24,20 @@ variables:
 
     # Base Variables -------------------------------------------------------
     - name: mdsPackageVersion
-      value: '6.1.1'
+      value: '7.0.0-preview3.25342.7'
 
     # @TODO: Version should ideally be pulled from one location (versions.props?)
     - name: versionMajor
-      value: '6'
+      value: '7'
     - name: versionMinor
-      value: '1'
+      value: '0'
     - name: versionPatch
-      value: '1'
+      value: '0'
     - name: versionPreview
-      value: '-preview1'
+      value: '-preview3'
 
     # Compound Variables ---------------------------------------------------
-    - name: assemblyFileVersion
+    - name: akvAssemblyFileVersion
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
-    - name: nugetPackageVersion
+    - name: akvPackageVersion
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
-
-

@@ -14,8 +14,8 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal class ColumnMasterKeyMetadataSignatureVerificationCache
     {
-        private const int _cacheSize = 2000; // Cache size in number of entries.
-        private const int _cacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
+        private const int CacheSize = 2000; // Cache size in number of entries.
+        private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
 
         private const string _className = "ColumnMasterKeyMetadataSignatureVerificationCache";
         private const string _getSignatureVerificationResultMethodName = "GetSignatureVerificationResult";
@@ -26,6 +26,7 @@ namespace Microsoft.Data.SqlClient
         private const string _cacheLookupKeySeparator = ":";
 
         private static readonly ColumnMasterKeyMetadataSignatureVerificationCache _signatureVerificationCache = new ColumnMasterKeyMetadataSignatureVerificationCache();
+        private static readonly TimeSpan s_verificationCacheTimeout = TimeSpan.FromDays(10);
 
         //singleton instance
         internal static ColumnMasterKeyMetadataSignatureVerificationCache Instance { get { return _signatureVerificationCache; } }
@@ -76,11 +77,7 @@ namespace Microsoft.Data.SqlClient
             TrimCacheIfNeeded();
 
             // By default evict after 10 days.
-            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(10)
-            };
-            _cache.Set<bool>(cacheLookupKey, result, options);
+            _cache.Set<bool>(cacheLookupKey, result, absoluteExpirationRelativeToNow: s_verificationCacheTimeout);
         }
 
         private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)
@@ -117,12 +114,12 @@ namespace Microsoft.Data.SqlClient
         {
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
             long currentCacheSize = _cache.Count;
-            if ((currentCacheSize > _cacheSize + _cacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
+            if ((currentCacheSize > CacheSize + CacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
             {
                 try
                 {
                     // Example: 2301 - 2000 = 301; 301 / 2301 = 0.1308 * 100 = 13% compacting
-                    _cache.Compact((((double)(currentCacheSize - _cacheSize) / (double)currentCacheSize) * 100));
+                    _cache.Compact((((double)(currentCacheSize - CacheSize) / (double)currentCacheSize) * 100));
                 }
                 finally
                 {

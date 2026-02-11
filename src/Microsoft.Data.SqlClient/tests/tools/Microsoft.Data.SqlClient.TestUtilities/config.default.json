@@ -35,5 +35,6 @@
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",
-    "AliasName": ""
+    "AliasName": "",
+    "WorkloadIdentityFederationServiceConnectionId": ""
 }

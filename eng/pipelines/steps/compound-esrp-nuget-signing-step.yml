@@ -1,0 +1,71 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  - name: appRegistrationClientId
+    type: string
+
+  - name: appRegistrationTenantId
+    type: string
+
+  - # Name of the Azure Key Vault to retrieve certificates from.
+    # note: This has nothing to do with the AKV provider package.
+    name: authAkvName
+    type: string
+
+  - name: authSignCertName
+    type: string
+
+  - name: esrpConnectedServiceName
+    type: string
+
+  - name: esrpClientId
+    type: string
+    
+steps:
+  - task: EsrpMalwareScanning@5
+    displayName: 'ESRP Nuget Malware Scanning'
+    inputs:
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      CleanupTempStorage: 1
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      FolderPath: '$(ARTIFACT_PATH)'
+      Pattern: '*.*nupkg'
+      UseMSIAuthentication: true
+      VerboseLogin: 1
+      
+  - task: EsrpCodeSigning@5
+    displayName: 'ESRP Signing NuGet Package'
+    inputs:
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      AuthAKVName: '${{ parameters.authAkvName }}'
+      AuthSignCertName: '${{ parameters.authSignCertName }}'
+      FolderPath: '$(ARTIFACT_PATH)'
+      Pattern: '*.*nupkg'
+      signConfigType: 'inlineSignParams'
+      UseMSIAuthentication: true
+      inlineOperation: |
+        [ 
+            { 
+                "keyCode": "CP-401405", 
+                "operationSetCode": "NuGetSign", 
+                "parameters": [ ], 
+                "toolName": "sign", 
+                "toolVersion": "1.0" 
+            },
+            { 
+                "keyCode": "CP-401405", 
+                "operationSetCode": "NuGetVerify", 
+                "parameters": [ ], 
+                "toolName": "sign", 
+                "toolVersion": "1.0" 
+            } 
+        ]

@@ -27,13 +27,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                                    // _headerOffset is not needed because it is always 0
         private byte[] _data;
         private SniAsyncCallback _asyncIOCompletionCallback;
-#if DEBUG
         internal readonly int _id;  // in debug mode every packet is assigned a unique id so that the entire lifetime can be tracked when debugging
+        internal readonly SniHandle _owner; // used in debug builds to check that packets are being returned to the correct pool
+
+#if DEBUG
         /// refcount = 0 means that a packet should only exist in the pool
         /// refcount = 1 means that a packet is active
         /// refcount > 1 means that a packet has been reused in some way and is a serious error
         internal int _refCount;
-        internal readonly SniHandle _owner; // used in debug builds to check that packets are being returned to the correct pool
         internal string _traceTag; // used in debug builds to assist tracing what steps the packet has been through
 
 #if TRACE_HISTORY
@@ -60,17 +61,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public bool IsActive => _refCount == 1;
 
-        public SniPacket(SniHandle owner, int id)
-            : this()
-        {
-#if TRACE_HISTORY
-            _history = new List<History>();
-#endif
-            _id = id;
-            _owner = owner;
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} instantiated,", args0: _owner?.ConnectionId, args1: _id);
-        }
-
         // the finalizer is only included in debug builds and is used to ensure that all packets are correctly recycled
         // it is not an error if a packet is dropped but it is undesirable so all efforts should be made to make sure we
         // do not drop them for the GC to pick up
@@ -83,8 +73,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
 
 #endif
-        public SniPacket()
+
+        public SniPacket(SniHandle owner, int id)
         {
+#if DEBUG && TRACE_HISTORY
+            _history = new List<History>();
+#endif
+            _id = id;
+            _owner = owner;
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} instantiated,", args0: _owner?.ConnectionId, args1: _id);
         }
 
         /// <summary>
@@ -286,23 +283,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (e != null)
             {
                 SniLoadHandle.LastError = new SniError(SniProviders.TCP_PROV, SniCommon.InternalExceptionError, e);
-#if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
-#endif
                 error = true;
             }
             else
             {
                 packet._dataLength = task.Result;
-#if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: packet._owner?.ConnectionId, args1: packet._id, args2: packet._dataLength);
-#endif
                 if (packet._dataLength == 0)
                 {
                     SniLoadHandle.LastError = new SniError(SniProviders.TCP_PROV, 0, SniCommon.ConnTerminatedError, Strings.SNI_ERROR_2);
-#if DEBUG
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
-#endif
                     error = true;
                 }
             }

@@ -8,18 +8,20 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
-      - internal/main
+    # This pipeline is intended to only run against the ADO.Net dotnet-sqlclient
+    # repo.
+    - internal/main
   paths:
     include:
-      - src
-      - eng
-      - tools
-      - .config
-      - build.proj
-      - Nuget.config
-      - "*.cmd"
-      - "*.sh"
-
+    - .azuredevops
+    - .config
+    - doc
+    - eng
+    - src
+    - tools
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
 schedules:
   - cron: "30 4 * * Mon"
     displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
@@ -120,8 +122,8 @@ parameters:
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
-  - name: packageFolderName
-    value: drop_build${{ parameters['product'] }}_build_signed_package
+  - name: mdsArtifactName
+    value: drop_buildMDS_build_signed_package
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
   - name: CurrentNetFxVersion
@@ -135,7 +137,7 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  template: /v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
       # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
@@ -157,14 +159,14 @@ extends:
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(AssemblyFileVersion)
+        versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
       sbom:
         enabled: ${{ not(parameters['isPreview']) }}
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(NugetPackageVersion)
+        packageVersion: $(mdsPackageVersion)
       policheck:
         enabled: ${{ not(parameters['isPreview']) }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
@@ -207,11 +209,11 @@ extends:
             jobs:
               - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
                 parameters:
-                  packageFolderName: $(packageFolderName)
+                  packageFolderName: $(mdsArtifactName)
                   isPreview: ${{ parameters['isPreview'] }}
                   downloadPackageStep:
                     download: current
-                    artifact: $(packageFolderName)
+                    artifact: $(mdsArtifactName)
                     patterns: "**/*.*nupkg"
                     displayName: "Download NuGet Package"
       # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
@@ -222,7 +224,7 @@ extends:
       #          timeout: ${{ parameters.testJobTimeout }}
       #          downloadPackageStep:
       #            download: current
-      #            artifact: $(packageFolderName)
+      #            artifact: $(mdsArtifactName)
       #            patterns: '**/*.nupkg'
       #            displayName: 'Download NuGet Package'
       # Manual Release Stage (templated)
@@ -236,6 +238,6 @@ extends:
           publicNuGetSource: ${{ parameters.publicNuGetSource }}
           publishSymbols: ${{ parameters.publishSymbols }}
           isPreview: ${{ parameters.isPreview }}
-          packageFolderName: $(packageFolderName)
+          packageFolderName: $(mdsArtifactName)
           nugetPackageVersion: $(NugetPackageVersion)
           product: ${{ parameters.product }}
