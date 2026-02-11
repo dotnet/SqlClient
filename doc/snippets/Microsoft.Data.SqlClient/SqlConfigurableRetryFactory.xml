@@ -169,7 +169,7 @@
         </format>
       </remarks>
     </CreateNoneRetryProvider>
-    <IntrinsicTransientErrors>
+    <BaselineTransientErrors>
       <summary>
         This list may change at any time as the underlying implementation changes, and will not be considered a breaking API change.  Applications should not depend on this list containing any particular error codes.
       </summary>
@@ -284,6 +284,6 @@
           </item>
         </list>
       </remarks>
-    </IntrinsicTransientErrors>
+    </BaselineTransientErrors>
   </members>
 </docs>

@@ -4,9 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using Xunit;
 
@@ -16,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly HashSet<int> s_defaultTransientErrors =
         [
-            .. SqlConfigurableRetryFactory.IntrinsicTransientErrors,
+            .. SqlConfigurableRetryFactory.BaselineTransientErrors,
             -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
             0,      // A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.)
             20,     // The instance of SQL Server you attempted to connect to does not support encryption.
