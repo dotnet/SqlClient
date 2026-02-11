@@ -25,7 +25,7 @@ steps:
     inputs:
       displayName: Publish to Internal Feed
       pwsh: true
-      filePath: /tools/scripts/publishPackagesToFeed.ps1
+      filePath: /tools/scripts/publishPackagesToAzDOFeed.ps1
       arguments: >
         -dryRun ${{ parameters.dryRun }}
         -internalFeedSource '${{ parameters.internalFeedSource }}'
