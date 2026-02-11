@@ -11,9 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-#if !NETFRAMEWORK
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [PlatformSpecific(TestPlatforms.Windows)]
     public class SqlDataSourceEnumeratorTest
     {
         private static bool IsEnvironmentAvailable()

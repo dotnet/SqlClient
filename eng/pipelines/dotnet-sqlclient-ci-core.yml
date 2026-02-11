@@ -110,7 +110,7 @@ parameters:
 
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
-  
+
   - name: abstractionsArtifactsName
     value: Abstractions.Artifacts
 
@@ -149,6 +149,8 @@ stages:
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
+        abstractionsPackageVersion: $(abstractionsPackageVersion)
+        abstractionsArtifactsName: $(abstractionsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
         mdsArtifactsName: $(mdsArtifactsName)
         ${{if ne(parameters.SNIVersion, '')}}:
@@ -168,16 +170,15 @@ stages:
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
-      ${{if eq(parameters.debug, 'true')}}:
-        dotnetVerbosity: diagnostic
-      mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
       # When building via packages, we must depend on the Abstractions and MDS
       # packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      mdsArtifactsName: $(mdsArtifactsName)
+      mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
 
   # Run the stress tests, if desired.
@@ -187,16 +188,20 @@ stages:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         dependsOn:
           - build_mds_akv_packages_stage
+          - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
+        azurePackageVersion: $(azurePackageVersion)
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-  
+
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
@@ -220,10 +225,6 @@ stages:
         - ${{if eq(parameters.debug, true)}}:
           - pwsh: 'Get-ChildItem env: | Sort-Object Name'
             displayName: '[Debug] List Environment Variables'
-
-        - ${{if eq(parameters.referenceType, 'Package')}}:
-          - pwsh: Copy-Item -Path "$(Build.SourcesDirectory)/NuGet.config.local" -Destination "$(Build.SourcesDirectory)/NuGet.config" -Force
-            displayName: Use local NuGet packages
 
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:
@@ -341,10 +342,10 @@ stages:
             # skipSqlConfiguration: # skips the SQL configuration step
 
 
-        windows_sql_22_x64: 
+        windows_sql_22_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22: ADO-MMS22-SQL22 
+            Win22_Sql22: ADO-MMS22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -370,10 +371,10 @@ stages:
             enableLocalDB: true
 
 
-        windows_sql_22_x86: 
+        windows_sql_22_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_x86: ADO-MMS22-SQL22 
+            Win22_Sql22_x86: ADO-MMS22-SQL22
           TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -424,8 +425,8 @@ stages:
 
     # Azure SQL Server - Windows
         windows_azure_sql:
-          pool: ${{parameters.defaultPoolName }} 
-          images: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
             Win22_Azure_Sql: ADO-MMS22-SQL19
             Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
@@ -457,7 +458,7 @@ stages:
 
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
-          images: 
+          images:
             Win11_ARM64_Azure_Sql: ADO-WIN11-ARM64
           isArm64: true
           TargetFrameworks: ${{parameters.targetFrameworks }}

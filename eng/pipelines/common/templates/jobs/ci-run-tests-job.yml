@@ -4,6 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
   - name: configProperties
     type: object
     default: {} # - key: 'value'
@@ -45,7 +51,11 @@ parameters:
 
   - name: operatingSystem
     type: string
-    default: ''
+    values:
+      - Linux
+      - Mac
+      - Windows
+    default: Windows
 
   - name: buildConfiguration
     type: string
@@ -110,9 +120,15 @@ jobs:
 
   steps:
 
-  # If we're testing in Package mode, download the MDS package
+  # If we're testing in Package mode, download the Abstractions and MDS package
   # artifacts and put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
     - task: DownloadPipelineArtifact@2
       displayName: Download MDS Package Artifacts
       inputs:
@@ -133,22 +149,6 @@ jobs:
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
-
-  - powershell: |
-      $guid = [guid]::NewGuid().ToString()
-      Write-Host "##vso[task.setvariable variable=password;issecret=true]$guid"
-    displayName: 'Generate Password'
-
-  - powershell: |
-      Write-Host "Password: $(password)" # prints *** to logs when set
-
-      $variableValue = "$(password)"
-      if (-not [string]::IsNullOrEmpty($variableValue)) {
-          Write-Output "The password exists with a value."
-      } else {
-          Write-Output "The password does not exist or is empty."
-      }
-    displayName: 'Verify Password'
 
   - ${{ if eq(parameters.referenceType, 'Project') }}:
     - template: ../steps/ci-project-build-step.yml@self
@@ -271,6 +271,7 @@ jobs:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
@@ -284,6 +285,8 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
@@ -310,6 +313,8 @@ jobs:
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if eq(parameters.publishTestResults, true) }}:
     - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
