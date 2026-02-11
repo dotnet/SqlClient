@@ -7,48 +7,51 @@
 # This step configures an existing SQL Server running on the local Linux host.  For example, our 1ES
 # Hosted Pool has images like ADO-UB20-SQL22 that come with SQL Server 2022 pre-installed and
 # running.
-#
-# The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
-# Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
+
+parameters:
+
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
 
 steps:
-# Linux only steps
-- bash: |
-    sudo systemctl stop mssql-server
 
-    # Password for the SA user (required)
+  # Configure SQL Server.
+  - bash: |
+      sudo systemctl stop mssql-server
 
-    MSSQL_SA_PW="$(Password)"
+      # Password for the SA user (required)
+      MSSQL_SA_PW="${{ parameters.saPassword }}"
 
-    # Product ID of the version of SQL server you're installing
-    # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
-    MSSQL_PID="enterprise"
+      # Product ID of the version of SQL server you're installing
+      # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
+      MSSQL_PID="enterprise"
 
-    echo Running mssql-conf setup...
-    sudo MSSQL_SA_PASSWORD="$MSSQL_SA_PW" \
-          MSSQL_PID="$MSSQL_PID" \
-          /opt/mssql/bin/mssql-conf -n setup accept-eula
+      echo Running mssql-conf setup...
+      sudo MSSQL_SA_PASSWORD="$MSSQL_SA_PW" \
+            MSSQL_PID="$MSSQL_PID" \
+            /opt/mssql/bin/mssql-conf -n setup accept-eula
 
-    # Connect to server and get the version:
-    counter=1
-    errstatus=1
-    while [ $counter -le 5 ] && [ $errstatus = 1 ]
-    do
-      echo Waiting for SQL Server to start...
-      sleep 3s
-      /opt/mssql-tools/bin/sqlcmd \
-        -S localhost \
-        -U SA \
-        -P $MSSQL_SA_PW\
-        -Q "SELECT @@VERSION" 2>/dev/null
-      errstatus=$?
-      ((counter++))
-    done
+      # Connect to server and get the version:
+      counter=1
+      errstatus=1
+      while [ $counter -le 5 ] && [ $errstatus = 1 ]
+      do
+        echo Waiting for SQL Server to start...
+        sleep 3s
+        /opt/mssql-tools/bin/sqlcmd \
+          -S localhost \
+          -U SA \
+          -P "$MSSQL_SA_PW" \
+          -Q "SELECT @@VERSION" 2>/dev/null
+        errstatus=$?
+        ((counter++))
+      done
 
-    # Display error if connection failed:
-    if [ $errstatus = 1 ]
-    then
-      echo Cannot connect to SQL Server, installation aborted
-      exit $errstatus
-    fi
-  displayName: 'Configure SQL Server [Linux]'
+      # Display error if connection failed:
+      if [ $errstatus = 1 ]
+      then
+        echo Cannot connect to SQL Server, installation aborted
+        exit $errstatus
+      fi
+    displayName: 'Configure SQL Server [Linux]'

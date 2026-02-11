@@ -45,6 +45,10 @@ parameters:
       - Project
       - Package
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
   - name: testConfigurations
     type: object
 
@@ -87,6 +91,7 @@ stages:
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                  saPassword: ${{ parameters.saPassword }}
                   ${{if ne(config.value.configProperties, '{}') }}:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
@@ -123,6 +128,7 @@ stages:
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                    saPassword: ${{ parameters.saPassword }}
                     ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:

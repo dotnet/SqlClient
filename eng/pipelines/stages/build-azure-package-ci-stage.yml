@@ -119,6 +119,10 @@ parameters:
     - Package
     - Project
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
 stages:
 
   - stage: build_azure_package_stage
@@ -164,9 +168,12 @@ stages:
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
+          saPassword: ${{ parameters.saPassword }}
           # The image includes a SQL Server instance that we must configure.
           sqlServerSetupSteps:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
+              parameters:
+                saPassword: ${{ parameters.saPassword }}
           vmImage: ADO-UB22-SQL22
 
       # ------------------------------------------------------------------------
@@ -206,11 +213,13 @@ stages:
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
+          saPassword: ${{ parameters.saPassword }}
           # The image includes a SQL Server instance that we must configure.
           sqlServerSetupSteps:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
               # Use defaults for most parameters.
               parameters:
+                saPassword: ${{ parameters.saPassword }}
                 enableLocalDB: true
                 # These variables are from an Azure DevOps Library variable
                 # group.

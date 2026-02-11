@@ -97,6 +97,11 @@ parameters:
     - Package
     - Project
 
+  # The SA password set by the sqlServerSetupSteps, if relevant.
+  - name: saPassword
+    type: string
+    default: ''
+
   # Steps to run, if any, to configure a local SQL Server instance on the agent
   # VM.
   - name: sqlServerSetupSteps
@@ -222,6 +227,7 @@ jobs:
       - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
+          saPassword: ${{ parameters.saPassword }}
 
           # The config.json file has many options, but only some of them are
           # used by the Azure package tests.  We only specify the ones that are

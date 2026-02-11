@@ -122,6 +122,9 @@ variables:
 
 stages:
 
+  # Generate secrets used throughout the pipeline.
+  - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
+
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
@@ -174,12 +177,17 @@ stages:
       # packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
+          - secrets_stage
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
+      ${{ else }}:
+        dependsOn:
+          - secrets_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      saPassword: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
 
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
@@ -187,12 +195,14 @@ stages:
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         dependsOn:
+          - secrets_stage
           - build_mds_akv_packages_stage
           - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
         azurePackageVersion: $(azurePackageVersion)
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        saPassword: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
 
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
@@ -204,15 +214,20 @@ stages:
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
+      saPassword: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
       # MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         dependsOn:
+          - secrets_stage
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
           - build_azure_package_stage
+      ${{ else }}:
+        dependsOn:
+          - secrets_stage
 
       # Steps to run prior to building and running tests on each job.
       prebuildSteps:

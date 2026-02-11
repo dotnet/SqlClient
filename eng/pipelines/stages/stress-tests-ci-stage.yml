@@ -12,9 +12,7 @@
 #   src/Microsoft.Data.SqlClient/tests/StressTests
 #
 # All tests use a localhost SQL Server configured for SQL auth via the 'sa' user
-# and password of '$(Password)'.  The $(Password) variable is defined in the ADO
-# Library "ADO Test Configuration properties", brought in by
-# common/templates/libraries/ci-build-variables.yml.
+# and the provided password.
 #
 # This template defines a stage named 'run_stress_tests_stage' that can be
 # depended on by downstream stages.
@@ -71,6 +69,10 @@ parameters:
     type: object
     default: [net8.0, net9.0, net10.0]
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
 stages:
   - stage: run_stress_tests_stage
     displayName: Run Stress Tests
@@ -116,7 +118,7 @@ stages:
               "isDefault": true,
               "dataSource": "localhost",
               "user": "sa",
-              "password": "$(Password)",
+              "password": "${{ parameters.saPassword }}",
               "supportsWindowsAuthentication": false,
               "isLocal": false,
               "disableMultiSubnetFailover": true,
@@ -136,7 +138,10 @@ stages:
         displayNamePrefix: Linux
         poolName: $(ci_var_defaultPoolName)
         vmImage: ADO-UB22-SQL22
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
+          parameters:
+            saPassword: ${{ parameters.saPassword }}
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
@@ -156,7 +161,10 @@ stages:
         # The Windows images include a suitable .NET Framework runtime, so we
         # don't have to install one explicitly.
         vmImage: ADO-MMS22-SQL22
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
+          parameters:
+            saPassword: ${{ parameters.saPassword }}
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
@@ -179,7 +187,10 @@ stages:
         # generic one from Azure Pipelines.
         poolName: Azure Pipelines
         vmImage: macos-latest
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
+          parameters:
+            saPassword: ${{ parameters.saPassword }}
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)

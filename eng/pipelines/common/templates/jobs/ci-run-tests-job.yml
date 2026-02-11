@@ -99,6 +99,10 @@ parameters:
     type: boolean
     default: false
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -158,26 +162,11 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  # Some of the connection strings brought in from Azure DevOps Library groups expect a runtime
-  # $(Password) variable to exist.  This is used for username/password logins to SQL Servers running
-  # locally on the agent.  We must generate a random password here so it is available when those
-  # connection strings are expanded.  We cannot use a Library variable because it will be deemed a
-  # secret, and will not be available to forked repos.
-  #
-  # From this point forward in this job, any pipeline runtime expansion of $(Password) will use the
-  # random value we generate below.  This includes the SQL Server config templates
-  # (configure-sql-server-*.yml), and the expansion of connection strings via our configProperties
-  # parameter.
-  #
-  - pwsh: |
-      $guid = [guid]::NewGuid().ToString()
-      Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$guid"
-    displayName: Generate local SQL Server password
-
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
+        saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
         ${{ if parameters.configProperties.TCPConnectionString }}:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
@@ -254,6 +243,7 @@ jobs:
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
+          saPassword: ${{ parameters.saPassword }}
           ${{ if parameters.configProperties.instanceName }}:
             instanceName: ${{ parameters.configProperties.instanceName }}
           ${{ if parameters.configProperties.user }}:
