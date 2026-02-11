@@ -9,6 +9,10 @@
 
 parameters:
 
+  - name: debug
+    type: boolean
+    default: false
+
   # The SA password to set when configuring SQL Server.
   - name: saPassword
     type: string
@@ -40,6 +44,10 @@ steps:
 
       # Password for the SA user (required)
       MSSQL_SA_PW="${{ parameters.saPassword }}"
+
+      if [ "${{ parameters.debug }}" = "True" ]; then
+        echo "SA password: $MSSQL_SA_PW"
+      fi
 
       docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
 

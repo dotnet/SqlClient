@@ -173,6 +173,7 @@ stages:
           sqlServerSetupSteps:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
               parameters:
+                debug: ${{ parameters.debug }}
                 saPassword: ${{ parameters.saPassword }}
           vmImage: ADO-UB22-SQL22
 
@@ -219,6 +220,7 @@ stages:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
               # Use defaults for most parameters.
               parameters:
+                debug: ${{ parameters.debug }}
                 saPassword: ${{ parameters.saPassword }}
                 enableLocalDB: true
                 # These variables are from an Azure DevOps Library variable

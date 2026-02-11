@@ -124,6 +124,8 @@ stages:
 
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
