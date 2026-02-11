@@ -167,10 +167,6 @@ stages:
           # The image includes a SQL Server instance that we must configure.
           sqlServerSetupSteps:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
-              parameters:
-                # Override the template's default step condition.  We always
-                # want this step to run.
-                condition: true
           vmImage: ADO-UB22-SQL22
 
       # ------------------------------------------------------------------------
@@ -215,9 +211,6 @@ stages:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
               # Use defaults for most parameters.
               parameters:
-                # Override the template's default step condition.  We always
-                # want this step to run.
-                condition: true
                 enableLocalDB: true
                 # These variables are from an Azure DevOps Library variable
                 # group.

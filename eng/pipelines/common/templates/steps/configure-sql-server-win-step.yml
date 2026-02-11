@@ -61,11 +61,6 @@ parameters:
     type: string
     default: $(LocalDbSharedInstanceName)
 
-# Common parameters
-  - name: condition
-    type: string
-    default: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-
 steps:
 # Windows only steps
 - powershell: |
@@ -108,7 +103,6 @@ steps:
     $sqlSrvPath = (Get-WmiObject win32_service | ?{$_.DisplayName -eq 'SQL Server (${{parameters.instanceName }})'} | select @{Name="Path"; Expression={$_.PathName.split('"')[1]}}).Path
     New-NetFirewallRule -DisplayName "sqlservr.exe" -Program "$sqlSrvPath"
   displayName: 'Enable TCP, NP & Firewall [Win]'
-  condition: ${{parameters.condition }}
   retryCountOnTaskFailure: 2
 
 - powershell: |
@@ -145,7 +139,6 @@ steps:
         }
     }
   displayName: 'Create SQL user [Win]'
-  condition: ${{parameters.condition }}
   env:
     SQL_USER: ${{parameters.user }}
     SQL_PASSWD: $(Password)
@@ -171,7 +164,6 @@ steps:
           RECONFIGURE;
       "@
     displayName: 'Enable FileStream [Win]'
-    condition: ${{parameters.condition }}
     env:
       SQL_USER: ${{parameters.user }}
       SQL_PASSWD: $(Password)
@@ -181,7 +173,6 @@ steps:
       New-Item -Path ${{ parameters.fileStreamDirectory }} -ItemType Directory
     displayName: 'Create FileStreamFolder'
     retryCountOnTaskFailure: 1
-    condition: ${{parameters.condition }}
     continueOnError: true
 
 - powershell: |
@@ -201,7 +192,6 @@ steps:
     New-ItemProperty -Path ${{parameters.x86AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
     New-ItemProperty -Path ${{parameters.x64AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
   displayName: 'Setup SQL Alias [Win]'
-  condition: ${{parameters.condition }}
 
 - powershell: |
     # Create Certificate
@@ -239,7 +229,6 @@ steps:
         }
     }
   displayName: 'Add SQL Certificate [Win]'
-  condition: ${{parameters.condition }}
 
 - powershell: |
     # You need to restart SQL Server for the change to persist
@@ -259,7 +248,6 @@ steps:
     Restart-Service -Name MSSQLSERVER* -Force
 
   displayName: 'Restart SQL Server [Win]'
-  condition: ${{parameters.condition }}
 
 - powershell: |
     $arrService = Get-Service -Name "SQLBrowser"
@@ -294,4 +282,3 @@ steps:
 
       sqlcmd -S "(localdb)\.\${{parameters.LocalDbSharedInstanceName }}" -q "SELECT @@VERSION"
     displayName: 'Enable LocalDB [Win]'
-    condition: ${{parameters.condition }}
