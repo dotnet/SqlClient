@@ -211,7 +211,6 @@
     <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
-    <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
     <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
     <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
