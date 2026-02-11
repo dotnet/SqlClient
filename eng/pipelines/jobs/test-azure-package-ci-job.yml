@@ -238,12 +238,7 @@ jobs:
           # Avoid exposing secrets to pipeline jobs triggered via forks.  This
           # prevents external contributors from creating PRs and running
           # pipelines that could expose these secrets.
-          #
-          # Note that this isn't a perfect restriction since internal
-          # contributors may want to use forks, but this would prevent them from
-          # running the full test suite.  We don't have a better way to detect
-          # external parties though.
-          ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+          ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
             AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
             AADServicePrincipalSecret: $(AADServicePrincipalSecret)
 

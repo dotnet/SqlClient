@@ -259,7 +259,6 @@ steps:
         }
     }
   displayName: 'Start Sql Server Browser [Win]'
-  condition: ${{parameters.condition }}
 
 - ${{ if parameters.enableLocalDB }}:
   - powershell: |

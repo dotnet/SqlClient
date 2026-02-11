@@ -162,9 +162,9 @@ jobs:
   # DevOps Library groups.  This includes the $(Password) used to configure local SQL Server
   # instances.  In such a case, we must generate a random password and clobber $(Password).
   #
-  # From this point forward in this stage, any pipeline runtime expansion of $(Password) will use
-  # the random value.  This includes the SQL Server config templates (configure-sql-server-*.yml),
-  # and the expansion of connection strings via our configProperties parameter.
+  # From this point forward in this job, any pipeline runtime expansion of $(Password) will use the
+  # random value.  This includes the SQL Server config templates (configure-sql-server-*.yml), and
+  # the expansion of connection strings via our configProperties parameter.
   #
   # Azure Pipelines provides the System.PullRequest.IsFork variable that is available at template
   # expansion time.  See:
