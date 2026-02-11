@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// </summary>
     public class DateTimeVariantTests
     {
-        private static void SendInfo(
+        private static void RunTest(
             TestVariations tag,
             Func<object, string, string, TestResult> action,
             object paramValue, 
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSimpleParameter_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSimpleParameter_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -218,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSqlDataRecordParameterToTVP_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -271,7 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSqlDataRecordParameterToTVP_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSqlDataReaderParameterToTVP_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -380,7 +380,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSqlDataReaderParameterToTVP_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -438,7 +438,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSqlDataReader_TVP_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSqlDataReader_TVP_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -616,7 +616,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSimpleDataReader_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -680,7 +680,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.TestSimpleDataReader_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -744,7 +744,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.SqlBulkCopySqlDataReader_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -824,7 +824,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.SqlBulkCopySqlDataReader_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -908,7 +908,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.SqlBulkCopyDataTable_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -966,7 +966,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.SqlBulkCopyDataTable_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -1024,7 +1024,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.SqlBulkCopyDataRow_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
@@ -1077,7 +1077,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
-            SendInfo(
+            RunTest(
                 TestVariations.SqlBulkCopyDataRow_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
