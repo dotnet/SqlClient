@@ -149,7 +149,7 @@ feature implementations via the appropriate APIs at runtime:
 
 - Authentication: [SqlAuthenticationProvider](https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlauthenticationprovider?view=sqlclient-dotnet-core-6.0)
 - Attestation: _**New API will be exposed.**_
-- Key Valut: [SqlColumnEncryptionKeyStoreProvider](https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlcolumnencryptionkeystoreprovider?view=sqlclient-dotnet-core-6.0)
+- Key Vault: [SqlColumnEncryptionKeyStoreProvider](https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlcolumnencryptionkeystoreprovider?view=sqlclient-dotnet-core-6.0)
 
 ## Versioning Strategy
 
@@ -181,7 +181,7 @@ packages as well.  Those dependent packages will then take a strict dependency
 on the appropriate `Abstractions` package version.  This ensures that only
 compatible extensions package versions can co-exist with the main MDS package.
 
-For example, imagine that a new extensible conenction pooling feature is added
+For example, imagine that a new extensible connection pooling feature is added
 to MDS.  The `Abstractions` package would be updated to include any new pooling
 APIs, the main MDS package would be updated to accept extensible pooling, and
 the new pooling implementation would be included in a new `ConnectionPooling`
@@ -269,7 +269,7 @@ package will look for the `Azure` extension assembly and automatically load it.
 #### Use AKV Provider v7.0.0
 
 This is a temporary solution.  The AKV provider v7.0.0 will be marked as
-deprecated and removed entirely at some point in the future.  The applictaion
+deprecated and removed entirely at some point in the future.  The application
 would remain dependent on the AKV provider, but must update to the v7.0.0
 package.  Previous AKV package versions do not support main MDS package versions
 beyond the v6.x range.

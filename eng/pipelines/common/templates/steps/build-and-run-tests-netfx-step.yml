@@ -4,21 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: TargetNetFxVersion
+  - name: abstractionsPackageVersion
     type: string
-    default: $(TargetNetFxVersion)
-
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
-  - name: referenceType
-    default: Project
-    values:
-      - Project
-      - Package
+    default: $(abstractionsPackageVersion)
 
   - name: mdsPackageVersion
     type: string
@@ -28,6 +16,14 @@ parameters:
     type: string
     default: $(Platform)
 
+  - name: retryCountOnManualTests
+    type: number
+    default: 2
+
+  - name: TargetNetFxVersion
+    type: string
+    default: $(TargetNetFxVersion)
+
   - name: TestTargetOS
     type: string
     default: Windowsnetfx
@@ -35,10 +31,6 @@ parameters:
       - Windowsnetfx
       - Windowsnetcoreapp
       - Unixnetcoreapp
-
-  - name: retryCountOnManualTests
-    type: number
-    default: 2
 
 steps:
 
@@ -54,8 +46,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
@@ -75,8 +68,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
@@ -97,8 +91,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
@@ -119,8 +114,9 @@ steps:
       -p:Platform=${{ parameters.platform }}
       -p:TestTargetOS=${{ parameters.TestTargetOS }}
       -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:Configuration=${{ parameters.buildConfiguration }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n

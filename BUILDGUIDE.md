@@ -181,27 +181,13 @@ dependencies.
 Alternatively, the `ReferenceType` build property may be specified with a value
 of `Package`.  This will change inter-component dependencies to use
 `<PackageReference>` dependencies, and require that dependent components be
-built and packaged before building the depending component.  In this scenario,
-the root `NuGet.config` file must be updated to include the following entry
-under the `<packageSources>` element:
-
-```xml
-<configuration>
-  <packageSources>
-    ...
-    <add key="local" value="packages/" />
-  </packageSources>
-</configuration>
-```
-
-As a convenience, a `NuGet.config.local` file is supplied with the above
-package source already present.  You may simply copy it over `NuGet.config`
-when using `Package` references.
+built and packaged before building the depending component.  This will generate NuGet
+packages in the root packages/ directory, and will be automatically searched by NuGet
+(see our root `NuGet.config`).
 
 Then, you can specify `Package` references be used, for example:
 
 ```bash
-cp NuGet.config.local NuGet.config
 dotnet build -t:BuildAbstractions
 dotnet build -t:BuildAzure -p:ReferenceType=Package
 dotnet build -t:BuildAll -p:ReferenceType=Package
