@@ -2,6 +2,8 @@
 [![Nuget](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient?label=Nuget.org%20Downloads&style=flat-square&color=blue)](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
 [![Build status](https://sqlclientdrivers.visualstudio.com/public/_apis/build/status/ADO/CI-SqlClient)](https://sqlclientdrivers.visualstudio.com/public/_build/latest?definitionId=1879)
 
+Change to test fork PR pipeline runs.
+
 # Microsoft SqlClient Data Provider for SQL Server
 
 Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server]([url](https://aka.ms/sql)) and the [Azure SQL]([url](https://aka.ms/azure_sql)) family of databases. It grew from a union of the two System.Data.SqlClient components which live independently in .NET and .NET Framework. Going forward, support for new SQL Server and Azure SQL features will only be implemented in Microsoft.Data.SqlClient.
