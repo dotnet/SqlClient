@@ -1,8 +1,14 @@
 {
 	"servers": {
-		"eng-copilot": {
-			"url": "https://sql-mcp.eng-copilot.net/default/mcp/",
-			"type": "http"
+		"bluebird-mcp-sqlclient": {
+			"url": "https://mcp.bluebird-ai.net/",
+			"type": "http",
+			   "headers": {
+				"x-mcp-ec-organization": "SqlClientDrivers",
+				"x-mcp-ec-project": "ADO.NET",
+				"x-mcp-ec-repository": "dotnet-sqlclient",
+				"x-mcp-ec-branch": "internal/main"
+			}
 		},
 		"icm": {
 			"url": "https://icm-mcp-prod.azure-api.net/v1/",
@@ -18,15 +24,8 @@
 			"args": [
 				"-y",
 				"@azure-devops/mcp",
-				"${input:ado_org}"
+				"SqlClientDrivers"
 			]
 		}
-	},
-	"inputs": [
-		{
-			"id": "ado_org",
-			"type": "promptString",
-			"description": "Azure DevOps organization name  (e.g. 'contoso')"
-		}
-	]
+	}
 }

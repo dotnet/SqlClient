@@ -16,13 +16,35 @@
     # Run for a specific set of tests (Recommended)
     .\AnalyzeTestOverlap.ps1 -Filter "FullyQualifiedName~ConnectionEnhancedRoutingTests"
 
+.PARAMETER Filter
+    The dotnet test filter expression used to select which tests to analyze.
+    Supports MSTest filter syntax (e.g., "FullyQualifiedName~ClassName" or
+    "TestCategory=Unit").  Use "*" to include all tests (warning: very slow as
+    each test runs in a separate process).  Default is
+    "" (analyze all tests).
+
+.PARAMETER Framework
+    The target framework moniker (TFM) to build and run tests against.  Must
+    match a valid <TargetFramework> in the test project (e.g., "net462",
+    "net9.0").  Default is "net462".
+
+.PARAMETER Project
+    The relative path to the test project (.csproj) to analyze.  Default is
+    the SqlClient unit tests project.
+
+.PARAMETER Output
+    The file path where the JSON coverage analysis report will be saved.  The
+    report maps each test method to the source file lines it covers.  Default
+    is "test-coverage-analysis.json".
+
 .EXAMPLE
     # Run for all tests (Warning: Slow, as it runs each test in a separate process)
     .\AnalyzeTestOverlap.ps1 -Filter "*"
 #>
 
-param(
-    [string]$Filter = "FullyQualifiedName~ConnectionEnhancedRoutingTests",
+param
+(
+    [string]$Filter = "",
     [string]$Framework = "net462",
     [string]$Project = "src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj",
     [string]$Output = "test-coverage-analysis.json"
@@ -69,7 +91,7 @@ New-Item -ItemType Directory -Path $tempDir | Out-Null
 foreach ($test in $uniqueTestMethods) {
     Write-Host "Running $test..."
     # Sanitize test name for filename
-    $safeTestName = $test -replace '[^a-zA-Z0-9\._-]', '_'
+    $safeTestName = $test -replace '[^a-zA-Z0-9\.-]', '_'
     $coverageFile = Join-Path $tempDir "$safeTestName.xml"
     
     # Run test with coverage
