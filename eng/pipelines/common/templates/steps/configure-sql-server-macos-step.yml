@@ -10,11 +10,6 @@
 # The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
 # Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
 
-parameters:
-  - name: condition
-    type: string
-    default: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
-
 steps:
 # macOS only steps
 - bash: |
@@ -122,4 +117,3 @@ steps:
     fi
 
   displayName: 'Configure SQL Server [macOS]'
-  condition: ${{parameters.condition }}

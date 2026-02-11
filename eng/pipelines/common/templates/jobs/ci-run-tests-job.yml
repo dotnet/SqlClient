@@ -158,6 +158,25 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
+  # Pipelines running via forks of the repo won't have access to secrets brought in from Azure
+  # DevOps Library groups.  This includes the $(Password) used to configure local SQL Server
+  # instances.  In such a case, we must generate a random password and clobber $(Password).
+  #
+  # From this point forward in this stage, any pipeline runtime expansion of $(Password) will use
+  # the random value.  This includes the SQL Server config templates (configure-sql-server-*.yml),
+  # and the expansion of connection strings via our configProperties parameter.
+  #
+  # Azure Pipelines provides the System.PullRequest.IsFork variable that is available at template
+  # expansion time.  See:
+  #
+  #  https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#system-variables
+  #
+  - ${{ if eq(variables['System.PullRequest.IsFork'], 'true') }}:
+    - pwsh: |
+        $guid = [guid]::NewGuid().ToString()
+        Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$guid"
+      displayName: Generate random SQL Server password for forked repo
+
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
