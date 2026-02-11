@@ -43,6 +43,7 @@ ALL_ISSUES=(
     3716  # Fixed by PRs 3749, 3857, 3854
     3736  # Fixed by PR 3912
     3523  # Fixed by PR 3929
+    3924  # Fixed by PR 3938 (newly discovered)
 )
 
 echo -e "${BLUE}========================================${NC}"

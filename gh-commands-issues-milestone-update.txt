@@ -1,16 +1,18 @@
 # GitHub CLI Commands to Update Issue Milestones
 # These commands add the 7.0.0-preview4 milestone to issues closed by PRs since v7.0.0-preview3
 # Repository: dotnet/SqlClient
-# Generated: 2026-02-11
+# Generated: 2026-02-11 (Updated with current GitHub state)
 
 # Execute these commands in sequence (or copy-paste into terminal)
 # Prerequisites: gh CLI installed and authenticated (gh auth login)
 
-# Issue #3716 - NullReferenceException in SqlDataAdapter (fixed by PRs 3749, 3857, 3854)
-gh issue edit 3716 --repo dotnet/SqlClient --milestone "7.0.0-preview4"
+# UPDATE: Issues #3716, #3736, #3523 already have the milestone ✅
+# Only issue #3924 needs the milestone now:
 
-# Issue #3736 - ExecuteScalar error propagation (fixed by PR 3912)
-gh issue edit 3736 --repo dotnet/SqlClient --milestone "7.0.0-preview4"
+# Issue #3924 - Avoid running GitHub actions on forks (fixed by PR #3938)
+gh issue edit 3924 --repo dotnet/SqlClient --milestone "7.0.0-preview4"
 
-# Issue #3523 - SPN generation performance issue (fixed by PR 3929)
-gh issue edit 3523 --repo dotnet/SqlClient --milestone "7.0.0-preview4"
+# For reference - these already have milestone (no action needed):
+# gh issue edit 3716 --repo dotnet/SqlClient --milestone "7.0.0-preview4"  # ✅ Already done
+# gh issue edit 3736 --repo dotnet/SqlClient --milestone "7.0.0-preview4"  # ✅ Already done
+# gh issue edit 3523 --repo dotnet/SqlClient --milestone "7.0.0-preview4"  # ✅ Already done
