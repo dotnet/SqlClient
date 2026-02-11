@@ -53,14 +53,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
             Dictionary<TestVariations, object> expectedValueOverrides,
-            Dictionary<TestVariations, object> expectedBaseTypeOverrides)
+            Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
             try
             {
                 TestResult result = action(paramValue, expectedBaseTypeName, connStr);
+
                 expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
                 expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
-                VerifyReaderTypeAndValue(expectedBaseTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, expectedBaseTypeOverride);
+                
+                Assert.Equal(expectedValueOverride ?? paramValue, result.Value);
+                Assert.Equal(expectedBaseTypeOverride ?? expectedBaseTypeName, result.BaseTypeName);
             }
             catch (Exception e)
             {
@@ -806,34 +809,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void DropType(SqlConnection conn, string typeName)
         {
             xsql(conn, string.Format("if exists(select 1 from sys.types where name='{0}') begin drop type {1} end", typeName.Substring(1, typeName.Length - 2), typeName));
-        }
-
-        public static void VerifyReaderTypeAndValue(
-            string expectedBaseTypeName, 
-            object expectedValue, 
-            object actualValue, 
-            string actualBaseTypeName, 
-            object expectedValueOverride, 
-            object expectedBaseTypeOverride)
-        {
-
-            if (expectedValueOverride is not null)
-            {
-                Assert.Equal(expectedValueOverride, actualValue);
-            }
-            else {
-                Assert.Equal(expectedValue, actualValue);
-            }
-
-            //TODO: pass in actualBaseType for non-variant tests to remove these IsNullOrEmpty conditionals
-            if (expectedBaseTypeOverride is not null)
-            {
-                Assert.Equal(expectedBaseTypeOverride, actualBaseTypeName);
-            }
-            else
-            {
-                Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
-            }
         }
     }
 }
