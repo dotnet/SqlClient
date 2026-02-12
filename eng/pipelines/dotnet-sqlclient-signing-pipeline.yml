@@ -8,17 +8,21 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
+
+    # This pipeline is intended to only run against the ADO.Net dotnet-sqlclient
+    # repo.
     - internal/main
   paths:
     include:
-    - src
-    - eng
-    - tools
+    - .azuredevops
     - .config
+    - doc
+    - eng/pipelines
+    - src
+    - tools
+    - azurepipelines-coverage.yml
     - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+    - NuGet.config
 
 schedules:
 - cron: '30 4 * * Mon'
@@ -66,11 +70,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: testJobTimeout
   displayName: 'Test job timeout (in minutes)'
   type: number
-  default: 90
+  default: 60
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
-  - name: packageFolderName
+  - name: mdsArtifactName
     value: drop_buildMDS_build_signed_package
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
@@ -78,14 +82,14 @@ variables:
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
       ref: refs/heads/main
 
 extends:
-  template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  template: /v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
       # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
@@ -107,20 +111,20 @@ extends:
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(AssemblyFileVersion)
+        versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
       sbom:
         enabled: ${{ not(parameters['isPreview']) }}
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(NugetPackageVersion)
+        packageVersion: $(mdsPackageVersion)
       policheck:
         enabled: ${{ not(parameters['isPreview']) }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
@@ -142,7 +146,7 @@ extends:
     - stage: buildMDS
       displayName: 'Build MDS'
       jobs:
-      - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
+      - template: /eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
         parameters:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
@@ -153,24 +157,23 @@ extends:
       displayName: 'MDS Package Validation'
       dependsOn: buildMDS
       jobs:
-      - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
+      - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
         parameters:
-          packageFolderName: $(packageFolderName)
+          packageFolderName: $(mdsArtifactName)
           isPreview: ${{ parameters['isPreview'] }}
           downloadPackageStep:
             download: current
-            artifact: $(packageFolderName)
+            artifact: $(mdsArtifactName)
             patterns: '**/*.*nupkg'
             displayName: 'Download NuGet Package'
 
 # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
-#      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+#      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
 #        parameters:
-#          packageFolderName: $(packageFolderName)
 #          isPreview: ${{ parameters['isPreview'] }}
 #          timeout: ${{ parameters.testJobTimeout }}
 #          downloadPackageStep:
 #            download: current
-#            artifact: $(packageFolderName)
+#            artifact: $(mdsArtifactName)
 #            patterns: '**/*.nupkg'
 #            displayName: 'Download NuGet Package'

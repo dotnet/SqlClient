@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         protected const int DefaultPoolSize = 4;
 
         private static int s_packetId;
+
         private ObjectPool<SniPacket> _pool;
 
         protected SniPhysicalHandle(int poolSize = DefaultPoolSize)

@@ -9,7 +9,6 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
 using System.Text;
@@ -136,22 +135,52 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
+    #nullable enable
+
     internal sealed class SqlFedAuthInfo
     {
-        internal string spn;
-        internal string stsurl;
+        internal SqlFedAuthInfo(string spn, string stsurl)
+        {
+            Spn = spn;
+            StsUrl = stsurl;
+        }
+
+        internal string Spn { get; }
+        internal string StsUrl { get; }
+
         public override string ToString()
         {
-            return $"STSURL: {stsurl}, SPN: {spn}";
+            return $"SPN: {Spn}, STSURL: {StsUrl}";
         }
     }
 
     internal sealed class SqlFedAuthToken
     {
-        internal uint dataLen;
-        internal byte[] accessToken;
-        internal long expirationFileTime;
+        internal SqlFedAuthToken(
+            byte[] accessToken,
+            long expirationFileTime)
+        {
+            AccessToken = accessToken;
+            DataLen = (uint)AccessToken.Length;
+            ExpirationFileTime = expirationFileTime;
+        }
+
+        /// <summary>
+        /// Convert from a SqlAuthenticationToken.
+        /// </summary>
+        internal SqlFedAuthToken(SqlAuthenticationToken token)
+        {
+            AccessToken = Encoding.Unicode.GetBytes(token.AccessToken);
+            DataLen = (uint)AccessToken.Length;
+            ExpirationFileTime = token.ExpiresOn.ToFileTime();
+        }
+
+        internal byte[] AccessToken { get; }
+        internal uint DataLen { get; }
+        internal long ExpirationFileTime { get; }
     }
+
+    #nullable disable
 
     internal sealed class _SqlMetaData : SqlMetaDataPriv
     {
@@ -473,7 +502,7 @@ namespace Microsoft.Data.SqlClient
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
-            
+
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
                 result._altMetaDataSetArray.Add(set.Clone());

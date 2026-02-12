@@ -2356,9 +2356,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     // if there is a snapshot which it contains a stored plp buffer take it
                     // and try to use it if it is the right length
-                    buff = TryTakeSnapshotStorage() as byte[];
-                    if (buff != null)
+                    byte[] existingBuff = TryTakeSnapshotStorage() as byte[];
+                    if (existingBuff != null)
                     {
+                        buff = existingBuff;
                         totalBytesRead = _snapshot.GetPacketDataOffset();
                     }
                 }
