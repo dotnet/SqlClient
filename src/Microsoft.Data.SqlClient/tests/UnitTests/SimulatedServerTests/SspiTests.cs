@@ -80,6 +80,73 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Verifies that connections using different <see cref="SspiContextProvider"/> instances
+        /// are placed in separate connection pools (since the provider is part of the pool key).
+        /// </summary>
+        [Fact]
+        public void DifferentSspiProviders_UseSeparateConnectionPools()
+        {
+            using var server = new ChallengeResponseSspiTdsServer(new TdsServerArguments());
+            server.Start();
+
+            var connStr = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                IntegratedSecurity = true,
+            }.ConnectionString;
+
+            var providerA = new ChallengeResponseSspiContextProvider();
+            var providerB = new ChallengeResponseSspiContextProvider();
+
+            // Open and close a connection with provider A
+            using (SqlConnection connectionA = new(connStr) { SspiContextProvider = providerA })
+            {
+                connectionA.Open();
+                Assert.Equal(ConnectionState.Open, connectionA.State);
+            }
+
+            // Open a connection with provider B — it should not reuse provider A's pooled connection
+            using (SqlConnection connectionB = new(connStr) { SspiContextProvider = providerB })
+            {
+                connectionB.Open();
+                Assert.Equal(ConnectionState.Open, connectionB.State);
+            }
+
+            // Both providers should have been called (not just the first one)
+            // If pooling incorrectly shared connections, the server would see fewer logins
+            Assert.True(server.PreLoginCount >= 2,
+                $"Expected at least 2 pre-login requests (separate pools) but got {server.PreLoginCount}");
+        }
+
+        /// <summary>
+        /// Verifies that the same <see cref="SspiContextProvider"/> instance can be reused
+        /// across multiple sequential connection open/close cycles.
+        /// </summary>
+        [Fact]
+        public void SameSspiProvider_CanBeReusedAcrossMultipleConnections()
+        {
+            using var server = new ChallengeResponseSspiTdsServer(new TdsServerArguments());
+            server.Start();
+
+            var connStr = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                IntegratedSecurity = true,
+            }.ConnectionString;
+
+            var provider = new ChallengeResponseSspiContextProvider();
+
+            for (int i = 0; i < 3; i++)
+            {
+                using SqlConnection connection = new(connStr) { SspiContextProvider = provider };
+                connection.Open();
+                Assert.Equal(ConnectionState.Open, connection.State);
+            }
+        }
+
+        /// <summary>
         /// A custom <see cref="SspiContextProvider"/> that performs a two-step
         /// challenge-response handshake:
         ///   Step 1 (empty incoming): writes an initial client token.

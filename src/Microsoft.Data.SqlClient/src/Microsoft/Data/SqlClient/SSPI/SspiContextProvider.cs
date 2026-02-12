@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/ctor/*'/>
         protected SspiContextProvider()
         {
         }
