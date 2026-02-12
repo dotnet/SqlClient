@@ -140,7 +140,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
+        restoreArguments: $(commonArguments)
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         configContent: $(ConfigContent)
@@ -160,7 +160,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
+        restoreArguments: $(commonArguments)
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         # Note that we include the .NET Framework runtimes for test runs on
@@ -183,7 +183,7 @@ stages:
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
-        restoreArguments: $(commonArguments) --configfile=$(Build.SourcesDirectory)/NuGet.config.local
+        restoreArguments: $(commonArguments)
         buildArguments: $(buildArguments)
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         configContent: $(ConfigContent)
