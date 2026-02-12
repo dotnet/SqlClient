@@ -30,7 +30,8 @@ pr:
   branches:
     include:
     # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/**/*
+    - copilot/*
+    - dev/*
     - feat/*
     - main
 
