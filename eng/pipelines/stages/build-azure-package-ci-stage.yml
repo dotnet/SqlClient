@@ -128,7 +128,8 @@ stages:
 
     dependsOn:
       - secrets_stage
-      - ${{ parameters.additionalDependsOn }}
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     variables:
       # Bring the SA password from the secrets_stage into scope here.

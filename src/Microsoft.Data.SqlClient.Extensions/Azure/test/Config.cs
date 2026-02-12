@@ -175,8 +175,6 @@ internal static class Config
             Console.WriteLine(
                 $"  SystemAccessToken:                      {SystemAccessToken}");
             Console.WriteLine(
-                $"                                          {Base64Encode(SystemAccessToken)}");
-            Console.WriteLine(
                 $"  SystemAssignedManagedIdentitySupported: {SystemAssignedManagedIdentitySupported}");
             Console.WriteLine(
                 $"  TcpConnectionString:                    {TcpConnectionString}");

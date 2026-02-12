@@ -76,7 +76,8 @@ stages:
     displayName: Run Stress Tests
     dependsOn:
       - secrets_stage
-      - ${{ parameters.additionalDependsOn }}
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     variables:
       # The directory where dotnet artifacts will be staged.  Not to be

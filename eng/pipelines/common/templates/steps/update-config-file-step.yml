@@ -142,8 +142,8 @@ steps:
   #
   # We use the saPassword parameter as the value for this variable.
   #
-  # From this point forward in this step, any pipeline runtime expansion of $(Password) will use the
-  # saPassword parameter's value.
+  # All subsequent steps in the current job will expand $(Password) with the saPassword parameter's
+  # value.
   #
   - pwsh: |
       $password = "${{ parameters.saPassword }}"

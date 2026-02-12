@@ -130,9 +130,7 @@ extends:
     buildPlatforms: ${{ parameters.buildPlatforms }}
     referenceType: Project
     codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
-    # TODO: Temporaryily forcing debug for forked repo pipeline runs.
-    # debug: ${{ parameters.debug }}
-    debug: true
+    debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
