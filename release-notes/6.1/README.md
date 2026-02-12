@@ -4,6 +4,8 @@ The following Microsoft.Data.SqlClient 6.1 stable releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
+| 2026-01-15 | 6.1.4 | [Release Notes](6.1.4.md) |
+| 2025-11-12 | 6.1.3 | [Release Notes](6.1.3.md) |
 | 2025-10-07 | 6.1.2 | [Release Notes](6.1.2.md) |
 | 2025-08-14 | 6.1.1 | [Release Notes](6.1.1.md) |
 | 2025-07-25 | 6.1.0 | [Release Notes](6.1.0.md) |

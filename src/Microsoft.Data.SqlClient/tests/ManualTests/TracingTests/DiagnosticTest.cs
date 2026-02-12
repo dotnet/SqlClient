@@ -21,9 +21,21 @@ using Microsoft.DotNet.RemoteExecutor;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
+    [Trait("Category", "flaky")]
     public class DiagnosticTest
     {
         private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
+
+        private const string WriteCommandBefore = "Microsoft.Data.SqlClient.WriteCommandBefore";
+        private const string WriteCommandAfter = "Microsoft.Data.SqlClient.WriteCommandAfter";
+        private const string WriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
+        private const string WriteConnectionOpenBefore = "Microsoft.Data.SqlClient.WriteConnectionOpenBefore";
+        private const string WriteConnectionOpenAfter = "Microsoft.Data.SqlClient.WriteConnectionOpenAfter";
+        private const string WriteConnectionOpenError = "Microsoft.Data.SqlClient.WriteConnectionOpenError";
+        private const string WriteConnectionCloseBefore = "Microsoft.Data.SqlClient.WriteConnectionCloseBefore";
+        private const string WriteConnectionCloseAfter = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
+        private const string WriteConnectionCloseError = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
 
         [Fact]
         public void ExecuteScalarTest()
@@ -41,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         cmd.ExecuteScalar();
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -62,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -83,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         cmd.ExecuteNonQuery();
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -107,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -132,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             // Read until end.
                         }
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -154,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // @TODO: TestTdsServer should not throw on ExecuteReader, it should throw on reader.Read
                         Assert.Throws<SqlException>(() => cmd.ExecuteReader());
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -179,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             // Read to end
                         }
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -206,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             // Read to end
                         }
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -228,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // @TODO: TestTdsServer should not throw on ExecuteXmlReader, should throw on reader.Read
                         Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -254,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         await cmd.ExecuteScalarAsync();
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -280,7 +292,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteScalarAsync());
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -306,7 +318,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         await cmd.ExecuteNonQueryAsync();
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -332,7 +344,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteNonQueryAsync());
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -362,7 +374,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             // Read to end
                         }
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -389,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // @TODO: TestTdsServer should not throw on ExecuteReader, should throw on reader.Read
                         await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteReaderAsync());
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -421,7 +433,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             // Read to end
                         }
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -449,11 +461,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // @TODO: Since this test uses a real database connection, the exception is
                         //     thrown during reader.Read. (ie, TestTdsServer does not obey proper
                         //     exception behavior)
+                        // NB: As a result of the exception being thrown during reader.Read, 
+                        // cmd.ExecuteXmlReaderAsync returns successfully. This means that we receive
+                        // a WriteCommandAfter event rather than WriteCommandError.
                         await conn.OpenAsync();
                         XmlReader reader = await cmd.ExecuteXmlReaderAsync();
                         await Assert.ThrowsAsync<SqlException>(() => reader.ReadAsync());
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -469,7 +484,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         sqlConnection.Open();
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -485,7 +500,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         Assert.Throws<SqlException>(() => sqlConnection.Open());
                     }
-                });
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenError]);
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -505,7 +520,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         await sqlConnection.OpenAsync();
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -525,12 +540,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         await Assert.ThrowsAsync<SqlException>(() => sqlConnection.OpenAsync());
                     }
-                }).Wait();
+                }, [WriteConnectionOpenBefore, WriteConnectionOpenError]).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, [CallerMemberName] string methodName = "")
+        private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
         {
             bool statsLogged = false;
             bool operationHasError = false;
@@ -738,6 +753,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(statsLogged);
 
                     diagnosticListenerObserver.Disable();
+                    foreach (string expected in expectedDiagnostics)
+                    {
+                        Assert.True(diagnosticListenerObserver.HasReceivedDiagnostic(expected), $"Missing diagnostic '{expected}'");
+                    }
 
                     Console.WriteLine(string.Format("Test: {0} Listeners Disabled", methodName));
                 }
@@ -746,7 +765,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine(string.Format("Test: {0} Listeners Disposed Successfully", methodName));
         }
 
-        private static async Task CollectStatisticsDiagnosticsAsync(Func<string, Task> sqlOperation, [CallerMemberName] string methodName = "")
+        private static async Task CollectStatisticsDiagnosticsAsync(Func<string, Task> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
         {
             bool statsLogged = false;
             bool operationHasError = false;
@@ -936,6 +955,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(statsLogged);
 
                     diagnosticListenerObserver.Disable();
+                    foreach (string expected in expectedDiagnostics)
+                    {
+                        Assert.True(diagnosticListenerObserver.HasReceivedDiagnostic(expected), $"Missing diagnostic '{expected}'");
+                    }
 
                     Console.WriteLine(string.Format("Test: {0} Listeners Disabled", methodName));
                 }

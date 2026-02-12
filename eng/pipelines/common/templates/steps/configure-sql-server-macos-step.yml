@@ -4,14 +4,13 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This step installs the latest SQL Server 2022 onto the macOS host and
+# This step installs the latest SQL Server 2022 onto the macOS host as a docker container and
 # configures it for use.
+#
+# The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
+# Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
 
 parameters:
-  - name: password
-    type: string
-    default: $(password)
-
   - name: condition
     type: string
     default: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
@@ -19,11 +18,18 @@ parameters:
 steps:
 # macOS only steps
 - bash: |
-    # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it back to the pipeline user.
+    # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it
+    # back to the pipeline user.
     USER=`whoami`
-    SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
-    echo $SQLCMD_ERRORS
 
+    SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
+    echo "Errors will be written to: $SQLCMD_ERRORS"
+
+    # Configure the prompt to show the current timestamp so we can see how long each command takes.
+    export PS4='+ [$(date "+%Y-%m-%d %H:%M:%S")] '
+    set -x
+
+    # Install Docker and SQLCMD tools.
     brew install colima
     brew install --cask docker
     brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
@@ -32,12 +38,12 @@ steps:
     colima start --arch x86_64
     docker --version
     docker pull mcr.microsoft.com/mssql/server:2022-latest
-    
+
     # Password for the SA user (required)
-    MSSQL_SA_PW=${{ parameters.password }}
+    MSSQL_SA_PW="$(Password)"
 
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
- 
+
     sleep 5
 
     docker ps -a
@@ -50,10 +56,10 @@ steps:
 
     # Wait 3 seconds between attempts.
     delay=3
-    
+
     # Try up to 40 times (2 minutes) to connect.
     maxAttempts=40
-    
+
     # Attempt counter.
     attempt=1
 
@@ -62,21 +68,23 @@ steps:
 
     while [ $attempt -le $maxAttempts ]
     do
+
       echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
-    
+
       sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
-    
+
       # If the command was successful, then the SQL Server is ready.
       if [ $? -eq 0 ]; then
         ready=1
         break
       fi
-    
+
       # Increment the attempt counter.
       ((attempt++))
-    
+
       # Wait before trying again.
       sleep $delay
+
     done
 
     # Is the SQL Server ready?

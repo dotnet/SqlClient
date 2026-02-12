@@ -4,30 +4,35 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: targetFramework
+
+  - name: abstractionsPackageVersion
     type: string
 
-  - name: nugetPackageVersion
+  - name: buildConfiguration
     type: string
-    default: $(NugetPackageVersion)
+    values:
+      - Debug
+      - Release
+
+  - name: mdsPackageVersion
+    type: string
+
+  - name: osGroup
+    type: string
+    default: ''
 
   - name: platform
     type: string
     default: $(Platform)
-  
-  - name: configuration
-    type: string
-    default: '$(Configuration)'
 
   - name: referenceType
-    default: Package
+    type: string
     values:
       - Project
       - Package
-  
-  - name: OSGroup
+
+  - name: targetFramework
     type: string
-    default: ''
 
   - name: testSet
     type: string
@@ -38,28 +43,29 @@ steps:
     displayName: 'Build Tests NetFx'
     inputs:
       solution: build.proj
-      platform: '${{parameters.platform }}'
-      configuration: '${{parameters.configuration }}'
-      msbuildArguments: '-t:BuildTestsNetFx -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
-
-# - ${{else if contains(parameters.targetFramework, 'netstandard')}}: # .NET Standard
-#   - task: MSBuild@1
-#     displayName: 'Build Tests NetStandard'
-#     inputs:
-#       solution: build.proj
-#       platform: '${{parameters.platform }}'
-#       configuration: '${{parameters.configuration }}'
-#       msbuildArguments: '-t:BuildTestsNetCore -p:ReferenceType=NetStandard -p:TargetNetStandardVersion=${{parameters.targetNetStandardVersion }} -p:TF=${{parameters.targetFramework }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
-#     condition: and(succeeded(), not(startsWith(variables['TF'], 'net4')), startsWith(variables['TargetNetStandardVersion'], 'netstandard'))
-
-- ${{elseif eq(parameters.OSGroup, '')}}: # .NET on Windows
+      platform: '${{ parameters.platform }}'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:BuildTestsNetFx
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+- ${{elseif eq(parameters.osGroup, '')}}: # .NET on Windows
   - task: MSBuild@1
     displayName: 'Build Tests NetCore [Win]'
     inputs:
       solution: build.proj
-      platform: '${{parameters.platform }}'
-      configuration: '${{parameters.configuration }}'
-      msbuildArguments: '-t:BuildTestsNetCore -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+      platform: '${{ parameters.platform }}'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:BuildTestsNetCore
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
 - ${{ else }}: # .NET on Unix
@@ -69,7 +75,16 @@ steps:
       command: custom
       projects: build.proj
       custom: msbuild
-      arguments: '-t:BuildTestsNetCore -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:OSGroup=${{parameters.OSGroup }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
+      arguments: >-
+        -t:BuildTestsNetCore
+        -p:TF=${{ parameters.targetFramework }}
+        -p:TestSet=${{ parameters.testSet }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:OSGroup=${{ parameters.osGroup }}
+        -p:platform=${{ parameters.platform }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))

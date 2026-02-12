@@ -3,32 +3,26 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters:  
-  - name: TargetNetFxVersion
+parameters:
+  - name: abstractionsPackageVersion
     type: string
-    default: $(TargetNetFxVersion)
+    default: $(abstractionsPackageVersion)
 
-  - name: configuration
+  - name: mdsPackageVersion
     type: string
-    default: $(Configuration)
-
-  - name: referenceType
-    default: Project
-    values:
-      - Project
-      - Package
-
-  - name: NugetPackageVersion
-    type: string
-    default: $(NugetPackageVersion)
+    default: $(mdsPackageVersion)
 
   - name: platform
     type: string
     default: $(Platform)
 
-  - name: cleanFirst
-    type: boolean
-    default: false
+  - name: retryCountOnManualTests
+    type: number
+    default: 2
+
+  - name: TargetNetFxVersion
+    type: string
+    default: $(TargetNetFxVersion)
 
   - name: TestTargetOS
     type: string
@@ -38,44 +32,122 @@ parameters:
       - Windowsnetcoreapp
       - Unixnetcoreapp
 
-  - name: retryCountOnManualTests
-    type: number
-    default: 2
-
 steps:
-- ${{ if eq(parameters.cleanFirst, true)}}:
-    - task: MSBuild@1
-      displayName: 'Clean artifacts folder'
-      inputs:
-        solution: build.proj
-        msbuildArguments: '-t:clean'
-
 - task: MSBuild@1
   displayName: 'Build AKV Provider .NET Framework'
   inputs:
     solution: build.proj
     msbuildArchitecture: x64
-    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }}'
+    msbuildArguments: >-
+      -p:Configuration=Release
+      -t:BuildAKVNetFx
+      -p:ReferenceType=Package
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
 - task: MSBuild@1
   displayName: 'MSBuild Build Tests for ${{parameters.TargetNetFxVersion }}'
   inputs:
     solution: build.proj
-    msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.configuration }} -p:Platform=${{parameters.platform }}'
-    
+    msbuildArguments: >-
+      -t:BuildTestsNetFx
+      -p:ReferenceType=Package
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
+      -p:Configuration=Release
+      -p:Platform=${{ parameters.platform }}
+
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Functional Tests for ${{parameters.TargetNetFxVersion }}'
+  condition: succeededOrFailed()
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" --collect "Code Coverage"'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      --no-build
+      -v n
+      --filter "category!=failing&category!=flaky"
+      --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Flaky Functional Tests for ${{parameters.TargetNetFxVersion }}'
+  condition: succeededOrFailed()
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      --no-build
+      -v n
+      --filter "category=flaky"
+      --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
+  continueOnError: true
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Manual Tests for ${{parameters.TargetNetFxVersion }}'
+  condition: succeededOrFailed()
   inputs:
     command: test
     projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" --collect "Code Coverage"'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      --no-build
+      -v n
+      --filter "category!=failing&category!=flaky"
+      --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
   retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Flaky Manual Tests for ${{parameters.TargetNetFxVersion }}'
+  condition: succeededOrFailed()
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
+    arguments: >-
+      -p:Platform=${{ parameters.platform }}
+      -p:TestTargetOS=${{ parameters.TestTargetOS }}
+      -p:TargetNetFxVersion=${{ parameters.TargetNetFxVersion }}
+      -p:ReferenceType=Package
+      -p:Configuration=Release
+      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      --no-build
+      -v n
+      --filter "category=flaky"
+      --collect "Code Coverage"
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
+  retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
+  continueOnError: true

@@ -4,23 +4,13 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: Configuration
-    type: string
-    default: '$(Configuration)'
-
   - name: symbolsFolder
     type: string
     default: symbols
-  
+
   - name: softwareFolder
     type: string
     default: software
-  
-  - name: referenceType
-    default: project
-    values:
-    - project
-    - package
 
   - name: listOfTF
     type: object
@@ -28,12 +18,6 @@ parameters:
     - net462
     - net8.0
     - net9.0
-
-  - name: product
-    default: MDS
-    values:
-    - MDS
-    - MSS
 
 steps:
 - powershell: |
@@ -46,43 +30,42 @@ steps:
     md $symbols
     md $symbols\win
   displayName: 'Make base directories'
-  
+
 - ${{ each targetFramework in parameters.listOfTF }}:
-  - ${{ if eq(parameters.product, 'MDS') }}:
-    - powershell: |
-        $software = '${{parameters.softwareFolder}}'
-        $tf = '${{ targetFramework }}'
-        md $software\win\$tf
-        
-        if ($tf.StartsWith('net4'))
-        {
-          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
-        }
-        else
-        {
-          Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
-        }
-        
-        $symbols = '${{parameters.symbolsFolder}}'
-        md $symbols\win\$tf
-        
-        if ($tf.StartsWith('net4'))
-        {
-          Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
-        }
-        else
-        {
-          Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
-        }
-            
-        Write-Host "Artifacts fetched for testing"
-        Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
+  - powershell: |
+      $software = '${{parameters.softwareFolder}}'
+      $tf = '${{ targetFramework }}'
+      md $software\win\$tf
+
+      if ($tf.StartsWith('net4'))
+      {
+        Copy-Item "artifacts\Package\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
+      }
+      else
+      {
+        Copy-Item "artifacts\Package\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.dll" "$software\win\$tf" -recurse
+      }
+
+      $symbols = '${{parameters.symbolsFolder}}'
+      md $symbols\win\$tf
+
+      if ($tf.StartsWith('net4'))
+      {
+        Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netfx\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
+      }
+      else
+      {
+        Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
+      }
+
+      Write-Host "Artifacts fetched for testing"
+      Get-Location
+    displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
 
 - powershell: |
     $software = '${{parameters.softwareFolder}}'
     $symbols = '${{parameters.symbolsFolder}}'
 
-    Get-ChildItem -recurse "$software\*.dll"
-    Get-ChildItem -recurse "$symbols\*.pdb"
+    Get-ChildItem -recurse "$software\*.dll" | ForEach-Object VersionInfo | Format-List
+    Get-ChildItem -recurse "$symbols\*.pdb" | ForEach-Object VersionInfo | Format-List
   displayName: 'List the prepared files'

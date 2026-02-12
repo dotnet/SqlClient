@@ -5,20 +5,23 @@
 #################################################################################
 
 parameters:
+    - name: akvAssemblyFileVersion
+      type: string
+
+    - name: akvPackageVersion
+      type: string
+
     - name: apiScanDllPath
       type: string
-      
+
     - name: apiScanPdbPath
-      type: string
-    
-    - name: assemblyFileVersion
       type: string
 
     - name: buildConfiguration
       type: string
-
-    - name: nugetPackageVersion
-      type: string
+      values:
+        - Debug
+        - Release
 
     - name: mdsPackageVersion
       type: string
@@ -58,7 +61,7 @@ parameters:
 
     - name: symbolsUploadAccount
       type: string
-      
+
     # @TODO: This should be determined from build output, or at a higher level
     - # Note: not intended to be passed in, is only used for copying files for ApiScan.
       # This is only defined as a parameter since ADO pipelines do not support array variables.
@@ -79,21 +82,30 @@ jobs:
           ob_outputDirectory: '$(ARTIFACT_PATH)'
 
       steps:
-          - template: ../steps/script-output-environment-variables-step.yml@self
+          - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
-          - template: ../steps/compound-build-akv-step.yml@self
+          # Perform analysis before building, since this step will clobber build
+          # output.
+          - template: /eng/pipelines/steps/roslyn-analyzers-akv-step.yml@self
             parameters:
-                assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
+                akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
-                
-          - ${{ each targetFramework in parameters.targetFrameworks }}:  
-              - template: ../steps/compound-extract-akv-apiscan-files-step.yml
+
+          - template: /eng/pipelines/steps/compound-build-akv-step.yml@self
+            parameters:
+                akvAssemblyFileVersion: '${{ parameters.akvAssemblyFileVersion }}'
+                akvPackageVersion: '${{ parameters.akvPackageVersion }}'
+                buildConfiguration: '${{ parameters.buildConfiguration }}'
+                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+
+          - ${{ each targetFramework in parameters.targetFrameworks }}:
+              - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
                 parameters:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
                     dllPath: '${{ parameters.apiScanDllPath }}'
@@ -101,44 +113,39 @@ jobs:
                     referenceType: Package
                     targetFramework: '${{ targetFramework }}'
 
-          - template: ../steps/roslyn-analyzers-akv-step.yml@self
-            parameters:
-                buildConfiguration: '${{ parameters.buildConfiguration }}'
-                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
-
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'dll'
                 authAkvName: '${{ parameters.signingAuthAkvName }}'
                 authSignCertName: '${{ parameters.signingAuthSignCertName }}'
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'
                 esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
-          - template: ../steps/compound-nuget-pack-step.yml@self
+          - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
-                packageVersion: '${{ parameters.nugetPackageVersion }}'
+                packageVersion: '${{ parameters.akvPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
-                referenceType: 'Package'
+                referenceType: Package
+                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
+          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'pkg'
                 authAkvName: '${{ parameters.signingAuthAkvName }}'
                 authSignCertName: '${{ parameters.signingAuthSignCertName }}'
                 esrpClientId: '${{ parameters.signingEsrpClientId }}'
                 esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
           - ${{ if parameters.publishSymbols }}:
-            - template: ../steps/compound-publish-symbols-step.yml@self
+            - template: /eng/pipelines/steps/compound-publish-symbols-step.yml@self
               parameters:
-                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
+                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.akvPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
                   publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
                   packageName: '$(PACKAGE_NAME)'
@@ -146,9 +153,9 @@ jobs:
                   publishToInternal: true
                   publishToPublic: true
                   publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-                  referenceType: 'Package'
+                  referenceType: Package
                   searchPattern: |
                       Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                       AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                   uploadAccount: '${{ parameters.symbolsUploadAccount }}'
-                  version: '${{ parameters.nugetPackageVersion }}'
+                  version: '${{ parameters.akvPackageVersion }}'

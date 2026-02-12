@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -230,7 +231,7 @@ namespace Microsoft.Data.SqlClient
         private bool _hasMoreRowToCopy = false;
         private bool _isAsyncBulkCopy = false;
         private bool _isBulkCopyingInProgress = false;
-        private SqlInternalConnectionTds.SyncAsyncLock _parserLock = null;
+        private SqlConnectionInternal.SyncAsyncLock _parserLock = null;
 
         private SourceColumnMetadata[] _currentRowMetadata;
 
@@ -1156,8 +1157,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
-              // Release lock to prevent possible deadlocks
-                SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                // Release lock to prevent possible deadlocks
+                SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
                 bool semaphoreLock = internalConnection._parserLock.CanBeReleasedFromAnyThread;
                 internalConnection._parserLock.Release();
 
@@ -1366,7 +1367,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private void RunParser(BulkCopySimpleResultSet bulkCopyHandler = null)
         {
             // In case of error while reading, we should let the connection know that we already own the _parserLock
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
             internalConnection.ThreadHasParserLockForClose = true;
             try
@@ -1384,7 +1385,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private void RunParserReliably(BulkCopySimpleResultSet bulkCopyHandler = null)
         {
             // In case of error while reading, we should let the connection know that we already own the _parserLock
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
             internalConnection.ThreadHasParserLockForClose = true;
             try
             {
@@ -1401,7 +1402,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             if (_internalTransaction != null)
             {
-                SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
                 internalConnection.ThreadHasParserLockForClose = true; // In case of error, let the connection know that we have the lock
                 try
                 {
@@ -1422,7 +1423,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 if (!_internalTransaction.IsZombied)
                 {
-                    SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                    SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
                     internalConnection.ThreadHasParserLockForClose = true; // In case of error, let the connection know that we have the lock
                     try
                     {
@@ -2069,7 +2070,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             
             CreateOrValidateConnection(nameof(WriteToServer));
 
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
             Debug.Assert(_parserLock == null, "Previous parser lock not cleaned");
             _parserLock = internalConnection._parserLock;
@@ -2222,7 +2223,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private bool FireRowsCopiedEvent(long rowsCopied)
         {
             // Release lock to prevent possible deadlocks
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
             bool semaphoreLock = internalConnection._parserLock.CanBeReleasedFromAnyThread;
             internalConnection._parserLock.Release();
 
@@ -2361,7 +2362,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // This is in its own method to avoid always allocating the lambda in CopyColumnsAsync
         private void CopyColumnsAsyncSetupContinuation(TaskCompletionSource<object> source, Task task, int i)
         {
-            AsyncHelper.ContinueTaskWithState(task, source, this,
+            AsyncHelper.ContinueTaskWithState(
+                task,
+                source,
+                state: this,
                 onSuccess: (object state) =>
                 {
                     SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2373,9 +2377,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {
                         source.SetResult(null);
                     }
-                },
-                connectionToDoom: _connection.GetOpenTdsConnection()
-            );
+                });
         }
 
         // The notification logic.
@@ -2510,10 +2512,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                             resultTask = source.Task;
 
-                            AsyncHelper.ContinueTaskWithState(readTask, source, this,
-                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source),
-                                connectionToDoom: _connection.GetOpenTdsConnection()
-                            );
+                            AsyncHelper.ContinueTaskWithState(
+                                readTask,
+                                source,
+                                state: this,
+                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source));
                             return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
                         }
                     }
@@ -2535,14 +2538,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 }
                                 else
                                 {
-                                    AsyncHelper.ContinueTaskWithState(readTask, source, sqlBulkCopy,
-                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source),
-                                        connectionToDoom: _connection.GetOpenTdsConnection()
-                                    );
+                                    AsyncHelper.ContinueTaskWithState(
+                                        readTask,
+                                        source,
+                                        state: sqlBulkCopy,
+                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source));
                                 }
-                            },
-                            connectionToDoom: _connection.GetOpenTdsConnection()
-                        );
+                            });
                         return resultTask;
                     }
                 }
@@ -2577,7 +2579,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 while (_hasMoreRowToCopy)
                 {
                     //pre->before every batch: Transaction, BulkCmd and metadata are done.
-                    SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                    SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
                     if (IsCopyOption(SqlBulkCopyOptions.UseInternalTransaction))
                     { //internal transaction is started prior to each batch if the Option is set.
@@ -2611,7 +2613,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             source = new TaskCompletionSource<object>();
                         }
 
-                        AsyncHelper.ContinueTaskWithState(commandTask, source, this,
+                        AsyncHelper.ContinueTaskWithState(
+                            commandTask,
+                            source,
+                            state: this,
                             onSuccess: (object state) =>
                             {
                                 SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2621,9 +2626,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                     // Continuation finished sync, recall into CopyBatchesAsync to continue
                                     sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                                 }
-                            },
-                            connectionToDoom: _connection.GetOpenTdsConnection()
-                        );
+                            });
                         return source.Task;
                     }
                 }
@@ -2677,7 +2680,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {   // First time only
                         source = new TaskCompletionSource<object>();
                     }
-                    AsyncHelper.ContinueTaskWithState(task, source, this,
+                    AsyncHelper.ContinueTaskWithState(
+                        task,
+                        source,
+                        state: this,
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2689,9 +2695,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true));
 
                     return source.Task;
                 }
@@ -2738,7 +2742,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         source = new TaskCompletionSource<object>();
                     }
 
-                    AsyncHelper.ContinueTaskWithState(writeTask, source, this,
+                    AsyncHelper.ContinueTaskWithState(
+                        writeTask,
+                        source,
+                        state: this,
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2756,9 +2763,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             // Always call back into CopyBatchesAsync
                             sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false));
                     return source.Task;
                 }
             }
@@ -2859,7 +2864,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {
                         source = new TaskCompletionSource<object>();
                     }
-                    AsyncHelper.ContinueTaskWithState(task, source, this,
+                    AsyncHelper.ContinueTaskWithState(
+                        task,
+                        source,
+                        state: this,
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
@@ -2902,9 +2910,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                     }
                                 }
                             }
-                        },
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        });
                     return;
                 }
                 else
@@ -2960,7 +2966,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _hasMoreRowToCopy = true;
             Task<BulkCopySimpleResultSet> internalResultsTask = null;
             BulkCopySimpleResultSet internalResults = new BulkCopySimpleResultSet();
-            SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+            SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
             try
             {
                 _parser = _connection.Parser;
@@ -3029,14 +3035,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            connectionToAbort: _connection,
                             onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            #if NET
                             exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                            #else
-                            exceptionConverter: (ex, _) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                            #endif
                         );
                         return;
                     }
@@ -3085,10 +3086,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 if (internalResultsTask != null)
                 {
-                    AsyncHelper.ContinueTaskWithState(internalResultsTask, source, this,
-                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source),
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                    AsyncHelper.ContinueTaskWithState(
+                        internalResultsTask,
+                        source,
+                        state: this,
+                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source));
                 }
                 else
                 {
@@ -3169,9 +3171,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             {
                                 sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
                             }
-                        },
-                        connectionToDoom: _connection.GetOpenTdsConnection()
-                    );
+                        });
                     return resultTask;
                 }
             }

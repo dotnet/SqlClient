@@ -4,8 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in MDS OneBranch Official pipelines.
+
 variables:
-  - template: build-variables.yml@self
+  - template: /eng/pipelines/libraries/build-variables.yml@self
   # onebranch template variables
   - name: ob_outputDirectory
     value: '$(artifactDirectory)' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts

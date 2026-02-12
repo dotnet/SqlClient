@@ -7,6 +7,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -36,7 +37,7 @@ namespace Microsoft.Data.SqlClient
         private readonly TransactionType _transactionType;
         private long _transactionId;             // passed in the MARS headers
         private int _openResultCount;           // passed in the MARS headers
-        private SqlInternalConnection _innerConnection;
+        private SqlConnectionInternal _innerConnection;
         private bool _disposing;                 // used to prevent us from throwing exceptions while we're disposing
         private WeakReference<SqlTransaction> _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
 
@@ -46,11 +47,19 @@ namespace Microsoft.Data.SqlClient
         internal bool RestoreBrokenConnection { get; set; }
         internal bool ConnectionHasBeenRestored { get; set; }
 
-        internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction) : this(innerConnection, type, outerTransaction, NullTransactionId)
+        internal SqlInternalTransaction(
+            SqlConnectionInternal innerConnection,
+            TransactionType type,
+            SqlTransaction outerTransaction)
+            : this(innerConnection, type, outerTransaction, NullTransactionId)
         {
         }
 
-        internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction, long transactionId)
+        internal SqlInternalTransaction(
+            SqlConnectionInternal innerConnection,
+            TransactionType type,
+            SqlTransaction outerTransaction,
+            long transactionId)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.ctor | RES | CPOOL | Object Id {0}, Created for connection {1}, outer transaction {2}, Type {3}", ObjectID, innerConnection.ObjectID, outerTransaction?.ObjectId, (int)type);
             _innerConnection = innerConnection;
@@ -187,14 +196,14 @@ namespace Microsoft.Data.SqlClient
 
         internal void CloseFromConnection()
         {
-            SqlInternalConnection innerConnection = _innerConnection;
+            SqlConnectionInternal innerConnection = _innerConnection;
 
             Debug.Assert(innerConnection != null, "How can we be here if the connection is null?");
             SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.CloseFromConnection | RES | CPOOL | Object Id {0}, Closing transaction", ObjectID);
             bool processFinallyBlock = true;
             try
             {
-                innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
+                innerConnection.ExecuteTransaction(TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
             }
             catch (Exception e)
             {
@@ -230,7 +239,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
                     // simply commits the transaction from the most recent BEGIN, nested or otherwise.
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
                     ZombieParent();
                 }
                 catch (Exception e)
@@ -334,7 +343,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // If no arg is given to ROLLBACK it will rollback to the outermost begin - rolling back
                     // all nested transactions as well as the outermost transaction.
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
 
                     // Since Rollback will rollback to outermost begin, no need to check
                     // server transaction level.  This transaction has been completed.
@@ -382,7 +391,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
                 }
                 catch (Exception e)
                 {
@@ -414,7 +423,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
+                    _innerConnection.ExecuteTransaction(TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
                 }
                 catch (Exception e)
                 {
@@ -452,7 +461,7 @@ namespace Microsoft.Data.SqlClient
 
             ZombieParent();
 
-            SqlInternalConnection innerConnection = _innerConnection;
+            SqlConnectionInternal innerConnection = _innerConnection;
             _innerConnection = null;
 
             if (innerConnection != null)

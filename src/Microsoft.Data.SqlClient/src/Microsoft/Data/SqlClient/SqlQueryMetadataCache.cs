@@ -19,11 +19,12 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     sealed internal class SqlQueryMetadataCache
     {
-        const int CacheSize = 2000; // Cache size in number of entries.
-        const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
+        private const int CacheSize = 2000; // Cache size in number of entries.
+        private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
 
         private readonly MemoryCache _cache;
         private static readonly SqlQueryMetadataCache s_singletonInstance = new();
+        private static readonly TimeSpan s_metadataCacheTimeout = TimeSpan.FromHours(10);
         private int _inTrim = 0;
         private long _cacheHits = 0;
         private long _cacheMisses = 0;
@@ -37,6 +38,7 @@ namespace Microsoft.Data.SqlClient
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
+        // @TODO: Replace with Instance property.
         internal static SqlQueryMetadataCache GetInstance()
         {
             return s_singletonInstance;
@@ -234,16 +236,11 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // By default evict after 10 hours.
-            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(10)
-            };
-            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, options);
+            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, absoluteExpirationRelativeToNow: s_metadataCacheTimeout);
             if (sqlCommand.requiresEnclaveComputations)
             {
                 ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
-                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, options);
+                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, absoluteExpirationRelativeToNow: s_metadataCacheTimeout);
             }
         }
 

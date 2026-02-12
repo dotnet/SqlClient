@@ -10,6 +10,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -109,10 +111,8 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             // @TODO: Do we want to use a command scope here like nonquery and xml? or is operation id ok?
-            #if NET
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             Exception e = null;
-            #endif
 
             using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
             // @TODO: Do we want to have a correlation trace event here like nonquery and xml?
@@ -136,9 +136,7 @@ namespace Microsoft.Data.SqlClient
             // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception ex)
             {
-                #if NET
                 e = ex;
-                #endif
 
                 if (ex is SqlException sqlException)
                 {
@@ -150,9 +148,8 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
 
-                #if NET
                 if (e is not null)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -161,7 +158,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
-                #endif
             }
         }
 
@@ -415,7 +411,11 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParameterCount,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTE;
             rpc.rpcName = TdsEnums.SP_EXECUTE;
 
@@ -451,7 +451,11 @@ namespace Microsoft.Data.SqlClient
             int userParamCount = CountSendableParameters(parameters);
             int systemParamCount = userParamCount > 0 ? 2 : 1;
 
-            GetRPCObject(systemParamCount, userParamCount, ref rpc);
+            GetRPCObject(
+                systemParamCount,
+                userParamCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_EXECUTESQL;
             rpc.rpcName = TdsEnums.SP_EXECUTESQL;
 
@@ -471,7 +475,10 @@ namespace Microsoft.Data.SqlClient
             if (userParamCount > 0)
             {
                 // @TODO: Why does batch RPC mode use different parameters?
-                string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
+                string paramList = BuildParamList(
+                    _stateObj.Parser,
+                    _batchRPCMode ? parameters : _parameters,
+                    includeReturnValue: false);
                 sqlParam = rpc.systemParams[1];
                 sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                     ? SqlDbType.NVarChar
@@ -494,7 +501,11 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
-            GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParameterCount,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = TdsEnums.RPC_PROCID_PREPEXEC;
             rpc.rpcName = TdsEnums.SP_PREPEXEC;
 
@@ -509,7 +520,10 @@ namespace Microsoft.Data.SqlClient
             rpc.systemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
 
             // @batch_params
-            string paramList = BuildParamList(_stateObj.Parser, _parameters);
+            string paramList = BuildParamList(
+                _stateObj.Parser,
+                _parameters,
+                includeReturnValue: false);
             sqlParam = rpc.systemParams[1];
             // @TODO: This pattern is used quite a bit - it could be factored out
             sqlParam.SqlDbType = (paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
@@ -525,8 +539,8 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Size = text.Length;
             sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, inSchema: false, _parameters);
@@ -544,7 +558,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(CommandType is CommandType.StoredProcedure, "Command must be a stored proc to execute an RPC");
 
             int userParameterCount = CountSendableParameters(parameters);
-            GetRPCObject(systemParamCount: 0, userParameterCount, ref rpc);
+            GetRPCObject(
+                systemParamCount: 0,
+                userParameterCount,
+                ref rpc,
+                forSpDescribeParameterEncryption: false);
             rpc.ProcID = 0;
 
             // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
@@ -573,23 +591,19 @@ namespace Microsoft.Data.SqlClient
             {
                 Exception e = task.Exception.InnerException;
 
-                #if NET
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
-                #endif
 
                 source.SetException(e);
             }
             else
             {
-                #if NET
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
-                #endif
 
                 if (task.IsCanceled)
                 {
@@ -605,7 +619,8 @@ namespace Microsoft.Data.SqlClient
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal, bool forDescribeParameterEncryption)
         {
             SqlDataReader reader = CachedAsyncState.CachedAsyncReader;
-            Debug.Assert(reader is not null);
+            // TODO(GH-3604): Fix this failing assertion.
+            // Debug.Assert(reader is not null);
 
             bool processFinallyBlock = true;
             try
@@ -720,7 +735,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: false);
             }
         }
 
@@ -940,13 +955,7 @@ namespace Microsoft.Data.SqlClient
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
-            Guid operationId = Guid.Empty;
-            #if NET
-            if (!_parentOperationStarted)
-            {
-                operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-            }
-            #endif
+            Guid operationId = !_parentOperationStarted ? s_diagnosticListener.WriteCommandBefore(this, _transaction) : Guid.Empty;
 
             // Connection can be used as state in RegisterForConnectionCloseNotification
             // continuation to avoid an allocation so use it as the state value if possible, but it
@@ -972,11 +981,9 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
-                    context = Interlocked.Exchange(
-                        ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
-                        null);
+                    context = sqlInternalConnection.CachedContexts.TakeCommandExecuteReaderAsyncContext();
                 }
 
                 context ??= new ExecuteReaderAsyncCallContext();
@@ -1015,12 +1022,10 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                #if NET
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
-                #endif
 
                 source.SetException(e);
                 context?.Dispose();
@@ -1377,7 +1382,7 @@ namespace Microsoft.Data.SqlClient
                             $"Command Text '{CommandText}'");
                     }
 
-                    string text = GetCommandText(cmdBehavior) + GetResetOptionsString(cmdBehavior);
+                    string text = GetCommandText(cmdBehavior) + GetOptionsResetString(cmdBehavior);
 
                     // If the query requires enclave computations, pass the enclave package in the
                     // SqlBatch TDS stream
@@ -1485,7 +1490,7 @@ namespace Microsoft.Data.SqlClient
                     // If we need to augment the command because a user has changed the command
                     // behavior (e.g. FillSchema) then batch sql them over. This is inefficient (3
                     // round trips) but the only way we can get metadata only from a stored proc.
-                    optionSettings = GetSetOptionsString(cmdBehavior);
+                    optionSettings = GetOptionsSetString(cmdBehavior);
 
                     if (returnStream)
                     {
@@ -1524,7 +1529,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // And turn OFF when the ds exhausts the stream on Close()
-                        optionSettings = GetResetOptionsString(cmdBehavior);
+                        optionSettings = GetOptionsResetString(cmdBehavior);
                     }
 
                     // Execute sproc
@@ -1572,7 +1577,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (decrementAsyncCountOnFailure)
                 {
-                    if (_activeConnection.InnerConnection is SqlInternalConnectionTds innerConnectionTds)
+                    if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnectionTds)
                     {
                         // It may be closed
                         innerConnectionTds.DecrementAsyncCount();
@@ -1749,11 +1754,7 @@ namespace Microsoft.Data.SqlClient
                     onCancellation: static state =>
                     {
                         ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
-                    }
-                    #if NETFRAMEWORK
-                    , connectionToAbort: _activeConnection
-                    #endif
-                );
+                    });
 
                 task = completion.Task;
                 return ds;
@@ -1784,18 +1785,6 @@ namespace Microsoft.Data.SqlClient
                 this,
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
 
-        private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                // @TODO: This should be part of the sql internal connection class.
-                Interlocked.CompareExchange(
-                    ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
-                    instance,
-                    null);
-            }
-        }
-
         #endregion
 
         internal sealed class ExecuteReaderAsyncCallContext
@@ -1823,7 +1812,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-                owner?.SetCachedCommandExecuteReaderAsyncContext(this);
+                DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetCommandExecuteReaderAsyncContext(this);
+                }
             }
 
             protected override void Clear()

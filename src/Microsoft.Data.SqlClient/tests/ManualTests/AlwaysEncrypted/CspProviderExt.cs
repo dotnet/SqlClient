@@ -5,25 +5,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using Xunit;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Microsoft.Win32;
-
-#if NET
-using System.Runtime.Versioning;
-#endif
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public CspProvider Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-#if !NETFRAMEWORK
-    [SupportedOSPlatform("windows")]
-#endif
+    // TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {

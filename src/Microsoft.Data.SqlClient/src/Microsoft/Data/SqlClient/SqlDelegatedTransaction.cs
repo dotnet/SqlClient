@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -24,7 +25,7 @@ namespace Microsoft.Data.SqlClient
         //  or notifications of same. Updates to the connection's association with the transaction or to the connection pool
         //  may be initiated here AFTER the connection lock is released, but should NOT fall under this class's locking strategy.
 
-        private SqlInternalConnection _connection;            // the internal connection that is the root of the transaction
+        private SqlConnectionInternal _connection;            // the internal connection that is the root of the transaction
         private System.Data.IsolationLevel _isolationLevel;        // the IsolationLevel of the transaction we delegated to the server
         private SqlInternalTransaction _internalTransaction;   // the SQL Server transaction we're delegating to
 
@@ -32,7 +33,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _active;                // Is the transaction active?
 
-        internal SqlDelegatedTransaction(SqlInternalConnection connection, Transaction tx)
+        internal SqlDelegatedTransaction(SqlConnectionInternal connection, Transaction tx)
         {
             Debug.Assert(connection != null, "null connection?");
             _connection = connection;
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient
         {
             // if we get here, then we know for certain that we're the delegated
             // transaction.
-            SqlInternalConnection connection = _connection;
+            SqlConnectionInternal connection = _connection;
             SqlConnection usersConnection = connection.Connection;
             SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Initialize | RES | CPOOL | Object Id {0}, Client Connection Id {1}, delegating transaction.", ObjectID, usersConnection?.ClientConnectionId);
 
@@ -92,7 +93,7 @@ namespace Microsoft.Data.SqlClient
 
             _internalTransaction = new SqlInternalTransaction(connection, TransactionType.Delegated, null);
 
-            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
+            connection.ExecuteTransaction(TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
 
             // Handle case where ExecuteTran didn't produce a new transaction, but also didn't throw.
             if (connection.CurrentTransaction == null)
@@ -119,7 +120,7 @@ namespace Microsoft.Data.SqlClient
             //  Don't read values off of the connection outside the lock unless it doesn't really matter
             //  from an operational standpoint (i.e. logging connection's ObjectID should be fine,
             //  but the PromotedDTCToken can change over calls. so that must be protected).
-            SqlInternalConnection connection = GetValidConnection();
+            SqlConnectionInternal connection = GetValidConnection();
             Exception promoteException;
             byte[] returnValue = null;
 
@@ -135,8 +136,8 @@ namespace Microsoft.Data.SqlClient
                         // Now that we've acquired the lock, make sure we still have valid state for this operation.
                         ValidateActiveOnConnection(connection);
 
-                        connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                        returnValue = connection.PromotedDTCToken;
+                        connection.ExecuteTransaction(TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                        returnValue = connection.PromotedDtcToken;
 
                         // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
                         if (connection.IsGlobalTransaction)
@@ -212,7 +213,7 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(enlistment != null, "null enlistment?");
-            SqlInternalConnection connection = GetValidConnection();
+            SqlConnectionInternal connection = GetValidConnection();
 
             if (connection != null)
             {
@@ -231,7 +232,7 @@ namespace Microsoft.Data.SqlClient
                         // If we haven't already rolled back (or aborted) then tell the SQL Server to roll back
                         if (!_internalTransaction.IsAborted)
                         {
-                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            connection.ExecuteTransaction(TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                         }
                     }
                     catch (SqlException e)
@@ -280,7 +281,7 @@ namespace Microsoft.Data.SqlClient
         public void SinglePhaseCommit(SinglePhaseEnlistment enlistment)
         {
             Debug.Assert(enlistment != null, "null enlistment?");
-            SqlInternalConnection connection = GetValidConnection();
+            SqlConnectionInternal connection = GetValidConnection();
 
             if (connection != null)
             {
@@ -313,7 +314,7 @@ namespace Microsoft.Data.SqlClient
                             _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
                             _connection = null; // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
-                            connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                            connection.ExecuteTransaction(TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                             commitException = null;
                         }
                         catch (SqlException e)
@@ -385,7 +386,7 @@ namespace Microsoft.Data.SqlClient
         //  the transaction).
         internal void TransactionEnded(Transaction transaction)
         {
-            SqlInternalConnection connection = _connection;
+            SqlConnectionInternal connection = _connection;
 
             if (connection != null)
             {
@@ -406,9 +407,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Check for connection validity
-        private SqlInternalConnection GetValidConnection()
+        private SqlConnectionInternal GetValidConnection()
         {
-            SqlInternalConnection connection = _connection;
+            SqlConnectionInternal connection = _connection;
             if (connection == null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
@@ -420,7 +421,7 @@ namespace Microsoft.Data.SqlClient
         // Dooms connection and throws and error if not a valid, active, delegated transaction for the given
         //  connection. Designed to be called AFTER a lock is placed on the connection, otherwise a normal return
         //  may not be trusted.
-        private void ValidateActiveOnConnection(SqlInternalConnection connection)
+        private void ValidateActiveOnConnection(SqlConnectionInternal connection)
         {
             bool valid = _active && (connection == _connection) && (connection.DelegatedTransaction == this);
 
@@ -446,10 +447,10 @@ namespace Microsoft.Data.SqlClient
         private Guid GetGlobalTxnIdentifierFromToken()
         {
 #if NET
-            return new Guid(new ReadOnlySpan<byte>(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes, 16));
+            return new Guid(new ReadOnlySpan<byte>(_connection.PromotedDtcToken, _globalTransactionsTokenVersionSizeInBytes, 16));
 #else
             byte[] txnGuid = new byte[16];
-            Buffer.BlockCopy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
+            Buffer.BlockCopy(_connection.PromotedDtcToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
             return new Guid(txnGuid);
 #endif
         }

@@ -15,12 +15,18 @@ parameters:
     type: string
     default: $(Platform)
 
-  - name: configuration
+  - name: buildConfiguration
     type: string
-    default: '$(Configuration)'
-  
+    values:
+      - Debug
+      - Release
+
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - task: PublishTestResults@2
@@ -29,7 +35,7 @@ steps:
     testResultsFormat: VSTest
     mergeTestResults: true
     buildPlatform: '${{parameters.platform }}'
-    buildConfiguration: '${{parameters.configuration }}'
+    buildConfiguration: '${{parameters.buildConfiguration }}'
     ${{ if eq(parameters.operatingSystem, 'Windows') }}:
       testResultsFiles: 'TestResults/*.trx'
       testRunTitle: 'Windows Tests'
@@ -43,17 +49,17 @@ steps:
 - powershell: |
    cd TestResults
    $TF="${{parameters.targetFramework }}"
-   Get-ChildItem -Filter “*.coverage” -Recurse | Rename-Item -NewName {"$TF" + $_.name} 
+   Get-ChildItem -Filter "*.coverage" -Recurse | Rename-Item -NewName {"$TF" + $_.name}
   displayName: 'Rename coverage files'
 
 - ${{ if eq(parameters.debug, true)}}:
   - powershell: |
       cd TestResults
-      Get-ChildItem -Filter “*.coverage” -Recurse
-    displayName: 'List test result coverage files [debug]'
+      Get-ChildItem -Filter "*.coverage" -Recurse
+    displayName: '[Debug] List test result coverage files'
 
 - task: PublishPipelineArtifact@1
-  displayName: 'Publish Pipeline Artifact'
+  displayName: 'Publish Pipeline Artifacts'
   inputs:
     targetPath: TestResults
     artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'

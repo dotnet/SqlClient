@@ -20,7 +20,9 @@ using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
+#if _WINDOWS
 using Interop.Windows.Sni;
+#endif
 using Microsoft.Data.SqlClient.LocalDb;
 #endif
 
@@ -311,8 +313,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_HasChanges)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_HasChanges))
         ]
 #endif
         public bool HasChanges => _dependencyFired;
@@ -320,8 +322,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_Id)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_Id))
         ]
 #endif
         public string Id => _id;
@@ -342,8 +344,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_OnChange)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_OnChange))
         ]
 #endif
         public event OnChangeEventHandler OnChange
@@ -420,8 +422,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_AddCommandDependency)
+        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
+        ResDescriptionAttribute(nameof(Strings.SqlDependency_AddCommandDependency))
         ]
 #endif
         public void AddCommandDependency(SqlCommand command)

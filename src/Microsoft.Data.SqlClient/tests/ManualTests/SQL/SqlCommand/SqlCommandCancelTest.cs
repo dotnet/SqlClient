@@ -18,59 +18,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Remove dependency on Northwind database + WAITFOR not supported + ';' not supported
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void PlainCancelTest()
-        {
+        public static void PlainCancelTest_Tcp() =>
             PlainCancel(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void PlainCancelTestNP()
-        {
+        public static void PlainCancelTest_NamedPipe() =>
             PlainCancel(np_connStr);
-        }
-        
+
         // Synapse: Remove dependency on Northwind database + WAITFOR not supported + ';' not supported
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void PlainMARSCancelTest()
-        {
+        public static void PlainCancelTest_TcpMars() =>
             PlainCancel((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void PlainMARSCancelTestNP()
-        {
+        public static void PlainCancelTest_NamedPipeMars() =>
             PlainCancel((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
-        }
 
         // Synapse: Remove dependency on Northwind database + WAITFOR not supported + ';' not supported
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void PlainCancelTestAsync()
-        {
+        public static void PlainCancelTestAsync_Tcp() =>
             PlainCancelAsync(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void PlainCancelTestAsyncNP()
-        {
+        public static void PlainCancelTestAsync_NamedPipe() =>
             PlainCancelAsync(np_connStr);
-        }
 
         // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void PlainMARSCancelTestAsync()
-        {
+        public static void PlainCancelTestAsync_TcpMars() =>
             PlainCancelAsync((new SqlConnectionStringBuilder(tcp_connStr) { MultipleActiveResultSets = true }).ConnectionString);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void PlainMARSCancelTestAsyncNP()
-        {
+        public static void PlainCancelTestAsync_NamedPipeMars() =>
             PlainCancelAsync((new SqlConnectionStringBuilder(np_connStr) { MultipleActiveResultSets = true }).ConnectionString);
-        }
 
         private static void PlainCancel(string connString)
         {
@@ -124,128 +108,90 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public static void MultiThreadedCancel_NonAsync()
-        {
+        public static void MultiThreadedCancel_TcpSync() =>
             MultiThreadedCancel(tcp_connStr, false);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void MultiThreadedCancel_NonAsyncNP()
-        {
+        public static void MultiThreadedCancel_NamedPipeSync() =>
             MultiThreadedCancel(np_connStr, false);
-        }
 
         // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void MultiThreadedCancel_Async()
-        {
+        public static void MultiThreadedCancel_TcpAsync() =>
             MultiThreadedCancel(tcp_connStr, true);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void MultiThreadedCancel_AsyncNP()
-        {
+        public static void MultiThreadedCancel_NamedPipeAsync() =>
             MultiThreadedCancel(np_connStr, true);
-        }
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public static void TimeoutCancel()
-        {
+        public static void TimeoutCancel_Tcp() =>
             TimeoutCancel(tcp_connStr);
-        }
 
-        [ActiveIssue("12167")]
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3755")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void TimeoutCancelNP()
-        {
+        public static void TimeoutCancel_NamedPipe() =>
             TimeoutCancel(np_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void CancelAndDisposePreparedCommand()
-        {
+        public static void CancelAndDisposePreparedCommand_Tcp() =>
             CancelAndDisposePreparedCommand(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void CancelAndDisposePreparedCommandNP()
-        {
+        public static void CancelAndDisposePreparedCommand_NamedPipe() =>
             CancelAndDisposePreparedCommand(np_connStr);
-        }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TimeOutDuringRead()
-        {
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
+        public static void TimeOutDuringRead_Tcp() =>
             TimeOutDuringRead(tcp_connStr);
-        }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void TimeOutDuringReadNP()
-        {
+        public static void TimeOutDuringRead_NamedPipe() =>
             TimeOutDuringRead(np_connStr);
-        }
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CancelDoesNotWait()
-        {
+        public static void CancelDoesNotWait_Tcp() =>
             CancelDoesNotWait(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void CancelDoesNotWaitNP()
-        {
+        public static void CancelDoesNotWait_NamedPipe() =>
             CancelDoesNotWait(np_connStr);
-        }
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void AsyncCancelDoesNotWait()
-        {
-            AsyncCancelDoesNotWait(tcp_connStr).Wait();
-        }
+        public static Task CancelDoesNotWait_TcpAsync() =>
+            CancelDoesNotWaitAsync(tcp_connStr);
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void AsyncCancelDoesNotWaitNP()
-        {
-            AsyncCancelDoesNotWait(np_connStr).Wait();
-        }
+        public static Task CancelDoesNotWait_NamedPipeAsync() =>
+            CancelDoesNotWaitAsync(np_connStr);
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TCPAttentionPacketTestTransaction()
-        {
+        public static void AttentionPacketTestTransaction_Tcp() =>
             CancelFollowedByTransaction(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void NPAttentionPacketTestTransaction()
-        {
+        public static void AttentionPacketTestTransaction_NamedPipe() =>
             CancelFollowedByTransaction(np_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public static void TCPAttentionPacketTestAlerts()
-        {
+        public static void AttentionPacketTestAlerts_Tcp() =>
             CancelFollowedByAlert(tcp_connStr);
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void NPAttentionPacketTestAlerts()
-        {
+        public static void AttentionPacketTestAlerts_NamedPipe() =>
             CancelFollowedByAlert(np_connStr);
-        }
 
         private static void CancelFollowedByTransaction(string constr)
         {
@@ -348,26 +294,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimeoutCancel(string constr)
         {
-            using (SqlConnection con = new SqlConnection(constr))
-            {
-                con.Open();
-                using (SqlCommand cmd = con.CreateCommand())
-                {
-                    cmd.CommandTimeout = 1;
-                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
+            // Arrange
+            using SqlConnection connection = new SqlConnection(constr);
+            connection.Open();
 
-                    string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
+            using SqlCommand command = new SqlCommand();
+            command.CommandTimeout = 1;
+            command.CommandText = @"WAITFOR DELAY '00:01:00';" +
+                                  @"SELECT * FROM customers";
+            command.CommandType = CommandType.Text;
+            command.Connection = connection;
 
-                    VerifyConnection(cmd);
-                }
-            }
-        }
+            // Act
+            Action action = () => { using SqlDataReader reader = command.ExecuteReader(); };
 
-        private static void ExecuteReaderOnCmd(SqlCommand cmd)
-        {
-            using (SqlDataReader reader = cmd.ExecuteReader())
-            { }
+            // Assert
+            // - Action throws timeout exception with timeout message
+            Exception e = Assert.Throws<SqlException>(action);
+            Assert.Contains(SystemDataResourceManager.Instance.SQL_Timeout_Execution, e.Message);
+
+            // - Connection has not faulted
+            VerifyConnection(command);
         }
 
         //InvalidOperationException from connection.Dispose if that connection has prepared command cancelled during reading of data
@@ -379,7 +326,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     // Generate a query with a large number of results.
-                    using (var command = new SqlCommand("select @P from sysobjects a cross join sysobjects b cross join sysobjects c cross join sysobjects d cross join sysobjects e cross join sysobjects f", connection))
+                    using (var command = new SqlCommand("select @P from sys.objects a cross join sys.objects b cross join sys.objects c cross join sys.objects d cross join sys.objects e cross join sys.objects f", connection))
                     {
                         command.Parameters.Add(new SqlParameter("@P", SqlDbType.Int) { Value = expectedValue });
                         connection.Open();
@@ -531,7 +478,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static async Task AsyncCancelDoesNotWait(string connStr)
+        private static async Task CancelDoesNotWaitAsync(string connStr)
         {
             const int delaySeconds = 30;
             const int cancelSeconds = 1;
