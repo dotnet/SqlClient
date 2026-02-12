@@ -4,15 +4,15 @@
 
 .DESCRIPTION
   Special handling is required for ARM64 due to a bug in UseDotNet@2:
- 
+
   [BUG]: UseDotNet@2 task installs x86 build
   https://github.com/microsoft/azure-pipelines-tasks/issues/20300
- 
+
   The downloaded dotnet-install.ps1 script is kept in the $InstallDir to avoid
   downloading it multiple times during the pipeline job.
- 
+
   The following environment variables are set for subsequent steps in the pipeline:
- 
+
     DOTNET_ROOT: Set to $InstallDir.
     PATH: $DOTNET_ROOT is prepended to the PATH environment variable.
 
@@ -80,7 +80,7 @@ if (-not (Test-Path -Path "$InstallDir/dotnet-install.ps1" -PathType Leaf))
   }
 
   Write-Host "Downloading dotnet-install.ps1..."
-  
+
   $params =
   @{
     Uri = "https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1"

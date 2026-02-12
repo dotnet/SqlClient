@@ -372,9 +372,9 @@ stages:
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
               EnclaveEnabled: true
               AADAuthorityURL: $(AADAuthorityURL)
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalId: $(AADServicePrincipalId)
-              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
-                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)
               AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
               SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
