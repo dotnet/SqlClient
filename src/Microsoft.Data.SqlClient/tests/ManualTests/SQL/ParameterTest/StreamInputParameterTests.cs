@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _connStr = DataTestUtility.TCPConnectionString;
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void StreamInputParameterTest()
         {

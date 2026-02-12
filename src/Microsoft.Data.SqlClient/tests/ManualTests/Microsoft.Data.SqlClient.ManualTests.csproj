@@ -233,6 +233,12 @@
     <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
+
+    <!-- Resource files -->
+    <!-- @TODO: Move these into some folder or a resx or something -->
+    <Content Include="DDDataTypesTest_Data.xml"
+             CopyToOutputDirectory="PreserveNewest" />
+
     <!-- Split baseline files for individual test groups -->
     <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -330,36 +336,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>OutputParameter_ReleaseMode_Azure.bsl</Link>
     </Content>
-    <Content Include="DDBasics\DDDataTypesTest\data.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>data.xml</Link>
-    </Content>
-    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
-    <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
-    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
-    <Compile Include="TracingTests\MetricsTest.cs" />
-    <Compile Include="TracingTests\DiagnosticTest.cs" />
-    <Compile Include="TracingTests\EventSourceTest.cs" />
-    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
-    <Compile Include="TracingTests\MetricsTest.cs" />
-    <Compile Include="TracingTests\XEventsTracingTest.cs" />
-
-    <!-- Resource files -->
-    <!-- @TODO: Move these into some folder or a resx or something -->
-    <Content Include="DDDataTypesTest_Data.xml"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_DebugMode.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_DebugMode_Azure.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_ReleaseMode.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_ReleaseMode_Azure.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   
   <!-- Items to include in AE test set -->

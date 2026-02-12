@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// </summary>
     public class TvpQueryHintsTests
     {
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TvpQueryHintsTest()
         {
