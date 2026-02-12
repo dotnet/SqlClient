@@ -25,7 +25,7 @@ public sealed class ColumnEncryptionCertificateFixture : CertificateFixtureBase
     public X509Certificate2 CertificateWithoutPrivateKey { get; }
 
     private readonly X509Certificate2 _currentUserCertificate;
-    private readonly X509Certificate2 _localMachineCertificate;
+    private readonly X509Certificate2? _localMachineCertificate;
 
     public ColumnEncryptionCertificateFixture()
     {
@@ -57,11 +57,19 @@ public sealed class ColumnEncryptionCertificateFixture : CertificateFixtureBase
 
     public X509Certificate2 GetCertificate(StoreLocation storeLocation)
     {
-        return storeLocation == StoreLocation.CurrentUser
-            ? _currentUserCertificate
-            : storeLocation == StoreLocation.LocalMachine && IsAdmin
-                ? _localMachineCertificate
-                : throw new InvalidOperationException("Attempted to retrieve the certificate added to the local machine store; this requires administrator rights.");
+        if (storeLocation == StoreLocation.CurrentUser)
+        {
+            return _currentUserCertificate;
+        }
+
+        if (storeLocation == StoreLocation.LocalMachine &&
+            IsAdmin &&
+            _localMachineCertificate is not null)
+        {
+            return _localMachineCertificate;
+        }
+
+        throw new InvalidOperationException("Attempted to retrieve the certificate added to the local machine store; this requires administrator rights.");
     }
 
     public static bool IsAdmin

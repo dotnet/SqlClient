@@ -13,6 +13,83 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // XEvent sessions may become orphaned on the Azure SQL Server, which leads to poor performance
+    // (query timeouts, deadlocks, etc) over time.  This class is instantiated once per test run and
+    // drops these orphaned sessions as part of every run to help mitigate this issue.
+    public class XEventCleaner
+    {
+        public XEventCleaner()
+        {
+            if (DataTestUtility.AreConnStringsSetup() &&
+                DataTestUtility.IsNotAzureSynapse() &&
+                DataTestUtility.IsNotManagedInstance())
+            {
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                connection.Open();
+
+                // Identify orphaned event sessions and generate DROP commands.
+                using SqlCommand command = new(
+                    """
+                    SELECT Sessions.name
+                    FROM sys.database_event_sessions Sessions
+                    LEFT JOIN sys.dm_xe_database_sessions Active ON Sessions.name = Active.name
+                    WHERE Active.name IS NULL;
+                    """,
+                    connection);
+
+                HashSet<string> orphanedSessions = new();
+                try
+                {
+                    using SqlDataReader reader = command.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        string sessionName = reader.GetString(0);
+                        orphanedSessions.Add(sessionName);
+                    }
+                }
+                catch (SqlException)
+                {
+                    // Ignore exceptions - the next test run will attempt the cleanup.
+                }
+
+                if (orphanedSessions.Count == 0)
+                {
+                    return;
+                }
+
+                Console.WriteLine($"Identified {orphanedSessions.Count} orphaned XEvent sessions:");
+
+                // Drop them one at a time.
+                foreach (string sessionName in orphanedSessions)
+                {
+                    using SqlCommand dropCommand = new(
+                        $"DROP EVENT SESSION [{sessionName}] ON DATABASE;",
+                        connection);
+
+                    try
+                    {
+                        dropCommand.ExecuteNonQuery();
+                    }
+                    catch (SqlException)
+                    {
+                        // Ignore exceptions, as the session may have been cleaned up by another
+                        // test run at the same time.
+                    }
+
+                    Console.WriteLine($"  Dropped orphaned XEvent session: {sessionName}");
+                }
+            }
+        }
+    }
+
+    // This empty class is required by xUnit to tie the cleaner to the test classes.
+    [CollectionDefinition("XEventCleaner")]
+    public class XEventCleanerCollection : ICollectionFixture<XEventCleaner>
+    {
+    }
+
+    [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {
         private readonly string _testName;
@@ -22,6 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testName = DataTestUtility.CurrentTestName(outputHelper);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
         [InlineData("sp_help", System.Data.CommandType.StoredProcedure, "rpc_starting")]
@@ -39,8 +117,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
             xEventManagementConnection.Open();
-            
-            using DataTestUtility.XEventScope xEventSession = new(
+
+            using XEventScope xEventSession = new(
                 _testName,
                 xEventManagementConnection,
                 $@"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}')),
@@ -84,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             XPathNavigator? current = statementStartingQuery.Current;
             Assert.NotNull(current);
             XPathNavigator? activityIdElement = current.SelectSingleNode("action[@name='attach_activity_id_xfer']/value");
-            
+
             Assert.NotNull(activityIdElement);
             Assert.NotNull(activityIdElement.Value);
 

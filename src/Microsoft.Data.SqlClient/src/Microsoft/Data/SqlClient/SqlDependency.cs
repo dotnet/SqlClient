@@ -19,7 +19,9 @@ using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
+#if _WINDOWS
 using Interop.Windows.Sni;
+#endif
 using Microsoft.Data.SqlClient.LocalDb;
 #endif
 

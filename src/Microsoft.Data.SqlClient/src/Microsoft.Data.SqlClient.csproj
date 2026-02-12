@@ -1,55 +1,164 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+	<!-- General Properties ============================================== -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <Configurations>Debug;Release;</Configurations>
+    <RootNamespace />
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<RootNamespace />
 	</PropertyGroup>
+
+  <!-- CLS Compliance ================================================== -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)' == 'Official'">
+    <SignAssembly>true</SignAssembly>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Internals visible to ============================================ -->
+  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
-    <!-- If a target OS was not specified, use the current OS as the target OS. -->
+    <!-- @TODO: Move to directory.build.props? -->
+    <!--
+      If a target OS was not specified, we must choose a reasonable default.
+
+      For .NET Framework targets, we can assume a target OS of Windows, since
+      we don't support .NET Framework on any other OS.
+
+      For .NET targets, we will use the host OS, since that is where the
+      resulting artifacts are likely to be executed (i.e. tests).
+
+      Official builds should always explicitly specify a target OS.
+    -->
+    <TargetOs Condition="'$(TargetOs)' == '' AND '$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">Windows_NT</TargetOs>
     <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
     <!-- Uncomment the following line to override the OS you are developing for -->
     <!--<TargetOs>Unix</TargetOs>-->
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
+    <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
+
     <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
-    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here. -->
-    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'UNIX'">$(DefineConstants),_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
+    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
+    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
+    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: Move to directory.build.props? -->
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
+    <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
+    <!-- to is possible but requires also specifying the IntermediateOutputPath. So while it      -->
+    <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
-    <EmbeddedResource Include="Resources/ILLink.Substitutions.xml"
-                      Condition="'$(TargetOs.ToUpper())' == 'WINDOWS_NT'" />
+    <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->
+    <!-- the app context switch in their csproj. This file only applies to netcore on windows.    -->
+    <!-- This file does not support pre-processor directives, so it must be conditionally         -->
+    <!-- included into the build.                                                                 -->
+    <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
+                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
+
+    <!-- Used by SqlMetaDataFactory to construct its DataSet -->
+    <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
+      <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
+      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
+    </EmbeddedResource>
+
+    <!-- Base strings in English -->
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>System</CustomToolNamespace>
+    </EmbeddedResource>
+
+    <!-- Include all strings that have been translated -->
+    <EmbeddedResource Update="Resources\Strings.*.resx">
+      <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
+    </EmbeddedResource>
+
+    <!-- Strings designer that depends on the resx -->
+    <Compile Update="Resources\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <!-- References ====================================================== -->
-  <ItemGroup>
-    <!-- References that apply to all target frameworks -->
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
+  <!-- References for netframework -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Transactions" />
+
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI">
+      <PrivateAssets>All</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs"  />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <!-- References that only apply to net462 -->
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Transactions" />
-    <PackageReference Include="System.ValueTuple" />
-    <PackageReference Include="System.Threading.Channels" />
-	</ItemGroup>
-
-  <!-- System.Buffers, System.Memory, and System.Runtime.InteropServices.RuntimeInformation are included in .NET 10+ BCL -->
-  <ItemGroup Condition="$([MSBuild]::VersionLessThan($([MSBuild]::GetTargetFrameworkVersion($(TargetFramework))), '10.0'))">
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.ValueTuple" />
+	</ItemGroup>
+
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+  </ItemGroup>
+
+  <!-- CodeGen Targets ================================================= -->
+  <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>

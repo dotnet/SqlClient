@@ -12,7 +12,10 @@ using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
+
+#if _WINDOWS
 using Interop.Windows.Kernel32;
+#endif
 
 namespace Microsoft.Data.Common
 {

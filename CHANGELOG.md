@@ -7,6 +7,287 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable release 6.0.5] - 2026-01-15
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed NullReferenceException issue with `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3878](https://github.com/dotnet/SqlClient/pull/3878))
+
+### Added
+
+*What Changed:*
+
+- Added new AppContext switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection string.
+  ([#3852](https://github.com/dotnet/SqlClient/pull/3852))
+
+*Who Benefits:*
+
+- Applications that need MultiSubnetFailover enabled globally without modifying connection strings.
+
+*Impact:*
+
+- Applications can now enable MultiSubnetFailover globally using one of the following methods:
+
+```c#
+// In application code
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault", true);
+```
+
+```json
+// In runtimeconfig.json
+{
+  "configProperties": {
+    "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault": true
+  }
+}
+```
+
+```xml
+<!-- In App.Config -->
+<runtime>
+  <AppContextSwitchOverrides value="Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=true" />
+</runtime>
+```
+
+### Changed
+
+- Updated dependencies ([#3840](https://github.com/dotnet/SqlClient/pull/3840)):
+  - .NET Framework 4.6.2:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.Text.Json 8.0.5 -> 8.0.6
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Encodings.Web - Removed
+
+  - .NET 8.0:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+
+  - .NET 9.0:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 9.0.11
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+
+## [Stable Release 6.1.4] - 2026-01-15
+
+This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.3.md) release:
+
+### Fixed
+
+- Fixed NullReferenceException issue with `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3877](https://github.com/dotnet/SqlClient/pull/3877))
+- Fixed connection pooling issue where extra connection deactivation was causing active connection counts to go negative.
+  ([#3776](https://github.com/dotnet/SqlClient/pull/3776))
+
+### Added
+
+#### AppContext Switch for enabling MultiSubnetFailover
+
+*What Changed:*
+
+- Added new AppContext switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection string.
+  ([#3851](https://github.com/dotnet/SqlClient/pull/3851))
+
+*Who Benefits:*
+
+- Applications that need MultiSubnetFailover enabled globally without modifying connection strings.
+
+*Impact:*
+
+- Applications can now enable MultiSubnetFailover globally using one of the following methods:
+
+```c#
+// In application code
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault", true);
+```
+
+```json
+// In runtimeconfig.json
+{
+  "configProperties": {
+    "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault": true
+  }
+}
+```
+
+```xml
+<!-- In App.Config -->
+<runtime>
+  <AppContextSwitchOverrides value="Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=true" />
+</runtime>
+```
+
+### Changed
+
+- Optimized `SqlStatistics` execution timing by using `Environment.TickCount` instead of more expensive timing mechanisms.
+  ([#3830](https://github.com/dotnet/SqlClient/pull/3830))
+- Updated dependencies ([#3843](https://github.com/dotnet/SqlClient/pull/3843)):
+  - .NET Framework 4.6.2:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.Diagnostics.DiagnosticSource 8.0.1 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - System.Memory 4.6.3 - Added
+    - System.Text.Json 8.0.5 -> 8.0.6
+    - System.Text.RegularExpressions 4.3.1 - Added
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Encodings.Web - Removed
+  - .NET 8.0:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Diagnostics.DiagnosticSource 8.0.1 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+  - .NET 9.0:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 9.0.11
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Configuration.ConfigurationManager 9.0.4 -> 9.0.11
+    - System.Diagnostics.DiagnosticSource 9.0.11 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - System.Security.Cryptography.Pkcs 9.0.4 -> 9.0.11
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+  - .NET Standard 2.0:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 8.0.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Configuration.ConfigurationManager 9.0.4 -> 8.0.1
+    - System.Diagnostics.DiagnosticSource 8.0.1 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - System.Security.Cryptography.Pkcs 9.0.4 -> 8.0.1
+    - System.Text.Json 9.0.5 -> 8.0.6
+    - Microsoft.Bcl.Cryptography - Removed
+
+## [Stable release 5.1.9] - 2026-01-13
+
+This update brings the following changes since the [5.1.8](release-notes/5.1/5.1.8.md) release:
+
+### Changed
+
+- Use Environment.TickCount for SqlStatistics execution timing.
+  ([#3831](https://github.com/dotnet/SqlClient/pull/3831))
+- Updated dependencies ([#3838](https://github.com/dotnet/SqlClient/pull/3838)):
+  - .NET Standard 2.0:
+    - Microsoft.Win32.Registry - Removed
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+  - .NET Standard 2.1:
+    - Microsoft.Win32.Registry - Removed
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+  - .NET Framework 4.6.2:
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+    - System.Text.Json - Removed
+  - .NET 6.0:
+    - System.Diagnostics.DiagnosticSource - Removed
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+
+## [Preview Release 7.0.0-preview3.25342.7] - 2025-12-08
+
+This update brings the following changes over the previous preview release:
+
+### Added
+
+#### Support for .NET 10
+
+*What Changed:*
+
+- Updated pipelines and test suites to compile the driver using the .NET 10 SDK. Cleaned up unnecessary dependency references. 
+  ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
+
+*Who Benefits:*
+
+- Developers targeting .NET 10.
+
+*Impact:*
+
+- Addressed .NET 10 warnings regarding unused/unnecessary dependencies.
+
+#### Enable SqlClientDiagnosticListener in SqlCommand on .NET Framework
+
+*What Changed:*
+
+- Enabled SqlClientDiagnosticListener functionality on SqlCommand for .NET Framework.
+  ([#3658](https://github.com/dotnet/SqlClient/pull/3658))
+
+*Who Benefits:*
+
+- Developers requiring diagnostic information on .NET Framework.
+
+*Impact:*
+
+- Improved observability and diagnostics for SqlCommand on .NET Framework.
+
+#### Enable User Agent Extension
+
+*What Changed:*
+
+- Enabled User Agent Feature Extension.
+  ([#3606](https://github.com/dotnet/SqlClient/pull/3606))
+
+*Who Benefits:*
+
+- Telemetry and diagnostics consumers.
+
+*Impact:*
+
+- When the `Switch.Microsoft.Data.SqlClient.EnableUserAgent` app context switch is enabled, the driver sends more detailed user agent strings. This switch is disabled by default. This change will assist with troubleshooting and quantifying driver usage by version and operating system.
+
+### Fixed
+
+- Fixed an issue where extra connection deactivation was occurring.
+  ([#3758](https://github.com/dotnet/SqlClient/pull/3758))
+
+### Changed
+
+#### Other changes
+
+- Performance improvements:
+  ([#3732](https://github.com/dotnet/SqlClient/pull/3732),
+   [#3660](https://github.com/dotnet/SqlClient/pull/3660))
+
+- Codebase merge and cleanup:
+  ([#3803](https://github.com/dotnet/SqlClient/pull/3803),
+   [#3781](https://github.com/dotnet/SqlClient/pull/3781),
+   [#3760](https://github.com/dotnet/SqlClient/pull/3760),
+   [#3746](https://github.com/dotnet/SqlClient/pull/3746),
+   [#3743](https://github.com/dotnet/SqlClient/pull/3743),
+   [#3738](https://github.com/dotnet/SqlClient/pull/3738),
+   [#3683](https://github.com/dotnet/SqlClient/pull/3683),
+   [#3676](https://github.com/dotnet/SqlClient/pull/3676),
+   [#3768](https://github.com/dotnet/SqlClient/pull/3768))
+
 ## [Stable release 6.0.4] - 2025-11-15
 
 This update brings the below changes over the previous stable release:

@@ -3,10 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-
-#if _WINDOWS
 using System.Security.Principal;
-#endif
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {

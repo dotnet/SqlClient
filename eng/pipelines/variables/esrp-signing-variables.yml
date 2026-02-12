@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in AKV OneBranch Official pipelines.
+
 # These variables are used for running ESRP signing tasks. All names start with "Signing" to make
 # it clear that these variables are used for signing (as opposed to other msc tasks).
 

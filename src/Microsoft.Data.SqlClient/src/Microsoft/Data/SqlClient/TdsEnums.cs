@@ -13,10 +13,6 @@ namespace Microsoft.Data.SqlClient
     internal static class TdsEnums
     {
         // internal tdsparser constants
-
-
-        public const string SQL_PROVIDER_NAME = DbConnectionStringDefaults.ApplicationName;
-
         public static readonly decimal SQL_SMALL_MONEY_MIN = new(-214748.3648);
         public static readonly decimal SQL_SMALL_MONEY_MAX = new(214748.3647);
 
@@ -987,9 +983,6 @@ namespace Microsoft.Data.SqlClient
         internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
         internal const int VECTOR_HEADER_SIZE = 8;
 
-        // User Agent constants
-        internal const byte SUPPORTED_USER_AGENT_VERSION = 0x01;
-
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
         internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support
@@ -1132,44 +1125,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*' />
         Disabled,
     }
-
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>
-    public enum SqlAuthenticationMethod
-    {
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/NotSpecified/*'/>
-        NotSpecified = 0,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlPassword/*'/>
-        SqlPassword,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
-        [Obsolete("ActiveDirectoryPassword is deprecated, use a more secure authentication method. See https://aka.ms/SqlClientEntraIDAuthentication for more details.")]
-        ActiveDirectoryPassword,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>
-        ActiveDirectoryIntegrated,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryInteractive/*'/>
-        ActiveDirectoryInteractive,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
-        ActiveDirectoryServicePrincipal,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDeviceCodeFlow/*'/>
-        ActiveDirectoryDeviceCodeFlow,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryManagedIdentity/*'/>
-        ActiveDirectoryManagedIdentity,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryMSI/*'/>
-        ActiveDirectoryMSI,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDefault/*'/>
-        ActiveDirectoryDefault,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryWorkloadIdentity/*'/>
-        ActiveDirectoryWorkloadIdentity
-    }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt fails next attempts should be parallel.
     internal enum TransparentNetworkResolutionState
@@ -1178,12 +1133,6 @@ namespace Microsoft.Data.SqlClient
         SequentialMode,
         ParallelMode
     };
-
-    internal class ActiveDirectoryAuthentication
-    {
-        internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-        internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
-    }
 
     // Fields in the first resultset of "sp_describe_parameter_encryption".
     // We expect the server to return the fields in the resultset in the same order as mentioned below.

@@ -54,24 +54,24 @@ parameters:
     default: $(LocalDbSharedInstanceName)
 
 # Common parameters
-  - name: password
-    type: string
-    default: $(password)
-
   - name: netcoreVersionTestUtils
     type: string
 
   - name: databaseName
     type: string
     default: Northwind
-  
+
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
   # windows only steps
-  - template: configure-sql-server-win-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
     parameters:
       instanceName: ${{parameters.instanceName}}
       user: ${{parameters.user}}
@@ -85,24 +85,20 @@ steps:
       enableLocalDB: ${{parameters.enableLocalDB}}
       localDbAppName: ${{parameters.localDbAppName}}
       localDbSharedInstanceName: ${{parameters.localDbSharedInstanceName}}
-      password: ${{parameters.password}}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
   # Linux only steps
-  - template: configure-sql-server-linux-step.yml@self
-    parameters:
-      password: ${{parameters.password}}
+  - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
 
 - ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
   # macOS only steps
-  - template: configure-sql-server-macos-step.yml@self
-    parameters:
-      password: ${{parameters.password}}
+  - template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
 
 # Common steps
 - task: DotNetCoreCLI@2
   displayName: 'Build Ext Utilities'
   inputs:
+    command: build
     arguments: '-f ${{parameters.netcoreVersionTestUtils }}'
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
   retryCountOnTaskFailure: 1
