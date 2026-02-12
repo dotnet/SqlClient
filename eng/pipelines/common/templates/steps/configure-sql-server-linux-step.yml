@@ -4,15 +4,14 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This step configures an existing SQL Server running on the local Linux host.
-# For example, our 1ES Hosted Pool has images like ADO-UB20-SQL22 that come with
-# SQL Server 2022 pre-installed and running.
+# This step configures an existing SQL Server running on the local Linux host.  For example, our 1ES
+# Hosted Pool has images like ADO-UB20-SQL22 that come with SQL Server 2022 pre-installed and
+# running.
+#
+# The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
+# Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
 
 parameters:
-  - name: password
-    type: string
-    default: $(password)
-
   - name: condition
     type: string
     default: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
@@ -21,20 +20,20 @@ steps:
 # Linux only steps
 - bash: |
     sudo systemctl stop mssql-server
-    
+
     # Password for the SA user (required)
 
-    MSSQL_SA_PW=${{parameters.password }}
+    MSSQL_SA_PW="$(Password)"
 
     # Product ID of the version of SQL server you're installing
     # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
-    MSSQL_PID='enterprise'
-    
+    MSSQL_PID="enterprise"
+
     echo Running mssql-conf setup...
-    sudo MSSQL_SA_PASSWORD=$MSSQL_SA_PW\
-          MSSQL_PID=$MSSQL_PID \
+    sudo MSSQL_SA_PASSWORD="$MSSQL_SA_PW" \
+          MSSQL_PID="$MSSQL_PID" \
           /opt/mssql/bin/mssql-conf -n setup accept-eula
-    
+
     # Connect to server and get the version:
     counter=1
     errstatus=1
@@ -50,7 +49,7 @@ steps:
       errstatus=$?
       ((counter++))
     done
-    
+
     # Display error if connection failed:
     if [ $errstatus = 1 ]
     then

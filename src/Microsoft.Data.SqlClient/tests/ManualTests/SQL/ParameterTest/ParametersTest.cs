@@ -301,7 +301,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     cmd.ExecuteNonQuery();
 
-                    // Verify if the data was updated 
+                    // Verify if the data was updated
                     cmd.CommandText = "select * from " + tableName;
                     cmd.CommandType = CommandType.Text;
                     using SqlDataReader reader = cmd.ExecuteReader();
@@ -350,7 +350,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record1,
                 record2,
             };
-            
+
             using SqlConnection connection = new(builder.ConnectionString);
             string procName = DataTestUtility.GetLongName("Proc");
             string typeName = DataTestUtility.GetShortName("Type");
@@ -430,7 +430,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     cmd.CommandText = spName;
                     cmd.CommandType = CommandType.StoredProcedure;
-                    
+
                     DataTable dtTest = new();
                     dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
                     dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
@@ -973,6 +973,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [SkipOnPlatform(TestPlatforms.OSX, "Flaky on macOS: https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42351")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {

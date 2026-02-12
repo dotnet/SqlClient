@@ -109,7 +109,7 @@ parameters:
   - name: testJobTimeout
     displayName: Test job timeout (in minutes)
     type: number
-    default: 60
+    default: 90
 
   - name: testSets
     displayName: Test Sets

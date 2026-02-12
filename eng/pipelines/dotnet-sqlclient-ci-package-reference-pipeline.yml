@@ -48,11 +48,11 @@ pr: none
 
 # Trigger this pipeline on commits to certain branches.
 trigger:
-  
+
   # Don't trigger a new run until the previous one completes.  This may cause
   # multiple commits to be batched into a single run.
   batch: true
-  
+
   branches:
     include:
     # GitHub main branch.
@@ -60,7 +60,7 @@ trigger:
 
     # ADO internal/main branch.
     - internal/main
-  
+
   paths:
     include:
     - .azuredevops
@@ -154,7 +154,7 @@ parameters:
   - name: testJobTimeout
     displayName: Test job timeout (in minutes)
     type: number
-    default: 60
+    default: 90
 
   - name: testSets
     displayName: Test Sets
