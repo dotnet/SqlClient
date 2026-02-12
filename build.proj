@@ -10,10 +10,6 @@
     <!-- SourceLink variable-->
     <DisableSourceLink>false</DisableSourceLink>
 
-    <!-- Use the NuGet.config with a local source for Package reference builds. -->
-    <NuGetConfigFile>$(RepoRoot)/NuGet.config</NuGetConfigFile>
-    <NuGetConfigFile Condition="'$(ReferenceType)' == 'Package'">$(NuGetConfigFile).local</NuGetConfigFile>
-
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
@@ -32,7 +28,7 @@
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
     <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
-    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);RestoreConfigFile=$(NuGetConfigFile)</CommonProperties>
+    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
     <SqlServerLibProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
