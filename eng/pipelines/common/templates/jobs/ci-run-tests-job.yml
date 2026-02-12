@@ -241,7 +241,6 @@ jobs:
     - ${{ elseif eq(parameters.configSqlFor, 'local') }}:
       - template: /eng/pipelines/common/templates/steps/configure-sql-server-step.yml@self # configure SQL Server
         parameters:
-          debug: ${{ parameters.debug }}
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
           saPassword: ${{ parameters.saPassword }}

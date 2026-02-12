@@ -59,10 +59,6 @@ parameters:
     default: $(LocalDbSharedInstanceName)
 
 # Common parameters
-  - name: debug
-    type: boolean
-    default: false
-
   - name: netcoreVersionTestUtils
     type: string
 
@@ -82,7 +78,6 @@ steps:
   # windows only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
     parameters:
-      debug: ${{ parameters.debug }}
       instanceName: ${{parameters.instanceName}}
       user: ${{parameters.user}}
       saUser: ${{parameters.saUser}}
@@ -101,14 +96,12 @@ steps:
   # Linux only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
     parameters:
-      debug: ${{ parameters.debug }}
       saPassword: ${{ parameters.saPassword }}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
   # macOS only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
     parameters:
-      debug: ${{ parameters.debug }}
       saPassword: ${{ parameters.saPassword }}
 
 # Common steps

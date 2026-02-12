@@ -10,21 +10,11 @@
 
 parameters:
 
-  - name: debug
-    type: boolean
-    default: false
-
   # The SA password to set when configuring SQL Server.
   - name: saPassword
     type: string
 
 steps:
-
-  # Emit the SA password, if desired.
-  - ${{ if eq(parameters.debug, true) }}:
-    - bash: |
-        echo "SA password: ${{ parameters.saPassword }}"
-      displayName: '[Debug] Emit SA password'
 
   # Configure SQL Server.
   - bash: |
@@ -32,10 +22,6 @@ steps:
 
       # Password for the SA user (required)
       MSSQL_SA_PW="${{ parameters.saPassword }}"
-
-      if [ "${{ parameters.debug }}" = "True" ]; then
-        echo "SA password: $MSSQL_SA_PW"
-      fi
 
       # Product ID of the version of SQL server you're installing
       # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key

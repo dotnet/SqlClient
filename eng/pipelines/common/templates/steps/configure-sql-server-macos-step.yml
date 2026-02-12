@@ -9,21 +9,11 @@
 
 parameters:
 
-  - name: debug
-    type: boolean
-    default: false
-
   # The SA password to set when configuring SQL Server.
   - name: saPassword
     type: string
 
 steps:
-
-  # Emit the SA password, if desired.
-  - ${{ if eq(parameters.debug, true) }}:
-    - bash: |
-        echo "SA password: ${{ parameters.saPassword }}"
-      displayName: '[Debug] Emit SA password'
 
   # Configure SQL Server.  This includes installing Docker and the SQLCMD tools, starting a SQL
   # Server container, and verifying we can connect to it.
