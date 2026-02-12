@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for DateTime variant parameters with different date/time types.
     /// These tests run independently with their own baseline comparison.
     /// </summary>
+    [Collection("ParameterBaselineTests")]
     public class DateTimeVariantTests
     {
         private readonly string _connStr;

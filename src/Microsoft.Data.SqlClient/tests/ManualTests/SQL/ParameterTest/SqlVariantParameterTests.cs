@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for SQL Variant parameters.
     /// These tests run independently with their own baseline comparison.
     /// </summary>
+    [Collection("ParameterBaselineTests")]
     public class SqlVariantParameterTests
     {
         private readonly string _connStr;

@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for output parameters.
     /// These tests run independently with their own baseline comparison.
     /// </summary>
+    [Collection("ParameterBaselineTests")]
     public class OutputParameterTests
     {
         private readonly string _connStr;

@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for TVP query hints (sort order, uniqueness, default columns).
     /// These tests run independently with their own baseline comparison.
     /// </summary>
+    [Collection("ParameterBaselineTests")]
     public class TvpQueryHintsTests
     {
         [Trait("Category", "flaky")]
