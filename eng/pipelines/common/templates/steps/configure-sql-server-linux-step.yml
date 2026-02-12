@@ -20,6 +20,12 @@ parameters:
 
 steps:
 
+  # Emit the SA password, if desired.
+  - ${{ if eq(parameters.debug, true) }}:
+    - bash: |
+        echo "SA password: ${{ parameters.saPassword }}"
+      displayName: '[Debug] Emit SA password'
+
   # Configure SQL Server.
   - bash: |
       sudo systemctl stop mssql-server

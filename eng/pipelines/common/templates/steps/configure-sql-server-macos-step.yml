@@ -18,6 +18,13 @@ parameters:
     type: string
 
 steps:
+
+  # Emit the SA password, if desired.
+  - ${{ if eq(parameters.debug, true) }}:
+    - bash: |
+        echo "SA password: ${{ parameters.saPassword }}"
+      displayName: '[Debug] Emit SA password'
+
   # Configure SQL Server.  This includes installing Docker and the SQLCMD tools, starting a SQL
   # Server container, and verifying we can connect to it.
   - bash: |
@@ -44,10 +51,6 @@ steps:
 
       # Password for the SA user (required)
       MSSQL_SA_PW="${{ parameters.saPassword }}"
-
-      if [ "${{ parameters.debug }}" = "True" ]; then
-        echo "SA password: $MSSQL_SA_PW"
-      fi
 
       docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
 
@@ -78,7 +81,7 @@ steps:
 
         echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
 
-        sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
+        sqlcmd -S 127.0.0.1 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
 
         # If the command was successful, then the SQL Server is ready.
         if [ $? -eq 0 ]; then
@@ -108,18 +111,18 @@ steps:
 
       echo "Use sqlcmd to show which IP addresses are being listened on..."
       echo 0.0.0.0
-      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+      sqlcmd -S 0.0.0.0 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
       echo 127.0.0.1
-      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+      sqlcmd -S 127.0.0.1 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
       echo ::1
-      sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+      sqlcmd -S ::1 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
       echo localhost
-      sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+      sqlcmd -S localhost -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
       echo "(sqlcmd default / not specified)"
-      sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+      sqlcmd -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
 
       echo "Configuring Dedicated Administer Connections to allow remote connections..."
-      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
+      sqlcmd -S 127.0.0.1 -No -U sa -P "$MSSQL_SA_PW" -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
       if [ $? = 1 ]
       then
         echo "Error configuring DAC for remote access."

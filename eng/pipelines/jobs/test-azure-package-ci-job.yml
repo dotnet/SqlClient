@@ -274,7 +274,7 @@ jobs:
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:
-        - pwsh: >
+        - pwsh: >-
             Get-ChildItem
               -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}"
               -Recurse

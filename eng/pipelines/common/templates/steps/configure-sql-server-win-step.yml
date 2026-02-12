@@ -68,7 +68,13 @@ parameters:
 
 steps:
 
-  - powershell: |
+  # Emit the SA password, if desired.
+  - ${{ if eq(parameters.debug, true) }}:
+    - pwsh: |
+        Write-Host "SA password: ${{ parameters.saPassword }}"
+      displayName: '[Debug] Emit SA password'
+
+  - pwsh: |
       try
       {
       # enable TCP
@@ -102,7 +108,7 @@ steps:
     displayName: 'Enable TCP, NP & Firewall [Win]'
     retryCountOnTaskFailure: 2
 
-  - powershell: |
+  - pwsh: |
       $password = "${{ parameters.saPassword }}"
 
       if ("${{ parameters.debug }}" -eq "True")
@@ -146,7 +152,7 @@ steps:
       SQL_PASSWD: ${{ parameters.saPassword }}
 
   - ${{ if ne(parameters.SQLRootPath, '') }}:
-    - powershell: |
+    - pwsh: |
         #Enable FileStream
         $instance = "${{parameters.instanceName }}"
         $wmi = Get-WmiObject -Namespace "${{parameters.SQLRootPath }}" -Class FilestreamSettings | where {$_.InstanceName -eq $instance}
@@ -171,13 +177,13 @@ steps:
         SQL_PASSWD: ${{ parameters.saPassword }}
 
   - ${{ if ne(parameters.FileStreamDirectory, '') }}:
-    - powershell: |
+    - pwsh: |
         New-Item -Path ${{ parameters.fileStreamDirectory }} -ItemType Directory
       displayName: 'Create FileStreamFolder'
       retryCountOnTaskFailure: 1
       continueOnError: true
 
-  - powershell: |
+  - pwsh: |
       $SQLServerName = ("{0}" -f [System.Net.Dns]::GetHostByName($env:computerName).HostName)
       Write-Host  FQDN is: $SQLServerName
 
@@ -195,7 +201,7 @@ steps:
       New-ItemProperty -Path ${{parameters.x64AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
     displayName: 'Setup SQL Alias [Win]'
 
-  - powershell: |
+  - pwsh: |
       # Create Certificate
       $computerDnsName = [System.Net.Dns]::Resolve($null).HostName
       $certificate = New-SelfSignedCertificate -DnsName $computerDnsName,localhost -CertStoreLocation cert:\LocalMachine\My -FriendlyName test99 -KeySpec KeyExchange
@@ -232,7 +238,7 @@ steps:
       }
     displayName: 'Add SQL Certificate [Win]'
 
-  - powershell: |
+  - pwsh: |
       # You need to restart SQL Server for the change to persist
       # -Force takes care of any dependent services, like SQL Agent.
       # Note: if the instance is named, replace MSSQLSERVER with MSSQL$ followed by
@@ -251,7 +257,7 @@ steps:
 
     displayName: 'Restart SQL Server [Win]'
 
-  - powershell: |
+  - pwsh: |
       $arrService = Get-Service -Name "SQLBrowser"
       $arrService
 
@@ -271,7 +277,7 @@ steps:
     displayName: 'Start Sql Server Browser [Win]'
 
   - ${{ if parameters.enableLocalDB }}:
-    - powershell: |
+    - pwsh: |
         #script to enable local db
 
         SqlLocalDB info
