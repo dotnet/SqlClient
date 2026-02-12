@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -25,6 +27,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool RunTestAndCompareWithBaseline()
         {
+            CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+            try
+            {
             string outputPath = "TvpColumnBoundaries.out";
             string baselinePath;
 #if DEBUG
@@ -77,6 +83,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine("Comparison Results:");
             Console.WriteLine(comparisonResult);
             return false;
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = previousCulture;
+            }
         }
 
         private static string FindDiffFromBaseline(string baselinePath, string outputPath)

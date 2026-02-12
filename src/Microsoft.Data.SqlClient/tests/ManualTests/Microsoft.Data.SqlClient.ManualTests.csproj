@@ -233,6 +233,11 @@
     <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
+    <Compile Include="TracingTests\DiagnosticTest.cs" />
+    <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
+    <Compile Include="TracingTests\MetricsTest.cs" />
+    <Compile Include="TracingTests\XEventsTracingTest.cs" />
 
     <!-- Resource files -->
     <!-- @TODO: Move these into some folder or a resx or something -->
