@@ -73,14 +73,8 @@ jobs:
       Write-Host "This will verify the artifact signature" -ForegroundColor Green
       Write-Host "--------------------------------------------------"
 
-      if ($packageType -eq 'dll' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.nupkg
-      }
-      if ($packageType -eq 'pdb' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.snupkg
-      }
+      nuget verify -All $(pathToDownloadedNuget)\*.nupkg
+      nuget verify -All $(pathToDownloadedNuget)\*.snupkg
     displayName: 'Verify nuget signature'
 
   - powershell: |
