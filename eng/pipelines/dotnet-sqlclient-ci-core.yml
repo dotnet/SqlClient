@@ -122,6 +122,11 @@ variables:
 
 stages:
 
+  # Generate secrets used throughout the pipeline.
+  - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
@@ -173,7 +178,7 @@ stages:
       # When building via packages, we must depend on the Abstractions and MDS
       # packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
-        dependsOn:
+        additionalDependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -186,7 +191,7 @@ stages:
     - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn:
+        additionalDependsOn:
           - build_mds_akv_packages_stage
           - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
@@ -209,7 +214,7 @@ stages:
       # When testing MDS via packages, we must depend on the Abstractions,
       # MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
-        dependsOn:
+        additionalDependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
           - build_azure_package_stage

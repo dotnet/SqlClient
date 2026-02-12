@@ -12,14 +12,20 @@
 #   src/Microsoft.Data.SqlClient/tests/StressTests
 #
 # All tests use a localhost SQL Server configured for SQL auth via the 'sa' user
-# and password of '$(Password)'.  The $(Password) variable is defined in the ADO
-# Library "ADO Test Configuration properties", brought in by
-# common/templates/libraries/ci-build-variables.yml.
+# and the provided password.
+#
+# This stage depends on the secrets_stage.
 #
 # This template defines a stage named 'run_stress_tests_stage' that can be
 # depended on by downstream stages.
 
 parameters:
+
+  # The names of any additional stages this stage depends on, for example the stages that publish
+  # the MDS package artifacts we will test.
+  - name: additionalDependsOn
+    type: object
+    default: []
 
   # The Azure package version to stress test.  This version must be available in
   # one of the configured NuGet sources.
@@ -34,12 +40,6 @@ parameters:
     values:
       - Debug
       - Release
-
-  # The names of any stages this stage depends on, for example the stages
-  # that publish the MDS package artifacts we will test.
-  - name: dependsOn
-    type: object
-    default: []
 
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
@@ -74,7 +74,9 @@ parameters:
 stages:
   - stage: run_stress_tests_stage
     displayName: Run Stress Tests
-    dependsOn: ${{ parameters.dependsOn }}
+    dependsOn:
+      - secrets_stage
+      - ${{ parameters.additionalDependsOn }}
 
     variables:
       # The directory where dotnet artifacts will be staged.  Not to be
@@ -104,6 +106,10 @@ stages:
           $(commonArguments)
           --configuration ${{parameters.buildConfiguration}}
 
+      # Bring the SA password from the secrets_stage into scope here.
+      - name: saPassword
+        value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
+
       # The contents of the config file to use for all tests.  We will write
       # this to a JSON file for each test job, and then point to it via the
       # STRESS_CONFIG_FILE environment variable.
@@ -116,7 +122,7 @@ stages:
               "isDefault": true,
               "dataSource": "localhost",
               "user": "sa",
-              "password": "$(Password)",
+              "password": "$(saPassword)",
               "supportsWindowsAuthentication": false,
               "isLocal": false,
               "disableMultiSubnetFailover": true,
@@ -136,7 +142,10 @@ stages:
         displayNamePrefix: Linux
         poolName: $(ci_var_defaultPoolName)
         vmImage: ADO-UB22-SQL22
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
+          parameters:
+            saPassword: $(saPassword)
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
@@ -156,7 +165,10 @@ stages:
         # The Windows images include a suitable .NET Framework runtime, so we
         # don't have to install one explicitly.
         vmImage: ADO-MMS22-SQL22
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
+          parameters:
+            saPassword: $(saPassword)
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
@@ -179,7 +191,10 @@ stages:
         # generic one from Azure Pipelines.
         poolName: Azure Pipelines
         vmImage: macos-latest
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
+          parameters:
+            saPassword: $(saPassword)
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
