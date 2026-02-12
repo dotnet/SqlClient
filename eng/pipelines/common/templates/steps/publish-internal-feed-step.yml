@@ -1,0 +1,32 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Template to publish NuGet packages to an internal Azure DevOps feed
+
+parameters:
+  # Boolean value to indicate whether to perform a dry run or actual publish
+  - name: dryRun
+    type: boolean
+    default: true
+
+  # Internal feed source URL for publishing packages to Azure DevOps Feed
+  - name: internalFeedSource
+    type: string
+
+  # Glob pattern to identify packages to be published
+  - name: packagesGlob
+    type: string
+
+steps:
+  - task: PowerShell@2
+    inputs:
+      displayName: Publish to Internal Feed
+      pwsh: true
+      filePath: /tools/scripts/publishPackagesToAzDOFeed.ps1
+      arguments: >
+        -dryRun ${{ parameters.dryRun }}
+        -internalFeedSource '${{ parameters.internalFeedSource }}'
+        -packagesGlob '${{ parameters.packagesGlob }}'

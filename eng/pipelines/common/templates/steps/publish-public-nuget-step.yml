@@ -1,0 +1,59 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Template to publish NuGet packages to a public NuGet feed
+
+parameters:
+  # Boolean value to indicate whether to perform a dry run or actual publish
+  - name: dryRun
+    type: boolean
+    default: true
+
+  # Public NuGet source URL for publishing packages to public feed
+  - name: publicNuGetSource
+    type: string
+
+  # Service connection name for authenticating to NuGet.org
+  - name: nugetServiceConnection
+    type: string
+    default: "ADO Nuget Org Connection"
+
+  # Glob pattern to identify packages to be published
+  - name: packagesGlob
+    type: string
+
+steps:
+  - task: NuGetToolInstaller@1
+    displayName: "Install Latest Nuget"
+    inputs:
+      checkLatest: true
+  - script: |
+      echo "[DRY RUN] Listing packages targeted for push to: ${{ parameters.publicNuGetSource }}"
+      echo "Using glob pattern: ${{ parameters.packagesGlob }}"
+      # Derive directory and filename pattern from the glob for a precise find (handles nested patterns minimally)
+      glob='${{ parameters.packagesGlob }}'
+      dir="${glob%/*}"
+      name="${glob##*/}"
+      echo "Resolved directory: $dir"
+      echo "Filename pattern: $name"
+      if [ -d "$dir" ]; then
+        echo "Matched files:" || true
+        # Print all matched files to identify what would be pushed
+        find "$dir" -type f -name "$name" -print || true
+      else
+        echo "Directory does not exist yet: $dir"
+      fi
+    displayName: "Dry Run - List Packages"
+    condition: and(succeeded(), eq(${{ parameters.dryRun }}, true))
+
+  - task: NuGetCommand@2
+    displayName: "Push to Nuget.org"
+    condition: and(succeeded(), eq(${{ parameters.dryRun }}, false))
+    inputs:
+      command: push
+      packagesToPush: "${{ parameters.packagesGlob }}"
+      nuGetFeedType: external
+      publishFeedCredentials: "${{ parameters.nugetServiceConnection }}"

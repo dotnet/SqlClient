@@ -6,106 +6,132 @@
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
 ####################################################################################
 parameters:
+  # Symbol account name in Azure DevOps organization where symbols will be published
   - name: SymAccount
     type: string
-    default: 'SqlClientDrivers'
+    default: "SqlClientDrivers"
 
+  # Boolean value to indicate whether to publish symbols
+  - name: publishSymbols
+    type: boolean
+    default: false
+
+  # Version of the symbols being published
   - name: symbolsVersion
     type: string
     default: '$(mdsPackageVersion)'
 
+  # Symbol server name (without .trafficmanager.net)
   - name: symbolServer
     type: string
-    default: '$(SymbolServer)'
+    default: "$(SymbolServer)"
 
+  # Token URI for authenticating to the symbol server
   - name: symbolTokenUri
     type: string
-    default: '$(SymbolTokenUri)'
+    default: "$(SymbolTokenUri)"
 
+  # Artifact name for the symbols being published
   - name: symbolsArtifactName
     type: string
 
+  # Servers to which symbols should be published
   - name: publishToServers
     type: object
     default:
       internal: true
       public: true
 
+  # Type of reference for which symbols are being published
+  - name: referenceType
+    values:
+      - Project
+      - Package
+
+  # Product name associated with the symbols
+  # Symbols publishing Step is currently only configured for the MDS driver, as they are required to be published to 3 locations:
+  #   1. Azure DevOps Org,
+  #   2. MS Internal Symbols server
+  #   3. MS Public symbol server
+  # For other products: Symbols are uploaded to NuGet.org symbol server via snuget package push during package publishing.
+  - name: product
+    default: MDS
+    values:
+      - MDS
+      - MSS
+
+  # Azure subscription for publishing symbols to internal and public symbol servers
+  - name: azureSubscription
+    type: string
+    default: "Symbols publishing Workload Identity federation service-ADO.Net"
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
 steps:
-- powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
-  displayName: 'Update Symbol.AccountName with ${{parameters.SymAccount}}'
+  - powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
+    displayName: "Update Symbol.AccountName with ${{parameters.SymAccount}}"
+    condition: and(succeeded(), eq(parameters.publishSymbols, true))
 
-- task: PublishSymbols@2
-  displayName: 'Upload symbols to ${{parameters.SymAccount }} org'
-  inputs:
-    SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\Package\bin'
-    SearchPattern: |
-      Windows_NT/Release.AnyCPU/**/Microsoft.Data.SqlClient.pdb
-      Unix/Release.AnyCPU/**/Microsoft.Data.SqlClient.pdb
-    IndexSources: false
-    SymbolServerType: TeamServices
-    SymbolsMaximumWaitTime: 60
-    SymbolExpirationInDays: 1825 # 5 years
-    SymbolsProduct: Microsoft.Data.SqlClient
-    SymbolsVersion: ${{parameters.symbolsVersion }}
-    SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
-    Pat: $(System.AccessToken)
+  - ${{ if and(eq(parameters.publishSymbols, true), eq(parameters.product, 'MDS')) }}:
+      - task: PublishSymbols@2
+        displayName: "Upload MDS symbols to ${{parameters.SymAccount }} org"
+        inputs:
+          SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
+          SearchPattern: |
+            Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
+            Unix/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
+          IndexSources: false
+          SymbolServerType: TeamServices
+          SymbolsMaximumWaitTime: 60
+          SymbolExpirationInDays: 1825 # 5 years
+          SymbolsProduct: Microsoft.Data.SqlClient
+          SymbolsVersion: ${{parameters.symbolsVersion }}
+          SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
+          Pat: $(System.AccessToken)
+        condition: and(succeeded(), eq(parameters.publishSymbols, true))
+      - task: AzureCLI@2
+        displayName: "Publish MDS symbols"
+        condition: and(succeeded(), eq(parameters.publishSymbols, true))
+        inputs:
+          azureSubscription: ${{ parameters.azureSubscription }}
+          scriptType: ps
+          scriptLocation: inlineScript
+          inlineScript: |
+            $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
+            $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
 
-- task: AzureCLI@2
-  displayName: 'Publish symbols'
-  inputs:
-    azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-    scriptType: ps
-    scriptLocation: inlineScript
-    inlineScript: |
-      $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
-      $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
+            echo "Publishing request name: ${{parameters.symbolsArtifactName }}"
+            echo "Publish to internal server: $publishToInternalServer"
+            echo "Publish to public server: $publishToPublicServer"      
 
-      echo "Publishing request name: ${{parameters.symbolsArtifactName }}"
-      echo "Publish to internal server: $publishToInternalServer"
-      echo "Publish to public server: $publishToPublicServer"
+            $symbolServer = "${{parameters.symbolServer }}"
+            $tokenUri = "${{parameters.symbolTokenUri }}"
+            $projectName = "Microsoft.Data.SqlClient.SNI"
 
-      $symbolServer = "${{parameters.symbolServer }}"
-      $tokenUri = "${{parameters.symbolTokenUri }}"
-      # Registered project name in the symbol publishing pipeline: https://portal.microsofticm.com/imp/v3/incidents/incident/520844254/summary
-      $projectName = "Microsoft.Data.SqlClient.SNI"
+            $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
 
-      # Get the access token for the symbol publishing service
-      $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
+            echo ">  1.Symbol publishing token acquired."
 
-      echo ">  1.Symbol publishing token acquired."
+            echo "Registering the request name ..."
+            $requestName = "${{parameters.symbolsArtifactName }}"
+            $requestNameRegistrationBody = "{'requestName': '$requestName'}"
+            Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
 
-      echo "Registering the request name ..."
-      $requestName = "${{parameters.symbolsArtifactName }}"
-      $requestNameRegistrationBody = "{'requestName': '$requestName'}"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
+            echo ">  2.Registration of request name succeeded."
 
-      echo ">  2.Registration of request name succeeded."
+            echo "Publishing the symbols ..."
+            $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
+            echo "Publishing symbols request body: $publishSymbolsBody"
+            Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $publishSymbolsBody
 
-      echo "Publishing the symbols ..."
-      $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
-      echo "Publishing symbols request body: $publishSymbolsBody"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $publishSymbolsBody
+            echo ">  3.Request to publish symbols succeeded."
 
-      echo ">  3.Request to publish symbols succeeded."
+            echo ">  4.Checking the status of the request ..."
+            Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
 
-      # The following REST calls are used to check publishing status.
-      echo ">  4.Checking the status of the request ..."
-
-      Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
-
-      echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-
-      echo "PublishingStatus"
-      echo "-----------------"
-      echo "0	NotRequested; The request has not been requested to publish."
-      echo "1	Submitted; The request is submitted to be published"
-      echo "2	Processing; The request is still being processed"
-      echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-
-      echo "PublishingResult"
-      echo "-----------------"
-      echo "0	Pending; The request has not completed or has not been requested."
-      echo "1	Succeeded; The request has published successfully"
-      echo "2	Failed; The request has failed to publish"
-      echo "3	Cancelled; The request was cancelled"
+            echo "PublishingStatus"; echo "-----------------"; echo "0 NotRequested"; echo "1 Submitted"; echo "2 Processing"; echo "3 Completed"
+            echo "PublishingResult"; echo "-----------------"; echo "0 Pending"; echo "1 Succeeded"; echo "2 Failed"; echo "3 Cancelled"
