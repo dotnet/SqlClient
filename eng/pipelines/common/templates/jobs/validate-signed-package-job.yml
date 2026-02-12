@@ -5,7 +5,7 @@
 #################################################################################
 parameters:
 
-  - name: packageFolderName
+  - name: artifactName
     type: string
 
   - name: isPreview
@@ -25,7 +25,7 @@ jobs:
   - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
 
   - name: pathToDownloadedNuget # path to the downloaded nuget files
-    value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+    value: $(Pipeline.Workspace)\${{parameters.artifactName }}
 
   - name: BuildType
     # This variable is set in the build-signed-package-job.yml job. Any changes
@@ -54,7 +54,7 @@ jobs:
     displayName: 'Clear local cache'
 
   - download: current
-    artifact: ${{parameters.packageFolderName}}
+    artifact: ${{parameters.artifactName}}
     patterns: '**/*.*nupkg'
     displayName: 'Download NuGet Package'
 
