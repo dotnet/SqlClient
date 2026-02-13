@@ -69,10 +69,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void PrintJsonDataToFile(SqlConnection connection)
+        private void PrintJsonDataToFile(SqlConnection connection, string tableName)
         {
             DeleteFile(_outputFile);
-            using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTab]", connection))
+            using (SqlCommand command = new SqlCommand($"SELECT [data] FROM [{tableName}]", connection))
             {
                 using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
@@ -99,10 +99,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private async Task PrintJsonDataToFileAsync(SqlConnection connection)
+        private async Task PrintJsonDataToFileAsync(SqlConnection connection, string tableName)
         {
             DeleteFile(_outputFile);
-            using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTab]", connection))
+            using (SqlCommand command = new SqlCommand($"SELECT [data] FROM [{tableName}]", connection))
             {
                 using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess))
                 {
@@ -129,9 +129,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void StreamJsonFileToServer(SqlConnection connection)
+        private void StreamJsonFileToServer(SqlConnection connection, string tableName)
         {
-            using (SqlCommand cmd = new SqlCommand("INSERT INTO [jsonTab] (data) VALUES (@jsondata)", connection))
+            using (SqlCommand cmd = new SqlCommand($"INSERT INTO [{tableName}] (data) VALUES (@jsondata)", connection))
             {
                 using (StreamReader jsonFile = File.OpenText(_jsonFile))
                 {
@@ -141,9 +141,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private async Task StreamJsonFileToServerAsync(SqlConnection connection)
+        private async Task StreamJsonFileToServerAsync(SqlConnection connection, string tableName)
         {
-            using (SqlCommand cmd = new SqlCommand("INSERT INTO [jsonTab] (data) VALUES (@jsondata)", connection))
+            using (SqlCommand cmd = new SqlCommand($"INSERT INTO [{tableName}] (data) VALUES (@jsondata)", connection))
             {
                 using (StreamReader jsonFile = File.OpenText(_jsonFile))
                 {
@@ -168,9 +168,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
-                DataTestUtility.CreateTable(connection, "jsonTab", "(data json)");
-                StreamJsonFileToServer(connection);
-                PrintJsonDataToFile(connection);
+                var tableName = DataTestUtility.GetLongName("jsonTab");
+                DataTestUtility.CreateTable(connection, tableName, "(data json)");
+                StreamJsonFileToServer(connection, tableName);
+                PrintJsonDataToFile(connection, tableName);
                 CompareJsonFiles();
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
@@ -184,9 +185,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
-                DataTestUtility.CreateTable(connection, "jsonTab", "(data json)");
-                await StreamJsonFileToServerAsync(connection);
-                await PrintJsonDataToFileAsync(connection);
+                var tableName = DataTestUtility.GetLongName("jsonTab");
+                DataTestUtility.CreateTable(connection, tableName, "(data json)");
+                await StreamJsonFileToServerAsync(connection, tableName);
+                await PrintJsonDataToFileAsync(connection, tableName);
                 CompareJsonFiles();
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
