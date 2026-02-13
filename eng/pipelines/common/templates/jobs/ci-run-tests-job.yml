@@ -111,9 +111,9 @@ jobs:
         architecture: arm64
         # ARM64 needs to specify slightly different runtime version formats.
         # See the install-dotnet template docs for more info.
-        runtimes: ['8.0', '9.0']
+        runtimes: ['8.0']
       ${{ else }}:
-        runtimes: [8.x, 9.x]
+        runtimes: [8.x]
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -278,7 +278,7 @@ jobs:
           architecture: x86
           debug: ${{ parameters.debug }}
           installDir: $(dotnetx86RootPath)
-          runtimes: [8.x, 9.x]
+          runtimes: [8.x]
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:

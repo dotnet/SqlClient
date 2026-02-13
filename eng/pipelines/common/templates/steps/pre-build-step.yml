@@ -7,7 +7,7 @@ steps:
   # Install the .NET SDK and Runtimes.
   - template: /eng/pipelines/common/templates/steps/install-dotnet.yml@self
     parameters:
-      runtimes: [8.x, 9.x]
+      runtimes: [8.x]
 
   - script: SET
     displayName: 'Print Environment Variables'
