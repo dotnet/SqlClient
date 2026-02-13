@@ -1,4 +1,6 @@
-﻿//-----------------------------------------------------------------------------
+﻿namespace SqlUserDefinedTypeAttribute_Type1;
+
+//-----------------------------------------------------------------------------
 //<Snippet5>
 using System;
 using System.Data.SqlTypes;
@@ -78,8 +80,8 @@ public struct Point : INullable
         string[] xy = str.Split(':');
 
         Point pt = new Point();
-        pt.X = Convert.Toint(xy[0]);
-        pt.Y = Convert.Toint(xy[1]);
+        pt.X = Convert.ToInt32(xy[0]);
+        pt.Y = Convert.ToInt32(xy[1]);
         return (pt);
     }
 

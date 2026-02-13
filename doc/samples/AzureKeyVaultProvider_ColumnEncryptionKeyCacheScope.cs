@@ -3,7 +3,7 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
-namespace AzureKeyVaultProviderExample
+namespace AzureKeyVaultProvider_ColumnEncryptionKeyCacheScope
 {
     // <Snippet1>
     class Program

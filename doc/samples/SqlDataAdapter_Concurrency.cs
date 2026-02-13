@@ -1,3 +1,5 @@
+namespace SqlDataAdapter_Concurrency;
+
 // <Snippet1>
 using System;
 using System.Data;
