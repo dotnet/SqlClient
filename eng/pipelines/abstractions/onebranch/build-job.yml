@@ -36,14 +36,14 @@ parameters:
     type: boolean
 
 jobs:
-  - job: build_job
+  - job: abstractions_build_job
     displayName: Build Abstractions
 
     pool:
       type: linux
 
     # This job depends on the analysis and test jobs completing successfully.
-    dependsOn: [analysis_job, test_job]
+    dependsOn: [abstractions_analysis_job, abstractions_test_job]
 
     variables:
       # OneBranch requires that each job explicitly define the ob_outputDirectory - it cannot be
@@ -121,6 +121,8 @@ jobs:
         displayName: Symlink Assemblies
 
       # Scan the DLLs for malware.
+      #
+      # TODO: Where is this task documented?
       - task: EsrpMalwareScanning@5
         displayName: ESRP DLL Malware Scanning
         inputs:

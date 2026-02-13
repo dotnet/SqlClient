@@ -32,7 +32,7 @@ parameters:
     - diagnostic
 
 jobs:
-  - job: test_job
+  - job: abstractions_test_job
     displayName: Run Unit Tests
 
     pool:

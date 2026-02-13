@@ -32,12 +32,12 @@ parameters:
     - detailed
     - diagnostic
 
-  # True to publish symbols if the build and tests succeed.
+  # When true, will publish symbols if the analysis, tests, and build jobs succeed.
   - name: publishSymbols
     type: boolean
 
 stages:
-  - stage: build_stage
+  - stage: abstractions_build_stage
     displayName: Build Abstractions
 
     jobs:
