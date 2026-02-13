@@ -8,7 +8,7 @@
     <!-- This is only required today because of the separate test sets -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
-  
+
   <!-- Test Set ======================================================== -->
   <PropertyGroup>
     <!-- This is a measure to allow parallelizing this test project across multiple jobs. By -->
@@ -18,7 +18,7 @@
     <TestSet Condition="'$(TestSet)' == ''">123AE</TestSet>
     <NormalizedTestSet>$(TestSet.ToLower())</NormalizedTestSet>
   </PropertyGroup>
-  
+
   <!-- Links to project files ========================================== -->
   <!-- Items to include in all test sets -->
   <ItemGroup>
@@ -58,7 +58,7 @@
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1"
           CopyToOutputDirectory="Always" />
   </ItemGroup>
-  
+
   <!-- Items to include in test set 1 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('1'))">
     <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
@@ -70,7 +70,7 @@
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
   </ItemGroup>
-  
+
   <!-- Items to include in test set 2 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('2'))">
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
@@ -161,7 +161,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
     <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
   </ItemGroup>
-  
+
   <!-- Items to include in test set 3 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('3'))">
     <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
@@ -246,7 +246,7 @@
     <Content Include="SqlParameterTest_ReleaseMode_Azure.bsl"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-  
+
   <!-- Items to include in AE test set -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('ae'))">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />

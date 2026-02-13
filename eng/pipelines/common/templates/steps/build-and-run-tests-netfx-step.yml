@@ -53,7 +53,6 @@ steps:
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -75,7 +74,6 @@ steps:
       --no-build
       -v n
       --filter "category=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -98,7 +96,6 @@ steps:
       --no-build
       -v n
       --filter "category!=failing&category!=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -121,7 +118,6 @@ steps:
       --no-build
       -v n
       --filter "category=flaky"
-      --collect "Code Coverage"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m

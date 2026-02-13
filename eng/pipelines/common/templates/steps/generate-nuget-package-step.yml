@@ -23,7 +23,6 @@ parameters:
 
   - name: generateSymbolsPackage
     type: boolean
-    default: true
 
   - name: displayName
     type: string
@@ -55,7 +54,7 @@ steps:
     $Commit=git rev-parse HEAD
     Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
   displayName: CommitHead
- 
+
 - task: NuGetCommand@2
   displayName: ${{parameters.displayName }}
   inputs:

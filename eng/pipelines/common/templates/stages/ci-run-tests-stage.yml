@@ -93,9 +93,6 @@ stages:
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
-                  ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
-                    ${{ if eq(codeCoveTF, targetFramework) }}:
-                      publishTestResults: true
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   isArm64: ${{ eq(config.value.isArm64, 'true') }}
@@ -130,9 +127,6 @@ stages:
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
-                    ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
-                      ${{ if eq(codeCoveTF, targetFramework) }}:
-                        publishTestResults: true
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     isArm64: ${{ eq(config.value.isArm64, 'true') }}

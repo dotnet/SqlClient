@@ -10,7 +10,7 @@
 variables:
   - group: 'ADO Build properties'
   - group: 'ADO Test Configuration Properties'
-  
+
   - name: buildNumber
     value: '$(Build.BuildNumber)'
   - name: SQLTarget

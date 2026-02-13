@@ -43,7 +43,7 @@ steps:
       testResultsFiles: |
         TestResults/*.trx
         TestResults/**/*.coverage
-      testRunTitle: 'Linux Tests'
+      testRunTitle: 'Unix Tests'
   condition: succeededOrFailed()
 
 - powershell: |
@@ -59,7 +59,7 @@ steps:
     displayName: '[Debug] List test result coverage files'
 
 - task: PublishPipelineArtifact@1
-  displayName: 'Publish Pipeline Artifacts'
+  displayName: 'Publish Test Artifacts'
   inputs:
     targetPath: TestResults
     artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'

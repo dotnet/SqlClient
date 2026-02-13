@@ -19,10 +19,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <ContentWithTargetPath Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
 
   <!-- References ====================================================== -->
