@@ -64,7 +64,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 # The timeout, in minutes, for each test job.
 - name: testsTimeout
   displayName: 'Tests timeout (in minutes)'
-  type: string
+  type: number
   default: 90
 
 variables:
@@ -79,7 +79,7 @@ variables:
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
@@ -119,7 +119,7 @@ extends:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json

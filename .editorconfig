@@ -9,13 +9,13 @@ root = true
 [*]
 insert_final_newline = true
 indent_style = space
-indent_size = 4
-
-[project.json]
 indent_size = 2
 
 # C# files
 [*.cs]
+
+indent_size = 4
+
 # New line preferences
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
@@ -143,28 +143,11 @@ dotnet_diagnostic.CA2100.severity = silent
 # CA1416: Validate platform compatibility
 dotnet_diagnostic.CA1416.severity = silent
 
-[*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
-indent_size = 2
-
-# Xml build files
-[*.builds]
-indent_size = 2
-
-# Xml files
-[*.{xml,stylecop,resx,ruleset}]
-indent_size = 2
-
-# Xml config files
-[*.{props,targets,config,nuspec}]
-indent_size = 2
-
 # Shell scripts
 [*.sh]
-indent_size = 2
 end_of_line = lf
 
 [*.{bat,cmd,ps1}]
-indent_size = 2
 end_of_line = crlf
 
 # Analyzers
@@ -174,5 +157,3 @@ dotnet_code_quality.ca1802.api_surface = private, internal
 dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Data.SqlClient.ManualTesting.Tests.*
 dotnet_diagnostic.xUnit1031.severity=none
 dotnet_diagnostic.xUnit1030.severity=none
-
-

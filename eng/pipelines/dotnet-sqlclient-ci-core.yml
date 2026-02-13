@@ -59,8 +59,7 @@ parameters:
 
 # The timeout, in minutes, for each test job.
 - name: testsTimeout
-  type: string
-  default: 90
+  type: number
 
 variables:
   - template: libraries/ci-build-variables.yml@self
