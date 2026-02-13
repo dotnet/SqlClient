@@ -7,12 +7,9 @@
 # This step configures an existing SQL Server running on the local Windows host.  For example, our
 # 1ES Hosted Pool has images like ADO-MMS22-SQL22 that come with SQL Server 2022 pre-installed and
 # running.
-#
-# The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
-# Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
 
 parameters:
-# Windows only parameters
+
   - name: instanceName
     type: string
     default: MSSQLSERVER
@@ -24,6 +21,10 @@ parameters:
   - name: saUser
     type: string
     default: $(saUser)
+
+  # The SA password to set when configuring SQL Server.  This is also used for the user password.
+  - name: saPassword
+    type: string
 
   - name: SQLRootPath
     type: string
@@ -61,101 +62,54 @@ parameters:
     type: string
     default: $(LocalDbSharedInstanceName)
 
-# Common parameters
-  - name: condition
-    type: string
-    default: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-
 steps:
-# Windows only steps
-- powershell: |
-    try
-    {
-      # Acquire a WMI handle.
-      Import-Module "sqlps"
-      $smo = 'Microsoft.SqlServer.Management.Smo.'
-      $wmi = new-object ($smo + 'Wmi.ManagedComputer')
 
-      # List the WMI, including the instance names.
-      Write-Host "WMI Information:"
-      $wmi
-
-      # Enable the TCP protocol on the default instance.
-      $Tcp = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Tcp']")
-      $Tcp.IsEnabled = $true
-      $Tcp.Alter()
-
-      # Emit the TCP object to the pipeline log.
-      Write-Host "TCP Information:"
-      $Tcp
-
-      # Enable the NP protocol on the default instance.
-      $Np = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Np']")
-      $Np.IsEnabled = $true
-      $Np.Alter()
-
-      # Emit the NP object to the pipeline log.
-      Write-Host "NP Information:"
-      $Np
-    }
-    catch
-    {
-      $error[0] | format-list -force
-      throw
-    }
-
-    New-NetFirewallRule -DisplayName "SQL TCP Ports" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action allow
-    $sqlSrvPath = (Get-WmiObject win32_service | ?{$_.DisplayName -eq 'SQL Server (${{parameters.instanceName }})'} | select @{Name="Path"; Expression={$_.PathName.split('"')[1]}}).Path
-    New-NetFirewallRule -DisplayName "sqlservr.exe" -Program "$sqlSrvPath"
-  displayName: 'Enable TCP, NP & Firewall [Win]'
-  condition: ${{parameters.condition }}
-  retryCountOnTaskFailure: 2
-
-- powershell: |
-    $password = "$(Password)"
-
-    $machineName = $env:COMPUTERNAME
-
-    if ("${{parameters.instanceName }}" -ne "MSSQLSERVER"){
-      $machineName += "\${{parameters.instanceName }}"
-    }
-
-    Write-Host $machineName
-    Import-Module "sqlps"
-    $tries = 0
-    while ($true) {
-        $tries++
-        try {
-            Invoke-Sqlcmd -ServerInstance "$machineName" @"
-                CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
-                DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
-                CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
-                ALTER SERVER ROLE [sysadmin] ADD MEMBER [${{parameters.user }}];
-                ALTER LOGIN [${{parameters.saUser }}] ENABLE;
-                ALTER LOGIN [${{parameters.saUser }}] WITH PASSWORD = '$password';
-    "@
-            break
-        } catch {
-            if ($tries -ge 5) {
-                Write-Host "##[error]Failed to create database user after $tries tries."
-                break
-            }
-            Write-Host "Failed to connect to server. Retrying in 5 seconds..."
-            Start-Sleep -Seconds 5
-        }
-    }
-  displayName: 'Create SQL user [Win]'
-  condition: ${{parameters.condition }}
-  env:
-    SQL_USER: ${{parameters.user }}
-    SQL_PASSWD: $(Password)
-
-- ${{ if ne(parameters.SQLRootPath, '') }}:
+  # GOTCHA: We must use the Windows-only powershell task here instead of the cross-platform pwsh
+  # task because we call some Windows-specific cmdlets.
   - powershell: |
-      #Enable FileStream
-      $instance = "${{parameters.instanceName }}"
-      $wmi = Get-WmiObject -Namespace "${{parameters.SQLRootPath }}" -Class FilestreamSettings | where {$_.InstanceName -eq $instance}
-      $wmi.EnableFilestream(3, $instance)
+      try
+      {
+        # Acquire a WMI handle.
+        Import-Module "sqlps"
+        $smo = 'Microsoft.SqlServer.Management.Smo.'
+        $wmi = new-object ($smo + 'Wmi.ManagedComputer')
+
+        # List the WMI, including the instance names.
+        Write-Host "WMI Information:"
+        $wmi
+
+        # Enable the TCP protocol on the default instance.
+        $Tcp = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Tcp']")
+        $Tcp.IsEnabled = $true
+        $Tcp.Alter()
+
+        # Emit the TCP object to the pipeline log.
+        Write-Host "TCP Information:"
+        $Tcp
+
+        # Enable the NP protocol on the default instance.
+        $Np = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='${{parameters.instanceName }}']/ServerProtocol[@Name='Np']")
+        $Np.IsEnabled = $true
+        $Np.Alter()
+
+        # Emit the NP object to the pipeline log.
+        Write-Host "NP Information:"
+        $Np
+      }
+      catch
+      {
+        $error[0] | format-list -force
+        throw
+      }
+
+      New-NetFirewallRule -DisplayName "SQL TCP Ports" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action allow
+      $sqlSrvPath = (Get-WmiObject win32_service | ?{$_.DisplayName -eq 'SQL Server (${{parameters.instanceName }})'} | select @{Name="Path"; Expression={$_.PathName.split('"')[1]}}).Path
+      New-NetFirewallRule -DisplayName "sqlservr.exe" -Program "$sqlSrvPath"
+    displayName: 'Enable TCP, NP & Firewall [Win]'
+    retryCountOnTaskFailure: 2
+
+  - powershell: |
+      $password = "${{ parameters.saPassword }}"
 
       $machineName = $env:COMPUTERNAME
 
@@ -163,135 +117,170 @@ steps:
         $machineName += "\${{parameters.instanceName }}"
       }
 
-      #Change the access level for FileStream for SQLServer
-      Set-ExecutionPolicy Unrestricted
+      Write-Host $machineName
       Import-Module "sqlps"
-      Invoke-Sqlcmd -ServerInstance "$machineName" @"
-          EXEC sp_configure filestream_access_level, 2;
-          RECONFIGURE;
+      $tries = 0
+      while ($true) {
+          $tries++
+          try {
+              Invoke-Sqlcmd -ServerInstance "$machineName" @"
+                  CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
+                  DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
+                  CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
+                  ALTER SERVER ROLE [sysadmin] ADD MEMBER [${{parameters.user }}];
+                  ALTER LOGIN [${{parameters.saUser }}] ENABLE;
+                  ALTER LOGIN [${{parameters.saUser }}] WITH PASSWORD = '$password';
       "@
-    displayName: 'Enable FileStream [Win]'
-    condition: ${{parameters.condition }}
+              break
+          } catch {
+              if ($tries -ge 5) {
+                  Write-Host "##[error]Failed to create database user after $tries tries."
+                  break
+              }
+              Write-Host "Failed to connect to server. Retrying in 5 seconds..."
+              Start-Sleep -Seconds 5
+          }
+      }
+    displayName: 'Create SQL user [Win]'
     env:
       SQL_USER: ${{parameters.user }}
-      SQL_PASSWD: $(Password)
+      SQL_PASSWD: ${{ parameters.saPassword }}
 
-- ${{ if ne(parameters.FileStreamDirectory, '') }}:
-  - powershell: |
-      New-Item -Path ${{ parameters.fileStreamDirectory }} -ItemType Directory
-    displayName: 'Create FileStreamFolder'
-    retryCountOnTaskFailure: 1
-    condition: ${{parameters.condition }}
-    continueOnError: true
+  - ${{ if ne(parameters.SQLRootPath, '') }}:
+    - powershell: |
+        #Enable FileStream
+        $instance = "${{parameters.instanceName }}"
+        $wmi = Get-WmiObject -Namespace "${{parameters.SQLRootPath }}" -Class FilestreamSettings | where {$_.InstanceName -eq $instance}
+        $wmi.EnableFilestream(3, $instance)
 
-- powershell: |
-    $SQLServerName = ("{0}" -f [System.Net.Dns]::GetHostByName($env:computerName).HostName)
-    Write-Host  FQDN is: $SQLServerName
+        $machineName = $env:COMPUTERNAME
 
-    if ((Test-Path -Path ${{parameters.x64AliasRegistryPath }}) -ne $true) {
-        New-Item ${{parameters.x64AliasRegistryPath }}
-    }
-
-    if ((Test-Path -Path ${{parameters.x86AliasRegistryPath }}) -ne $true) {
-        New-Item ${{parameters.x86AliasRegistryPath }}
-    }
-
-    $TCPAliasName = "DBMSSOCN, $SQLServerName, ${{parameters.SQLAliasPort }}"
-
-    New-ItemProperty -Path ${{parameters.x86AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
-    New-ItemProperty -Path ${{parameters.x64AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
-  displayName: 'Setup SQL Alias [Win]'
-  condition: ${{parameters.condition }}
-
-- powershell: |
-    # Create Certificate
-    $computerDnsName = [System.Net.Dns]::Resolve($null).HostName
-    $certificate = New-SelfSignedCertificate -DnsName $computerDnsName,localhost -CertStoreLocation cert:\LocalMachine\My -FriendlyName test99 -KeySpec KeyExchange
-
-    # Get path to Private key (used later)
-    $keyPath = $certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
-    $machineKeyPath = "$env:ProgramData\Microsoft\Crypto\RSA\MachineKeys\$keyPath"
-
-    # Add certificate to trusted roots
-    $store = new-object System.Security.Cryptography.X509Certificates.X509Store(
-        [System.Security.Cryptography.X509Certificates.StoreName]::Root,
-        "localmachine"
-    )
-
-    $store.open("MaxAllowed")
-    $store.add($certificate)
-    $store.close()
-
-    # Get SQL Server instances and add the Certificate
-    $instances = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL'
-    foreach ($instance in $instances){
-        $instance | ForEach-Object {
-        $_.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS.*' } | ForEach-Object {
-                Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$($_.Value)\MSSQLServer\SuperSocketNetLib" -Name Certificate -Value $certificate.Thumbprint.ToLower()
-
-                # Grant read access to Private Key for SQL Service Account
-                if ($($_.Name) -eq "MSSQLSERVER") {
-                    icacls $machineKeyPath /grant "NT Service\MSSQLSERVER:R"
-                } else {
-                    icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
-                }
-            }
+        if ("${{parameters.instanceName }}" -ne "MSSQLSERVER"){
+          $machineName += "\${{parameters.instanceName }}"
         }
-    }
-  displayName: 'Add SQL Certificate [Win]'
-  condition: ${{parameters.condition }}
 
-- powershell: |
-    # You need to restart SQL Server for the change to persist
-    # -Force takes care of any dependent services, like SQL Agent.
-    # Note: if the instance is named, replace MSSQLSERVER with MSSQL$ followed by
-    # the name of the instance (e.g. MSSQL$MYINSTANCE)
+        #Change the access level for FileStream for SQLServer
+        Set-ExecutionPolicy Unrestricted
+        Import-Module "sqlps"
+        Invoke-Sqlcmd -ServerInstance "$machineName" @"
+            EXEC sp_configure filestream_access_level, 2;
+            RECONFIGURE;
+        "@
+      displayName: 'Enable FileStream [Win]'
+      env:
+        SQL_USER: ${{parameters.user }}
+        SQL_PASSWD: ${{ parameters.saPassword }}
 
-    $serviceName = "${{parameters.instanceName }}"
-    $InstancePrefix = 'MSSQL$'
+  - ${{ if ne(parameters.FileStreamDirectory, '') }}:
+    - powershell: |
+        New-Item -Path ${{ parameters.fileStreamDirectory }} -ItemType Directory
+      displayName: 'Create FileStreamFolder'
+      retryCountOnTaskFailure: 1
+      continueOnError: true
 
-    if ( "${{parameters.instanceName }}" -ne "MSSQLSERVER" )
-    {
-        $serviceName = $InstancePrefix+"${{parameters.instanceName }}"
-    }
-
-    Restart-Service -Name "$serviceName" -Force
-    Restart-Service -Name MSSQLSERVER* -Force
-
-  displayName: 'Restart SQL Server [Win]'
-  condition: ${{parameters.condition }}
-
-- powershell: |
-    $arrService = Get-Service -Name "SQLBrowser"
-    $arrService
-
-    if ($arrService.Status -eq 'Stopped') {
-        Write-Host 'Attempt to run the service ...'
-        # updating the startup type to make sure it's not disabled
-        Set-Service -StartupType Automatic $arrService.Name
-        $arrService.Start()
-
-        $arrService.WaitForStatus('Running', '00:00:30')
-        if ($arrService.Status -eq 'Running') {
-            $arrService
-        } else {
-            Write-Error 'Timed out waiting for service to start.'
-        }
-    }
-  displayName: 'Start Sql Server Browser [Win]'
-  condition: ${{parameters.condition }}
-
-- ${{ if parameters.enableLocalDB }}:
   - powershell: |
-      #script to enable local db
+      $SQLServerName = ("{0}" -f [System.Net.Dns]::GetHostByName($env:computerName).HostName)
+      Write-Host  FQDN is: $SQLServerName
 
-      SqlLocalDB info
-      #SqlLocalDB create ${{parameters.localDbAppName }}
-      SqlLocalDB info ${{parameters.localDbAppName }}
-      SqlLocalDB share ${{parameters.localDbAppName }} ${{parameters.LocalDbSharedInstanceName }}
-      SqlLocalDB start ${{parameters.localDbAppName }}
-      SqlLocalDB info ${{parameters.localDbAppName }}
+      if ((Test-Path -Path ${{parameters.x64AliasRegistryPath }}) -ne $true) {
+          New-Item ${{parameters.x64AliasRegistryPath }}
+      }
 
-      sqlcmd -S "(localdb)\.\${{parameters.LocalDbSharedInstanceName }}" -q "SELECT @@VERSION"
-    displayName: 'Enable LocalDB [Win]'
-    condition: ${{parameters.condition }}
+      if ((Test-Path -Path ${{parameters.x86AliasRegistryPath }}) -ne $true) {
+          New-Item ${{parameters.x86AliasRegistryPath }}
+      }
+
+      $TCPAliasName = "DBMSSOCN, $SQLServerName, ${{parameters.SQLAliasPort }}"
+
+      New-ItemProperty -Path ${{parameters.x86AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
+      New-ItemProperty -Path ${{parameters.x64AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
+    displayName: 'Setup SQL Alias [Win]'
+
+  - powershell: |
+      # Create Certificate
+      $computerDnsName = [System.Net.Dns]::Resolve($null).HostName
+      $certificate = New-SelfSignedCertificate -DnsName $computerDnsName,localhost -CertStoreLocation cert:\LocalMachine\My -FriendlyName test99 -KeySpec KeyExchange
+
+      # Get path to Private key (used later)
+      $keyPath = $certificate.PrivateKey.CspKeyContainerInfo.UniqueKeyContainerName
+      $machineKeyPath = "$env:ProgramData\Microsoft\Crypto\RSA\MachineKeys\$keyPath"
+
+      # Add certificate to trusted roots
+      $store = new-object System.Security.Cryptography.X509Certificates.X509Store(
+          [System.Security.Cryptography.X509Certificates.StoreName]::Root,
+          "localmachine"
+      )
+
+      $store.open("MaxAllowed")
+      $store.add($certificate)
+      $store.close()
+
+      # Get SQL Server instances and add the Certificate
+      $instances = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL'
+      foreach ($instance in $instances){
+          $instance | ForEach-Object {
+          $_.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS.*' } | ForEach-Object {
+                  Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$($_.Value)\MSSQLServer\SuperSocketNetLib" -Name Certificate -Value $certificate.Thumbprint.ToLower()
+
+                  # Grant read access to Private Key for SQL Service Account
+                  if ($($_.Name) -eq "MSSQLSERVER") {
+                      icacls $machineKeyPath /grant "NT Service\MSSQLSERVER:R"
+                  } else {
+                      icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
+                  }
+              }
+          }
+      }
+    displayName: 'Add SQL Certificate [Win]'
+
+  - powershell: |
+      # You need to restart SQL Server for the change to persist
+      # -Force takes care of any dependent services, like SQL Agent.
+      # Note: if the instance is named, replace MSSQLSERVER with MSSQL$ followed by
+      # the name of the instance (e.g. MSSQL$MYINSTANCE)
+
+      $serviceName = "${{parameters.instanceName }}"
+      $InstancePrefix = 'MSSQL$'
+
+      if ( "${{parameters.instanceName }}" -ne "MSSQLSERVER" )
+      {
+          $serviceName = $InstancePrefix+"${{parameters.instanceName }}"
+      }
+
+      Restart-Service -Name "$serviceName" -Force
+      Restart-Service -Name MSSQLSERVER* -Force
+
+    displayName: 'Restart SQL Server [Win]'
+
+  - powershell: |
+      $arrService = Get-Service -Name "SQLBrowser"
+      $arrService
+
+      if ($arrService.Status -eq 'Stopped') {
+          Write-Host 'Attempt to run the service ...'
+          # updating the startup type to make sure it's not disabled
+          Set-Service -StartupType Automatic $arrService.Name
+          $arrService.Start()
+
+          $arrService.WaitForStatus('Running', '00:00:30')
+          if ($arrService.Status -eq 'Running') {
+              $arrService
+          } else {
+              Write-Error 'Timed out waiting for service to start.'
+          }
+      }
+    displayName: 'Start Sql Server Browser [Win]'
+
+  - ${{ if parameters.enableLocalDB }}:
+    - powershell: |
+        #script to enable local db
+
+        SqlLocalDB info
+        #SqlLocalDB create ${{parameters.localDbAppName }}
+        SqlLocalDB info ${{parameters.localDbAppName }}
+        SqlLocalDB share ${{parameters.localDbAppName }} ${{parameters.LocalDbSharedInstanceName }}
+        SqlLocalDB start ${{parameters.localDbAppName }}
+        SqlLocalDB info ${{parameters.localDbAppName }}
+
+        sqlcmd -S "(localdb)\.\${{parameters.LocalDbSharedInstanceName }}" -q "SELECT @@VERSION"
+      displayName: 'Enable LocalDB [Win]'

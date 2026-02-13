@@ -36,9 +36,11 @@ jobs:
   - script: SET
     displayName: 'Print Environment Variables'
 
-  - powershell: |
+  - pwsh: |
       Write-Host "##vso[task.setvariable variable=CDP_BUILD_TYPE_COPY;isOutput=true]$($env:CDP_BUILD_TYPE)"
+    # This variable is used far away in validate-signed-packages-job.yml.
     name: GetBuildType
+    displayName: Get Build Type
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self

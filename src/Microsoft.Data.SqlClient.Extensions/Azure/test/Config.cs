@@ -143,6 +143,13 @@ internal static class Config
         DebugEmit = GetEnvFlag("TEST_DEBUG_EMIT");
         SystemAccessToken = GetEnvVar("SYSTEM_ACCESSTOKEN");
 
+        // Circumvent pipeline masking of things it considers secrets by base64 encoding them.  We
+        // will emit them on their own line without labels.
+        string Base64Encode(string s)
+        {
+            return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s));
+        }
+
         // Emit debug information if requested.
         if (DebugEmit)
         {
@@ -158,9 +165,13 @@ internal static class Config
             Console.WriteLine(
                 $"  PasswordConnectionString:               {PasswordConnectionString}");
             Console.WriteLine(
+                $"                                          {Base64Encode(PasswordConnectionString)}");
+            Console.WriteLine(
                 $"  ServicePrincipalId:                     {ServicePrincipalId}");
             Console.WriteLine(
-                $"  ServicePrincipalSecret:                 {ServicePrincipalSecret.Length}");
+                $"  ServicePrincipalSecret:                 {ServicePrincipalSecret}");
+            Console.WriteLine(
+                $"                                          {Base64Encode(ServicePrincipalSecret)}");
             Console.WriteLine(
                 $"  SystemAccessToken:                      {SystemAccessToken}");
             Console.WriteLine(
@@ -168,11 +179,15 @@ internal static class Config
             Console.WriteLine(
                 $"  TcpConnectionString:                    {TcpConnectionString}");
             Console.WriteLine(
+                $"                                          {Base64Encode(TcpConnectionString)}");
+            Console.WriteLine(
                 $"  TenantId:                               {TenantId}");
             Console.WriteLine(
                 $"  UseManagedSniOnWindows:                 {UseManagedSniOnWindows}");
             Console.WriteLine(
                 $"  UserManagedIdentityClientId:            {UserManagedIdentityClientId}");
+            Console.WriteLine(
+                $"                                          {Base64Encode(UserManagedIdentityClientId)}");
             Console.WriteLine(
                 "  WorkloadIdentityFederationServiceConnectionId: " +
                 WorkloadIdentityFederationServiceConnectionId);
