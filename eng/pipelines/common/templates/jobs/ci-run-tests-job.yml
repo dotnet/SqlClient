@@ -116,6 +116,10 @@ parameters:
     type: boolean
     default: false
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -179,6 +183,7 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
+        saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
         ${{ if parameters.configProperties.TCPConnectionString }}:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
@@ -255,6 +260,7 @@ jobs:
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
+          saPassword: ${{ parameters.saPassword }}
           ${{ if parameters.configProperties.instanceName }}:
             instanceName: ${{ parameters.configProperties.instanceName }}
           ${{ if parameters.configProperties.user }}:

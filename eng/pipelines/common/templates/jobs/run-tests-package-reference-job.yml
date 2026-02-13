@@ -43,6 +43,8 @@ jobs:
 
   - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
     parameters:
+      # We use the Library $(Password) variable as the SA password in this pipeline.
+      saPassword: $(Password)
       TCPConnectionString: $(SQL_TCP_CONN_STRING)
       NPConnectionString: $(SQL_NP_CONN_STRING)
       SupportsIntegratedSecurity: false
