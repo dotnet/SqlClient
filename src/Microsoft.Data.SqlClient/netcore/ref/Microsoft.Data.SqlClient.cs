@@ -1881,6 +1881,8 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
     public abstract class SspiContextProvider
     {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/ctor/*'/>
+        protected SspiContextProvider() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/GenerateContext/*'/>
         protected abstract bool GenerateContext(System.ReadOnlySpan<byte> incomingBlob, System.Buffers.IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
     }
