@@ -795,11 +795,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SspiContextProvider SspiContextProvider
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+        public SspiContextProvider SspiContextProvider
         {
             get { return _sspiContextProvider; }
             set
             {
+                // If a connection is connecting or is ever opened, SspiContextProvider cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
+                }
+
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
