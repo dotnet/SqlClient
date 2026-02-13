@@ -33,30 +33,6 @@ parameters:
       - Unixnetcoreapp
 
 steps:
-- task: MSBuild@1
-  displayName: 'Build AKV Provider .NET'
-  inputs:
-    solution: build.proj
-    msbuildArchitecture: x64
-    msbuildArguments: >-
-      -p:Configuration=Release
-      -t:BuildAKVNetCore
-      -p:ReferenceType=Package
-      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-
-- task: MSBuild@1
-  displayName: 'MSBuild Build Tests for ${{parameters.TargetNetCoreVersion }}'
-  inputs:
-    solution: build.proj
-    msbuildArchitecture: x64
-    msbuildArguments: >-
-      -t:BuildTestsNetCore
-      -p:ReferenceType=Package
-      -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
-      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-      -p:Configuration=Release
 
 # Don't run unit tests using package reference. Unit tests are only run using project reference.
 

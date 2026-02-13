@@ -1,24 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!-- @TODO: Give this a better name, and fix the root namespace -->
     <AssemblyName>ExternalConfigurableRetryLogic</AssemblyName>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
+
+  <!-- References ====================================================== -->
   <ItemGroup>
-    <Compile Include="CustomConfigurableRetryLogic.cs" />
-  </ItemGroup>
-
-  <!-- Conditional Project References -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Condition="'$(TargetGroup)' == 'netcoreapp'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)' == 'netfx'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-  </ItemGroup>
-
-  <!-- Conditional Package References -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'"  />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 </Project>
