@@ -45,6 +45,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         
         public static Config Load(string configPath = @"config.json")
         {
+            // Allow an override of the config path via an environment variable.
             configPath = Environment.GetEnvironmentVariable("MDS_TEST_CONFIG") ?? configPath;
 
             try

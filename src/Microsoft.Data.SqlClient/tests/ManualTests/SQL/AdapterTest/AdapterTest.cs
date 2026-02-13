@@ -1398,45 +1398,67 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), null)]
-        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), true)]
-        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), false)]
-        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), null)]
-        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), true)]
-        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), false)]
-        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), null)]
-        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), false)]
-        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), true)]
-        public void VerifyGetCommand(string methodName, bool? useColumnsForParameterNames)
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void VerifyDeleteCommand(bool? useColumnsForParameterNames)
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            if (useColumnsForParameterNames.HasValue)
             {
-                connection.Open();
-                using (SqlDataAdapter dataAdapter = new SqlDataAdapter("SELECT * FROM dbo.Customers", connection))
-                {
-                    using (SqlCommandBuilder commandBuilder = new SqlCommandBuilder(dataAdapter))
-                    {
-                        object[] parameters = null;
-                        Type[] parameterTypes = null;
-                        if (useColumnsForParameterNames != null)
-                        {
-                            parameters = new object[] { useColumnsForParameterNames };
-                            parameterTypes = new Type[] { typeof(bool) };
-                        }
-                        else
-                        {
-                            parameters = new object[] { };
-                            parameterTypes = new Type[] { };
-                        }
-
-                        MethodInfo method = commandBuilder.GetType().GetMethod(methodName, parameterTypes);
-                        using (SqlCommand cmd = (SqlCommand)method.Invoke(commandBuilder, parameters))
-                        {
-                            Assert.NotNull(cmd);
-                        }
-                    }
-                }
+                VerifyGetCommand(commandBuilder => commandBuilder.GetDeleteCommand(useColumnsForParameterNames.Value));
             }
+            else
+            {
+                VerifyGetCommand(commandBuilder => commandBuilder.GetDeleteCommand());
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void VerifyInsertCommand(bool? useColumnsForParameterNames)
+        {
+            if (useColumnsForParameterNames.HasValue)
+            {
+                VerifyGetCommand(commandBuilder => commandBuilder.GetInsertCommand(useColumnsForParameterNames.Value));
+            }
+            else
+            {
+                VerifyGetCommand(commandBuilder => commandBuilder.GetInsertCommand());
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void VerifyUpdateCommand(bool? useColumnsForParameterNames)
+        {
+            if (useColumnsForParameterNames.HasValue)
+            {
+                VerifyGetCommand(commandBuilder => commandBuilder.GetUpdateCommand(useColumnsForParameterNames.Value));
+            }
+            else
+            {
+                VerifyGetCommand(commandBuilder => commandBuilder.GetUpdateCommand());
+            }
+        }
+
+        private static void VerifyGetCommand(Func<SqlCommandBuilder, SqlCommand> getFunc)
+        {
+            // Arrange
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlDataAdapter dataAdapter = new SqlDataAdapter("SELECT * FROM dbo.Customers", connection);
+            using SqlCommandBuilder commandBuilder = new SqlCommandBuilder(dataAdapter);
+
+            // Act
+            using SqlCommand command = getFunc(commandBuilder);
+
+            // Assert
+            Assert.NotNull(command);
         }
 
         #region Utility_Methods

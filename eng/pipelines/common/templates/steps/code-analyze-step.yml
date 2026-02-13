@@ -3,40 +3,36 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters:
-  - name: analyzeType
-    values:
-    - roslyn
-    - inspect
-    - all
 
+# This template defines a step to run Roslyn Analyzers on the MDS project build.
+# It uses the RoslynAnalyzers@3 task from the Secure Development Team's SDL
+# extension:
+#
+# https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
+#
+# GOTCHA: This step will clobber any existing build output.  It should be run
+# _before_ any build steps that perform versioning or signing.
+
+# @TODO: This can probably be made generic and pass in the command lines for msbuild
+#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
+#        affect >1 project at a time.
+
+parameters:
   - name: sourceRoot
     type: string
     default: $(REPOROOT)
 
-  - name: packageRefMdsVersion
-    type: string
-    default: ''
-  
-  - name: product
-    default: MDS
-    values:
-    - MDS
-    - MSS
-
 steps:
-- ${{ if or(eq(parameters.analyzeType, 'roslyn'), eq(parameters.analyzeType, 'all')) }}:
-  - ${{ if eq(parameters.product, 'MDS') }}:
-    - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
-      displayName: 'Guardian Dotnet Analyzers '
-      inputs:
-        msBuildVersion: 17.0
-        msBuildArchitecture: x64
-        setupCommandlinePicker: vs2022
-        msBuildCommandline: 'msbuild  ${{parameters.sourceRoot}}\build.proj -p:configuration=Release -p:GenerateNuget=false -p:BuildTools=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
-
-- ${{ if or(eq(parameters.analyzeType, 'inspect'), eq(parameters.analyzeType, 'all')) }}:
-  - task: securedevelopmentteam.vss-secure-development-tools.build-task-codeinspector.CodeInspector@2
-    displayName: 'Run Code Inspector'
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+    displayName: Roslyn Analyzers
     inputs:
-      LogLevel: Error
+      msBuildVersion: 17.0
+      msBuildArchitecture: x64
+      setupCommandlinePicker: vs2022
+      msBuildCommandline: >-
+        msbuild
+        ${{parameters.sourceRoot}}\build.proj
+        -t:BuildAllConfigurations
+        -p:configuration=Release
+        -p:GenerateNuget=false
+        -p:BuildTools=false

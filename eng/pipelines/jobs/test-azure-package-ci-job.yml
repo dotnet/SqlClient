@@ -1,0 +1,371 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This job builds the Azure package and runs its tests for a set of .NET
+# runtimes.
+#
+# This template defines a job named 'test_azure_package_job_<jobNameSuffix>'
+# that can be depended on by downstream jobs.
+
+parameters:
+
+  # The name of the Abstractions pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsArtifactsName
+    type: string
+    default: Abstractions.Artifacts
+
+  # The Abstractions package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # The type of build to test (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    values:
+    - Release
+    - Debug
+
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The prefix to prepend to the job's display name:
+  #
+  #   [<prefix>] Run Stress Tests
+  #
+  - name: displayNamePrefix
+    type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The suffix to append to the job name.
+  - name: jobNameSuffix
+    type: string
+
+  # The name of the MDS pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsArtifactsName
+    type: string
+    default: MDS.Artifacts
+
+  # The MDS package verion to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: mdsPackageVersion
+    type: string
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkRuntimes
+    type: object
+    default: []
+
+  # The list of .NET runtimes to test against.
+  - name: netRuntimes
+    type: object
+    default: []
+
+  # The name of the Azure Pipelines pool to use.
+  - name: poolName
+    type: string
+
+  # The reference type to use:
+  #
+  # Project - dependent projects are referenced directly.
+  # Package - dependent projects are referenced via NuGet packages.
+  #
+  - name: referenceType
+    type: string
+    values:
+    - Package
+    - Project
+
+  # The SA password set by the sqlServerSetupSteps, if relevant.
+  - name: saPassword
+    type: string
+    default: ''
+
+  # Steps to run, if any, to configure a local SQL Server instance on the agent
+  # VM.
+  - name: sqlServerSetupSteps
+    type: stepList
+    default: []
+
+  # True if the VM image includes a local SQL Server that supports connections
+  # via integrated security.
+  - name: supportsIntegratedSecurity
+    type: boolean
+    default: false
+
+  # The pool VM image to use.
+  - name: vmImage
+    type: string
+
+jobs:
+
+  - job: test_azure_package_job_${{ parameters.jobNameSuffix }}
+    displayName: '[${{ parameters.displayNamePrefix }}] Test Azure Package'
+    pool:
+      name: ${{ parameters.poolName }}
+
+      # Images provided by Azure Pipelines must be selected using 'vmImage'.
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.vmImage }}
+      # Images provided by 1ES must be selected using a demand.
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
+
+    variables:
+
+      # The Azure test project file to use for all dotnet CLI commands.
+      #
+      # Building this project implicitly builds the Azure project.
+      - name: project
+        value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
+
+      # The NuGet.config file to use for restoring packages.
+      - name: nugetConfigFile
+        ${{ if eq(parameters.referenceType, 'Package') }}:
+          value: $(Build.SourcesDirectory)/NuGet.config.local
+        ${{ else }}:
+          value: $(Build.SourcesDirectory)/NuGet.config
+
+      # dotnet CLI arguments common to all commands.
+      - name: commonArguments
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+
+      # dotnet CLI arguments for build/test/pack commands.
+      - name: buildArguments
+        value: >-
+          $(commonArguments)
+          --configuration ${{ parameters.buildConfiguration }}
+
+      # Explicitly unset the $PLATFORM environment variable that is set by the
+      # 'ADO Build properties' Library in the ADO SqlClientDrivers public
+      # project.  This is defined with a non-standard Platform of 'AnyCPU', and
+      # will fail the builds if left defined.  The stress tests solution does
+      # not require any specific Platform, and so its solution file doesn't
+      # support any non-standard platforms.
+      #
+      # Note that Azure Pipelines will inject this variable as PLATFORM into the
+      # environment of all tasks in this job.
+      #
+      # See:
+      #   https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch
+      #
+      - name: Platform
+        value: ''
+
+      # Do the same for $CONFIGURATION since we explicitly set it using our
+      # 'buildConfiguration' parameter, and we don't want the environment to
+      # override us.
+      - name: Configuration
+        value: ''
+
+    steps:
+
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
+
+      # We have a few extra steps for Package reference builds.
+      - ${{ if eq(parameters.referenceType, 'Package') }}:
+
+        # Download the Abstractions package artifacts into packages/.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Abstractions Package Artifacts
+          inputs:
+            artifactName: ${{ parameters.abstractionsArtifactsName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+        # Download the MDS package artifacts into packages/.
+        #
+        # The Azure project doesn't depend on MDS, but the test project does.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download MDS Package Artifacts
+          inputs:
+            artifactName: ${{ parameters.mdsArtifactsName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+      # Install the .NET SDK and Runtimes.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x]
+
+      # The Windows agent images include a suitable .NET Framework runtime, so
+      # we don't have to install one explicitly.
+
+      # Setup the test config file.
+      #
+      # This must be done before building the project.  This template updates
+      # the sample config file, which is then copied into place by the build.
+      #
+      - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          saPassword: ${{ parameters.saPassword }}
+
+          # The config.json file has many options, but only some of them are
+          # used by the Azure package tests.  We only specify the ones that are
+          # necessary here.
+
+          AADServicePrincipalId: $(AADServicePrincipalId)
+          AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+          # macOS doesn't support managed identities.
+          ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
+          SupportsIntegratedSecurity: ${{ parameters.supportsIntegratedSecurity }}
+          TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+          UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+          WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)
+          # Avoid exposing secrets to pipeline jobs triggered via forks.  This
+          # prevents external contributors from creating PRs and running
+          # pipelines that could expose these secrets.
+          ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
+            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+
+      # Perform any local SQL Server setup.
+      - ${{ parameters.sqlServerSetupSteps }}
+
+      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
+      # support all of our argument combinations for the different build steps.
+
+      # Restore the project.
+      - task: DotNetCoreCLI@2
+        displayName: Restore Project
+        inputs:
+          command: custom
+          custom: restore
+          projects: $(project)
+          arguments: $(commonArguments) --configfile $(nugetConfigFile)
+
+      # Build the project.
+      - task: DotNetCoreCLI@2
+        displayName: Build Project
+        inputs:
+          command: custom
+          custom: build
+          projects: $(project)
+          arguments: $(buildArguments) --no-restore
+
+      # List the DLLs in the output directory for debugging purposes.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: >-
+            Get-ChildItem
+            -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}"
+            -Recurse
+          displayName: '[Debug] List Output DLLs'
+
+      # Run the tests for each .NET runtime.
+      - ${{ each runtime in parameters.netRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          env:
+            # Many of our tests require access to Azure resources that are
+            # currently only granted by agents running our custom ADO 1ES
+            # images in our ADO pools.
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+              ADO_POOL: 1
+            # When using connectedServiceName below, the DotNetCoreCLI task
+            # needs the system access token to be injected as this environment
+            # variable.
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
+          inputs:
+            # The tests need to access Azure resources, which is achieved via
+            # this service connection.  See:
+            #
+            # https://sqlclientdrivers.visualstudio.com/public/_settings/adminservices?resourceId=ec9623b2-829c-497f-ae1f-7461766f9a9c
+            connectedServiceName: dotnetMSI-managed-identity
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category != failing & category != flaky"
+
+        - task: DotNetCoreCLI@2
+          displayName: Test Flaky [${{ runtime }}]
+          env:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+              ADO_POOL: 1
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
+          inputs:
+            connectedServiceName: dotnetMSI-managed-identity
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category = flaky"
+
+      # Run the tests for each .NET Framework runtime.
+      - ${{ each runtime in parameters.netFrameworkRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          env:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+              ADO_POOL: 1
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
+          inputs:
+            connectedServiceName: dotnetMSI-managed-identity
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category != failing & category != flaky"
+
+        - task: DotNetCoreCLI@2
+          displayName: Test Flaky [${{ runtime }}]
+          env:
+            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+              ADO_POOL: 1
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            ${{ if eq(parameters.debug, true) }}:
+              TEST_DEBUG_EMIT: 1
+          inputs:
+            connectedServiceName: dotnetMSI-managed-identity
+            command: custom
+            custom: test
+            projects: $(project)
+            arguments: >-
+              $(buildArguments)
+              --no-build
+              -f ${{ runtime }}
+              --filter "category = flaky"

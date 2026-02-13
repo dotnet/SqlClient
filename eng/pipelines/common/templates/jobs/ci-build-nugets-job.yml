@@ -4,6 +4,17 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: referenceType
+    type: string
+    values:
+      - Package
+      - Project
+
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
@@ -12,14 +23,18 @@ parameters:
     type: string
     default: ADO-MMS22-SQL19
 
-  - name: artifactName
+  - name: abstractionsArtifactsName
     type: string
-    default: Artifacts
-  
+    default: Abstractions.Artifacts
+
+  - name: mdsArtifactsName
+    type: string
+    default: MDS.Artifacts
+
   - name: platform
     type: string
     default: $(Platform)
-  
+
   - name: buildConfiguration
     type: string
     values:
@@ -30,8 +45,15 @@ parameters:
     type: stepList
     default: []
 
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: mdsPackageVersion
+    type: string
+
 jobs:
-- job: build_nugets
+- job: build_mds_akv_packages_job
+  displayName: Build MDS & AKV Packages
 
   pool:
     name: ${{parameters.poolName }}
@@ -40,11 +62,26 @@ jobs:
     - msbuild
 
   variables:
-    - template: ../../../libraries/ci-build-variables.yml@self
+    - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
   steps:
+  - ${{ if eq(parameters.debug, true)}}:
+    - powershell: |
+        Get-ChildItem env: | Sort-Object Name
+      displayName: '[Debug] List Environment Variables'
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
-    - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
+     # Extra steps to run before the build like downloading sni and the required
+     # configuration
+    - ${{ parameters.prebuildSteps }}
+
+  # If we're testing in Package mode, then we must download the Abstractions package artifacts.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(packagePath)
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -54,41 +91,57 @@ jobs:
   # compilation errors.  We won't use the Release artifacts for anything else
   # though.
   - ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-    - template: ../steps/ci-project-build-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
       parameters:
         platform: ${{ parameters.platform }}
         buildConfiguration: Release
-        operatingSystem: Windows
+        referenceType: Project
         build: all
 
-  - template: ../steps/ci-project-build-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
+      referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
-      build: all
+      build: MDS
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
-      NugetPackageVersion: $(NugetPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
-      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
-      OutputDirectory: $(packagePath)
+      displayName: 'Create MDS NuGet Package'
       generateSymbolsPackage: false
-      displayName: 'Generate NuGet package M.D.SqlClient'
+      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
+      outputDirectory: $(packagePath)
+      packageVersion: ${{ parameters.mdsPackageVersion }}
+      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
+      referenceType: ${{ parameters.referenceType }}
 
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
-      NugetPackageVersion: $(NugetPackageVersion)
+      platform: ${{ parameters.platform }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
-      nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
-      OutputDirectory: $(packagePath)
+      referenceType: ${{ parameters.referenceType }}
+      operatingSystem: Windows
+      build: AKV
+      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      displayName: 'Create AKV NuGet Package'
       generateSymbolsPackage: false
       installNuget: false
-      displayName: 'Generate NuGet package AKV Provider'
+      nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+      outputDirectory: $(packagePath)
+      packageVersion: $(akvPackageVersion)
+      properties: 'MdsPackageVersion=${{ parameters.mdsPackageVersion }}'
+      referenceType: ${{ parameters.referenceType }}
 
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifact: Artifacts'
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Pipeline Artifacts'
     inputs:
-      PathtoPublish: $(packagePath)
-      ArtifactName: ${{ parameters.artifactName }}
+      targetPath: $(packagePath)
+      artifactName: ${{ parameters.mdsArtifactsName }}

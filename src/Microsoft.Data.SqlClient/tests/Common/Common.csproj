@@ -7,7 +7,6 @@
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
-    <IsTestProject>true</IsTestProject>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -16,7 +15,7 @@
     <DefineConstants Condition="'$(OSGroup.ToUpper())'=='UNIX'">$(DefineConstants),_UNIX</DefineConstants>
     <DefineConstants Condition="'$(OSGroup.ToUpper())'=='WINDOWS_NT'">$(DefineConstants),_WINDOWS</DefineConstants>
   </PropertyGroup>
-  
+
   <!-- .NET Framework Packages -->
   <ItemGroup>
     <!-- For compilation targeting .NET Framework using .NET SDKs. -->
@@ -40,10 +39,10 @@
     </PackageReference>
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+    <Content Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
+    </Content>
   </ItemGroup>
 
   <!-- MDS References -->
@@ -51,10 +50,6 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
-    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>%(Filename)%(Extension)</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
 
   <!-- Fixture-specific References -->

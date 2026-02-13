@@ -15,12 +15,22 @@
   <ItemGroup>
     <None Remove=".AssemblyAttributes" />
   </ItemGroup>
-  <ItemGroup>
+
+  <!-- Conditional Project References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
+
+  <!-- Conditional Package References -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
+
+  <!-- Unconditional Package References -->
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
   </ItemGroup>
+
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="runnerconfig.json" CopyToOutputDirectory="PreserveNewest" />
