@@ -160,6 +160,37 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Verifies that setting <see cref="SqlConnection.SspiContextProvider"/> throws
+        /// <see cref="InvalidOperationException"/> when the connection is open.
+        /// </summary>
+        [Fact]
+        public void SspiContextProvider_CannotBeSetWhileConnectionIsOpen()
+        {
+            using var server = new ChallengeResponseSspiTdsServer(new TdsServerArguments());
+            server.Start();
+
+            var connStr = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                IntegratedSecurity = true,
+            }.ConnectionString;
+
+            var provider = new ChallengeResponseSspiContextProvider();
+            using SqlConnection connection = new(connStr)
+            {
+                SspiContextProvider = provider,
+            };
+
+            connection.Open();
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
+                () => connection.SspiContextProvider = new ChallengeResponseSspiContextProvider());
+            Assert.Contains("SspiContextProvider", ex.Message);
+        }
+
+        /// <summary>
         /// A custom <see cref="SspiContextProvider"/> that performs a two-step
         /// challenge-response handshake:
         ///   Step 1 (empty incoming): writes an initial client token.
