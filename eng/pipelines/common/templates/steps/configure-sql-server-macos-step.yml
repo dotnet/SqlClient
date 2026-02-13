@@ -6,120 +6,119 @@
 
 # This step installs the latest SQL Server 2022 onto the macOS host as a docker container and
 # configures it for use.
-#
-# The SA password is set to the value of the $(Password) variable defined in the ADO Library "ADO
-# Test Configuration properties", brought in by common/templates/libraries/ci-build-variables.yml.
 
 parameters:
-  - name: condition
+
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
     type: string
-    default: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
 
 steps:
-# macOS only steps
-- bash: |
-    # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it
-    # back to the pipeline user.
-    USER=`whoami`
 
-    SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
-    echo "Errors will be written to: $SQLCMD_ERRORS"
+  # Configure SQL Server.  This includes installing Docker and the SQLCMD tools, starting a SQL
+  # Server container, and verifying we can connect to it.
+  - bash: |
+      # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it
+      # back to the pipeline user.
+      USER=`whoami`
 
-    # Configure the prompt to show the current timestamp so we can see how long each command takes.
-    export PS4='+ [$(date "+%Y-%m-%d %H:%M:%S")] '
-    set -x
+      SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
+      echo "Errors will be written to: $SQLCMD_ERRORS"
 
-    # Install Docker and SQLCMD tools.
-    brew install colima
-    brew install --cask docker
-    brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
-    brew update
-    HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
-    colima start --arch x86_64
-    docker --version
-    docker pull mcr.microsoft.com/mssql/server:2022-latest
+      # Configure the prompt to show the current timestamp so we can see how long each command takes.
+      export PS4='+ [$(date "+%Y-%m-%d %H:%M:%S")] '
+      set -x
 
-    # Password for the SA user (required)
-    MSSQL_SA_PW="$(Password)"
+      # Install Docker and SQLCMD tools.
+      brew install colima
+      brew install --cask docker
+      brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+      brew update
+      HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
+      colima start --arch x86_64
+      docker --version
+      docker pull mcr.microsoft.com/mssql/server:2022-latest
 
-    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+      # Password for the SA user (required)
+      MSSQL_SA_PW="${{ parameters.saPassword }}"
 
-    sleep 5
+      docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
 
-    docker ps -a
+      sleep 5
 
-    # Connect to the SQL Server container and get its version.
-    #
-    # It can take a while for the docker container to start listening and be
-    # ready for connections, so we will wait for up to 2 minutes, checking every
-    # 3 seconds.
+      docker ps -a
 
-    # Wait 3 seconds between attempts.
-    delay=3
+      # Connect to the SQL Server container and get its version.
+      #
+      # It can take a while for the docker container to start listening and be
+      # ready for connections, so we will wait for up to 2 minutes, checking every
+      # 3 seconds.
 
-    # Try up to 40 times (2 minutes) to connect.
-    maxAttempts=40
+      # Wait 3 seconds between attempts.
+      delay=3
 
-    # Attempt counter.
-    attempt=1
+      # Try up to 40 times (2 minutes) to connect.
+      maxAttempts=40
 
-    # Flag to indicate when SQL Server is ready to accept connections.
-    ready=0
+      # Attempt counter.
+      attempt=1
 
-    while [ $attempt -le $maxAttempts ]
-    do
+      # Flag to indicate when SQL Server is ready to accept connections.
+      ready=0
 
-      echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
+      while [ $attempt -le $maxAttempts ]
+      do
 
-      sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
+        echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
 
-      # If the command was successful, then the SQL Server is ready.
-      if [ $? -eq 0 ]; then
-        ready=1
-        break
+        sqlcmd -S 127.0.0.1 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
+
+        # If the command was successful, then the SQL Server is ready.
+        if [ $? -eq 0 ]; then
+          ready=1
+          break
+        fi
+
+        # Increment the attempt counter.
+        ((attempt++))
+
+        # Wait before trying again.
+        sleep $delay
+
+      done
+
+      # Is the SQL Server ready?
+      if [ $ready -eq 0 ]
+      then
+        # No, so report the error(s) and exit.
+        echo Cannot connect to SQL Server; installation aborted; errors were:
+        cat $SQLCMD_ERRORS
+        rm -f $SQLCMD_ERRORS
+        exit 1
       fi
 
-      # Increment the attempt counter.
-      ((attempt++))
-
-      # Wait before trying again.
-      sleep $delay
-
-    done
-
-    # Is the SQL Server ready?
-    if [ $ready -eq 0 ]
-    then
-      # No, so report the error(s) and exit.
-      echo Cannot connect to SQL Server; installation aborted; errors were:
-      cat $SQLCMD_ERRORS
       rm -f $SQLCMD_ERRORS
-      exit 1
-    fi
 
-    rm -f $SQLCMD_ERRORS
+      echo "Use sqlcmd to show which IP addresses are being listened on..."
+      echo 0.0.0.0
+      sqlcmd -S 0.0.0.0 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
+      echo 127.0.0.1
+      sqlcmd -S 127.0.0.1 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
+      echo ::1
+      sqlcmd -S ::1 -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
+      echo localhost
+      sqlcmd -S localhost -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
+      echo "(sqlcmd default / not specified)"
+      sqlcmd -No -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" -l 2
 
-    echo "Use sqlcmd to show which IP addresses are being listened on..."
-    echo 0.0.0.0
-    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
-    echo 127.0.0.1
-    sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
-    echo ::1
-    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
-    echo localhost
-    sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
-    echo "(sqlcmd default / not specified)"
-    sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+      echo "Configuring Dedicated Administer Connections to allow remote connections..."
+      sqlcmd -S 127.0.0.1 -No -U sa -P "$MSSQL_SA_PW" -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
+      if [ $? = 1 ]
+      then
+        echo "Error configuring DAC for remote access."
+        exit $errstatus
+      else
+        echo "Configuration complete."
+      fi
 
-    echo "Configuring Dedicated Administer Connections to allow remote connections..."
-    sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
-    if [ $? = 1 ]
-    then
-      echo "Error configuring DAC for remote access."
-      exit $errstatus
-    else
-      echo "Configuration complete."
-    fi
-
-  displayName: 'Configure SQL Server [macOS]'
-  condition: ${{parameters.condition }}
+    displayName: 'Configure SQL Server [macOS]'

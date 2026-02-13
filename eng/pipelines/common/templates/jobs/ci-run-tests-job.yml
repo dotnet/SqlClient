@@ -10,6 +10,22 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  # The configuration properties to set in the config file.
+  #
+  # GOTCHA: The following keys are used in template expressions and must be
+  # specified as boolean strings 'true' or 'false'.  They cannot be specified as
+  # runtime variables like $(SomeBooleanVar), since those are expanded after
+  # template compilation and will literally be "$(SomeBooleanVar)" during
+  # template expansion.
+  #
+  #   EnclaveEnabled
+  #   IsAzureSynapse
+  #   IsDNSCachingSupportedCR
+  #   IsDNSCachingSupportedTR
+  #   ManagedIdentitySupported
+  #   SupportsFileStream
+  #   SupportsIntegratedSecurity
+  #   TracingEnabled
   - name: configProperties
     type: object
     default: {} # - key: 'value'
@@ -95,6 +111,10 @@ parameters:
     type: boolean
     default: false
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -158,6 +178,7 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
+        saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
         ${{ if parameters.configProperties.TCPConnectionString }}:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
@@ -234,6 +255,7 @@ jobs:
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
+          saPassword: ${{ parameters.saPassword }}
           ${{ if parameters.configProperties.instanceName }}:
             instanceName: ${{ parameters.configProperties.instanceName }}
           ${{ if parameters.configProperties.user }}:
@@ -260,17 +282,6 @@ jobs:
             LocalDbSharedInstanceName: ${{ parameters.configProperties.localDbSharedInstanceName }}
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
-
-    - template: /eng/pipelines/common/templates/steps/build-all-tests-step.yml@self # build tests
-      parameters:
-        targetFramework: ${{ parameters.targetFramework }}
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        testSet: ${{ parameters.testSet }}
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-        ${{ if ne(parameters.operatingSystem, 'Windows') }}:
-          OSGroup: Unix
 
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests

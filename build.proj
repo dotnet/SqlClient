@@ -10,10 +10,6 @@
     <!-- SourceLink variable-->
     <DisableSourceLink>false</DisableSourceLink>
 
-    <!-- Use the NuGet.config with a local source for Package reference builds. -->
-    <NuGetConfigFile>$(RepoRoot)/NuGet.config</NuGetConfigFile>
-    <NuGetConfigFile Condition="'$(ReferenceType)' == 'Package'">$(NuGetConfigFile).local</NuGetConfigFile>
-
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
@@ -32,7 +28,7 @@
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
     <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
-    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);RestoreConfigFile=$(NuGetConfigFile)</CommonProperties>
+    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
     <SqlServerLibProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
@@ -51,12 +47,22 @@
 
   <!-- Test configuration properties -->
   <PropertyGroup>
-      <FilterStatement>$(Filter)</FilterStatement>
-      <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
-      <!--Collect code coverage unless explicitly disabled-->
-      <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
-      <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
-      <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectStatement>
+    <!-- Set up default filters for tests to exclude failing and flaky tests -->
+    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky</Filter>
+    <FilterArgument>--filter "$(Filter)"</FilterArgument>
+
+    <!-- Collect code coverage unless explicitly disabled -->
+    <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
+    <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
+    <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectStatement>
+
+    <!-- Set up tests to fail after hangs and report via blame -->
+    <BlameArgument>$(Blame)</BlameArgument>
+    <BlameArgument Condition="'$(BlameArgument)' == ''">
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout 10m
+    </BlameArgument>
   </PropertyGroup>
 
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
@@ -83,17 +89,6 @@
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
 
-    <ManualTests Include="**/Common/Common.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
-    <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
-    <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
-    <ManualTests Include="**/tools/TDS/TDS/TDS.csproj" />
-    <ManualTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <ManualTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
-    <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
     <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
   </ItemGroup>
@@ -103,10 +98,6 @@
   <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-
-  <!-- @TODO: Manual tests have a reference to AKV provider, and AKV provider is not built on non-windows pipeline runs. Thus it is added to the dependencies of the build tests target. This is not good since it means AKV is built twice on windows and once on unix, in a mix of implicit and explicit. The pipeline should be modified to build it in both cases, or the build should be updated to have dotnet build the test projects. -->
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildManualTestsNetCore"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
 
   <!-- Abstractions Targets -->
   <PropertyGroup>
@@ -202,16 +193,8 @@
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
-  <Target Name="RestoreTestsNetCore" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-  </Target>
-
   <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
-  </Target>
-
-  <Target Name="RestoreTestsNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
   </Target>
 
   <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
@@ -259,24 +242,6 @@
     <MSBuild Projects="@(NetStandardDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;BuildForLib=True" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
-  <Target Name="BuildManualTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
-    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform)] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <Message Text=">>> Building ManualTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building ManualTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
   <!-- Tests -->
 
   <!-- Run all tests applicable to the host OS. -->
@@ -296,13 +261,11 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -318,13 +281,11 @@
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
         -f $(TF)
         -p:Configuration=$(Configuration)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -346,13 +307,11 @@
         -p:ReferenceType=$(ReferenceType)
         -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
         -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -371,13 +330,11 @@
         -p:ReferenceType=$(ReferenceType)
         -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
         -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
       <!-- Convert more than one whitespace character into one space -->
       <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
@@ -394,24 +351,25 @@
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
-        --no-build
-        -v n
+        -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:Target$(TFGroup)Version=$(TF)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Windows$(TargetGroup)
         -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
         -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+      <!-- Add test set only if it was provided - otherwise it will be permanently set to '' -->
+      <TestCommand Condition="'$(TestSet)' != ''">
+        $(TestCommand)
+        -p:TestSet=$(TestSet)
+      </TestCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
@@ -422,24 +380,26 @@
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
-        --no-build
-        -v n
+        -f $(TF)
         -p:Configuration=$(Configuration)
-        -p:TargetNetCoreVersion=$(TF)
         -p:ReferenceType=$(ReferenceType)
-        -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Unixnetcoreapp
         -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
         -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(CollectStatement)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
         --results-directory $(ResultsDirectory)
-        --filter "$(FilterStatement)"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
-        --blame-hang
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
       </TestCommand>
-      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+
+      <!-- Add test set only if it was provided - otherwise it will be permanently set to '' -->
+      <TestCommand Condition="'$(TestSet)' != ''">
+        $(TestCommand)
+        -p:TestSet=$(TestSet)
+      </TestCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
     </PropertyGroup>
     <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />

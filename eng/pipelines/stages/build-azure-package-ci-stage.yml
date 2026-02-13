@@ -20,6 +20,8 @@
 # The packages are published to pipeline artifacts with the name specified by
 # the azureArtifactsName parameter.
 #
+# This stage depends on the secrets_stage.
+#
 # This template defines a stage named 'build_azure_package_stage' that
 # can be depended on by downstream stages.
 
@@ -37,6 +39,11 @@ parameters:
   # This is used when the referenceType is 'Package'.
   - name: abstractionsPackageVersion
     type: string
+
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
 
   # The name of the pool to use for jobs that require customized VM images.
   - name: adoPoolName
@@ -79,11 +86,6 @@ parameters:
     type: boolean
     default: false
 
-  # The stages we depend on, if any.
-  - name: dependsOn
-    type: object
-    default: []
-
   # The dotnet CLI verbosity to use.
   - name: dotnetVerbosity
     type: string
@@ -124,7 +126,15 @@ stages:
   - stage: build_azure_package_stage
     displayName: Build Azure Package
 
-    dependsOn: ${{ parameters.dependsOn }}
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
+
+    variables:
+      # Bring the SA password from the secrets_stage into scope here.
+      - name: saPassword
+        value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
 
     jobs:
 
@@ -164,13 +174,12 @@ stages:
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
+          saPassword: $(saPassword)
           # The image includes a SQL Server instance that we must configure.
           sqlServerSetupSteps:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
               parameters:
-                # Override the template's default step condition.  We always
-                # want this step to run.
-                condition: true
+                saPassword: $(saPassword)
           vmImage: ADO-UB22-SQL22
 
       # ------------------------------------------------------------------------
@@ -210,14 +219,13 @@ stages:
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
           referenceType: ${{ parameters.referenceType }}
+          saPassword: $(saPassword)
           # The image includes a SQL Server instance that we must configure.
           sqlServerSetupSteps:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
               # Use defaults for most parameters.
               parameters:
-                # Override the template's default step condition.  We always
-                # want this step to run.
-                condition: true
+                saPassword: $(saPassword)
                 enableLocalDB: true
                 # These variables are from an Azure DevOps Library variable
                 # group.

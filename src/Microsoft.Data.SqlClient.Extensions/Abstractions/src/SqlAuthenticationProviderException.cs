@@ -11,7 +11,7 @@ public abstract class SqlAuthenticationProviderException : Exception
     /// The string value used when the failure code is not known.
     /// </summary>
     private const string Unknown = "Unknown";
-    
+
     /// <include file='../doc/SqlAuthenticationProviderException.xml' path='docs/members[@name="SqlAuthenticationProviderException"]/ctor1/*'/>
     protected SqlAuthenticationProviderException(
         string message,
@@ -37,7 +37,7 @@ public abstract class SqlAuthenticationProviderException : Exception
         Method = method;
         FailureCode = failureCode;
         ShouldRetry = shouldRetry;
-        RetryPeriod = shouldRetry && retryPeriod > 0? retryPeriod : 0;
+        RetryPeriod = (shouldRetry && retryPeriod > 0) ? retryPeriod : 0;
     }
 
     /// <include file='../doc/SqlAuthenticationProviderException.xml' path='docs/members[@name="SqlAuthenticationProviderException"]/Method/*'/>

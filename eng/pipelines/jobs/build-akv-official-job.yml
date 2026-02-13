@@ -89,6 +89,9 @@ jobs:
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
+          # Install the .NET SDK.
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+
           # Perform analysis before building, since this step will clobber build
           # output.
           - template: /eng/pipelines/steps/roslyn-analyzers-akv-step.yml@self
