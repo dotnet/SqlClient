@@ -44,13 +44,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 IntegratedSecurity = true,
             }.ConnectionString;
 
+            var provider = new ChallengeResponseSspiContextProvider();
             using SqlConnection connection = new(connStr)
             {
-                SspiContextProvider = new ChallengeResponseSspiContextProvider(),
+                SspiContextProvider = provider,
             };
 
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(2, provider.GenerateContextCallCount);
         }
 
         /// <summary>
@@ -70,13 +72,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 IntegratedSecurity = true,
             }.ConnectionString;
 
+            var provider = new ChallengeResponseSspiContextProvider();
             using SqlConnection connection = new(connStr)
             {
-                SspiContextProvider = new ChallengeResponseSspiContextProvider(),
+                SspiContextProvider = provider,
             };
 
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(2, provider.GenerateContextCallCount);
         }
 
         /// <summary>
@@ -117,6 +121,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // If pooling incorrectly shared connections, the server would see fewer logins
             Assert.True(server.PreLoginCount >= 2,
                 $"Expected at least 2 pre-login requests (separate pools) but got {server.PreLoginCount}");
+
+            // Verify each provider completed the two-step SSPI handshake
+            Assert.Equal(2, providerA.GenerateContextCallCount);
+            Assert.Equal(2, providerB.GenerateContextCallCount);
         }
 
         /// <summary>
@@ -144,6 +152,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 connection.Open();
                 Assert.Equal(ConnectionState.Open, connection.State);
             }
+
+            // The first login triggers 2 GenerateContext calls (initial + challenge-response).
+            // Subsequent connections may reuse pooled connections, so the total should be at least 2.
+            Assert.True(provider.GenerateContextCallCount >= 2,
+                $"Expected at least 2 GenerateContext calls but got {provider.GenerateContextCallCount}");
         }
 
         /// <summary>
@@ -154,11 +167,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private sealed class ChallengeResponseSspiContextProvider : SspiContextProvider
         {
+            /// <summary>
+            /// Tracks how many times <see cref="GenerateContext"/> has been called.
+            /// For a successful two-step handshake this should be 2 per login.
+            /// </summary>
+            public int GenerateContextCallCount { get; private set; }
+
             protected override bool GenerateContext(
                 ReadOnlySpan<byte> incomingBlob,
                 IBufferWriter<byte> outgoingBlobWriter,
                 SspiAuthenticationParameters authParams)
             {
+                GenerateContextCallCount++;
+
                 if (incomingBlob.IsEmpty)
                 {
                     // First call: no server challenge yet, send initial client token

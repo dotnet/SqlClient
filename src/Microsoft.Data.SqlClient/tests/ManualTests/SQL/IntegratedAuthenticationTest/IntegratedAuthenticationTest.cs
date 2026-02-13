@@ -71,24 +71,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.ServerSPN += ":" + instanceName;
             }
 
+            var provider = new TestSspiContextProvider();
             using SqlConnection conn = new(builder.ConnectionString)
             {
-                SspiContextProvider = new TestSspiContextProvider(),
+                SspiContextProvider = provider,
             };
 
-            try
-            {
-                conn.Open();
+            // The custom provider captures auth params and returns false,
+            // causing an SSPI generation failure wrapped in SqlException.
+            Assert.ThrowsAny<SqlException>(() => conn.Open());
 
-                Assert.Fail("Expected to use custom SSPI context provider");
-            }
-            catch (SspiTestException sspi)
-            {
-                Assert.Equal(sspi.AuthParams.ServerName, builder.DataSource);
-                Assert.Equal(sspi.AuthParams.DatabaseName, builder.InitialCatalog);
-                Assert.Equal(sspi.AuthParams.UserId, builder.UserID);
-                Assert.Equal(sspi.AuthParams.Password, builder.Password);
-            }
+            Assert.NotNull(provider.CapturedAuthParams);
+            Assert.Equal(provider.CapturedAuthParams.ServerName, builder.DataSource);
+            Assert.Equal(provider.CapturedAuthParams.DatabaseName, builder.InitialCatalog);
+            Assert.Equal(provider.CapturedAuthParams.UserId, builder.UserID);
+            Assert.Equal(provider.CapturedAuthParams.Password, builder.Password);
         }
 
         private static void TryOpenConnectionWithIntegratedAuthentication(string connectionString)
@@ -101,20 +98,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private sealed class TestSspiContextProvider : SspiContextProvider
         {
+            public SspiAuthenticationParameters CapturedAuthParams { get; private set; }
+
             protected override bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
             {
-                throw new SspiTestException(authParams);
+                CapturedAuthParams = authParams;
+                return false;
             }
-        }
-
-        private sealed class SspiTestException : Exception
-        {
-            public SspiTestException(SspiAuthenticationParameters authParams)
-            {
-                AuthParams = authParams;
-            }
-
-            public SspiAuthenticationParameters AuthParams { get; }
         }
     }
 }
