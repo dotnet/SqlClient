@@ -226,7 +226,6 @@ steps:
           -p:Filter="category=flaky"
           -p:CollectCodeCoverage=false
     continueOnError: true
-    retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
 - ${{ else }}: # Linux or macOS
   - ${{if eq(parameters.referenceType, 'Project')}}:
@@ -350,4 +349,3 @@ steps:
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true
-    retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
