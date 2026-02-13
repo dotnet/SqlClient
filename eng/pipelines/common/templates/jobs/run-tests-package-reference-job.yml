@@ -4,14 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: downloadPackageStep
-    type: step
-    default:
-      script: echo <empty step>
 
-  - name: dependsOn
+  - name: artifactName
     type: string
-    default: empty
 
   - name: isPreview
     type: boolean
@@ -21,10 +16,9 @@ parameters:
     type: number
 
 jobs:
+
 - job: run_tests_package_reference
   displayName: 'Run tests with package reference'
-  ${{ if ne(parameters.dependsOn, 'empty')}}:
-    dependsOn: '${{parameters.dependsOn }}'
 
   # Some of our tests take longer than the default 60 minutes to run on some
   # OSes and configurations.
@@ -42,7 +36,10 @@ jobs:
   steps:
   - template: /eng/pipelines/common/templates/steps/pre-build-step.yml
 
-  - ${{parameters.downloadPackageStep }}
+  - download: current
+    artifact: ${{parameters.artifactName}}
+    patterns: '**/*.*nupkg'
+    displayName: 'Download NuGet Package'
 
   - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
     parameters:
@@ -52,7 +49,7 @@ jobs:
 
   - template: /eng/pipelines/common/templates/steps/prepare-test-db-step.yml
 
-# build & test
+  # build & test
   - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netfx-step.yml
     parameters:
       ${{ if parameters.isPreview }}:

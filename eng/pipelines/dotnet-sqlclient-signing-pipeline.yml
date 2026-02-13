@@ -159,21 +159,12 @@ extends:
       jobs:
       - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
         parameters:
-          packageFolderName: $(mdsArtifactName)
+          artifactName: $(mdsArtifactName)
           isPreview: ${{ parameters['isPreview'] }}
-          downloadPackageStep:
-            download: current
-            artifact: $(mdsArtifactName)
-            patterns: '**/*.*nupkg'
-            displayName: 'Download NuGet Package'
 
 # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
 #      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
 #        parameters:
+#          artifactName: $(mdsArtifactName)
 #          isPreview: ${{ parameters['isPreview'] }}
 #          timeout: ${{ parameters.testJobTimeout }}
-#          downloadPackageStep:
-#            download: current
-#            artifact: $(mdsArtifactName)
-#            patterns: '**/*.nupkg'
-#            displayName: 'Download NuGet Package'

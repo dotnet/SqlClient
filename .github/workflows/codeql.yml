@@ -12,10 +12,19 @@
 name: "CodeQL Advanced"
 
 on:
+  # Scan on pushes to main only.
   push:
-    branches: [ "main", "feat/*", "dev/**/*" ]
+    branches:
+      - main
+
+  # Scan on PRs that target matching branches.
   pull_request:
-    branches: [ "main", "feat/*", "dev/**/*" ]
+    branches:
+      - main
+      - feat/**
+      - dev/**
+
+  # Scan weekly on Saturdays at 23:33 UTC
   schedule:
     - cron: '33 23 * * 6'
 
