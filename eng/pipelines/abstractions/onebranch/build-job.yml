@@ -129,7 +129,8 @@ jobs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
           CleanupTempStorage: 1
-          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          ConnectedServiceName: ESRP Managed Identity federated auth - AME tenant
+          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
           EsrpClientId: $(SigningEsrpClientId)
           FolderPath: $(assembliesPath)
           Pattern: $(packageName).dll
@@ -144,7 +145,8 @@ jobs:
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
           AuthAKVName: $(SigningAuthAkvName)
           AuthSignCertName: $(SigningAuthSignCertName)
-          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          ConnectedServiceName: ESRP Managed Identity federated auth - AME tenant
+          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
           EsrpClientId: $(SigningEsrpClientId)
           FolderPath: $(assembliesPath)
           Pattern: $(packageName).dll
@@ -217,7 +219,8 @@ jobs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
           CleanupTempStorage: 1
-          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          ConnectedServiceName: ESRP Managed Identity federated auth - AME tenant
+          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
           EsrpClientId: $(SigningEsrpClientId)
           FolderPath: $(packagesPath)
           Pattern: $(packageName).nupkg
@@ -232,7 +235,8 @@ jobs:
         inputs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          ConnectedServiceName: ESRP Managed Identity federated auth - AME tenant
+          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
           EsrpClientId: $(SigningEsrpClientId)
           AuthAKVName: $(SigningAuthAkvName)
           AuthSignCertName: $(SigningAuthSignCertName)
