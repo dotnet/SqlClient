@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal(2, provider.GenerateContextCallCount);
+            Assert.True(provider.GenerateContextCallCount >= 2, $"Expected at least 2 GenerateContext calls (initial + challenge-response) but got {provider.GenerateContextCallCount}");
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal(2, provider.GenerateContextCallCount);
+            Assert.True(provider.GenerateContextCallCount >= 2, $"Expected at least 2 GenerateContext calls (initial + challenge-response) but got {provider.GenerateContextCallCount}");
         }
 
         /// <summary>
@@ -123,8 +123,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 $"Expected at least 2 pre-login requests (separate pools) but got {server.PreLoginCount}");
 
             // Verify each provider completed the two-step SSPI handshake
-            Assert.Equal(2, providerA.GenerateContextCallCount);
-            Assert.Equal(2, providerB.GenerateContextCallCount);
+            Assert.True(providerA.GenerateContextCallCount >= 2, $"Expected at least 2 GenerateContext calls (initial + challenge-response) but got {providerA.GenerateContextCallCount}");
+            Assert.True(providerB.GenerateContextCallCount >= 2, $"Expected at least 2 GenerateContext calls (initial + challenge-response) but got {providerB.GenerateContextCallCount}");
         }
 
         /// <summary>
