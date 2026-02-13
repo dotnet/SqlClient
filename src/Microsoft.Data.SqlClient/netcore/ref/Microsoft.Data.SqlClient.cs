@@ -5,39 +5,6 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
-namespace Microsoft.Data
-{
-
-
-
-}
-
-namespace Microsoft.Data.Sql
-{
-    /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />
-    public sealed partial class SqlNotificationRequest
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor1/*' />
-        public SqlNotificationRequest() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor2/*' />
-        public SqlNotificationRequest(string userData, string options, int timeout) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Options/*' />
-        public string Options { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Timeout/*' />
-        public int Timeout { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/UserData/*' />
-        public string UserData { get { throw null; } set { } }
-    }
-
-    /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/SqlDataSourceEnumerator/*' />
-    public sealed class SqlDataSourceEnumerator : System.Data.Common.DbDataSourceEnumerator
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/Instance/*' />
-        public static SqlDataSourceEnumerator Instance { get; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/GetDataSources/*' />
-        public override System.Data.DataTable GetDataSources() { throw null; }
-    }
-}
 namespace Microsoft.Data.SqlTypes
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
