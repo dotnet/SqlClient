@@ -1,10 +1,10 @@
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/dotnet/sqlclient/master/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Nuget](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient?label=Nuget.org%20Downloads&style=flat-square&color=blue)](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
 [![Build status](https://sqlclientdrivers.visualstudio.com/public/_apis/build/status/ADO/CI-SqlClient)](https://sqlclientdrivers.visualstudio.com/public/_build/latest?definitionId=1879)
 
 # Microsoft SqlClient Data Provider for SQL Server
 
-Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server]([url](https://aka.ms/sql)) and the [Azure SQL]([url](https://aka.ms/azure_sql)) family of databases. It grew from a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server and Azure SQL features will only be implemented in Microsoft.Data.SqlClient.
+Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server]([url](https://aka.ms/sql)) and the [Azure SQL]([url](https://aka.ms/azure_sql)) family of databases. It grew from a union of the two System.Data.SqlClient components which live independently in .NET and .NET Framework. Going forward, support for new SQL Server and Azure SQL features will only be implemented in Microsoft.Data.SqlClient.
 
 ## Supportability
 
@@ -27,13 +27,15 @@ When targeting .NET on Windows, a package reference to [Microsoft.Data.SqlClient
 
 | Topic | Link to File |
 | :---- | :------------- |
-| Coding Style | [coding-style.md](coding-style.md) |
-| Guidelines for building the driver | [BUILDGUIDE.md](BUILDGUIDE.md) |
-| Guidelines for Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Changelog for all driver releases | [CHANGELOG.md](CHANGELOG.md) |
-| Support Policy | [SUPPORT.md](SUPPORT.md) |
+| Best Practices | [coding-best-practices.md](/policy/coding-best-practices.md) |
+| Build Guide | [BUILDGUIDE.md](/BUILDGUIDE.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
+| Coding Style | [coding-style.md](/policy/coding-style.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
+| Review Process | [review-process.md](/policy/review-process.md) |
+| Support Policy | [SUPPORT.md](SUPPORT.md) |
 
 ## Our Featured Contributors
 
@@ -72,7 +74,7 @@ Check out our [FAQ](https://github.com/dotnet/SqlClient/wiki/Frequently-Asked-Qu
 
 Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations, which include [Microsoft](https://github.com/Microsoft), [Azure](https://github.com/Azure), [DotNet](https://github.com/dotnet), [AspNet](https://github.com/aspnet), [Xamarin](https://github.com/xamarin), and [our GitHub organizations](https://opensource.microsoft.com/).
 
-If you believe you have found a security vulnerability in any Microsoft-owned repository that meets Microsoft's [Microsoft's definition of a security vulnerability](https://docs.microsoft.com/en-us/previous-versions/tn-archive/cc751383(v=technet.10)), please report it to us as described below.
+If you believe you have found a security vulnerability in any Microsoft-owned repository that meets [Microsoft's definition of a security vulnerability](https://www.microsoft.com/en-us/msrc/definition-of-a-security-vulnerability), please report it to us as described below.
 
 ## Reporting Security Issues
 
@@ -86,13 +88,13 @@ You should receive a response within 24 hours. If for some reason you do not, pl
 
 Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
 
-  * Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
+- Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
+- Full paths of source file(s) related to the manifestation of the issue
+- The location of the affected source code (tag/branch/commit or direct URL)
+- Any special configuration required to reproduce the issue
+- Step-by-step instructions to reproduce the issue
+- Proof-of-concept or exploit code (if possible)
+- Impact of the issue, including how an attacker might exploit the issue
 
 This information will help us triage your report more quickly.
 
@@ -110,7 +112,7 @@ Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https:
 
 ## License
 
-The Microsoft.Data.SqlClient Driver for SQL Server is licensed under the MIT license. See the [LICENSE](https://github.com/dotnet/SqlClient/blob/master/LICENSE) file for more details.
+The Microsoft.Data.SqlClient Driver for SQL Server is licensed under the MIT license. See the [LICENSE](LICENSE) file for more details.
 
 ## Trademarks
 

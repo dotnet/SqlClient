@@ -25,15 +25,14 @@ parameters:
   - name: prebuildSteps
     type: stepList
     default: []
-  
+
   - name: postTestJobs
     type: jobList
     default: []
 
   # The timeout, in minutes, for each test job.
   - name: testsTimeout
-    type: string
-    default: 90
+    type: number
 
 stages:
 - ${{ each config in parameters.testConfigurations }}:
@@ -67,6 +66,7 @@ stages:
                       publishTestResults: true
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
+                  isArm64: ${{ eq(config.value.isArm64, 'true') }}
                   ${{if ne(config.value.configProperties, '{}') }}:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
@@ -88,7 +88,7 @@ stages:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
-                    prebuildSteps: ${{ parameters.prebuildSteps }}                  
+                    prebuildSteps: ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
@@ -97,6 +97,7 @@ stages:
                         publishTestResults: true
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
+                    isArm64: ${{ eq(config.value.isArm64, 'true') }}
                     ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:
@@ -106,7 +107,7 @@ stages:
 - ${{ if ne(length(parameters.postTestJobs), 0) }}:
   - stage: Post_Test
     displayName: 'Post Test Jobs'
-    dependsOn: 
+    dependsOn:
       - ${{ each config in parameters.testConfigurations }}:
         - ${{ each image in config.value.images }}:
           - ${{ image.key }}
