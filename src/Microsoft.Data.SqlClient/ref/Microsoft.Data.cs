@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient;
 #if NETFRAMEWORK
 [System.Serializable]
 #endif
-public sealed partial class OperationAbortedException : System.SystemException
+public sealed class OperationAbortedException : System.SystemException
 {
     internal OperationAbortedException() { }
 

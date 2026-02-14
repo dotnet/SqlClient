@@ -359,6 +359,7 @@ public enum SqlBulkCopyOptions
     UseInternalTransaction = 32,
 }
 
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/SqlClientFactory/*'/>
 #if NETFRAMEWORK
 public sealed class SqlClientFactory : System.Data.Common.DbProviderFactory, System.IServiceProvider
 #else
@@ -1350,6 +1351,7 @@ public sealed class SqlDataAdapter : System.Data.Common.DbDataAdapter, System.Da
     public event Microsoft.Data.SqlClient.SqlRowUpdatedEventHandler RowUpdated { add { } remove { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*'/>
     public event Microsoft.Data.SqlClient.SqlRowUpdatingEventHandler RowUpdating { add { } remove { } }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
     protected override void OnRowUpdated(System.Data.Common.RowUpdatedEventArgs value) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
     protected override void OnRowUpdating(System.Data.Common.RowUpdatingEventArgs value) { }
