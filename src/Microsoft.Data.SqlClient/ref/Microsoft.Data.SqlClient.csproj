@@ -21,6 +21,14 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
+  <!-- Reference to Abstractions -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System" />
