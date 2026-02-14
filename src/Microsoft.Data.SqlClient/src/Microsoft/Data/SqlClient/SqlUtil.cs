@@ -18,13 +18,7 @@ using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 
-#if NETFRAMEWORK
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-#if _WINDOWS
-using Interop.Windows.Kernel32;
-#endif
-#else
+#if NET
 using System.Net.Sockets;
 #endif
 
