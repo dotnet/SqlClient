@@ -29,10 +29,6 @@
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />

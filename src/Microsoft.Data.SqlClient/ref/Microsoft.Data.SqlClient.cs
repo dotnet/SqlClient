@@ -731,11 +731,8 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     public void ResetCommandTimeout() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
     public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
-
-    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
     protected override void Dispose(bool disposing) { }
-    #endif
 
     #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
@@ -969,10 +966,8 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     protected override System.Data.Common.DbProviderFactory DbProviderFactory { get { throw null; } }
     #endif
 
-    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
     protected override void Dispose(bool disposing) { }
-    #endif
 
     #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*'/>
@@ -1799,6 +1794,9 @@ public enum SqlNotificationType
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*'/>
+#if !NETFRAMEWORK
+[System.ComponentModel.TypeConverter(typeof(SqlParameterConverter))]
+#endif
 public sealed class SqlParameter : System.Data.Common.DbParameter, System.Data.IDataParameter, System.Data.IDbDataParameter, System.ICloneable
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*'/>
@@ -1886,6 +1884,10 @@ public sealed class SqlParameter : System.Data.Common.DbParameter, System.Data.I
     public void ResetSqlDbType() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*'/>
     public override string ToString() { throw null; }
+
+    #if !NETFRAMEWORK
+    internal class SqlParameterConverter { }
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*'/>
