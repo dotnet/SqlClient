@@ -14,6 +14,7 @@
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
+  
   <!--Generating Strong Name-->
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
     <SignAssembly>true</SignAssembly>
@@ -24,11 +25,24 @@
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <!-- CLS Compliance attribute -->
   <ItemGroup>
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
+  
+  <!-- Files -->
+  <ItemGroup>
+    <Compile Include="../../ref/Microsoft.Data.cs" />
+    <Compile Include="../../ref/Microsoft.Data.Sql.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.DataClassification.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.Server.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlTypes.cs" />
+  </ItemGroup>
+  
+  <!-- References -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />

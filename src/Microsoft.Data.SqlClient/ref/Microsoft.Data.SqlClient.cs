@@ -47,7 +47,7 @@ public abstract class SqlAuthenticationInitializer
     public abstract void Initialize();
 }
 
-#if !NETFRAMEWORK
+#if NET
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/SqlBatch/*'/>
 public class SqlBatch : System.Data.Common.DbBatch
 {
@@ -100,7 +100,7 @@ public class SqlBatch : System.Data.Common.DbBatch
 }
 #endif
 
-#if !NETFRAMEWORK
+#if NET
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
 public partial class SqlBatchCommand : System.Data.Common.DbBatchCommand
 {
@@ -128,7 +128,7 @@ public partial class SqlBatchCommand : System.Data.Common.DbBatchCommand
 }
 #endif
 
-#if !NETFRAMEWORK
+#if NET
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SqlBatchCommandCollection/*'/>
 public class SqlBatchCommandCollection : System.Data.Common.DbBatchCommandCollection, System.Collections.Generic.IList<SqlBatchCommand>
 {
@@ -1642,7 +1642,7 @@ public sealed class SqlException : System.Data.Common.DbException
     internal SqlException() { }
     private SqlException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 
-    #if !NETFRAMEWORK
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
     public new Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
     #endif

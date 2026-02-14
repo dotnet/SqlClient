@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFramework>net462</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
@@ -9,6 +9,7 @@
     <Product>Framework $(BaseProduct)</Product>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
+  
   <!--Generating Strong Name-->
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
     <SignAssembly>true</SignAssembly>
@@ -19,11 +20,24 @@
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <!-- CLS Compliance -->
   <ItemGroup>
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
+
+  <!-- Files -->
+  <ItemGroup>
+    <Compile Include="../../ref/Microsoft.Data.cs" />
+    <Compile Include="../../ref/Microsoft.Data.Sql.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.DataClassification.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.Server.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlTypes.cs" />
+  </ItemGroup>
+  
+  <!-- References -->
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -34,8 +48,7 @@
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Transactions" />
-  </ItemGroup>
-  <ItemGroup>
+
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <PrivateAssets>All</PrivateAssets>
