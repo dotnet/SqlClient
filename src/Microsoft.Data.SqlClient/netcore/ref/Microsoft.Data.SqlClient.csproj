@@ -31,12 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Microsoft.Data.SqlClient.cs" />
     <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$(TargetGroup) == 'netcoreapp'">
-    <Compile Include="Microsoft.Data.SqlClient.Batch.cs" />
-    <Compile Include="Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
