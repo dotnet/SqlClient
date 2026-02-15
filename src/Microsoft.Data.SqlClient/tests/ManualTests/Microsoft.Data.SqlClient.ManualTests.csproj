@@ -111,6 +111,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\Bug85007.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug903514.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Bug98182.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CacheMetadata.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CheckConstraints.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
