@@ -72,7 +72,7 @@ resources:
       name: OneBranch.Pipelines/GovernedTemplates
       ref: refs/heads/main
 
-# Extend the Non-Official (a.k.a Buddy)pipeline, inspired by:
+# Extend the Non-Official (a.k.a Buddy) pipeline, inspired by:
 #
 # https://sqlclientdrivers.visualstudio.com/OneBranch.Pipelines/_git/GovernedTemplates?path=/UserPipelines/Linux/OneBranch.Buddy.CrossPlat.yml
 extends:

@@ -52,8 +52,8 @@ jobs:
       # Our variables.yml defines several paths where interesting artifacts are placed, all of
       # which are sub-directories of this one.  All jobs set ob_outputDirectory identically.
       #
-      - name: ob_outputDirectory
-        value: $(Agent.BuildDirectory)/build
+      # - name: ob_outputDirectory
+      #   value: $(Agent.BuildDirectory)/build
 
       # We share ESRP signing variables with other pipelines, so we store them in a shared ADO.Net
       # Library variagle group.  This will bring in the following variables that we use:
@@ -65,7 +65,7 @@ jobs:
       #   SigningEsrpClientId
       #   SigningEsrpConnectedServiceName
       #
-      # - group: abstractions-esrp
+      - group: abstractions-esrp
 
       # We share symbols variables with the AKV pipelines via an Azure DevOps Library variable
       # group.  This will bring in the following variables that we use:
@@ -126,15 +126,15 @@ jobs:
       - task: EsrpMalwareScanning@5
         displayName: ESRP DLL Malware Scanning
         inputs:
-          # AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          AppRegistrationClientId: $(appRegistrationClientId)
-          # AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          AppRegistrationTenantId: $(appRegistrationTenantId)
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          # AppRegistrationClientId: $(appRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          # AppRegistrationTenantId: $(appRegistrationTenantId)
           CleanupTempStorage: 1
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
-          # EsrpClientId: $(SigningEsrpClientId)
-          EsrpClientId: $(EsrpClientId)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          # ConnectedServiceName: $(ESRPConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(assembliesPath)
           Pattern: $(packageName).dll
           UseMSIAuthentication: true
@@ -144,18 +144,18 @@ jobs:
       - task: EsrpCodeSigning@5
         displayName: ESRP DLL Signing
         inputs:
-          # AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          AppRegistrationClientId: $(appRegistrationClientId)
-          # AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          AppRegistrationTenantId: $(appRegistrationTenantId)
-          # AuthAKVName: $(SigningAuthAkvName)
-          AuthAKVName: $(AuthAKVName)
-          # AuthSignCertName: $(SigningAuthSignCertName)
-          AuthSignCertName: $(AuthSignCertName)
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
-          # EsrpClientId: $(SigningEsrpClientId)
-          EsrpClientId: $(EsrpClientId)
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          # AppRegistrationClientId: $(appRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          # AppRegistrationTenantId: $(appRegistrationTenantId)
+          AuthAKVName: $(SigningAuthAkvName)
+          # AuthAKVName: $(AuthAKVName)
+          AuthSignCertName: $(SigningAuthSignCertName)
+          # AuthSignCertName: $(AuthSignCertName)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          # ConnectedServiceName: $(ESRPConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(assembliesPath)
           Pattern: $(packageName).dll
           signConfigType: inlineSignParams
@@ -224,15 +224,15 @@ jobs:
       - task: EsrpMalwareScanning@5
         displayName: ESRP Nuget Malware Scanning
         inputs:
-          # AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          AppRegistrationClientId: $(appRegistrationClientId)
-          # AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          AppRegistrationTenantId: $(appRegistrationTenantId)
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          # AppRegistrationClientId: $(appRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          # AppRegistrationTenantId: $(appRegistrationTenantId)
           CleanupTempStorage: 1
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
-          # EsrpClientId: $(SigningEsrpClientId)
-          EsrpClientId: $(EsrpClientId)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          # ConnectedServiceName: $(ESRPConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(packagesPath)
           Pattern: $(packageName).nupkg
           UseMSIAuthentication: true
@@ -244,18 +244,18 @@ jobs:
       - task: EsrpCodeSigning@5
         displayName: ESRP Signing NuGet Package
         inputs:
-          # AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          AppRegistrationClientId: $(appRegistrationClientId)
-          # AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          AppRegistrationTenantId: $(appRegistrationTenantId)
-          # AuthAKVName: $(SigningAuthAkvName)
-          AuthAKVName: $(AuthAKVName)
-          # AuthSignCertName: $(SigningAuthSignCertName)
-          AuthSignCertName: $(AuthSignCertName)
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
-          # EsrpClientId: $(SigningEsrpClientId)
-          EsrpClientId: $(EsrpClientId)
+          AppRegistrationClientId: $(SigningAppRegistrationClientId)
+          # AppRegistrationClientId: $(appRegistrationClientId)
+          AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+          # AppRegistrationTenantId: $(appRegistrationTenantId)
+          AuthAKVName: $(SigningAuthAkvName)
+          # AuthAKVName: $(AuthAKVName)
+          AuthSignCertName: $(SigningAuthSignCertName)
+          # AuthSignCertName: $(AuthSignCertName)
+          ConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          # ConnectedServiceName: $(ESRPConnectedServiceName)
+          EsrpClientId: $(SigningEsrpClientId)
+          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(packagesPath)
           Pattern: $(packageName).nupkg
           signConfigType: inlineSignParams

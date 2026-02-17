@@ -92,7 +92,8 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: 60
 
 variables:
-  - template: /eng/pipelines/libraries/variables.yml@self
+  - template: /eng/pipelines/libraries/onebranch-variables.yml@self
+  - template: /eng/pipelines/libraryes/build-variables.yml@self
   - name: mdsArtifactName
     value: drop_buildMDS_build_signed_package
   - name: PublishSymbols
