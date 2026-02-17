@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+
+    Logging versioning information found in our sibling file LoggingVersions.props
+    is imported via tools/props/Versions.props.
+  -->
+
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Config -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Logging</AssemblyName>
+
+    <!--
+      Clear the root namespace since our directory structure doesn't match our
+      namespace definitions.  Otherwise, if omitted it would default to the
+      AssemblyName.
+    -->
+    <RootNamespace></RootNamespace>
+
+    <!--
+      We pin the AssemblyVersion of our package to the default major version
+      number, with all remaining parts set to 0.
+    -->
+    <AssemblyVersion>$(LoggingDefaultMajorVersion).0.0.0</AssemblyVersion>
+
+    <AssemblyFileVersion>$(LoggingAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(LoggingAssemblyFileVersion)</FileVersion>
+    <Version>$(LoggingPackageVersion)</Version>
+
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Our API is CLS Compliant. -->
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <!--
+    Our unit tests have access to our internal types, but only for non-official
+    builds.  This prevents downstream consumers from creating an assembly with
+    our test assembly name and gaining non-reflective access to our internals.
+
+    CDP_BUILD_TYPE is a OneBranch governed pipeline variable.
+  -->
+  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(LoggingPackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing and diagnostics.</Description>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <!--
+    Generate ThisAssembly.cs which contains some version information that is
+    used at runtime and otherwise would not be available.
+  -->
+  <PropertyGroup>
+    <!--
+      We must specify a unique namespace for ThisAssembly since MDS puts its
+      ThisAssembly class in the System namespace, and we cannot have two
+      classes with the same name in the same namespace.
+    -->
+    <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
+  </PropertyGroup>
+  <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
+
+</Project>

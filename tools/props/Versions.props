@@ -20,6 +20,9 @@
   <!-- Abstractions Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\AbstractionsVersions.props" />
 
+  <!-- Logging Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Logging\src\LoggingVersions.props" />
+
   <!-- MDS Package Properties -->
   <PropertyGroup>
     <MdsVersionDefault>7.0.0</MdsVersionDefault>

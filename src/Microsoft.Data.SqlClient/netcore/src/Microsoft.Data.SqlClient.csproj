@@ -1093,6 +1093,17 @@
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
   </ItemGroup>
 
+  <!--
+    Refer to the Logging package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+  </ItemGroup>
+
   <!-- CodeGen Targets ================================================= -->
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
