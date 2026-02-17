@@ -108,7 +108,7 @@ extends:
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
                 # be forced into 'break' build mode.
-                enabled: true
+                enabled: false
                 configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
         stages:
