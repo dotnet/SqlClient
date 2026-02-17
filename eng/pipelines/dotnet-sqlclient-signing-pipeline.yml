@@ -170,6 +170,7 @@ extends:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        onebranchOutputDirectory: $(ob_outputDirectory)
         publishSymbols: ${{ parameters.publishSymbols }}
 
     - stage: buildMDS

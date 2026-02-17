@@ -31,6 +31,12 @@ parameters:
     - detailed
     - diagnostic
 
+  # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every job
+  # level.  Strangely, it is inherited by jobs defined in the same file that extends the OneBranch
+  # template, but not in jobs abstracted behind a stage template like this file.
+  - name: onebranchOutputDirectory
+    type: string
+
 jobs:
   - job: abstractions_analysis_job
     displayName: Analysis
@@ -39,15 +45,10 @@ jobs:
       # The Roslyn analyzers require a Windows agent with Visual Studio.
       type: windows
 
-    # variables:
-      # OneBranch requires that each job explicitly define the ob_outputDirectory - it cannot be
-      # inherited from previous jobs or stages.
-      #
-      # Our variables.yml defines several paths where interesting artifacts are placed, all of
-      # which are sub-directories of this one.  All jobs set ob_outputDirectory identically.
-      #
-      # - name: ob_outputDirectory
-      #   value: $(Agent.BuildDirectory)/build
+    variables:
+      # Re-define $(ob_outputDirectory) for the strange OneBranch template expansion checks.
+      - name: ob_outputDirectory
+        value: ${{ parameters.onebranchOutputDirectory }}
 
     steps:
       # Install the .NET SDK.
