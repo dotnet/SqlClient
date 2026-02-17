@@ -175,7 +175,10 @@
       </summary>
       <remarks>
         <para>
-          The following table shows the inner transient error list.
+          The following table shows the baseline/default transient error list used by the built-in retry providers.
+        </para>
+        <para>
+          Callers should treat this list as a starting point to copy and extend for their own retry logic, rather than as a stable contract that will remain unchanged.
         </para>
         <list type="table">
           <listheader>
