@@ -30,7 +30,7 @@ pr:
   branches:
     include:
     # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/**/*
+    - dev/*
     - feat/*
     - main
 
@@ -65,11 +65,6 @@ parameters:
     displayName: Build Platforms on Windows
     type: object
     default: [AnyCPU]
-
-  - name: codeCovTargetFrameworks
-    displayName: Code Coverage Target Frameworks
-    type: object
-    default: [net462, net8.0, net9.0]
 
   - name: debug
     displayName: Enable debug output
@@ -129,7 +124,6 @@ extends:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     referenceType: Project
-    codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}

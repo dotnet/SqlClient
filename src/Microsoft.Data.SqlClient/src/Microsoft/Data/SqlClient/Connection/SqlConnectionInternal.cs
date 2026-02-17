@@ -2535,7 +2535,10 @@ namespace Microsoft.Data.SqlClient.Connection
                     if (_timeout.IsExpired || _timeout.MillisecondsRemaining <= 0)
                     {
                         // No, so we throw.
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Attempt: {0}, Timeout: {1}", attempt, ex.FailureCode);
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            "<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Attempt: {0}, FailureCode: {1}",
+                            attempt,
+                            ex.FailureCode);
                         throw SQL.ActiveDirectoryTokenRetrievingTimeout(Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication), ex.FailureCode, ex);
                     }
 
@@ -2553,6 +2556,28 @@ namespace Microsoft.Data.SqlClient.Connection
                     Thread.Sleep(retryPeriod);
 
                     // Fall through to retry...
+                }
+                // If the provider throws anything else, it's an API violation, which we must
+                // consume to avoid breaking our API promise.
+                catch (Exception ex)
+                {
+                    // Some exceptions should escape as-is.
+                    if (! ADP.IsCatchableExceptionType(ex))
+                    {
+                        throw;
+                    }
+
+                    // Wrap the exception in a SqlAuthenticationProviderException to maintain our
+                    // API promise.
+                    throw ADP.CreateSqlException(
+                        new ProviderApiViolationException(
+                            message:
+                                "API violation; provider threw unexpected exception " +
+                                ex.GetType().FullName + ": " + ex.Message,
+                            causedBy: ex),
+                        ConnectionOptions,
+                        this,
+                        username);
                 }
             }
 
@@ -2579,6 +2604,15 @@ namespace Microsoft.Data.SqlClient.Connection
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
             return _fedAuthToken;
+        }
+
+        // Thrown when an authentication provider violates the expected API contract.
+        private class ProviderApiViolationException : SqlAuthenticationProviderException
+        {
+            public ProviderApiViolationException(string message, Exception causedBy)
+                : base(message, causedBy)
+            {
+            }
         }
 
         #nullable disable

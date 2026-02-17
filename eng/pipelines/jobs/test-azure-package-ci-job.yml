@@ -97,6 +97,11 @@ parameters:
     - Package
     - Project
 
+  # The SA password set by the sqlServerSetupSteps, if relevant.
+  - name: saPassword
+    type: string
+    default: ''
+
   # Steps to run, if any, to configure a local SQL Server instance on the agent
   # VM.
   - name: sqlServerSetupSteps
@@ -135,13 +140,6 @@ jobs:
       # Building this project implicitly builds the Azure project.
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
-
-      # The NuGet.config file to use for restoring packages.
-      - name: nugetConfigFile
-        ${{ if eq(parameters.referenceType, 'Package') }}:
-          value: $(Build.SourcesDirectory)/NuGet.config.local
-        ${{ else }}:
-          value: $(Build.SourcesDirectory)/NuGet.config
 
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
@@ -222,6 +220,7 @@ jobs:
       - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
+          saPassword: ${{ parameters.saPassword }}
 
           # The config.json file has many options, but only some of them are
           # used by the Azure package tests.  We only specify the ones that are
@@ -238,12 +237,7 @@ jobs:
           # Avoid exposing secrets to pipeline jobs triggered via forks.  This
           # prevents external contributors from creating PRs and running
           # pipelines that could expose these secrets.
-          #
-          # Note that this isn't a perfect restriction since internal
-          # contributors may want to use forks, but this would prevent them from
-          # running the full test suite.  We don't have a better way to detect
-          # external parties though.
-          ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+          ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
             AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
             AADServicePrincipalSecret: $(AADServicePrincipalSecret)
 
@@ -260,7 +254,7 @@ jobs:
           command: custom
           custom: restore
           projects: $(project)
-          arguments: $(commonArguments) --configfile $(nugetConfigFile)
+          arguments: $(commonArguments)
 
       # Build the project.
       - task: DotNetCoreCLI@2
@@ -273,10 +267,10 @@ jobs:
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:
-        - pwsh: >
+        - pwsh: >-
             Get-ChildItem
-              -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}"
-              -Recurse
+            -Path "src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}"
+            -Recurse
           displayName: '[Debug] List Output DLLs'
 
       # Run the tests for each .NET runtime.
