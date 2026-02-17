@@ -33,7 +33,6 @@
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
-
     <!--
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
       This property is empty by default to use the default path of the system's path variable.
@@ -54,7 +53,8 @@
 
     <!-- Collect code coverage unless explicitly disabled -->
     <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
-    <CollectArgument Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage"</CollectArgument>
+    <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
+    <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectStatement>
 
     <!-- Set up tests to fail after hangs and report via blame -->
     <BlameArgument>$(Blame)</BlameArgument>
