@@ -19,10 +19,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <ContentWithTargetPath Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
   </ItemGroup>
 
   <!-- References ====================================================== -->
@@ -52,10 +48,10 @@
                       IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
                       PrivateAssets="all" />
 
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="$(TestsPath)Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
   </ItemGroup>
 
   <!-- References for netcore -->
@@ -73,9 +69,9 @@
                       IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
                       PrivateAssets="all" />
 
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="$(TestsPath)Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
   </ItemGroup>
 </Project>

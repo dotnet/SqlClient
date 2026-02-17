@@ -5,13 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- Embedded resources and content files  =========================== -->
-  <ItemGroup>
-    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
-  </ItemGroup>
+
 
   <!-- References ====================================================== -->
   <!-- Test target reference -->
