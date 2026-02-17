@@ -51,7 +51,8 @@ steps:
   - task: AzureCLI@2
     displayName: Publish Symbols to Symbol Servers
     inputs:
-      azureSubscription: $(SymbolsAzureSubscription)
+      # azureSubscription: $(SymbolsAzureSubscription)
+      azureSubscription: Symbols publishing Workload Identity federation service-ADO.Net
       scriptLocation: inlineScript
       scriptType: ps
       inlineScript: |
