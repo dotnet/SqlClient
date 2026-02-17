@@ -7,7 +7,7 @@
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
 parameters:
-    - name:  buildConfiguration
+    - name: buildConfiguration
       displayName: 'Build configuration'
       type: 'string'
       values:
@@ -95,7 +95,7 @@ extends:
             roslyn:
                 enabled: ${{ parameters.runSdlTasks }}
                 break: true
-                # Requires RoslynAnalyzers task to be added after build task
+                # Requires RoslynAnalyzers task to be added somewhere in the build stage.
 
             publishLogs:
                 enabled: ${{ parameters.runSdlTasks }}
@@ -103,7 +103,7 @@ extends:
             sbom:
                 enabled: ${{ parameters.runSdlTasks }}
                 packageName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
-                packageVersion: ${{ variables.nugetPackageVersion }}
+                packageVersion: ${{ variables.akvPackageVersion }}
 
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
@@ -117,11 +117,11 @@ extends:
               jobs:
                   - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
                     parameters:
+                        akvAssemblyFileVersion: '${{ variables.assemblyFileVersion }}'
+                        akvPackageVersion: '${{ variables.akvPackageVersion }}'
                         apiScanDllPath: '${{ variables.apiScanDllPath }}'
                         apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
-                        assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
-                        nugetPackageVersion: '${{ variables.nugetPackageVersion }}'
                         mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
                         publishSymbols: '${{ parameters.publishSymbols }}'
                         signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
