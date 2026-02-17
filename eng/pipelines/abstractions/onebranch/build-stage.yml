@@ -32,9 +32,22 @@ parameters:
     - detailed
     - diagnostic
 
+  # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every job
+  # level.  Strangely, it is inherited by jobs defined in the same file that extends the OneBranch
+  # template, but not in jobs abstracted behind a stage template like this file.  So we must define
+  # it again below so it is inherited by our jobs.
+  - name: onebranchOutputDirectory
+    type: string
+
   # When true, will publish symbols if the analysis, tests, and build jobs succeed.
   - name: publishSymbols
     type: boolean
+
+variables:
+
+  # Re-define $(ob_outputDirectory) for the strange OneBranch template expansion checks.
+  - name: ob_outputDirectory
+    value:  ${{ parameters.onebranchOutputDirectory }}
 
 stages:
   - stage: abstractions_build_stage

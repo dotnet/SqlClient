@@ -40,7 +40,7 @@ variables:
     value: '$(Agent.BuildDirectory)/apiScan/pdbs'
 
   # This entire directory tree will be published.  Any stage/job/step that generates interesting
-  # artifacts will place them here or in sub-diretcories.
+  # artifacts must place them here or in sub-diretcories.
   - name: ob_outputDirectory
     value: $(Agent.BuildDirectory)/build
 
