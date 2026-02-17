@@ -280,7 +280,7 @@ jobs:
 
       # Publish symbols if requested.
       - ${{ if eq(parameters.publishSymbols, true) }}:
-        - template: /eng/pipelines/abstractions/official/publish-symbols-steps.yml@self
+        - template: /eng/pipelines/abstractions/onebranch/publish-symbols-steps.yml@self
           parameters:
             debug: ${{ parameters.debug }}
             symbolsArtifactName: $(symbolsArtifactName)
