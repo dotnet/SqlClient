@@ -43,15 +43,14 @@ parameters:
   - name: publishSymbols
     type: boolean
 
-variables:
-
-  # Re-define $(ob_outputDirectory) for the strange OneBranch template expansion checks.
-  - name: ob_outputDirectory
-    value:  ${{ parameters.onebranchOutputDirectory }}
-
 stages:
   - stage: abstractions_build_stage
     displayName: Build Abstractions
+
+    variables:
+      # Re-define $(ob_outputDirectory) for the strange OneBranch template expansion checks.
+      - name: ob_outputDirectory
+        value:  ${{ parameters.onebranchOutputDirectory }}
 
     jobs:
       # Analyze the Abstractions assemblies with Roslyn analyzers.
