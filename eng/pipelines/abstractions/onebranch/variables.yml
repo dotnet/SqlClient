@@ -40,6 +40,10 @@ variables:
   - name: projectPath
     value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
 
+  # The path to the Abstrations test project file.
+  - name: testProjectPath
+    value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
+
   # We consolidate all artifacts to be automatically published by OneBranch into the
   # $(onebranchArtifactsPath) directory.  See /eng/pipelines/libraries/onebranch-variables.yml.
 

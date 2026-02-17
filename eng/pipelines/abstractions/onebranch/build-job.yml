@@ -107,7 +107,6 @@ jobs:
             --configuration ${{ parameters.buildConfiguration }}
             -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
             -p:AbstractionsPackageVersion=$(packageVersion)
-            -p:ReferenceType=Package
             -p:SigningKeyPath=$(signingKey.secureFilePath)
             --verbosity ${{ parameters.dotnetVerbosity }}
 

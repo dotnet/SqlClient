@@ -59,10 +59,7 @@ jobs:
         inputs:
           command: custom
           custom: test
-          projects: $(projectPath)
+          projects: $(testProjectPath)
           arguments: >-
             --configuration ${{ parameters.buildConfiguration }}
-            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
-            -p:AbstractionsPackageVersion=$(packageVersion)
-            -p:ReferenceType=Package
             --verbosity ${{ parameters.dotnetVerbosity }}

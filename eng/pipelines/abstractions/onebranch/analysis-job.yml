@@ -64,9 +64,6 @@ jobs:
           projects: $(projectPath)
           arguments: >-
             --configuration ${{ parameters.buildConfiguration }}
-            -p:AbstractionsAssemblyFileVersion=$(assemblyFileVersion)
-            -p:AbstractionsPackageVersion=$(packageVersion)
-            -p:ReferenceType=Package
             --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Perform the analysis with the 1ES Roslyn Analyzer:
@@ -80,3 +77,5 @@ jobs:
           rulesetVersion: Latest
           policyName: Microsoft
           loadRoslynConfiguredAnalyzersOption: Enable
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
