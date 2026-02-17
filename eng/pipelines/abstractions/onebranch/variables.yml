@@ -6,12 +6,11 @@
 
 variables:
 
-  # ============================================================================
+  # ================================================================================================
   # Versioning
   #
-  # These variables define the version numbers used throughout the build.  This
-  # is the only place that version information is defined for the Abstractions
-  # package.
+  # These variables define the version numbers used throughout the build.  This is the only place
+  # that version information is defined for the Abstractions package.
 
   # The full name of the Abstractions package and assembly.
   - name: packageName
@@ -21,31 +20,36 @@ variables:
   - name: packageVersion
     value: 1.0.0-preview1.$(Build.BuildNumber)
 
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but $(Build.BuildNumber)
+  # has the format XXX.YY.  Additionally, each version part must be a positive 16-bit integer less
+  # than 65535.  Simply concatenating both parts of $(Build.BuildNumber) could produce values larger
+  # than 65534, so we must omit the second part entirely.  Unfortunately, this may result in
+  # multiple subsequent pipline builds using the same C# assembly versions.  The package versions
+  # will not be affected and will show the complete $(Build.BuildNumber) values.
+  - name: assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+
   # The assembly file version.
   - name: assemblyFileVersion
-    value: 1.0.0.$(Build.BuildNumber)
+    value: 1.0.0.$(assemblyBuildNumber)
 
-  # ============================================================================
+  # ================================================================================================
   # Build Configuration
 
   # The path to the Abstrations project file.
   - name: projectPath
     value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj
 
-  # OneBranch requires the $(ob_outputDirectory) variable to be set, and all artifacts to be
-  # published must be placed there, or in sub-directories thereof.
-  #
-  # We expect this variable to be set before this file is included.
-  #
-  # See /eng/pipelines/libraries/onebranch-variables.yml.
+  # We consolidate all artifacts to be automatically published by OneBranch into the
+  # $(onebranchArtifactsPath) directory.  See /eng/pipelines/libraries/onebranch-variables.yml.
 
   # The path to build artifacts from the build stage.
   - name: artifactsPath
-    value: $(ob_outputDirectory)/artifacts
+    value: $(onebranchArtifactsPath)/artifacts
 
   # The path to assemblies (DLLs and PDBs) from the build stage.
   - name: assembliesPath
-    value: $(ob_outputDirectory)/assemblies
+    value: $(onebranchArtifactsPath)/assemblies
   # The path to NuGet and symbols packages from the build stage.
   - name: packagesPath
-    value: $(ob_outputDirectory)/packages
+    value: $(onebranchArtifactsPath)/packages

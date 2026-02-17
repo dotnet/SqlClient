@@ -46,6 +46,9 @@ stages:
   - stage: abstractions_build_stage
     displayName: Build Abstractions
 
+    variables:
+      - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
+
     jobs:
       # Analyze the Abstractions assemblies with Roslyn analyzers.
       - template: /eng/pipelines/abstractions/onebranch/analysis-job.yml@self
