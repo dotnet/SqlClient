@@ -1870,27 +1870,29 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/*'/>
     public sealed class SspiAuthenticationParameters
     {
+
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ctor'/>
-        public SspiAuthenticationParameters(string serverName, string resource)
-        {
-            ServerName = serverName;
-            Resource = resource;
-        }
+        public SspiAuthenticationParameters(
+            string serverName, 
+            string resource,
+            string userId = null,
+            string databaseName = null,
+            string password = null){}
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Resource'/>
-        public string Resource { get; }
+        public string Resource { get { throw null; } }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ServerName'/>
-        public string ServerName { get; }
+        public string ServerName { get { throw null; } }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/UserId'/>
-        public string UserId { get; set; }
+        public string UserId { get { throw null; } }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/DatabaseName'/>
-        public string DatabaseName { get; set; }
+        public string DatabaseName { get { throw null; } }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Password'/>
-        public string Password { get; set; }
+        public string Password { get { throw null; } }
     }
 }
 namespace Microsoft.Data.SqlClient.Diagnostics

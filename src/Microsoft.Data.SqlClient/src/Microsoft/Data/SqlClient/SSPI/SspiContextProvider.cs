@@ -57,12 +57,13 @@ namespace Microsoft.Data.SqlClient
 
             Initialize();
 
-            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(connString.DataSource, serverSpn)
-            {
-                DatabaseName = connString.InitialCatalog,
-                UserId = connString.UserID,
-                Password = connString.Password,
-            };
+            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(
+                resource: serverSpn,
+                serverName: connString.DataSource,
+                databaseName: connString.InitialCatalog,
+                userId: connString.UserID,
+                password: connString.Password
+            );
         }
 
         private protected virtual void Initialize()

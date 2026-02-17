@@ -10,10 +10,18 @@ namespace Microsoft.Data.SqlClient
     public sealed class SspiAuthenticationParameters
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ctor'/>
-        public SspiAuthenticationParameters(string serverName, string resource)
+        public SspiAuthenticationParameters(
+            string serverName, 
+            string resource,
+            string? userId = null,
+            string? databaseName = null,
+            string? password = null)
         {
             ServerName = serverName;
             Resource = resource;
+            UserId = userId;
+            DatabaseName = databaseName;
+            Password = password;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Resource'/>
@@ -23,12 +31,12 @@ namespace Microsoft.Data.SqlClient
         public string ServerName { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/UserId'/>
-        public string? UserId { get; set; }
+        public string? UserId { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/DatabaseName'/>
-        public string? DatabaseName { get; set; }
+        public string? DatabaseName { get; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Password'/>
-        public string? Password { get; set; }
+        public string? Password { get; }
     }
 }
