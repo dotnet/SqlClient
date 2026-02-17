@@ -39,10 +39,29 @@ schedules:
     - internal/main
 
 parameters: # parameters are shown up in ADO UI in a build queue time
+- name: buildConfiguration
+  displayName: Build Configuration
+  type: string
+  values:
+    - Debug
+    - Release
+  default: Release
+
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean
   default: false
+
+# The verbosity level for the dotnet CLI commands.
+- name: dotnetVerbosity
+  type: string
+  default: normal
+  values:
+  - quiet
+  - minimal
+  - normal
+  - detailed
+  - diagnostic
 
 - name: publishSymbols
   displayName: 'Publish symbols'
@@ -143,6 +162,15 @@ extends:
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
+
+    # Build the Abstractions package.
+    - template: /eng/pipelines/abstractions/onebranch/build-stage.yml@self
+      parameters:
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        debug: ${{ parameters.debug }}
+        dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        publishSymbols: ${{ parameters.publishSymbols }}
+
     - stage: buildMDS
       displayName: 'Build MDS'
       jobs:

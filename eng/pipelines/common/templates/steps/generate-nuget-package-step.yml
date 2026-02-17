@@ -21,9 +21,6 @@ parameters:
       - Debug
       - Release
 
-  - name: generateSymbolsPackage
-    type: boolean
-
   - name: displayName
     type: string
 
@@ -59,19 +56,11 @@ steps:
   displayName: ${{parameters.displayName }}
   inputs:
     command: custom
-    ${{ if parameters.generateSymbolsPackage }}:
-      arguments: >-
-        pack
-        -Symbols
-        -SymbolPackageFormat snupkg
-        ${{parameters.nuspecPath}}
-        -Version ${{parameters.packageVersion}}
-        -OutputDirectory ${{parameters.outputDirectory}}
-        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"
-    ${{else }}:
-      arguments: >-
-        pack
-        ${{parameters.nuspecPath}}
-        -Version ${{parameters.packageVersion}}
-        -OutputDirectory ${{parameters.outputDirectory}}
-        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"
+    arguments: >-
+      pack
+      -Symbols
+      -SymbolPackageFormat snupkg
+      ${{parameters.nuspecPath}}
+      -Version ${{parameters.packageVersion}}
+      -OutputDirectory ${{parameters.outputDirectory}}
+      -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"

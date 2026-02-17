@@ -112,7 +112,6 @@ jobs:
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       displayName: 'Create MDS NuGet Package'
-      generateSymbolsPackage: true
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       outputDirectory: $(packagePath)
       packageVersion: ${{ parameters.mdsPackageVersion }}
@@ -132,7 +131,6 @@ jobs:
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       displayName: 'Create AKV NuGet Package'
-      generateSymbolsPackage: true
       installNuget: false
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       outputDirectory: $(packagePath)
