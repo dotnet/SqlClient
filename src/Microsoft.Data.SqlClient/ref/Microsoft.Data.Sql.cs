@@ -8,7 +8,7 @@ namespace Microsoft.Data.Sql;
 public sealed class SqlDataSourceEnumerator : System.Data.Common.DbDataSourceEnumerator
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/Instance/*' />
-    public static SqlDataSourceEnumerator Instance { get; }
+    public static SqlDataSourceEnumerator Instance { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/GetDataSources/*' />
     public override System.Data.DataTable GetDataSources() { throw null; }
 }
