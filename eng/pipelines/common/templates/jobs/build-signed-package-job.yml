@@ -4,19 +4,25 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: symbolsFolder
+
+  - name: isPreview
+    type: boolean
+
+  # The value we will set as the ob_outputDirectory variable, required by the OneBranch templates.
+  # level.
+  - name: onebranchOutputDirectory
     type: string
-    default: symbols
+
+  - name: publishSymbols
+    type: boolean
 
   - name: softwareFolder
     type: string
     default: software
 
-  - name: publishSymbols
-    type: boolean
-
-  - name: isPreview
-    type: boolean
+  - name: symbolsFolder
+    type: string
+    default: symbols
 
 jobs:
 - job: build_signed_package
@@ -25,6 +31,11 @@ jobs:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
   variables:
+  # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every job
+  # level.
+  - name: ob_outputDirectory
+    value: ${{ parameters.onebranchOutputDirectory }}
+
   - ${{ if parameters.isPreview }}:
     - name: abstractionsPackageVersion
       value: $(abstractionsPackagePreviewVersion)

@@ -11,6 +11,11 @@ parameters:
   - name: isPreview
     type: boolean
 
+  # The value we will set as the ob_outputDirectory variable, required by the OneBranch templates.
+  # level.
+  - name: onebranchOutputDirectory
+    type: string
+
 jobs:
 - job: validate_signed_package
   displayName: 'Verify signed package'
@@ -22,6 +27,11 @@ jobs:
     vmImage: 'ADO-MMS22-SQL19'
 
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+  # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every job
+  # level.
+  - name: ob_outputDirectory
+    value: ${{ parameters.onebranchOutputDirectory }}
+
   - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
 
   - name: pathToDownloadedNuget # path to the downloaded nuget files

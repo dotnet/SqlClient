@@ -170,7 +170,7 @@ extends:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-        onebranchOutputDirectory: $(ob_outputDirectory)
+        onebranchOutputDirectory: ${{ variables.onebranchArtifactsPath }}
         publishSymbols: ${{ parameters.publishSymbols }}
 
     - stage: buildMDS
@@ -178,10 +178,11 @@ extends:
       jobs:
       - template: /eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
         parameters:
-          symbolsFolder: $(symbolsFolder)
-          softwareFolder: $(softwareFolder)
-          publishSymbols: ${{ parameters['publishSymbols'] }}
           isPreview: ${{ parameters['isPreview'] }}
+          onebranchOutputDirectory: ${{ variables.onebranchArtifactsPath }}
+          publishSymbols: ${{ parameters['publishSymbols'] }}
+          softwareFolder: $(softwareFolder)
+          symbolsFolder: $(symbolsFolder)
 
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'
@@ -191,6 +192,7 @@ extends:
         parameters:
           artifactName: $(mdsArtifactName)
           isPreview: ${{ parameters['isPreview'] }}
+          onebranchOutputDirectory: ${{ variables.onebranchArtifactsPath }}
 
 # Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
 #      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self

@@ -31,9 +31,8 @@ parameters:
     - detailed
     - diagnostic
 
-  # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every job
-  # level.  Strangely, it is inherited by jobs defined in the same file that extends the OneBranch
-  # template, but not in jobs abstracted behind a stage template like this file.
+  # The value we will set as the ob_outputDirectory variable, required by the OneBranch templates.
+  # level.
   - name: onebranchOutputDirectory
     type: string
 
@@ -52,7 +51,8 @@ jobs:
     dependsOn: [abstractions_analysis_job, abstractions_test_job]
 
     variables:
-      # Re-define $(ob_outputDirectory) for the strange OneBranch template expansion checks.
+      # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every
+      # job level.
       - name: ob_outputDirectory
         value: ${{ parameters.onebranchOutputDirectory }}
 

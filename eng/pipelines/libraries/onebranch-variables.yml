@@ -41,7 +41,7 @@ variables:
 
   # This entire directory tree will be published.  Any stage/job/step that generates interesting
   # artifacts must place them here or in sub-diretcories.
-  - name: ob_outputDirectory
+  - name: onebranchArtifactsPath
     value: $(Agent.BuildDirectory)/build
 
   # Explicitly enable the SDL BinSkim task; see https://aka.ms/obpipelines/sdl
