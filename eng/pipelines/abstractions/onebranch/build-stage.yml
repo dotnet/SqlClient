@@ -38,6 +38,7 @@ parameters:
   # it again below so it is inherited by our jobs.
   - name: onebranchOutputDirectory
     type: string
+    default: $(ob_outputDirectory)
 
   # When true, will publish symbols if the analysis, tests, and build jobs succeed.
   - name: publishSymbols
@@ -50,7 +51,7 @@ stages:
     variables:
       # Re-define $(ob_outputDirectory) for the strange OneBranch template expansion checks.
       - name: ob_outputDirectory
-        value:  ${{ parameters.onebranchOutputDirectory }}
+        value: ${{ parameters.onebranchOutputDirectory }}
 
     jobs:
       # Analyze the Abstractions assemblies with Roslyn analyzers.
