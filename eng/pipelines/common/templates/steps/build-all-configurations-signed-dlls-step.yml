@@ -11,6 +11,18 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  - name: azureAssemblyFileVersion
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: loggingAssemblyFileVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
   - name: mdsAssemblyFileVersion
     type: string
 
@@ -40,6 +52,9 @@ steps:
         -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+        -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
+        -p:AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }}

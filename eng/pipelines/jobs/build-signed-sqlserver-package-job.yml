@@ -1,0 +1,92 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Job template for building, signing, and packaging Microsoft.SqlServer.Server.
+# Uses the nuspec-based packaging flow (compound-nuget-pack-step) instead of
+# the SDK Pack target used by the Extension libraries.
+
+parameters:
+    - name: buildConfiguration
+      type: string
+      default: Release
+      values:
+          - Debug
+          - Release
+
+    - name: assemblyFileVersion
+      type: string
+
+    - name: packageVersion
+      type: string
+
+    - name: nuspecPath
+      type: string
+
+    # ESRP signing parameters
+    - name: esrpConnectedServiceName
+      type: string
+    - name: esrpClientId
+      type: string
+    - name: appRegistrationClientId
+      type: string
+    - name: appRegistrationTenantId
+      type: string
+    - name: authAkvName
+      type: string
+    - name: authSignCertName
+      type: string
+
+    - name: publishSymbols
+      type: boolean
+      default: false
+
+jobs:
+    - job: build_signed_sqlserver_package
+      displayName: 'Build and Sign Microsoft.SqlServer.Server'
+      pool:
+          type: windows
+
+      variables:
+          ob_outputDirectory: '$(ARTIFACT_PATH)'
+
+      steps:
+          - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
+
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+          - template: /eng/pipelines/steps/compound-build-sqlserver-step.yml@self
+            parameters:
+                assemblyFileVersion: ${{ parameters.assemblyFileVersion }}
+                packageVersion: ${{ parameters.packageVersion }}
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+
+          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
+            parameters:
+                esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+                esrpClientId: ${{ parameters.esrpClientId }}
+                appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+                appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+                authAkvName: ${{ parameters.authAkvName }}
+                authSignCertName: ${{ parameters.authSignCertName }}
+                pattern: 'Microsoft.SqlServer.Server.dll'
+
+          - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
+            parameters:
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+                generateSymbolsPackage: true
+                packageVersion: ${{ parameters.packageVersion }}
+                nuspecPath: ${{ parameters.nuspecPath }}
+                outputDirectory: $(ARTIFACT_PATH)
+                referenceType: Package
+
+          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
+            parameters:
+                esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+                esrpClientId: ${{ parameters.esrpClientId }}
+                appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+                appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+                authAkvName: ${{ parameters.authAkvName }}
+                authSignCertName: ${{ parameters.authSignCertName }}

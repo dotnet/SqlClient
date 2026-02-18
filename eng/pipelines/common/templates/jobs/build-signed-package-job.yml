@@ -29,6 +29,10 @@ jobs:
   - ${{ if parameters.isPreview }}:
     - name: abstractionsPackageVersion
       value: $(abstractionsPackagePreviewVersion)
+    - name: loggingPackageVersion
+      value: $(loggingPackagePreviewVersion)
+    - name: azurePackageVersion
+      value: $(azurePackagePreviewVersion)
     - name: mdsPackageVersion
       value: $(previewMdsPackageVersion)
 
@@ -63,6 +67,10 @@ jobs:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
+      azureAssemblyFileVersion: $(azureAssemblyFileVersion)
+      azurePackageVersion: $(azurePackageVersion)
+      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
       mdsPackageVersion: $(mdsPackageVersion)
 
@@ -78,7 +86,7 @@ jobs:
       nuspecPath: $(nuspecPath)
       outputDirectory: $(artifactDirectory)
       packageVersion: $(mdsPackageVersion)
-      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)'
       referenceType: Package
 
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self

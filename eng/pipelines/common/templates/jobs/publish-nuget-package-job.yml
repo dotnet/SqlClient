@@ -1,0 +1,64 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Reusable job template for publishing a signed NuGet package to a NuGet feed.
+# Downloads the pipeline artifact produced by a build job and pushes .nupkg and
+# .snupkg files using NuGetCommand@2.
+
+parameters:
+    - # Human-readable package name (used in display strings).
+      name: packageDisplayName
+      type: string
+
+    - # The pipeline artifact name to download (OneBranch naming: drop_<stage>_<job>).
+      name: artifactName
+      type: string
+
+    - # NuGet service connection name for authentication.
+      name: nugetServiceConnection
+      type: string
+
+    - # Globbing pattern to match .nupkg files within the downloaded artifact.
+      name: packagePattern
+      type: string
+      default: '**/*.nupkg'
+
+    - # When true, list packages that would be published without actually pushing.
+      # Use for non-official pipelines to validate the release stage without risk.
+      name: dryRun
+      type: boolean
+      default: false
+
+jobs:
+    - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
+      displayName: 'Publish ${{ parameters.packageDisplayName }}${{ if eq(parameters.dryRun, true) }} (dry run)${{ else }}${{ end }}'
+      pool:
+          type: windows
+
+      steps:
+          - download: current
+            artifact: ${{ parameters.artifactName }}
+            patterns: |
+                **/*.nupkg
+                **/*.snupkg
+            displayName: 'Download ${{ parameters.packageDisplayName }} artifacts'
+
+          - ${{ if eq(parameters.dryRun, true) }}:
+            - script: |
+                echo "##[section]DRY RUN — the following packages would be published:"
+                dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.nupkg" 2>nul || echo "(no .nupkg found)"
+                dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.snupkg" 2>nul || echo "(no .snupkg found)"
+                echo "##[warning]Dry run mode — no packages were pushed."
+              displayName: 'Dry Run — List ${{ parameters.packageDisplayName }} packages'
+
+          - ${{ else }}:
+            - task: NuGetCommand@2
+              displayName: 'Push ${{ parameters.packageDisplayName }} to NuGet'
+              inputs:
+                  command: push
+                  packagesToPush: '$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}'
+                  nuGetFeedType: external
+                  publishFeedCredentials: '${{ parameters.nugetServiceConnection }}'

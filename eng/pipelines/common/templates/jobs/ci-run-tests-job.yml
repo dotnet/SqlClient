@@ -10,6 +10,14 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
   # The configuration properties to set in the config file.
   #
   # GOTCHA: The following keys are used in template expressions and must be
@@ -146,6 +154,12 @@ jobs:
         targetPath: $(Build.SourcesDirectory)/packages
 
     - task: DownloadPipelineArtifact@2
+      displayName: Download Logging Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.loggingArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
       displayName: Download MDS Package Artifacts
       inputs:
         artifactName: ${{ parameters.mdsArtifactsName }}
@@ -172,6 +186,7 @@ jobs:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
+        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
@@ -293,6 +308,7 @@ jobs:
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
@@ -321,6 +337,7 @@ jobs:
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self

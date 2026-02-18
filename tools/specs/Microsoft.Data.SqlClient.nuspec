@@ -29,15 +29,16 @@
     <tags>sqlclient microsoft.data.sqlclient</tags>
 
     <!--
-      We require the $AbstractionsPackageVersion$ property to be supplied on the
-      nuget pack command line to indicate which version of the Abstractions
-      package we depend on.
+      We require the $AbstractionsPackageVersion$ and $LoggingPackageVersion$
+      properties to be supplied on the nuget pack command line to indicate which
+      version of the Abstractions and Logging packages we depend on.
     -->
 
     <dependencies>
       <group targetFramework="net462">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
+        <dependency id="Microsoft.Data.SqlClient.Extensions.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI" version="6.0.2" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.14.0" />
@@ -54,6 +55,7 @@
       <group targetFramework="net8.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
+        <dependency id="Microsoft.Data.SqlClient.Extensions.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.14.0" />
@@ -65,6 +67,7 @@
       <group targetFramework="net9.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="9.0.9" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
+        <dependency id="Microsoft.Data.SqlClient.Extensions.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.9" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.14.0" />
@@ -76,6 +79,7 @@
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
+        <dependency id="Microsoft.Data.SqlClient.Extensions.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.14.0" />

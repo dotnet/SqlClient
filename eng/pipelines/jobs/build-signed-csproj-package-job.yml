@@ -1,0 +1,101 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic job template for building and signing csproj-based Extension packages
+# (Logging, Abstractions, Azure).  The job builds via build.proj, ESRP signs
+# both the DLL and NuGet package, and optionally publishes symbols.
+
+parameters:
+    - # Human-readable package name used in display strings.
+      name: packageDisplayName
+      type: string
+
+    - # The MSBuild build target in build.proj (e.g. BuildLogging).
+      name: buildTarget
+      type: string
+
+    - name: buildConfiguration
+      type: string
+      values:
+          - Debug
+          - Release
+      default: Release
+
+    - # Additional MSBuild -p: arguments for version properties.
+      name: versionProperties
+      type: string
+      default: ''
+
+    - # Globbing pattern to match DLLs for ESRP signing (e.g.
+      # Microsoft.Data.SqlClient.Extensions.Logging.dll).
+      name: dllSigningPattern
+      type: string
+
+    - # ESRP signing credentials — sourced from the pipeline variable group.
+      name: esrpConnectedServiceName
+      type: string
+
+    - name: esrpClientId
+      type: string
+
+    - name: appRegistrationClientId
+      type: string
+
+    - name: appRegistrationTenantId
+      type: string
+
+    - name: authAkvName
+      type: string
+
+    - name: authSignCertName
+      type: string
+
+    - name: publishSymbols
+      type: boolean
+      default: false
+
+jobs:
+    - job: build_signed_${{ replace(parameters.buildTarget, 'Build', '') }}_package
+      displayName: 'Build Signed ${{ parameters.packageDisplayName }} Package'
+      pool:
+          type: windows
+
+      variables:
+          ob_outputDirectory: '$(ARTIFACT_PATH)'
+
+      steps:
+          - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
+
+          # Install the .NET SDK.
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+          # Build the package, producing DLLs and .nupkg.
+          - template: /eng/pipelines/steps/compound-build-csproj-step.yml@self
+            parameters:
+                buildTarget: '${{ parameters.buildTarget }}'
+                buildConfiguration: '${{ parameters.buildConfiguration }}'
+                versionProperties: '${{ parameters.versionProperties }}'
+
+          # ESRP sign the DLLs.
+          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
+            parameters:
+                appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+                authAkvName: '${{ parameters.authAkvName }}'
+                authSignCertName: '${{ parameters.authSignCertName }}'
+                esrpClientId: '${{ parameters.esrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+                pattern: '${{ parameters.dllSigningPattern }}'
+
+          # ESRP sign the NuGet package.
+          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
+            parameters:
+                appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+                authAkvName: '${{ parameters.authAkvName }}'
+                authSignCertName: '${{ parameters.authSignCertName }}'
+                esrpClientId: '${{ parameters.esrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'

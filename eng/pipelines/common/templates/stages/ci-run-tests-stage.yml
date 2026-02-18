@@ -27,6 +27,14 @@ parameters:
     type: boolean
     default: false
 
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
@@ -87,6 +95,8 @@ stages:
                   configProperties: ${{ config.value.configProperties }}
                   abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
                   abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                  loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+                  loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                   mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
@@ -121,6 +131,8 @@ stages:
                     useManagedSNI: ${{ useManagedSNI }}
                     abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
                     abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+                    loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+                    loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}

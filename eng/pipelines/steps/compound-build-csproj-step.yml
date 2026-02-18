@@ -1,0 +1,54 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic build step for csproj-based Extension packages (Logging, Abstractions,
+# Azure).  Each project uses a build.proj target that runs Build;Pack.  The DLL
+# output is redirected to $(BUILD_OUTPUT) so that downstream ESRP DLL signing
+# can locate the assemblies.  The .nupkg output is already directed to
+# $(ARTIFACT_PATH) via PackageOutputPath in each csproj.
+
+parameters:
+    - # The MSBuild build target in build.proj (e.g. BuildLogging, BuildAbstractions,
+      # BuildAzure).
+      name: buildTarget
+      type: string
+
+    - name: buildConfiguration
+      type: string
+      values:
+          - Debug
+          - Release
+
+    - # Additional MSBuild arguments for version properties, e.g.
+      # -p:LoggingPackageVersion=1.0.0 -p:LoggingAssemblyFileVersion=1.0.123
+      name: versionProperties
+      type: string
+      default: ''
+
+steps:
+    - task: DownloadSecureFile@1
+      displayName: 'Download Signing Key'
+      inputs:
+          retryCount: 5
+          secureFile: 'netfxKeypair.snk'
+
+    - task: MSBuild@1
+      displayName: 'Build.proj - ${{ parameters.buildTarget }}'
+      inputs:
+          solution: '$(REPO_ROOT)/build.proj'
+          configuration: '${{ parameters.buildConfiguration }}'
+          msbuildArguments: >-
+              -t:${{ parameters.buildTarget }}
+              -p:ReferenceType=Package
+              -p:OutputPath=$(BUILD_OUTPUT)/
+              -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+              ${{ parameters.versionProperties }}
+
+    - script: tree /a /f $(BUILD_OUTPUT)
+      displayName: Output Build Output Tree
+
+    - script: tree /a /f $(ARTIFACT_PATH)
+      displayName: Output Artifact Path Tree

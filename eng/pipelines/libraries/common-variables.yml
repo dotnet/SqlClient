@@ -4,8 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in Abstractions, Azure, and MDS OneBranch Official
-# pipelines.
+# Common variables shared across all OneBranch Official pipelines.
+# Included transitively by build-variables.yml → variables.yml.
 
 variables:
   - group: ESRP Federated Creds (AME)
@@ -26,6 +26,15 @@ variables:
     value: $(REPOROOT)/symbols
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
+
+  # Aliases required by compound step templates (compound-esrp-dll-signing-step,
+  # compound-esrp-nuget-signing-step, compound-nuget-pack-step, etc.).
+  - name: REPO_ROOT
+    value: $(Build.SourcesDirectory)
+  - name: BUILD_OUTPUT
+    value: $(Build.SourcesDirectory)/artifacts
+  - name: ARTIFACT_PATH
+    value: '$(Build.SourcesDirectory)/packages'
 
   # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
   # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
@@ -79,6 +88,24 @@ variables:
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
 
   # ----------------------------------------------------------------------------
+  # Logging Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: loggingPackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: loggingPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the Logging package.
+  - name: loggingAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
   # Azure Package Versions
   #
   # These are version values that will be used by the official build.  They
@@ -95,3 +122,71 @@ variables:
   # The AssemblyFileVersion for all assemblies in the Azure package.
   - name: azureAssemblyFileVersion
     value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
+  # SqlServer.Server Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: sqlServerPackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: sqlServerPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the SqlServer.Server package.
+  - name: sqlServerAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # The path to the NuGet packaging specification file for SqlServer.Server.
+  - name: sqlServerNuspecPath
+    value: '$(REPOROOT)/tools/specs/Microsoft.SqlServer.Server.nuspec'
+
+  # ----------------------------------------------------------------------------
+  # AKV Provider Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: akvPackageVersion
+    value: '7.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: akvPackagePreviewVersion
+    value: 7.0.0-preview3.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the AKV Provider package.
+  - name: akvAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # The MDS package version that AKV Provider depends on.
+  - name: akvMdsPackageVersion
+    value: '7.0.0-preview3.25342.7'
+
+  # The path to the NuGet packaging specification file for the AKV Provider.
+  - name: akvNuspecPath
+    value: '$(REPOROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+
+  # ----------------------------------------------------------------------------
+  # MDS Symbols Publishing
+  #
+  # Alias variables for MDS publish-symbols-step.yml, which defaults to
+  # $(SymbolServer) and $(SymbolTokenUri).  These map to the values provided
+  # by the akv-variables-v2 variable group.
+  - name: SymbolServer
+    value: $(SymbolsPublishServer)
+  - name: SymbolTokenUri
+    value: $(SymbolsPublishTokenUri)
+
+  # ----------------------------------------------------------------------------
+  # Release Variables
+  #
+  # NuGet service connection used by the release stage to push packages.
+  # This should match the name of an ADO service connection configured with
+  # NuGet.org credentials (API key or federated auth).
+  - name: NuGetServiceConnection
+    value: 'NuGet-Org-ServiceConnection'

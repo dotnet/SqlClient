@@ -111,6 +111,9 @@ variables:
   - name: azureArtifactsName
     value: Azure.Artifacts
 
+  - name: loggingArtifactsName
+    value: Logging.Artifacts
+
   - name: mdsArtifactsName
     value: MDS.Artifacts
 
@@ -131,15 +134,27 @@ stages:
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
+  # Build the Logging package, and publish it to the pipeline artifacts
+  # under the given artifact name.  This runs in parallel with the Abstractions
+  # stage since neither depends on the other.
+  - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
+    parameters:
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+
   # Build MDS and its NuGet packages.
   - stage: build_mds_akv_packages_stage
     displayName: 'Build MDS & AKV Packages'
 
     # When building MDS via packages, we must depend on the Abstractions
-    # package.
+    # and Logging packages.
     ${{ if eq(parameters.referenceType, 'Package') }}:
       dependsOn:
         - build_abstractions_package_stage
+        - build_logging_package_stage
     ${{ else }}:
       dependsOn: []
 
@@ -150,6 +165,8 @@ stages:
         referenceType: ${{ parameters.referenceType }}
         abstractionsPackageVersion: $(abstractionsPackageVersion)
         abstractionsArtifactsName: $(abstractionsArtifactsName)
+        loggingPackageVersion: $(loggingPackageVersion)
+        loggingArtifactsName: $(loggingArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
         mdsArtifactsName: $(mdsArtifactsName)
         ${{if ne(parameters.SNIVersion, '')}}:
@@ -169,11 +186,12 @@ stages:
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
-      # When building via packages, we must depend on the Abstractions and MDS
-      # packages.
+      # When building via packages, we must depend on the Abstractions, Logging,
+      # and MDS packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
+          - build_logging_package_stage
           - build_mds_akv_packages_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       mdsArtifactsName: $(mdsArtifactsName)
@@ -201,15 +219,18 @@ stages:
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
-      # MDS, and Azure packages.
+      # Logging, MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
+          - build_logging_package_stage
           - build_mds_akv_packages_stage
           - build_azure_package_stage
 

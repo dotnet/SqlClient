@@ -27,6 +27,10 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
@@ -46,6 +50,9 @@ parameters:
     default: []
 
   - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingPackageVersion
     type: string
 
   - name: mdsPackageVersion
@@ -75,12 +82,19 @@ jobs:
      # configuration
     - ${{ parameters.prebuildSteps }}
 
-  # If we're testing in Package mode, then we must download the Abstractions package artifacts.
+  # If we're testing in Package mode, then we must download the Abstractions and
+  # Logging package artifacts.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(packagePath)
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Logging Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.loggingArtifactsName }}
         targetPath: $(packagePath)
 
   # Install the .NET SDK.
@@ -106,6 +120,7 @@ jobs:
       operatingSystem: Windows
       build: MDS
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
@@ -116,7 +131,7 @@ jobs:
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       outputDirectory: $(packagePath)
       packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
+      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self

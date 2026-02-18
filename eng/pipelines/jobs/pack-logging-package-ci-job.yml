@@ -1,0 +1,145 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This job packs the Logging package into NuGet and symbols packages and
+# publishes them as a named pipeline artifact.
+#
+# This template defines a job named 'pack_logging_package_job' that can be
+# depended on by downstream jobs.
+
+parameters:
+
+  # The name to apply to the published pipeline artifacts.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The version to apply to the Logging NuGet package and its assemblies.
+  - name: loggingPackageVersion
+    type: string
+
+  # The type of build to test (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    values:
+    - Release
+    - Debug
+
+  # True to enable extra debug steps and logging.
+  - name: debug
+    type: boolean
+    default: false
+  
+  # The list of upstream jobs to depend on.
+  - name: dependsOn
+    type: object
+    default: []
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+jobs:
+
+  - job: pack_logging_package_job
+    displayName: 'Pack Logging Package'
+
+    dependsOn: ${{ parameters.dependsOn }}
+
+    pool:
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
+
+    variables:
+
+      # The Logging project file to use for all dotnet CLI commands.
+      - name: project
+        value: src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj
+
+      # The directory where the NuGet packages will be staged before being
+      # published as pipeline artifacts.
+      - name: dotnetPackagesDir
+        value: $(Build.StagingDirectory)/dotnetPackages
+
+      # dotnet CLI arguments common to all commands.
+      - name: commonArguments
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # dotnet CLI arguments for build/test/pack commands
+      - name: buildArguments
+        value: >-
+          $(commonArguments)
+          --configuration ${{ parameters.buildConfiguration }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+
+      # Explicitly unset the $PLATFORM environment variable that is set by the
+      # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
+      - name: Platform
+        value: ''
+
+      # Do the same for $CONFIGURATION since we explicitly set it using our
+      # 'buildConfiguration' parameter, and we don't want the environment to
+      # override us.
+      - name: Configuration
+        value: ''
+
+    steps:
+
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
+
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+
+      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
+      # support all of our argument combinations for the different build steps.
+
+      # Restore the project.
+      - task: DotNetCoreCLI@2
+        displayName: Restore Project
+        inputs:
+          command: custom
+          custom: restore
+          projects: $(project)
+          arguments: $(commonArguments)
+
+      # Build the project.
+      - task: DotNetCoreCLI@2
+        displayName: Build Project
+        inputs:
+          command: custom
+          custom: build
+          projects: $(project)
+          arguments: $(buildArguments) --no-restore
+
+      # Create the NuGet packages.
+      - task: DotNetCoreCLI@2
+        displayName: Create NuGet Package
+        inputs:
+          command: custom
+          custom: pack
+          projects: $(project)
+          arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
+
+      # Publish the NuGet packages as a named pipeline artifact.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Pipeline Artifact
+        inputs:
+          targetPath: $(dotnetPackagesDir)
+          artifactName: ${{ parameters.loggingArtifactsName }}
+          publishLocation: pipeline
