@@ -37,10 +37,18 @@ parameters:
       type: object
       default: []
 
+    - # Optional runtime condition.  When set, the job is skipped if the
+      # condition evaluates to false (e.g., approval rejected / timed out).
+      name: condition
+      type: string
+      default: ''
+
 jobs:
     - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
       displayName: 'Publish ${{ parameters.packageDisplayName }}${{ if eq(parameters.dryRun, true) }} (dry run)${{ else }}${{ end }}'
       dependsOn: ${{ parameters.dependsOn }}
+      ${{ if ne(parameters.condition, '') }}:
+        condition: ${{ parameters.condition }}
       pool:
           type: windows
 
