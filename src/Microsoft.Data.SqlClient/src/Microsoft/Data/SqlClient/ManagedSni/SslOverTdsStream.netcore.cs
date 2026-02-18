@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <inheritdoc/>
         public override int Read(Span<byte> buffer)
         {
-            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
+            using (SqlClientSNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 if (!_encapsulate)
                 {
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <inheritdoc/>
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
+            using (SqlClientSNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 if (!_encapsulate)
                 {
@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <inheritdoc/>
         public override void Write(ReadOnlySpan<byte> buffer)
         {
-            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
+            using (SqlClientSNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
                 // negotiation, the underlying socket only sees SSL frames.
@@ -341,7 +341,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <inheritdoc/>
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
+            using (SqlClientSNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 if (!_encapsulate)
                 {

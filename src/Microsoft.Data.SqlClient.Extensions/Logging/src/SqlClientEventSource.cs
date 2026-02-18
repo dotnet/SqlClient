@@ -1466,15 +1466,15 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// A disposable scope for SNI event tracing. Automatically leaves the scope when disposed.
     /// </summary>
-    public readonly struct TrySNIEventScope : IDisposable
+    public readonly struct SqlClientSNIEventScope : IDisposable
     {
         private readonly long _scopeId;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TrySNIEventScope"/> struct.
+        /// Initializes a new instance of the <see cref="SqlClientSNIEventScope"/> struct.
         /// </summary>
         /// <param name="scopeID">The scope identifier.</param>
-        public TrySNIEventScope(long scopeID) => _scopeId = scopeID;
+        public SqlClientSNIEventScope(long scopeID) => _scopeId = scopeID;
 
         /// <inheritdoc />
         public void Dispose()
@@ -1491,23 +1491,23 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="className">The class name for the scope.</param>
         /// <param name="memberName">The member name for the scope (auto-populated by caller).</param>
-        /// <returns>A new <see cref="TrySNIEventScope"/> instance.</returns>
-        public static TrySNIEventScope Create(string className, [CallerMemberName] string memberName = "")
-            => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
+        /// <returns>A new <see cref="SqlClientSNIEventScope"/> instance.</returns>
+        public static SqlClientSNIEventScope Create(string className, [CallerMemberName] string memberName = "")
+            => new SqlClientSNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
     /// <summary>
     /// A disposable scope for general event tracing. Automatically leaves the scope when disposed.
     /// </summary>
-    public readonly ref struct TryEventScope
+    public readonly ref struct SqlClientEventScope
     {
         private readonly long _scopeId;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TryEventScope"/> struct.
+        /// Initializes a new instance of the <see cref="SqlClientEventScope"/> struct.
         /// </summary>
         /// <param name="scopeID">The scope identifier.</param>
-        public TryEventScope(long scopeID) => _scopeId = scopeID;
+        public SqlClientEventScope(long scopeID) => _scopeId = scopeID;
 
         /// <summary>
         /// Disposes the scope, leaving the event scope if the scope ID is non-zero.
@@ -1523,21 +1523,21 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Creates a new event scope with one formatted argument.
         /// </summary>
-        public static TryEventScope Create<T0>(string message, T0 args0) => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
+        public static SqlClientEventScope Create<T0>(string message, T0 args0) => new SqlClientEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
 
         /// <summary>
         /// Creates a new event scope with two formatted arguments.
         /// </summary>
-        public static TryEventScope Create<T0, T1>(string message, T0 args0, T1 args1) => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
+        public static SqlClientEventScope Create<T0, T1>(string message, T0 args0, T1 args1) => new SqlClientEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
 
         /// <summary>
         /// Creates a new event scope for a class with the calling member name.
         /// </summary>
-        public static TryEventScope Create(string className, [CallerMemberName] string memberName = "") => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
+        public static SqlClientEventScope Create(string className, [CallerMemberName] string memberName = "") => new SqlClientEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
 
         /// <summary>
         /// Creates a new event scope with a pre-existing scope identifier.
         /// </summary>
-        public static TryEventScope Create(long scopeId) => new TryEventScope(scopeId);
+        public static SqlClientEventScope Create(long scopeId) => new SqlClientEventScope(scopeId);
     }
 }

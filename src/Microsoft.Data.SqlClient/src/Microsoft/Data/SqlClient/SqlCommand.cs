@@ -1057,7 +1057,7 @@ namespace Microsoft.Data.SqlClient
             // cancel because immediately after checking the connection can be closed or removed
             // via another thread.
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.Cancel | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.Cancel | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.Cancel | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -1169,7 +1169,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnection.ExecutePermission.Demand();
             #endif
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.Prepare | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.Prepare | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.Prepare | API | Correlation | " +
                 $"Object Id {ObjectID}, " +

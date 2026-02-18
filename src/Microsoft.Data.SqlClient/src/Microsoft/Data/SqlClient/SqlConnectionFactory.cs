@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
         
         internal void ClearAllPools()
         {
-            using TryEventScope scope = TryEventScope.Create(nameof(SqlConnectionFactory));
+            using SqlClientEventScope scope = SqlClientEventScope.Create(nameof(SqlConnectionFactory));
             foreach (DbConnectionPoolGroup group in _connectionPoolGroups.Values)
             {
                 group?.Clear();
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
             
-            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
+            using SqlClientEventScope scope = SqlClientEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
             DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
             poolGroup?.Clear();
         }
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(key.ConnectionString, $"{nameof(key)}.{nameof(key.ConnectionString)}");
             
-            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
+            using SqlClientEventScope scope = SqlClientEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
             if (_connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
             {
                 poolGroup?.Clear();

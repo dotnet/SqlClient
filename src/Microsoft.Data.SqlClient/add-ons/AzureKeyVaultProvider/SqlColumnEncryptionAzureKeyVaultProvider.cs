@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="trustedEndpoints">TrustedEndpoints are used to validate the master key path</param>
         public SqlColumnEncryptionAzureKeyVaultProvider(TokenCredential tokenCredential, string[] trustedEndpoints)
         {
-            using var _ = AKVScope.Create();
+            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNotNull(tokenCredential, nameof(tokenCredential));
             ValidateNotNull(trustedEndpoints, nameof(trustedEndpoints));
             ValidateNotEmpty(trustedEndpoints, nameof(trustedEndpoints));
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
-            using var _ = AKVScope.Create();
+            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
 
             // Also validates key is of RSA type.
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
-            using var _ = AKVScope.Create();
+            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
 
             var key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
@@ -183,7 +183,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Plain text column encryption key</returns>
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
-            using var _ = AKVScope.Create();
+            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             // Validate the input parameters
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
@@ -216,8 +216,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 // validate the ciphertext length
                 if (cipherTextLength != keySizeInBytes)
                 {
-                    AKVEventSource.Log.TryTraceEvent("Cipher Text length: {0}", cipherTextLength);
-                    AKVEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
+                    SqlClientEventSource.Log.TryTraceEvent("Cipher Text length: {0}", cipherTextLength);
+                    SqlClientEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
                     throw ADP.InvalidCipherTextLength(cipherTextLength, keySizeInBytes, masterKeyPath);
                 }
 
@@ -225,8 +225,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
                 if (signatureLength != keySizeInBytes)
                 {
-                    AKVEventSource.Log.TryTraceEvent("Signature length: {0}", signatureLength);
-                    AKVEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
+                    SqlClientEventSource.Log.TryTraceEvent("Signature length: {0}", signatureLength);
+                    SqlClientEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
                     throw ADP.InvalidSignatureLengthTemplate(signatureLength, keySizeInBytes, masterKeyPath);
                 }
 
@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
                 if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
                 {
-                    AKVEventSource.Log.TryTraceEvent("Signature could not be verified.");
+                    SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
                     throw ADP.InvalidSignatureTemplate(masterKeyPath);
                 }
                 return KeyCryptographer.UnwrapKey(s_keyWrapAlgorithm, cipherText, masterKeyPath);
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
-            using var _ = AKVScope.Create();
+            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             // Validate the input parameters
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
@@ -293,8 +293,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             if (cipherText.Length != keySizeInBytes)
             {
-                AKVEventSource.Log.TryTraceEvent("Cipher Text length: {0}", cipherText.Length);
-                AKVEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
+                SqlClientEventSource.Log.TryTraceEvent("Cipher Text length: {0}", cipherText.Length);
+                SqlClientEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
                 throw ADP.CipherTextLengthMismatch();
             }
 
@@ -348,14 +348,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // throw appropriate error if masterKeyPath is null or empty
             if (string.IsNullOrWhiteSpace(masterKeyPath))
             {
-                AKVEventSource.Log.TryTraceEvent("Azure Key Vault URI found null or empty.");
+                SqlClientEventSource.Log.TryTraceEvent("Azure Key Vault URI found null or empty.");
                 throw ADP.InvalidAKVPath(masterKeyPath, isSystemOp);
             }
 
             if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri) || parsedUri.Segments.Length < 3)
             {
                 // Return an error indicating that the AKV url is invalid.
-                AKVEventSource.Log.TryTraceEvent("URI could not be created with provided master key path: {0}", masterKeyPath);
+                SqlClientEventSource.Log.TryTraceEvent("URI could not be created with provided master key path: {0}", masterKeyPath);
                 throw ADP.InvalidAKVUrl(masterKeyPath);
             }
 
@@ -365,13 +365,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             {
                 if (parsedUri.Host.EndsWith(trustedEndPoint, StringComparison.OrdinalIgnoreCase))
                 {
-                    AKVEventSource.Log.TryTraceEvent("Azure Key Vault URI validated successfully.");
+                    SqlClientEventSource.Log.TryTraceEvent("Azure Key Vault URI validated successfully.");
                     return;
                 }
             }
 
             // Return an error indicating that the AKV url is invalid.
-            AKVEventSource.Log.TryTraceEvent("Master Key Path could not be validated as it does not end with trusted endpoints: {0}", masterKeyPath);
+            SqlClientEventSource.Log.TryTraceEvent("Master Key Path could not be validated as it does not end with trusted endpoints: {0}", masterKeyPath);
             throw ADP.InvalidAKVUrlTrustedEndpoints(masterKeyPath, string.Join(", ", TrustedEndPoints));
         }
 
@@ -379,10 +379,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
             {
-                AKVEventSource.Log.TryTraceEvent("Signature could not be verified.");
+                SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
                 throw ADP.InvalidSignature();
             }
-            AKVEventSource.Log.TryTraceEvent("Signature verified successfully.");
+            SqlClientEventSource.Log.TryTraceEvent("Signature verified successfully.");
         }
 
         private byte[] CompileMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
