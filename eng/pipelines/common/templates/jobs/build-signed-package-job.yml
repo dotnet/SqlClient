@@ -3,6 +3,9 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This template is only used in the MDS Official pipeline.
+
 parameters:
 
   - name: isPreview
@@ -62,15 +65,6 @@ jobs:
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
-
-  # Build our tooling, which is required by the analysis step below, but
-  # shouldn't be analyzed itself.
-  - task: MSBuild@1
-    displayName: 'Build Tooling'
-    inputs:
-      solution: '**/build.proj'
-      configuration: Release
-      msbuildArguments: -t:BuildTools
 
   # Perform analysis before building, since this step will clobber build output.
   - template: /eng/pipelines/common/templates/steps/code-analyze-step.yml@self

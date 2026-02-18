@@ -103,11 +103,8 @@ jobs:
         inputs:
           secureFile: netfxKeypair.snk
 
-      # Install the .NET SDK and Runtimes.
+      # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
-        parameters:
-          # The ESRP tasks don't work in .NET 10 yet, so we need an older runtime.
-          runtimes: [9.x]
 
       # Build the Abstractions project and use our signing key to sign the assemblies.
       - task: DotNetCoreCLI@2
@@ -143,6 +140,15 @@ jobs:
           # Create the symlink from artifacts -> assemblies.
           ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(apiScanPath)
         displayName: Symlink Assemblies for ApiScan
+
+      # Install the .NET 9 SDK for the ESRP tasks.  They don't support .NET 10 yet!
+      - task: UseDotNet@2
+        displayName: Install .NET 9 SDK for ESRP
+        inputs:
+          packageType: sdk
+          # We must avoid using our repo's global.json here.
+          useGlobalJson: false
+          version: 9.x
 
       # Scan the DLLs for malware.  See:
       #

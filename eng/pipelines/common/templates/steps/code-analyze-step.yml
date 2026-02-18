@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This template is only used in the MDS Official pipeline.
+
 # This template defines a step to run Roslyn Analyzers on the MDS project build.
 # It uses the RoslynAnalyzers@3 task from the Secure Development Team's SDL
 # extension:
@@ -12,7 +14,7 @@
 #
 # GOTCHA: This step will clobber any existing build output.  It should be run
 # _before_ any build steps that perform versioning or signing.
-
+#
 # @TODO: This can probably be made generic and pass in the command lines for msbuild
 #        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
 #        affect >1 project at a time.
@@ -23,16 +25,33 @@ parameters:
     default: $(REPOROOT)
 
 steps:
-  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
-    displayName: Roslyn Analyzers
+
+  # Build MDS.
+  - task: MSBuild@1
+    displayName: Build MDS for Roslyn Analysis
     inputs:
-      msBuildVersion: 17.0
-      msBuildArchitecture: x64
-      setupCommandlinePicker: vs2022
-      msBuildCommandline: >-
-        msbuild
-        ${{parameters.sourceRoot}}\build.proj
+      solution: ${{parameters.sourceRoot}}\build.proj
+      configuration: Release
+      msbuildArguments: >-
         -t:BuildAllConfigurations
-        -p:Configuration=Release
         -p:GenerateNuget=false
-        -p:BuildTools=false
+
+  # Run the Roslyn analysis.  It will detect the build from the previous step automatically.
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+    displayName: Roslyn Analysis
+    inputs:
+      userProvideBuildInfo: autoMsBuildInfo
+      rulesetName: Recommended
+      rulesetVersion: Latest
+      policyName: Microsoft
+      loadRoslynConfiguredAnalyzersOption: Enable
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+  # Clean the workspace.
+  - task: MSBuild@1
+    displayName: Clean Workspace after Roslyn Analysis
+    inputs:
+      solution: ${{parameters.sourceRoot}}\build.proj
+      configuration: Release
+      msbuildArguments: -t:Clean

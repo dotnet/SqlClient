@@ -3,6 +3,9 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This template is only used in the MDS Official pipeline.
+
 parameters:
 
   - name: abstractionsAssemblyFileVersion
@@ -24,9 +27,6 @@ steps:
     inputs:
       secureFile: netfxKeypair.snk
       retryCount: 5
-
-  # Install the .NET SDK.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
 
   - task: MSBuild@1
     displayName: 'BuildAllConfigurations using build.proj'
