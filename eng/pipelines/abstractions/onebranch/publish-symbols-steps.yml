@@ -11,6 +11,10 @@
 
 parameters:
 
+  # The connected service name (a.k.a Azure subscription)
+  - name: connectedServiceName
+    type: string
+
   # True to enable debug steps and logging.
   - name: debug
     type: boolean
@@ -51,8 +55,7 @@ steps:
   - task: AzureCLI@2
     displayName: Publish Symbols to Symbol Servers
     inputs:
-      # azureSubscription: $(SymbolsAzureSubscription)
-      azureSubscription: Symbols publishing Workload Identity federation service-ADO.Net
+      connectedServiceName: ${{ parameters.connectedServiceName }}
       scriptLocation: inlineScript
       scriptType: ps
       inlineScript: |

@@ -128,10 +128,12 @@ extends:
         # break non-official builds, so we explicitly set 'break' to false here.
         ${{ if ne(parameters.oneBranchType, 'Official') }}:
           break: false
-        softwareFolder: $(softwareFolder)
-        symbolsFolder: $(symbolsFolder)
+        softwareFolder: $(apiScanDllPath)
+        symbolsFolder: $(apiScanPdbPath)
         softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(mdsAssemblyFileVersion)
+        # We produce multiple packages with different assembly version numbers.  It isn't clear
+        # what ApiScan does with this, so we just hardcode it.
+        versionNumber: 1.0.0.0
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
@@ -181,8 +183,8 @@ extends:
           isPreview: ${{ parameters['isPreview'] }}
           onebranchOutputDirectory: ${{ variables.onebranchArtifactsPath }}
           publishSymbols: ${{ parameters['publishSymbols'] }}
-          softwareFolder: $(softwareFolder)
-          symbolsFolder: $(symbolsFolder)
+          softwareFolder: $(apiScanDllPath)
+          symbolsFolder: $(apiScanPdbPath)
 
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'

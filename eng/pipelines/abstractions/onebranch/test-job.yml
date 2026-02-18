@@ -4,7 +4,8 @@
 # See the LICENSE file in the project root for more information.               #
 ################################################################################
 
-# This job runs unit tests for the Abstractions project.
+# This job runs unit tests on Linux .NET 10.0 for the Abstractions project.  It isn't meant to be
+# an exhaustive test run - just a basic sanity check.
 
 parameters:
 
@@ -52,6 +53,8 @@ jobs:
     steps:
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
 
       # Run the unit tests.
       - task: DotNetCoreCLI@2
@@ -63,3 +66,4 @@ jobs:
           arguments: >-
             --configuration ${{ parameters.buildConfiguration }}
             --verbosity ${{ parameters.dotnetVerbosity }}
+            -f net10.0

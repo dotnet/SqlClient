@@ -31,14 +31,22 @@ jobs:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
   variables:
+
+  # Bring in Abstractions version variables, and give them unique names for our purposes.
+  - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
+
+  - name: abstractionsAssemblyFileVersion
+    value: $(assemblyFileVersion)
+
+  - name: abstractionsPackageVersion
+    value: $(packageVersion)
+
   # The OneBranch templates require that the $(ob_outputDirectory) variable be defined at every job
   # level.
   - name: ob_outputDirectory
     value: ${{ parameters.onebranchOutputDirectory }}
 
   - ${{ if parameters.isPreview }}:
-    - name: abstractionsPackageVersion
-      value: $(abstractionsPackagePreviewVersion)
     - name: mdsPackageVersion
       value: $(previewMdsPackageVersion)
 

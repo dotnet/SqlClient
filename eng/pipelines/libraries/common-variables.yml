@@ -20,10 +20,6 @@ variables:
     value: '' # the value will be extracted from the repo's head
   - name: REPOROOT
     value: $(Build.SourcesDirectory)
-  - name: softwareFolder
-    value: $(REPOROOT)/software
-  - name: symbolsFolder
-    value: $(REPOROOT)/symbols
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
 
@@ -37,24 +33,6 @@ variables:
   # $(Build.BuildNumber) values.
   - name: assemblyBuildNumber
     value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
-
-  # ----------------------------------------------------------------------------
-  # Abstractions Package Versions
-  #
-  # These are version values that will be used by the official build.  They
-  # should be updated after each release to reflect the next release's versions.
-
-  # The NuGet package version for GA releases (non-preview).
-  - name: abstractionsPackageVersion
-    value: '1.0.0'
-
-  # The NuGet package version for preview releases.
-  - name: abstractionsPackagePreviewVersion
-    value: 1.0.0-preview1.$(Build.BuildNumber)
-
-  # The AssemblyFileVersion for all assemblies in the Abstractions package.
-  - name: abstractionsAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
 
   # ----------------------------------------------------------------------------
   # MDS Package Versions

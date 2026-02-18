@@ -54,6 +54,7 @@ variables:
   # The path to assemblies (DLLs and PDBs) from the build stage.
   - name: assembliesPath
     value: $(onebranchArtifactsPath)/assemblies
+
   # The path to NuGet and symbols packages from the build stage.
   - name: packagesPath
     value: $(onebranchArtifactsPath)/packages

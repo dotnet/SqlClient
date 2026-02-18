@@ -68,6 +68,13 @@ jobs:
       #
       - group: abstractions-esrp
 
+      # For some reason, Azure Pipelines refuses to expand the $(SigningEsrpConnectedServiceName)
+      # variable from the group above before the EsrpMalwareScanning@5 task validates it.  This
+      # causes pipeline runs to fail after template expansion, so we just hardcode the service name.
+      # It's not a secret.
+      - name: SigningEsrpConnectedServiceName
+        value: ESRP Managed Identity federated auth - AME tenant
+
       # We share symbols variables with the AKV pipelines via an Azure DevOps Library variable
       # group.  This will bring in the following variables that we use:
       #
@@ -78,6 +85,10 @@ jobs:
       #   SymbolsUploadAccount
       #
       - group: abstractions-symbols
+
+      # The same expansion problem occurs for $(SymbolsAzureSubscription).
+      - name: SymbolsAzureSubscription
+        value: Symbols publishing Workload Identity federation service-ADO.Net
 
       # Embed a variety of build information into the symbols artifact name.
       - name: symbolsArtifactName
@@ -127,14 +138,11 @@ jobs:
         displayName: ESRP DLL Malware Scanning
         inputs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          # AppRegistrationClientId: $(appRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          # AppRegistrationTenantId: $(appRegistrationTenantId)
           CleanupTempStorage: 1
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
+          # Use template expansion syntax here to ensure the service name is set before runtime.
+          ConnectedServiceName: ${{ variables.SigningEsrpConnectedServiceName }}
           EsrpClientId: $(SigningEsrpClientId)
-          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(assembliesPath)
           Pattern: $(packageName).dll
           UseMSIAuthentication: true
@@ -145,17 +153,11 @@ jobs:
         displayName: ESRP DLL Signing
         inputs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          # AppRegistrationClientId: $(appRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          # AppRegistrationTenantId: $(appRegistrationTenantId)
           AuthAKVName: $(SigningAuthAkvName)
-          # AuthAKVName: $(AuthAKVName)
           AuthSignCertName: $(SigningAuthSignCertName)
-          # AuthSignCertName: $(AuthSignCertName)
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
+          ConnectedServiceName: ${{ variables.SigningEsrpConnectedServiceName }}
           EsrpClientId: $(SigningEsrpClientId)
-          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(assembliesPath)
           Pattern: $(packageName).dll
           signConfigType: inlineSignParams
@@ -225,14 +227,10 @@ jobs:
         displayName: ESRP Nuget Malware Scanning
         inputs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          # AppRegistrationClientId: $(appRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          # AppRegistrationTenantId: $(appRegistrationTenantId)
           CleanupTempStorage: 1
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
+          ConnectedServiceName: ${{ variables.SigningEsrpConnectedServiceName }}
           EsrpClientId: $(SigningEsrpClientId)
-          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(packagesPath)
           Pattern: $(packageName).nupkg
           UseMSIAuthentication: true
@@ -245,17 +243,11 @@ jobs:
         displayName: ESRP Signing NuGet Package
         inputs:
           AppRegistrationClientId: $(SigningAppRegistrationClientId)
-          # AppRegistrationClientId: $(appRegistrationClientId)
           AppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          # AppRegistrationTenantId: $(appRegistrationTenantId)
           AuthAKVName: $(SigningAuthAkvName)
-          # AuthAKVName: $(AuthAKVName)
           AuthSignCertName: $(SigningAuthSignCertName)
-          # AuthSignCertName: $(AuthSignCertName)
-          # ConnectedServiceName: $(SigningEsrpConnectedServiceName)
-          ConnectedServiceName: $(ESRPConnectedServiceName)
+          ConnectedServiceName: ${{ variables.SigningEsrpConnectedServiceName }}
           EsrpClientId: $(SigningEsrpClientId)
-          # EsrpClientId: $(EsrpClientId)
           FolderPath: $(packagesPath)
           Pattern: $(packageName).nupkg
           signConfigType: inlineSignParams
@@ -282,5 +274,6 @@ jobs:
       - ${{ if eq(parameters.publishSymbols, true) }}:
         - template: /eng/pipelines/abstractions/onebranch/publish-symbols-steps.yml@self
           parameters:
+            connectedServiceName: ${{ variables.SymbolsAzureSubscription }}
             debug: ${{ parameters.debug }}
             symbolsArtifactName: $(symbolsArtifactName)
