@@ -87,9 +87,11 @@
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <!--

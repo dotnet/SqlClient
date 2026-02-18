@@ -226,9 +226,22 @@ parameters:
     displayName: 'Test job timeout (in minutes)'
     type: number
     default: 60
+
+  # Build parameters — control which packages to build
+  - name: buildSqlServerServer
+    displayName: 'Build Microsoft.SqlServer.Server'
+    type: boolean
+    default: true
+
+  - name: buildAKVProvider
+    displayName: 'Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+    type: boolean
+    default: true
 ```
 
 The `isPreview` parameter controls version resolution — when `true`, each package uses its preview version (e.g., `loggingPackagePreviewVersion`) instead of the GA version (e.g., `loggingPackageVersion`). All versions are defined in the centralized `libraries/common-variables.yml`.
+
+The `buildSqlServerServer` and `buildAKVProvider` parameters enable selective package building. When set to `false`, the respective jobs/stages are excluded at compile-time using `${{ if eq(parameters.xxx, true) }}` conditionals. This allows faster pipeline runs when only certain packages need to be built.
 
 ### 5.2 Release Parameters
 

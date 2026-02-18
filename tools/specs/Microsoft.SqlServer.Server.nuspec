@@ -9,6 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
+    <readme>PackageReadme.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$" />
     <description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
     
@@ -35,6 +36,7 @@ Microsoft.SqlServer.Server.Format
   </metadata>
   <files>
     <file src="..\icons\dotnet.png" target="" />
+    <file src="PackageReadme.SqlServer.Server.md" target="PackageReadme.md" />
 
     <!--
       We require the $ReferenceType$ property to be supplied on the nuget pack

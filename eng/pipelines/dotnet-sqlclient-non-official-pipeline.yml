@@ -29,6 +29,17 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: boolean
   default: false
 
+# Build parameters — control which packages to build.
+- name: buildSqlServerServer
+  displayName: 'Build Microsoft.SqlServer.Server'
+  type: boolean
+  default: true
+
+- name: buildAKVProvider
+  displayName: 'Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+  type: boolean
+  default: true
+
 # The timeout, in minutes, for each test job.
 - name: testJobTimeout
   displayName: 'Test job timeout (in minutes)'
@@ -202,17 +213,18 @@ extends:
           authAkvName: $(AuthAKVName)
           authSignCertName: $(AuthSignCertName)
 
-      - template: /eng/pipelines/jobs/build-signed-sqlserver-package-job.yml@self
-        parameters:
-          assemblyFileVersion: $(sqlServerAssemblyFileVersion)
-          packageVersion: $(effectiveSqlServerVersion)
-          nuspecPath: $(sqlServerNuspecPath)
-          esrpConnectedServiceName: $(ESRPConnectedServiceName)
-          esrpClientId: $(ESRPClientId)
-          appRegistrationClientId: $(AppRegistrationClientId)
-          appRegistrationTenantId: $(AppRegistrationTenantId)
-          authAkvName: $(AuthAKVName)
-          authSignCertName: $(AuthSignCertName)
+      - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+        - template: /eng/pipelines/jobs/build-signed-sqlserver-package-job.yml@self
+          parameters:
+            assemblyFileVersion: $(sqlServerAssemblyFileVersion)
+            packageVersion: $(effectiveSqlServerVersion)
+            nuspecPath: $(sqlServerNuspecPath)
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
 
     # ------------------------------------------------------------------
     # Stage 2: Core packages (depend on independent packages)
@@ -249,30 +261,31 @@ extends:
     # Stage 3: Add-on packages (depend on core packages)
     # AKV Provider builds after MDS completes.
     # ------------------------------------------------------------------
-    - stage: build_addons
-      displayName: 'Build Add-on Packages'
-      dependsOn: buildMDS
-      jobs:
-      - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
-        parameters:
-          akvAssemblyFileVersion: $(akvAssemblyFileVersion)
-          akvPackageVersion: $(effectiveAkvVersion)
-          apiScanDllPath: $(apiScanDllPath)
-          apiScanPdbPath: $(apiScanPdbPath)
-          buildConfiguration: Release
-          mdsPackageVersion: $(akvMdsPackageVersion)
-          publishSymbols: ${{ parameters['publishSymbols'] }}
-          appRegistrationClientId: $(appRegistrationClientId)
-          appRegistrationTenantId: $(appRegistrationTenantId)
-          authAkvName: $(AuthAkvName)
-          authSignCertName: $(AuthSignCertName)
-          esrpClientId: $(EsrpClientId)
-          esrpConnectedServiceName: $(EsrpConnectedServiceName)
-          symbolsAzureSubscription: $(SymbolsAzureSubscription)
-          symbolsPublishProjectName: $(SymbolsPublishProjectName)
-          symbolsPublishServer: $(SymbolsPublishServer)
-          symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
-          symbolsUploadAccount: $(SymbolsUploadAccount)
+    - ${{ if eq(parameters.buildAKVProvider, true) }}:
+      - stage: build_addons
+        displayName: 'Build Add-on Packages'
+        dependsOn: buildMDS
+        jobs:
+        - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
+          parameters:
+            akvAssemblyFileVersion: $(akvAssemblyFileVersion)
+            akvPackageVersion: $(effectiveAkvVersion)
+            apiScanDllPath: $(apiScanDllPath)
+            apiScanPdbPath: $(apiScanPdbPath)
+            buildConfiguration: Release
+            mdsPackageVersion: $(akvMdsPackageVersion)
+            publishSymbols: ${{ parameters['publishSymbols'] }}
+            appRegistrationClientId: $(appRegistrationClientId)
+            appRegistrationTenantId: $(appRegistrationTenantId)
+            authAkvName: $(AuthAkvName)
+            authSignCertName: $(AuthSignCertName)
+            esrpClientId: $(EsrpClientId)
+            esrpConnectedServiceName: $(EsrpConnectedServiceName)
+            symbolsAzureSubscription: $(SymbolsAzureSubscription)
+            symbolsPublishProjectName: $(SymbolsPublishProjectName)
+            symbolsPublishServer: $(SymbolsPublishServer)
+            symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
+            symbolsUploadAccount: $(SymbolsUploadAccount)
 
     # ------------------------------------------------------------------
     # Validation
@@ -298,7 +311,9 @@ extends:
       - stage: release
         displayName: 'Release to NuGet (Dry Run)'
         dependsOn:
-          - build_addons
+          - ${{ if eq(parameters.buildAKVProvider, true) }}:
+            - build_addons
+          - buildMDS
           - mds_package_validation
         jobs:
         # Manual approval gate — blocks until a designated approver
