@@ -13,8 +13,11 @@ variables:
 
   - name: buildNumber
     value: '$(Build.BuildNumber)'
+  # CI pipelines use 'name: $(DayOfYear)$(Rev:rr)' which concatenates into a
+  # single integer (e.g. 260492) that can exceed the 65535 max for assembly
+  # version components (UInt16).  Use modulo 65536 to keep it in range [0, 65535].
   - name: assemblyBuildNumber
-    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+    value: $[ variables['Build.BuildNumber'] % 65536 ]
   - name: SQLTarget
     value: 'localhost'
   - name: abstractionsAssemblyFileVersion

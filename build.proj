@@ -139,8 +139,15 @@
   <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions">
     <MSBuild
       Projects="@(Abstractions)"
-      Targets="Build;Pack"
+      Targets="Build"
       Properties="$(AbstractionsProperties)" />
+  </Target>
+
+  <Target Name="PackAbstractions">
+    <MSBuild
+      Projects="@(Abstractions)"
+      Targets="Pack"
+      Properties="$(AbstractionsProperties);NoBuild=true" />
   </Target>
 
   <!-- Logging Targets -->
@@ -175,8 +182,15 @@
   <Target Name="BuildLogging" DependsOnTargets="RestoreLogging">
     <MSBuild
       Projects="@(Logging)"
-      Targets="Build;Pack"
+      Targets="Build"
       Properties="$(LoggingProperties)" />
+  </Target>
+
+  <Target Name="PackLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Pack"
+      Properties="$(LoggingProperties);NoBuild=true" />
   </Target>
 
   <!-- Azure Targets -->
@@ -217,8 +231,15 @@
   <Target Name="BuildAzure" DependsOnTargets="RestoreAzure">
     <MSBuild
       Projects="@(Azure)"
-      Targets="Build;Pack"
+      Targets="Build"
       Properties="$(AzureProperties)" />
+  </Target>
+
+  <Target Name="PackAzure">
+    <MSBuild
+      Projects="@(Azure)"
+      Targets="Pack"
+      Properties="$(AzureProperties);NoBuild=true" />
   </Target>
 
   <!-- Other Targets -->
