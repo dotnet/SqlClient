@@ -43,7 +43,7 @@ parameters:
 
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:
-  - task: EsrpMalwareScanning@5
+  - task: EsrpMalwareScanning@6
     displayName: 'ESRP MalwareScanning'
     inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
@@ -55,7 +55,7 @@ steps:
       Pattern: 'Microsoft.Data.SqlClient*.dll'
       CleanupTempStorage: 1
       VerboseLogin: 1
-  - task: EsrpCodeSigning@5
+  - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning'
     inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
@@ -108,7 +108,7 @@ steps:
           ] 
 
 - ${{ if eq(parameters.artifactType, 'pkg') }}:
-  - task: EsrpMalwareScanning@5
+  - task: EsrpMalwareScanning@6
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
@@ -120,7 +120,7 @@ steps:
       Pattern: '*.*nupkg'
       CleanupTempStorage: 1
       VerboseLogin: 1
-  - task: EsrpCodeSigning@5
+  - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
       inputs:

@@ -17,6 +17,11 @@ parameters:
     type: string
     default: Logging.Artifacts
 
+  # The assembly file version to stamp into the Logging DLLs.
+  - name: loggingAssemblyFileVersion
+    type: string
+    default: ''
+
   # The version to apply to the Logging NuGet package and its assemblies.
   - name: loggingPackageVersion
     type: string
@@ -82,6 +87,7 @@ jobs:
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+          -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.

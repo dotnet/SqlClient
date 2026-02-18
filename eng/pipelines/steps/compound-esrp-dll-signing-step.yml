@@ -31,7 +31,7 @@ parameters:
     type: string
   
 steps:
-  - task: EsrpMalwareScanning@5
+  - task: EsrpMalwareScanning@6
     displayName: 'ESRP DLL Malware Scanning'
     inputs:
       AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
@@ -44,7 +44,7 @@ steps:
       UseMSIAuthentication: true
       VerboseLogin: 1
       
-  - task: EsrpCodeSigning@5
+  - task: EsrpCodeSigning@6
     displayName: 'ESRP DLL Signing'
     inputs:
       AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'

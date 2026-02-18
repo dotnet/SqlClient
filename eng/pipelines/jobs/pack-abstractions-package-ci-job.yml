@@ -17,6 +17,11 @@ parameters:
     type: string
     default: Abstractions.Artifact
 
+  # The assembly file version to stamp into the Abstractions DLLs.
+  - name: abstractionsAssemblyFileVersion
+    type: string
+    default: ''
+
   # The version to apply to the Abstractions NuGet package and its assemblies.
   - name: abstractionsPackageVersion
     type: string
@@ -82,6 +87,7 @@ jobs:
           $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.

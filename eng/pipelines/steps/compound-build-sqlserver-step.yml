@@ -36,7 +36,6 @@ steps:
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: >-
               -t:BuildSqlServerLibAnyOS
-              -p:SqlServerAssemblyVersion=${{ parameters.packageVersion }}
               -p:SqlServerAssemblyFileVersion=${{ parameters.assemblyFileVersion }}
               -p:SqlServerPackageVersion=${{ parameters.packageVersion }}
               -p:ReferenceType=Package

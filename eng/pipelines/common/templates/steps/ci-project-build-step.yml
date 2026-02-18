@@ -57,6 +57,11 @@ parameters:
     type: string
     default: ''
 
+  # The assembly build number, kept within 0-65535 range for valid assembly versions.
+  - name: assemblyBuildNumber
+    type: string
+    default: ''
+
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -89,6 +94,7 @@ steps:
             -p:GenerateNuget=false
             -p:GenerateDocumentationFile=false
             -p:BuildNumber=${{ parameters.buildNumber }}
+            -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
             -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
@@ -107,6 +113,7 @@ steps:
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:GenerateNuget=false
             -p:BuildNumber=${{ parameters.buildNumber }}
+            -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
             -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
@@ -125,6 +132,7 @@ steps:
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:GenerateNuget=false
           -p:BuildNumber=${{ parameters.buildNumber }}
+          -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
     - task: MSBuild@1
@@ -140,6 +148,7 @@ steps:
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:GenerateNuget=false
           -p:BuildNumber=${{ parameters.buildNumber }}
+          -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
@@ -157,6 +166,8 @@ steps:
         -p:GenerateNuget=false
         -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:BuildNumber=${{ parameters.buildNumber }}
+        -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}

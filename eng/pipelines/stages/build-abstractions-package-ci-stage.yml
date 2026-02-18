@@ -30,6 +30,11 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
+  # The assembly file version to stamp into the DLLs.
+  - name: abstractionsAssemblyFileVersion
+    type: string
+    default: ''
+
   # The version to apply to the NuGet package and DLLs.
   - name: abstractionsPackageVersion
     type: string
@@ -116,6 +121,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsAssemblyFileVersion: ${{ parameters.abstractionsAssemblyFileVersion }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}

@@ -129,6 +129,7 @@ stages:
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -140,6 +141,7 @@ stages:
   - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
     parameters:
       loggingArtifactsName: $(loggingArtifactsName)
+      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
       loggingPackageVersion: $(loggingPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -161,6 +163,7 @@ stages:
     jobs:
     - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
+        assemblyBuildNumber: $(assemblyBuildNumber)
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         abstractionsPackageVersion: $(abstractionsPackageVersion)
@@ -183,6 +186,7 @@ stages:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       azureArtifactsName: $(azureArtifactsName)
+      azureAssemblyFileVersion: $(azureAssemblyFileVersion)
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}

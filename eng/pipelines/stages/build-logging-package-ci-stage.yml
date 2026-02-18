@@ -30,6 +30,11 @@ parameters:
     type: string
     default: Logging.Artifacts
 
+  # The assembly file version to stamp into the DLLs.
+  - name: loggingAssemblyFileVersion
+    type: string
+    default: ''
+
   # The version to apply to the NuGet package and DLLs.
   - name: loggingPackageVersion
     type: string
@@ -74,6 +79,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-logging-package-ci-job.yml@self
         parameters:
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingAssemblyFileVersion: ${{ parameters.loggingAssemblyFileVersion }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}

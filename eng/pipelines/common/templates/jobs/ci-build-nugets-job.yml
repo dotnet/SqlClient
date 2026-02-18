@@ -58,6 +58,10 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  - name: assemblyBuildNumber
+    type: string
+    default: ''
+
 jobs:
 - job: build_mds_akv_packages_job
   displayName: Build MDS & AKV Packages
@@ -111,6 +115,7 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
+        assemblyBuildNumber: ${{ parameters.assemblyBuildNumber }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -122,6 +127,7 @@ jobs:
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+      assemblyBuildNumber: ${{ parameters.assemblyBuildNumber }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
@@ -142,6 +148,7 @@ jobs:
       operatingSystem: Windows
       build: AKV
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+      assemblyBuildNumber: ${{ parameters.assemblyBuildNumber }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:

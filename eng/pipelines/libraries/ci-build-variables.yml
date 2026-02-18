@@ -13,8 +13,20 @@ variables:
 
   - name: buildNumber
     value: '$(Build.BuildNumber)'
+  - name: assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
   - name: SQLTarget
     value: 'localhost'
+  - name: abstractionsAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+  - name: loggingAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+  - name: azureAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+  - name: mdsAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+  - name: akvAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
   - name: abstractionsPackageVersion
     value: 1.0.0.$(buildNumber)-ci
   - name: akvPackageVersion
