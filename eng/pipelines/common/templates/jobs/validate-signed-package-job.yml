@@ -4,26 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: downloadPackageStep
-    type: step
-    default:
-      script: echo <empty step>
 
-  - name: packageFolderName
+  - name: artifactName
     type: string
-    default: drop_build_build_signed_package
-
-  - name: dependsOn
-    type: string
-    default: ''
-
-  - name: packageType
-    type: string
-    default: both
-    values:
-    - dll
-    - pdb
-    - both
 
   - name: isPreview
     type: boolean
@@ -31,8 +14,7 @@ parameters:
 jobs:
 - job: validate_signed_package
   displayName: 'Verify signed package'
-  ${{ if ne(parameters.dependsOn, '')}}:
-    dependsOn: '${{parameters.dependsOn }}'
+
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     isCustom: true
@@ -43,9 +25,11 @@ jobs:
   - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
 
   - name: pathToDownloadedNuget # path to the downloaded nuget files
-    value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+    value: $(Pipeline.Workspace)\${{parameters.artifactName }}
 
   - name: BuildType
+    # This variable is set in the build-signed-package-job.yml job. Any changes
+    # to the names of the stage, job, or variable must be reflected here.
     value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
   - ${{ if parameters.isPreview }}:
@@ -69,7 +53,10 @@ jobs:
       nuget locals all -Clear
     displayName: 'Clear local cache'
 
-  - ${{parameters.downloadPackageStep }}
+  - download: current
+    artifact: ${{parameters.artifactName}}
+    patterns: '**/*.*nupkg'
+    displayName: 'Download NuGet Package'
 
   - powershell: |
       # Install nuget package
@@ -82,21 +69,12 @@ jobs:
     displayName: 'Extract Nuget in temp folder'
 
   - powershell: |
-      # Artifact is stored in the Nuget folder
-      $packageType = '${{parameters.packageType}}'
-
       Write-Host "--------------------------------------------------"
       Write-Host "This will verify the artifact signature" -ForegroundColor Green
       Write-Host "--------------------------------------------------"
 
-      if ($packageType -eq 'dll' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.nupkg
-      }
-      if ($packageType -eq 'pdb' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.snupkg
-      }
+      nuget verify -All $(pathToDownloadedNuget)\*.nupkg
+      nuget verify -All $(pathToDownloadedNuget)\*.snupkg
     displayName: 'Verify nuget signature'
 
   - powershell: |

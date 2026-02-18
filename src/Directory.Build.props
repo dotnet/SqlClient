@@ -49,7 +49,7 @@
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
-    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
+    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient/tests/</TestsPath>
     <BinFolder Condition="'$(TargetsWindows)' == 'true'">$(Artifacts)bin\Windows_NT\</BinFolder>
     <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(Artifacts)bin\AnyOS\</BinFolder>
     <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(Artifacts)bin\Unix\</BinFolder>

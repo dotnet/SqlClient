@@ -4,59 +4,43 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This job processes code coverage reports generated during test runs,
-# merges them, generates code coverage reports, publishes them to the
-# pipeline, and uploads them to CodeCov.
+# This job processes code coverage reports generated during test runs, merges
+# them, generates code coverage reports, publishes them to the pipeline, and
+# uploads them to CodeCov.
 
 parameters:
-  
+
   # True to include debug steps.
   - name: debug
     type: boolean
     default: false
-
-  # The pool image to use.
-  - name: image
-    type: string
-
-  # The agent pool name.
-  - name: pool
-    type: string
-
-  # Array of target frameworks to process code coverage for:
-  #
-  #   e.g. [net462, net8.0, net9.0]
-  #
-  - name: targetFrameworks
-    type: object
 
   # True to upload code coverage results to CodeCov.
   - name: upload
     type: boolean
 
 jobs:
-  - job: CodeCoverage
+  - job: publish_code_coverage
     displayName: Publish Code Coverage
 
     pool:
-      name: ${{ parameters.pool }}
-      ${{ if eq(parameters.pool, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.image }}
-      ${{ else }}:
-        demands:
-        - imageOverride -equals ${{ parameters.image }}
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
 
     variables:
-      netFxDir: $(Build.SourcesDirectory)\coverageNetFx
-      netCoreDir: $(Build.SourcesDirectory)\coverageNetCore
+      # Use a temp directory that is cleaned up after each job runs.  This helps
+      # avoid disk space issues on pooled agents that may run many jobs before
+      # being retired.
+      - name: workingDir
+        value: $(Agent.TempDirectory)/coverage
 
     steps:
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
-        - pwsh: 'Get-ChildItem env: | Sort-Object Name'
+        - script: env | sort
           displayName: '[Debug] List Environment Variables'
 
       # Install the .NET SDK.
@@ -65,150 +49,103 @@ jobs:
           debug: ${{ parameters.debug }}
 
       # Install additional dotnet tools.
-      - pwsh: |
-          dotnet tool install --global dotnet-coverage
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-        displayName: Install dotnet tools
-          
-      - pwsh: |
-          Write-Host "Removing leftover coverage files from previous runs..."
-          Remove-Item $(netFxDir) -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item $(netCoreDir) -Recurse -Force -ErrorAction SilentlyContinue
+      #
+      # We must work around a bug in the dotnet CLI that prevents tool installs
+      # when multiple project/solution files are present in the working
+      # directory:
+      #
+      # https://github.com/dotnet/sdk/issues/9623
+      #
+      # Our repo root (the default working directory for tasks) contains more
+      # than one project file.  However, we must also obey the NuGet.config in
+      # the repo root to ensure that tools are installed from the correct feeds.
+      # We accomplish this by copying the NuGet.config to a temp dir and then
+      # instructing the dotnet CLI tasks to run from that directory.  They will
+      # still install the tools globally for subsequent tasks to use.
+      #
+      - script: cp "$(Build.SourcesDirectory)/NuGet.config" "$(Agent.TempDirectory)/"
+        displayName: Copy NuGet.config for tool installs
 
-          Write-Host "Removing leftover merged XML files from previous runs..."
-          Remove-Item coverageNetFxXml -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item coverageNetCoreXml -Recurse -Force -ErrorAction SilentlyContinue
-
-          Write-Host "Removing leftover reports from previous runs..."
-          Remove-Item coveragereportNetFx -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item coveragereportNetCore -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item coveragereportAddOns -Recurse -Force -ErrorAction SilentlyContinue
-
-      - ${{ each targetFramework in parameters.targetFrameworks }}:
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Download Coverage Reports [${{ targetFramework }}]'
-          inputs:
-            itemPattern: '**\${{ targetFramework }}*'
-            ${{ if startsWith(targetFramework, 'net4') }}:
-              targetPath: $(netFxDir)
-            ${{ else }}:
-              targetPath: $(netCoreDir)
+      - task: DotNetCoreCLI@2
+        displayName: Install dotnet-coverage tool
+        inputs:
+          command: custom
+          custom: tool
+          workingDirectory: $(Agent.TempDirectory)
+          arguments: install --global dotnet-coverage --version 18.3.2
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
-        - pwsh: Get-ChildItem $(netFxDir) -Recurse -File -Filter *.coverage
-          displayName: '[Debug] List coverageNetFx files'
-
-        - pwsh: Get-ChildItem $(netCoreDir) -Recurse -File -Filter *.coverage
-          displayName: '[Debug] List coverageNetCore files'
-
-      - pwsh: |
-          function MergeFiles {
-            param(
-            [string]$InputDirectoryPath,
-            [string]$OutputDirectoryName
-            )
-
-            $files = Get-ChildItem $InputDirectoryPath -Recurse -File -Filter *.coverage
-
-            # echo $files
-            mkdir $OutputDirectoryName
-            $counter=0
-
-            $toProcess = @()
-
-            foreach ($file in $files) {
-                $toProcess += @{ 
-                    File = $file.FullName
-                    OutputFile = "$OutputDirectoryName\$counter.coveragexml"
-                }
-
-                $counter++
-            }
-
-            $jobs = @()
-            foreach ($file in $toProcess){
-                $jobs += Start-ThreadJob -ScriptBlock { 
-                    $params = $using:file
-                    & dotnet-coverage merge $($params.File) --output $($params.OutputFile) --output-format xml 
-                } 
-            }
-
-            Write-Host "Merging started..."
-            Wait-Job -Job $jobs
-
-            foreach ($job in $jobs) {
-                Receive-Job -Job $job -Wait -AutoRemoveJob
-            }
-          }
-
-          MergeFiles -InputDirectoryPath "$(netFxDir)" -OutputDirectoryName "coverageNetFxXml"
-          MergeFiles -InputDirectoryPath "$(netCoreDir)" -OutputDirectoryName "coverageNetCoreXml"
-          
-          Write-Host "Removing original coverage files..."
-          Remove-Item $(netFxDir) -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item $(netCoreDir) -Recurse -Force -ErrorAction SilentlyContinue
-        displayName: Convert coverage files to xml
+      # Download all of the coverage reports from the test jobs.
+      #
+      # These artifacts contain the .coverage files generated during test runs,
+      # along with a bunch of other files that we ignore.  We only download the
+      # .coverage files.
+      #
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Coverage Reports
+        inputs:
+          # All of our coverage report artifact names start with 'net'.
+          itemPattern: '**/net*/**/*.coverage'
+          targetPath: $(workingDir)/originals
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
-        - pwsh: |
-            dir coverageNetFxXml\
-            dir coverageNetCoreXml\
-          displayName: '[Debug] List converted files'
+        - script: ls -alFR "$(workingDir)/originals"
+          displayName: '[Debug] List coverage files'
 
-      - pwsh: |
-          $jobs = @()
-          $jobs += Start-ThreadJob -ScriptBlock { 
-              & reportgenerator "-reports:coverageNetFxXml\*.coveragexml" "-targetdir:coveragereportNetFx" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netfx\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
-          }
-
-          $jobs += Start-ThreadJob -ScriptBlock { 
-              & reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportNetCore" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netcore\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
-          }
-
-          $jobs += Start-ThreadJob -ScriptBlock { 
-              & reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportAddOns" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider" "-classfilters:+Microsoft.Data.*"
-          }
-
-          Write-Host "Running ReportGenerator..."
-          Wait-Job -Job $jobs
-
-          foreach ($job in $jobs) {
-              Receive-Job -Job $job -Wait -AutoRemoveJob
-          }
-
-          Write-Host "Removing merged XML files..."
-          Remove-Item coverageNetFxXml -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item coverageNetCoreXml -Recurse -Force -ErrorAction SilentlyContinue
-        displayName: Run ReportGenerator
+      # Merge them all into a single Cobertura XML file.
+      - script: >-
+          dotnet-coverage merge "$(workingDir)/originals/**/*.coverage"
+          --output "$(workingDir)/merge/Cobertura.xml"
+          --output-format cobertura
+          --log-file "$(workingDir)/merge/merge.log"
+          --log-level Verbose
+        displayName: Merge coverage files to Cobertura XML
 
       - ${{if eq(parameters.debug, true)}}:
-        - pwsh: Get-Volume
+        - script: df -h
           displayName: '[Debug] Show Disk Usage'
 
+      # Publish the Cobertura XML coverage file as a pipeline artifact for
+      # debugging purposes.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Cobertura XML Artifact
+        inputs:
+          targetPath: $(workingDir)/merge
+          artifact: Cobertura Merge Results
+
+      # Publish the Cobertura reports to the pipeline to be viewed in the Azure
+      # DevOps pipeline run UI.
       - task: PublishCodeCoverageResults@2
         displayName: Publish code coverage results
         inputs:
-          summaryFileLocation: '*\Cobertura.xml'
+          summaryFileLocation: $(workingDir)/merge/Cobertura.xml
 
+      # Publish the Cobertura reports to CodeCov, if desired.
       - ${{if eq(parameters.upload, true)}}:
-        - pwsh: |
-            #download Codecov CLI
-            $ProgressPreference = 'SilentlyContinue' 
-            Invoke-WebRequest -Uri https://cli.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
-            
-            ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetFx\Cobertura.xml" -F netfx
-            ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetCore\Cobertura.xml" -F netcore
-            ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportAddOns\Cobertura.xml" -F addons
+        # Download the CodeCov CLI
+        - script: |
+            curl -o "$(workingDir)/codecov" https://cli.codecov.io/latest/linux/codecov
+            chmod +x "$(workingDir)/codecov"
+          displayName: Download CodeCov CLI
+
+        # Upload the report.
+        #
+        # We use the pipeline name as the "flag" to help distinguish reports
+        # uploaded from different pipelines.
+        #
+        - script: >-
+            $(workingDir)/codecov
+            --verbose
+            upload-process
+            --fail-on-error
+            -t $(CODECOV_TOKEN)
+            --disable-search
+            -f "$(workingDir)/merge/Cobertura.xml"
+            -F $(Build.DefinitionName)
           displayName: Upload to CodeCov
-      
-      - pwsh: |
-          Write-Host "Removing reports..."
-          Remove-Item coveragereportNetFx -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item coveragereportNetCore -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item coveragereportAddOns -Recurse -Force -ErrorAction SilentlyContinue
