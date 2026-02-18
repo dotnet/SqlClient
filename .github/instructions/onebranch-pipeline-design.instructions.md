@@ -1,3 +1,6 @@
+---
+applyTo: "eng/pipelines/**/*.yml"
+---
 # Multi-Product Azure DevOps Pipeline in dotnet/sqlclient — Design Specification
 
 ## 1. Overview
@@ -367,7 +370,7 @@ Both pipelines use **OneBranch governed templates** for 1ES compliance. The SDL 
 | SDL Tool | Official | Non-Official | Purpose |
 |----------|----------|--------------|---------|
 | **TSA** | ✅ `enabled: true` | ❌ `enabled: false` | Uploads SDL results to TSA for downstream analysis |
-| **ApiScan** | ✅ `enabled: true` | ✅ `enabled: true`, `break: false` | Scans APIs for compliance issues |
+| **ApiScan** | ✅ `enabled: true`, `break: true` | ✅ `enabled: true`, `break: true` | Scans APIs for compliance issues |
 | **CodeQL** | ✅ (non-preview) | ✅ (non-preview) | Static analysis for security vulnerabilities |
 | **SBOM** | ✅ (non-preview) | ✅ (non-preview) | Software Bill of Materials generation |
 | **Policheck** | ✅ `break: true` | ✅ `break: true` | Scans for policy-violating content |
