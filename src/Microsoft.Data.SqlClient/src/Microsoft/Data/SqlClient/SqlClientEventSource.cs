@@ -31,7 +31,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+#if NET
                     Metrics.EnableEventCounters();
+#endif
                 }
             };
 

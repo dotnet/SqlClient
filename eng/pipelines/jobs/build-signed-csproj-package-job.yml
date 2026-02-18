@@ -41,6 +41,14 @@ parameters:
       name: dllSigningPattern
       type: string
 
+    - # APIScan software name (e.g. Microsoft.Data.SqlClient.Extensions.Logging).
+      name: softwareName
+      type: string
+
+    - # Assembly file version for APIScan (e.g. 1.0.0.12345).
+      name: assemblyFileVersion
+      type: string
+
     - # ESRP signing credentials — sourced from the pipeline variable group.
       name: esrpConnectedServiceName
       type: string
@@ -64,11 +72,6 @@ parameters:
       type: boolean
       default: false
 
-    - # Folder to copy DLLs for APIScan. Set by OneBranch SDL configuration.
-      name: softwareFolder
-      type: string
-      default: '$(Build.SourcesDirectory)/software'
-
 jobs:
     - job: build_signed_${{ replace(parameters.buildTarget, 'Build', '') }}_package
       displayName: 'Build Signed ${{ parameters.packageDisplayName }} Package'
@@ -77,6 +80,12 @@ jobs:
 
       variables:
           ob_outputDirectory: '$(ARTIFACT_PATH)'
+          # APIScan configuration for this Extension package
+          ob_sdl_apiscan_enabled: true
+          ob_sdl_apiscan_softwareFolder: '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/dlls'
+          ob_sdl_apiscan_symbolsFolder: '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/pdbs'
+          ob_sdl_apiscan_softwarename: '${{ parameters.softwareName }}'
+          ob_sdl_apiscan_versionNumber: '${{ parameters.assemblyFileVersion }}'
 
       steps:
           - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
@@ -102,28 +111,33 @@ jobs:
                 esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
                 pattern: '${{ parameters.dllSigningPattern }}'
 
-          # Copy signed DLLs to software folder for APIScan.
+          # Copy signed DLLs and PDBs to APIScan folders.
           - powershell: |
-                $softwareFolder = '${{ parameters.softwareFolder }}'
-                $buildOutput = '$(BUILD_OUTPUT)'
-                $dllPattern = '${{ parameters.dllSigningPattern }}'
+                $dllFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/dlls'
+                $pdbFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/pdbs'
                 
-                # Create software folder if it doesn't exist
-                if (-not (Test-Path $softwareFolder)) {
-                    New-Item -ItemType Directory -Path $softwareFolder -Force | Out-Null
+                New-Item -ItemType Directory -Force -Path $dllFolder
+                New-Item -ItemType Directory -Force -Path $pdbFolder
+                
+                # Copy DLLs from build output
+                Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include '${{ parameters.dllSigningPattern }}' | ForEach-Object {
+                    Write-Host "Copying DLL: $($_.FullName)"
+                    Copy-Item $_.FullName -Destination $dllFolder
                 }
                 
-                # Find and copy DLLs matching pattern to software folder
-                Get-ChildItem -Path $buildOutput -Filter $dllPattern -Recurse | ForEach-Object {
-                    $destPath = Join-Path $softwareFolder $_.Name
-                    Copy-Item $_.FullName $destPath -Force
-                    Write-Host "Copied $($_.FullName) to $destPath"
+                # Copy PDBs from build output (same name but .pdb extension)
+                $pdbPattern = '${{ parameters.dllSigningPattern }}' -replace '\.dll$', '.pdb'
+                Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include $pdbPattern | ForEach-Object {
+                    Write-Host "Copying PDB: $($_.FullName)"
+                    Copy-Item $_.FullName -Destination $pdbFolder
                 }
                 
-                # List files in software folder
-                Write-Host "Files in software folder:"
-                Get-ChildItem -Path $softwareFolder -Recurse | ForEach-Object { Write-Host $_.FullName }
-            displayName: 'Copy DLLs for APIScan'
+                Write-Host "APIScan folders prepared:"
+                Write-Host "DLLs:"
+                Get-ChildItem $dllFolder | ForEach-Object { Write-Host "  $($_.Name)" }
+                Write-Host "PDBs:"
+                Get-ChildItem $pdbFolder | ForEach-Object { Write-Host "  $($_.Name)" }
+            displayName: 'Copy files for APIScan'
 
           # Pack the signed DLLs into NuGet package (NoBuild=true).
           - template: /eng/pipelines/steps/compound-pack-csproj-step.yml@self

@@ -80,6 +80,12 @@ jobs:
 
       variables:
           ob_outputDirectory: '$(ARTIFACT_PATH)'
+          # APIScan configuration for AKV Provider
+          ob_sdl_apiscan_enabled: true
+          ob_sdl_apiscan_softwareFolder: '${{ parameters.apiScanDllPath }}'
+          ob_sdl_apiscan_symbolsFolder: '${{ parameters.apiScanPdbPath }}'
+          ob_sdl_apiscan_softwarename: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+          ob_sdl_apiscan_versionNumber: '${{ parameters.akvAssemblyFileVersion }}'
 
       steps:
           - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self

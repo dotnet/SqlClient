@@ -129,7 +129,7 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 - **`dependsOn`**: `build_independent`
 - **Parallelism**: Both jobs run in parallel
 - The MDS (SqlClient) job also publishes symbol packages (`.snupkg`) when `publishSymbols` is true
-- The MDS job populates `softwareFolder` and `symbolsFolder` for ApiScan SDL analysis
+- All jobs configure APIScan with job-level `ob_sdl_apiscan_*` variables targeting package-specific folders
 
 #### Stage 3 — `build_addons`: Add-on Packages (depend on Stage 2)
 
@@ -375,6 +375,24 @@ Both pipelines use **OneBranch governed templates** for 1ES compliance. The SDL 
 | **CredScan** | ✅ (async, non-preview) | ✅ (async, non-preview) | Credential leak detection |
 | **Roslyn** | ✅ (async, non-preview) | ✅ (async, non-preview) | Roslyn-based security analyzers |
 | **Armory** | ✅ `break: true` | ✅ `break: true` | Additional security scanning |
+
+### APIScan Configuration
+
+APIScan is configured at **both pipeline level and job level**:
+
+**Pipeline-level** (`globalSdl:apiscan:`): Sets default configuration inherited by all jobs. This is configured for MDS (Microsoft.Data.SqlClient) as the primary product.
+
+**Job-level** (`ob_sdl_apiscan_*` variables): Each build job overrides the pipeline defaults with package-specific settings:
+
+| Variable | Purpose |
+|----------|---------|
+| `ob_sdl_apiscan_enabled` | Enable/disable APIScan for this job (`true`) |
+| `ob_sdl_apiscan_softwareFolder` | Path to signed DLLs for scanning |
+| `ob_sdl_apiscan_symbolsFolder` | Path to PDBs for scanning |
+| `ob_sdl_apiscan_softwarename` | Package name (e.g., `Microsoft.Data.SqlClient.Extensions.Logging`) |
+| `ob_sdl_apiscan_versionNumber` | Assembly file version |
+
+Each job copies its signed DLLs and PDBs to a package-specific folder under `$(Build.SourcesDirectory)/apiScan/<PackageName>/` after ESRP DLL signing, ensuring APIScan analyzes the correct signed binaries for each package.
 
 > **PRC Compliance**: The Official pipeline hardcodes `OneBranch.Official.CrossPlat.yml` (not parameterized) to satisfy Production Readiness Check static verification requirements.
 

@@ -223,7 +223,8 @@ extends:
             -p:LoggingPackageVersion=$(effectiveLoggingVersion)
             -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
           dllSigningPattern: 'Microsoft.Data.SqlClient.Extensions.Logging.dll'
-          softwareFolder: $(softwareFolder)
+          softwareName: 'Microsoft.Data.SqlClient.Extensions.Logging'
+          assemblyFileVersion: $(loggingAssemblyFileVersion)
           esrpConnectedServiceName: $(ESRPConnectedServiceName)
           esrpClientId: $(ESRPClientId)
           appRegistrationClientId: $(AppRegistrationClientId)
@@ -239,7 +240,8 @@ extends:
             -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
             -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
           dllSigningPattern: 'Microsoft.Data.SqlClient.Extensions.Abstractions.dll'
-          softwareFolder: $(softwareFolder)
+          softwareName: 'Microsoft.Data.SqlClient.Extensions.Abstractions'
+          assemblyFileVersion: $(abstractionsAssemblyFileVersion)
           esrpConnectedServiceName: $(ESRPConnectedServiceName)
           esrpClientId: $(ESRPClientId)
           appRegistrationClientId: $(AppRegistrationClientId)
@@ -253,7 +255,6 @@ extends:
             assemblyFileVersion: $(sqlServerAssemblyFileVersion)
             packageVersion: $(effectiveSqlServerVersion)
             nuspecPath: $(sqlServerNuspecPath)
-            softwareFolder: $(softwareFolder)
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
             appRegistrationClientId: $(AppRegistrationClientId)
@@ -285,7 +286,8 @@ extends:
             -p:AzurePackageVersion=$(effectiveAzureVersion)
             -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
           dllSigningPattern: 'Microsoft.Data.SqlClient.Extensions.Azure.dll'
-          softwareFolder: $(softwareFolder)
+          softwareName: 'Microsoft.Data.SqlClient.Extensions.Azure'
+          assemblyFileVersion: $(azureAssemblyFileVersion)
           esrpConnectedServiceName: $(ESRPConnectedServiceName)
           esrpClientId: $(ESRPClientId)
           appRegistrationClientId: $(AppRegistrationClientId)
