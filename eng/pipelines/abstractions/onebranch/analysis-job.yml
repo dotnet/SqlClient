@@ -81,12 +81,11 @@ jobs:
         env:
           SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
-      # Symlink the assemblies (DLLs and PDBs) to a dedicated folder for ApiScan.
-      - script: |
+      # Copy the assemblies (DLLs and PDBs) to a dedicated folder for ApiScan.
+      - pwsh: |
           # Lower-case the build configuration for use in paths.
-          BUILD_CONFIG="${{ parameters.buildConfiguration }}"
-          BUILD_CONFIG=${BUILD_CONFIG,,}
+          $BUILD_CONFIG="${{ parameters.buildConfiguration }}".ToLower()
 
-          # Create the symlink from artifacts -> assemblies.
-          ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(apiScanPath)
-        displayName: Symlink Assemblies for ApiScan
+          # Recursively copy all build artifacts to the ApiScan path.
+          Copy-Item -Path "$(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0" -Destination "$(apiScanPath)" -Recurse
+        displayName: Copy Assemblies for ApiScan

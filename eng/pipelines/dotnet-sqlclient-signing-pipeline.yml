@@ -185,6 +185,7 @@ extends:
         onebranchOutputDirectory: ${{ variables.onebranchArtifactsPath }}
         publishSymbols: ${{ parameters.publishSymbols }}
 
+    # Build the MDS package.
     - stage: buildMDS
       displayName: 'Build MDS'
       jobs:
@@ -196,6 +197,7 @@ extends:
           softwareFolder: $(apiScanPath)
           symbolsFolder: $(apiScanPath)
 
+    # Validate the MDS package.
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'
       dependsOn: buildMDS

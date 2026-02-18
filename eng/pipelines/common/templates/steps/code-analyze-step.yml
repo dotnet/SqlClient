@@ -33,6 +33,6 @@ steps:
         msbuild
         ${{parameters.sourceRoot}}\build.proj
         -t:BuildAllConfigurations
-        -p:configuration=Release
+        -p:Configuration=Release
         -p:GenerateNuget=false
         -p:BuildTools=false
