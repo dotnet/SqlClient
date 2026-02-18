@@ -285,6 +285,7 @@ extends:
           versionProperties: >-
             -p:AzurePackageVersion=$(effectiveAzureVersion)
             -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
+            -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
           dllSigningPattern: 'Microsoft.Data.SqlClient.Extensions.Azure.dll'
           softwareName: 'Microsoft.Data.SqlClient.Extensions.Azure'
           assemblyFileVersion: $(azureAssemblyFileVersion)
