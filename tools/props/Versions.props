@@ -4,6 +4,12 @@
   <!-- Common Package Properties -->
   <PropertyGroup>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <!--
+      Build numbers from CI pipelines may be in format "XXXXX.YY".
+      Extract just the first part before any decimal point for use in
+      assembly version components (which must be 16-bit unsigned integers).
+    -->
+    <AssemblyBuildNumber>$(BuildNumber.Split('.')[0])</AssemblyBuildNumber>
   </PropertyGroup>
 
   <!-- SqlServer Package Properties -->
@@ -46,7 +52,7 @@
 
       eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
     -->
-    <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
+    <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(AssemblyBuildNumber)</AssemblyFileVersion>
     
     <!-- Only update the major version number here. -->
     <AssemblyVersion>7.0.0.0</AssemblyVersion>

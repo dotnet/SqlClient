@@ -87,7 +87,7 @@ sequenceDiagram
 
     alt At least one release parameter is true
         P->>R: Stage: release (dependsOn: build_addons, mds_package_validation)
-        Note right of R: Manual Approval Gate<br/>(ManualValidation@0, 24h timeout)
+        Note right of R: Manual Approval Gate<br/>(ManualValidation@0, 3d timeout)
         R-->>P: ✅ Approved
         Note right of R: Publish selected packages<br/>via NuGetCommand@2
         R-->>P: ✅ Published to NuGet

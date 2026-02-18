@@ -165,7 +165,7 @@ variables:
 
   # The MDS package version that AKV Provider depends on.
   - name: akvMdsPackageVersion
-    value: '7.0.0-preview3.25342.7'
+    value: '7.0.0-preview3.25342'
 
   # The path to the NuGet packaging specification file for the AKV Provider.
   - name: akvNuspecPath
