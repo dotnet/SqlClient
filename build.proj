@@ -5,6 +5,7 @@
   <Import Project="$(ToolsDir)targets\GenerateSqlServerPackage.targets" />
   <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
   <Import Project="$(ToolsDir)targets\add-ons\GenerateAkvPackage.targets" />
+  <Import Project="$(ToolsDir)targets\CompareRefAssemblies.targets" />
 
   <PropertyGroup>
     <!-- SourceLink variable-->

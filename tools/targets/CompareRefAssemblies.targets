@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CompareRefAssemblies.targets
+
+  Build target that compares locally-built ref assemblies against those published
+  in a specified NuGet package version of Microsoft.Data.SqlClient. Uses
+  Microsoft.DotNet.ApiCompat.Tool in strict mode to detect any API surface
+  differences (additions or removals).
+
+  Usage:
+    dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+
+  BaselinePackageVersion is required. Both the legacy ref projects (netcore/ref,
+  netfx/ref) and the new consolidated ref project (ref/) are built and compared.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- ================================================================== -->
+  <!-- _SetApiCompatProperties                                            -->
+  <!--                                                                    -->
+  <!-- All path properties are set inside a target so that they are        -->
+  <!-- evaluated at execution time, after $(Configuration) and other       -->
+  <!-- properties from build.proj have been resolved.                      -->
+  <!-- ================================================================== -->
+  <Target Name="_SetApiCompatProperties">
+    <PropertyGroup>
+      <!-- BaselinePackageVersion: must be supplied by the user. -->
+      <BaselinePackageDir>$([MSBuild]::NormalizePath('$(Artifacts)', 'apicompat'))\</BaselinePackageDir>
+      <BaselineNupkgPath>$(BaselinePackageDir)microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg</BaselineNupkgPath>
+      <BaselinePackageUrl>https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/$(BaselinePackageVersion)/microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg</BaselinePackageUrl>
+      <BaselineExtractDir>$([MSBuild]::NormalizePath('$(BaselinePackageDir)', 'extracted', '$(BaselinePackageVersion)'))\</BaselineExtractDir>
+
+      <!-- New consolidated ref project -->
+      <NewRefProjectPath>$([MSBuild]::NormalizePath('$(ManagedSourceCode)', 'ref', 'Microsoft.Data.SqlClient.csproj'))</NewRefProjectPath>
+      <NewRefOutputDir>$([MSBuild]::NormalizePath('$(ManagedSourceCode)', 'ref', 'bin', '$(Configuration)'))\</NewRefOutputDir>
+
+      <!-- Legacy ref output directories (set by legacy csproj OutputPath) -->
+      <LegacyNetFxRefDir>$([MSBuild]::NormalizePath('$(Artifacts)', 'bin', 'Windows_NT', '$(Configuration)', 'Microsoft.Data.SqlClient', 'ref'))\</LegacyNetFxRefDir>
+      <LegacyNetCoreRefDir>$([MSBuild]::NormalizePath('$(Artifacts)', 'bin', 'AnyOS', '$(Configuration)', 'Microsoft.Data.SqlClient', 'ref'))\</LegacyNetCoreRefDir>
+
+      <!-- Legacy ref project paths -->
+      <LegacyNetFxRefProject>$([MSBuild]::NormalizePath('$(NetFxSource)', 'ref', 'Microsoft.Data.SqlClient.csproj'))</LegacyNetFxRefProject>
+      <LegacyNetCoreRefProject>$([MSBuild]::NormalizePath('$(NetCoreSource)', 'ref', 'Microsoft.Data.SqlClient.csproj'))</LegacyNetCoreRefProject>
+    </PropertyGroup>
+
+    <!--
+      Each _RefTfm item carries metadata indicating which legacy output dir to
+      use.  net462 comes from the netfx ref project (Windows_NT); the others
+      come from the netcore ref project (AnyOS).
+    -->
+    <ItemGroup>
+      <_RefTfm Include="net462">
+        <LegacyRefDir>$(LegacyNetFxRefDir)</LegacyRefDir>
+      </_RefTfm>
+      <_RefTfm Include="net8.0">
+        <LegacyRefDir>$(LegacyNetCoreRefDir)</LegacyRefDir>
+      </_RefTfm>
+      <_RefTfm Include="net9.0">
+        <LegacyRefDir>$(LegacyNetCoreRefDir)</LegacyRefDir>
+      </_RefTfm>
+      <_RefTfm Include="netstandard2.0">
+        <LegacyRefDir>$(LegacyNetCoreRefDir)</LegacyRefDir>
+      </_RefTfm>
+    </ItemGroup>
+
+    <Message Importance="high" Text="Configuration:      $(Configuration)" />
+    <Message Importance="high" Text="BaselineExtractDir: $(BaselineExtractDir)" />
+    <Message Importance="high" Text="NewRefOutputDir:    $(NewRefOutputDir)" />
+    <Message Importance="high" Text="LegacyNetFxRefDir:  $(LegacyNetFxRefDir)" />
+    <Message Importance="high" Text="LegacyNetCoreRefDir:$(LegacyNetCoreRefDir)" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _ValidateBaselineVersion                                           -->
+  <!-- ================================================================== -->
+  <Target Name="_ValidateBaselineVersion">
+    <Error
+      Condition="'$(BaselinePackageVersion)' == ''"
+      Text="BaselinePackageVersion is required. Specify the published NuGet package version to compare against, e.g.: /p:BaselinePackageVersion=6.1.4" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _DownloadBaselinePackage                                           -->
+  <!-- ================================================================== -->
+  <Target Name="_DownloadBaselinePackage" DependsOnTargets="_ValidateBaselineVersion;_SetApiCompatProperties">
+    <!-- Skip download if already extracted -->
+    <Message
+      Condition="Exists('$(BaselineExtractDir)ref\')"
+      Importance="high"
+      Text="Baseline package $(BaselinePackageVersion) already extracted at $(BaselineExtractDir). Skipping download." />
+
+    <MakeDir
+      Condition="!Exists('$(BaselineExtractDir)ref\')"
+      Directories="$(BaselinePackageDir)" />
+
+    <DownloadFile
+      Condition="!Exists('$(BaselineExtractDir)ref\')"
+      SourceUrl="$(BaselinePackageUrl)"
+      DestinationFolder="$(BaselinePackageDir)"
+      DestinationFileName="microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg" />
+
+    <Unzip
+      Condition="!Exists('$(BaselineExtractDir)ref\')"
+      SourceFiles="$(BaselineNupkgPath)"
+      DestinationFolder="$(BaselineExtractDir)"
+      OverwriteReadOnlyFiles="true" />
+
+    <Message
+      Importance="high"
+      Text="Baseline ref assemblies available at $(BaselineExtractDir)ref\" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _RestoreApiCompatTool                                              -->
+  <!-- ================================================================== -->
+  <Target Name="_RestoreApiCompatTool" DependsOnTargets="_SetApiCompatProperties">
+    <Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _BuildLegacyRefNetFx                                               -->
+  <!-- ================================================================== -->
+  <Target Name="_BuildLegacyRefNetFx" DependsOnTargets="_SetApiCompatProperties" Condition="'$(IsEnabledWindows)' == 'true'">
+    <Message Importance="high" Text="Building legacy netfx ref project (net462)..." />
+    <MSBuild
+      Projects="$(LegacyNetFxRefProject)"
+      Targets="restore"
+      Properties="$(ProjectProperties)" />
+    <MSBuild
+      Projects="$(LegacyNetFxRefProject)"
+      Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _BuildLegacyRefNetCore                                             -->
+  <!-- ================================================================== -->
+  <Target Name="_BuildLegacyRefNetCore" DependsOnTargets="_SetApiCompatProperties">
+    <Message Importance="high" Text="Building legacy netcore ref project (net8.0, net9.0, netstandard2.0)..." />
+    <MSBuild
+      Projects="$(LegacyNetCoreRefProject)"
+      Targets="restore"
+      Properties="$(ProjectProperties)" />
+    <MSBuild
+      Projects="$(LegacyNetCoreRefProject)"
+      Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS"
+      RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _BuildNewRefProject                                                -->
+  <!-- ================================================================== -->
+  <Target Name="_BuildNewRefProject" DependsOnTargets="_SetApiCompatProperties">
+    <Message Importance="high" Text="Building new consolidated ref project (all TFMs)..." />
+    <Exec Command="dotnet restore &quot;$(NewRefProjectPath)&quot;" />
+    <Exec Command="dotnet build &quot;$(NewRefProjectPath)&quot; --configuration $(Configuration) --no-restore" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _RunRefApiCompat                                                   -->
+  <!-- ================================================================== -->
+  <Target Name="_RunRefApiCompat"
+          DependsOnTargets="_DownloadBaselinePackage;_RestoreApiCompatTool;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
+
+    <!--
+      For each TFM, compare:
+        1) Legacy ref output vs baseline (from published NuGet package)
+        2) New consolidated ref output vs baseline
+      Using strict mode to flag any difference (additions or removals).
+      ContinueOnError ensures all comparisons run even if some fail.
+
+      Output from each comparison is written to a file under
+      $(ApiCompatResultsDir) so the user can review results after the run.
+    -->
+
+    <PropertyGroup>
+      <ApiCompatResultsDir>$(BaselinePackageDir)results\</ApiCompatResultsDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(ApiCompatResultsDir)" />
+
+    <!-- ============================================================== -->
+    <!-- Legacy ref vs baseline                                         -->
+    <!-- ============================================================== -->
+    <Message
+      Importance="high"
+      Text="--- Comparing LEGACY %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) ---" />
+
+    <Exec
+      Command="dotnet apicompat -l &quot;$(BaselineExtractDir)ref\%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; -r &quot;%(_RefTfm.LegacyRefDir)%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)legacy-%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      WorkingDirectory="$(RepoRoot)"
+      ContinueOnError="ErrorAndContinue" />
+
+    <!-- ============================================================== -->
+    <!-- New consolidated ref vs baseline                               -->
+    <!-- ============================================================== -->
+    <Message
+      Importance="high"
+      Text="--- Comparing NEW %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) ---" />
+
+    <Exec
+      Command="dotnet apicompat -l &quot;$(BaselineExtractDir)ref\%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; -r &quot;$(NewRefOutputDir)%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)new-%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      WorkingDirectory="$(RepoRoot)"
+      ContinueOnError="ErrorAndContinue" />
+
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- CompareRefAssemblies (public entry point)                          -->
+  <!-- ================================================================== -->
+  <Target Name="CompareRefAssemblies" DependsOnTargets="_RunRefApiCompat">
+    <ItemGroup>
+      <_ApiCompatResultFiles Include="$(ApiCompatResultsDir)*.txt" />
+    </ItemGroup>
+    <Message Importance="high" Text="=== Ref assembly API comparison complete. ===" />
+    <Message Importance="high" Text="Results written to: $(ApiCompatResultsDir)" />
+    <Message Importance="high" Text="  %(_ApiCompatResultFiles.Filename)%(_ApiCompatResultFiles.Extension)" />
+  </Target>
+
+</Project>
