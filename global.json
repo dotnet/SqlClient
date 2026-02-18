@@ -1,0 +1,29 @@
+{
+  "sdk":
+  {
+    // We currently require the .NET 10 SDK to build and test the project.
+    //
+    // We specify the most recent release, and let rollForward pick the latest
+    // available suitable SDK per the rollForward setting.
+    //
+    // We must specify a complete version here since this file is also used by
+    // the Azure Pipelines UseDotNet@2 task, which doesn't support wildcards,
+    // and won't roll-forward.  It uses the version verbatim.
+    //
+    // GOTCHA: This file is only used by the dotnet CLI and related tools.
+    // Other toolchains (IDEs like Visual Studio, the .NET Framework MSBuild
+    // system, etc.) may use their own installed SDKs unless configured
+    // otherwise.
+    //
+    "version": "10.0.103",
+
+    // Any 10.x version is acceptable.
+    "rollForward": "latestMinor",
+
+    // Do not allow pre-release versions.
+    //
+    // Set this to true if you are testing the viability of pre-release SDK
+    // versions in your local workspace.
+    "allowPrerelease": false
+  }
+}

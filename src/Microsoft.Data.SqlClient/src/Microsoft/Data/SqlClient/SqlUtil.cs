@@ -16,11 +16,14 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 
 #if NETFRAMEWORK
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+#if _WINDOWS
 using Interop.Windows.Kernel32;
+#endif
 #else
 using System.Net.Sockets;
 #endif
@@ -872,7 +875,9 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
-        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
+        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(
+            SqlConnectionInternal internalConnection,
+            bool marsOn)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
@@ -1115,7 +1120,9 @@ namespace Microsoft.Data.SqlClient
         /// * server-provided failover partner - raising SqlException in this case
         /// * connection string with failover partner and MultiSubnetFailover=true - raising argument one in this case with the same message
         /// </summary>
-        internal static Exception MultiSubnetFailoverWithFailoverPartner(bool serverProvidedFailoverPartner, SqlInternalConnectionTds internalConnection)
+        internal static Exception MultiSubnetFailoverWithFailoverPartner(
+            bool serverProvidedFailoverPartner,
+            SqlConnectionInternal internalConnection)
         {
             string msg = StringsHelper.GetString(Strings.SQLMSF_FailoverPartnerNotSupported);
             if (serverProvidedFailoverPartner)
@@ -1159,7 +1166,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported));
         }
 
-        internal static Exception ROR_FailoverNotSupportedServer(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_FailoverNotSupportedServer(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported)), "", 0));
@@ -1168,7 +1175,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection, int maxNumberOfRedirectRoute)
+        internal static Exception ROR_RecursiveRoutingNotSupported(SqlConnectionInternal internalConnection, int maxNumberOfRedirectRoute)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported, maxNumberOfRedirectRoute)), "", 0));
@@ -1177,7 +1184,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_InvalidRoutingInfo(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_InvalidRoutingInfo(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
@@ -1186,7 +1193,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_TimeoutAfterRoutingInfo(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_TimeoutAfterRoutingInfo(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
@@ -1226,7 +1233,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception CR_EncryptionChanged(SqlInternalConnectionTds internalConnection)
+        internal static Exception CR_EncryptionChanged(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_EncryptionChanged), "", 0));
@@ -1242,7 +1249,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static SqlException CR_NoCRAckAtReconnection(SqlInternalConnectionTds internalConnection)
+        internal static SqlException CR_NoCRAckAtReconnection(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NoCRAckAtReconnection), "", 0));
@@ -1250,7 +1257,7 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
+        internal static SqlException CR_TDSVersionNotPreserved(SqlConnectionInternal internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVersionNotPreserved), "", 0));

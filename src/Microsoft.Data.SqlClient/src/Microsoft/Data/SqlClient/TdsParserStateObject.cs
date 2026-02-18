@@ -2356,9 +2356,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     // if there is a snapshot which it contains a stored plp buffer take it
                     // and try to use it if it is the right length
-                    buff = TryTakeSnapshotStorage() as byte[];
-                    if (buff != null)
+                    byte[] existingBuff = TryTakeSnapshotStorage() as byte[];
+                    if (existingBuff != null)
                     {
+                        buff = existingBuff;
                         totalBytesRead = _snapshot.GetPacketDataOffset();
                     }
                 }
@@ -3611,6 +3612,7 @@ namespace Microsoft.Data.SqlClient
             //    to the outstanding GCRoot until AppDomain.Unload.
             // We live with the above for the time being due to the constraints of the current
             // reliability infrastructure provided by the CLR.
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, Entered ReadAsyncCallback.", _objectID);
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG

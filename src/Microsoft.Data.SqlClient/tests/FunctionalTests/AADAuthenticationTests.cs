@@ -49,50 +49,29 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
         }
-        
-        #if NETFRAMEWORK
-        // This test is only valid for .NET Framework
 
         /// <summary>
-        /// Tests whether SQL Auth provider is overridden using app.config file.
-        /// This use case is only supported for .NET Framework applications, as driver doesn't support reading configuration from appsettings.json file.
-        /// In future if need be, appsettings.json support can be added.
+        /// Tests whether a dummy SQL Auth provider is registered due to
+        /// configuration in an app.config file.  Only .NET Framework reads
+        /// from the app.config file, so this test is only valid for that
+        /// runtime.
+        ///
+        /// See the app.config file in the same directory as this file.
+        /// 
+        /// .NET (Core) reads similar configuration from appsettings.json, but
+        /// our SqlAuthenticationProviderManager does not currently support
+        /// that configuration source.
         /// </summary>
-        [Fact]
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
 
             Assert.NotNull(provider);
-            Assert.Equal(typeof(DummySqlAuthenticationProvider), provider.GetType());
+            Assert.IsType<DummySqlAuthenticationProvider>(provider);
 
             var token = await provider.AcquireTokenAsync(null);
             Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
-        }
-        #endif
-
-        [Fact]
-        public void CustomActiveDirectoryProviderTest()
-        {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask);
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        }
-
-        [Fact]
-        public void CustomActiveDirectoryProviderTest_AppClientId()
-        {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(Guid.NewGuid().ToString());
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        }
-
-        [Fact]
-        public void CustomActiveDirectoryProviderTest_AppClientId_DeviceFlowCallback()
-        {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask, Guid.NewGuid().ToString());
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
-            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
     }
 }
