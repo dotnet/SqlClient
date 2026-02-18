@@ -24,6 +24,9 @@
       Include="Microsoft.Data.SqlClient"
       Version="$(MdsPackageVersion)" />
     <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Logging"
+      Version="$(LoggingPackageVersion)" />
+    <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Version="$(AbstractionsPackageVersion)" />
     <PackageVersion
