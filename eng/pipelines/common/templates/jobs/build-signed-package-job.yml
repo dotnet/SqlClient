@@ -93,7 +93,11 @@ jobs:
     parameters:
       artifactType: pkg
 
+  # Copy DLLs and PDBs to the software and symbols folders for APIScan and testing.
   - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
+    parameters:
+      softwareFolder: '${{ parameters.softwareFolder }}'
+      symbolsFolder: '${{ parameters.symbolsFolder }}'
 
   # Publish symbols to servers
   - ${{ if eq(parameters.publishSymbols, true) }}:

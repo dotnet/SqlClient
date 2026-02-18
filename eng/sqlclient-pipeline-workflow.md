@@ -50,10 +50,10 @@ sequenceDiagram
     Note over P: Stage 1 — build_independent (parallel, no deps)
 
     par Stage 1 jobs (parallel)
-        P->>B1a: Build + ESRP sign + pack Extensions.Logging
+        P->>B1a: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Logging)
         B1a-->>P: ✅ Signed .nupkg
     and
-        P->>B1b: Build + ESRP sign + pack Extensions.Abstractions
+        P->>B1b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Abstractions)
         B1b-->>P: ✅ Signed .nupkg
     and
         P->>B1c: Build + ESRP sign + pack SqlServer.Server
@@ -67,7 +67,7 @@ sequenceDiagram
         Note right of B2a: Downloads: Extensions.Logging,<br/>Extensions.Abstractions artifacts
         B2a-->>P: ✅ Signed .nupkg + .snupkg
     and
-        P->>B2b: Build + ESRP sign + pack Extensions.Azure
+        P->>B2b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Azure)
         Note right of B2b: Downloads:<br/>Extensions.Abstractions artifact
         B2b-->>P: ✅ Signed .nupkg
     end
@@ -110,20 +110,21 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 
 | Job Template | Package | Build Target |
 |--------------|---------|--------------|
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` |
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` / `PackLogging` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` |
 | `build-signed-sqlserver-package-job.yml` | `Microsoft.SqlServer.Server` | *(nuspec-based)* |
 
 - **`dependsOn`**: none
 - **Parallelism**: All 3 jobs run in parallel
-- Each job performs: build → ESRP DLL signing → NuGet pack → ESRP NuGet signing → publish artifact
+- csproj-based jobs (`build-signed-csproj-package-job.yml`) perform: **Build DLLs → ESRP DLL signing → NuGet pack (NoBuild=true) → ESRP NuGet signing** → publish artifact
+- nuspec-based job (`build-signed-sqlserver-package-job.yml`) performs: build → ESRP DLL signing → NuGet pack → ESRP NuGet signing → publish artifact
 
 #### Stage 2 — `buildMDS`: Core Packages (depend on Stage 1)
 
-| Job Template | Package | Artifact Dependencies |
-|--------------|---------|----------------------|
-| `build-signed-package-job.yml` | `Microsoft.Data.SqlClient` | `Extensions.Logging`, `Extensions.Abstractions` |
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `Extensions.Abstractions` |
+| Job Template | Package | Build Target | Artifact Dependencies |
+|--------------|---------|--------------|----------------------|
+| `build-signed-package-job.yml` | `Microsoft.Data.SqlClient` | *(nuspec-based)* | `Extensions.Logging`, `Extensions.Abstractions` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `BuildAzure` / `PackAzure` | `Extensions.Abstractions` |
 
 - **`dependsOn`**: `build_independent`
 - **Parallelism**: Both jobs run in parallel
@@ -325,8 +326,18 @@ All packages are signed using **ESRP (Enterprise Security Release Pipeline)** wi
 
 ### Signing Flow (per job)
 
-1. **DLL signing** — Assemblies are signed with Authenticode certificates via ESRP
-2. **NuGet signing** — The `.nupkg` files are signed with NuGet certificates via ESRP
+#### csproj-based Extension Packages (Logging, Abstractions, Azure)
+1. **Build DLLs only** — `build.proj` target (e.g., `BuildLogging`) compiles assemblies without creating NuGet packages
+2. **ESRP DLL signing** — Assemblies are signed with Authenticode certificates via ESRP
+3. **NuGet pack** — `build.proj` pack target (e.g., `PackLogging`) creates `.nupkg` from signed DLLs using `NoBuild=true`
+4. **ESRP NuGet signing** — The `.nupkg` files are signed with NuGet certificates via ESRP
+
+This workflow ensures the NuGet package contains **signed DLLs** rather than signing the NuGet package around unsigned assemblies.
+
+#### nuspec-based Packages (SqlServer.Server, SqlClient, AKV Provider)
+1. **Build + pack** — MSBuild creates both assemblies and NuGet packages
+2. **ESRP DLL signing** — Assemblies are signed with Authenticode certificates via ESRP
+3. **ESRP NuGet signing** — The `.nupkg` files are signed with NuGet certificates via ESRP
 
 ### Credential Model
 
