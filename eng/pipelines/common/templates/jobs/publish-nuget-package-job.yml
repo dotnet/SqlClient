@@ -32,9 +32,15 @@ parameters:
       type: boolean
       default: false
 
+    - # Optional list of jobs this job depends on (e.g., manual_approval).
+      name: dependsOn
+      type: object
+      default: []
+
 jobs:
     - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
       displayName: 'Publish ${{ parameters.packageDisplayName }}${{ if eq(parameters.dryRun, true) }} (dry run)${{ else }}${{ end }}'
+      dependsOn: ${{ parameters.dependsOn }}
       pool:
           type: windows
 
