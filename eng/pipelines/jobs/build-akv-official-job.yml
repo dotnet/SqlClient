@@ -29,22 +29,22 @@ parameters:
     - name: publishSymbols
       type: boolean
 
-    - name: signingAppRegistrationClientId
+    - name: appRegistrationClientId
       type: string
 
-    - name: signingAppRegistrationTenantId
+    - name: appRegistrationTenantId
       type: string
 
-    - name: signingAuthAkvName
+    - name: authAkvName
       type: string
 
-    - name: signingAuthSignCertName
+    - name: authSignCertName
       type: string
 
-    - name: signingEsrpClientId
+    - name: esrpClientId
       type: string
 
-    - name: signingEsrpConnectedServiceName
+    - name: esrpConnectedServiceName
       type: string
 
     - name: symbolsAzureSubscription
@@ -118,12 +118,12 @@ jobs:
 
           - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
             parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                appRegistrationClientId: '${{ parameters.AppRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.AppRegistrationTenantId }}'
+                authAkvName: '${{ parameters.AuthAkvName }}'
+                authSignCertName: '${{ parameters.AuthSignCertName }}'
+                esrpClientId: '${{ parameters.EsrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.EsrpConnectedServiceName }}'
                 pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
           - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
@@ -138,12 +138,12 @@ jobs:
 
           - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                appRegistrationClientId: '${{ parameters.AppRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.AppRegistrationTenantId }}'
+                authAkvName: '${{ parameters.AuthAkvName }}'
+                authSignCertName: '${{ parameters.AuthSignCertName }}'
+                esrpClientId: '${{ parameters.EsrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.EsrpConnectedServiceName }}'
 
           - ${{ if parameters.publishSymbols }}:
             - template: /eng/pipelines/steps/compound-publish-symbols-step.yml@self

@@ -278,12 +278,12 @@ extends:
           buildConfiguration: Release
           mdsPackageVersion: $(akvMdsPackageVersion)
           publishSymbols: ${{ parameters['publishSymbols'] }}
-          signingAppRegistrationClientId: $(SigningAppRegistrationClientId)
-          signingAppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-          signingAuthAkvName: $(SigningAuthAkvName)
-          signingAuthSignCertName: $(SigningAuthSignCertName)
-          signingEsrpClientId: $(SigningEsrpClientId)
-          signingEsrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+          appRegistrationClientId: $(appRegistrationClientId)
+          appRegistrationTenantId: $(appRegistrationTenantId)
+          authAkvName: $(AuthAkvName)
+          authSignCertName: $(AuthSignCertName)
+          esrpClientId: $(EsrpClientId)
+          esrpConnectedServiceName: $(EsrpConnectedServiceName)
           symbolsAzureSubscription: $(SymbolsAzureSubscription)
           symbolsPublishProjectName: $(SymbolsPublishProjectName)
           symbolsPublishServer: $(SymbolsPublishServer)
