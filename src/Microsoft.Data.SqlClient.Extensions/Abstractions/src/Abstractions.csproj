@@ -14,6 +14,15 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)' == 'Official'">
+    <SignAssembly>true</SignAssembly>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+  </PropertyGroup>
+
   <!-- Compiler Config -->
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
