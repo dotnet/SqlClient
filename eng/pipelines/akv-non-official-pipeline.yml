@@ -6,8 +6,6 @@
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
-# @TODO: Add triggers and schedules
-
 parameters:
     - name: buildConfiguration
       displayName: 'Build configuration'
@@ -41,7 +39,7 @@ resources:
           ref: 'refs/heads/main'
 
 extends:
-    template: 'v2/OneBranch.Official.CrossPlat.yml@templates'
+    template: 'v2/OneBranch.NonOfficial.CrossPlat.yml@templates'
 
     parameters:
         featureFlags:
@@ -110,7 +108,7 @@ extends:
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
                 # be forced into 'break' build mode.
-                enabled: true
+                enabled: false
                 configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
         stages:
