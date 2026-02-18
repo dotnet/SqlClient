@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
-    <readme>PackageReadme.md</readme>
+    <readme>README.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$" />
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
 
@@ -116,7 +116,7 @@
   </metadata>
   <files>
     <file src="..\icons\dotnet.png" target="" />
-    <file src="..\..\src\Microsoft.Data.SqlClient\src\PackageReadme.md" target="" />
+    <file src="..\..\src\Microsoft.Data.SqlClient\src\PackageReadme.md" target="README.md" />
 
     <!--
       We require the $ReferenceType$ property to be supplied on the nuget pack

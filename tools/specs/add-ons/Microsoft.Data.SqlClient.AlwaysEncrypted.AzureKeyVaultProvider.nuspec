@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
-    <readme>PackageReadme.md</readme>
+    <readme>README.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
 
@@ -45,7 +45,7 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
   </metadata>
   <files>
     <file src="..\..\icons\dotnet.png" target="" />
-    <file src="PackageReadme.md" target="" />
+    <file src="PackageReadme.md" target="README.md" />
 
     <!--
       We require the $ReferenceType$ property to be supplied on the nuget pack
