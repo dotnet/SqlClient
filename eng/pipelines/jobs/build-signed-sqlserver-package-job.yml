@@ -43,6 +43,11 @@ parameters:
       type: boolean
       default: false
 
+    - # Folder to copy DLLs for APIScan. Set by OneBranch SDL configuration.
+      name: softwareFolder
+      type: string
+      default: '$(Build.SourcesDirectory)/software'
+
 jobs:
     - job: build_signed_sqlserver_package
       displayName: 'Build and Sign Microsoft.SqlServer.Server'
@@ -72,6 +77,29 @@ jobs:
                 authAkvName: ${{ parameters.authAkvName }}
                 authSignCertName: ${{ parameters.authSignCertName }}
                 pattern: 'Microsoft.SqlServer.Server.dll'
+
+          # Copy signed DLLs to software folder for APIScan.
+          - powershell: |
+                $softwareFolder = '${{ parameters.softwareFolder }}'
+                $buildOutput = '$(BUILD_OUTPUT)'
+                $dllPattern = 'Microsoft.SqlServer.Server.dll'
+                
+                # Create software folder if it doesn't exist
+                if (-not (Test-Path $softwareFolder)) {
+                    New-Item -ItemType Directory -Path $softwareFolder -Force | Out-Null
+                }
+                
+                # Find and copy DLLs matching pattern to software folder
+                Get-ChildItem -Path $buildOutput -Filter $dllPattern -Recurse | ForEach-Object {
+                    $destPath = Join-Path $softwareFolder $_.Name
+                    Copy-Item $_.FullName $destPath -Force
+                    Write-Host "Copied $($_.FullName) to $destPath"
+                }
+                
+                # List files in software folder
+                Write-Host "Files in software folder:"
+                Get-ChildItem -Path $softwareFolder -Recurse | ForEach-Object { Write-Host $_.FullName }
+            displayName: 'Copy DLLs for APIScan'
 
           - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
             parameters:
