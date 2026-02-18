@@ -307,93 +307,85 @@ extends:
     # Requires all build and validation stages to succeed.  The stage
     # only runs when at least one release parameter is set to true.
     # A manual approval gate prevents accidental publication.
+    # The stage is wrapped in a compile-time ${{ if }} so it is removed
+    # entirely when no release parameters are selected, avoiding the
+    # "must contain at least one job with no dependencies" validation error.
     # ------------------------------------------------------------------
-    - stage: release
-      displayName: 'Release to NuGet (Dry Run)'
-      dependsOn:
-        - build_addons
-        - mds_package_validation
-      condition: >-
-        and(
-          succeeded(),
-          or(
-            eq('${{ parameters.releaseSqlServerServer }}', 'true'),
-            eq('${{ parameters.releaseLogging }}', 'true'),
-            eq('${{ parameters.releaseAbstractions }}', 'true'),
-            eq('${{ parameters.releaseSqlClient }}', 'true'),
-            eq('${{ parameters.releaseExtAzure }}', 'true'),
-            eq('${{ parameters.releaseAKVProvider }}', 'true')
-          )
-        )
-      jobs:
-      # Manual approval gate — blocks until a human approves the release.
-      - job: manual_approval
-        displayName: 'Manual Approval'
-        pool: server
-        steps:
-        - task: ManualValidation@0
-          displayName: 'Approve NuGet Release'
-          timeoutInMinutes: 1440
-          inputs:
-            notifyUsers: ''
-            instructions: >-
-              DRY RUN — Non-official pipeline. No packages will be pushed to NuGet.
-              Approve to validate the release stage for build $(Build.BuildNumber).
-              Selected packages:
-              SqlServer.Server=${{ parameters.releaseSqlServerServer }},
-              Logging=${{ parameters.releaseLogging }},
-              Abstractions=${{ parameters.releaseAbstractions }},
-              SqlClient=${{ parameters.releaseSqlClient }},
-              Extensions.Azure=${{ parameters.releaseExtAzure }},
-              AKV Provider=${{ parameters.releaseAKVProvider }}.
+    - ${{ if or(eq(parameters.releaseSqlServerServer, true), eq(parameters.releaseLogging, true), eq(parameters.releaseAbstractions, true), eq(parameters.releaseSqlClient, true), eq(parameters.releaseExtAzure, true), eq(parameters.releaseAKVProvider, true)) }}:
+      - stage: release
+        displayName: 'Release to NuGet (Dry Run)'
+        dependsOn:
+          - build_addons
+          - mds_package_validation
+        jobs:
+        # Manual approval gate — blocks until a human approves the release.
+        - job: manual_approval
+          displayName: 'Manual Approval'
+          pool: server
+          steps:
+          - task: ManualValidation@0
+            displayName: 'Approve NuGet Release'
+            timeoutInMinutes: 1440
+            inputs:
+              notifyUsers: ''
+              instructions: >-
+                DRY RUN — Non-official pipeline. No packages will be pushed to NuGet.
+                Approve to validate the release stage for build $(Build.BuildNumber).
+                Selected packages:
+                SqlServer.Server=${{ parameters.releaseSqlServerServer }},
+                Logging=${{ parameters.releaseLogging }},
+                Abstractions=${{ parameters.releaseAbstractions }},
+                SqlClient=${{ parameters.releaseSqlClient }},
+                Extensions.Azure=${{ parameters.releaseExtAzure }},
+                AKV Provider=${{ parameters.releaseAKVProvider }}.
 
-      # Conditional publish jobs — one per package, gated by its release parameter.
-      # Non-official pipeline: all publish jobs run in dry-run mode to
-      # validate the release stage without actually pushing to NuGet.
-      - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
-        - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-          parameters:
-            packageDisplayName: SqlServer.Server
-            artifactName: drop_build_independent_build_signed_sqlserver_package
-            nugetServiceConnection: $(NuGetServiceConnection)
-            dryRun: true
+        # Conditional publish jobs — one per package, gated by its release parameter.
+        # Non-official pipeline: all publish jobs run in dry-run mode to
+        # validate the release stage without actually pushing to NuGet.
+        - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
+          - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageDisplayName: SqlServer.Server
+              artifactName: drop_build_independent_build_signed_sqlserver_package
+              nugetServiceConnection: $(NuGetServiceConnection)
+              dryRun: true
 
-      - ${{ if eq(parameters.releaseLogging, true) }}:
-        - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-          parameters:
-            packageDisplayName: Logging
-            artifactName: drop_build_independent_build_signed_Logging_package
-            nugetServiceConnection: $(NuGetServiceConnection)
-            dryRun: true
+        - ${{ if eq(parameters.releaseLogging, true) }}:
+          - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageDisplayName: Logging
+              artifactName: drop_build_independent_build_signed_Logging_package
+              nugetServiceConnection: $(NuGetServiceConnection)
+              dryRun: true
 
-      - ${{ if eq(parameters.releaseAbstractions, true) }}:
-        - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-          parameters:
-            packageDisplayName: Abstractions
-            artifactName: drop_build_independent_build_signed_Abstractions_package
-            nugetServiceConnection: $(NuGetServiceConnection)
-            dryRun: true
+        - ${{ if eq(parameters.releaseAbstractions, true) }}:
+          - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageDisplayName: Abstractions
+              artifactName: drop_build_independent_build_signed_Abstractions_package
+              nugetServiceConnection: $(NuGetServiceConnection)
+              dryRun: true
 
-      - ${{ if eq(parameters.releaseSqlClient, true) }}:
-        - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-          parameters:
-            packageDisplayName: SqlClient
-            artifactName: drop_buildMDS_build_signed_package
-            nugetServiceConnection: $(NuGetServiceConnection)
-            dryRun: true
+        - ${{ if eq(parameters.releaseSqlClient, true) }}:
+          - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageDisplayName: SqlClient
+              artifactName: drop_buildMDS_build_signed_package
+              nugetServiceConnection: $(NuGetServiceConnection)
+              dryRun: true
 
-      - ${{ if eq(parameters.releaseExtAzure, true) }}:
-        - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-          parameters:
-            packageDisplayName: Extensions.Azure
-            artifactName: drop_buildMDS_build_signed_Azure_package
-            nugetServiceConnection: $(NuGetServiceConnection)
-            dryRun: true
+        - ${{ if eq(parameters.releaseExtAzure, true) }}:
+          - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageDisplayName: Extensions.Azure
+              artifactName: drop_buildMDS_build_signed_Azure_package
+              nugetServiceConnection: $(NuGetServiceConnection)
+              dryRun: true
 
-      - ${{ if eq(parameters.releaseAKVProvider, true) }}:
-        - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-          parameters:
-            packageDisplayName: AKVProvider
-            artifactName: drop_build_addons_buildSignedAkvPackage
-            nugetServiceConnection: $(NuGetServiceConnection)
-            dryRun: true
+        - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+          - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageDisplayName: AKVProvider
+              artifactName: drop_build_addons_buildSignedAkvPackage
+              nugetServiceConnection: $(NuGetServiceConnection)
+              dryRun: true
