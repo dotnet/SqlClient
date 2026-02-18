@@ -63,6 +63,7 @@ jobs:
           custom: build
           projects: $(projectPath)
           arguments: >-
+            --artifacts-path $(artifactsPath)
             --configuration ${{ parameters.buildConfiguration }}
             --verbosity ${{ parameters.dotnetVerbosity }}
 
@@ -79,3 +80,13 @@ jobs:
           loadRoslynConfiguredAnalyzersOption: Enable
         env:
           SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+      # Symlink the assemblies (DLLs and PDBs) to a dedicated folder for ApiScan.
+      - script: |
+          # Lower-case the build configuration for use in paths.
+          BUILD_CONFIG="${{ parameters.buildConfiguration }}"
+          BUILD_CONFIG=${BUILD_CONFIG,,}
+
+          # Create the symlink from artifacts -> assemblies.
+          ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(apiScanPath)
+        displayName: Symlink Assemblies for ApiScan

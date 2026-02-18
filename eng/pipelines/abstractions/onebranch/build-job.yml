@@ -69,9 +69,9 @@ jobs:
       - group: abstractions-esrp
 
       # For some reason, Azure Pipelines refuses to expand the $(SigningEsrpConnectedServiceName)
-      # variable from the group above before the EsrpMalwareScanning@5 task validates it.  This
-      # causes pipeline runs to fail after template expansion, so we just hardcode the service name.
-      # It's not a secret.
+      # variable from the group above before the EsrpMalwareScanning@5 and EsrpCodeSigning@5 tasks
+      # validates it.  This causes pipeline runs to fail after template expansion, so we just
+      # hardcode the service name.  It's not a secret.
       - name: SigningEsrpConnectedServiceName
         value: ESRP Managed Identity federated auth - AME tenant
 
@@ -103,8 +103,11 @@ jobs:
         inputs:
           secureFile: netfxKeypair.snk
 
-      # Install the .NET SDK.
+      # Install the .NET SDK and Runtimes.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          # The ESRP tasks don't work in .NET 10 yet, so we need an older runtime.
+          runtimes: [9.x]
 
       # Build the Abstractions project and use our signing key to sign the assemblies.
       - task: DotNetCoreCLI@2
@@ -121,7 +124,7 @@ jobs:
             -p:SigningKeyPath=$(signingKey.secureFilePath)
             --verbosity ${{ parameters.dotnetVerbosity }}
 
-      # Symlink the assemblies (DLLs and PDBs) to a dedicated folder for scanning and publishing.
+      # Symlink the assemblies (DLLs and PDBs) to a dedicated folder for ESRP scanning/signing.
       - script: |
           # Lower-case the build configuration for use in paths.
           BUILD_CONFIG="${{ parameters.buildConfiguration }}"
@@ -129,11 +132,22 @@ jobs:
 
           # Create the symlink from artifacts -> assemblies.
           ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(assembliesPath)
-        displayName: Symlink Assemblies
+        displayName: Symlink Assemblies for ESRP
 
-      # Scan the DLLs for malware.
+      # Symlink the assemblies to a dedicated folder for ApiScan.
+      - script: |
+          # Lower-case the build configuration for use in paths.
+          BUILD_CONFIG="${{ parameters.buildConfiguration }}"
+          BUILD_CONFIG=${BUILD_CONFIG,,}
+
+          # Create the symlink from artifacts -> assemblies.
+          ln -s $(artifactsPath)/bin/Abstractions/${BUILD_CONFIG}_netstandard2.0 $(apiScanPath)
+        displayName: Symlink Assemblies for ApiScan
+
+      # Scan the DLLs for malware.  See:
       #
-      # TODO: Where is this task documented?
+      # https://aka.ms/esrp.scantask
+      #
       - task: EsrpMalwareScanning@5
         displayName: ESRP DLL Malware Scanning
         inputs:
@@ -148,7 +162,10 @@ jobs:
           UseMSIAuthentication: true
           VerboseLogin: 1
 
-      # Sign the DLLs (not the same as signing the assemblies).
+      # Sign the DLLs (not the same as signing the assemblies).  See:
+      #
+      # https://eng.ms/docs/products/onebranch/signing/containerbuildsigning/nativeesrp/usingnativeesrpadotaskinonebranchpipelines
+      #
       - task: EsrpCodeSigning@5
         displayName: ESRP DLL Signing
         inputs:
@@ -221,8 +238,6 @@ jobs:
             --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Scan the NuGet package for malware.
-      #
-      # TODO: Where is this task documented?
       - task: EsrpMalwareScanning@5
         displayName: ESRP Nuget Malware Scanning
         inputs:
@@ -237,8 +252,6 @@ jobs:
           VerboseLogin: 1
 
       # Sign the NuGet package and all of the DLLs it contains.
-      #
-      # https://eng.ms/docs/products/onebranch/signing/containerbuildsigning/nativeesrp/usingnativeesrpadotaskinonebranchpipelines
       - task: EsrpCodeSigning@5
         displayName: ESRP Signing NuGet Package
         inputs:

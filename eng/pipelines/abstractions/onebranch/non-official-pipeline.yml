@@ -57,6 +57,7 @@ parameters:
     default: false
 
 variables:
+  - template: /eng/pipelines/libraries/onebranch-variables.yml@self
   - template: /eng/pipelines/abstractions/onebranch/variables.yml@self
 
 # We extend the latest version of the OneBranch non-official pipeline template.  These are injected
@@ -84,11 +85,11 @@ extends:
 
       apiscan:
         enabled: true
-        softwareFolder: $(apiScanDllPath)
+        softwareFolder: $(apiScanPath)
         # Note: This name is registered with ApiScan and shared by all SqlClient packages.
         softwareName: Microsoft.Data.SqlClient
         softwareVersionNum: $(assemblyFileVersion)
-        symbolsFolder: $(apiScanPdbPath)
+        symbolsFolder: $(apiScanPath)
 
       armory:
         enabled: true

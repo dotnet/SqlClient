@@ -31,18 +31,15 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
 
-  # We copy the Abstractions DLLs and PDBs into these paths for ApiScan.  We don't want ApiScan
-  # to scan all build outputs, just the Abstractions ones.
-  - name: apiScanDllPath
-    value: '$(Agent.BuildDirectory)/apiScan/dlls'
-
-  - name: apiScanPdbPath
-    value: '$(Agent.BuildDirectory)/apiScan/pdbs'
-
   # This entire directory tree will be published.  Any stage/job/step that generates interesting
   # artifacts must place them here or in sub-diretcories.
   - name: onebranchArtifactsPath
     value: $(Agent.BuildDirectory)/build
+
+  # We don't want ApiScan to scan all build outputs, just the ones in this directory.  Any jobs that
+  # produce assemblies _and_ where ApiScan wants to run must put their assemblies here.
+  - name: apiScanPath
+    value: $(Agent.BuildDirectory)/apiScan
 
   # Explicitly enable the SDL BinSkim task; see https://aka.ms/obpipelines/sdl
   - name: ob_sdl_binskim_break

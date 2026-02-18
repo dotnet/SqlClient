@@ -115,7 +115,17 @@ extends:
       # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
       EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
-    globalSdl: # https://aka.ms/obpipelines/sdl
+
+    # Configure OneBranch SDL tools (a.k.a static analysis tools).  See:
+    #
+    # https://aka.ms/obpipelines/sdl
+    #
+    globalSdl:
+
+      # The parameters below control how each SDL tool will behave.  See:
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds
+
       tsa:
         # The OneBranch template will set 'break' to false for the other SDL
         # tools when TSA is enabled.  This allows TSA to gather the results
@@ -128,8 +138,8 @@ extends:
         # break non-official builds, so we explicitly set 'break' to false here.
         ${{ if ne(parameters.oneBranchType, 'Official') }}:
           break: false
-        softwareFolder: $(apiScanDllPath)
-        symbolsFolder: $(apiScanPdbPath)
+        softwareFolder: $(apiScanPath)
+        symbolsFolder: $(apiScanPath)
         softwarename: Microsoft.Data.SqlClient
         # We produce multiple packages with different assembly version numbers.  It isn't clear
         # what ApiScan does with this, so we just hardcode it.
@@ -183,8 +193,8 @@ extends:
           isPreview: ${{ parameters['isPreview'] }}
           onebranchOutputDirectory: ${{ variables.onebranchArtifactsPath }}
           publishSymbols: ${{ parameters['publishSymbols'] }}
-          softwareFolder: $(apiScanDllPath)
-          symbolsFolder: $(apiScanPdbPath)
+          softwareFolder: $(apiScanPath)
+          symbolsFolder: $(apiScanPath)
 
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'
