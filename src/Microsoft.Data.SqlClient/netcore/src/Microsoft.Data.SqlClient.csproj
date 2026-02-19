@@ -726,17 +726,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.netcore.unix.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.netcore.unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.netcore.unix.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.netcore.unix.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs</Link>
@@ -999,11 +993,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.unix.cs">
-      <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.unix.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.windows.cs">
-      <Link>Microsoft\Data\SqlTypes\SqlFileStream.windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
