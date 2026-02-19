@@ -113,6 +113,8 @@ variables:
         value: $(sqlServerPackagePreviewVersion)
       - name: effectiveAkvVersion
         value: $(akvPackagePreviewVersion)
+      - name: effectiveMdsVersion
+        value: $(previewMdsPackageVersion)
   - ${{ else }}:
       - name: effectiveLoggingVersion
         value: $(loggingPackageVersion)
@@ -124,6 +126,8 @@ variables:
         value: $(sqlServerPackageVersion)
       - name: effectiveAkvVersion
         value: $(akvPackageVersion)
+      - name: effectiveMdsVersion
+        value: $(mdsPackageVersion)
 
 resources:
   repositories:
@@ -291,7 +295,7 @@ extends:
                   apiScanDllPath: $(apiScanDllPath)
                   apiScanPdbPath: $(apiScanPdbPath)
                   buildConfiguration: Release
-                  mdsPackageVersion: $(akvMdsPackageVersion)
+                  mdsPackageVersion: $(effectiveMdsVersion)
                   loggingPackageVersion: $(effectiveLoggingVersion)
                   publishSymbols: ${{ parameters['publishSymbols'] }}
                   appRegistrationClientId: $(appRegistrationClientId)
