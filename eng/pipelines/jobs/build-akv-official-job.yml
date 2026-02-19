@@ -28,7 +28,9 @@ parameters:
 
     - name: loggingPackageVersion
       type: string
-      default: '1.0.0'
+
+    - name: abstractionsPackageVersion
+      type: string
 
     - name: publishSymbols
       type: boolean
@@ -125,6 +127,7 @@ jobs:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+                abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
           - template: /eng/pipelines/steps/compound-build-akv-step.yml@self
             parameters:
@@ -133,6 +136,7 @@ jobs:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+                abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
           - ${{ each targetFramework in parameters.targetFrameworks }}:
               - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
@@ -161,7 +165,7 @@ jobs:
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: Package
-                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
           - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:

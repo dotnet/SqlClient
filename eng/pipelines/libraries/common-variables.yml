@@ -157,7 +157,7 @@ variables:
 
   # The NuGet package version for preview releases.
   - name: akvPackagePreviewVersion
-    value: 7.0.0-preview3.$(Build.BuildNumber)
+    value: 7.0.0-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the AKV Provider package.
   - name: akvAssemblyFileVersion
@@ -165,7 +165,7 @@ variables:
 
   # The MDS package version that AKV Provider depends on.
   - name: akvMdsPackageVersion
-    value: '7.0.0-preview3.25342'
+    value: '7.0.0-preview4.$(Build.BuildNumber)'
 
   # The path to the NuGet packaging specification file for the AKV Provider.
   - name: akvNuspecPath

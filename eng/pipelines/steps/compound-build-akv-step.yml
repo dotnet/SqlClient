@@ -26,7 +26,9 @@ parameters:
 
   - name: loggingPackageVersion
     type: string
-    default: '1.0.0'
+    
+  - name: abstractionsPackageVersion
+    type: string
 
 steps:
   - task: DownloadSecureFile@1
@@ -46,6 +48,7 @@ steps:
             -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
             -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:ReferenceType=Package
             -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
 

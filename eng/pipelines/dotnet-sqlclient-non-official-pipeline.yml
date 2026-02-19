@@ -146,9 +146,7 @@ extends:
       WindowsHostVersion: 1ESWindows2022
     globalSdl: # https://aka.ms/obpipelines/sdl
       tsa:
-        # The OneBranch template will set 'break' to false for the other SDL
-        # tools when TSA is enabled.  This allows TSA to gather the results
-        # and publish them for downstream analysis.
+        # TSA is disabled on non-official pipelines as they can be run against anyone's branch for testing purposes.
         enabled: false
       apiscan:
         enabled: true
@@ -159,32 +157,32 @@ extends:
         versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
       sbom:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
         packageName: Microsoft.Data.SqlClient
         packageVersion: $(mdsPackageVersion)
       policheck:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
         credscan:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
         binskim:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
         armory:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           break: true
         eslint: # TypeScript and JavaScript
           enabled: false
         roslyn:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           break: true
         publishLogs:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
@@ -297,6 +295,7 @@ extends:
                   buildConfiguration: Release
                   mdsPackageVersion: $(effectiveMdsVersion)
                   loggingPackageVersion: $(effectiveLoggingVersion)
+                  abstractionsPackageVersion: $(effectiveAbstractionsVersion)
                   publishSymbols: ${{ parameters['publishSymbols'] }}
                   appRegistrationClientId: $(appRegistrationClientId)
                   appRegistrationTenantId: $(appRegistrationTenantId)

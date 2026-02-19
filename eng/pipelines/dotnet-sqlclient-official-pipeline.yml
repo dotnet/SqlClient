@@ -186,6 +186,8 @@ extends:
         # tools when TSA is enabled.  This allows TSA to gather the results
         # and publish them for downstream analysis.
         enabled: true
+        # All SDL tools should be enabled all the time for continuous security screening.
+        # Any issue should be triaged and addressed on topmost priority by the team.
       apiscan:
         enabled: true
         break: true # break the build on APIScan issues
@@ -195,32 +197,32 @@ extends:
         versionNumber: $(mdsAssemblyFileVersion)
       codeql:
         compiled:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
       sbom:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
         packageName: Microsoft.Data.SqlClient
         packageVersion: $(mdsPackageVersion)
       policheck:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
         credscan:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
         binskim:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
         armory:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           break: true
         eslint: # TypeScript and JavaScript
           enabled: false
         roslyn:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           break: true
         publishLogs:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
@@ -333,6 +335,7 @@ extends:
                   buildConfiguration: Release
                   mdsPackageVersion: $(effectiveMdsVersion)
                   loggingPackageVersion: $(effectiveLoggingVersion)
+                  abstractionsPackageVersion: $(effectiveAbstractionsVersion)
                   publishSymbols: ${{ parameters['publishSymbols'] }}
                   appRegistrationClientId: $(appRegistrationClientId)
                   appRegistrationTenantId: $(appRegistrationTenantId)
