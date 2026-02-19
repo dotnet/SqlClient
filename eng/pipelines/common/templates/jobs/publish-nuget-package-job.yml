@@ -52,6 +52,11 @@ jobs:
       pool:
           type: windows
 
+      variables:
+          # OneBranch requires ob_outputDirectory to be defined for all jobs.
+          # This job doesn't produce artifacts, so we use a placeholder path.
+          ob_outputDirectory: '$(Build.SourcesDirectory)/packages'
+
       steps:
           - download: current
             artifact: ${{ parameters.artifactName }}

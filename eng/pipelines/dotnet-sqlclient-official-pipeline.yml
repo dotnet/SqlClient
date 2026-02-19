@@ -357,12 +357,24 @@ extends:
           - buildMDS
           - mds_package_validation
         jobs:
+        # No-op gate job required by OneBranch — every stage must have at least
+        # one job using a managed pool with no dependencies.
+        - job: release_gate
+          displayName: 'Release Gate'
+          pool:
+              type: windows
+          variables:
+              ob_outputDirectory: '$(Build.SourcesDirectory)/packages'
+          steps:
+          - script: echo "Release stage gate — proceeding to manual approval."
+            displayName: 'Gate Check'
+
         # Manual approval gate — blocks until a designated approver
         # reviews and approves the release.  The gate stays open for
         # 3 days (4320 min) so you can decide well after the build.
         - job: manual_approval
           displayName: 'Manual Approval'
-          dependsOn: []
+          dependsOn: release_gate
           pool: server
           steps:
           - task: ManualValidation@0
