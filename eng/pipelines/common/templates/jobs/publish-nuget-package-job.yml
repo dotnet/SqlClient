@@ -43,6 +43,7 @@ parameters:
     type: boolean
     default: false
 
+# Read more: https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/pipelinebasics#what-is-a-onebranch-release-yaml-pipeline
 jobs:
 - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
   displayName: 'Publish ${{ parameters.packageDisplayName }}'
@@ -53,7 +54,7 @@ jobs:
     isProduction: ${{ parameters.isProduction }}
     inputs:
     - input: pipelineArtifact
-      artifact: ${{ parameters.artifactName }}
+      artifactName: ${{ parameters.artifactName }}
       targetPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
   
   variables:
