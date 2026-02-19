@@ -9,14 +9,6 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 # @TODO: Add triggers and schedules
 
 parameters:
-    - name: oneBranchType
-      displayName: 'OneBranch template'
-      type: 'string'
-      values:
-          - 'Official'
-          - 'NonOfficial'
-      default: 'Official'
-
     - name: buildConfiguration
       displayName: 'Build configuration'
       type: 'string'
@@ -49,7 +41,7 @@ resources:
           ref: 'refs/heads/main'
 
 extends:
-    template: 'v2/OneBranch.${{ parameters.oneBranchType }}.CrossPlat.yml@templates'
+    template: 'v2/OneBranch.Official.CrossPlat.yml@templates'
 
     parameters:
         featureFlags:
@@ -105,7 +97,7 @@ extends:
             roslyn:
                 enabled: ${{ parameters.runSdlTasks }}
                 break: true
-                # Requires RoslynAnalyzers task to be added after build task
+                # Requires RoslynAnalyzers task to be added somewhere in the build stage.
 
             publishLogs:
                 enabled: ${{ parameters.runSdlTasks }}
@@ -113,12 +105,12 @@ extends:
             sbom:
                 enabled: ${{ parameters.runSdlTasks }}
                 packageName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
-                packageVersion: ${{ variables.nugetPackageVersion }}
+                packageVersion: ${{ variables.akvPackageVersion }}
 
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
                 # be forced into 'break' build mode.
-                enabled: ${{ eq(parameters.oneBranchType, 'Official') }}
+                enabled: true
                 configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
         stages:
@@ -127,11 +119,11 @@ extends:
               jobs:
                   - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
                     parameters:
+                        akvAssemblyFileVersion: '${{ variables.assemblyFileVersion }}'
+                        akvPackageVersion: '${{ variables.akvPackageVersion }}'
                         apiScanDllPath: '${{ variables.apiScanDllPath }}'
                         apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
-                        assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
-                        nugetPackageVersion: '${{ variables.nugetPackageVersion }}'
                         mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
                         publishSymbols: '${{ parameters.publishSymbols }}'
                         signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'

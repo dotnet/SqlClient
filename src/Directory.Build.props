@@ -12,15 +12,12 @@
     <!--
       "ReferenceType" property supports below options:
 
-      "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
-      "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+      "Project" => Build and run tests with driver components as Project references.
+      "Package" => Build and run tests with driver components as Package reference.
 
-      ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
-      CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
-      > msbuild -p:configuration=Release
+      See the BUILDGUIDE.md for more details.
     -->
-    <ReferenceType Condition="$(ReferenceType) == ''">Project</ReferenceType>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
   </PropertyGroup>
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
@@ -52,7 +49,7 @@
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
-    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient\tests\</TestsPath>
+    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient/tests/</TestsPath>
     <BinFolder Condition="'$(TargetsWindows)' == 'true'">$(Artifacts)bin\Windows_NT\</BinFolder>
     <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(Artifacts)bin\AnyOS\</BinFolder>
     <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(Artifacts)bin\Unix\</BinFolder>
@@ -153,7 +150,7 @@
     https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
   -->
   <PropertyGroup>
-    <!-- The newest .NET SDK we support is .NET 9.0, which uses C# 13 -->
-    <LangVersion>13</LangVersion>
+    <!-- The newest .NET SDK we support is .NET 10.0, which uses C# 14 -->
+    <LangVersion>14</LangVersion>
   </PropertyGroup>
 </Project>

@@ -27,11 +27,17 @@ public class LocalAppContextSwitchesTest
         Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
-#if NETFRAMEWORK
-        Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
+        Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
+        Assert.False(LocalAppContextSwitches.EnableUserAgent);
+        Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
+        #if NET
+        Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
+        #endif
+        #if NET && _WINDOWS
         Assert.False(LocalAppContextSwitches.UseManagedNetworking);
-#else
-        Assert.Equal(!OperatingSystem.IsWindows(), LocalAppContextSwitches.UseManagedNetworking);
-#endif
+        #endif
+        #if NETFRAMEWORK
+        Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
+        #endif
     }
 }

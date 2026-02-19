@@ -4,6 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in Abstractions, Azure, and MDS OneBranch Official
+# pipelines.
+
 variables:
   - group: ESRP Federated Creds (AME)
     # ESRPConnectedServiceName
@@ -14,7 +17,7 @@ variables:
     # AuthSignCertName
 
   - name: CommitHead
-    value: '' # the value will be extracted from the repo's head  
+    value: '' # the value will be extracted from the repo's head
   - name: REPOROOT
     value: $(Build.SourcesDirectory)
   - name: softwareFolder
@@ -24,25 +27,71 @@ variables:
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
 
-  # Update this after every release. This is used to generate the MDS NuGet package version.
-  - name: Major
-    value: '7'
-  - name: Minor
-    value: '0'
-  - name: Patch
-    value: '0'
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
+  # must be a positive 16-bit integer less than 65535.  Simply concatenating
+  # both parts of $(Build.BuildNumber) could produce values larger than 65534,
+  # so we must omit the second part entirely.  Unfortunately, this may result
+  # in multiple subsequent pipline builds using the same C# assembly versions.
+  # The package versions will not be affected and will show the complete
+  # $(Build.BuildNumber) values.
+  - name: assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
 
-    # Update this for preview releases.
-  - name: Preview
-    value: '-preview'
-  - name: Revision
-    value: '2'
+  # ----------------------------------------------------------------------------
+  # Abstractions Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
 
-  - name: NugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)
-  - name: PreviewNugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
-  - name: AssemblyFileVersion
-    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  # The NuGet package version for GA releases (non-preview).
+  - name: abstractionsPackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: abstractionsPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the Abstractions package.
+  - name: abstractionsAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
+  # MDS Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: mdsPackageVersion
+    value: '7.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: previewMdsPackageVersion
+    value: 7.0.0-preview4.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the MDS package.
+  - name: mdsAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # The path to the NuGet packaging specification file used to generate the MDS NuGet package.
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+
+  # ----------------------------------------------------------------------------
+  # Azure Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: azurePackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: azurePackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the Azure package.
+  - name: azureAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)

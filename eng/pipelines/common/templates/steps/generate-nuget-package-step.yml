@@ -6,13 +6,11 @@
 parameters:
   - name: nuspecPath
     type: string
-    default: '$(nuspecPath)'
 
-  - name: NugetPackageVersion
+  - name: packageVersion
     type: string
-    default: '$(NugetPackageVersion)'
 
-  - name: OutputDirectory
+  - name: outputDirectory
     type: string
     default: '$(Build.SourcesDirectory)/packages'
 
@@ -25,21 +23,25 @@ parameters:
 
   - name: generateSymbolsPackage
     type: boolean
-    default: true
 
   - name: displayName
     type: string
-    default: 'NuGet pack with snupkg'
 
   - name: installNuget
     type: boolean
     default: true
 
   - name: referenceType
-    default: project
+    type: string
     values:
-    - project
-    - package
+      - Package
+      - Project
+
+  # Semi-colon separated properties to pass to nuget via the -properties
+  # argument.
+  - name: properties
+    type: string
+    default: ''
 
 steps:
 - ${{ if parameters.installNuget }}:
@@ -52,12 +54,24 @@ steps:
     $Commit=git rev-parse HEAD
     Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
   displayName: CommitHead
- 
+
 - task: NuGetCommand@2
   displayName: ${{parameters.displayName }}
   inputs:
     command: custom
     ${{ if parameters.generateSymbolsPackage }}:
-      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: >-
+        pack
+        -Symbols
+        -SymbolPackageFormat snupkg
+        ${{parameters.nuspecPath}}
+        -Version ${{parameters.packageVersion}}
+        -OutputDirectory ${{parameters.outputDirectory}}
+        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"
     ${{else }}:
-      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: >-
+        pack
+        ${{parameters.nuspecPath}}
+        -Version ${{parameters.packageVersion}}
+        -OutputDirectory ${{parameters.outputDirectory}}
+        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"

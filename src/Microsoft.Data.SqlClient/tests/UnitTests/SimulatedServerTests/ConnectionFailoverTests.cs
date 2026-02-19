@@ -4,7 +4,7 @@
 
 using System;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -181,10 +181,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
-            var e = Assert.Throws<SqlException>(() => connection.Open());
+            Action action = () => connection.Open();
 
             // Assert
-            Assert.Contains("Connection Timeout Expired", e.Message);
+            SqlException exception = Assert.Throws<SqlException>(action);
+            Assert.Contains("Connection Timeout Expired", exception.Message);
+
             Assert.Equal(ConnectionState.Closed, connection.State);
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount);
@@ -214,7 +216,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                InitialCatalog = "master",// Required for failover partner to work
+                InitialCatalog = "master", // Required for failover partner to work
                 ConnectTimeout = 5,
                 Encrypt = false,
                 MultiSubnetFailover = false,
@@ -223,15 +225,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+
+            // Act
+            connection.Open();
 
             // Assert
             // On the first connection attempt, no failover partner information is available,
@@ -274,15 +270,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
             };
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                // Act
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                Assert.Fail(e.Message);
-            }
+
+            // Act
+            connection.Open();
+
 
             // Assert
             // On the first connection attempt, failover partner information is available in the connection string,
@@ -529,7 +520,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             // Arrange
             using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.IgnoreServerProvidedFailoverPartnerField = LocalAppContextSwitchesHelper.Tristate.True;
+            switchesHelper.IgnoreServerProvidedFailoverPartner = true;
 
             using TdsServer failoverServer = new(
                 new TdsServerArguments
@@ -563,7 +554,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Connect once to the primary to trigger it to send the failover partner
             connection.Open();
-            Assert.Equal("invalidhost", (connection.InnerConnection as SqlInternalConnectionTds)!.ServerProvidedFailoverPartner);
+            Assert.Equal("invalidhost", (connection.InnerConnection as SqlConnectionInternal)!.ServerProvidedFailoverPartner);
 
             // Close the connection to return it to the pool
             connection.Close();

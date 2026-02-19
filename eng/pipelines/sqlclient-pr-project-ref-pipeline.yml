@@ -39,7 +39,7 @@ pr:
     - .azuredevops
     - .config
     - doc
-    - eng
+    - eng/pipelines
     - src
     - tools
     - azurepipelines-coverage.yml
@@ -66,11 +66,6 @@ parameters:
     type: object
     default: [AnyCPU]
 
-  - name: codeCovTargetFrameworks
-    displayName: Code Coverage Target Frameworks
-    type: object
-    default: [net462, net8.0, net9.0]
-
   - name: debug
     displayName: Enable debug output
     type: boolean
@@ -81,26 +76,40 @@ parameters:
     type: boolean
     default: false
 
+  # The target frameworks to build and run tests for on Windows.
+  #
+  # These are _not_ the target frameworks to build the driver packages for.
+  #
+  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
+  # during PR pipeline runs.  The periodic CI pipeline runs include .NET 10.0.
+  #
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
     default: [net462, net8.0, net9.0]
 
-  - name: targetFrameworksLinux
-    displayName: Target Frameworks on Non-Windows
+  # The target frameworks to build and run tests for on Unix.
+  #
+  # These are _not_ the target frameworks to build the driver packages for.
+  #
+  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
+  # during PR pipeline runs.  The periodic CI pipeline runs include .NET 10.0.
+  #
+  - name: targetFrameworksUnix
+    displayName: Target Frameworks on Unix
     type: object
     default: [net8.0, net9.0]
+
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    displayName: Test job timeout (in minutes)
+    type: number
+    default: 90
 
   - name: testSets
     displayName: Test Sets
     type: object
     default: [1, 2, 3]
-
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: Test job timeout (in minutes)
-    type: string
-    default: Default
 
   - name: useManagedSNI
     displayName: |
@@ -110,29 +119,17 @@ parameters:
     default: [false, true]
 
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Project
-    codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
+    referenceType: Project
     debug: ${{ parameters.debug }}
     enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
-    targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
+    targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
+    testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
-    # Populate the actual test job timeout numeric values if Default was
-    # specified.  We choose different values depending on the build
-    # configuration.
-    ${{ if eq(parameters.testJobTimeout, 'Default') }}:
-      # If the build configuration is Debug, we allow a bit of extra time since
-      # some tests run more slowly, and some tests are Debug only.
-      ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-        testJobTimeout: 110
-      ${{ else }}:
-        testJobTimeout: 90
-    ${{ else }}:
-      testJobTimeout: ${{ parameters.testJobTimeout }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:

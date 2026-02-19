@@ -1,40 +1,45 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
-using static Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
     public class SqlConnectionStringTest : IDisposable
     {
-        private LocalAppContextSwitchesHelper _appContextSwitchHelper;
-        public SqlConnectionStringTest()
+        // Ensure we restore the original app context switch values after each
+        // test.
+        private readonly LocalAppContextSwitchesHelper _appContextSwitchHelper = new();
+
+        public void Dispose()
         {
-            // Ensure that the app context switch is set to the default value
-            _appContextSwitchHelper = new LocalAppContextSwitchesHelper();
+            _appContextSwitchHelper.Dispose();
         }
 
 #if NETFRAMEWORK
         [Theory]
-        [InlineData("test.database.windows.net", true, Tristate.True, true)]
-        [InlineData("test.database.windows.net", false, Tristate.True, false)]
-        [InlineData("test.database.windows.net", null, Tristate.True, false)]
-        [InlineData("test.database.windows.net", true, Tristate.False, true)]
-        [InlineData("test.database.windows.net", false, Tristate.False, false)]
-        [InlineData("test.database.windows.net", null, Tristate.False, true)]
-        [InlineData("test.database.windows.net", true, Tristate.NotInitialized, true)]
-        [InlineData("test.database.windows.net", false, Tristate.NotInitialized, false)]
-        [InlineData("test.database.windows.net", null, Tristate.NotInitialized, true)]
-        [InlineData("my.test.server", true, Tristate.True, true)]
-        [InlineData("my.test.server", false, Tristate.True, false)]
-        [InlineData("my.test.server", null, Tristate.True, false)]
-        [InlineData("my.test.server", true, Tristate.False, true)]
-        [InlineData("my.test.server", false, Tristate.False, false)]
-        [InlineData("my.test.server", null, Tristate.False, true)]
-        [InlineData("my.test.server", true, Tristate.NotInitialized, true)]
-        [InlineData("my.test.server", false, Tristate.NotInitialized, false)]
-        [InlineData("my.test.server", null, Tristate.NotInitialized, true)]
-        public void TestDefaultTnir(string dataSource, bool? tnirEnabledInConnString, Tristate tnirDisabledAppContext, bool expectedValue)
+        [InlineData("test.database.windows.net", true, true, true)]
+        [InlineData("test.database.windows.net", false, true, false)]
+        [InlineData("test.database.windows.net", null, true, false)]
+        [InlineData("test.database.windows.net", true, false, true)]
+        [InlineData("test.database.windows.net", false, false, false)]
+        [InlineData("test.database.windows.net", null, false, true)]
+        [InlineData("test.database.windows.net", true, null, true)]
+        [InlineData("test.database.windows.net", false, null, false)]
+        [InlineData("test.database.windows.net", null, null, true)]
+        [InlineData("my.test.server", true, true, true)]
+        [InlineData("my.test.server", false, true, false)]
+        [InlineData("my.test.server", null, true, false)]
+        [InlineData("my.test.server", true, false, true)]
+        [InlineData("my.test.server", false, false, false)]
+        [InlineData("my.test.server", null, false, true)]
+        [InlineData("my.test.server", true, null, true)]
+        [InlineData("my.test.server", false, null, false)]
+        [InlineData("my.test.server", null, null, true)]
+        public void TestDefaultTnir(string dataSource, bool? tnirEnabledInConnString, bool? tnirDisabledAppContext, bool expectedValue)
         {
             // Note: TNIR is only supported on .NET Framework.
             // Note: TNIR is disabled by default for Azure SQL Database servers (i.e. *.database.windows.net)
@@ -43,7 +48,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // the value of TransparentNetworkIPResolution property in SqlConnectionString.
 
             // Arrange
-            _appContextSwitchHelper.DisableTnirByDefaultField = tnirDisabledAppContext;
+            _appContextSwitchHelper.DisableTnirByDefault = tnirDisabledAppContext;
 
             // Act
             SqlConnectionStringBuilder builder = new();
@@ -58,11 +63,47 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Equal(expectedValue, connectionString.TransparentNetworkIPResolution);
         }
 #endif
-
-        public void Dispose()
+        /// <summary>
+        /// Test MSF values when set through connection string and through app context switch.
+        /// </summary>
+        [Theory]
+        [InlineData(true, true, true)]
+        [InlineData(false, true, false)]
+        [InlineData(null, true, true)]
+        [InlineData(true, false, true)]
+        [InlineData(false, false, false)]
+        [InlineData(null, false, false)]
+        [InlineData(null, null, false)]
+        public void TestDefaultMultiSubnetFailover(bool? msfInConnString, bool? msfEnabledAppContext, bool expectedValue)
         {
-            // Clean up any resources if necessary
-            _appContextSwitchHelper.Dispose();
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = msfEnabledAppContext;
+
+            SqlConnectionStringBuilder builder = new();
+            if (msfInConnString.HasValue)
+            {
+                builder.MultiSubnetFailover = msfInConnString.Value;
+            }
+            SqlConnectionString connectionString = new(builder.ConnectionString);
+
+            Assert.Equal(expectedValue, connectionString.MultiSubnetFailover);
+        }
+
+        /// <summary>
+        /// Tests that MultiSubnetFailover=true cannot be used with FailoverPartner.
+        /// </summary>
+        [Fact]
+        public void TestMultiSubnetFailoverWithFailoverPartnerThrows()
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = true;
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "server",
+                FailoverPartner = "partner",
+                InitialCatalog = "database"
+            };
+
+            Assert.Throws<ArgumentException>(() => new SqlConnectionString(builder.ConnectionString));
         }
     }
 }

@@ -1,8 +1,0 @@
-<linker>
-  <assembly fullname="Microsoft.Data.SqlClient">
-    <type fullname="Microsoft.Data.SqlClient.LocalAppContextSwitches">
-      <!-- The Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows switch must always be true on Unix platforms. -->
-      <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="true" />
-    </type>
-  </assembly>
-</linker>
