@@ -8,7 +8,7 @@
     <!-- This is only required today because of the separate test sets -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
-  
+
   <!-- Test Set ======================================================== -->
   <PropertyGroup>
     <!-- This is a measure to allow parallelizing this test project across multiple jobs. By -->
@@ -18,7 +18,7 @@
     <TestSet Condition="'$(TestSet)' == ''">123AE</TestSet>
     <NormalizedTestSet>$(TestSet.ToLower())</NormalizedTestSet>
   </PropertyGroup>
-  
+
   <!-- Links to project files ========================================== -->
   <!-- Items to include in all test sets -->
   <ItemGroup>
@@ -58,7 +58,7 @@
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1"
           CopyToOutputDirectory="Always" />
   </ItemGroup>
-  
+
   <!-- Items to include in test set 1 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('1'))">
     <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
@@ -70,7 +70,7 @@
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
   </ItemGroup>
-  
+
   <!-- Items to include in test set 2 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('2'))">
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
@@ -161,7 +161,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
     <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
   </ItemGroup>
-  
+
   <!-- Items to include in test set 3 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('3'))">
     <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
@@ -199,6 +199,12 @@
     <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
     <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
     <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
+    <Compile Include="SQL\ParameterTest\StreamInputParameterTests.cs" />
+    <Compile Include="SQL\ParameterTest\TvpColumnBoundariesTests.cs" />
+    <Compile Include="SQL\ParameterTest\TvpQueryHintsTests.cs" />
+    <Compile Include="SQL\ParameterTest\SqlVariantParameterTests.cs" />
+    <Compile Include="SQL\ParameterTest\DateTimeVariantTests.cs" />
+    <Compile Include="SQL\ParameterTest\OutputParameterTests.cs" />
     <Compile Include="SQL\ParameterTest\TvpTest.cs" />
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
@@ -237,16 +243,106 @@
     <!-- @TODO: Move these into some folder or a resx or something -->
     <Content Include="DDDataTypesTest_Data.xml"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_DebugMode.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_DebugMode_Azure.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_ReleaseMode.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SqlParameterTest_ReleaseMode_Azure.bsl"
-             CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Split baseline files for individual test groups -->
+    <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>StreamInputParameter_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>StreamInputParameter_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\StreamInputParameter_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>StreamInputParameter_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\StreamInputParameter_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>StreamInputParameter_ReleaseMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpColumnBoundaries_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpColumnBoundaries_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpColumnBoundaries_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpColumnBoundaries_ReleaseMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpQueryHints_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpQueryHints_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpQueryHints_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpQueryHints_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpQueryHints_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpQueryHints_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\TvpQueryHints_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TvpQueryHints_ReleaseMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlVariantParameter_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlVariantParameter_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlVariantParameter_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SqlVariantParameter_ReleaseMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DateTimeVariant_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DateTimeVariant_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DateTimeVariant_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DateTimeVariant_ReleaseMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\OutputParameter_DebugMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>OutputParameter_DebugMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\OutputParameter_DebugMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>OutputParameter_DebugMode_Azure.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\OutputParameter_ReleaseMode.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>OutputParameter_ReleaseMode.bsl</Link>
+    </Content>
+    <Content Include="SQL\ParameterTest\OutputParameter_ReleaseMode_Azure.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>OutputParameter_ReleaseMode_Azure.bsl</Link>
+    </Content>
   </ItemGroup>
-  
+
   <!-- Items to include in AE test set -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('ae'))">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />

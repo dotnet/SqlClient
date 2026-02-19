@@ -150,6 +150,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventArgs.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventArgs.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SspiAuthenticationParameters.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SspiAuthenticationParameters.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SspiContextProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SspiContextProvider.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.DataClassification", "Microsoft.Data.SqlClient.DataClassification", "{5D1F0032-7B0D-4FB6-A969-FCFB25C9EA1D}"

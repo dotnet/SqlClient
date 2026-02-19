@@ -24,20 +24,6 @@ trigger:
     - build.proj
     - NuGet.config
 
-schedules:
-- cron: '30 4 * * Mon'
-  displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
-  always: true
-
-- cron: '30 3 * * Mon-Fri'
-  displayName: Mon-Fri 8:30 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
-
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
   displayName: 'Enable debug output'
@@ -53,13 +39,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   displayName: 'Lowest supported .NET Framework version (MDS validation)'
   type: string
   default: 'net462'
-
-- name: oneBranchType
-  displayName: 'Select OneBranch template'
-  default: Official
-  values:
-  - NonOfficial
-  - Official
 
 - name: isPreview
   displayName: 'Is this a preview build?'
@@ -89,7 +68,7 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: /v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
       # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
@@ -100,14 +79,9 @@ extends:
         # The OneBranch template will set 'break' to false for the other SDL
         # tools when TSA is enabled.  This allows TSA to gather the results
         # and publish them for downstream analysis.
-        enabled: true
+        enabled: false
       apiscan:
         enabled: true
-        # For non-official builds, the OneBranch template seems to set APIScan's
-        # 'break' to true even when TSA is enabled.  We don't want APIScan to
-        # break non-official builds, so we explicitly set 'break' to false here.
-        ${{ if ne(parameters.oneBranchType, 'Official') }}:
-          break: false
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
