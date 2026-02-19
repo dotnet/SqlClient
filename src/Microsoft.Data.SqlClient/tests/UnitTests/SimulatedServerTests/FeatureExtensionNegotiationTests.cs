@@ -13,12 +13,12 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 
 [Collection("SimulatedServerTests")]
-public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNegotiationTests.SimulatedServerFixture>
+public class FeatureExtensionNegotiationTests : IClassFixture<TdsServerFixture>
 {
     private TdsServer _server;
     private string _connectionString;
 
-    public FeatureExtensionNegotiationTests(SimulatedServerFixture fixture)
+    public FeatureExtensionNegotiationTests(TdsServerFixture fixture)
     {
         _server = fixture.TdsServer;
         SqlConnectionStringBuilder builder = new()
@@ -35,7 +35,7 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
     public void EnhancedRouting_EnabledByServer_ShouldBeEnabled()
     {
         // Arrange
-        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Enabled;
+        _server.EnhancedRoutingBehavior = FeatureExtensionBehavior.Enabled;
 
         bool clientFeatureExtensionFound = false;
         _server.OnLogin7Validated = loginToken =>
@@ -44,8 +44,7 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
                                   .OfType<TDSLogin7GenericOptionToken>()
                                   .FirstOrDefault(t => t.FeatureID == TDSFeatureID.EnhancedRoutingSupport);
 
-
-            // Test should fail if no EnhancedRoutingSupport FE token is found
+            // Test should fail if no UserAgent FE token is found
             Assert.NotNull(token);
 
             Assert.Equal((byte)TDSFeatureID.EnhancedRoutingSupport, (byte)token.FeatureID);
@@ -58,7 +57,6 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
         // Act
         sqlConnection.Open();
 
-
         // Assert
         Assert.True(clientFeatureExtensionFound);
         Assert.True(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
@@ -68,13 +66,12 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
     public void EnhancedRouting_DisabledByServer_ShouldBeDisabled()
     {
         // Arrange
-        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Disabled;
+        _server.EnhancedRoutingBehavior = FeatureExtensionBehavior.Disabled;
 
         using SqlConnection sqlConnection = new(_connectionString);
 
         // Act
         sqlConnection.Open();
-
 
         // Assert
         Assert.False(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
@@ -84,31 +81,14 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
     public void EnhancedRouting_NotAcknowledgedByServer_ShouldBeDisabled()
     {
         // Arrange
-        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.DoNotAcknowledge;
+        _server.EnhancedRoutingBehavior = FeatureExtensionBehavior.DoNotAcknowledge;
 
         using SqlConnection sqlConnection = new(_connectionString);
 
         // Act
         sqlConnection.Open();
 
-
         // Assert
         Assert.False(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
-    }
-
-    public class SimulatedServerFixture : IDisposable
-    {
-        public SimulatedServerFixture()
-        {
-            TdsServer = new TdsServer();
-            TdsServer.Start();
-        }
-
-        public void Dispose()
-        {
-            TdsServer.Dispose();
-        }
-
-        public TdsServer TdsServer { get; private set; }
     }
 }

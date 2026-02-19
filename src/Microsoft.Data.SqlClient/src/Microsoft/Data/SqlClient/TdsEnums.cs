@@ -186,29 +186,7 @@ namespace Microsoft.Data.SqlClient
         public const byte ENV_SPRESETCONNECTIONACK = 18; // SP_Reset_Connection ack
         public const byte ENV_USERINSTANCE = 19; // User Instance
         public const byte ENV_ROUTING = 20; // Routing (ROR) information
-
-        public enum EnvChangeType : byte
-        {
-            ENVCHANGE_DATABASE = ENV_DATABASE,
-            ENVCHANGE_LANG = ENV_LANG,
-            ENVCHANGE_CHARSET = ENV_CHARSET,
-            ENVCHANGE_PACKETSIZE = ENV_PACKETSIZE,
-            ENVCHANGE_LOCALEID = ENV_LOCALEID,
-            ENVCHANGE_COMPFLAGS = ENV_COMPFLAGS,
-            ENVCHANGE_COLLATION = ENV_COLLATION,
-            ENVCHANGE_BEGINTRAN = ENV_BEGINTRAN,
-            ENVCHANGE_COMMITTRAN = ENV_COMMITTRAN,
-            ENVCHANGE_ROLLBACKTRAN = ENV_ROLLBACKTRAN,
-            ENVCHANGE_ENLISTDTC = ENV_ENLISTDTC,
-            ENVCHANGE_DEFECTDTC = ENV_DEFECTDTC,
-            ENVCHANGE_LOGSHIPNODE = ENV_LOGSHIPNODE,
-            ENVCHANGE_PROMOTETRANSACTION = ENV_PROMOTETRANSACTION,
-            ENVCHANGE_TRANSACTIONMANAGERADDRESS = ENV_TRANSACTIONMANAGERADDRESS,
-            ENVCHANGE_TRANSACTIONENDED = ENV_TRANSACTIONENDED,
-            ENVCHANGE_SPRESETCONNECTIONACK = ENV_SPRESETCONNECTIONACK,
-            ENVCHANGE_USERINSTANCE = ENV_USERINSTANCE,
-            ENVCHANGE_ROUTING = ENV_ROUTING
-        }
+        public const byte ENV_ENHANCEDROUTING = 21; // Enhanced Routing (ROR) information
 
         // done status stream bit masks
         public const int DONE_MORE = 0x0001; // more command results coming

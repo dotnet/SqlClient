@@ -3385,6 +3385,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_ROUTING:
+                    {
                         ushort newLength;
                         result = stateObj.TryReadUInt16(out newLength);
                         if (result != TdsOperationStatus.Done)
@@ -3430,6 +3431,17 @@ namespace Microsoft.Data.SqlClient
                         }
                         env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
                         break;
+                    }
+
+                    case TdsEnums.ENV_ENHANCEDROUTING:
+                    {
+                        result = TryProcessEnhancedRoutingToken(env, stateObj);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        break;
+                    }
 
                     default:
                         Debug.Fail("Unknown environment change token: " + env._type);
@@ -3439,6 +3451,95 @@ namespace Microsoft.Data.SqlClient
             }
 
             sqlEnvChange = head;
+            return TdsOperationStatus.Done;
+        }
+
+        /// <summary>
+        /// Processes an enhanced routing ENVCHANGE token from the TDS stream.
+        /// This token contains the routing information for the connection, including the protocol,
+        /// port, server name, and database name. The enhanced routing token has the following structure:
+        /// <list type="bullet">
+        ///     <item>NewValueLength (USHORT) - length of the new value</item>
+        ///     <item>Protocol (BYTE) - routing protocol (must be 0 = TCP)</item>
+        ///     <item>Port (USHORT) - routing port number</item>
+        ///     <item>AlternateServerNameLength (USHORT) - length of the alternate server name in characters</item>
+        ///     <item>AlternateServerName (UNICODE_STRING) - the server name to route to</item>
+        ///     <item>AlternateDatabaseNameLength (USHORT) - length of the alternate database name in characters</item>
+        ///     <item>AlternateDatabaseName (UNICODE_STRING) - the database name to route to</item>
+        ///     <item>OldValueLength (USHORT) - length of the old value</item>
+        ///     <item>OldValue (BYTE[]) - old value (skipped)</item>
+        /// </list>
+        /// </summary>
+        private TdsOperationStatus TryProcessEnhancedRoutingToken(SqlEnvChange env, TdsParserStateObject stateObj)
+        {
+            ushort newLength;
+            TdsOperationStatus result = stateObj.TryReadUInt16(out newLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            env._newLength = newLength;
+
+            byte protocol;
+            result = stateObj.TryReadByte(out protocol);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort port;
+            result = stateObj.TryReadUInt16(out port);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort serverLen;
+            result = stateObj.TryReadUInt16(out serverLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string serverName;
+            result = stateObj.TryReadString(serverLen, out serverName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort databaseLen;
+            result = stateObj.TryReadUInt16(out databaseLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string databaseName;
+            result = stateObj.TryReadString(databaseLen, out databaseName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            env._newRoutingInfo = new RoutingInfo(protocol, port, serverName, databaseName);
+
+            ushort oldLength;
+            result = stateObj.TryReadUInt16(out oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            result = stateObj.TrySkipBytes(oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            // 5 = 2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+            env._length = env._newLength + oldLength + 5;
+
             return TdsOperationStatus.Done;
         }
 
