@@ -324,13 +324,6 @@ extends:
     - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseExtAzure, parameters.releaseAKVProvider) }}:
       - stage: release
         displayName: 'Release to NuGet (Dry Run)'
-        dependsOn:
-          - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
-            - build_addons
-          - ${{ if eq(parameters.buildSqlClient, true) }}:
-            - buildMDS
-            - mds_package_validation
-          - build_independent
         variables:
           ob_release_usedeploymentjob: true # use deployment job for environment-based approvals
           ob_release_environment: 'NuGet-DryRun' # non-official pipeline always uses dry-run environment.
