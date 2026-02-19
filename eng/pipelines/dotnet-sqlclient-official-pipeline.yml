@@ -386,6 +386,7 @@ extends:
               artifactName: drop_build_independent_build_signed_sqlserver_package
               nugetServiceConnection: $(NuGetServiceConnection)
               environment: 'NuGet-Production'
+              isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
         - ${{ if eq(parameters.releaseLogging, true) }}:
@@ -395,6 +396,7 @@ extends:
               artifactName: drop_build_independent_build_signed_Logging_package
               nugetServiceConnection: $(NuGetServiceConnection)
               environment: 'NuGet-Production'
+              isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
         - ${{ if eq(parameters.releaseAbstractions, true) }}:
@@ -404,6 +406,7 @@ extends:
               artifactName: drop_build_independent_build_signed_Abstractions_package
               nugetServiceConnection: $(NuGetServiceConnection)
               environment: 'NuGet-Production'
+              isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
         - ${{ if eq(parameters.releaseSqlClient, true) }}:
@@ -413,6 +416,7 @@ extends:
               artifactName: drop_buildMDS_build_signed_package
               nugetServiceConnection: $(NuGetServiceConnection)
               environment: 'NuGet-Production'
+              isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
         - ${{ if eq(parameters.releaseExtAzure, true) }}:
@@ -422,6 +426,7 @@ extends:
               artifactName: drop_buildMDS_build_signed_Azure_package
               nugetServiceConnection: $(NuGetServiceConnection)
               environment: 'NuGet-Production'
+              isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
         - ${{ if eq(parameters.releaseAKVProvider, true) }}:
@@ -431,4 +436,5 @@ extends:
               artifactName: drop_build_addons_buildSignedAkvPackage
               nugetServiceConnection: $(NuGetServiceConnection)
               environment: 'NuGet-Production'
+              isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
