@@ -4,9 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Reusable job template for publishing a signed NuGet package to a NuGet feed.
+# Reusable deployment job template for publishing a signed NuGet package to a NuGet feed.
 # Downloads the pipeline artifact produced by a build job and pushes .nupkg and
 # .snupkg files using NuGetCommand@2.
+#
+# Uses ADO deployment jobs with environment support, enabling approval gates
+# configured on the target environment (e.g., NuGet-Production).
 
 parameters:
     - # Human-readable package name (used in display strings).
@@ -32,52 +35,63 @@ parameters:
       type: boolean
       default: false
 
-    - # Optional list of jobs this job depends on (e.g., manual_approval).
+    - # ADO environment name. Configure approval gates on this environment.
+      # Set to empty string to skip environment-based approvals.
+      name: environment
+      type: string
+      default: 'NuGet-Production'
+
+    - # Optional list of jobs this deployment depends on.
       name: dependsOn
       type: object
       default: []
 
     - # Optional runtime condition.  When set, the job is skipped if the
-      # condition evaluates to false (e.g., approval rejected / timed out).
+      # condition evaluates to false.
       name: condition
       type: string
       default: ''
 
 jobs:
-    - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
+    - deployment: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
       displayName: 'Publish ${{ parameters.packageDisplayName }}'
       dependsOn: ${{ parameters.dependsOn }}
       ${{ if ne(parameters.condition, '') }}:
         condition: ${{ parameters.condition }}
       pool:
           type: windows
+      ${{ if ne(parameters.environment, '') }}:
+        environment: ${{ parameters.environment }}
 
       variables:
           # OneBranch requires ob_outputDirectory to be defined for all jobs.
           # This job doesn't produce artifacts, so we use a placeholder path.
           ob_outputDirectory: '$(Build.SourcesDirectory)/packages'
 
-      steps:
-          - download: current
-            artifact: ${{ parameters.artifactName }}
-            patterns: |
-                **/*.nupkg
-                **/*.snupkg
-            displayName: 'Download ${{ parameters.packageDisplayName }} artifacts'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+                - download: current
+                  artifact: ${{ parameters.artifactName }}
+                  patterns: |
+                      **/*.nupkg
+                      **/*.snupkg
+                  displayName: 'Download ${{ parameters.packageDisplayName }} artifacts'
 
-          - ${{ if eq(parameters.dryRun, true) }}:
-            - script: |
-                echo "##[section]DRY RUN — the following packages would be published:"
-                dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.nupkg" 2>nul || echo "(no .nupkg found)"
-                dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.snupkg" 2>nul || echo "(no .snupkg found)"
-                echo "##[warning]Dry run mode — no packages were pushed."
-              displayName: 'Dry Run — List ${{ parameters.packageDisplayName }} packages'
+                - ${{ if eq(parameters.dryRun, true) }}:
+                  - script: |
+                      echo "##[section]DRY RUN — the following packages would be published:"
+                      dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.nupkg" 2>nul || echo "(no .nupkg found)"
+                      dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.snupkg" 2>nul || echo "(no .snupkg found)"
+                      echo "##[warning]Dry run mode — no packages were pushed."
+                    displayName: 'Dry Run — List ${{ parameters.packageDisplayName }} packages'
 
-          - ${{ else }}:
-            - task: NuGetCommand@2
-              displayName: 'Push ${{ parameters.packageDisplayName }} to NuGet'
-              inputs:
-                  command: push
-                  packagesToPush: '$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}'
-                  nuGetFeedType: external
-                  publishFeedCredentials: '${{ parameters.nugetServiceConnection }}'
+                - ${{ else }}:
+                  - task: NuGetCommand@2
+                    displayName: 'Push ${{ parameters.packageDisplayName }} to NuGet'
+                    inputs:
+                        command: push
+                        packagesToPush: '$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}'
+                        nuGetFeedType: external
+                        publishFeedCredentials: '${{ parameters.nugetServiceConnection }}'
