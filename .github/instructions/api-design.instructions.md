@@ -27,12 +27,16 @@ Reference assemblies define the public contract:
 - Public and protected members
 - Method signatures (no implementation)
 
+### Nullable Annotations
+The reference assemblies do **not** use C# nullable context (`#nullable enable`). All reference types in `ref/` files must be declared as non-nullable (e.g., `string` not `string?`), even when the implementation uses nullable annotations. This is a project-wide convention — do not add `?` nullable annotations to ref assembly signatures.
+
 ### Updating Public APIs
 When adding or modifying public APIs:
 1. Update reference assembly in BOTH `netcore/ref/` and `netfx/ref/`
 2. Ensure signatures match across platforms
 3. Add XML documentation
 4. Consider backward compatibility
+5. Do not use nullable annotations (`?`) in ref assemblies (see above)
 
 ## ADO.NET Interface Compliance
 
