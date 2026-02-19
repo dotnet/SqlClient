@@ -8,19 +8,21 @@
   differences (additions or removals).
 
   Usage:
-    dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+    dotnet build build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
 
   BaselinePackageVersion is required. Both the legacy ref projects (netcore/ref,
   netfx/ref) and the new consolidated ref project (ref/) are built and compared.
+
+  Depends on src/Directory.Build.props for path properties and build configuration.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!-- ================================================================== -->
   <!-- _SetApiCompatProperties                                            -->
   <!--                                                                    -->
-  <!-- All path properties are set inside a target so that they are        -->
-  <!-- evaluated at execution time, after $(Configuration) and other       -->
-  <!-- properties from build.proj have been resolved.                      -->
+  <!-- All path properties are set inside a target so that they are       -->
+  <!-- evaluated at execution time, after $(Configuration) and other      -->
+  <!-- properties from build.proj have been resolved.                     -->
   <!-- ================================================================== -->
   <Target Name="_SetApiCompatProperties">
     <PropertyGroup>
@@ -76,7 +78,7 @@
   <Target Name="_ValidateBaselineVersion">
     <Error
       Condition="'$(BaselinePackageVersion)' == ''"
-      Text="BaselinePackageVersion is required. Specify the published NuGet package version to compare against, e.g.: /p:BaselinePackageVersion=6.1.4" />
+      Text="BaselinePackageVersion is required. Specify the published MDS NuGet package version to compare against, e.g.: /p:BaselinePackageVersion=6.1.4" />
   </Target>
 
   <!-- ================================================================== -->
@@ -85,22 +87,22 @@
   <Target Name="_DownloadBaselinePackage" DependsOnTargets="_ValidateBaselineVersion;_SetApiCompatProperties">
     <!-- Skip download if already extracted -->
     <Message
-      Condition="Exists('$(BaselineExtractDir)ref\')"
+      Condition="Exists('$(BaselineExtractDir)')"
       Importance="high"
-      Text="Baseline package $(BaselinePackageVersion) already extracted at $(BaselineExtractDir). Skipping download." />
+      Text="Baseline package already extracted. Skipping download." />
 
     <MakeDir
-      Condition="!Exists('$(BaselineExtractDir)ref\')"
+      Condition="!Exists('$(BaselineExtractDir)')"
       Directories="$(BaselinePackageDir)" />
 
     <DownloadFile
-      Condition="!Exists('$(BaselineExtractDir)ref\')"
+      Condition="!Exists('$(BaselineExtractDir)')"
       SourceUrl="$(BaselinePackageUrl)"
       DestinationFolder="$(BaselinePackageDir)"
       DestinationFileName="microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg" />
 
     <Unzip
-      Condition="!Exists('$(BaselineExtractDir)ref\')"
+      Condition="!Exists('$(BaselineExtractDir)')"
       SourceFiles="$(BaselineNupkgPath)"
       DestinationFolder="$(BaselineExtractDir)"
       OverwriteReadOnlyFiles="true" />
@@ -111,9 +113,9 @@
   </Target>
 
   <!-- ================================================================== -->
-  <!-- _RestoreApiCompatTool                                              -->
+  <!-- _RestoreTools                                                      -->
   <!-- ================================================================== -->
-  <Target Name="_RestoreApiCompatTool" DependsOnTargets="_SetApiCompatProperties">
+  <Target Name="_RestoreTools" DependsOnTargets="_SetApiCompatProperties">
     <Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />
   </Target>
 
@@ -122,13 +124,9 @@
   <!-- ================================================================== -->
   <Target Name="_BuildLegacyRefNetFx" DependsOnTargets="_SetApiCompatProperties" Condition="'$(IsEnabledWindows)' == 'true'">
     <Message Importance="high" Text="Building legacy netfx ref project (net462)..." />
-    <MSBuild
-      Projects="$(LegacyNetFxRefProject)"
-      Targets="restore"
-      Properties="$(ProjectProperties)" />
-    <MSBuild
-      Projects="$(LegacyNetFxRefProject)"
-      Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
+    <MSBuild 
+      Targets="Restore;Build" 
+      Projects="$(LegacyNetFxRefProject)"/>
   </Target>
 
   <!-- ================================================================== -->
@@ -136,14 +134,11 @@
   <!-- ================================================================== -->
   <Target Name="_BuildLegacyRefNetCore" DependsOnTargets="_SetApiCompatProperties">
     <Message Importance="high" Text="Building legacy netcore ref project (net8.0, net9.0, netstandard2.0)..." />
-    <MSBuild
+    <!-- Build legacy netcore ref project using AnyOS to align with expected directory LegacyNetCoreRefDir -->
+    <MSBuild 
+      Targets="Restore;Build" 
       Projects="$(LegacyNetCoreRefProject)"
-      Targets="restore"
-      Properties="$(ProjectProperties)" />
-    <MSBuild
-      Projects="$(LegacyNetCoreRefProject)"
-      Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS"
-      RemoveProperties="TargetsWindows;TargetsUnix;" />
+      Properties="$(ProjectProperties);OSGroup=AnyOS"/>
   </Target>
 
   <!-- ================================================================== -->
@@ -151,15 +146,16 @@
   <!-- ================================================================== -->
   <Target Name="_BuildNewRefProject" DependsOnTargets="_SetApiCompatProperties">
     <Message Importance="high" Text="Building new consolidated ref project (all TFMs)..." />
-    <Exec Command="dotnet restore &quot;$(NewRefProjectPath)&quot;" />
-    <Exec Command="dotnet build &quot;$(NewRefProjectPath)&quot; --configuration $(Configuration) --no-restore" />
+    <MSBuild 
+      Targets="Restore;Build" 
+      Projects="$(NewRefProjectPath)"/>
   </Target>
 
   <!-- ================================================================== -->
   <!-- _RunRefApiCompat                                                   -->
   <!-- ================================================================== -->
   <Target Name="_RunRefApiCompat"
-          DependsOnTargets="_DownloadBaselinePackage;_RestoreApiCompatTool;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
+          DependsOnTargets="_DownloadBaselinePackage;_RestoreTools;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
 
     <!--
       For each TFM, compare:

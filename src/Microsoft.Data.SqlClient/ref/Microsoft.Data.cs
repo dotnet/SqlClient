@@ -10,6 +10,7 @@ namespace Microsoft.Data;
 #endif
 public sealed class OperationAbortedException : System.SystemException
 {
+    // Included to hide the default public constructor. 
     internal OperationAbortedException() { }
 
     #if NETFRAMEWORK
