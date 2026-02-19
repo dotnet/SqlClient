@@ -325,6 +325,9 @@ extends:
             - build_addons
           - buildMDS
           - mds_package_validation
+        variables:
+          ob_release_usedeploymentjob: true # use deployment job for environment-based approvals
+          ob_release_environment: 'NuGet-Production' # configure environment approvals in ADO environment.
         jobs:
         # Publish jobs — use reusable job template for consistency.
         # Controlled by releaseDryRun parameter (default: true).
