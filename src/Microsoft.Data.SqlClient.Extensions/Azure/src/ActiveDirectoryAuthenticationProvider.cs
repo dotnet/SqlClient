@@ -112,10 +112,10 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     }
 
     #if NETFRAMEWORK
-    private Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc = null;
+    private Func<System.Windows.Forms.IWin32Window>? _iWin32WindowFunc = null;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
-    public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this._iWin32WindowFunc = iWin32WindowFunc;
+    public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => _iWin32WindowFunc = iWin32WindowFunc;
     #endif
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
@@ -607,7 +607,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
     private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey, CancellationToken cancellationToken)
     {
-        if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication clientApplicationInstance))
+        if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication? clientApplicationInstance))
         {
             await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken);
             try
@@ -631,7 +631,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private static async Task<AccessToken> GetTokenAsync(TokenCredentialKey tokenCredentialKey, string secret,
         TokenRequestContext tokenRequestContext, CancellationToken cancellationToken)
     {
-        if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData tokenCredentialInstance))
+        if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData? tokenCredentialInstance))
         {
             await s_tokenCredentialMapModifierSemaphore.WaitAsync(cancellationToken);
             try
@@ -704,17 +704,17 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
             .CreateWithApplicationOptions(new PublicClientApplicationOptions
             {
-                ClientId = publicClientAppKey._applicationClientId,
+                ClientId = publicClientAppKey.ApplicationClientId,
                 ClientName = typeof(ActiveDirectoryAuthenticationProvider).FullName,
                 ClientVersion = Extensions.Azure.ThisAssembly.InformationalVersion,
-                RedirectUri = publicClientAppKey._redirectUri,
+                RedirectUri = publicClientAppKey.RedirectUri,
             })
-            .WithAuthority(publicClientAppKey._authority);
+            .WithAuthority(publicClientAppKey.Authority);
 
         #if NETFRAMEWORK
-        if (_iWin32WindowFunc is not null)
+        if (publicClientAppKey.IWin32WindowFunc is not null)
         {
-            builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+            builder.WithParentActivityOrWindow(publicClientAppKey.IWin32WindowFunc);
         }
         #endif
 
@@ -795,45 +795,51 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
     internal class PublicClientAppKey
     {
-        public readonly string _authority;
-        public readonly string _redirectUri;
-        public readonly string _applicationClientId;
+        public string Authority { get; }
+        public string RedirectUri { get; }
+        public string ApplicationClientId { get; }
         #if NETFRAMEWORK
-        public readonly Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc;
+        public Func<System.Windows.Forms.IWin32Window>? IWin32WindowFunc { get; }
         #endif
 
-        public PublicClientAppKey(string authority, string redirectUri, string applicationClientId
-        #if NETFRAMEWORK
-        , Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc
-        #endif
-            )
-        {
-            _authority = authority;
-            _redirectUri = redirectUri;
-            _applicationClientId = applicationClientId;
+        public PublicClientAppKey(
+            string authority,
+            string redirectUri,
+            string applicationClientId
             #if NETFRAMEWORK
-            _iWin32WindowFunc = iWin32WindowFunc;
+            , Func<System.Windows.Forms.IWin32Window>? iWin32WindowFunc
+            #endif
+        )
+        {
+            Authority = authority;
+            RedirectUri = redirectUri;
+            ApplicationClientId = applicationClientId;
+            #if NETFRAMEWORK
+            IWin32WindowFunc = iWin32WindowFunc;
             #endif
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj != null && obj is PublicClientAppKey pcaKey)
             {
-                return (string.CompareOrdinal(_authority, pcaKey._authority) == 0
-                    && string.CompareOrdinal(_redirectUri, pcaKey._redirectUri) == 0
-                    && string.CompareOrdinal(_applicationClientId, pcaKey._applicationClientId) == 0
+                return (string.CompareOrdinal(Authority, pcaKey.Authority) == 0
+                    && string.CompareOrdinal(RedirectUri, pcaKey.RedirectUri) == 0
+                    && string.CompareOrdinal(ApplicationClientId, pcaKey.ApplicationClientId) == 0
                     #if NETFRAMEWORK
-                    && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
+                    && IWin32WindowFunc == pcaKey.IWin32WindowFunc
                     #endif
                 );
             }
             return false;
         }
 
-        public override int GetHashCode() => Tuple.Create(_authority, _redirectUri, _applicationClientId
-        #if NETFRAMEWORK
-            , _iWin32WindowFunc
+        public override int GetHashCode() => Tuple.Create(
+            Authority,
+            RedirectUri,
+            ApplicationClientId
+            #if NETFRAMEWORK
+            , IWin32WindowFunc
             #endif
             ).GetHashCode();
     }
@@ -867,7 +873,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             _clientId = clientId;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj != null && obj is TokenCredentialKey tcKey)
             {
