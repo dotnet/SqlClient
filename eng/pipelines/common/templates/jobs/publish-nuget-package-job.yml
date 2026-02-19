@@ -32,10 +32,10 @@ parameters:
     type: boolean
     default: false
 
-  # Globbing pattern to match .nupkg files within the downloaded artifact.
+  # Globbing pattern to match .nupkg and .snupkg files within the downloaded artifact.
   - name: packagePattern
     type: string
-    default: '**/*.nupkg'
+    default: '**/*.nupkg;**/*.snupkg'
 
   # When true, list packages that would be published without actually pushing.
   # Use for non-official pipelines to validate the release stage without risk.
