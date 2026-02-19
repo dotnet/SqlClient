@@ -45,7 +45,7 @@ parameters:
 
 jobs:
     - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
-      displayName: 'Publish ${{ parameters.packageDisplayName }}${{ if eq(parameters.dryRun, true) }} (dry run)${{ else }}${{ end }}'
+      displayName: 'Publish ${{ parameters.packageDisplayName }}'
       dependsOn: ${{ parameters.dependsOn }}
       ${{ if ne(parameters.condition, '') }}:
         condition: ${{ parameters.condition }}
