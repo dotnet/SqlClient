@@ -97,6 +97,7 @@ jobs:
     parameters:
       buildConfiguration: Release
       displayName: 'Create MDS NuGet Package'
+      generateSymbolsPackage: true
       installNuget: false
       nuspecPath: $(nuspecPath)
       outputDirectory: $(artifactDirectory)
