@@ -27,11 +27,6 @@ parameters:
   - name: nugetServiceConnection
     type: string
 
-  # ADO environment name for deployment approval gates.
-  - name: environment
-    type: string
-    default: 'NuGet-DryRun'  # Use a non-production environment by default to require explicit override for official pipelines.
-
   # Indicates whether this is a production release (enables additional 1ES PT checks).
   - name: isProduction
     type: boolean
@@ -49,13 +44,10 @@ parameters:
     default: false
 
 jobs:
-- deployment: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
+- job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
   displayName: 'Publish ${{ parameters.packageDisplayName }}'
-  environment: ${{ parameters.environment }}
-  pool:
-    vmImage: 'windows-latest'
 
-  # OneBranch 1ES PT release job requirements
+  # Template context inputs are used to pass parameters to the deployment job since it doesn't automatically download pipeline artifacts.
   templateContext:
     type: releaseJob
     isProduction: ${{ parameters.isProduction }}
@@ -63,30 +55,32 @@ jobs:
     - input: pipelineArtifact
       artifact: ${{ parameters.artifactName }}
       targetPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
-
+  
   variables:
     - name: ob_outputDirectory
       value: '$(Build.SourcesDirectory)/packages'
 
-  strategy:
-    runOnce:
-      deploy:
-        steps:
-        # Artifact is downloaded via templateContext.inputs per OneBranch requirements
+  pool:
+    type: release 
+    
+  steps:
+  # Artifact is downloaded via templateContext.inputs per OneBranch requirements
 
-        - ${{ if eq(parameters.dryRun, true) }}:
-          - script: |
-              echo "##[section]DRY RUN — the following packages would be published:"
-              dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.nupkg" 2>nul || echo "(no .nupkg found)"
-              dir /s /b "$(Pipeline.Workspace)\${{ parameters.artifactName }}\*.snupkg" 2>nul || echo "(no .snupkg found)"
-              echo "##[warning]Dry run mode — no packages were pushed."
-            displayName: 'Dry Run — List ${{ parameters.packageDisplayName }} packages'
+  - ${{ if eq(parameters.dryRun, true) }}:
+    - pwsh: |
+        Write-Host "##[section]DRY RUN — the following packages would be published:"
+        $nupkgs = Get-ChildItem -Path "$(Pipeline.Workspace)/${{ parameters.artifactName }}" -Filter "*.nupkg" -Recurse -ErrorAction SilentlyContinue
+        $snupkgs = Get-ChildItem -Path "$(Pipeline.Workspace)/${{ parameters.artifactName }}" -Filter "*.snupkg" -Recurse -ErrorAction SilentlyContinue
+        if ($nupkgs) { $nupkgs | ForEach-Object { Write-Host $_.FullName } } else { Write-Host "(no .nupkg found)" }
+        if ($snupkgs) { $snupkgs | ForEach-Object { Write-Host $_.FullName } } else { Write-Host "(no .snupkg found)" }
+        Write-Host "##[warning]Dry run mode — no packages were pushed."
+      displayName: 'Dry Run — List ${{ parameters.packageDisplayName }} packages'
 
-        - ${{ else }}:
-          - task: NuGetCommand@2
-            displayName: 'Push ${{ parameters.packageDisplayName }} to NuGet'
-            inputs:
-              command: push
-              packagesToPush: '$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}'
-              nuGetFeedType: external
-              publishFeedCredentials: '${{ parameters.nugetServiceConnection }}'
+  - ${{ else }}:
+    - task: NuGetCommand@2
+      displayName: 'Push ${{ parameters.packageDisplayName }} to NuGet'
+      inputs:
+        command: push
+        packagesToPush: '$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}'
+        nuGetFeedType: external
+        publishFeedCredentials: '${{ parameters.nugetServiceConnection }}'

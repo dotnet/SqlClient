@@ -363,11 +363,12 @@ extends:
     # reviewing the build.  Only designated approvers are notified.
     # ------------------------------------------------------------------
     - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseExtAzure, parameters.releaseAKVProvider) }}:
-      - stage: release
+      - stage: Production_Release
         displayName: 'Release to NuGet'
         variables:
+          ob_release_environment: 'Production' # set environment for OneBranch checks and deployment jobs
           ob_release_usedeploymentjob: true # use deployment job for environment-based approvals
-          ob_release_environment: 'NuGet-Production' # configure environment approvals in ADO environment.
+          ob_deploymentjob_environment: 'NuGet-Production' # configure environment approvals in ADO environment.
         jobs:
         # Publish jobs — use reusable job template for consistency.
         # Controlled by releaseDryRun parameter. For approval workflows,
@@ -378,7 +379,6 @@ extends:
               packageDisplayName: Microsoft.SqlServer.Server
               artifactName: drop_build_independent_build_signed_sqlserver_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              environment: 'NuGet-Production'
               isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
@@ -388,7 +388,6 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.Extensions.Logging
               artifactName: drop_build_independent_build_signed_Logging_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              environment: 'NuGet-Production'
               isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
@@ -398,7 +397,6 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: drop_build_independent_build_signed_Abstractions_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              environment: 'NuGet-Production'
               isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
@@ -408,7 +406,6 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient
               artifactName: drop_buildMDS_build_signed_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              environment: 'NuGet-Production'
               isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
@@ -418,7 +415,6 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: drop_buildMDS_build_signed_Azure_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              environment: 'NuGet-Production'
               isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
 
@@ -428,6 +424,5 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: drop_build_addons_buildSignedAkvPackage
               nugetServiceConnection: $(NuGetServiceConnection)
-              environment: 'NuGet-Production'
               isProduction: true
               dryRun: ${{ parameters.releaseDryRun }}
