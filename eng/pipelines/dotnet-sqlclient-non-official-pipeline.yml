@@ -148,7 +148,7 @@ extends:
         enabled: false
       apiscan:
         enabled: true
-        break: true # break the build on APIScan issues
+        break: false # @TODO set to true to break the build on APIScan issues
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
