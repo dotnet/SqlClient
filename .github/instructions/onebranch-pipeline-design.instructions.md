@@ -75,16 +75,16 @@ sequenceDiagram
         B2b-->>P: ✅ Signed .nupkg
     end
 
-    Note over P: Validation (dependsOn: buildMDS, parallel with Stage 3)
+    Note over P: Validation + Stage 3 (both dependsOn: buildMDS, run in parallel)
 
-    P->>V: Validate signed MDS package
-    V-->>P: ✅ Package validation passed
-
-    Note over P: Stage 3 — build_addons (dependsOn: buildMDS)
-
-    P->>B3: Build + ESRP sign + pack AKV Provider
-    Note right of B3: Downloads: SqlClient,<br/>Extensions.Logging artifacts
-    B3-->>P: ✅ Signed .nupkg
+    par Validation and Stage 3 (parallel)
+        P->>V: Validate signed MDS package
+        V-->>P: ✅ Package validation passed
+    and
+        P->>B3: Build + ESRP sign + pack AKV Provider
+        Note right of B3: Downloads: SqlClient,<br/>Extensions.Logging artifacts
+        B3-->>P: ✅ Signed .nupkg
+    end
 
     Note over T,R: ══════ RELEASE PHASE (on-demand) ══════
 
