@@ -11,8 +11,8 @@ Two pipeline variants exist from the same stage/job structure:
 
 | Pipeline | Template | Trigger | Purpose |
 |----------|----------|---------|---------|
-| `dotnet-sqlclient-signing-pipeline.yml` | `OneBranch.Official.CrossPlat.yml` | CI + scheduled | Production-signed builds |
-| `dotnet-sqlclient-signing-nonofficial-pipeline.yml` | `OneBranch.NonOfficial.CrossPlat.yml` | Manual only | Validation / test builds (release in dry-run mode) |
+| `dotnet-sqlclient-official-pipeline.yml` | `OneBranch.Official.CrossPlat.yml` | CI + scheduled | Production-signed builds |
+| `dotnet-sqlclient-non-official-pipeline.yml` | `OneBranch.NonOfficial.CrossPlat.yml` | Manual only | Validation / test builds (release in dry-run mode) |
 
 Both pipelines use the **OneBranch (1ES) governed template** infrastructure and share identical stage definitions, job templates, and variable chains.
 
@@ -89,8 +89,8 @@ sequenceDiagram
     Note over T,R: ══════ RELEASE PHASE (on-demand) ══════
 
     alt At least one release parameter is true
-        P->>R: Stage: release (dependsOn: build_addons, mds_package_validation)
-        Note right of R: Manual Approval Gate<br/>(ManualValidation@0, 3d timeout)
+        P->>R: Stage: release (dependsOn: conditional on build stages)
+        Note right of R: ADO Environment Approval<br/>(NuGet-Production environment)
         R-->>P: ✅ Approved
         Note right of R: Publish selected packages<br/>via NuGetCommand@2
         R-->>P: ✅ Published to NuGet
@@ -111,14 +111,15 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 
 #### Stage 1 — `build_independent`: Independent Packages (no dependencies)
 
-| Job Template | Package | Build Target |
-|--------------|---------|--------------|
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` / `PackLogging` |
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` |
-| `build-signed-sqlserver-package-job.yml` | `Microsoft.SqlServer.Server` | *(nuspec-based)* |
+| Job Template | Package | Build Target | Condition |
+|--------------|---------|--------------|-----------|
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` / `PackLogging` | `buildAKVProvider OR buildSqlClient` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` | `buildSqlClient` |
+| `build-signed-sqlserver-package-job.yml` | `Microsoft.SqlServer.Server` | *(nuspec-based)* | `buildSqlServerServer` |
 
 - **`dependsOn`**: none
-- **Parallelism**: All 3 jobs run in parallel
+- **Parallelism**: Jobs run in parallel (depending on which are enabled)
+- **Conditional builds**: Each job is wrapped with compile-time `${{ if }}` conditionals based on build parameters
 - csproj-based jobs (`build-signed-csproj-package-job.yml`) perform: **Build DLLs → ESRP DLL signing → NuGet pack (NoBuild=true) → ESRP NuGet signing** → publish artifact
 - nuspec-based job (`build-signed-sqlserver-package-job.yml`) performs: build → ESRP DLL signing → NuGet pack → ESRP NuGet signing → publish artifact
 
@@ -129,6 +130,7 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 | `build-signed-package-job.yml` | `Microsoft.Data.SqlClient` | *(nuspec-based)* | `Extensions.Logging`, `Extensions.Abstractions` |
 | `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `BuildAzure` / `PackAzure` | `Extensions.Abstractions` |
 
+- **Stage condition**: `buildSqlClient = true` (entire stage is excluded when false)
 - **`dependsOn`**: `build_independent`
 - **Parallelism**: Both jobs run in parallel
 - The MDS (SqlClient) job also publishes symbol packages (`.snupkg`) when `publishSymbols` is true
@@ -140,6 +142,7 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 |--------------|---------|----------------------|
 | `build-akv-official-job.yml` | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Extensions.Logging` |
 
+- **Stage condition**: `buildAKVProvider AND buildSqlClient` (both must be true)
 - **`dependsOn`**: `buildMDS`
 - Downloads `Microsoft.Data.SqlClient.nupkg` (from Stage 2) and `Microsoft.Data.SqlClient.Extensions.Logging.nupkg` (from Stage 1) pipeline artifacts
 - Uses separate ESRP signing credentials (`Signing`-prefixed variables from `esrp-variables-v2` group)
@@ -148,6 +151,7 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 
 Validates the signed MDS (SqlClient) package after Stage 2 completes.
 
+- **Stage condition**: `buildSqlClient = true`
 - **`dependsOn`**: `buildMDS`
 - Runs in parallel with Stage 3 (`build_addons`)
 - Uses `validate-signed-package-job.yml` template
@@ -157,26 +161,23 @@ Validates the signed MDS (SqlClient) package after Stage 2 completes.
 
 The release stage is gated and only executes on demand when at least one release parameter is set to `true` at queue time.
 
-- **`dependsOn`**: `build_addons`, `mds_package_validation` (all build and validation stages must succeed)
-- **Gate**: `ManualValidation@0` task in an agentless job (`pool: server`) with a 24-hour timeout
+- **`dependsOn`**: Conditional based on which build stages are enabled:
+  - `build_independent` (always)
+  - `buildMDS`, `mds_package_validation` (when `buildSqlClient = true`)
+  - `build_addons` (when `buildAKVProvider AND buildSqlClient`)
+- **Gate**: ADO Environment approvals configured on `NuGet-Production` environment
 - **Package selection**: Controlled by 6 runtime boolean parameters (see Section 5.2)
 - **Stage condition**: The entire stage is skipped unless at least one release parameter is `true`:
   ```yaml
-  condition: >-
-    and(
-      succeeded(),
-      or(
-        eq('${{ parameters.releaseSqlServerServer }}', 'true'),
-        eq('${{ parameters.releaseLogging }}', 'true'),
-        ...
-      )
-    )
+  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, ...) }}:
+    - stage: release
   ```
 - **Publish jobs**: Each package has a conditional publish job that is included at compile time only when its parameter is `true`:
   ```yaml
   - ${{ if eq(parameters.releaseXxx, true) }}:
     - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
   ```
+- **Environment variables**: Stage sets `ob_release_usedeploymentjob: true` and `ob_release_environment: 'NuGet-Production'` to enable OneBranch environment-based approvals
 
 #### Artifact → Publish Job Mapping
 
@@ -236,6 +237,11 @@ parameters:
     type: boolean
     default: true
 
+  - name: buildSqlClient
+    displayName: 'Build Microsoft.Data.SqlClient and Extensions'
+    type: boolean
+    default: true
+
   - name: buildAKVProvider
     displayName: 'Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
     type: boolean
@@ -244,7 +250,12 @@ parameters:
 
 The `isPreview` parameter controls version resolution — when `true`, each package uses its preview version (e.g., `loggingPackagePreviewVersion`) instead of the GA version (e.g., `loggingPackageVersion`). All versions are defined in the centralized `libraries/common-variables.yml`.
 
-The `buildSqlServerServer` and `buildAKVProvider` parameters enable selective package building. When set to `false`, the respective jobs/stages are excluded at compile-time using `${{ if eq(parameters.xxx, true) }}` conditionals. This allows faster pipeline runs when only certain packages need to be built.
+The build parameters enable selective package building:
+- `buildSqlServerServer` — controls SqlServer.Server build job
+- `buildSqlClient` — controls MDS, Extensions.Azure, Abstractions, Logging (when AKV is disabled), and validation stages
+- `buildAKVProvider` — controls AKV Provider build (also requires `buildSqlClient=true`) and Logging (when SqlClient is disabled)
+
+When set to `false`, the respective jobs/stages are excluded at compile-time using `${{ if }}` conditionals. This allows faster pipeline runs when only certain packages need to be built.
 
 ### 5.2 Release Parameters
 
@@ -292,7 +303,7 @@ parameters:
 Variables are defined in a layered template chain. All variable groups live inside the templates — none are declared inline at the pipeline level:
 
 ```
-dotnet-sqlclient-signing-pipeline.yml
+dotnet-sqlclient-official-pipeline.yml
   └─ libraries/variables.yml
        └─ libraries/build-variables.yml
             ├─ group: 'Release Variables'
@@ -412,7 +423,7 @@ Each job copies its signed DLLs and PDBs to a package-specific folder under `$(B
 
 ## 10. Trigger Configuration
 
-### Official Pipeline (`dotnet-sqlclient-signing-pipeline.yml`)
+### Official Pipeline (`dotnet-sqlclient-official-pipeline.yml`)
 
 ```yaml
 trigger:
@@ -443,7 +454,7 @@ schedules:
 - **Scheduled**: Weekly full build (Sundays) + weekday builds (Mon–Fri)
 - **No PR trigger**: Official pipeline should not run on PRs (separate PR pipelines exist)
 
-### Non-Official Pipeline (`dotnet-sqlclient-signing-nonofficial-pipeline.yml`)
+### Non-Official Pipeline (`dotnet-sqlclient-non-official-pipeline.yml`)
 
 ```yaml
 trigger: none
@@ -477,6 +488,7 @@ pr: none
 7. **Dependency-aware stage ordering** — ensures packages are always built after their dependencies, guaranteeing consistent, reproducible builds.
 8. **Validation in parallel with Stage 3** — MDS package validation runs alongside AKV Provider build (both depend on Stage 2), reducing total pipeline duration.
 9. **Selective on-demand release** — 6 boolean parameters control which packages are published; the release stage is entirely skipped when none are selected, keeping normal CI builds unaffected.
-10. **ManualValidation@0 approval gate** — uses an agentless server job (no agent pool consumed) with a 24-hour timeout; simpler than Environment-based approvals and requires no external resource creation.
+10. **ADO Environment approval gate** — uses `NuGet-Production` environment with configured approvals; simpler than `ManualValidation@0` and integrates with ADO's approval workflows via `ob_release_environment` variable.
 11. **Compile-time conditional publish jobs** — `${{ if eq(parameters.releaseXxx, true) }}` template expansion ensures unselected publish jobs are excluded entirely from the pipeline run (not just skipped at runtime).
 12. **Dry-run release in non-official pipeline** — the non-official variant passes `dryRun: true` to publish jobs so the full release stage can be validated without pushing packages, preventing accidental publication from test builds.
+13. **Selective build parameters** — `buildSqlClient`, `buildSqlServerServer`, and `buildAKVProvider` allow building subsets of packages, with dependency-aware conditionals ensuring Logging builds when either SqlClient or AKV is needed.
