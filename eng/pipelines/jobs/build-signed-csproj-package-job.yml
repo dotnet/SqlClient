@@ -74,7 +74,7 @@ parameters:
 
 jobs:
     - job: build_signed_${{ replace(parameters.buildTarget, 'Build', '') }}_package
-      displayName: 'Build Signed ${{ parameters.packageDisplayName }} Package'
+      displayName: 'Build ${{ parameters.softwareName }}'
       pool:
           type: windows
 

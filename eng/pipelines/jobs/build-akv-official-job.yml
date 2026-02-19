@@ -78,7 +78,7 @@ parameters:
 
 jobs:
     - job: buildSignedAkvPackage
-      displayName: 'Build Signed AKV Package'
+      displayName: 'Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
       pool:
           type: windows
 

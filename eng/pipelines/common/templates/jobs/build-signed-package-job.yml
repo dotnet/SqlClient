@@ -20,7 +20,7 @@ parameters:
 
 jobs:
 - job: build_signed_package
-  displayName: 'Build Signed MDS Package'
+  displayName: 'Build Microsoft.Data.SqlClient'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 

@@ -340,7 +340,7 @@ extends:
         - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: SqlServer.Server
+              packageDisplayName: Microsoft.SqlServer.Server
               artifactName: drop_build_independent_build_signed_sqlserver_package
               nugetServiceConnection: $(NuGetServiceConnection)
               dryRun: true
@@ -348,7 +348,7 @@ extends:
         - ${{ if eq(parameters.releaseLogging, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Logging
+              packageDisplayName: Microsoft.Data.SqlClient.Extensions.Logging
               artifactName: drop_build_independent_build_signed_Logging_package
               nugetServiceConnection: $(NuGetServiceConnection)
               dryRun: true
@@ -356,7 +356,7 @@ extends:
         - ${{ if eq(parameters.releaseAbstractions, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Abstractions
+              packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: drop_build_independent_build_signed_Abstractions_package
               nugetServiceConnection: $(NuGetServiceConnection)
               dryRun: true
@@ -364,7 +364,7 @@ extends:
         - ${{ if eq(parameters.releaseSqlClient, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: SqlClient
+              packageDisplayName: Microsoft.Data.SqlClient
               artifactName: drop_buildMDS_build_signed_package
               nugetServiceConnection: $(NuGetServiceConnection)
               dryRun: true
@@ -372,7 +372,7 @@ extends:
         - ${{ if eq(parameters.releaseExtAzure, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Extensions.Azure
+              packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: drop_buildMDS_build_signed_Azure_package
               nugetServiceConnection: $(NuGetServiceConnection)
               dryRun: true
@@ -380,7 +380,7 @@ extends:
         - ${{ if eq(parameters.releaseAKVProvider, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: AKVProvider
+              packageDisplayName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: drop_build_addons_buildSignedAkvPackage
               nugetServiceConnection: $(NuGetServiceConnection)
               dryRun: true

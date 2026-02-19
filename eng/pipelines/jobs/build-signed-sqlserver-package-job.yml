@@ -45,7 +45,7 @@ parameters:
 
 jobs:
     - job: build_signed_sqlserver_package
-      displayName: 'Build and Sign Microsoft.SqlServer.Server'
+      displayName: 'Build Microsoft.SqlServer.Server'
       pool:
           type: windows
 
