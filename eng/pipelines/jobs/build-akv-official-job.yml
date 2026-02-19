@@ -26,6 +26,10 @@ parameters:
     - name: mdsPackageVersion
       type: string
 
+    - name: loggingPackageVersion
+      type: string
+      default: '1.0.0'
+
     - name: publishSymbols
       type: boolean
 
@@ -120,6 +124,7 @@ jobs:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
 
           - template: /eng/pipelines/steps/compound-build-akv-step.yml@self
             parameters:
@@ -127,6 +132,7 @@ jobs:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
 
           - ${{ each targetFramework in parameters.targetFrameworks }}:
               - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
