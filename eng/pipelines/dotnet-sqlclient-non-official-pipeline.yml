@@ -292,6 +292,7 @@ extends:
                   apiScanPdbPath: $(apiScanPdbPath)
                   buildConfiguration: Release
                   mdsPackageVersion: $(akvMdsPackageVersion)
+                  loggingPackageVersion: $(effectiveLoggingVersion)
                   publishSymbols: ${{ parameters['publishSymbols'] }}
                   appRegistrationClientId: $(appRegistrationClientId)
                   appRegistrationTenantId: $(appRegistrationTenantId)
