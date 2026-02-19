@@ -343,6 +343,7 @@ extends:
               packageDisplayName: Microsoft.SqlServer.Server
               artifactName: drop_build_independent_build_signed_sqlserver_package
               nugetServiceConnection: $(NuGetServiceConnection)
+              environment: 'NuGet-DryRun'
               dryRun: true
 
         - ${{ if eq(parameters.releaseLogging, true) }}:
@@ -351,6 +352,7 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.Extensions.Logging
               artifactName: drop_build_independent_build_signed_Logging_package
               nugetServiceConnection: $(NuGetServiceConnection)
+              environment: 'NuGet-DryRun'
               dryRun: true
 
         - ${{ if eq(parameters.releaseAbstractions, true) }}:
@@ -359,6 +361,7 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: drop_build_independent_build_signed_Abstractions_package
               nugetServiceConnection: $(NuGetServiceConnection)
+              environment: 'NuGet-DryRun'
               dryRun: true
 
         - ${{ if eq(parameters.releaseSqlClient, true) }}:
@@ -367,6 +370,7 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient
               artifactName: drop_buildMDS_build_signed_package
               nugetServiceConnection: $(NuGetServiceConnection)
+              environment: 'NuGet-DryRun'
               dryRun: true
 
         - ${{ if eq(parameters.releaseExtAzure, true) }}:
@@ -375,6 +379,7 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: drop_buildMDS_build_signed_Azure_package
               nugetServiceConnection: $(NuGetServiceConnection)
+              environment: 'NuGet-DryRun'
               dryRun: true
 
         - ${{ if eq(parameters.releaseAKVProvider, true) }}:
@@ -383,4 +388,5 @@ extends:
               packageDisplayName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: drop_build_addons_buildSignedAkvPackage
               nugetServiceConnection: $(NuGetServiceConnection)
+              environment: 'NuGet-DryRun'
               dryRun: true
