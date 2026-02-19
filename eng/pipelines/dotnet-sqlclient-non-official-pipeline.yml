@@ -326,6 +326,13 @@ extends:
       - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseExtAzure, parameters.releaseAKVProvider) }}:
           - stage: Test_Release
             displayName: "Release to NuGet (Dry Run)"
+            dependsOn:
+              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
+                - build_independent
+              - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
+                - buildMDS
+              - ${{ if parameters.releaseAKVProvider }}:
+                - build_addons
             variables:
               ob_release_environment: "Test" # set environment for OneBranch checks and deployment jobs; non-official pipeline always uses PPE environment for dry-run releases
               ob_release_usedeploymentjob: true # use deployment job for environment-based approvals

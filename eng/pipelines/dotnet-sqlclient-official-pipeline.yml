@@ -366,6 +366,13 @@ extends:
       - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseExtAzure, parameters.releaseAKVProvider) }}:
           - stage: Production_Release
             displayName: "Release to NuGet"
+            dependsOn:
+              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
+                - build_independent
+              - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
+                - buildMDS
+              - ${{ if parameters.releaseAKVProvider }}:
+                - build_addons
             variables:
               ob_release_environment: "Production" # set environment for OneBranch checks and deployment jobs
               ob_release_usedeploymentjob: true # use deployment job for environment-based approvals
