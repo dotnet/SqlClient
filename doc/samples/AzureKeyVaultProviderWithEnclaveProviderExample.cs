@@ -1,4 +1,4 @@
-﻿/*
+#if false
 using System;
 //<Snippet1>
 using System.Collections.Generic;
@@ -265,4 +265,4 @@ namespace AzureKeyVaultProviderWithEnclaveProviderExample
     }
 }
 //</Snippet1>
-*/
+#endif
