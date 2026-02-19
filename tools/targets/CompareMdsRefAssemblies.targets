@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  CompareRefAssemblies.targets
+  CompareMdsRefAssemblies.targets
 
   Build target that compares locally-built ref assemblies against those published
   in a specified NuGet package version of Microsoft.Data.SqlClient. Uses
@@ -8,7 +8,7 @@
   differences (additions or removals).
 
   Usage:
-    dotnet build build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+    dotnet build build.proj /t:CompareMdsRefAssemblies /p:BaselinePackageVersion=6.1.4
 
   BaselinePackageVersion is required. Both the legacy ref projects (netcore/ref,
   netfx/ref) and the new consolidated ref project (ref/) are built and compared.
@@ -201,9 +201,9 @@
   </Target>
 
   <!-- ================================================================== -->
-  <!-- CompareRefAssemblies (public entry point)                          -->
+  <!-- CompareMdsRefAssemblies (public entry point)                          -->
   <!-- ================================================================== -->
-  <Target Name="CompareRefAssemblies" DependsOnTargets="_RunRefApiCompat">
+  <Target Name="CompareMdsRefAssemblies" DependsOnTargets="_RunRefApiCompat">
     <ItemGroup>
       <_ApiCompatResultFiles Include="$(ApiCompatResultsDir)*.txt" />
     </ItemGroup>
