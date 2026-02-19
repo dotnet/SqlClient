@@ -11795,6 +11795,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid enhanced routing information received..
+        /// </summary>
+        internal static string SQLROR_InvalidEnhancedRoutingInfo {
+            get {
+                return ResourceManager.GetString("SQLROR_InvalidEnhancedRoutingInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Too many redirections have occurred. Only {0} redirections per login is allowed..
         /// </summary>
         internal static string SQLROR_RecursiveRoutingNotSupported {
