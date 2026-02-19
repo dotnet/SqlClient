@@ -165,7 +165,9 @@ The release stage is gated and only executes on demand when at least one release
   - `build_independent` (always)
   - `buildMDS`, `mds_package_validation` (when `buildSqlClient = true`)
   - `build_addons` (when `buildAKVProvider AND buildSqlClient`)
-- **Gate**: ADO Environment approvals configured on `NuGet-Production` environment
+- **Gate**: ADO Environment approvals (official pipeline only):
+  - Official: `NuGet-Production` environment with configured approvals
+  - Non-Official: `NuGet-DryRun` environment (no approvals, validation only)
 - **Package selection**: Controlled by 6 runtime boolean parameters (see Section 5.2)
 - **Stage condition**: The entire stage is skipped unless at least one release parameter is `true`:
   ```yaml
@@ -177,7 +179,9 @@ The release stage is gated and only executes on demand when at least one release
   - ${{ if eq(parameters.releaseXxx, true) }}:
     - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
   ```
-- **Environment variables**: Stage sets `ob_release_usedeploymentjob: true` and `ob_release_environment: 'NuGet-Production'` to enable OneBranch environment-based approvals
+- **Environment variables**: Stage sets `ob_release_usedeploymentjob: true` for OneBranch integration:
+  - Official: `ob_release_environment: 'NuGet-Production'`
+  - Non-Official: `ob_release_environment: 'NuGet-DryRun'`
 
 #### Artifact → Publish Job Mapping
 
@@ -192,9 +196,18 @@ The release stage is gated and only executes on demand when at least one release
 
 Each publish job uses the reusable `publish-nuget-package-job.yml` template, which downloads the artifact and pushes `.nupkg`/`.snupkg` files via `NuGetCommand@2` with an external feed service connection.
 
-#### Dry-Run Mode (Non-Official Pipeline)
+#### Dry-Run Mode
 
-The **non-official pipeline** passes `dryRun: true` to every publish job. In dry-run mode the template downloads artifacts and lists the `.nupkg`/`.snupkg` files that *would* be published, but skips the actual `NuGetCommand@2` push. This allows the full release stage to be exercised safely during validation builds without risk of accidental publication. The official pipeline uses the default (`dryRun: false`) and performs real pushes.
+Two ADO environments control release behavior:
+
+| Environment | Pipeline | Behavior |
+|------------|----------|----------|
+| `NuGet-DryRun` | Non-Official | Validation only — packages are never pushed |
+| `NuGet-Production` | Official | Real releases with approval gate |
+
+**Non-official pipeline**: Always runs in dry-run mode. There is no `releaseDryRun` parameter — `dryRun: true` is hardcoded in every publish job. This prevents accidental publication from validation builds.
+
+**Official pipeline**: Exposes a `releaseDryRun` parameter (default: `true` for safety). When enabled, the template downloads artifacts and lists the `.nupkg`/`.snupkg` files that *would* be published but skips the actual `NuGetCommand@2` push. Set `releaseDryRun: false` to perform real pushes after final validation.
 
 ---
 
@@ -293,6 +306,21 @@ parameters:
     type: boolean
     default: false
 ```
+
+#### Dry-Run Parameter (Official Pipeline Only)
+
+The **official pipeline** includes a `releaseDryRun` parameter that defaults to `true` for safety:
+
+```yaml
+  - name: releaseDryRun
+    displayName: 'Release Dry Run (do not push to NuGet)'
+    type: boolean
+    default: true    # safety default — must explicitly disable for real releases
+```
+
+When `releaseDryRun: true`, publish jobs download artifacts and list packages but skip actual NuGet push. Set to `false` for production releases.
+
+> **Note**: The non-official pipeline does **not** expose this parameter — dry-run mode is hardcoded and cannot be disabled.
 
 ---
 
@@ -488,7 +516,7 @@ pr: none
 7. **Dependency-aware stage ordering** — ensures packages are always built after their dependencies, guaranteeing consistent, reproducible builds.
 8. **Validation in parallel with Stage 3** — MDS package validation runs alongside AKV Provider build (both depend on Stage 2), reducing total pipeline duration.
 9. **Selective on-demand release** — 6 boolean parameters control which packages are published; the release stage is entirely skipped when none are selected, keeping normal CI builds unaffected.
-10. **ADO Environment approval gate** — uses `NuGet-Production` environment with configured approvals; simpler than `ManualValidation@0` and integrates with ADO's approval workflows via `ob_release_environment` variable.
+10. **ADO Environment approval gate** — two environments: `NuGet-Production` (official, with configured approvals) and `NuGet-DryRun` (non-official, validation only). Both use `ob_release_environment` for OneBranch integration.
 11. **Compile-time conditional publish jobs** — `${{ if eq(parameters.releaseXxx, true) }}` template expansion ensures unselected publish jobs are excluded entirely from the pipeline run (not just skipped at runtime).
-12. **Dry-run release in non-official pipeline** — the non-official variant passes `dryRun: true` to publish jobs so the full release stage can be validated without pushing packages, preventing accidental publication from test builds.
+12. **Mandatory dry-run for non-official** — the non-official variant hardcodes `dryRun: true` (no parameter), preventing accidental publication. The official variant defaults `releaseDryRun: true` for safety but allows override for actual releases.
 13. **Selective build parameters** — `buildSqlClient`, `buildSqlServerServer`, and `buildAKVProvider` allow building subsets of packages, with dependency-aware conditionals ensuring Logging builds when either SqlClient or AKV is needed.

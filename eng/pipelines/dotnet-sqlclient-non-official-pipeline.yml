@@ -83,11 +83,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: boolean
   default: false
 
-- name: releaseDryRun
-  displayName: 'Release Dry Run (do not push to NuGet)'
-  type: boolean
-  default: true
-
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
 
@@ -338,18 +333,17 @@ extends:
           - build_independent
         variables:
           ob_release_usedeploymentjob: true # use deployment job for environment-based approvals
-          ob_release_environment: 'NuGet-Production' # configure environment approvals in ADO environment.
+          ob_release_environment: 'NuGet-DryRun' # non-official pipeline always uses dry-run environment.
         jobs:
-        # Publish jobs — use reusable job template for consistency.
-        # Controlled by releaseDryRun parameter (default: true).
-        # For approval workflows, configure ADO environment approvals.
+        # Publish jobs — dry-run mode is always enforced for non-official pipeline.
+        # Packages are validated but not pushed to NuGet.
         - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageDisplayName: SqlServer.Server
               artifactName: drop_build_independent_build_signed_sqlserver_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              dryRun: ${{ parameters.releaseDryRun }}
+              dryRun: true
 
         - ${{ if eq(parameters.releaseLogging, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
@@ -357,7 +351,7 @@ extends:
               packageDisplayName: Logging
               artifactName: drop_build_independent_build_signed_Logging_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              dryRun: ${{ parameters.releaseDryRun }}
+              dryRun: true
 
         - ${{ if eq(parameters.releaseAbstractions, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
@@ -365,7 +359,7 @@ extends:
               packageDisplayName: Abstractions
               artifactName: drop_build_independent_build_signed_Abstractions_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              dryRun: ${{ parameters.releaseDryRun }}
+              dryRun: true
 
         - ${{ if eq(parameters.releaseSqlClient, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
@@ -373,7 +367,7 @@ extends:
               packageDisplayName: SqlClient
               artifactName: drop_buildMDS_build_signed_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              dryRun: ${{ parameters.releaseDryRun }}
+              dryRun: true
 
         - ${{ if eq(parameters.releaseExtAzure, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
@@ -381,7 +375,7 @@ extends:
               packageDisplayName: Extensions.Azure
               artifactName: drop_buildMDS_build_signed_Azure_package
               nugetServiceConnection: $(NuGetServiceConnection)
-              dryRun: ${{ parameters.releaseDryRun }}
+              dryRun: true
 
         - ${{ if eq(parameters.releaseAKVProvider, true) }}:
           - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
@@ -389,4 +383,4 @@ extends:
               packageDisplayName: AKVProvider
               artifactName: drop_build_addons_buildSignedAkvPackage
               nugetServiceConnection: $(NuGetServiceConnection)
-              dryRun: ${{ parameters.releaseDryRun }}
+              dryRun: true

@@ -117,7 +117,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: releaseDryRun
   displayName: 'Release Dry Run (do not push to NuGet)'
   type: boolean
-  default: false
+  default: true
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
