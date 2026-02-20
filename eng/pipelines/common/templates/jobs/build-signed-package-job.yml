@@ -4,23 +4,27 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Symbols Folder.
   - name: symbolsFolder
     type: string
     default: symbols
 
+  # Software Folder.
   - name: softwareFolder
     type: string
     default: software
 
+  # Publish Symbols.
   - name: publishSymbols
     type: boolean
 
+  # Is Preview.
   - name: isPreview
     type: boolean
 
 jobs:
-- job: build_signed_package
-  displayName: 'Build Signed MDS Package'
+- job: build_package_SqlClient
+  displayName: 'Build Microsoft.Data.SqlClient'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
@@ -29,6 +33,8 @@ jobs:
   - ${{ if parameters.isPreview }}:
     - name: abstractionsPackageVersion
       value: $(abstractionsPackagePreviewVersion)
+    - name: loggingPackageVersion
+      value: $(loggingPackagePreviewVersion)
     - name: mdsPackageVersion
       value: $(previewMdsPackageVersion)
 
@@ -41,6 +47,21 @@ jobs:
     # This variable is used far away in validate-signed-packages-job.yml.
     name: GetBuildType
     displayName: Get Build Type
+
+  # Download the Abstractions and Logging packages from the previous stage into
+  # packages/ so that they're available via the local NuGet feed when restoring MDS.
+  # MDS depends on both Extensions.Abstractions and Extensions.Logging.
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Abstractions Package'
+    inputs:
+      artifactName: drop_build_independent_build_package_Abstractions
+      targetPath: $(Build.SourcesDirectory)/packages
+
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Logging Package'
+    inputs:
+      artifactName: drop_build_independent_build_package_Logging
+      targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -63,6 +84,8 @@ jobs:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
+      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
       mdsPackageVersion: $(mdsPackageVersion)
 
@@ -74,18 +97,23 @@ jobs:
     parameters:
       buildConfiguration: Release
       displayName: 'Create MDS NuGet Package'
+      generateSymbolsPackage: true
       installNuget: false
       nuspecPath: $(nuspecPath)
       outputDirectory: $(artifactDirectory)
       packageVersion: $(mdsPackageVersion)
-      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)'
       referenceType: Package
 
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: pkg
 
+  # Copy DLLs and PDBs to the software and symbols folders for APIScan and testing.
   - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
+    parameters:
+      softwareFolder: '${{ parameters.softwareFolder }}'
+      symbolsFolder: '${{ parameters.symbolsFolder }}'
 
   # Publish symbols to servers
   - ${{ if eq(parameters.publishSymbols, true) }}:

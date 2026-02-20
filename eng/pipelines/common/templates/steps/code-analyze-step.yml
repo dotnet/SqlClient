@@ -18,6 +18,7 @@
 #        affect >1 project at a time.
 
 parameters:
+  # Source Root.
   - name: sourceRoot
     type: string
     default: $(REPOROOT)

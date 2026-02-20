@@ -4,6 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Debug.
   - name: debug
     type: boolean
     default: false
@@ -12,122 +13,152 @@ parameters:
   - name: saPassword
     type: string
 
+  # TCP Connection String.
   - name: TCPConnectionString
     type: string
     default: ''
 
+  # NP Connection String.
   - name: NPConnectionString
     type: string
     default: ''
 
+  # TCP Connection String HGSVBS.
   - name: TCPConnectionStringHGSVBS
     type: string
     default: ''
 
+  # TCP Connection String None VBS.
   - name: TCPConnectionStringNoneVBS
     type: string
     default: ''
 
+  # TCP Connection String AASSGX.
   - name: TCPConnectionStringAASSGX
     type: string
     default: ''
 
+  # Enclave Enabled.
   - name: EnclaveEnabled
     type: boolean
     default: false
 
+  # Tracing Enabled.
   - name: TracingEnabled
     type: boolean
     default: false
 
+  # AAD Authority URL.
   - name: AADAuthorityURL
     type: string
     default: ''
 
+  # AAD Password Connection String.
   - name: AADPasswordConnectionString
     type: string
     default: ''
 
+  # AAD Service Principal Id.
   - name: AADServicePrincipalId
     type: string
     default: ''
 
+  # AAD Service Principal Secret.
   - name: AADServicePrincipalSecret
     type: string
     default: ''
 
+  # Azure Key Vault Url.
   - name: AzureKeyVaultUrl
     type: string
     default: ''
 
+  # Azure Key Vault Tenant Id.
   - name: AzureKeyVaultTenantId
     type: string
     default: ''
 
+  # Use Managed SNI On Windows.
   - name: UseManagedSNIOnWindows
     type: boolean
     default: false
 
+  # User Managed Identity Client Id.
   - name: UserManagedIdentityClientId
     type: string
     default: ''
 
+  # File Stream Directory.
   - name: FileStreamDirectory
     type: string
     default: ''
 
+  # Local Db App Name.
   - name: LocalDbAppName
     type: string
     default: ''
 
+  # Local Db Shared Instance Name.
   - name: LocalDbSharedInstanceName
     type: string
     default: ''
 
+  # Alias Name.
   - name: AliasName
     type: string
     default: ''
 
+  # Supports Integrated Security.
   - name: SupportsIntegratedSecurity
     type: boolean
     default: false
 
+  # Supports File Stream.
   - name: SupportsFileStream
     type: boolean
     default: false
 
+  # DNS Caching Conn String.
   - name: DNSCachingConnString
     type: string
     default: ''
 
+  # DNS Caching Server CR.
   - name: DNSCachingServerCR
     type: string
     default: ''
 
+  # DNS Caching Server TR.
   - name: DNSCachingServerTR
     type: string
     default: ''
 
+  # Enclave Azure Database Conn String.
   - name: EnclaveAzureDatabaseConnString
     type: string
     default: ''
 
+  # Is DNS Caching Supported CR.
   - name: IsDNSCachingSupportedCR
     type: boolean
     default: false
 
+  # Is DNS Caching Supported TR.
   - name: IsDNSCachingSupportedTR
     type: boolean
     default: false
 
+  # Is Azure Synapse.
   - name: IsAzureSynapse
     type: boolean
     default: false
 
+  # Managed Identity Supported.
   - name: ManagedIdentitySupported
     type: boolean
     default: true
 
+  # Workload Identity Federation Service Connection Id.
   - name: WorkloadIdentityFederationServiceConnectionId
     type: string
     default: ''

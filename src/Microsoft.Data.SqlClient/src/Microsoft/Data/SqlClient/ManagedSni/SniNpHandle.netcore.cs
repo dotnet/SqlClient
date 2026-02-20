@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public SniNpHandle(string serverName, string pipeName, TimeoutTimer timeout, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Setting server name = {1}, pipe name = {2}", args0: _connectionId, args1: serverName, args2: pipeName);
 
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override uint CheckConnection()
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 if (!_stream.CanWrite || !_stream.CanRead)
                 {
@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override uint Receive(out SniPacket packet, int timeout)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 SniPacket errorPacket;
                 lock (this)
@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override uint ReceiveAsync(ref SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 SniPacket errorPacket;
                 packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override uint Send(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 bool releaseLock = false;
                 try
@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override uint SendAsync(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                 packet.WriteToStreamAsync(_stream, _sendCallback, SniProviders.NP_PROV);
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override uint EnableSsl(uint options)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
@@ -381,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>true if valid</returns>
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {			
                 if (!_validateCert)
                 {

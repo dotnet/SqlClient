@@ -74,7 +74,7 @@ Optional pipeline for long-running stress and endurance testing. Enabled via `en
 ## Build Stages
 
 1. **build_abstractions_package_stage**: Build and pack abstractions
-2. **build_mds_akv_packages_stage**: Build main driver and AKV packages
+2. **build_sqlclient_package_stage**: Build main driver and AKV packages
 3. **build_azure_package_stage**: Build Azure extensions package
 4. **stress_tests_stage**: Optional stress testing
 5. **run_tests_stage**: Execute all test suites

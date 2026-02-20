@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                     newPool.Startup(); // must start pool before usage
                                     bool addResult = _poolCollection.TryAdd(currentIdentity, newPool);
                                     Debug.Assert(addResult, "No other pool with current identity should exist at this point");
-                                    SqlClientEventSource.Metrics.EnterActiveConnectionPool();
+                                    SqlClientDiagnostics.Metrics.EnterActiveConnectionPool();
 
                                     pool = newPool;
                                 }

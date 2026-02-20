@@ -9,10 +9,12 @@ parameters:
     type: string
     default: MSSQLSERVER
 
+  # User.
   - name: user
     type: string
     default: $(user)
 
+  # Sa User.
   - name: saUser
     type: string
     default: $(saUser)
@@ -22,38 +24,47 @@ parameters:
   - name: saPassword
     type: string
 
+  # SQL Root Path.
   - name: SQLRootPath
     type: string
     default: ''
 
+  # File Stream Directory.
   - name: fileStreamDirectory
     type: string
     default: ''
 
+  # X64Alias Registry Path.
   - name: x64AliasRegistryPath
     type: string
     default: $(x64AliasRegistryPath)
 
+  # X86Alias Registry Path.
   - name: x86AliasRegistryPath
     type: string
     default: $(x86AliasRegistryPath)
 
+  # SQL Alias Name.
   - name: SQLAliasName
     type: string
     default: $(SQLAliasName)
 
+  # SQL Alias Port.
   - name: SQLAliasPort
     type: string
     default: $(SQLAliasPort)
 
+  # Enable Local DB.
   - name: enableLocalDB
     type: boolean
     default: false
 
+  # Local Db App Name.
   - name: localDbAppName
     type: string
     default: $(LocalDbAppName)
 
+  # Local Db Shared Instance Name.
   - name: localDbSharedInstanceName
     type: string
     default: $(LocalDbSharedInstanceName)
@@ -62,10 +73,12 @@ parameters:
   - name: netcoreVersionTestUtils
     type: string
 
+  # Database Name.
   - name: databaseName
     type: string
     default: Northwind
 
+  # Operating System.
   - name: operatingSystem
     type: string
     values:

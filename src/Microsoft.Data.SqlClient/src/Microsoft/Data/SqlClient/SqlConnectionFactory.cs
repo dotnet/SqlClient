@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
         
         internal void ClearAllPools()
         {
-            using TryEventScope scope = TryEventScope.Create(nameof(SqlConnectionFactory));
+            using SqlClientEventScope scope = SqlClientEventScope.Create(nameof(SqlConnectionFactory));
             foreach (DbConnectionPoolGroup group in _connectionPoolGroups.Values)
             {
                 group?.Clear();
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
             
-            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
+            using SqlClientEventScope scope = SqlClientEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
             DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
             poolGroup?.Clear();
         }
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(key.ConnectionString, $"{nameof(key)}.{nameof(key.ConnectionString)}");
             
-            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
+            using SqlClientEventScope scope = SqlClientEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
             if (_connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
             {
                 poolGroup?.Clear();
@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient
                 userOptions);
             if (newConnection is not null)
             {
-                SqlClientEventSource.Metrics.HardConnectRequest();
+                SqlClientDiagnostics.Metrics.HardConnectRequest();
                 newConnection.MakeNonPooledObject(owningConnection);
             }
             
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
             }
 
-            SqlClientEventSource.Metrics.HardConnectRequest();
+            SqlClientDiagnostics.Metrics.HardConnectRequest();
             newConnection.MakePooledConnection(pool);
 
             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);
@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient
                         // lock prevents race condition with PruneConnectionPoolGroups
                         newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
 
-                        SqlClientEventSource.Metrics.EnterActiveConnectionPoolGroup();
+                        SqlClientDiagnostics.Metrics.EnterActiveConnectionPoolGroup();
                         connectionPoolGroup = newConnectionPoolGroup;
                         _connectionPoolGroups = newConnectionPoolGroups;
                     }
@@ -296,8 +296,8 @@ namespace Microsoft.Data.SqlClient
                 _poolsToRelease.Add(pool);
             }
             
-            SqlClientEventSource.Metrics.EnterInactiveConnectionPool();
-            SqlClientEventSource.Metrics.ExitActiveConnectionPool();
+            SqlClientDiagnostics.Metrics.EnterInactiveConnectionPool();
+            SqlClientDiagnostics.Metrics.ExitActiveConnectionPool();
         }
 
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
@@ -310,8 +310,8 @@ namespace Microsoft.Data.SqlClient
                 _poolGroupsToRelease.Add(poolGroup);
             }
 
-            SqlClientEventSource.Metrics.EnterInactiveConnectionPoolGroup();
-            SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
+            SqlClientDiagnostics.Metrics.EnterInactiveConnectionPoolGroup();
+            SqlClientDiagnostics.Metrics.ExitActiveConnectionPoolGroup();
         }
 
         internal bool TryGetConnection(
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient
 
                     connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
 
-                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
+                    SqlClientDiagnostics.Metrics.EnterNonPooledConnection();
                 }
                 else
                 {
@@ -863,7 +863,7 @@ namespace Microsoft.Data.SqlClient
                                 _poolsToRelease.Remove(pool);
                                 
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectId, pool.Id);
-                                SqlClientEventSource.Metrics.ExitInactiveConnectionPool();
+                                SqlClientDiagnostics.Metrics.ExitInactiveConnectionPool();
                             }
                         }
                     }
@@ -889,7 +889,7 @@ namespace Microsoft.Data.SqlClient
                                 _poolGroupsToRelease.Remove(poolGroup);
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectId, poolGroup.ObjectID);
 
-                                SqlClientEventSource.Metrics.ExitInactiveConnectionPoolGroup();
+                                SqlClientDiagnostics.Metrics.ExitInactiveConnectionPoolGroup();
                             }
                         }
                     }
@@ -955,7 +955,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
+                    SqlClientDiagnostics.Metrics.EnterNonPooledConnection();
                 }
             }
         }

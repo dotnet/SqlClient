@@ -24,14 +24,17 @@
       Include="Microsoft.Data.SqlClient"
       Version="$(MdsPackageVersion)" />
     <PackageVersion
+      Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+      Version="$(AkvPackageVersion)" />
+    <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Version="$(AbstractionsPackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Azure"
       Version="$(AzurePackageVersion)" />
     <PackageVersion
-      Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-      Version="$(AkvPackageVersion)" />
+      Include="Microsoft.Data.SqlClient.Extensions.Logging"
+      Version="$(LoggingPackageVersion)" />
   </ItemGroup>
 
   <!-- ===================================================================== -->

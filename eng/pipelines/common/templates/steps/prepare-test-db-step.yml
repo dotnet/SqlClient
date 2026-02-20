@@ -4,10 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Database Name.
   - name: databaseName
     type: string
     default: $(Database)
   
+  # Target Framework.
   - name: targetFramework
     type: string
     default: net10.0

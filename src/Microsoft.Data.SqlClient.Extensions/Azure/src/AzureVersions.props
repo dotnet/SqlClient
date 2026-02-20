@@ -55,7 +55,7 @@
     <!-- If AzurePackageVersion is set, use its trimmed value. -->
     <_OurAssemblyFileVersion Condition="'$(AzureAssemblyFileVersion)' == '' and '$(AzurePackageVersion)' != ''">$(AzurePackageVersion.Split('-')[0])</_OurAssemblyFileVersion>
     <!-- If neither property is set, use the default value.-->
-    <_OurAssemblyFileVersion Condition="'$(AzureAssemblyFileVersion)' == '' and '$(AzurePackageVersion)' == ''">$(AzureDefaultMajorVersion).0.0.$(BuildNumber)</_OurAssemblyFileVersion>
+    <_OurAssemblyFileVersion Condition="'$(AzureAssemblyFileVersion)' == '' and '$(AzurePackageVersion)' == ''">$(AzureDefaultMajorVersion).0.0.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
 
     <!--
       Assign the public properties.  This has no effect if they were

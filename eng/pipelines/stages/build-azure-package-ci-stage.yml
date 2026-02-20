@@ -63,6 +63,10 @@ parameters:
     type: string
     default: Azure.Artifacts
 
+  # The assembly file version to stamp into the DLLs.
+  - name: azureAssemblyFileVersion
+    type: string
+
   # The version to apply to the NuGet package and DLLs.
   - name: azurePackageVersion
     type: string
@@ -267,6 +271,7 @@ stages:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           azureArtifactsName: ${{ parameters.azureArtifactsName }}
+          azureAssemblyFileVersion: ${{ parameters.azureAssemblyFileVersion }}
           azurePackageVersion: ${{ parameters.azurePackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}

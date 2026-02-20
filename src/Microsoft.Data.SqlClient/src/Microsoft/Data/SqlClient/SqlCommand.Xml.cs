@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient
             
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteXmlReader | API | Correlation | " +
                 $"Object Id {ObjectID}, " +

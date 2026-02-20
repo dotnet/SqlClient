@@ -5,49 +5,69 @@
 #################################################################################
 parameters:
 
+  # Debug.
   - name: debug
     type: boolean
     default: false
 
+  # Reference Type.
   - name: referenceType
     type: string
     values:
       - Package
       - Project
 
+  # Pool Name.
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
 
+  # Image Override.
   - name: imageOverride
     type: string
     default: ADO-MMS22-SQL19
 
+  # Abstractions Artifacts Name.
   - name: abstractionsArtifactsName
     type: string
     default: Abstractions.Artifacts
 
+  # Logging Artifacts Name.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # Mds Artifacts Name.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
+  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Prebuild Steps.
   - name: prebuildSteps
     type: stepList
     default: []
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
+  # Logging Package Version.
+  - name: loggingPackageVersion
+    type: string
+
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
@@ -75,12 +95,19 @@ jobs:
      # configuration
     - ${{ parameters.prebuildSteps }}
 
-  # If we're testing in Package mode, then we must download the Abstractions package artifacts.
+  # If we're testing in Package mode, then we must download the Abstractions and
+  # Logging package artifacts.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(packagePath)
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Logging Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.loggingArtifactsName }}
         targetPath: $(packagePath)
 
   # Install the .NET SDK.
@@ -97,6 +124,7 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
+        assemblyBuildNumber: $(assemblyBuildNumber)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -105,8 +133,9 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
+      assemblyBuildNumber: $(assemblyBuildNumber)
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
-      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
@@ -116,7 +145,7 @@ jobs:
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       outputDirectory: $(packagePath)
       packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
+      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
@@ -126,6 +155,7 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: AKV
+      assemblyBuildNumber: $(assemblyBuildNumber)
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self

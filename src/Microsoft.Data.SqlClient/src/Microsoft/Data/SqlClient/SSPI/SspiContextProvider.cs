@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
-            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
+            using var _ = SqlClientSNIEventScope.Create(nameof(SspiContextProvider));
 
             if (_primaryAuthParams is { })
             {

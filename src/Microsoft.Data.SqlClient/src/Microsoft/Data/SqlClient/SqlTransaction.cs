@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectId))
+            using (SqlClientEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectId))
             {
                 SqlStatistics statistics = null;
 
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                using (TryEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectId))
+                using (SqlClientEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectId))
                 {
                     SqlClientEventSource.Log.TryCorrelationTraceEvent(
                         "SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}",
@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            var eventScopeEnter = TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(
+            var eventScopeEnter = SqlClientEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(
                 "SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}",
                 ObjectId,
                 transactionName,
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectId, savePointName))
+            using (SqlClientEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectId, savePointName))
             {
                 try
                 {

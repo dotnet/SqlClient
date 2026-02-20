@@ -104,16 +104,19 @@ parameters:
       - Debug
       - Release
 
+  # Build Platforms on Windows
   - name: buildPlatforms
     displayName: Build Platforms on Windows
     type: object
     default: [AnyCPU]
 
+  # Enable debug output
   - name: debug
     displayName: Enable debug output
     type: boolean
     default: false
 
+  # Enable Stress Tests
   - name: enableStressTests
     displayName: Enable Stress Tests
     type: boolean
@@ -151,11 +154,13 @@ parameters:
     type: number
     default: 90
 
+  # Test Sets
   - name: testSets
     displayName: Test Sets
     type: object
     default: [1, 2, 3]
 
+  # |
   - name: useManagedSNI
     displayName: |
       Use Managed/Native SNI on Windows,

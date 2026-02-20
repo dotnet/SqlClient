@@ -5,15 +5,27 @@
 #################################################################################
 parameters:
 
+  # Abstractions Assembly File Version.
   - name: abstractionsAssemblyFileVersion
     type: string
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
+  # Logging Assembly File Version.
+  - name: loggingAssemblyFileVersion
+    type: string
+
+  # Logging Package Version.
+  - name: loggingPackageVersion
+    type: string
+
+  # Mds Assembly File Version.
   - name: mdsAssemblyFileVersion
     type: string
 
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
@@ -40,6 +52,7 @@ steps:
         -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}

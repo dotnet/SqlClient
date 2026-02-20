@@ -18,16 +18,27 @@
 #        affect >1 project at a time.
 
 parameters:
+    # Akv Package Version.
     - name: akvPackageVersion
       type: string
 
+    # Build Configuration.
     - name: buildConfiguration
       type: string
       values:
         - Debug
         - Release
 
+    # Mds Package Version.
     - name: mdsPackageVersion
+      type: string
+
+    # Logging Package Version.
+    - name: loggingPackageVersion
+      type: string
+
+    # Abstractions Package Version.
+    - name: abstractionsPackageVersion
       type: string
 
 steps:
@@ -42,6 +53,8 @@ steps:
               -p:Configuration=${{ parameters.buildConfiguration }}
               -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
               -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+              -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
               -p:ReferenceType=Package
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022

@@ -38,6 +38,14 @@
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
+  <!-- Logging Reference -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+  </ItemGroup>
+
   <!-- Other dependencies -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" />

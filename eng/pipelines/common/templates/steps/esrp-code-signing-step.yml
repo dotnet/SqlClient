@@ -4,46 +4,55 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Artifact Type.
   - name: artifactType
     values:
     - dll
     - pkg
 
+  # Source Root.
   - name: sourceRoot
     type: string
     default: $(REPOROOT)
   
+  # Artifact Directory.
   - name: artifactDirectory
     type: string
     default: $(artifactDirectory)
 
+  # ESRP Connected Service Name.
   - name: ESRPConnectedServiceName
     type: string
     default: $(ESRPConnectedServiceName)
 
+  # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
     default: $(appRegistrationClientId)
 
+  # App Registration Tenant Id.
   - name: appRegistrationTenantId
     type: string
     default: $(appRegistrationTenantId)
 
+  # Auth AKV Name.
   - name: AuthAKVName
     type: string
     default: $(AuthAKVName)
 
+  # Auth Sign Cert Name.
   - name: AuthSignCertName
     type: string
     default: $(AuthSignCertName)
 
+  # Esrp Client Id.
   - name: EsrpClientId
     type: string
     default: $(EsrpClientId)
 
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:
-  - task: EsrpMalwareScanning@5
+  - task: EsrpMalwareScanning@6
     displayName: 'ESRP MalwareScanning'
     inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
@@ -55,7 +64,7 @@ steps:
       Pattern: 'Microsoft.Data.SqlClient*.dll'
       CleanupTempStorage: 1
       VerboseLogin: 1
-  - task: EsrpCodeSigning@5
+  - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning'
     inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
@@ -108,7 +117,7 @@ steps:
           ] 
 
 - ${{ if eq(parameters.artifactType, 'pkg') }}:
-  - task: EsrpMalwareScanning@5
+  - task: EsrpMalwareScanning@6
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
@@ -120,7 +129,7 @@ steps:
       Pattern: '*.*nupkg'
       CleanupTempStorage: 1
       VerboseLogin: 1
-  - task: EsrpCodeSigning@5
+  - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
       inputs:

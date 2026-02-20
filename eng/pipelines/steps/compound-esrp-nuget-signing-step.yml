@@ -5,28 +5,34 @@
 #################################################################################
 
 parameters:
+  # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
 
+  # App Registration Tenant Id.
   - name: appRegistrationTenantId
     type: string
 
-  - # Name of the Azure Key Vault to retrieve certificates from.
-    # note: This has nothing to do with the AKV provider package.
-    name: authAkvName
+  # Name of the Azure Key Vault to retrieve certificates from.
+  # note: This has nothing to do with the AKV provider package.
+  - name: authAkvName
     type: string
 
+  # Auth Sign Cert Name.
   - name: authSignCertName
     type: string
 
+  # Esrp Connected Service Name.
   - name: esrpConnectedServiceName
     type: string
 
+  # Esrp Client Id.
   - name: esrpClientId
     type: string
-    
+
 steps:
-  - task: EsrpMalwareScanning@5
+  # See: https://microsoft.sharepoint.com/teams/prss/esrp/info/ESRP%20Onboarding%20Wiki/Integrate%20the%20ESRP%20Scan%20Task%20into%20ADO.aspx
+  - task: EsrpMalwareScanning@6
     displayName: 'ESRP Nuget Malware Scanning'
     inputs:
       AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
@@ -38,8 +44,9 @@ steps:
       Pattern: '*.*nupkg'
       UseMSIAuthentication: true
       VerboseLogin: 1
-      
-  - task: EsrpCodeSigning@5
+
+  # See: https://aka.ms/obpipelines/esrptask
+  - task: EsrpCodeSigning@6
     displayName: 'ESRP Signing NuGet Package'
     inputs:
       AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
@@ -53,19 +60,19 @@ steps:
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |
-        [ 
-            { 
-                "keyCode": "CP-401405", 
-                "operationSetCode": "NuGetSign", 
-                "parameters": [ ], 
-                "toolName": "sign", 
-                "toolVersion": "1.0" 
+        [
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetSign",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
             },
-            { 
-                "keyCode": "CP-401405", 
-                "operationSetCode": "NuGetVerify", 
-                "parameters": [ ], 
-                "toolName": "sign", 
-                "toolVersion": "1.0" 
-            } 
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            }
         ]
