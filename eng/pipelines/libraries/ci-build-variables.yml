@@ -11,10 +11,6 @@ variables:
   - group: ADO Build properties
   - group: ADO Test Configuration Properties
 
-  # Pipeline build number used for versioning
-  - name: buildNumber
-    value: $(Build.BuildNumber)
-
   # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
   # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
   # must be a positive 16-bit integer less than 65535.  Simply concatenating
@@ -24,7 +20,7 @@ variables:
   # The package versions will not be affected and will show the complete
   # $(Build.BuildNumber) values.
   - name: assemblyBuildNumber
-    value: $[ split(variables.buildNumber, '.')[0] ]
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
 
   # Abstractions library assembly file version
   - name: abstractionsAssemblyFileVersion
@@ -32,7 +28,7 @@ variables:
 
   # Abstractions library NuGet package version
   - name: abstractionsPackageVersion
-    value: 1.0.0.$(buildNumber)-ci
+    value: 1.0.0.$(Build.BuildNumber)-ci
 
   # AKV provider assembly file version
   - name: akvAssemblyFileVersion
@@ -40,7 +36,7 @@ variables:
 
   # AKV provider NuGet package version
   - name: akvPackageVersion
-    value: 7.0.0.$(buildNumber)-ci
+    value: 7.0.0.$(Build.BuildNumber)-ci
 
   # Azure library assembly file version
   - name: azureAssemblyFileVersion
@@ -48,7 +44,7 @@ variables:
 
   # Azure library NuGet package version
   - name: azurePackageVersion
-    value: 1.0.0.$(buildNumber)-ci
+    value: 1.0.0.$(Build.BuildNumber)-ci
 
   # Logging library assembly file version
   - name: loggingAssemblyFileVersion
@@ -56,7 +52,7 @@ variables:
 
   # Logging library NuGet package version
   - name: loggingPackageVersion
-    value: 1.0.0.$(buildNumber)-ci
+    value: 1.0.0.$(Build.BuildNumber)-ci
 
   # MDS library assembly file version
   - name: mdsAssemblyFileVersion
@@ -64,7 +60,7 @@ variables:
 
   # MDS library NuGet package version
   - name: mdsPackageVersion
-    value: 7.0.0.$(buildNumber)-ci
+    value: 7.0.0.$(Build.BuildNumber)-ci
 
   # Output path for built NuGet packages
   - name: packagePath

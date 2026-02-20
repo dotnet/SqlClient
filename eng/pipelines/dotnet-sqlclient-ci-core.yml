@@ -149,7 +149,7 @@ stages:
 
   # Build MDS and its NuGet packages.
   - stage: build_mds_akv_packages_stage
-    displayName: 'Build MDS & AKV Packages'
+    displayName: Build MDS & AKV Packages
 
     # When building MDS via packages, we must depend on the Abstractions
     # and Logging packages.
