@@ -127,13 +127,13 @@ jobs:
           - task: DownloadPipelineArtifact@2
             displayName: 'Download SqlClient (MDS) Package'
             inputs:
-                artifactName: drop_build_core_build_signed_SqlClient_package
+                artifactName: drop_build_dependent_build_package_SqlClient
                 targetPath: $(Build.SourcesDirectory)/packages
 
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Logging Package'
             inputs:
-                artifactName: drop_build_independent_build_signed_Logging_package
+                artifactName: drop_build_independent_build_package_Logging
                 targetPath: $(Build.SourcesDirectory)/packages
 
           # Install the .NET SDK.

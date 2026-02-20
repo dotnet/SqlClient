@@ -12,7 +12,6 @@ parameters:
   # Logging Package Version.
   - name: loggingPackageVersion
     type: string
-    default: ''
 
   # Debug.
   - name: debug
@@ -58,7 +57,7 @@ parameters:
       - x86
 
   # Dotnetx86Root Path # full path to the x86 dotnet root folder with trailing slash.
-  - name: dotnetx86RootPath # full path to the x86 dotnet root folder with trailing slash
+  - name: dotnetx86RootPath
     type: string
     default: ''
 

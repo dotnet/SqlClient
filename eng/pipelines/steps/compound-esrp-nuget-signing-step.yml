@@ -29,7 +29,7 @@ parameters:
   # Esrp Client Id.
   - name: esrpClientId
     type: string
-    
+
 steps:
   - task: EsrpMalwareScanning@6
     displayName: 'ESRP Nuget Malware Scanning'
@@ -43,7 +43,8 @@ steps:
       Pattern: '*.*nupkg'
       UseMSIAuthentication: true
       VerboseLogin: 1
-      
+
+  # See: https://aka.ms/obpipelines/esrptask
   - task: EsrpCodeSigning@6
     displayName: 'ESRP Signing NuGet Package'
     inputs:
@@ -58,19 +59,19 @@ steps:
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |
-        [ 
-            { 
-                "keyCode": "CP-401405", 
-                "operationSetCode": "NuGetSign", 
-                "parameters": [ ], 
-                "toolName": "sign", 
-                "toolVersion": "1.0" 
+        [
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetSign",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
             },
-            { 
-                "keyCode": "CP-401405", 
-                "operationSetCode": "NuGetVerify", 
-                "parameters": [ ], 
-                "toolName": "sign", 
-                "toolVersion": "1.0" 
-            } 
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            }
         ]

@@ -74,7 +74,6 @@ parameters:
   # Assembly Build Number.
   - name: assemblyBuildNumber
     type: string
-    default: ''
 
 jobs:
 - job: build_mds_akv_packages_job

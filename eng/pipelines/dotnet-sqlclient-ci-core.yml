@@ -276,22 +276,24 @@ stages:
             #
             upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
-# test stages configurations
-  # self hosted SQL Server on Windows
+      # Configuration of test jobs.  Each entry in this object will become a test job, and the
+      # properties of each entry will be supplied as parameters to the test job template.
       testConfigurations:
-        windows_sql_19_x64: # configuration name
-          pool: ${{parameters.defaultPoolName }} # pool name
-          images: # list of images to run tests on
-            Win22_Sql19: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
+
+        # Windows Server 22 with local SQL Server 2019, x64 build platform.
+        windows_sql_19_x64:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql19: ADO-MMS22-SQL19
+          TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
-          useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          configSqlFor: local # setup Sql Server (local | azure | enclave)
-          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          configSqlFor: local
+          operatingSystem: Windows
+          # config.json properties
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -302,36 +304,22 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
-            # instanceName: default: MSSQLSERVER
-            # user: default: $(user)
-            # saUser: default: $(saUser)
-            # fileStreamDirectory: default: ''
-            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
-            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
-            # SQLAliasName: default: $(SQLAliasName)
-            # SQLAliasPort: default: $(SQLAliasPort)
-            # databaseName: default: Northwind
-            # localDbAppName: default: $(LocalDbAppName)
-            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
-            # skipSqlConfiguration: # skips the SQL configuration step
 
-
-        windows_sql_19_x86: # configuration name
-          pool: ${{parameters.defaultPoolName }} # pool name
-          images: # list of images to run tests on
-            Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
+        # Windows Server 22 with local SQL Server 2019, x86 build platform.
+        windows_sql_19_x86:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql19_x86: ADO-MMS22-SQL19
           TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
-          useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          configSqlFor: local # setup Sql Server (local | azure | enclave)
-          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [false]
+          configSqlFor: local
+          operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -342,24 +330,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
-            # instanceName: default: MSSQLSERVER
-            # user: default: $(user)
-            # saUser: default: $(saUser)
-            # fileStreamDirectory: default: ''
-            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
-            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
-            # SQLAliasName: default: $(SQLAliasName)
-            # SQLAliasPort: default: $(SQLAliasPort)
-            # databaseName: default: Northwind
-            # localDbAppName: default: $(LocalDbAppName)
-            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
-            # skipSqlConfiguration: # skips the SQL configuration step
 
-
+        # Windows Server 22 with local SQL Server 2022, x64 build platform.
         windows_sql_22_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -372,7 +347,6 @@ stages:
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -383,11 +357,10 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
-
+        # Windows Server 22 with local SQL Server 2022, x86 build platform.
         windows_sql_22_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -400,7 +373,6 @@ stages:
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -411,12 +383,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
-
+        # Windows Server 22 with local SQL Server 2022 Named Instance, x64 build platform.
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -429,16 +400,13 @@ stages:
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_INSTANCE_CONN_STRING)
             NPConnectionString: $(SQL_NP_INSTANCE_CONN_STRING)
             SupportsIntegratedSecurity: true
-            # extra config properties
             SQLRootPath: $(SQL22RootPath)
             instanceName: $(NamedInstance)
 
-
-    # Azure SQL Server - Windows
+        # Windows Server 2022 and Windows 11, x64 build platform, with Azure SQL Server.
         windows_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -452,7 +420,6 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
@@ -470,6 +437,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
+        # Windows 11 on ARM64 with Azure SQL Server.
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
           images:
@@ -483,7 +451,6 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
             AADAuthorityURL: $(AADAuthorityURL)
@@ -498,11 +465,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-    # self hosted SQL Server on Linux
+        # Linux Ubuntu 20 and 22 with local SQL Server 2022, x64 build platform.
         linux_ub20_22_sql_22:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Sql22: ADO-UB20-SQL22 # drop testing against UB20 image post April 2025
+            Ubuntu20_Sql22: ADO-UB20-SQL22
             Ubuntu22_Sql22: ADO-UB22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
@@ -512,7 +479,6 @@ stages:
           configSqlFor: local
           operatingSystem: Linux
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -523,7 +489,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
 
-    # Azure Sql Server - Linux
+        # Linux Ubuntu 22 with Azure SQL Server, x64 build platform.
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -536,7 +502,6 @@ stages:
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
-            # config.json properties
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
@@ -551,7 +516,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        # Self hosted SQL Server on Mac
+        # macOS with local SQL Server 2022, x64 build platform.
         mac_sql_22:
           pool: Azure Pipelines
           hostedPool: true
@@ -565,7 +530,6 @@ stages:
           configSqlFor: local
           operatingSystem: Mac
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             SupportsIntegratedSecurity: false
@@ -578,6 +542,8 @@ stages:
         # Only run these tests if explicitly enabled, and if we're not a forked repo (which won't
         # have access to the necessary Library secrets).
         ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['System.PullRequest.IsFork'], 'False')) }}:
+
+          # Windows Server 22 with remote Enclave-enabled SQL Server 2019, x64 build platform.
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
@@ -590,7 +556,6 @@ stages:
             configSqlFor: enclave
             operatingSystem: Windows
             configProperties:
-              # config.json properties
               TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
@@ -606,6 +571,7 @@ stages:
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
+          # Linux Ubuntu 22 with remote Enclave-enabled SQL Server 2019, x64 build platform.
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
@@ -618,7 +584,6 @@ stages:
             configSqlFor: enclave
             operatingSystem: Linux
             configProperties:
-              # config.json properties
               TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)

@@ -34,9 +34,8 @@ parameters:
       values:
         - Package
         - Project
-    
-    # Semi-colon separated properties to pass to nuget via the -properties
-    # argument.
+
+    # Semi-colon separated properties to pass to nuget via the -properties argument.
     - name: properties
       type: string
       default: ''
@@ -81,7 +80,7 @@ steps:
             displayName: 'Generate NuGet Package'
             inputs:
                 command: custom
-                arguments: >- 
+                arguments: >-
                     pack
                     ${{ parameters.nuspecPath }}
                     -Version ${{ parameters.packageVersion }}

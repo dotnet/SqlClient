@@ -48,25 +48,24 @@ parameters:
       - all
       - allNoDocs
 
-  # Necessary to build MDS when referenceType is Package
+  # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
   - name: abstractionsPackageVersion
     type: string
-    default: ''
+    default: $(abstractionsPackageVersion)
 
-  # Necessary to build MDS when referenceType is Package
+  # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
   - name: loggingPackageVersion
     type: string
-    default: ''
+    default: $(loggingPackageVersion)
 
-  # Necessary to build AKV when referenceType is Package.
+  # Necessary to build AKV when referenceType is Package.  Ignored when referenceType is Project.
   - name: mdsPackageVersion
     type: string
-    default: ''
+    default: $(mdsPackageVersion)
 
   # The assembly build number, kept within 0-65535 range for valid assembly versions.
   - name: assemblyBuildNumber
     type: string
-    default: ''
 
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:

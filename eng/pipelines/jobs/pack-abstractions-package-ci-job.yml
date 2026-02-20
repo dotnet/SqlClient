@@ -20,7 +20,6 @@ parameters:
   # The assembly file version to stamp into the Abstractions DLLs.
   - name: abstractionsAssemblyFileVersion
     type: string
-    default: ''
 
   # The version to apply to the Abstractions NuGet package and its assemblies.
   - name: abstractionsPackageVersion
@@ -37,7 +36,7 @@ parameters:
   - name: debug
     type: boolean
     default: false
-  
+
   # The list of upstream jobs to depend on.
   - name: dependsOn
     type: object

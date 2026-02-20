@@ -60,7 +60,7 @@ parameters:
     default: false
 
 jobs:
-  - job: build_signed_sqlserver_package
+  - job: build_package_SqlServer
     displayName: Build Microsoft.SqlServer.Server
     pool:
       type: windows

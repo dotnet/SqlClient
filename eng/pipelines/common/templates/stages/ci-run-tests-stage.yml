@@ -40,7 +40,6 @@ parameters:
   # Logging Package Version.
   - name: loggingPackageVersion
     type: string
-    default: ''
 
   # Mds Artifacts Name.
   - name: mdsArtifactsName

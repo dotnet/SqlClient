@@ -87,7 +87,7 @@ parameters:
     default: false
 
 jobs:
-  - job: build_signed_${{ parameters.packageName }}_package
+  - job: build_package_${{ parameters.packageName }}
     displayName: Build ${{ parameters.softwareName }}
     pool:
       type: windows
@@ -113,7 +113,7 @@ jobs:
         - task: DownloadPipelineArtifact@2
           displayName: Download Abstractions Package
           inputs:
-            artifactName: drop_build_independent_build_signed_Abstractions_package
+            artifactName: drop_build_independent_build_package_Abstractions
             targetPath: $(Build.SourcesDirectory)/packages
 
       # Install the .NET SDK.

@@ -134,7 +134,7 @@ variables:
   - template: /eng/pipelines/libraries/variables.yml@self
 
   - name: mdsArtifactName
-    value: drop_build_core_build_signed_SqlClient_package
+    value: drop_build_dependent_build_package_SqlClient
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
   - name: CurrentNetFxVersion
@@ -295,10 +295,10 @@ extends:
       # ------------------------------------------------------------------
       # Stage 2: Core packages (depend on independent packages)
       # MDS and Extensions.Azure build in parallel after Stage 1 completes.
-      # Stage name kept as 'build_core' for validate job compatibility.
+      # Stage name kept as 'build_dependent' for validate job compatibility.
       # ------------------------------------------------------------------
       - ${{ if eq(parameters.buildSqlClient, true) }}:
-          - stage: build_core
+          - stage: build_dependent
             displayName: "Build Core Packages"
             dependsOn: build_independent
             jobs:
@@ -333,7 +333,7 @@ extends:
       - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
           - stage: build_addons
             displayName: "Build Add-on Packages"
-            dependsOn: build_core
+            dependsOn: build_dependent
             jobs:
               - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
                 parameters:
@@ -364,7 +364,7 @@ extends:
       - ${{ if eq(parameters.buildSqlClient, true) }}:
           - stage: mds_package_validation
             displayName: "MDS Package Validation"
-            dependsOn: build_core
+            dependsOn: build_dependent
             jobs:
               - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
                 parameters:
@@ -386,7 +386,7 @@ extends:
               - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
                 - build_independent
               - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
-                - build_core
+                - build_dependent
                 - mds_package_validation
               - ${{ if parameters.releaseAKVProvider }}:
                 - build_addons
@@ -402,7 +402,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.SqlServer.Server
-                      artifactName: drop_build_independent_build_signed_sqlserver_package
+                      artifactName: drop_build_independent_build_package_SqlServer
                       nugetServiceConnection: $(NuGetServiceConnection)
                       isProduction: true
                       dryRun: ${{ parameters.releaseDryRun }}
@@ -411,7 +411,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient.Extensions.Logging
-                      artifactName: drop_build_independent_build_signed_Logging_package
+                      artifactName: drop_build_independent_build_package_Logging
                       nugetServiceConnection: $(NuGetServiceConnection)
                       isProduction: true
                       dryRun: ${{ parameters.releaseDryRun }}
@@ -420,7 +420,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
-                      artifactName: drop_build_independent_build_signed_Abstractions_package
+                      artifactName: drop_build_independent_build_package_Abstractions
                       nugetServiceConnection: $(NuGetServiceConnection)
                       isProduction: true
                       dryRun: ${{ parameters.releaseDryRun }}
@@ -429,7 +429,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient
-                      artifactName: drop_build_core_build_signed_SqlClient_package
+                      artifactName: drop_build_dependent_build_package_SqlClient
                       nugetServiceConnection: $(NuGetServiceConnection)
                       isProduction: true
                       dryRun: ${{ parameters.releaseDryRun }}
@@ -438,7 +438,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
-                      artifactName: drop_build_core_build_signed_Azure_package
+                      artifactName: drop_build_dependent_build_package_Azure
                       nugetServiceConnection: $(NuGetServiceConnection)
                       isProduction: true
                       dryRun: ${{ parameters.releaseDryRun }}

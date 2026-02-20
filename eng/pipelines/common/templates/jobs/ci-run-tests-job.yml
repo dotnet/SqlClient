@@ -20,7 +20,6 @@ parameters:
   # Logging Package Version.
   - name: loggingPackageVersion
     type: string
-    default: ''
 
   # The configuration properties to set in the config file.
   #

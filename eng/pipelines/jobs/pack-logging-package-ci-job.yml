@@ -20,7 +20,6 @@ parameters:
   # The assembly file version to stamp into the Logging DLLs.
   - name: loggingAssemblyFileVersion
     type: string
-    default: ''
 
   # The version to apply to the Logging NuGet package and its assemblies.
   - name: loggingPackageVersion

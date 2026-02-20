@@ -29,13 +29,14 @@ parameters:
   # Esrp Client Id.
   - name: esrpClientId
     type: string
-    
+
   # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) and all subdirectories
   # that match this pattern will be scanned and signed. This should end with ".dll".
   - name: pattern
     type: string
-  
+
 steps:
+  # See: https://microsoft.sharepoint.com/teams/prss/esrp/info/ESRP%20Onboarding%20Wiki/Integrate%20the%20ESRP%20Scan%20Task%20into%20ADO.aspx
   - task: EsrpMalwareScanning@6
     displayName: 'ESRP DLL Malware Scanning'
     inputs:
@@ -48,7 +49,8 @@ steps:
       Pattern: '${{ parameters.pattern }}'
       UseMSIAuthentication: true
       VerboseLogin: 1
-      
+
+  # See: https://aka.ms/obpipelines/esrptask
   - task: EsrpCodeSigning@6
     displayName: 'ESRP DLL Signing'
     inputs:
@@ -63,11 +65,11 @@ steps:
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |
-        [ 
+        [
             {
                 "keyCode": "CP-230012",
                 "operationSetCode": "SigntoolSign",
-                "parameters": 
+                "parameters":
                     [
                         {
                             "parameterName": "OpusName",

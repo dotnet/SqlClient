@@ -33,7 +33,6 @@ parameters:
   # The assembly file version to stamp into the Azure DLLs.
   - name: azureAssemblyFileVersion
     type: string
-    default: ''
 
   # The version to apply to the NuGet package and DLLs.
   - name: azurePackageVersion
