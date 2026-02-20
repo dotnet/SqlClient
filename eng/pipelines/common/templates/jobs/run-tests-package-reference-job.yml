@@ -5,9 +5,11 @@
 #################################################################################
 parameters:
 
+  # Artifact Name.
   - name: artifactName
     type: string
 
+  # Is Preview.
   - name: isPreview
     type: boolean
 

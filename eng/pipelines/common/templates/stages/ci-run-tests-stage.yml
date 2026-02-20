@@ -7,55 +7,68 @@
 # This stage depends on the secrets_stage.
 
 parameters:
+  # Abstractions Artifacts Name.
   - name: abstractionsArtifactsName
     type: string
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
+  # Additional Depends On.
   - name: additionalDependsOn
     type: object
     default: []
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Debug.
   - name: debug
     type: boolean
     default: false
 
+  # Logging Artifacts Name.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
 
+  # Logging Package Version.
   - name: loggingPackageVersion
     type: string
     default: ''
 
+  # Mds Artifacts Name.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
+  # Post Test Jobs.
   - name: postTestJobs
     type: jobList
     default: []
 
+  # Prebuild Steps.
   - name: prebuildSteps
     type: stepList
     default: []
 
+  # Reference Type.
   - name: referenceType
     default: Project
     values:
       - Project
       - Package
 
+  # Test Configurations.
   - name: testConfigurations
     type: object
 

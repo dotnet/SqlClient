@@ -5,59 +5,73 @@
 #################################################################################
 parameters:
 
+  # Debug.
   - name: debug
     type: boolean
     default: false
 
+  # Reference Type.
   - name: referenceType
     type: string
     values:
       - Package
       - Project
 
+  # Pool Name.
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
 
+  # Image Override.
   - name: imageOverride
     type: string
     default: ADO-MMS22-SQL19
 
+  # Abstractions Artifacts Name.
   - name: abstractionsArtifactsName
     type: string
     default: Abstractions.Artifacts
 
+  # Logging Artifacts Name.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
 
+  # Mds Artifacts Name.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
+  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Prebuild Steps.
   - name: prebuildSteps
     type: stepList
     default: []
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
+  # Logging Package Version.
   - name: loggingPackageVersion
     type: string
 
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
+  # Assembly Build Number.
   - name: assemblyBuildNumber
     type: string
     default: ''

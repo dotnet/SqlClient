@@ -4,16 +4,20 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Nuspec Path.
   - name: nuspecPath
     type: string
 
+  # Package Version.
   - name: packageVersion
     type: string
 
+  # Output Directory.
   - name: outputDirectory
     type: string
     default: '$(Build.SourcesDirectory)/packages'
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     default: Debug
@@ -21,16 +25,20 @@ parameters:
       - Debug
       - Release
 
+  # Generate Symbols Package.
   - name: generateSymbolsPackage
     type: boolean
 
+  # Display Name.
   - name: displayName
     type: string
 
+  # Install Nuget.
   - name: installNuget
     type: boolean
     default: true
 
+  # Reference Type.
   - name: referenceType
     type: string
     values:

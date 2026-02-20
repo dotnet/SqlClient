@@ -9,33 +9,34 @@
 # NoBuild=true property ensures the DLLs are not rebuilt.
 
 parameters:
-    - # The MSBuild pack target in build.proj (e.g. PackLogging, PackAbstractions,
-      # PackAzure).
-      name: packTarget
-      type: string
+  # The MSBuild pack target in build.proj (e.g. PackLogging, PackAbstractions,
+  # PackAzure).
+  - name: packTarget
+    type: string
 
-    - name: buildConfiguration
-      type: string
-      values:
-          - Debug
-          - Release
+  # Build Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
-    - # Additional MSBuild arguments for version properties.
-      name: versionProperties
-      type: string
-      default: ''
+  # Additional MSBuild arguments for version properties.
+  - name: versionProperties
+    type: string
+    default: ''
 
 steps:
-    - task: MSBuild@1
-      displayName: 'Build.proj - ${{ parameters.packTarget }}'
-      inputs:
-          solution: '$(REPO_ROOT)/build.proj'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: >-
-              -t:${{ parameters.packTarget }}
-              -p:ReferenceType=Package
-              -p:OutputPath=$(BUILD_OUTPUT)/
-              ${{ parameters.versionProperties }}
+  - task: MSBuild@1
+    displayName: Build.proj - ${{ parameters.packTarget }}
+    inputs:
+      solution: $(REPO_ROOT)/build.proj
+      configuration: ${{ parameters.buildConfiguration }}
+      msbuildArguments: >-
+          -t:${{ parameters.packTarget }}
+          -p:ReferenceType=Package
+          -p:OutputPath=$(BUILD_OUTPUT)/
+          ${{ parameters.versionProperties }}
 
-    - script: tree /a /f $(ARTIFACT_PATH)
-      displayName: Output Artifact Path Tree After Pack
+  - script: tree /a /f $(ARTIFACT_PATH)
+    displayName: Output Artifact Path Tree After Pack

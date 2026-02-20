@@ -5,27 +5,27 @@
 #################################################################################
 parameters:
 
+  # Abstractions Assembly File Version.
   - name: abstractionsAssemblyFileVersion
     type: string
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
-  - name: azureAssemblyFileVersion
-    type: string
-
-  - name: azurePackageVersion
-    type: string
-
+  # Logging Assembly File Version.
   - name: loggingAssemblyFileVersion
     type: string
 
+  # Logging Package Version.
   - name: loggingPackageVersion
     type: string
 
+  # Mds Assembly File Version.
   - name: mdsAssemblyFileVersion
     type: string
 
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
@@ -56,5 +56,3 @@ steps:
         -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
         -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
-        -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
-        -p:AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }}

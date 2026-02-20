@@ -18,21 +18,26 @@
 #        affect >1 project at a time.
 
 parameters:
+    # Akv Package Version.
     - name: akvPackageVersion
       type: string
 
+    # Build Configuration.
     - name: buildConfiguration
       type: string
       values:
         - Debug
         - Release
 
+    # Mds Package Version.
     - name: mdsPackageVersion
       type: string
 
+    # Logging Package Version.
     - name: loggingPackageVersion
       type: string
 
+    # Abstractions Package Version.
     - name: abstractionsPackageVersion
       type: string
 

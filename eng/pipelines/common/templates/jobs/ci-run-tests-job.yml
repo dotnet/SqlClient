@@ -4,16 +4,20 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Abstractions Artifacts Name.
   - name: abstractionsArtifactsName
     type: string
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
+  # Logging Artifacts Name.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
 
+  # Logging Package Version.
   - name: loggingPackageVersion
     type: string
     default: ''
@@ -38,41 +42,52 @@ parameters:
     type: object
     default: {} # - key: 'value'
 
+  # Config Sql For.
   - name: configSqlFor
     type: string # local, azure, or enclave
     default: local
 
+  # Debug.
   - name: debug
     type: boolean
     default: false
 
+  # Enable X64Test.
   - name: enableX64Test
     type: boolean
     default: true
 
+  # Enable X86Test.
   - name: enableX86Test
     type: boolean
     default: false
 
+  # Hosted Pool.
   - name: hostedPool
     type: boolean
     default: false
 
+  # Image.
   - name: image
     type: string
 
+  # Job Display Name.
   - name: jobDisplayName
     type: string
 
+  # Mds Artifacts Name.
   - name: mdsArtifactsName
     type: string
 
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
+  # Netcore Version Test Utils.
   - name: netcoreVersionTestUtils
     type: string
 
+  # Operating System.
   - name: operatingSystem
     type: string
     values:
@@ -81,28 +96,34 @@ parameters:
       - Windows
     default: Windows
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Pool Name.
   - name: poolName
     type: string
 
+  # Prebuild Steps.
   - name: prebuildSteps
     type: stepList
     default: []
 
+  # Reference Type.
   - name: referenceType
     type: string
     values:
       - Project
       - Package
 
+  # Target Framework.
   - name: targetFramework
     type: string
 
+  # Test Set.
   - name: testSet
     type: string
 
@@ -115,6 +136,7 @@ parameters:
     type: boolean
     default: false
 
+  # Usemanaged SNI.
   - name: usemanagedSNI
     type: boolean
     default: false

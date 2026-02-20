@@ -4,22 +4,26 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Symbols Folder.
   - name: symbolsFolder
     type: string
     default: symbols
 
+  # Software Folder.
   - name: softwareFolder
     type: string
     default: software
 
+  # Publish Symbols.
   - name: publishSymbols
     type: boolean
 
+  # Is Preview.
   - name: isPreview
     type: boolean
 
 jobs:
-- job: build_signed_package
+- job: build_signed_SqlClient_package
   displayName: 'Build Microsoft.Data.SqlClient'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
@@ -31,8 +35,6 @@ jobs:
       value: $(abstractionsPackagePreviewVersion)
     - name: loggingPackageVersion
       value: $(loggingPackagePreviewVersion)
-    - name: azurePackageVersion
-      value: $(azurePackagePreviewVersion)
     - name: mdsPackageVersion
       value: $(previewMdsPackageVersion)
 
@@ -82,8 +84,6 @@ jobs:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
-      azureAssemblyFileVersion: $(azureAssemblyFileVersion)
-      azurePackageVersion: $(azurePackageVersion)
       loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
       loggingPackageVersion: $(loggingPackageVersion)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)

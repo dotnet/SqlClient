@@ -6,25 +6,31 @@
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
 ####################################################################################
 parameters:
+  # Sym Account.
   - name: SymAccount
     type: string
     default: 'SqlClientDrivers'
 
+  # Symbols Version.
   - name: symbolsVersion
     type: string
     default: '$(mdsPackageVersion)'
 
+  # Symbol Server.
   - name: symbolServer
     type: string
     default: '$(SymbolServer)'
 
+  # Symbol Token Uri.
   - name: symbolTokenUri
     type: string
     default: '$(SymbolTokenUri)'
 
+  # Symbols Artifact Name.
   - name: symbolsArtifactName
     type: string
 
+  # Publish To Servers.
   - name: publishToServers
     type: object
     default:

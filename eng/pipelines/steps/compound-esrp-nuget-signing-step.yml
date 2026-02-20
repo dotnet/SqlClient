@@ -5,23 +5,28 @@
 #################################################################################
 
 parameters:
+  # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
 
+  # App Registration Tenant Id.
   - name: appRegistrationTenantId
     type: string
 
-  - # Name of the Azure Key Vault to retrieve certificates from.
-    # note: This has nothing to do with the AKV provider package.
-    name: authAkvName
+  # Name of the Azure Key Vault to retrieve certificates from.
+  # note: This has nothing to do with the AKV provider package.
+  - name: authAkvName
     type: string
 
+  # Auth Sign Cert Name.
   - name: authSignCertName
     type: string
 
+  # Esrp Connected Service Name.
   - name: esrpConnectedServiceName
     type: string
 
+  # Esrp Client Id.
   - name: esrpClientId
     type: string
     

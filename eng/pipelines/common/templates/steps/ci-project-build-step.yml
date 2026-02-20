@@ -4,26 +4,31 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Reference Type.
   - name: referenceType
     type: string
     values:
       - Package
       - Project
 
+  # Build Number.
   - name: buildNumber
     type: string
     default: $(BuildNumber)
 
+  # Operating System.
   - name: operatingSystem
     type: string
     default: deferedToRuntime
@@ -33,6 +38,7 @@ parameters:
       - MacOS
       - deferedToRuntime
 
+  # Build.
   - name: build
     type: string
     default: MDS

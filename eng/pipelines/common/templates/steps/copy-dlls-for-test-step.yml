@@ -4,14 +4,17 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Symbols Folder.
   - name: symbolsFolder
     type: string
     default: symbols
 
+  # Software Folder.
   - name: softwareFolder
     type: string
     default: software
 
+  # List Of TF.
   - name: listOfTF
     type: object
     default:

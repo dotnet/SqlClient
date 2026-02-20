@@ -5,29 +5,34 @@
 #################################################################################
 
 parameters:
+  # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
 
+  # App Registration Tenant Id.
   - name: appRegistrationTenantId
     type: string
 
-  - # Name of the Azure Key Vault to retrieve certificates from.
-    # note: This has nothing to do with the AKV provider package.
-    name: authAkvName
+  # Name of the Azure Key Vault to retrieve certificates from.
+  # note: This has nothing to do with the AKV provider package.
+  - name: authAkvName
     type: string
 
+  # Auth Sign Cert Name.
   - name: authSignCertName
     type: string
 
+  # Esrp Connected Service Name.
   - name: esrpConnectedServiceName
     type: string
 
+  # Esrp Client Id.
   - name: esrpClientId
     type: string
     
-  - # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) and all subdirectories
-    # that match this pattern will be scanned and signed. This should end with ".dll". 
-    name: pattern
+  # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) and all subdirectories
+  # that match this pattern will be scanned and signed. This should end with ".dll".
+  - name: pattern
     type: string
   
 steps:

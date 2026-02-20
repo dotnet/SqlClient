@@ -4,39 +4,48 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # Artifact Type.
   - name: artifactType
     values:
     - dll
     - pkg
 
+  # Source Root.
   - name: sourceRoot
     type: string
     default: $(REPOROOT)
   
+  # Artifact Directory.
   - name: artifactDirectory
     type: string
     default: $(artifactDirectory)
 
+  # ESRP Connected Service Name.
   - name: ESRPConnectedServiceName
     type: string
     default: $(ESRPConnectedServiceName)
 
+  # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
     default: $(appRegistrationClientId)
 
+  # App Registration Tenant Id.
   - name: appRegistrationTenantId
     type: string
     default: $(appRegistrationTenantId)
 
+  # Auth AKV Name.
   - name: AuthAKVName
     type: string
     default: $(AuthAKVName)
 
+  # Auth Sign Cert Name.
   - name: AuthSignCertName
     type: string
     default: $(AuthSignCertName)
 
+  # Esrp Client Id.
   - name: EsrpClientId
     type: string
     default: $(EsrpClientId)

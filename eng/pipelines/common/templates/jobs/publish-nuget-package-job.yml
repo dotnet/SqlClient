@@ -46,7 +46,7 @@ parameters:
 # Read more: https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/pipelinebasics#what-is-a-onebranch-release-yaml-pipeline
 jobs:
 - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
-  displayName: 'Publish ${{ parameters.packageDisplayName }}'
+  displayName: Publish ${{ parameters.packageDisplayName }}
 
   # Template context inputs are used to pass parameters to the deployment job since it doesn't automatically download pipeline artifacts.
   templateContext:
@@ -56,14 +56,14 @@ jobs:
     - input: pipelineArtifact
       artifactName: ${{ parameters.artifactName }}
       targetPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
-  
+
   variables:
     - name: ob_outputDirectory
-      value: '$(Build.SourcesDirectory)/packages'
+      value: $(Build.SourcesDirectory)/packages
 
   pool:
-    type: release 
-    
+    type: release
+
   steps:
   # Artifact is downloaded via templateContext.inputs per OneBranch requirements
 
@@ -75,13 +75,13 @@ jobs:
         if ($nupkgs) { $nupkgs | ForEach-Object { Write-Host $_.FullName } } else { Write-Host "(no .nupkg found)" }
         if ($snupkgs) { $snupkgs | ForEach-Object { Write-Host $_.FullName } } else { Write-Host "(no .snupkg found)" }
         Write-Host "##[warning]Dry run mode — no packages were pushed."
-      displayName: 'Dry Run — List ${{ parameters.packageDisplayName }} packages'
+      displayName: Dry Run — List ${{ parameters.packageDisplayName }} packages
 
   - ${{ else }}:
     - task: NuGetCommand@2
-      displayName: 'Push ${{ parameters.packageDisplayName }} to NuGet'
+      displayName: Push ${{ parameters.packageDisplayName }} to NuGet
       inputs:
         command: push
-        packagesToPush: '$(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}'
+        packagesToPush: $(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}
         nuGetFeedType: external
-        publishFeedCredentials: '${{ parameters.nugetServiceConnection }}'
+        publishFeedCredentials: ${{ parameters.nugetServiceConnection }}

@@ -37,7 +37,7 @@ parameters:
   - name: debug
     type: boolean
     default: false
-  
+
   # The list of upstream jobs to depend on.
   - name: dependsOn
     type: object
@@ -57,7 +57,7 @@ parameters:
 jobs:
 
   - job: pack_logging_package_job
-    displayName: 'Pack Logging Package'
+    displayName: Pack Logging Package
 
     dependsOn: ${{ parameters.dependsOn }}
 

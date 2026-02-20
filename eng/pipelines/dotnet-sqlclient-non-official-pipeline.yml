@@ -9,21 +9,25 @@ trigger: none
 pr: none
 
 parameters: # parameters are shown up in ADO UI in a build queue time
+  # Enable debug output
   - name: "debug"
     displayName: "Enable debug output"
     type: boolean
     default: false
 
+  # Publish symbols
   - name: publishSymbols
     displayName: "Publish symbols"
     type: boolean
     default: false
 
+  # Lowest supported .NET Framework version (MDS validation)
   - name: CurrentNetFxVersion
     displayName: "Lowest supported .NET Framework version (MDS validation)"
     type: string
     default: "net462"
 
+  # Is this a preview build?
   - name: isPreview
     displayName: "Is this a preview build?"
     type: boolean
@@ -35,11 +39,13 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     type: boolean
     default: true
 
+  # Build Microsoft.Data.SqlClient and Extensions
   - name: buildSqlClient
     displayName: "Build Microsoft.Data.SqlClient and Extensions"
     type: boolean
     default: true
 
+  # Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
   - name: buildAKVProvider
     displayName: "Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
     type: boolean
@@ -58,26 +64,31 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     type: boolean
     default: false
 
+  # Release Microsoft.Data.SqlClient.Extensions.Logging
   - name: releaseLogging
     displayName: "Release Microsoft.Data.SqlClient.Extensions.Logging"
     type: boolean
     default: false
 
+  # Release Microsoft.Data.SqlClient.Extensions.Abstractions
   - name: releaseAbstractions
     displayName: "Release Microsoft.Data.SqlClient.Extensions.Abstractions"
     type: boolean
     default: false
 
+  # Release Microsoft.Data.SqlClient
   - name: releaseSqlClient
     displayName: "Release Microsoft.Data.SqlClient"
     type: boolean
     default: false
 
+  # Release Microsoft.Data.SqlClient.Extensions.Azure
   - name: releaseExtAzure
     displayName: "Release Microsoft.Data.SqlClient.Extensions.Azure"
     type: boolean
     default: false
 
+  # Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
   - name: releaseAKVProvider
     displayName: "Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
     type: boolean
@@ -87,7 +98,7 @@ variables:
   - template: /eng/pipelines/libraries/variables.yml@self
 
   - name: mdsArtifactName
-    value: drop_buildMDS_build_signed_package
+    value: drop_build_core_build_signed_SqlClient_package
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
   - name: CurrentNetFxVersion
@@ -196,8 +207,7 @@ extends:
           - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
-                  packageDisplayName: Logging
-                  buildTarget: BuildLogging
+                  packageName: Logging
                   versionProperties: >-
                     -p:LoggingPackageVersion=$(effectiveLoggingVersion)
                     -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
@@ -214,8 +224,7 @@ extends:
           - ${{ if eq(parameters.buildSqlClient, true) }}:
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
-                  packageDisplayName: Abstractions
-                  buildTarget: BuildAbstractions
+                  packageName: Abstractions
                   versionProperties: >-
                     -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
                     -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
@@ -245,10 +254,9 @@ extends:
       # ------------------------------------------------------------------
       # Stage 2: Core packages (depend on independent packages)
       # MDS and Extensions.Azure build in parallel after Stage 1 completes.
-      # Stage name kept as 'buildMDS' for validate job compatibility.
       # ------------------------------------------------------------------
       - ${{ if eq(parameters.buildSqlClient, true) }}:
-          - stage: buildMDS
+          - stage: build_core
             displayName: "Build Core Packages"
             dependsOn: build_independent
             jobs:
@@ -261,8 +269,7 @@ extends:
 
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
-                  packageDisplayName: Azure
-                  buildTarget: BuildAzure
+                  packageName: Azure
                   versionProperties: >-
                     -p:AzurePackageVersion=$(effectiveAzureVersion)
                     -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
@@ -284,7 +291,7 @@ extends:
       - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
           - stage: build_addons
             displayName: "Build Add-on Packages"
-            dependsOn: buildMDS
+            dependsOn: build_core
             jobs:
               - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
                 parameters:
@@ -315,7 +322,7 @@ extends:
       - ${{ if eq(parameters.buildSqlClient, true) }}:
           - stage: mds_package_validation
             displayName: "MDS Package Validation"
-            dependsOn: buildMDS
+            dependsOn: build_core
             jobs:
               - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
                 parameters:
@@ -334,7 +341,7 @@ extends:
               - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
                 - build_independent
               - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
-                - buildMDS
+                - build_core
                 - mds_package_validation
               - ${{ if parameters.releaseAKVProvider }}:
                 - build_addons
@@ -373,7 +380,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient
-                      artifactName: drop_buildMDS_build_signed_package
+                      artifactName: drop_build_core_build_signed_SqlClient_package
                       nugetServiceConnection: $(NuGetServiceConnection)
                       dryRun: true
 
@@ -381,7 +388,7 @@ extends:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
-                      artifactName: drop_buildMDS_build_signed_Azure_package
+                      artifactName: drop_build_core_build_signed_Azure_package
                       nugetServiceConnection: $(NuGetServiceConnection)
                       dryRun: true
 

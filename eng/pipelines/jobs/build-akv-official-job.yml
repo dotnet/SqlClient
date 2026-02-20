@@ -5,73 +5,93 @@
 #################################################################################
 
 parameters:
+    # Akv Assembly File Version.
     - name: akvAssemblyFileVersion
       type: string
 
+    # Akv Package Version.
     - name: akvPackageVersion
       type: string
 
+    # Api Scan Dll Path.
     - name: apiScanDllPath
       type: string
 
+    # Api Scan Pdb Path.
     - name: apiScanPdbPath
       type: string
 
+    # Build Configuration.
     - name: buildConfiguration
       type: string
       values:
         - Debug
         - Release
 
+    # Mds Package Version.
     - name: mdsPackageVersion
       type: string
 
+    # Logging Package Version.
     - name: loggingPackageVersion
       type: string
 
+    # Abstractions Package Version.
     - name: abstractionsPackageVersion
       type: string
 
+    # Publish Symbols.
     - name: publishSymbols
       type: boolean
 
+    # App Registration Client Id.
     - name: appRegistrationClientId
       type: string
 
+    # App Registration Tenant Id.
     - name: appRegistrationTenantId
       type: string
 
+    # Auth Akv Name.
     - name: authAkvName
       type: string
 
+    # Auth Sign Cert Name.
     - name: authSignCertName
       type: string
 
+    # Esrp Client Id.
     - name: esrpClientId
       type: string
 
+    # Esrp Connected Service Name.
     - name: esrpConnectedServiceName
       type: string
 
+    # Symbols Azure Subscription.
     - name: symbolsAzureSubscription
       type: string
 
+    # Symbols Publish Project Name.
     - name: symbolsPublishProjectName
       type: string
 
+    # Symbols Publish Server.
     - name: symbolsPublishServer
       type: string
 
+    # Symbols Publish Token Uri.
     - name: symbolsPublishTokenUri
       type: string
 
+    # Symbols Upload Account.
     - name: symbolsUploadAccount
       type: string
 
     # @TODO: This should be determined from build output, or at a higher level
-    - # Note: not intended to be passed in, is only used for copying files for ApiScan.
-      # This is only defined as a parameter since ADO pipelines do not support array variables.
-      name: targetFrameworks
+    # Note: not intended to be passed in, is only used for copying files for ApiScan.
+    # This is only defined as a parameter since ADO pipelines do not support array variables.
+    - name: targetFrameworks
       type: object
       default:
           - net462
@@ -107,7 +127,7 @@ jobs:
           - task: DownloadPipelineArtifact@2
             displayName: 'Download SqlClient (MDS) Package'
             inputs:
-                artifactName: drop_buildMDS_build_signed_package
+                artifactName: drop_build_core_build_signed_SqlClient_package
                 targetPath: $(Build.SourcesDirectory)/packages
 
           - task: DownloadPipelineArtifact@2

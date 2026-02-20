@@ -97,7 +97,7 @@
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard;BuildLogging;BuildAzure" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildAzure;BuildSqlServerPackage;GenerateMdsPackage" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildSqlServerPackage;GenerateMdsPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
 
   <!-- Abstractions Targets -->

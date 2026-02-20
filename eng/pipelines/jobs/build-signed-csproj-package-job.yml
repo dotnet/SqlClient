@@ -4,163 +4,180 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Generic job template for building and signing csproj-based Extension packages
-# (Logging, Abstractions, Azure).  The job builds DLLs via build.proj, ESRP
-# signs the DLLs, then creates NuGet packages from the signed DLLs, and finally
-# ESRP signs the NuGet packages.
+# Generic job template for building and signing csproj-based Extension packages (Logging,
+# Abstractions, Azure).  The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet
+# packages from the signed DLLs, and finally ESRP signs the NuGet packages.
 
 parameters:
-    - # Human-readable package name used in display strings.
-      name: packageDisplayName
-      type: string
+  # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
+  # the default Build and Pack targets if those aren't specified.
+  - name: packageName
+    type: string
+    values:
+      - Abstractions
+      - Azure
+      - Logging
 
-    - # The MSBuild build target in build.proj (e.g. BuildLogging).
-      name: buildTarget
-      type: string
+  # The MSBuild build target in build.proj (e.g. BuildLogging).  If not
+  # specified, defaults to Build<packageName>.
+  - name: buildTarget
+    type: string
+    default: ''
 
-    - # The MSBuild pack target in build.proj (e.g. PackLogging).  If not
-      # specified, defaults to Pack<packageDisplayName>.
-      name: packTarget
-      type: string
-      default: ''
+  # The MSBuild pack target in build.proj (e.g. PackLogging).  If not
+  # specified, defaults to Pack<packageName>.
+  - name: packTarget
+    type: string
+    default: ''
 
-    - name: buildConfiguration
-      type: string
-      values:
-          - Debug
-          - Release
-      default: Release
+  # Build configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+    default: Release
 
-    - # Additional MSBuild -p: arguments for version properties.
-      name: versionProperties
-      type: string
-      default: ''
+  # Additional MSBuild -p: arguments for version properties.  These may include versions of
+  # packages this package depends on, or versions for this package itself.
+  - name: versionProperties
+    type: string
+    default: ''
 
-    - # Globbing pattern to match DLLs for ESRP signing (e.g.
-      # Microsoft.Data.SqlClient.Extensions.Logging.dll).
-      name: dllSigningPattern
-      type: string
+  # Globbing pattern to match DLLs for ESRP signing (e.g.
+  # Microsoft.Data.SqlClient.Extensions.Logging.dll).
+  - name: dllSigningPattern
+    type: string
 
-    - # APIScan software name (e.g. Microsoft.Data.SqlClient.Extensions.Logging).
-      name: softwareName
-      type: string
+  # APIScan software name (e.g. Microsoft.Data.SqlClient.Extensions.Logging).
+  - name: softwareName
+    type: string
 
-    - # Assembly file version for APIScan (e.g. 1.0.0.12345).
-      name: assemblyFileVersion
-      type: string
+  # Assembly file version for APIScan (e.g. 1.0.0.12345).
+  - name: assemblyFileVersion
+    type: string
 
-    - # ESRP signing credentials — sourced from the pipeline variable group.
-      name: esrpConnectedServiceName
-      type: string
+  # ESRP signing credentials — sourced from the pipeline variable group.
+  - name: esrpConnectedServiceName
+    type: string
 
-    - name: esrpClientId
-      type: string
+  # ESRP client ID.
+  - name: esrpClientId
+    type: string
 
-    - name: appRegistrationClientId
-      type: string
+  # App registration client ID.
+  - name: appRegistrationClientId
+    type: string
 
-    - name: appRegistrationTenantId
-      type: string
+  # App registration tenant ID.
+  - name: appRegistrationTenantId
+    type: string
 
-    - name: authAkvName
-      type: string
+  # Auth AKV name.
+  - name: authAkvName
+    type: string
 
-    - name: authSignCertName
-      type: string
+  # Auth sign certificate name.
+  - name: authSignCertName
+    type: string
 
-    - name: publishSymbols
-      type: boolean
-      default: false
+  # Publish symbols.
+  - name: publishSymbols
+    type: boolean
+    default: false
 
 jobs:
-    - job: build_signed_${{ replace(parameters.buildTarget, 'Build', '') }}_package
-      displayName: 'Build ${{ parameters.softwareName }}'
-      pool:
-          type: windows
+  - job: build_signed_${{ parameters.packageName }}_package
+    displayName: Build ${{ parameters.softwareName }}
+    pool:
+      type: windows
 
-      variables:
-          ob_outputDirectory: '$(ARTIFACT_PATH)'
-          # APIScan configuration for this Extension package
-          ob_sdl_apiscan_enabled: true
-          ob_sdl_apiscan_softwareFolder: '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/dlls'
-          ob_sdl_apiscan_symbolsFolder: '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/pdbs'
-          ob_sdl_apiscan_softwarename: '${{ parameters.softwareName }}'
-          ob_sdl_apiscan_versionNumber: '${{ parameters.assemblyFileVersion }}'
+    variables:
+      ob_outputDirectory: $(ARTIFACT_PATH)
+      # APIScan configuration for this Extension package
+      ob_sdl_apiscan_enabled: true
+      ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
+      ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
+      ob_sdl_apiscan_softwarename: ${{ parameters.softwareName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.assemblyFileVersion }}
 
-      steps:
-          - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
+      buildTarget: ${{ coalesce(parameters.buildTarget, format('Build{0}', parameters.packageName)) }}
+      packTarget: ${{ coalesce(parameters.packTarget, format('Pack{0}', parameters.packageName)) }}
 
-          # Download Abstractions package from previous stage for packages that depend on it.
-          # Azure depends on Abstractions; Logging and Abstractions are independent.
-          - ${{ if eq(parameters.packageDisplayName, 'Azure') }}:
-            - task: DownloadPipelineArtifact@2
-              displayName: 'Download Abstractions Package'
-              inputs:
-                  artifactName: drop_build_independent_build_signed_Abstractions_package
-                  targetPath: $(Build.SourcesDirectory)/packages
+    steps:
+      - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
 
-          # Install the .NET SDK.
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+      # Download Abstractions package from previous stage for packages that depend on it.
+      # Azure depends on Abstractions; Logging and Abstractions are independent.
+      - ${{ if eq(parameters.packageName, 'Azure') }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Abstractions Package
+          inputs:
+            artifactName: drop_build_independent_build_signed_Abstractions_package
+            targetPath: $(Build.SourcesDirectory)/packages
 
-          # Build the package, producing DLLs only (no NuGet package yet).
-          - template: /eng/pipelines/steps/compound-build-csproj-step.yml@self
-            parameters:
-                buildTarget: '${{ parameters.buildTarget }}'
-                buildConfiguration: '${{ parameters.buildConfiguration }}'
-                versionProperties: '${{ parameters.versionProperties }}'
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
 
-          # ESRP sign the DLLs.
-          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
-            parameters:
-                appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-                authAkvName: '${{ parameters.authAkvName }}'
-                authSignCertName: '${{ parameters.authSignCertName }}'
-                esrpClientId: '${{ parameters.esrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-                pattern: '${{ parameters.dllSigningPattern }}'
+      # Build the package, producing DLLs only (no NuGet package yet).
+      - template: /eng/pipelines/steps/compound-build-csproj-step.yml@self
+        parameters:
+          buildTarget: $(buildTarget)
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          versionProperties: ${{ parameters.versionProperties }}
 
-          # Copy signed DLLs and PDBs to APIScan folders.
-          - powershell: |
-                $dllFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/dlls'
-                $pdbFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageDisplayName }}/pdbs'
-                
-                New-Item -ItemType Directory -Force -Path $dllFolder
-                New-Item -ItemType Directory -Force -Path $pdbFolder
-                
-                # Copy DLLs from build output
-                Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include '${{ parameters.dllSigningPattern }}' | ForEach-Object {
-                    Write-Host "Copying DLL: $($_.FullName)"
-                    Copy-Item $_.FullName -Destination $dllFolder
-                }
-                
-                # Copy PDBs from build output (same name but .pdb extension)
-                $pdbPattern = '${{ parameters.dllSigningPattern }}' -replace '\.dll$', '.pdb'
-                Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include $pdbPattern | ForEach-Object {
-                    Write-Host "Copying PDB: $($_.FullName)"
-                    Copy-Item $_.FullName -Destination $pdbFolder
-                }
-                
-                Write-Host "APIScan folders prepared:"
-                Write-Host "DLLs:"
-                Get-ChildItem $dllFolder | ForEach-Object { Write-Host "  $($_.Name)" }
-                Write-Host "PDBs:"
-                Get-ChildItem $pdbFolder | ForEach-Object { Write-Host "  $($_.Name)" }
-            displayName: 'Copy files for APIScan'
+      # ESRP sign the DLLs.
+      - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
+        parameters:
+          appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+          appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+          authAkvName: ${{ parameters.authAkvName }}
+          authSignCertName: ${{ parameters.authSignCertName }}
+          esrpClientId: ${{ parameters.esrpClientId }}
+          esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+          pattern: ${{ parameters.dllSigningPattern }}
 
-          # Pack the signed DLLs into NuGet package (NoBuild=true).
-          - template: /eng/pipelines/steps/compound-pack-csproj-step.yml@self
-            parameters:
-                packTarget: '${{ coalesce(parameters.packTarget, format(''Pack{0}'', parameters.packageDisplayName)) }}'
-                buildConfiguration: '${{ parameters.buildConfiguration }}'
-                versionProperties: '${{ parameters.versionProperties }}'
+      # Copy signed DLLs and PDBs to APIScan folders.
+      - powershell: |
+          $dllFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls'
+          $pdbFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs'
 
-          # ESRP sign the NuGet package.
-          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
-            parameters:
-                appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-                authAkvName: '${{ parameters.authAkvName }}'
-                authSignCertName: '${{ parameters.authSignCertName }}'
-                esrpClientId: '${{ parameters.esrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          New-Item -ItemType Directory -Force -Path $dllFolder
+          New-Item -ItemType Directory -Force -Path $pdbFolder
+
+          # Copy DLLs from build output
+          Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include '${{ parameters.dllSigningPattern }}' | ForEach-Object {
+              Write-Host "Copying DLL: $($_.FullName)"
+              Copy-Item $_.FullName -Destination $dllFolder
+          }
+
+          # Copy PDBs from build output (same name but .pdb extension)
+          $pdbPattern = '${{ parameters.dllSigningPattern }}' -replace '\.dll$', '.pdb'
+          Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include $pdbPattern | ForEach-Object {
+              Write-Host "Copying PDB: $($_.FullName)"
+              Copy-Item $_.FullName -Destination $pdbFolder
+          }
+
+          Write-Host "APIScan folders prepared:"
+          Write-Host "DLLs:"
+          Get-ChildItem $dllFolder | ForEach-Object { Write-Host "  $($_.Name)" }
+          Write-Host "PDBs:"
+          Get-ChildItem $pdbFolder | ForEach-Object { Write-Host "  $($_.Name)" }
+        displayName: Copy files for APIScan
+
+      # Pack the signed DLLs into NuGet package (NoBuild=true).
+      - template: /eng/pipelines/steps/compound-pack-csproj-step.yml@self
+        parameters:
+          packTarget: $(packTarget)
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          versionProperties: ${{ parameters.versionProperties }}
+
+      # ESRP sign the NuGet package.
+      - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
+        parameters:
+          appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+          appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+          authAkvName: ${{ parameters.authAkvName }}
+          authSignCertName: ${{ parameters.authSignCertName }}
+          esrpClientId: ${{ parameters.esrpClientId }}
+          esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}

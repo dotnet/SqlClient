@@ -5,52 +5,64 @@
 #################################################################################
 parameters:
 
+  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
 
+  # Logging Package Version.
   - name: loggingPackageVersion
     type: string
     default: ''
 
+  # Debug.
   - name: debug
     type: boolean
     default: false
 
+  # Target Framework.
   - name: targetFramework
     type: string
 
+  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
+  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
+  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Reference Type.
   - name: referenceType
     default: Package
     values:
       - Project
       - Package
 
+  # Test Set.
   - name: testSet
     type: string
 
+  # Msbuild Architecture.
   - name: msbuildArchitecture
     default: x64
     values:
       - x64
       - x86
 
+  # Dotnetx86Root Path # full path to the x86 dotnet root folder with trailing slash.
   - name: dotnetx86RootPath # full path to the x86 dotnet root folder with trailing slash
     type: string
     default: ''
 
+  # Operating System.
   - name: operatingSystem
     type: string
     values:
@@ -59,6 +71,7 @@ parameters:
       - Windows
     default: Windows
 
+  # Retry Count On Manual Tests.
   - name: retryCountOnManualTests
     type: number
     default: 2

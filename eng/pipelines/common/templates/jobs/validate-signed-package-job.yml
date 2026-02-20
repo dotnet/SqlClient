@@ -5,9 +5,11 @@
 #################################################################################
 parameters:
 
+  # Artifact Name.
   - name: artifactName
     type: string
 
+  # Is Preview.
   - name: isPreview
     type: boolean
 
@@ -30,7 +32,7 @@ jobs:
   - name: BuildType
     # This variable is set in the build-signed-package-job.yml job. Any changes
     # to the names of the stage, job, or variable must be reflected here.
-    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
+    value: $[ stageDependencies.build_core.build_signed_SqlClient_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath

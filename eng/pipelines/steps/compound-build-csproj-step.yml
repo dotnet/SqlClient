@@ -11,44 +11,45 @@
 # compound-pack-csproj-step.yml after DLL signing.
 
 parameters:
-    - # The MSBuild build target in build.proj (e.g. BuildLogging, BuildAbstractions,
-      # BuildAzure).
-      name: buildTarget
-      type: string
+  # The MSBuild build target in build.proj (e.g. BuildLogging, BuildAbstractions,
+  # BuildAzure).
+  - name: buildTarget
+    type: string
 
-    - name: buildConfiguration
-      type: string
-      values:
-          - Debug
-          - Release
+  # Build Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
-    - # Additional MSBuild arguments for version properties, e.g.
-      # -p:LoggingPackageVersion=1.0.0 -p:LoggingAssemblyFileVersion=1.0.123
-      name: versionProperties
-      type: string
-      default: ''
+  # Additional MSBuild arguments for version properties, e.g.
+  # -p:LoggingPackageVersion=1.0.0 -p:LoggingAssemblyFileVersion=1.0.123
+  - name: versionProperties
+    type: string
+    default: ''
 
 steps:
-    - task: DownloadSecureFile@1
-      displayName: 'Download Signing Key'
-      inputs:
-          retryCount: 5
-          secureFile: 'netfxKeypair.snk'
+  - task: DownloadSecureFile@1
+    displayName: Download Signing Key
+    inputs:
+      retryCount: 5
+      secureFile: netfxKeypair.snk
 
-    - task: MSBuild@1
-      displayName: 'Build.proj - ${{ parameters.buildTarget }}'
-      inputs:
-          solution: '$(REPO_ROOT)/build.proj'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: >-
-              -t:${{ parameters.buildTarget }}
-              -p:ReferenceType=Package
-              -p:OutputPath=$(BUILD_OUTPUT)/
-              -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
-              ${{ parameters.versionProperties }}
+  - task: MSBuild@1
+    displayName: Build.proj - ${{ parameters.buildTarget }}
+    inputs:
+      solution: $(REPO_ROOT)/build.proj
+      configuration: ${{ parameters.buildConfiguration }}
+      msbuildArguments: >-
+          -t:${{ parameters.buildTarget }}
+          -p:ReferenceType=Package
+          -p:OutputPath=$(BUILD_OUTPUT)/
+          -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+          ${{ parameters.versionProperties }}
 
-    - script: tree /a /f $(BUILD_OUTPUT)
-      displayName: Output Build Output Tree
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree
 
-    - script: tree /a /f $(ARTIFACT_PATH)
-      displayName: Output Artifact Path Tree
+  - script: tree /a /f $(ARTIFACT_PATH)
+    displayName: Output Artifact Path Tree

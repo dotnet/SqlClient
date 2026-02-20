@@ -10,37 +10,40 @@
 # via compound-nuget-pack-step.yml using a nuspec file.
 
 parameters:
-    - name: assemblyFileVersion
-      type: string
+  # Assembly File Version.
+  - name: assemblyFileVersion
+    type: string
 
-    - name: packageVersion
-      type: string
+  # Package Version.
+  - name: packageVersion
+    type: string
 
-    - name: buildConfiguration
-      type: string
-      values:
-          - Debug
-          - Release
+  # Build Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
 steps:
-    - task: DownloadSecureFile@1
-      displayName: 'Download Signing Key'
-      inputs:
-          retryCount: 5
-          secureFile: 'netfxKeypair.snk'
+  - task: DownloadSecureFile@1
+    displayName: Download Signing Key
+    inputs:
+      retryCount: 5
+      secureFile: netfxKeypair.snk
 
-    - task: MSBuild@1
-      displayName: 'Build.proj - BuildSqlServerLibAnyOS'
-      inputs:
-          solution: '$(REPO_ROOT)/build.proj'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: >-
-              -t:BuildSqlServerLibAnyOS
-              -p:SqlServerAssemblyFileVersion=${{ parameters.assemblyFileVersion }}
-              -p:SqlServerPackageVersion=${{ parameters.packageVersion }}
-              -p:ReferenceType=Package
-              -p:GenerateNuget=false
-              -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+  - task: MSBuild@1
+    displayName: Build.proj - BuildSqlServerLibAnyOS
+    inputs:
+      solution: $(REPO_ROOT)/build.proj
+      configuration: ${{ parameters.buildConfiguration }}
+      msbuildArguments: >-
+          -t:BuildSqlServerLibAnyOS
+          -p:SqlServerAssemblyFileVersion=${{ parameters.assemblyFileVersion }}
+          -p:SqlServerPackageVersion=${{ parameters.packageVersion }}
+          -p:ReferenceType=Package
+          -p:GenerateNuget=false
+          -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
 
-    - script: tree /a /f $(BUILD_OUTPUT)
-      displayName: Output Build Output Tree
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree
