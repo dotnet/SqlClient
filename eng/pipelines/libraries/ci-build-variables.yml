@@ -14,7 +14,7 @@ variables:
   - name: buildNumber
     value: '$(Build.BuildNumber)'
   - name: assemblyBuildNumber
-    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+    value: $(buildNumber)
   - name: SQLTarget
     value: 'localhost'
   - name: abstractionsAssemblyFileVersion
