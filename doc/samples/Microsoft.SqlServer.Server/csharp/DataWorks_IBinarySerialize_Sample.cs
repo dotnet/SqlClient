@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Microsoft.SqlServer.Server;
 
-namespace test
+namespace DataWorks_IBinarySerialize_Sample
 {
     public class Class1 : IBinarySerialize
     {

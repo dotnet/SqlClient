@@ -2,7 +2,7 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace NextResultCS
+namespace SqlDataReader_HasRows
 {
     class Program
     {

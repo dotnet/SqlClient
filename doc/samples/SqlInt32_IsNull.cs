@@ -1,3 +1,5 @@
+namespace SqlInt32_IsNull;
+
 using System;
 using System.Data;
 // <Snippet1>

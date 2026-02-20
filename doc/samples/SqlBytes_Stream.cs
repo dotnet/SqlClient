@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace SqlBytes_Stream;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -98,3 +101,4 @@ class Program
     }
 }
 // </Snippet1>
+#endif

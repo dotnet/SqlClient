@@ -1,3 +1,5 @@
+namespace SqlConnection_PacketSize;
+
 using System;
 using System.Data;
 // <Snippet1>

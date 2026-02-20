@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ColumnMappingRemoveAt;
+
 using System;
 using System.Data;
 // <Snippet1>

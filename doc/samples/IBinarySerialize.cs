@@ -5,7 +5,7 @@ using System.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 using System.Text;
 
-namespace test
+namespace IBinarySerializeCS
 {
 
     public class Class1 : IBinarySerialize

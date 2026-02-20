@@ -1,3 +1,5 @@
+namespace SqlBulkCopyOptions_UseInternalTransaction;
+
 using System;
 using System.Data;
 // <Snippet1>
