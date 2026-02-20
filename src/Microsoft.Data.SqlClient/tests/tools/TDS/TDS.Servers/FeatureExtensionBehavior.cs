@@ -5,7 +5,7 @@
 
 namespace Microsoft.SqlServer.TDS.Servers
 {
-    public enum FeatureExtensionEnablementTriState
+    public enum FeatureExtensionBehavior
     {
         Disabled,
         Enabled,

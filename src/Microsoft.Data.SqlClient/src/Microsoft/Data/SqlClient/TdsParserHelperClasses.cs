@@ -89,11 +89,18 @@ namespace Microsoft.Data.SqlClient
         internal ushort Port { get; private set; }
         internal string ServerName { get; private set; }
 
-        internal RoutingInfo(byte protocol, ushort port, string servername)
+        /// <summary>
+        /// The DatabaseName property is only used when routing via an EnhancedRouting ENVCHANGE token.
+        /// It is not used when routing via the normal Routing ENVCHANGE token.
+        /// </summary>
+        internal string DatabaseName { get; private set; }
+
+        internal RoutingInfo(byte protocol, ushort port, string serverName, string databaseName = null)
         {
             Protocol = protocol;
             Port = port;
-            ServerName = servername;
+            ServerName = serverName;
+            DatabaseName = databaseName;
         }
     }
 

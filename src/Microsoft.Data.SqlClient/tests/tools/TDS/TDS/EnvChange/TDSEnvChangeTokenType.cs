@@ -27,6 +27,7 @@ namespace Microsoft.SqlServer.TDS.EnvChange
         TransactionEnded = 17,
         ResetConnectionAcknowledgement = 18,
         UserInstance = 19,
-        Routing = 20
+        Routing = 20,
+        EnhancedRouting = 21
     }
 }
