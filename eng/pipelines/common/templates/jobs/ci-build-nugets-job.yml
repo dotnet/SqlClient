@@ -124,7 +124,7 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
-        mdsAssemblyFileVersion: ${{ parameters.mdsAssemblyFileVersion }}
+        assemblyBuildNumber: $(assemblyBuildNumber)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
