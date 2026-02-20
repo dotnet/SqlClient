@@ -3429,7 +3429,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+                        // Set the total length of the token
+                        // total = headers + size of new value + size of old value
+                        // headers = token id+newLengthHeader+oldLengthHeader = sizeof(byte) + 2*sizeof(UInt16) = 5
+                        env._length = env._newLength + oldLength + 5;
                         break;
                     }
 
