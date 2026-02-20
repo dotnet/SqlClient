@@ -48,7 +48,6 @@ public class FeatureExtensionNegotiationTests : IClassFixture<TdsServerFixture>
                                   .OfType<TDSLogin7GenericOptionToken>()
                                   .FirstOrDefault(t => t.FeatureID == TDSFeatureID.EnhancedRoutingSupport);
 
-            // Test should fail if no UserAgent FE token is found
             Assert.NotNull(token);
 
             Assert.Equal((byte)TDSFeatureID.EnhancedRoutingSupport, (byte)token.FeatureID);
