@@ -147,36 +147,28 @@ stages:
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
-  # Build MDS and its NuGet packages.
-  - stage: build_mds_akv_packages_stage
-    displayName: Build MDS & AKV Packages
-
-    # When building MDS via packages, we must depend on the Abstractions
-    # and Logging packages.
-    ${{ if eq(parameters.referenceType, 'Package') }}:
-      dependsOn:
-        - build_abstractions_package_stage
-        - build_logging_package_stage
-    ${{ else }}:
-      dependsOn: []
-
-    jobs:
-    - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
-      parameters:
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        abstractionsPackageVersion: $(abstractionsPackageVersion)
-        abstractionsArtifactsName: $(abstractionsArtifactsName)
-        loggingPackageVersion: $(loggingPackageVersion)
-        loggingArtifactsName: $(loggingArtifactsName)
-        mdsPackageVersion: $(mdsPackageVersion)
-        mdsArtifactsName: $(mdsArtifactsName)
-        ${{if ne(parameters.SNIVersion, '')}}:
-          prebuildSteps:
-            - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
-              parameters:
-                SNIVersion: ${{parameters.SNIVersion}}
-                SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+  # Build the SqlClienet package.
+  #
+  # For legacy reasons, this also builds the AKV package.
+  #
+  - template: /eng/pipelines/stages/build-sqlclient-package-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
+      mdsArtifactsName: $(mdsArtifactsName)
+      mdsPackageVersion: $(mdsPackageVersion)
+      referenceType: ${{ parameters.referenceType }}
+      SNIVersion: ${{ parameters.SNIVersion }}
+      SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
+      # When building SqlClient via packages, we must depend on the Abstractions and Logging
+      # packages.
+      ${{ if eq(parameters.referenceType, 'Package') }}:
+        additionalDependsOn:
+          - build_abstractions_package_stage
+          - build_logging_package_stage
 
   # Build the Azure package, and publish it to the pipeline artifacts under the
   # given artifact name.
@@ -195,7 +187,7 @@ stages:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
-          - build_mds_akv_packages_stage
+          - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
@@ -207,7 +199,7 @@ stages:
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         additionalDependsOn:
-          - build_mds_akv_packages_stage
+          - build_sqlclient_package_stage
           - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
@@ -234,7 +226,7 @@ stages:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
-          - build_mds_akv_packages_stage
+          - build_sqlclient_package_stage
           - build_azure_package_stage
 
       # Steps to run prior to building and running tests on each job.

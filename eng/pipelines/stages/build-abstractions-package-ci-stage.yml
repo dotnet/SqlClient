@@ -38,6 +38,11 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
+
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
     type: string
@@ -66,6 +71,11 @@ stages:
 
   - stage: build_abstractions_package_stage
     displayName: Build Abstractions Package
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     jobs:
 

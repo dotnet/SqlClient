@@ -25,6 +25,11 @@
 
 parameters:
 
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
+
   # The name of the pipeline artifacts to publish.
   - name: loggingArtifactsName
     type: string
@@ -66,6 +71,11 @@ stages:
 
   - stage: build_logging_package_stage
     displayName: Build Logging Package
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     jobs:
 
