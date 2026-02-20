@@ -1308,7 +1308,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: This class should not do low-level parsing of data from the server.
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
+            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING && featureId != TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT)
             {
                 return;
             }
@@ -3288,6 +3288,17 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginNoFailover | " +
+                                $"Ignoring enhanced routing info because the server did not acknowledge the feature.");
+                            RoutingInfo = null;
+                            break;
+                        }
+
                         SqlClientEventSource.Log.TryTraceEvent(
                             $"SqlInternalConnectionTds.LoginNoFailover | " +
                             $"Routed to {serverInfo.ExtendedServerName}");
@@ -3589,6 +3600,17 @@ namespace Microsoft.Data.SqlClient.Connection
                     int routingAttempts = 0;
                     while (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginWithFailover | " +
+                                $"Ignoring enhanced routing info because the server did not acknowledge the feature.");
+                            RoutingInfo = null;
+                            continue;
+                        }
+
                         if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
