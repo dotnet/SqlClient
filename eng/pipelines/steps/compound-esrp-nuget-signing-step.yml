@@ -31,6 +31,7 @@ parameters:
     type: string
 
 steps:
+  # See: https://microsoft.sharepoint.com/teams/prss/esrp/info/ESRP%20Onboarding%20Wiki/Integrate%20the%20ESRP%20Scan%20Task%20into%20ADO.aspx
   - task: EsrpMalwareScanning@6
     displayName: 'ESRP Nuget Malware Scanning'
     inputs:

@@ -8,8 +8,23 @@
 # Azure, Logging, and MDS projects.
 
 variables:
-  - group: 'ADO Build properties'
-  - group: 'ADO Test Configuration Properties'
+  - group: ADO Build properties
+  - group: ADO Test Configuration Properties
+
+  # Pipeline build number used for versioning
+  - name: buildNumber
+    value: $(Build.BuildNumber)
+
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
+  # must be a positive 16-bit integer less than 65535.  Simply concatenating
+  # both parts of $(Build.BuildNumber) could produce values larger than 65534,
+  # so we must omit the second part entirely.  Unfortunately, this may result
+  # in multiple subsequent pipline builds using the same C# assembly versions.
+  # The package versions will not be affected and will show the complete
+  # $(Build.BuildNumber) values.
+  - name: assemblyBuildNumber
+    value: $[ split(variables.buildNumber, '.')[0] ]
 
   # Abstractions library assembly file version
   - name: abstractionsAssemblyFileVersion
@@ -27,10 +42,6 @@ variables:
   - name: akvPackageVersion
     value: 7.0.0.$(buildNumber)-ci
 
-  # Assembly build number derived from the pipeline build number
-  - name: assemblyBuildNumber
-    value: $(buildNumber)
-
   # Azure library assembly file version
   - name: azureAssemblyFileVersion
     value: 1.0.0.$(assemblyBuildNumber)
@@ -38,10 +49,6 @@ variables:
   # Azure library NuGet package version
   - name: azurePackageVersion
     value: 1.0.0.$(buildNumber)-ci
-
-  # Pipeline build number used for versioning
-  - name: buildNumber
-    value: '$(Build.BuildNumber)'
 
   # Logging library assembly file version
   - name: loggingAssemblyFileVersion
@@ -61,7 +68,7 @@ variables:
 
   # Output path for built NuGet packages
   - name: packagePath
-    value: '$(Build.SourcesDirectory)/packages'
+    value: $(Build.SourcesDirectory)/packages
 
   # Disable codesign validation injection for CI builds
   - name: runCodesignValidationInjection
@@ -73,4 +80,4 @@ variables:
 
   # SQL Server target host for testing
   - name: SQLTarget
-    value: 'localhost'
+    value: localhost

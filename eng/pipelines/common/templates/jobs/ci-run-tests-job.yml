@@ -207,6 +207,8 @@ jobs:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
+        assemblyBuildNumber: $(assemblyBuildNumber)
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 

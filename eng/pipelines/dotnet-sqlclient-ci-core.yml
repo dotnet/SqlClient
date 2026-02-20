@@ -163,7 +163,6 @@ stages:
     jobs:
     - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
-        assemblyBuildNumber: $(assemblyBuildNumber)
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         abstractionsPackageVersion: $(abstractionsPackageVersion)

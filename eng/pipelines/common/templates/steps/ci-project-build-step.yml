@@ -48,6 +48,10 @@ parameters:
       - all
       - allNoDocs
 
+  # The build number suffix to apply to all assembly file versions built by this step.
+  - name: assemblyBuildNumber
+    type: string
+
   # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
   - name: abstractionsPackageVersion
     type: string
@@ -62,10 +66,6 @@ parameters:
   - name: mdsPackageVersion
     type: string
     default: $(mdsPackageVersion)
-
-  # The assembly build number, kept within 0-65535 range for valid assembly versions.
-  - name: assemblyBuildNumber
-    type: string
 
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
