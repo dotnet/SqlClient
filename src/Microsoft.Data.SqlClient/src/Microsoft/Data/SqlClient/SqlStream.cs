@@ -224,9 +224,9 @@ namespace Microsoft.Data.SqlClient
 
                         // we are guaranteed that cb is < Int32.Max since we always pass in count which is of type Int32 to
                         // our getbytes interface
-                        count -= (int)cb;
-                        offset += (int)cb;
-                        intCount += (int)cb;
+                        count -= cb;
+                        offset += cb;
+                        intCount += cb;
                     }
                     else
                     {
@@ -387,9 +387,9 @@ namespace Microsoft.Data.SqlClient
 
                 Buffer.BlockCopy(_cachedBytes[_currentArrayIndex], _currentPosition, buffer, offset, cb);
                 _currentPosition += cb;
-                count -= (int)cb;
-                offset += (int)cb;
-                intCount += (int)cb;
+                count -= cb;
+                offset += cb;
+                intCount += cb;
             }
 
             return intCount;
@@ -477,13 +477,14 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlStreamingXml
     {
-        private static readonly XmlWriterSettings s_writerSettings = new() { CloseOutput = true, ConformanceLevel = ConformanceLevel.Fragment };
+        private static readonly XmlWriterSettings s_writerSettings = new() { CloseOutput = true, ConformanceLevel = ConformanceLevel.Fragment, Encoding = new UTF8Encoding(false) };
 
         private readonly int _columnOrdinal;
         private SqlDataReader _reader;
         private XmlReader _xmlReader;
+        private bool _canReadChunk;
         private XmlWriter _xmlWriter;
-        private StringWriter _strWriter;
+        private MemoryStream _memoryStream;
         private long _charsRemoved;
 
         public SqlStreamingXml(int i, SqlDataReader reader)
@@ -495,11 +496,12 @@ namespace Microsoft.Data.SqlClient
         public void Close()
         {
             ((IDisposable)_xmlWriter).Dispose();
+            ((IDisposable)_memoryStream).Dispose();
             ((IDisposable)_xmlReader).Dispose();
             _reader = null;
             _xmlReader = null;
             _xmlWriter = null;
-            _strWriter = null;
+            _memoryStream = null;
         }
 
         public int ColumnOrdinal => _columnOrdinal;
@@ -508,14 +510,15 @@ namespace Microsoft.Data.SqlClient
         {
             if (_xmlReader == null)
             {
-                SqlStream sqlStream = new(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows:false, advanceReader:false);
+                SqlStream sqlStream = new(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows: false, advanceReader: false);
                 _xmlReader = sqlStream.ToXmlReader();
-                _strWriter = new StringWriter((System.IFormatProvider)null);
-                _xmlWriter = XmlWriter.Create(_strWriter, s_writerSettings);
+                _canReadChunk = _xmlReader.CanReadValueChunk;
+                _memoryStream = new MemoryStream();
+                _xmlWriter = XmlWriter.Create(_memoryStream, s_writerSettings);
             }
 
-            int charsToSkip = 0;
-            int cnt = 0;
+            long charsToSkip = 0;
+            long cnt = 0;
             if (dataIndex < _charsRemoved)
             {
                 throw ADP.NonSeqByteAccess(dataIndex, _charsRemoved, nameof(GetChars));
@@ -529,71 +532,72 @@ namespace Microsoft.Data.SqlClient
             // total size up front without reading and converting the XML.
             if (buffer == null)
             {
-                return (long)(-1);
+                return -1;
             }
 
-            StringBuilder strBldr = _strWriter.GetStringBuilder();
-            while (!_xmlReader.EOF)
+            long memoryStreamRemaining = _memoryStream.Length - _memoryStream.Position;
+            while (memoryStreamRemaining < (length + charsToSkip) && !_xmlReader.EOF)
             {
-                if (strBldr.Length >= (length + charsToSkip))
+                // Check whether the MemoryStream has been fully read.
+                // If so, reset the MemoryStream for reuse and to avoid growing size too much.
+                if (_memoryStream.Length > 0 && memoryStreamRemaining == 0)
                 {
-                    break;
+                    // This also sets the Position back to 0.
+                    _memoryStream.SetLength(0);
                 }
                 // Can't call _xmlWriter.WriteNode here, since it reads all of the data in before returning the first char.
                 // Do own implementation of WriteNode instead that reads just enough data to return the required number of chars
                 //_xmlWriter.WriteNode(_xmlReader, true);
                 //  _xmlWriter.Flush();
                 WriteXmlElement();
+                // Update memoryStreamRemaining based on the number of chars just written to the MemoryStream
+                memoryStreamRemaining = _memoryStream.Length - _memoryStream.Position;
                 if (charsToSkip > 0)
                 {
-                    // Aggressively remove the characters we want to skip to avoid growing StringBuilder size too much
-                    cnt = strBldr.Length < charsToSkip ? strBldr.Length : charsToSkip;
-                    strBldr.Remove(0, cnt);
+                    cnt = memoryStreamRemaining < charsToSkip ? memoryStreamRemaining : charsToSkip;
+                    // Move the Position forward
+                    _memoryStream.Seek(cnt, SeekOrigin.Current);
+                    memoryStreamRemaining -= cnt;
                     charsToSkip -= cnt;
-                    _charsRemoved += (long)cnt;
+                    _charsRemoved += cnt;
                 }
             }
 
             if (charsToSkip > 0)
             {
-                cnt = strBldr.Length < charsToSkip ? strBldr.Length : charsToSkip;
-                strBldr.Remove(0, cnt);
+                cnt = memoryStreamRemaining < charsToSkip ? memoryStreamRemaining : charsToSkip;
+                // Move the Position forward
+                _memoryStream.Seek(cnt, SeekOrigin.Current);
+                memoryStreamRemaining -= cnt;
                 charsToSkip -= cnt;
-                _charsRemoved += (long)cnt;
+                _charsRemoved += cnt;
             }
 
-            if (strBldr.Length == 0)
+            if (memoryStreamRemaining == 0)
             {
                 return 0;
             }
             // At this point charsToSkip must be 0
             Debug.Assert(charsToSkip == 0);
 
-            cnt = strBldr.Length < length ? strBldr.Length : length;
+            cnt = memoryStreamRemaining < length ? memoryStreamRemaining : length;
             for (int i = 0; i < cnt; i++)
             {
-                buffer[bufferIndex + i] = strBldr[i];
+                buffer[bufferIndex + i] = (char)_memoryStream.ReadByte();
             }
-            // Remove the characters we have already returned
-            strBldr.Remove(0, cnt);
-            _charsRemoved += (long)cnt;
-            return (long)cnt;
+            _charsRemoved += cnt;
+            return cnt;
         }
 
         // This method duplicates the work of XmlWriter.WriteNode except that it reads one element at a time 
         // instead of reading the entire node like XmlWriter.
+        // Caller already ensures !_xmlReader.EOF
         private void WriteXmlElement()
         {
-            if (_xmlReader.EOF)
-            {
-                return;
-            }
-
-            bool canReadChunk = _xmlReader.CanReadValueChunk;
-            char[] writeNodeBuffer = null;
-
             // Constants
             const int WriteNodeBufferSize = 1024;
+
+            long memoryStreamPosition = _memoryStream.Position;
 
             _xmlReader.Read();
             switch (_xmlReader.NodeType)
@@ -608,12 +612,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
                 case XmlNodeType.Text:
-                    if (canReadChunk)
+                    if (_canReadChunk)
                     {
-                        if (writeNodeBuffer == null)
-                        {
-                            writeNodeBuffer = new char[WriteNodeBufferSize];
-                        }
+                        char[] writeNodeBuffer = new char[WriteNodeBufferSize];
                         int read;
                         while ((read = _xmlReader.ReadValueChunk(writeNodeBuffer, 0, WriteNodeBufferSize)) > 0)
                         {
@@ -650,6 +651,7 @@ namespace Microsoft.Data.SqlClient
                     break;
             }
             _xmlWriter.Flush();
+            _memoryStream.Position = memoryStreamPosition;
         }
     }
 }
