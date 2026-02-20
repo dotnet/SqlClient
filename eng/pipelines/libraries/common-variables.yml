@@ -141,10 +141,6 @@ variables:
   - name: sqlServerAssemblyFileVersion
     value: 1.0.0.$(assemblyBuildNumber)
 
-  # The path to the NuGet packaging specification file for SqlServer.Server.
-  - name: sqlServerNuspecPath
-    value: '$(REPOROOT)/tools/specs/Microsoft.SqlServer.Server.nuspec'
-
   # ----------------------------------------------------------------------------
   # AKV Provider Package Versions
   #

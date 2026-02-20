@@ -115,13 +115,12 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 |--------------|---------|--------------|-----------|
 | `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` / `PackLogging` | `buildAKVProvider OR buildSqlClient` |
 | `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` | `buildSqlClient` |
-| `build-signed-sqlserver-package-job.yml` | `Microsoft.SqlServer.Server` | *(nuspec-based)* | `buildSqlServerServer` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.SqlServer.Server` | `PackSqlServer` | `buildSqlServerServer` |
 
 - **`dependsOn`**: none
 - **Parallelism**: Jobs run in parallel (depending on which are enabled)
 - **Conditional builds**: Each job is wrapped with compile-time `${{ if }}` conditionals based on build parameters
 - csproj-based jobs (`build-signed-csproj-package-job.yml`) perform: **Build DLLs → ESRP DLL signing → NuGet pack (NoBuild=true) → ESRP NuGet signing** → publish artifact
-- nuspec-based job (`build-signed-sqlserver-package-job.yml`) performs: build → ESRP DLL signing → NuGet pack → ESRP NuGet signing → publish artifact
 
 #### Stage 2 — `buildMDS`: Core Packages (depend on Stage 1)
 

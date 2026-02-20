@@ -239,11 +239,15 @@ extends:
                   authSignCertName: $(AuthSignCertName)
 
           - ${{ if eq(parameters.buildSqlServerServer, true) }}:
-              - template: /eng/pipelines/jobs/build-signed-sqlserver-package-job.yml@self
+              - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
+                  packageName: SqlServer
+                  versionProperties: >-
+                    -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
+                    -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
+                  dllSigningPattern: Microsoft.SqlServer.Server.dll
+                  softwareName: Microsoft.SqlServer.Server
                   assemblyFileVersion: $(sqlServerAssemblyFileVersion)
-                  packageVersion: $(effectiveSqlServerVersion)
-                  nuspecPath: $(sqlServerNuspecPath)
                   esrpConnectedServiceName: $(ESRPConnectedServiceName)
                   esrpClientId: $(ESRPClientId)
                   appRegistrationClientId: $(AppRegistrationClientId)

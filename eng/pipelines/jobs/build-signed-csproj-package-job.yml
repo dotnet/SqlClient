@@ -4,9 +4,15 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Generic job template for building and signing csproj-based Extension packages (Logging,
-# Abstractions, Azure).  The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet
-# packages from the signed DLLs, and finally ESRP signs the NuGet packages.
+# Generic job template for building and signing simple csproj-based packages, currently:
+#
+#  - Abstractions
+#  - Azure
+#  - Logging
+#  - SqlServer
+#
+# The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet packages from the
+# signed DLLs, and finally ESRP signs the NuGet packages.
 
 parameters:
   # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
@@ -17,6 +23,7 @@ parameters:
       - Abstractions
       - Azure
       - Logging
+      - SqlServer
 
   # The MSBuild build target in build.proj (e.g. BuildLogging).  If not
   # specified, defaults to Build<packageName>.
@@ -138,32 +145,21 @@ jobs:
           pattern: ${{ parameters.dllSigningPattern }}
 
       # Copy signed DLLs and PDBs to APIScan folders.
-      - powershell: |
-          $dllFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls'
-          $pdbFolder = '$(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs'
+      - task: CopyFiles@2
+        displayName: Copy DLLs for APIScan
+        inputs:
+          SourceFolder: $(BUILD_OUTPUT)
+          Contents: '**/${{ parameters.dllSigningPattern }}'
+          TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
+          flattenFolders: true
 
-          New-Item -ItemType Directory -Force -Path $dllFolder
-          New-Item -ItemType Directory -Force -Path $pdbFolder
-
-          # Copy DLLs from build output
-          Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include '${{ parameters.dllSigningPattern }}' | ForEach-Object {
-              Write-Host "Copying DLL: $($_.FullName)"
-              Copy-Item $_.FullName -Destination $dllFolder
-          }
-
-          # Copy PDBs from build output (same name but .pdb extension)
-          $pdbPattern = '${{ parameters.dllSigningPattern }}' -replace '\.dll$', '.pdb'
-          Get-ChildItem -Path '$(BUILD_OUTPUT)' -Recurse -Include $pdbPattern | ForEach-Object {
-              Write-Host "Copying PDB: $($_.FullName)"
-              Copy-Item $_.FullName -Destination $pdbFolder
-          }
-
-          Write-Host "APIScan folders prepared:"
-          Write-Host "DLLs:"
-          Get-ChildItem $dllFolder | ForEach-Object { Write-Host "  $($_.Name)" }
-          Write-Host "PDBs:"
-          Get-ChildItem $pdbFolder | ForEach-Object { Write-Host "  $($_.Name)" }
-        displayName: Copy files for APIScan
+      - task: CopyFiles@2
+        displayName: Copy PDBs for APIScan
+        inputs:
+          SourceFolder: $(BUILD_OUTPUT)
+          Contents: '**/${{ parameters.softwareName }}.pdb'
+          TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
+          flattenFolders: true
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).
       - template: /eng/pipelines/steps/compound-pack-csproj-step.yml@self
