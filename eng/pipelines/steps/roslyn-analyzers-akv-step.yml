@@ -32,7 +32,7 @@ parameters:
 
     - name: loggingPackageVersion
       type: string
-      
+
     - name: abstractionsPackageVersion
       type: string
 
@@ -51,5 +51,5 @@ steps:
               -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
               -p:ReferenceType=Package
-          msBuildVersion: 18.0
-          setupCommandLinePicker: vs2026
+          msBuildVersion: 17.0
+          setupCommandLinePicker: vs2022
