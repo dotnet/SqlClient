@@ -77,7 +77,7 @@ stages:
     displayName: Build MDS & AKV Packages
 
     dependsOn:
-      - generate_secrets
+      - secrets_stage
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
 
