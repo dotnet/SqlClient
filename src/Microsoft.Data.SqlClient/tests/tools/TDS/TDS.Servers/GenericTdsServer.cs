@@ -61,6 +61,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool EnableUserAgentFeatureExt { get; set; } = false;
 
         /// <summary>
+        /// Property for setting server enhanced routing enablement state.
+        /// </summary>
+        public FeatureExtensionEnablementTriState EnableEnhancedRouting { get; set; } = FeatureExtensionEnablementTriState.Disabled;
+
+        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
@@ -336,6 +341,12 @@ namespace Microsoft.SqlServer.TDS.Servers
                                     // Enable User Agent Support
                                     session.IsUserAgentSupportEnabled = true;
                                 }
+                                break;
+                            }
+
+                        case TDSFeatureID.EnhancedRoutingSupport:
+                            {
+                                session.IsEnhancedRoutingSupportEnabled = true;
                                 break;
                             }
 
@@ -645,6 +656,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             CheckJsonSupported(session, responseMessage);
             CheckVectorSupport(session, responseMessage);
             CheckUserAgentSupport(session, responseMessage);
+            CheckEnhancedRoutingSupport(session, responseMessage);
 
             if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
             {
@@ -796,6 +808,48 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
+        }
+
+        /// <summary>
+        /// Check if Enhanced Routing support is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckEnhancedRoutingSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            if (session.IsEnhancedRoutingSupportEnabled &&
+                EnableEnhancedRouting != FeatureExtensionEnablementTriState.DoNotAcknowledge)
+            {
+                // Create ack data (1 byte: IsEnabled)
+                byte[] data = new byte[1];
+
+                if (EnableEnhancedRouting == FeatureExtensionEnablementTriState.Enabled)
+                {
+                    data[0] = 1;
+                }
+                else
+                {
+                    data[0] = 0;
+                }
+
+                // Create enhanced routing support as a generic feature extension option
+                TDSFeatureExtAckGenericOption enhancedRoutingSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.EnhancedRoutingSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(enhancedRoutingSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(enhancedRoutingSupportOption);
+                }
+            }
         }
 
         /// <summary>
