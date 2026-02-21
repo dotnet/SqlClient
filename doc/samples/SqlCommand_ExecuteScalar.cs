@@ -1,3 +1,5 @@
+namespace SqlCommand_ExecuteScalar;
+
 // <Snippet1>
 using System;
 using System.Data;

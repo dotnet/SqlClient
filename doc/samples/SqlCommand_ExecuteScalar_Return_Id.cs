@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace SqlCommand_ExecuteScalar_Return_Id;
+
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 

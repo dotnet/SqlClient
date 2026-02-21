@@ -1,3 +1,5 @@
+namespace SqlBulkCopyOptions_Default;
+
 using System;
 using System.Data;
 // <Snippet1>

@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿namespace DataWorks_SqlFunctionAttribute_Sample;
+
+using System.IO;
 using System.Collections;
 using Microsoft.SqlServer.Server;
 

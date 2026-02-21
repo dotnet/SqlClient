@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace SqlParameterCollection_Remove;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -23,3 +26,4 @@ public class Form1 : Form
     }
 }
 // </Snippet1>
+#endif

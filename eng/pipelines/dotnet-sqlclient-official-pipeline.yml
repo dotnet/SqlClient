@@ -1,0 +1,158 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+trigger:
+  branches:
+    include:
+
+    # This pipeline is intended to only run against the ADO.Net dotnet-sqlclient
+    # repo.
+    - internal/main
+  paths:
+    include:
+    - .azuredevops
+    - .config
+    - doc
+    - eng/pipelines
+    - src
+    - tools
+    - azurepipelines-coverage.yml
+    - build.proj
+    - NuGet.config
+
+schedules:
+- cron: '30 4 * * Mon'
+  displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
+  branches:
+    include:
+    - internal/main
+  always: true
+
+- cron: '30 3 * * Mon-Fri'
+  displayName: Mon-Fri 8:30 PM (UTC - 7) Build
+  branches:
+    include:
+    - internal/main
+
+parameters: # parameters are shown up in ADO UI in a build queue time
+- name: 'debug'
+  displayName: 'Enable debug output'
+  type: boolean
+  default: false
+
+- name: publishSymbols
+  displayName: 'Publish symbols'
+  type: boolean
+  default: false
+
+- name: CurrentNetFxVersion
+  displayName: 'Lowest supported .NET Framework version (MDS validation)'
+  type: string
+  default: 'net462'
+
+- name: isPreview
+  displayName: 'Is this a preview build?'
+  type: boolean
+  default: false
+
+# The timeout, in minutes, for each test job.
+- name: testJobTimeout
+  displayName: 'Test job timeout (in minutes)'
+  type: number
+  default: 60
+
+variables:
+  - template: /eng/pipelines/libraries/variables.yml@self
+  - name: mdsArtifactName
+    value: drop_buildMDS_build_signed_package
+  - name: PublishSymbols
+    value: ${{ parameters['publishSymbols'] }}
+  - name: CurrentNetFxVersion
+    value: ${{ parameters['CurrentNetFxVersion'] }}
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  template: v2/OneBranch.Official.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  parameters:
+    featureFlags:
+      # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
+      EnableCDPxPAT: false
+      WindowsHostVersion: 1ESWindows2022
+    globalSdl: # https://aka.ms/obpipelines/sdl
+      tsa:
+        # The OneBranch template will set 'break' to false for the other SDL
+        # tools when TSA is enabled.  This allows TSA to gather the results
+        # and publish them for downstream analysis.
+        enabled: true
+      apiscan:
+        enabled: true
+        softwareFolder: $(softwareFolder)
+        symbolsFolder: $(symbolsFolder)
+        softwarename: Microsoft.Data.SqlClient
+        versionNumber: $(mdsAssemblyFileVersion)
+      codeql:
+        compiled:
+        enabled: ${{ not(parameters['isPreview']) }}
+      sbom:
+        enabled: ${{ not(parameters['isPreview']) }}
+        packageName: Microsoft.Data.SqlClient
+        packageVersion: $(mdsPackageVersion)
+      policheck:
+        enabled: ${{ not(parameters['isPreview']) }}
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+        exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
+      asyncSdl:
+        enabled: false
+        credscan:
+          enabled: ${{ not(parameters['isPreview']) }}
+          suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
+        binskim:
+          enabled: ${{ not(parameters['isPreview']) }}
+        armory:
+          enabled: ${{ not(parameters['isPreview']) }}
+          break: true
+        eslint: # TypeScript and JavaScript
+          enabled: false
+        roslyn:
+          enabled: ${{ not(parameters['isPreview']) }}
+          break: true
+        publishLogs:
+          enabled: ${{ not(parameters['isPreview']) }}
+        tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
+        disableLegacyManifest: true
+    stages:
+    - stage: buildMDS
+      displayName: 'Build MDS'
+      jobs:
+      - template: /eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
+        parameters:
+          symbolsFolder: $(symbolsFolder)
+          softwareFolder: $(softwareFolder)
+          publishSymbols: ${{ parameters['publishSymbols'] }}
+          isPreview: ${{ parameters['isPreview'] }}
+
+    - stage: mds_package_validation
+      displayName: 'MDS Package Validation'
+      dependsOn: buildMDS
+      jobs:
+      - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
+        parameters:
+          artifactName: $(mdsArtifactName)
+          isPreview: ${{ parameters['isPreview'] }}
+
+# Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
+#      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+#        parameters:
+#          artifactName: $(mdsArtifactName)
+#          isPreview: ${{ parameters['isPreview'] }}
+#          timeout: ${{ parameters.testJobTimeout }}

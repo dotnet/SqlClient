@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace SqlParameterCollection_Add6;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -28,3 +31,4 @@ public class Form1 : Form
     }
 }
 // </Snippet1>
+#endif

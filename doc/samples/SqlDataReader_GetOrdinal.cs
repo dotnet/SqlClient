@@ -1,3 +1,5 @@
+namespace SqlDataReader_GetOrdinal;
+
 using System;
 using System.Data;
 // <Snippet1>

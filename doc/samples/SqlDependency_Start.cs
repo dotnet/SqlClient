@@ -1,3 +1,7 @@
+/*
+#if NETFRAMEWORK
+namespace SqlDependencyExample;
+
 using System;
 using System.Data;
 using System.Configuration;
@@ -80,3 +84,5 @@ public partial class _Default : System.Web.UI.Page
     }
     // </Snippet2>
 }
+#endif
+*/
