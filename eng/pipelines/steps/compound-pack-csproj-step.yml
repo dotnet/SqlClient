@@ -35,8 +35,7 @@ steps:
       msbuildArguments: >-
           -t:${{ parameters.packTarget }}
           -p:ReferenceType=Package
-          -p:OutputPath=$(BUILD_OUTPUT)/
           ${{ parameters.versionProperties }}
 
-  - script: tree /a /f $(ARTIFACT_PATH)
-    displayName: Output Artifact Path Tree After Pack
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: List Pack Output Tree After Pack

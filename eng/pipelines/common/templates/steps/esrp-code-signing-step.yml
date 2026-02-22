@@ -13,8 +13,8 @@ parameters:
   # Source Root.
   - name: sourceRoot
     type: string
-    default: $(REPOROOT)
-  
+    default: $(REPO_ROOT)
+
   # Artifact Directory.
   - name: artifactDirectory
     type: string
@@ -78,43 +78,43 @@ steps:
       Pattern: 'Microsoft.Data.SqlClient*.dll'
       signConfigType: inlineSignParams
       inlineOperation: |
-          [ 
-              { 
-                  "keyCode": "CP-230012", 
-                  "operationSetCode": "SigntoolSign", 
-                  "parameters": [ 
-                  { 
-                      "parameterName": "OpusName", 
-                      "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server" 
-                  }, 
-                  { 
-                      "parameterName": "OpusInfo", 
-                      "parameterValue": "http://www.microsoft.com" 
-                  }, 
-                  { 
-                      "parameterName": "FileDigest", 
-                      "parameterValue": "/fd \"SHA256\"" 
-                  }, 
-                  { 
-                      "parameterName": "PageHash", 
-                      "parameterValue": "/NPH" 
-                  }, 
-                  { 
-                      "parameterName": "TimeStamp", 
-                      "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256" 
-                  } 
-                  ], 
-                  "toolName": "sign", 
-                  "toolVersion": "1.0" 
-              }, 
-              { 
-                  "keyCode": "CP-230012", 
-                  "operationSetCode": "SigntoolVerify", 
-                  "parameters": [ ], 
-                  "toolName": "sign", 
-                  "toolVersion": "1.0" 
-              } 
-          ] 
+          [
+              {
+                  "keyCode": "CP-230012",
+                  "operationSetCode": "SigntoolSign",
+                  "parameters": [
+                  {
+                      "parameterName": "OpusName",
+                      "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                  },
+                  {
+                      "parameterName": "OpusInfo",
+                      "parameterValue": "http://www.microsoft.com"
+                  },
+                  {
+                      "parameterName": "FileDigest",
+                      "parameterValue": "/fd \"SHA256\""
+                  },
+                  {
+                      "parameterName": "PageHash",
+                      "parameterValue": "/NPH"
+                  },
+                  {
+                      "parameterName": "TimeStamp",
+                      "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                  }
+                  ],
+                  "toolName": "sign",
+                  "toolVersion": "1.0"
+              },
+              {
+                  "keyCode": "CP-230012",
+                  "operationSetCode": "SigntoolVerify",
+                  "parameters": [ ],
+                  "toolName": "sign",
+                  "toolVersion": "1.0"
+              }
+          ]
 
 - ${{ if eq(parameters.artifactType, 'pkg') }}:
   - task: EsrpMalwareScanning@6
@@ -144,19 +144,19 @@ steps:
       Pattern: '*.*nupkg'
       signConfigType: inlineSignParams
       inlineOperation: |
-        [ 
-            { 
-                "keyCode": "CP-401405", 
-                "operationSetCode": "NuGetSign", 
-                "parameters": [ ], 
-                "toolName": "sign", 
-                "toolVersion": "1.0" 
+        [
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetSign",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
             },
-            { 
-                "keyCode": "CP-401405", 
-                "operationSetCode": "NuGetVerify", 
-                "parameters": [ ], 
-                "toolName": "sign", 
-                "toolVersion": "1.0" 
-            } 
-        ] 
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            }
+        ]

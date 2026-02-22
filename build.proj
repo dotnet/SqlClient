@@ -2,7 +2,6 @@
 <Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="src/Directory.Build.props" />
-  <Import Project="$(ToolsDir)targets\GenerateSqlServerPackage.targets" />
   <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
   <Import Project="$(ToolsDir)targets\add-ons\GenerateAkvPackage.targets" />
 
@@ -29,7 +28,6 @@
     <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
     <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
-    <SqlServerProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerProperties>
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
@@ -97,7 +95,32 @@
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard;BuildLogging;BuildAzure" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildSqlServer;GenerateSqlServerPackage;GenerateMdsPackage" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildSqlServer;PackSqlServer;GenerateMdsPackage" />
+
+  <!-- SqlServer Targets -->
+  <PropertyGroup>
+    <SqlServerProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreSqlServer">
+    <MSBuild Projects="@(SqlServer)" Targets="restore" Properties="$(SqlServerProperties)" />
+  </Target>
+
+  <Target Name="BuildSqlServer" DependsOnTargets="RestoreSqlServer">
+    <MSBuild
+      Projects="@(SqlServer)"
+      Targets="Build"
+      Properties="$(CI);$(SqlServerProperties);Platform=AnyCPU;OSGroup=AnyOS"
+      RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
+
+  <Target Name="PackSqlServer">
+    <MSBuild
+      Projects="@(SqlServer)"
+      Targets="Pack"
+      Properties="$(SqlServerProperties);Platform=AnyCPU;OSGroup=AnyOS;NoBuild=true"
+      RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
 
   <!-- Abstractions Targets -->
   <PropertyGroup>
@@ -242,10 +265,6 @@
   </Target>
 
   <!-- Other Targets -->
-  <Target Name="RestoreSqlServer">
-    <MSBuild Projects="@(SqlServer)" Targets="restore" Properties="$(SqlServerProperties)" />
-  </Target>
-
   <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
@@ -265,12 +284,6 @@
   <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServer;BuildAbstractions;BuildLogging" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
   </Target>
-
-  <Target Name="BuildSqlServer" DependsOnTargets="RestoreSqlServer">
-    <MSBuild Projects="@(SqlServer)" Properties="$(CI);$(SqlServerProperties);Platform=AnyCPU;OSGroup=AnyOS" RemoveProperties="TargetsWindows;TargetsUnix;" />
-  </Target>
-
-  <Target Name="PackSqlServer" DependsOnTargets="GenerateSqlServerPackage" />
 
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />

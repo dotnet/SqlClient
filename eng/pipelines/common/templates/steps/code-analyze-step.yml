@@ -21,7 +21,7 @@ parameters:
   # Source Root.
   - name: sourceRoot
     type: string
-    default: $(REPOROOT)
+    default: $(REPO_ROOT)
 
 steps:
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3

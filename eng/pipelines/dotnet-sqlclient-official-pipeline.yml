@@ -217,12 +217,12 @@ extends:
       policheck:
         enabled: true
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-        exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
+        exclusionsFile: $(REPO_ROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
         credscan:
           enabled: true
-          suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
+          suppressionsFile: $(REPO_ROOT)/.config/CredScanSuppressions.json
         binskim:
           enabled: true
         armory:
@@ -235,7 +235,7 @@ extends:
           break: true
         publishLogs:
           enabled: true
-        tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
+        tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
       # ------------------------------------------------------------------

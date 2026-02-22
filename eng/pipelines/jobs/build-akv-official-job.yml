@@ -105,7 +105,7 @@ jobs:
           type: windows
 
       variables:
-          ob_outputDirectory: '$(ARTIFACT_PATH)'
+          ob_outputDirectory: '$(PACK_OUTPUT)'
           # APIScan configuration for AKV Provider
           ob_sdl_apiscan_enabled: true
           ob_sdl_apiscan_softwareFolder: '${{ parameters.apiScanDllPath }}'
@@ -183,7 +183,7 @@ jobs:
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.akvPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
-                outputDirectory: '$(ARTIFACT_PATH)'
+                outputDirectory: '$(PACK_OUTPUT)'
                 referenceType: Package
                 properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 

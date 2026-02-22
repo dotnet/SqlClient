@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
     <Description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.</Description>
@@ -11,6 +11,50 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(SqlServerPackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Title>Microsoft.SqlServer.Server</Title>
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
+
+Available Types:
+Microsoft.SqlServer.Server.IBinarySerializer
+Microsoft.SqlServer.Server.InvalidUdtException
+Microsoft.SqlServer.Server.SqlFacetAttribute
+Microsoft.SqlServer.Server.SqlFunctionAttribute
+Microsoft.SqlServer.Server.SqlMethodAttribute
+Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute
+Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute
+Microsoft.SqlServer.Server.DataAccessKind
+Microsoft.SqlServer.Server.SystemDataAccessKind
+Microsoft.SqlServer.Server.Format</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlserver microsoft.sqlserver.server</PackageTags>
+    <PackageReleaseNotes>https://go.microsoft.com/fwlink/?linkid=2185441</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="$(RepoRoot)/tools/specs/PackageReadme.SqlServer.Server.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
 
   <!-- Strong name signing ============================================= -->
   <PropertyGroup>

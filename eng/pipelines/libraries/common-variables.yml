@@ -18,23 +18,28 @@ variables:
 
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
-  - name: REPOROOT
+  - name: REPO_ROOT
     value: $(Build.SourcesDirectory)
   - name: softwareFolder
-    value: $(REPOROOT)/software
+    value: $(REPO_ROOT)/software
   - name: symbolsFolder
-    value: $(REPOROOT)/symbols
+    value: $(REPO_ROOT)/symbols
   - name: artifactDirectory
-    value: '$(REPOROOT)/packages'
+    value: '$(REPO_ROOT)/packages'
 
   # Aliases required by compound step templates (compound-esrp-dll-signing-step,
   # compound-esrp-nuget-signing-step, compound-nuget-pack-step, etc.).
-  - name: REPO_ROOT
-    value: $(Build.SourcesDirectory)
+
+  # This is where our C# projects place their build outputs (see Directory.Build.props
+  # <ArtifactsPath>).  We exclude the reference type here since Official pipelines always use
+  # Package mode.
   - name: BUILD_OUTPUT
     value: $(Build.SourcesDirectory)/artifacts
-  - name: ARTIFACT_PATH
-    value: '$(Build.SourcesDirectory)/packages'
+
+  # THis is where our C# projects place their NuGet package outputs (see Directory.Build.props
+  # <PackagesDir>).
+  - name: PACK_OUTPUT
+    value: $(Build.SourcesDirectory)/packages
 
   # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
   # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
@@ -85,7 +90,7 @@ variables:
 
   # The path to the NuGet packaging specification file used to generate the MDS NuGet package.
   - name: nuspecPath
-    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+    value: '$(REPO_ROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
 
   # ----------------------------------------------------------------------------
   # Logging Package Versions
@@ -165,7 +170,7 @@ variables:
 
   # The path to the NuGet packaging specification file for the AKV Provider.
   - name: akvNuspecPath
-    value: '$(REPOROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+    value: '$(REPO_ROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
 
   # ----------------------------------------------------------------------------
   # MDS Symbols Publishing

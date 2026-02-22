@@ -4,10 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Generic build step for csproj-based Extension packages (Logging, Abstractions,
-# Azure).  Each project uses a build.proj target that runs Build only.  The DLL
-# output is redirected to $(BUILD_OUTPUT) so that downstream ESRP DLL signing
-# can locate the assemblies.  NuGet packaging is done separately via
+# Generic build step for csproj-based Extension packages (Logging, Abstractions, Azure).  Each
+# project uses a build.proj target that runs Build only and produces assemblies within
+# $(BUILD_OUTPUT).  Downstream ESRP DLL signing must locate the assemblies within $(BUILD_OUTPUT)
+# for all target frameworks that the csproj targets.  NuGet packaging is done separately via
 # compound-pack-csproj-step.yml after DLL signing.
 
 parameters:
@@ -44,12 +44,11 @@ steps:
       msbuildArguments: >-
           -t:${{ parameters.buildTarget }}
           -p:ReferenceType=Package
-          -p:OutputPath=$(BUILD_OUTPUT)/
           -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
           ${{ parameters.versionProperties }}
 
   - script: tree /a /f $(BUILD_OUTPUT)
-    displayName: Output Build Output Tree
+    displayName: List Build Output Tree
 
-  - script: tree /a /f $(ARTIFACT_PATH)
-    displayName: Output Artifact Path Tree
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: List Pack Output Tree

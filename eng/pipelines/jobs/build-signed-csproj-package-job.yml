@@ -100,7 +100,7 @@ jobs:
       type: windows
 
     variables:
-      ob_outputDirectory: $(ARTIFACT_PATH)
+      ob_outputDirectory: $(PACK_OUTPUT)
       # APIScan configuration for this Extension package
       ob_sdl_apiscan_enabled: true
       ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
@@ -151,7 +151,10 @@ jobs:
           SourceFolder: $(BUILD_OUTPUT)
           Contents: '**/${{ parameters.dllSigningPattern }}'
           TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
-          flattenFolders: true
+          # We must preserve the folder structure since our C# projects may produce multiple
+          # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
+          # etc.), and we need to keep those separate for APIScan to work correctly.
+          flattenFolders: false
 
       - task: CopyFiles@2
         displayName: Copy PDBs for APIScan
@@ -159,7 +162,7 @@ jobs:
           SourceFolder: $(BUILD_OUTPUT)
           Contents: '**/${{ parameters.softwareName }}.pdb'
           TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
-          flattenFolders: true
+          flattenFolders: false
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).
       - template: /eng/pipelines/steps/compound-pack-csproj-step.yml@self
