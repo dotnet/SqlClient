@@ -63,7 +63,7 @@ namespace Microsoft.Data.Common
         /// <returns>An array of <paramref name="limit"/> strings containing the various parts in the identifier.</returns>
         internal static string?[] ParseMultipartIdentifier(string identifier, string property, bool throwOnEmptyMultipartIdentifier, int limit = MaxParts)
         {
-            Debug.Assert(limit >= 0 && limit <= MaxParts);
+            Debug.Assert(limit > 0 && limit <= MaxParts);
 
             string?[] parts = new string?[limit];   // return string array                     
             int stringCount = 0;                        // index of current string in the buffer
