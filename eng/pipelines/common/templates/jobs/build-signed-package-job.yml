@@ -117,14 +117,29 @@ jobs:
     parameters:
       artifactType: pkg
 
-  # Copy DLLs and PDBs to the software and symbols folders for APIScan and testing.
-  - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
-    parameters:
-      softwareFolder: '${{ parameters.softwareFolder }}'
-      symbolsFolder: '${{ parameters.symbolsFolder }}'
+  # Copy signed DLLs and PDBs to APIScan folders.
+  - task: CopyFiles@2
+    displayName: Copy DLLs for APIScan
+    inputs:
+      SourceFolder: $(BUILD_OUTPUT)/Package/bin
+      Contents: '**/Microsoft.Data.SqlClient*.dll'
+      TargetFolder: ${{ parameters.softwareFolder }}
+      # We must preserve the folder structure since our C# projects may produce multiple
+      # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
+      # etc.), and we need to keep those separate for APIScan to work correctly.
+      flattenFolders: false
+
+  - task: CopyFiles@2
+    displayName: Copy PDBs for APIScan
+    inputs:
+      SourceFolder: $(BUILD_OUTPUT)/Package/bin
+      Contents: '**/Microsoft.Data.SqlClient*.pdb'
+      TargetFolder: ${{ parameters.symbolsFolder }}
+      flattenFolders: false
 
   # Publish symbols to servers
   - ${{ if eq(parameters.publishSymbols, true) }}:
     - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
       parameters:
-        symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)
+        packageFullName: Microsoft.Data.SqlClient
+        packageVersion: $(mdsPackageVersion)

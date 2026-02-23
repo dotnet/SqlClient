@@ -25,19 +25,29 @@ parameters:
       - Logging
       - SqlServer
 
-  # The MSBuild build target in build.proj (e.g. BuildLogging).  If not
-  # specified, defaults to Build<packageName>.
+  # The full name of the package.  This is used in the job name, and to form DLL and PDB filenames
+  # for APIScan.
+  - name: packageFullName
+    type: string
+
+  # The version of the package.  This is used for symbol publishing.  It is not used for the DLL or
+  # NuGet package versions since those are supplied via the versionProperties parameter.
+  - name: packageVersion
+    type: string
+
+  # The MSBuild build target in build.proj (e.g. BuildLogging).  If not specified, defaults to
+  # Build<packageName>.
   - name: buildTarget
     type: string
     default: ''
 
-  # The MSBuild pack target in build.proj (e.g. PackLogging).  If not
-  # specified, defaults to Pack<packageName>.
+  # The MSBuild pack target in build.proj (e.g. PackLogging).  If not specified, defaults to
+  # Pack<packageName>.
   - name: packTarget
     type: string
     default: ''
 
-  # Build configuration.
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
@@ -51,51 +61,36 @@ parameters:
     type: string
     default: ''
 
-  # Globbing pattern to match DLLs for ESRP signing (e.g.
-  # Microsoft.Data.SqlClient.Extensions.Logging.dll).
-  - name: dllSigningPattern
-    type: string
-
-  # APIScan software name (e.g. Microsoft.Data.SqlClient.Extensions.Logging).
-  - name: softwareName
-    type: string
-
   # Assembly file version for APIScan (e.g. 1.0.0.12345).
   - name: assemblyFileVersion
     type: string
 
-  # ESRP signing credentials — sourced from the pipeline variable group.
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    type: boolean
+
+  # Values required by ESRP tasks.
   - name: esrpConnectedServiceName
     type: string
 
-  # ESRP client ID.
   - name: esrpClientId
     type: string
 
-  # App registration client ID.
   - name: appRegistrationClientId
     type: string
 
-  # App registration tenant ID.
   - name: appRegistrationTenantId
     type: string
 
-  # Auth AKV name.
   - name: authAkvName
     type: string
 
-  # Auth sign certificate name.
   - name: authSignCertName
     type: string
 
-  # Publish symbols.
-  - name: publishSymbols
-    type: boolean
-    default: false
-
 jobs:
   - job: build_package_${{ parameters.packageName }}
-    displayName: Build ${{ parameters.softwareName }}
+    displayName: Build ${{ parameters.packageFullName }}
     pool:
       type: windows
 
@@ -105,7 +100,7 @@ jobs:
       ob_sdl_apiscan_enabled: true
       ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
       ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
-      ob_sdl_apiscan_softwarename: ${{ parameters.softwareName }}
+      ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
       ob_sdl_apiscan_versionNumber: ${{ parameters.assemblyFileVersion }}
 
       buildTarget: ${{ coalesce(parameters.buildTarget, format('Build{0}', parameters.packageName)) }}
@@ -142,14 +137,14 @@ jobs:
           authSignCertName: ${{ parameters.authSignCertName }}
           esrpClientId: ${{ parameters.esrpClientId }}
           esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-          pattern: ${{ parameters.dllSigningPattern }}
+          pattern: ${{ parameters.packageFullName }}.dll
 
       # Copy signed DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
         inputs:
-          SourceFolder: $(BUILD_OUTPUT)
-          Contents: '**/${{ parameters.dllSigningPattern }}'
+          SourceFolder: $(BUILD_OUTPUT)/Package/bin
+          Contents: '**/${{ parameters.packageFullName }}.dll'
           TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
           # We must preserve the folder structure since our C# projects may produce multiple
           # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
@@ -159,8 +154,8 @@ jobs:
       - task: CopyFiles@2
         displayName: Copy PDBs for APIScan
         inputs:
-          SourceFolder: $(BUILD_OUTPUT)
-          Contents: '**/${{ parameters.softwareName }}.pdb'
+          SourceFolder: $(BUILD_OUTPUT)/Package/bin
+          Contents: '**/${{ parameters.packageFullName }}.pdb'
           TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
           flattenFolders: false
 
@@ -180,3 +175,10 @@ jobs:
           authSignCertName: ${{ parameters.authSignCertName }}
           esrpClientId: ${{ parameters.esrpClientId }}
           esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+
+      # Publish symbols to servers
+      - ${{ if eq(parameters.publishSymbols, true) }}:
+        - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
+          parameters:
+            packageFullName: ${{ parameters.packageFullName }}
+            packageVersion: ${{ parameters.packageVersion }}

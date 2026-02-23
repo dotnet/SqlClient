@@ -30,7 +30,7 @@ parameters:
   - name: esrpClientId
     type: string
 
-  # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) and all subdirectories
+  # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT)/Package/bin
   # that match this pattern will be scanned and signed. This should end with ".dll".
   - name: pattern
     type: string
@@ -38,31 +38,31 @@ parameters:
 steps:
   # See: https://aka.ms/esrp.scantask
   - task: EsrpMalwareScanning@6
-    displayName: 'ESRP DLL Malware Scanning'
+    displayName: ESRP DLL Malware Scanning
     inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
       CleanupTempStorage: 1
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(BUILD_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
+      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+      EsrpClientId: ${{ parameters.esrpClientId }}
+      FolderPath: $(BUILD_OUTPUT)/Package/bin
+      Pattern: ${{ parameters.pattern }}
       UseMSIAuthentication: true
       VerboseLogin: 1
 
   # See: https://aka.ms/esrp.signtask
   - task: EsrpCodeSigning@6
-    displayName: 'ESRP DLL Signing'
+    displayName: ESRP DLL Signing
     inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-      AuthAKVName: '${{ parameters.authAkvName }}'
-      AuthSignCertName: '${{ parameters.authSignCertName }}'
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(BUILD_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
-      signConfigType: 'inlineSignParams'
+      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+      AuthAKVName: ${{ parameters.authAkvName }}
+      AuthSignCertName: ${{ parameters.authSignCertName }}
+      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+      EsrpClientId: ${{ parameters.esrpClientId }}
+      FolderPath: $(BUILD_OUTPUT)/Package/bin
+      Pattern: ${{ parameters.pattern }}
+      signConfigType: inlineSignParams
       UseMSIAuthentication: true
       inlineOperation: |
         [

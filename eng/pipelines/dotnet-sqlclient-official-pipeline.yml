@@ -50,12 +50,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     type: boolean
     default: false
 
-  # Lowest supported .NET Framework version (MDS validation)
-  - name: CurrentNetFxVersion
-    displayName: "Lowest supported .NET Framework version (MDS validation)"
-    type: string
-    default: "net462"
-
   # Is this a preview build?
   - name: isPreview
     displayName: "Is this a preview build?"
@@ -132,13 +126,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 
 variables:
   - template: /eng/pipelines/libraries/onebranch-variables.yml@self
-
-  - name: mdsArtifactName
-    value: drop_build_dependent_build_package_SqlClient
-  - name: PublishSymbols
-    value: ${{ parameters['publishSymbols'] }}
-  - name: CurrentNetFxVersion
-    value: ${{ parameters['CurrentNetFxVersion'] }}
 
   # AKV job variables
   - name: PACKAGE_NAME
@@ -249,12 +236,13 @@ extends:
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
                   packageName: Logging
+                  packageFullName: Microsoft.Data.SqlClient.Extensions.Logging
+                  packageVersion: $(effectiveLoggingVersion)
                   versionProperties: >-
                     -p:LoggingPackageVersion=$(effectiveLoggingVersion)
                     -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
-                  dllSigningPattern: "Microsoft.Data.SqlClient.Extensions.Logging.dll"
-                  softwareName: "Microsoft.Data.SqlClient.Extensions.Logging"
                   assemblyFileVersion: $(loggingAssemblyFileVersion)
+                  publishSymbols: ${{ parameters.publishSymbols }}
                   esrpConnectedServiceName: $(ESRPConnectedServiceName)
                   esrpClientId: $(ESRPClientId)
                   appRegistrationClientId: $(AppRegistrationClientId)
@@ -266,12 +254,13 @@ extends:
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
                   packageName: Abstractions
+                  packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
+                  packageVersion: $(effectiveAbstractionsVersion)
                   versionProperties: >-
                     -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
                     -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-                  dllSigningPattern: "Microsoft.Data.SqlClient.Extensions.Abstractions.dll"
-                  softwareName: "Microsoft.Data.SqlClient.Extensions.Abstractions"
                   assemblyFileVersion: $(abstractionsAssemblyFileVersion)
+                  publishSymbols: ${{ parameters.publishSymbols }}
                   esrpConnectedServiceName: $(ESRPConnectedServiceName)
                   esrpClientId: $(ESRPClientId)
                   appRegistrationClientId: $(AppRegistrationClientId)
@@ -283,12 +272,13 @@ extends:
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
                   packageName: SqlServer
+                  packageFullName: Microsoft.SqlServer.Server
+                  packageVersion: $(effectiveSqlServerVersion)
                   versionProperties: >-
                     -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
                     -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
-                  dllSigningPattern: Microsoft.SqlServer.Server.dll
-                  softwareName: Microsoft.SqlServer.Server
                   assemblyFileVersion: $(sqlServerAssemblyFileVersion)
+                  publishSymbols: ${{ parameters.publishSymbols }}
                   esrpConnectedServiceName: $(ESRPConnectedServiceName)
                   esrpClientId: $(ESRPClientId)
                   appRegistrationClientId: $(AppRegistrationClientId)
@@ -310,19 +300,20 @@ extends:
                 parameters:
                   symbolsFolder: $(symbolsFolder)
                   softwareFolder: $(softwareFolder)
-                  publishSymbols: ${{ parameters['publishSymbols'] }}
-                  isPreview: ${{ parameters['isPreview'] }}
+                  publishSymbols: ${{ parameters.publishSymbols }}
+                  isPreview: ${{ parameters.isPreview }}
 
               - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
                 parameters:
                   packageName: Azure
+                  packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
+                  packageVersion: $(effectiveAzureVersion)
                   versionProperties: >-
                     -p:AzurePackageVersion=$(effectiveAzureVersion)
                     -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
                     -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-                  dllSigningPattern: "Microsoft.Data.SqlClient.Extensions.Azure.dll"
-                  softwareName: "Microsoft.Data.SqlClient.Extensions.Azure"
                   assemblyFileVersion: $(azureAssemblyFileVersion)
+                  publishSymbols: ${{ parameters.publishSymbols }}
                   esrpConnectedServiceName: $(ESRPConnectedServiceName)
                   esrpClientId: $(ESRPClientId)
                   appRegistrationClientId: $(AppRegistrationClientId)
@@ -349,7 +340,7 @@ extends:
                   mdsPackageVersion: $(effectiveMdsVersion)
                   loggingPackageVersion: $(effectiveLoggingVersion)
                   abstractionsPackageVersion: $(effectiveAbstractionsVersion)
-                  publishSymbols: ${{ parameters['publishSymbols'] }}
+                  publishSymbols: ${{ parameters.publishSymbols }}
                   appRegistrationClientId: $(appRegistrationClientId)
                   appRegistrationTenantId: $(appRegistrationTenantId)
                   authAkvName: $(AuthAkvName)
@@ -372,8 +363,8 @@ extends:
             jobs:
               - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
                 parameters:
-                  artifactName: $(mdsArtifactName)
-                  isPreview: ${{ parameters['isPreview'] }}
+                  artifactName: $(sqlClientArtifactsName)
+                  isPreview: ${{ parameters.isPreview }}
 
       # ------------------------------------------------------------------
       # Release Stage — on-demand selective publish to NuGet

@@ -6,31 +6,32 @@
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
 ####################################################################################
 parameters:
-  # Sym Account.
-  - name: SymAccount
-    type: string
-    default: 'SqlClientDrivers'
 
-  # Symbols Version.
-  - name: symbolsVersion
+  # The full name of the package whose symbols are being published.
+  - name: packageFullName
     type: string
-    default: '$(mdsPackageVersion)'
 
-  # Symbol Server.
+  # The version of the package whose symbols are being published.
+  - name: packageVersion
+    type: string
+
+  # Our symbols account name.
+  - name: symbolsAccount
+    type: string
+    default: SqlClientDrivers
+
+  # The symbols server to publish to.
   - name: symbolServer
     type: string
-    default: '$(SymbolServer)'
+    default: $(SymbolServer)
 
-  # Symbol Token Uri.
+  # The token URI for the symbol publishing service.
   - name: symbolTokenUri
     type: string
-    default: '$(SymbolTokenUri)'
+    default: $(SymbolTokenUri)
 
-  # Symbols Artifact Name.
-  - name: symbolsArtifactName
-    type: string
-
-  # Publish To Servers.
+  # A pair of flags indicating whether to publish to the internal and public symbol servers.  Both
+  # default to true.
   - name: publishToServers
     type: object
     default:
@@ -38,23 +39,24 @@ parameters:
       public: true
 
 steps:
-- powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
-  displayName: 'Update Symbol.AccountName with ${{parameters.SymAccount}}'
+- pwsh: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.symbolsAccount}}"'
+  displayName: 'Set ArtifactServices.Symbol.AccountName to ${{parameters.symbolsAccount}}'
+
+- pwsh: 'Write-Host "##vso[task.setvariable variable=symbolsArtifactName;]${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)"'
+  displayName: 'Set symbolsArtifactName variable'
 
 - task: PublishSymbols@2
-  displayName: 'Upload symbols to ${{parameters.SymAccount }} org'
+  displayName: 'Upload symbols to ${{parameters.symbolsAccount }} org'
   inputs:
     SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\Package\bin'
-    SearchPattern: |
-      Windows_NT/Release.AnyCPU/**/Microsoft.Data.SqlClient.pdb
-      Unix/Release.AnyCPU/**/Microsoft.Data.SqlClient.pdb
+    SearchPattern: '**/*.pdb'
     IndexSources: false
     SymbolServerType: TeamServices
     SymbolsMaximumWaitTime: 60
     SymbolExpirationInDays: 1825 # 5 years
-    SymbolsProduct: Microsoft.Data.SqlClient
-    SymbolsVersion: ${{parameters.symbolsVersion }}
-    SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
+    SymbolsProduct: ${{ parameters.packageFullName }}
+    SymbolsVersion: ${{ parameters.packageVersion }}
+    SymbolsArtifactName: $(symbolsArtifactName)
     Pat: $(System.AccessToken)
 
 - task: AzureCLI@2
@@ -67,7 +69,7 @@ steps:
       $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
       $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
 
-      echo "Publishing request name: ${{parameters.symbolsArtifactName }}"
+      echo "Publishing request name: $(symbolsArtifactName)"
       echo "Publish to internal server: $publishToInternalServer"
       echo "Publish to public server: $publishToPublicServer"
 
@@ -82,7 +84,7 @@ steps:
       echo ">  1.Symbol publishing token acquired."
 
       echo "Registering the request name ..."
-      $requestName = "${{parameters.symbolsArtifactName }}"
+      $requestName = "$(symbolsArtifactName)"
       $requestNameRegistrationBody = "{'requestName': '$requestName'}"
       Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
 
