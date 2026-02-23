@@ -33,13 +33,18 @@ jobs:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
   variables:
-  - ${{ if parameters.isPreview }}:
-    - name: abstractionsPackageVersion
-      value: $(abstractionsPackagePreviewVersion)
-    - name: loggingPackageVersion
-      value: $(loggingPackagePreviewVersion)
-    - name: mdsPackageVersion
-      value: $(previewMdsPackageVersion)
+    ob_outputDirectory: $(PACK_OUTPUT)
+    # APIScan configuration for this Extension package
+    ob_sdl_apiscan_enabled: true
+    ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/dlls
+    ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/pdbs
+    ob_sdl_apiscan_softwarename: Microsoft.Data.SqlClient
+    ob_sdl_apiscan_versionNumber: $(assemblyBuildNumber)
+
+    ${{ if parameters.isPreview }}:
+      abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
+      loggingPackageVersion: $(loggingPackagePreviewVersion)
+      mdsPackageVersion: $(previewMdsPackageVersion)
 
   steps:
   - script: SET

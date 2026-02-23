@@ -7,67 +7,70 @@
 # This stage depends on the secrets_stage.
 
 parameters:
-  # Abstractions Artifacts Name.
+  # The name of the Abstractions pipeline artifacts to download.
   - name: abstractionsArtifactsName
     type: string
 
-  # Abstractions Package Version.
+  # The version of the Abstractions package to depend on when referenceType is 'Package'.
   - name: abstractionsPackageVersion
     type: string
 
-  # Additional Depends On.
+  # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
     default: []
 
-  # Build Configuration.
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
-  # Debug.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
 
-  # Logging Artifacts Name.
+  # The name of the Logging pipeline artifacts to download.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
 
-  # Logging Package Version.
+  # The version of the Logging package to depend on when referenceType is 'Package'.
   - name: loggingPackageVersion
     type: string
 
-  # Mds Artifacts Name.
+  # The name of the SqlClient pipeline artifacts to download.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
-  # Mds Package Version.
+  # The version of the SqlClient package to depend on when referenceType is 'Package'.
   - name: mdsPackageVersion
     type: string
 
-  # Post Test Jobs.
+  # Jobs to run after the test jobs complete, if any.
   - name: postTestJobs
     type: jobList
     default: []
 
-  # Prebuild Steps.
+  # Steps to run before the build starts, if any.
   - name: prebuildSteps
     type: stepList
     default: []
 
-  # Reference Type.
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
+    type: string
     default: Project
     values:
-      - Project
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
-  # Test Configurations.
+  # Each entry in this object will become a test stage.
   - name: testConfigurations
     type: object
 

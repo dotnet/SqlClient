@@ -39,12 +39,14 @@ parameters:
     - name: publishTokenUri
       type: string
 
-    # Type of build, used to determine path to search for symbols files
+    # The C# project reference type to use when building and packing the packages.
     - name: referenceType
       type: string
       values:
-        - Project
+        # Reference sibling packages as NuGet packages.
         - Package
+        # Reference sibling packages as C# projects.
+        - Project
 
     # Pattern to use to search for pdb symbols files to upload/publish
     - name: searchPattern

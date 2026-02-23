@@ -8,9 +8,8 @@
 
 variables:
   - template: /eng/pipelines/libraries/build-variables.yml@self
+
   # onebranch template variables
-  - name: ob_outputDirectory
-    value: '$(artifactDirectory)' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
   - name: ob_sdl_binskim_break
     value: true # https://aka.ms/obpipelines/sdl
   - name: Packaging.EnableSBOMSigning

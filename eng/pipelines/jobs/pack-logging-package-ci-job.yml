@@ -32,7 +32,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -107,9 +107,7 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: >-
-            -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-            -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+          buildProperties: LoggingPackageVersion=${{ parameters.loggingPackageVersion }};LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

@@ -13,7 +13,7 @@ parameters:
   - name: loggingPackageVersion
     type: string
 
-  # Debug.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -38,12 +38,15 @@ parameters:
       - Debug
       - Release
 
-  # Reference Type.
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
+    type: string
     default: Package
     values:
-      - Project
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
   # Test Set.
   - name: testSet

@@ -16,11 +16,13 @@ parameters:
       - Debug
       - Release
 
-  # Reference Type.
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
   # Build Number.

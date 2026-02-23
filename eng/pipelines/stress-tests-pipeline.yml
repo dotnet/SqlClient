@@ -64,7 +64,7 @@ parameters:
       - Debug
       - Release
 
-  # Enable debug output
+  # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
     type: boolean

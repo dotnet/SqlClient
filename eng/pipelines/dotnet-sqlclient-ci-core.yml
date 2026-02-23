@@ -4,6 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+# True to emit debug information and steps.
 - name: debug
   type: boolean
   default: false
@@ -58,14 +59,14 @@ parameters:
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
-# The way we will reference sibling projects in the .csproj files:
-#   Project - use <ProjectReference> references.
-#   Package - use <PackageReference> references to NuGet packages in the
-#             packages/ directory.
+# The C# project reference type to use when building and packing the packages.
 - name: referenceType
+  type: string
   values:
-    - Project
+    # Reference sibling packages as NuGet packages.
     - Package
+    # Reference sibling packages as C# projects.
+    - Project
 
 - name: buildConfiguration
   type: string

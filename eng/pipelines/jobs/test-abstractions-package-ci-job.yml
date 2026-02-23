@@ -20,7 +20,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false

@@ -5,27 +5,27 @@
 #################################################################################
 parameters:
 
-  # Abstractions Assembly File Version.
+  # The assembly file version to apply to the Abstractions package.
   - name: abstractionsAssemblyFileVersion
     type: string
 
-  # Abstractions Package Version.
+  # The version to apply to the Abstractions package.
   - name: abstractionsPackageVersion
     type: string
 
-  # Logging Assembly File Version.
+  # The assembly file version to apply to the Logging package.
   - name: loggingAssemblyFileVersion
     type: string
 
-  # Logging Package Version.
+  # The version to apply to the Logging package.
   - name: loggingPackageVersion
     type: string
 
-  # Mds Assembly File Version.
+  # The assembly file version to apply to the Mds package.
   - name: mdsAssemblyFileVersion
     type: string
 
-  # Mds Package Version.
+  # The version to apply to the Mds package.
   - name: mdsPackageVersion
     type: string
 

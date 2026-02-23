@@ -32,7 +32,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -86,16 +86,14 @@ parameters:
   - name: poolName
     type: string
 
-  # The reference type to use:
-  #
-  # Project - dependent projects are referenced directly.
-  # Package - dependent projects are referenced via NuGet packages.
-  #
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
-    - Package
-    - Project
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
   # The SA password set by the sqlServerSetupSteps, if relevant.
   - name: saPassword

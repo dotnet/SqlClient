@@ -51,14 +51,13 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
-  # The reference type to use:
-  #
-  # Project - dependent projects are referenced directly.
-  # Package - dependent projects are referenced via NuGet packages.
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
   # SNI Version Override.
