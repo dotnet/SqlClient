@@ -241,7 +241,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         <para>
-          Call this method when you know the destination table schema has changed and you want to force the next <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation to refresh the metadata from the server.
+          Call this method when you know the destination table schema has changed and you want to force the next <c>WriteToServer</c> operation to refresh the metadata from the server.
         </para>
         <para>
           The cache is automatically invalidated when the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property is changed to a different table name.

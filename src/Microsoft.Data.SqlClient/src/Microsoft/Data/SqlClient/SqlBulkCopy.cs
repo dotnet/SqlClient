@@ -236,8 +236,8 @@ namespace Microsoft.Data.SqlClient
         private SourceColumnMetadata[] _currentRowMetadata;
 
         // Metadata caching fields for CacheMetadata option
-        private BulkCopySimpleResultSet _cachedMetadata;
-        private string _cachedDestinationTableName;
+        internal BulkCopySimpleResultSet _cachedMetadata;
+        internal string _cachedDestinationTableName;
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
