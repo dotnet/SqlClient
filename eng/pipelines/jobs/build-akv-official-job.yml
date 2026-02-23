@@ -125,15 +125,15 @@ jobs:
           # packages/ so that they're available via the local NuGet feed when restoring.
           # AKV Provider depends on both SqlClient and Extensions.Logging.
           - task: DownloadPipelineArtifact@2
-            displayName: 'Download SqlClient (MDS) Package'
+            displayName: Download SqlClient Package
             inputs:
-                artifactName: drop_build_dependent_build_package_SqlClient
+                artifactName: $(sqlClientArtifactsName)
                 targetPath: $(Build.SourcesDirectory)/packages
 
           - task: DownloadPipelineArtifact@2
-            displayName: 'Download Logging Package'
+            displayName: Download Logging Package
             inputs:
-                artifactName: drop_build_independent_build_package_Logging
+                artifactName: $(loggingArtifactsName)
                 targetPath: $(Build.SourcesDirectory)/packages
 
           # Install the .NET SDK.

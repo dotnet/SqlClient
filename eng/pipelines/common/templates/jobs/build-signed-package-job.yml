@@ -3,22 +3,26 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This file is only included in MDS OneBranch Official pipelines.
+
 parameters:
-  # Symbols Folder.
+  # The directory to copy PDB files into for ApiScan to inspect.
   - name: symbolsFolder
     type: string
     default: symbols
 
-  # Software Folder.
+  # The directory to copy DLL files into for ApiScan to inspect.
   - name: softwareFolder
     type: string
     default: software
 
-  # Publish Symbols.
+  # True to publish symbols to public and private feeds after the build completes.
   - name: publishSymbols
     type: boolean
 
-  # Is Preview.
+  # True if this is a preview build, which uses the preview version numbers from
+  # common-variables.yml.
   - name: isPreview
     type: boolean
 
@@ -29,7 +33,6 @@ jobs:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
   variables:
-  - template: /eng/pipelines/libraries/variables.yml@self
   - ${{ if parameters.isPreview }}:
     - name: abstractionsPackageVersion
       value: $(abstractionsPackagePreviewVersion)
@@ -52,15 +55,15 @@ jobs:
   # packages/ so that they're available via the local NuGet feed when restoring MDS.
   # MDS depends on both Extensions.Abstractions and Extensions.Logging.
   - task: DownloadPipelineArtifact@2
-    displayName: 'Download Abstractions Package'
+    displayName: Download Abstractions Package
     inputs:
-      artifactName: drop_build_independent_build_package_Abstractions
+      artifactName: $(abstractionsArtifactsName)
       targetPath: $(Build.SourcesDirectory)/packages
 
   - task: DownloadPipelineArtifact@2
-    displayName: 'Download Logging Package'
+    displayName: Download Logging Package
     inputs:
-      artifactName: drop_build_independent_build_package_Logging
+      artifactName: $(loggingArtifactsName)
       targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK.

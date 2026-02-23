@@ -5,69 +5,71 @@
 #################################################################################
 parameters:
 
-  # Debug.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
 
-  # Reference Type.
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
-  # Pool Name.
+  # The name of Azure Pipelines pool to use.
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
 
-  # Image Override.
+  # The name of the Azure Pipelines image to use within the pool.
   - name: imageOverride
     type: string
     default: ADO-MMS22-SQL19
 
-  # Abstractions Artifacts Name.
+  # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName
     type: string
     default: Abstractions.Artifacts
 
-  # Logging Artifacts Name.
+  # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
 
-  # Mds Artifacts Name.
+  # The name of the SqlClient pipeline artifact to publish.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
-  # Platform.
+  # The C# project platform to build (e.g. AnyCPU, x64, x86).
   - name: platform
     type: string
     default: $(Platform)
 
-  # Build Configuration.
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
-  # Prebuild Steps.
+  # Pipeline steps to run before the build starts, if any.
   - name: prebuildSteps
     type: stepList
     default: []
 
-  # Abstractions Package Version.
+  # The version of the Abstractions package to depend on when referenceType is 'Package'.
   - name: abstractionsPackageVersion
     type: string
 
-  # Logging Package Version.
+  # The version of the Logging package to depend on when referenceType is 'Package'.
   - name: loggingPackageVersion
     type: string
 
-  # Mds Package Version.
+  # The version to apply to the SqlClient package.
   - name: mdsPackageVersion
     type: string
 
@@ -95,8 +97,7 @@ jobs:
      # configuration
     - ${{ parameters.prebuildSteps }}
 
-  # If we're testing in Package mode, then we must download the Abstractions and
-  # Logging package artifacts.
+  # If we're testing in Package mode, then we must download dependent package artifacts.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts

@@ -95,7 +95,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     default: false
 
 variables:
-  - template: /eng/pipelines/libraries/variables.yml@self
+  - template: /eng/pipelines/libraries/onebranch-variables.yml@self
 
   - name: mdsArtifactName
     value: drop_build_dependent_build_package_SqlClient

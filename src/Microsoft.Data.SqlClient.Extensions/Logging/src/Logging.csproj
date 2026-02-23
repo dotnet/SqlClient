@@ -49,8 +49,6 @@
     <AssemblyFileVersion>$(LoggingAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(LoggingAssemblyFileVersion)</FileVersion>
     <Version>$(LoggingPackageVersion)</Version>
-
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -68,6 +66,23 @@
   <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
     <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
+
+  <!-- Build Output Config-->
+  <PropertyGroup>
+
+    <!--
+      The obj/ folder for each target framework.  This contains intermediate files used during the
+      build process.
+    -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
+
+    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+
+    <!-- We put our docs in the bin/ directory as well. -->
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+
+  </PropertyGroup>
 
   <!--
     NuGet Package Config

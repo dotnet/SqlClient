@@ -52,6 +52,7 @@ parameters:
 
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:
+  # See: https://aka.ms/esrp.scantask
   - task: EsrpMalwareScanning@6
     displayName: 'ESRP MalwareScanning'
     inputs:
@@ -64,6 +65,8 @@ steps:
       Pattern: 'Microsoft.Data.SqlClient*.dll'
       CleanupTempStorage: 1
       VerboseLogin: 1
+
+  # See: https://aka.ms/esrp.signtask
   - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning'
     inputs:
@@ -117,6 +120,7 @@ steps:
           ]
 
 - ${{ if eq(parameters.artifactType, 'pkg') }}:
+  # See: https://aka.ms/esrp.scantask
   - task: EsrpMalwareScanning@6
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
@@ -129,6 +133,8 @@ steps:
       Pattern: '*.*nupkg'
       CleanupTempStorage: 1
       VerboseLogin: 1
+
+  # See: https://aka.ms/esrp.signtask
   - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:

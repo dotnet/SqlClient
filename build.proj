@@ -99,7 +99,17 @@
 
   <!-- SqlServer Targets -->
   <PropertyGroup>
-    <SqlServerProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerProperties>
+    <SqlServerProperties>$(CommonProperties)</SqlServerProperties>
+
+    <SqlServerProperties
+      Condition="'$(SqlServerPackageVersion)' != ''">
+      $(SqlServerProperties);SqlServerPackageVersion=$(SqlServerPackageVersion)
+    </SqlServerProperties>
+
+    <SqlServerProperties
+      Condition="'$(SqlServerAssemblyFileVersion)' != ''">
+      $(SqlServerProperties);SqlServerAssemblyFileVersion=$(SqlServerAssemblyFileVersion)
+    </SqlServerProperties>
   </PropertyGroup>
 
   <Target Name="RestoreSqlServer">
@@ -110,16 +120,14 @@
     <MSBuild
       Projects="@(SqlServer)"
       Targets="Build"
-      Properties="$(CI);$(SqlServerProperties);Platform=AnyCPU;OSGroup=AnyOS"
-      RemoveProperties="TargetsWindows;TargetsUnix;" />
+      Properties="$(CI);$(SqlServerProperties)" />
   </Target>
 
   <Target Name="PackSqlServer">
     <MSBuild
       Projects="@(SqlServer)"
       Targets="Pack"
-      Properties="$(SqlServerProperties);Platform=AnyCPU;OSGroup=AnyOS;NoBuild=true"
-      RemoveProperties="TargetsWindows;TargetsUnix;" />
+      Properties="$(SqlServerProperties);NoBuild=true" />
   </Target>
 
   <!-- Abstractions Targets -->
@@ -162,7 +170,7 @@
     <MSBuild
       Projects="@(Abstractions)"
       Targets="Build"
-      Properties="$(AbstractionsProperties)" />
+      Properties="$(CI);$(AbstractionsProperties)" />
   </Target>
 
   <Target Name="PackAbstractions">
@@ -205,7 +213,7 @@
     <MSBuild
       Projects="@(Logging)"
       Targets="Build"
-      Properties="$(LoggingProperties)" />
+      Properties="$(CI);$(LoggingProperties)" />
   </Target>
 
   <Target Name="PackLogging">
@@ -254,7 +262,7 @@
     <MSBuild
       Projects="@(Azure)"
       Targets="Build"
-      Properties="$(AzureProperties)" />
+      Properties="$(CI);$(AzureProperties)" />
   </Target>
 
   <Target Name="PackAzure">

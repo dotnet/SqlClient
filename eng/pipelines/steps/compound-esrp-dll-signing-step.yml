@@ -36,7 +36,7 @@ parameters:
     type: string
 
 steps:
-  # See: https://microsoft.sharepoint.com/teams/prss/esrp/info/ESRP%20Onboarding%20Wiki/Integrate%20the%20ESRP%20Scan%20Task%20into%20ADO.aspx
+  # See: https://aka.ms/esrp.scantask
   - task: EsrpMalwareScanning@6
     displayName: 'ESRP DLL Malware Scanning'
     inputs:
@@ -50,7 +50,7 @@ steps:
       UseMSIAuthentication: true
       VerboseLogin: 1
 
-  # See: https://aka.ms/obpipelines/esrptask
+  # See: https://aka.ms/esrp.signtask
   - task: EsrpCodeSigning@6
     displayName: 'ESRP DLL Signing'
     inputs:

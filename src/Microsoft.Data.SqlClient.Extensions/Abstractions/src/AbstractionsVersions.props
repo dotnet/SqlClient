@@ -11,10 +11,7 @@
     with an underscore (_).
   -->
 
-  <!--
-    This file uses the $(BuildNumber) property defined in
-    tools/props/Versions.props.
-  -->
+  <!-- This file uses several properties defined in tools/props/Versions.props. -->
 
   <!-- Versioning Properties -->
   <PropertyGroup>
@@ -37,7 +34,7 @@
               parts of its value, for example 1.0.0.345.
             - Otherwise, defaults to:
               $(DefaultMajorVersion).0.0.$(BuildNumber).
-    
+
       We use private properties to hold the computed values, and then always
       assign those to the public properties.  After importing this file, the
       public properties will always be set.

@@ -88,16 +88,11 @@ jobs:
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
 
-      # dotnet CLI arguments common to all commands.
-      - name: commonArguments
-        value: >-
-          --verbosity ${{ parameters.dotnetVerbosity }}
-
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
         value: >-
-          $(commonArguments)
           --configuration ${{ parameters.buildConfiguration }}
+          --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
@@ -137,34 +132,20 @@ jobs:
       # The Windows agent images include a suitable .NET Framework runtime, so
       # we don't have to install one explicitly.
 
-      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
-      # support all of our argument combinations for the different build steps.
-
-      # Restore the project.
-      - task: DotNetCoreCLI@2
-        displayName: Restore Project
-        inputs:
-          command: custom
-          custom: restore
-          projects: $(project)
-          arguments: $(commonArguments)
-
       # Build the project.
       - task: DotNetCoreCLI@2
         displayName: Build Project
         inputs:
-          command: custom
-          custom: build
+          command: build
           projects: $(project)
-          arguments: $(buildArguments) --no-restore
+          arguments: $(buildArguments)
 
       # Run the tests for each .NET runtime.
       - ${{ each runtime in parameters.netRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           inputs:
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)
@@ -175,8 +156,7 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
           inputs:
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)
@@ -189,8 +169,7 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           inputs:
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)
@@ -201,8 +180,7 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
           inputs:
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)

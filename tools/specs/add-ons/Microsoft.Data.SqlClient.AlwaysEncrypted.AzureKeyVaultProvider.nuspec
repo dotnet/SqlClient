@@ -45,13 +45,13 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
   </metadata>
   <files>
     <file src="..\..\icons\dotnet.png" target="" />
-    <file src="PackageReadme.md" target="README.md" />
+    <file src="../../../src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/PackageReadme.md" target="README.md" />
 
     <!--
       We require the $ReferenceType$ property to be supplied on the nuget pack
       command line to indicate where the DLLs are.
     -->
-    
+
     <!--  NetFx Files  -->
     <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net462\" exclude="" />
     <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net462\" exclude="" />

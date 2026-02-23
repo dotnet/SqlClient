@@ -114,13 +114,13 @@ jobs:
     steps:
       - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
 
-      # Download Abstractions package from previous stage for packages that depend on it.
-      # Azure depends on Abstractions; Logging and Abstractions are independent.
+      # The Azure package depends on Abstractions.  The other packages we build have no
+      # inter-package dependencies.
       - ${{ if eq(parameters.packageName, 'Azure') }}:
         - task: DownloadPipelineArtifact@2
           displayName: Download Abstractions Package
           inputs:
-            artifactName: drop_build_independent_build_package_Abstractions
+            artifactName: $(abstractionsArtifactsName)
             targetPath: $(Build.SourcesDirectory)/packages
 
       # Install the .NET SDK.

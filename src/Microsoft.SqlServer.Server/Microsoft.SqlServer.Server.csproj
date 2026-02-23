@@ -4,12 +4,26 @@
     <Description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.</Description>
     <BaseProduct>Microsoft SqlServer Server</BaseProduct>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\</OutputPath>
-    <DocumentationFile>$(OutputPath)$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <DebugType>portable</DebugType>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <!-- Build Output Config-->
+  <PropertyGroup>
+
+    <!--
+      The obj/ folder for each target framework.  This contains intermediate files used during the
+      build process.
+    -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
+
+    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+
+    <!-- The doc/ folder for each target framework. -->
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+
   </PropertyGroup>
 
   <!--
@@ -53,7 +67,7 @@ Microsoft.SqlServer.Server.Format</Description>
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
-    <None Include="$(RepoRoot)/tools/specs/PackageReadme.SqlServer.Server.md" Pack="true" PackagePath="README.md" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
   <!-- Strong name signing ============================================= -->

@@ -5,7 +5,7 @@
 #################################################################################
 
 # Common variables shared across all OneBranch Official pipelines.
-# Included transitively by build-variables.yml → variables.yml.
+# Included transitively by build-variables.yml -> onebranch-variables.yml.
 
 variables:
   - group: ESRP Federated Creds (AME)
