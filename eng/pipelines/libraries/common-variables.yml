@@ -18,28 +18,24 @@ variables:
 
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
-  - name: REPO_ROOT
-    value: $(Build.SourcesDirectory)
-  - name: softwareFolder
-    value: $(REPO_ROOT)/software
-  - name: symbolsFolder
-    value: $(REPO_ROOT)/symbols
-  - name: artifactDirectory
-    value: '$(REPO_ROOT)/packages'
 
   # Aliases required by compound step templates (compound-esrp-dll-signing-step,
   # compound-esrp-nuget-signing-step, compound-nuget-pack-step, etc.).
+
+  # The root of our repo.
+  - name: REPO_ROOT
+    value: $(Build.SourcesDirectory)
 
   # This is where our C# projects place their build outputs (see Directory.Build.props
   # <ArtifactsPath>).  We exclude the reference type here since Official pipelines always use
   # Package mode.
   - name: BUILD_OUTPUT
-    value: $(Build.SourcesDirectory)/artifacts
+    value: $(REPO_ROOT)/artifacts
 
   # THis is where our C# projects place their NuGet package outputs (see Directory.Build.props
   # <PackagesDir>).
   - name: PACK_OUTPUT
-    value: $(Build.SourcesDirectory)/packages
+    value: $(REPO_ROOT)/packages
 
   # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
   # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part

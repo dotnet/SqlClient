@@ -5,163 +5,119 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+
+# No PR-based triggers.
+pr: none
+
+# We trigger runs on activity on the internal/main branch, but not on any other branches.  This
+# pipeline is intended to only run against the ADO.Net dotnet-sqlclient repo.
 trigger:
   branches:
     include:
-      # This pipeline is intended to only run against the ADO.Net dotnet-sqlclient
-      # repo.
       - internal/main
-  paths:
-    include:
-      - .azuredevops
-      - .config
-      - doc
-      - eng/pipelines
-      - src
-      - tools
-      - azurepipelines-coverage.yml
-      - build.proj
-      - NuGet.config
 
+# We run this pipeline on a daily schedule.
 schedules:
-  - cron: "30 4 * * Mon"
-    displayName: Weekly Sunday 9:30 PM (UTC - 7) Build
+  - cron: "30 4 * * *"
+    displayName: Daily 04:30 UTC Build
     branches:
       include:
         - internal/main
     always: true
 
-  - cron: "30 3 * * Mon-Fri"
-    displayName: Mon-Fri 8:30 PM (UTC - 7) Build
-    branches:
-      include:
-        - internal/main
-
-parameters: # parameters are shown up in ADO UI in a build queue time
-  # Enable debug output
-  - name: "debug"
-    displayName: "Enable debug output"
+# These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
+parameters:
+  # True to enable debug information and steps.
+  - name: debug
+    displayName: Enable debug output
     type: boolean
     default: false
 
-  # Publish symbols
-  - name: publishSymbols
-    displayName: "Publish symbols"
-    type: boolean
-    default: false
-
-  # Is this a preview build?
+  # True if this is a preview build.
   - name: isPreview
-    displayName: "Is this a preview build?"
+    displayName: Is this a preview build?
     type: boolean
     default: false
 
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: "Test job timeout (in minutes)"
-    type: number
-    default: 60
-
-  # Build parameters — control which packages to build.
-  # Default to true for CI/scheduled builds; toggle at queue time for selective builds.
-  - name: buildSqlServerServer
-    displayName: "Build Microsoft.SqlServer.Server"
-    type: boolean
-    default: true
-
-  # Build Microsoft.Data.SqlClient and Extensions
-  - name: buildSqlClient
-    displayName: "Build Microsoft.Data.SqlClient and Extensions"
-    type: boolean
-    default: true
-
-  # Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-  - name: buildAKVProvider
-    displayName: "Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-    type: boolean
-    default: true
-
-  # Release parameters — select which packages to publish to NuGet.
-  # All default to false; toggle at queue time for on-demand selective release.
-  - name: releaseSqlServerServer
-    displayName: "Release Microsoft.SqlServer.Server"
-    type: boolean
-    default: false
-
-  # Release Microsoft.Data.SqlClient.Extensions.Logging
-  - name: releaseLogging
-    displayName: "Release Microsoft.Data.SqlClient.Extensions.Logging"
-    type: boolean
-    default: false
-
-  # Release Microsoft.Data.SqlClient.Extensions.Abstractions
-  - name: releaseAbstractions
-    displayName: "Release Microsoft.Data.SqlClient.Extensions.Abstractions"
-    type: boolean
-    default: false
-
-  # Release Microsoft.Data.SqlClient
-  - name: releaseSqlClient
-    displayName: "Release Microsoft.Data.SqlClient"
-    type: boolean
-    default: false
-
-  # Release Microsoft.Data.SqlClient.Extensions.Azure
-  - name: releaseExtAzure
-    displayName: "Release Microsoft.Data.SqlClient.Extensions.Azure"
-    type: boolean
-    default: false
-
-  # Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-  - name: releaseAKVProvider
-    displayName: "Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    displayName: Publish symbols
     type: boolean
     default: false
 
   # Release Dry Run (do not push to NuGet)
   - name: releaseDryRun
-    displayName: "Release Dry Run (do not push to NuGet)"
+    displayName: Release Dry Run (do not push to NuGet)
     type: boolean
     default: true
 
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    displayName: Test job timeout (in minutes)
+    type: number
+    default: 60
+
+  # Build parameters — select which packages to build.
+
+  # Build the Microsoft.SqlServer.Server package.
+  - name: buildSqlServerServer
+    displayName: Build Microsoft.SqlServer.Server
+    type: boolean
+    default: true
+
+  # Build Microsoft.Data.SqlClient and Extensions packages.
+  - name: buildSqlClient
+    displayName: Build Microsoft.Data.SqlClient and Extensions
+    type: boolean
+    default: true
+
+  # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
+  - name: buildAKVProvider
+    displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    type: boolean
+    default: true
+
+  # Release parameters — select which packages to publish to NuGet.
+  # All default to false; toggle at queue time for on-demand selective release.
+
+  # Release the Microsoft.SqlServer.Server package.
+  - name: releaseSqlServerServer
+    displayName: Release Microsoft.SqlServer.Server
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Logging package.
+  - name: releaseLogging
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Logging
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Abstractions package.
+  - name: releaseAbstractions
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Abstractions
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient package.
+  - name: releaseSqlClient
+    displayName: Release Microsoft.Data.SqlClient
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
+  - name: releaseExtAzure
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
+  - name: releaseAKVProvider
+    displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    type: boolean
+    default: false
+
 variables:
   - template: /eng/pipelines/libraries/onebranch-variables.yml@self
-
-  # AKV job variables
-  - name: PACKAGE_NAME
-    value: "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-  - name: apiScanDllPath
-    value: "$(Build.SourcesDirectory)/apiScan/dlls"
-  - name: apiScanPdbPath
-    value: "$(Build.SourcesDirectory)/apiScan/pdbs"
-
-  # Resolved package versions: use preview versions when isPreview is true
-  - ${{ if parameters.isPreview }}:
-      - name: effectiveLoggingVersion
-        value: $(loggingPackagePreviewVersion)
-      - name: effectiveAbstractionsVersion
-        value: $(abstractionsPackagePreviewVersion)
-      - name: effectiveAzureVersion
-        value: $(azurePackagePreviewVersion)
-      - name: effectiveSqlServerVersion
-        value: $(sqlServerPackagePreviewVersion)
-      - name: effectiveAkvVersion
-        value: $(akvPackagePreviewVersion)
-      - name: effectiveMdsVersion
-        value: $(previewMdsPackageVersion)
-  - ${{ else }}:
-      - name: effectiveLoggingVersion
-        value: $(loggingPackageVersion)
-      - name: effectiveAbstractionsVersion
-        value: $(abstractionsPackageVersion)
-      - name: effectiveAzureVersion
-        value: $(azurePackageVersion)
-      - name: effectiveSqlServerVersion
-        value: $(sqlServerPackageVersion)
-      - name: effectiveAkvVersion
-        value: $(akvPackageVersion)
-      - name: effectiveMdsVersion
-        value: $(mdsPackageVersion)
 
 resources:
   repositories:
@@ -171,29 +127,26 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: /v2/OneBranch.Official.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  # See: https://aka.ms/obpipelines/templates
+  template: /v2/OneBranch.Official.CrossPlat.yml@templates
   parameters:
     release:
-      category: NonAzure # This indicates the pipeline category to deploy Box products https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+       # This indicates the pipeline category to deploy Box products.  See:
+       # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+      category: NonAzure
     featureFlags:
-      # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
       EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
-    globalSdl: # https://aka.ms/obpipelines/sdl
+    # See: https://aka.ms/obpipelines/sdl
+    globalSdl:
       tsa:
-        # The OneBranch template will set 'break' to false for the other SDL
-        # tools when TSA is enabled.  This allows TSA to gather the results
-        # and publish them for downstream analysis.
+        # The OneBranch template will set 'break' to false for the other SDL tools when TSA is
+        # enabled.  This allows TSA to gather the results and publish them for downstream analysis.
         enabled: true
-        # All SDL tools should be enabled all the time for continuous security screening.
-        # Any issue should be triaged and addressed on topmost priority by the team.
       apiscan:
         enabled: true
-        break: true # break the build on APIScan issues
-        softwareFolder: $(softwareFolder)
-        symbolsFolder: $(symbolsFolder)
-        softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(mdsAssemblyFileVersion)
+        break: true
+        # Other ApiScan options are set by the jobs via ob_sdl_apiscan_* variables.
       codeql:
         compiled:
         enabled: true
@@ -203,7 +156,7 @@ extends:
         packageVersion: $(mdsPackageVersion)
       policheck:
         enabled: true
-        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+        break: true
         exclusionsFile: $(REPO_ROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
@@ -215,7 +168,7 @@ extends:
         armory:
           enabled: true
           break: true
-        eslint: # TypeScript and JavaScript
+        eslint:
           enabled: false
         roslyn:
           enabled: true
@@ -225,224 +178,21 @@ extends:
         tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-      # ------------------------------------------------------------------
-      # Stage 1: Independent packages (no cross-package dependencies)
-      # Logging, Abstractions, and SqlServer.Server build in parallel.
-      # ------------------------------------------------------------------
-      - stage: build_independent
-        displayName: "Build Independent Packages"
-        jobs:
-          - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
-              - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
-                parameters:
-                  packageName: Logging
-                  packageFullName: Microsoft.Data.SqlClient.Extensions.Logging
-                  packageVersion: $(effectiveLoggingVersion)
-                  versionProperties: >-
-                    -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-                    -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
-                  assemblyFileVersion: $(loggingAssemblyFileVersion)
-                  publishSymbols: ${{ parameters.publishSymbols }}
-                  esrpConnectedServiceName: $(ESRPConnectedServiceName)
-                  esrpClientId: $(ESRPClientId)
-                  appRegistrationClientId: $(AppRegistrationClientId)
-                  appRegistrationTenantId: $(AppRegistrationTenantId)
-                  authAkvName: $(AuthAKVName)
-                  authSignCertName: $(AuthSignCertName)
-
-          - ${{ if eq(parameters.buildSqlClient, true) }}:
-              - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
-                parameters:
-                  packageName: Abstractions
-                  packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
-                  packageVersion: $(effectiveAbstractionsVersion)
-                  versionProperties: >-
-                    -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-                    -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-                  assemblyFileVersion: $(abstractionsAssemblyFileVersion)
-                  publishSymbols: ${{ parameters.publishSymbols }}
-                  esrpConnectedServiceName: $(ESRPConnectedServiceName)
-                  esrpClientId: $(ESRPClientId)
-                  appRegistrationClientId: $(AppRegistrationClientId)
-                  appRegistrationTenantId: $(AppRegistrationTenantId)
-                  authAkvName: $(AuthAKVName)
-                  authSignCertName: $(AuthSignCertName)
-
-          - ${{ if eq(parameters.buildSqlServerServer, true) }}:
-              - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
-                parameters:
-                  packageName: SqlServer
-                  packageFullName: Microsoft.SqlServer.Server
-                  packageVersion: $(effectiveSqlServerVersion)
-                  versionProperties: >-
-                    -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
-                    -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
-                  assemblyFileVersion: $(sqlServerAssemblyFileVersion)
-                  publishSymbols: ${{ parameters.publishSymbols }}
-                  esrpConnectedServiceName: $(ESRPConnectedServiceName)
-                  esrpClientId: $(ESRPClientId)
-                  appRegistrationClientId: $(AppRegistrationClientId)
-                  appRegistrationTenantId: $(AppRegistrationTenantId)
-                  authAkvName: $(AuthAKVName)
-                  authSignCertName: $(AuthSignCertName)
-
-      # ------------------------------------------------------------------
-      # Stage 2: Core packages (depend on independent packages)
-      # MDS and Extensions.Azure build in parallel after Stage 1 completes.
-      # Stage name kept as 'build_dependent' for validate job compatibility.
-      # ------------------------------------------------------------------
-      - ${{ if eq(parameters.buildSqlClient, true) }}:
-          - stage: build_dependent
-            displayName: "Build Core Packages"
-            dependsOn: build_independent
-            jobs:
-              - template: /eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
-                parameters:
-                  symbolsFolder: $(symbolsFolder)
-                  softwareFolder: $(softwareFolder)
-                  publishSymbols: ${{ parameters.publishSymbols }}
-                  isPreview: ${{ parameters.isPreview }}
-
-              - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
-                parameters:
-                  packageName: Azure
-                  packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
-                  packageVersion: $(effectiveAzureVersion)
-                  versionProperties: >-
-                    -p:AzurePackageVersion=$(effectiveAzureVersion)
-                    -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
-                    -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-                  assemblyFileVersion: $(azureAssemblyFileVersion)
-                  publishSymbols: ${{ parameters.publishSymbols }}
-                  esrpConnectedServiceName: $(ESRPConnectedServiceName)
-                  esrpClientId: $(ESRPClientId)
-                  appRegistrationClientId: $(AppRegistrationClientId)
-                  appRegistrationTenantId: $(AppRegistrationTenantId)
-                  authAkvName: $(AuthAKVName)
-                  authSignCertName: $(AuthSignCertName)
-
-      # ------------------------------------------------------------------
-      # Stage 3: Add-on packages (depend on core packages)
-      # AKV Provider builds after MDS completes.
-      # ------------------------------------------------------------------
-      - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
-          - stage: build_addons
-            displayName: "Build Add-on Packages"
-            dependsOn: build_dependent
-            jobs:
-              - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
-                parameters:
-                  akvAssemblyFileVersion: $(akvAssemblyFileVersion)
-                  akvPackageVersion: $(effectiveAkvVersion)
-                  apiScanDllPath: $(apiScanDllPath)
-                  apiScanPdbPath: $(apiScanPdbPath)
-                  buildConfiguration: Release
-                  mdsPackageVersion: $(effectiveMdsVersion)
-                  loggingPackageVersion: $(effectiveLoggingVersion)
-                  abstractionsPackageVersion: $(effectiveAbstractionsVersion)
-                  publishSymbols: ${{ parameters.publishSymbols }}
-                  appRegistrationClientId: $(appRegistrationClientId)
-                  appRegistrationTenantId: $(appRegistrationTenantId)
-                  authAkvName: $(AuthAkvName)
-                  authSignCertName: $(AuthSignCertName)
-                  esrpClientId: $(EsrpClientId)
-                  esrpConnectedServiceName: $(EsrpConnectedServiceName)
-                  symbolsAzureSubscription: $(SymbolsAzureSubscription)
-                  symbolsPublishProjectName: $(SymbolsPublishProjectName)
-                  symbolsPublishServer: $(SymbolsPublishServer)
-                  symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
-                  symbolsUploadAccount: $(SymbolsUploadAccount)
-
-      # ------------------------------------------------------------------
-      # Validation
-      # ------------------------------------------------------------------
-      - ${{ if eq(parameters.buildSqlClient, true) }}:
-          - stage: mds_package_validation
-            displayName: "MDS Package Validation"
-            dependsOn: build_dependent
-            jobs:
-              - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
-                parameters:
-                  artifactName: $(sqlClientArtifactsName)
-                  isPreview: ${{ parameters.isPreview }}
-
-      # ------------------------------------------------------------------
-      # Release Stage — on-demand selective publish to NuGet
-      # Compile-time conditional: stage is removed entirely when no release
-      # parameters are selected, avoiding OneBranch validation errors.
-      # When at least one package is selected, a manual approval gate
-      # (3-day timeout) lets the team decide whether to release AFTER
-      # reviewing the build.  Only designated approvers are notified.
-      # ------------------------------------------------------------------
-      - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseExtAzure, parameters.releaseAKVProvider) }}:
-          - stage: Production_Release
-            displayName: "Release to NuGet"
-            dependsOn:
-              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
-                - build_independent
-              - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
-                - build_dependent
-                - mds_package_validation
-              - ${{ if parameters.releaseAKVProvider }}:
-                - build_addons
-            variables:
-              ob_release_environment: "Production" # set environment for OneBranch checks and deployment jobs
-              ob_release_usedeploymentjob: true # use deployment job for environment-based approvals
-              ob_deploymentjob_environment: "NuGet-Production" # configure environment approvals in ADO environment.
-            jobs:
-              # Publish jobs — use reusable job template for consistency.
-              # Controlled by releaseDryRun parameter. For approval workflows,
-              # configure ADO environment approvals or OneBranch Approval Service.
-              - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
-                  - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-                    parameters:
-                      packageDisplayName: Microsoft.SqlServer.Server
-                      artifactName: drop_build_independent_build_package_SqlServer
-                      nugetServiceConnection: $(NuGetServiceConnection)
-                      isProduction: true
-                      dryRun: ${{ parameters.releaseDryRun }}
-
-              - ${{ if eq(parameters.releaseLogging, true) }}:
-                  - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-                    parameters:
-                      packageDisplayName: Microsoft.Data.SqlClient.Extensions.Logging
-                      artifactName: drop_build_independent_build_package_Logging
-                      nugetServiceConnection: $(NuGetServiceConnection)
-                      isProduction: true
-                      dryRun: ${{ parameters.releaseDryRun }}
-
-              - ${{ if eq(parameters.releaseAbstractions, true) }}:
-                  - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-                    parameters:
-                      packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
-                      artifactName: drop_build_independent_build_package_Abstractions
-                      nugetServiceConnection: $(NuGetServiceConnection)
-                      isProduction: true
-                      dryRun: ${{ parameters.releaseDryRun }}
-
-              - ${{ if eq(parameters.releaseSqlClient, true) }}:
-                  - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-                    parameters:
-                      packageDisplayName: Microsoft.Data.SqlClient
-                      artifactName: drop_build_dependent_build_package_SqlClient
-                      nugetServiceConnection: $(NuGetServiceConnection)
-                      isProduction: true
-                      dryRun: ${{ parameters.releaseDryRun }}
-
-              - ${{ if eq(parameters.releaseExtAzure, true) }}:
-                  - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-                    parameters:
-                      packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
-                      artifactName: drop_build_dependent_build_package_Azure
-                      nugetServiceConnection: $(NuGetServiceConnection)
-                      isProduction: true
-                      dryRun: ${{ parameters.releaseDryRun }}
-
-              - ${{ if eq(parameters.releaseAKVProvider, true) }}:
-                  - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
-                    parameters:
-                      packageDisplayName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-                      artifactName: drop_build_addons_buildSignedAkvPackage
-                      nugetServiceConnection: $(NuGetServiceConnection)
-                      isProduction: true
-                      dryRun: ${{ parameters.releaseDryRun }}
+      - template: /eng/pipelines/stages/sqlclient-onebranch-stages.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          # This is an official pipeline.
+          isOfficial: true
+          isPreview: ${{ parameters.isPreview }}
+          publishSymbols: ${{ parameters.publishSymbols }}
+          releaseDryRun: ${{ parameters.releaseDryRun }}
+          testJobTimeout: ${{ parameters.testJobTimeout }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
+          releaseLogging: ${{ parameters.releaseLogging }}
+          releaseAbstractions: ${{ parameters.releaseAbstractions }}
+          releaseSqlClient: ${{ parameters.releaseSqlClient }}
+          releaseExtAzure: ${{ parameters.releaseExtAzure }}
+          releaseAKVProvider: ${{ parameters.releaseAKVProvider }}

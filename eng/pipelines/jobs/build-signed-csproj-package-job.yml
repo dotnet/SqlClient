@@ -145,7 +145,7 @@ jobs:
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
           Contents: '**/${{ parameters.packageFullName }}.dll'
-          TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
+          TargetFolder: $(ob_sdl_apiscan_softwareFolder)
           # We must preserve the folder structure since our C# projects may produce multiple
           # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
           # etc.), and we need to keep those separate for APIScan to work correctly.
@@ -156,7 +156,7 @@ jobs:
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
           Contents: '**/${{ parameters.packageFullName }}.pdb'
-          TargetFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
+          TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
           flattenFolders: false
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).

@@ -7,7 +7,7 @@
 # @TODO: This can be made generic when the output folders match the package names.
 
 parameters:
-    # Build Configuration.
+    # The C# build configuration to use (e.g. Debug or Release).
     - name: buildConfiguration
       type: string
       values:

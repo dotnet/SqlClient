@@ -9,30 +9,25 @@
 #        affect >1 project at a time.
 
 parameters:
-  # Akv Assembly File Version.
   - name: akvAssemblyFileVersion
     type: string
 
-  # Akv Package Version.
   - name: akvPackageVersion
     type: string
 
-  # Build Configuration.
+  # The C# build configuration to use (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
-  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
 
-  # Logging Package Version.
   - name: loggingPackageVersion
     type: string
-    
-  # Abstractions Package Version.
+
   - name: abstractionsPackageVersion
     type: string
 

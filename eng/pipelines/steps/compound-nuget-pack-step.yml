@@ -5,26 +5,22 @@
 #################################################################################
 
 parameters:
-    # Build Configuration.
+    # The C# build configuration to use (e.g. Debug or Release).
     - name: buildConfiguration
       type: string
       values:
         - Debug
         - Release
 
-    # Generate Symbols Package.
     - name: generateSymbolsPackage
       type: boolean
 
-    # Package Version.
     - name: packageVersion
       type: string
 
-    # Nuspec Path.
     - name: nuspecPath
       type: string
 
-    # Output Directory.
     - name: outputDirectory
       type: string
 

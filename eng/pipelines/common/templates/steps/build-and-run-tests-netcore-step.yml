@@ -4,32 +4,26 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  # Abstractions Package Version.
   - name: abstractionsPackageVersion
     type: string
     default: $(abstractionsPackageVersion)
 
-  # Mds Package Version.
   - name: mdsPackageVersion
     type: string
     default: $(mdsPackageVersion)
 
-  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
-  # Retry Count On Manual Tests.
   - name: retryCountOnManualTests
     type: number
     default: 2
 
-  # Target Net Core Version.
   - name: TargetNetCoreVersion
     type: string
     default: $(TargetNetCoreVersion)
 
-  # Test Target OS.
   - name: TestTargetOS
     type: string
     default: Windowsnetcoreapp

@@ -7,16 +7,6 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 parameters:
-  # The directory to copy PDB files into for ApiScan to inspect.
-  - name: symbolsFolder
-    type: string
-    default: symbols
-
-  # The directory to copy DLL files into for ApiScan to inspect.
-  - name: softwareFolder
-    type: string
-    default: software
-
   # True to publish symbols to public and private feeds after the build completes.
   - name: publishSymbols
     type: boolean
@@ -108,7 +98,7 @@ jobs:
       generateSymbolsPackage: true
       installNuget: false
       nuspecPath: $(nuspecPath)
-      outputDirectory: $(artifactDirectory)
+      outputDirectory: $(PACK_OUTPUT)
       packageVersion: $(mdsPackageVersion)
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)'
       referenceType: Package
@@ -123,7 +113,7 @@ jobs:
     inputs:
       SourceFolder: $(BUILD_OUTPUT)/Package/bin
       Contents: '**/Microsoft.Data.SqlClient*.dll'
-      TargetFolder: ${{ parameters.softwareFolder }}
+      TargetFolder: $(ob_sql_apiscan_softwareFolder)
       # We must preserve the folder structure since our C# projects may produce multiple
       # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
       # etc.), and we need to keep those separate for APIScan to work correctly.
@@ -134,7 +124,7 @@ jobs:
     inputs:
       SourceFolder: $(BUILD_OUTPUT)/Package/bin
       Contents: '**/Microsoft.Data.SqlClient*.pdb'
-      TargetFolder: ${{ parameters.symbolsFolder }}
+      TargetFolder: $(ob_sql_apiscan_symbolsFolder)
       flattenFolders: false
 
   # Publish symbols to servers

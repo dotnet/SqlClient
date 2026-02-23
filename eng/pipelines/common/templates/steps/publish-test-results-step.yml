@@ -9,23 +9,19 @@ parameters:
     type: boolean
     default: false
 
-  # Target Framework.
   - name: targetFramework
     type: string
 
-  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
-  # Build Configuration.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
-  # Operating System.
   - name: operatingSystem
     type: string
     values:

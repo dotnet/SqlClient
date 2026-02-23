@@ -95,7 +95,7 @@ schedules:
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use; defaults to Release.
+  # The C# build configuration to use; defaults to Release.
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
@@ -104,7 +104,6 @@ parameters:
       - Debug
       - Release
 
-  # Build Platforms on Windows
   - name: buildPlatforms
     displayName: Build Platforms on Windows
     type: object
@@ -116,7 +115,7 @@ parameters:
     type: boolean
     default: false
 
-  # Enable Stress Tests
+  # True to run the stress tests stage.
   - name: enableStressTests
     displayName: Enable Stress Tests
     type: boolean
@@ -154,13 +153,11 @@ parameters:
     type: number
     default: 90
 
-  # Test Sets
   - name: testSets
     displayName: Test Sets
     type: object
     default: [1, 2, 3]
 
-  # |
   - name: useManagedSNI
     displayName: |
       Use Managed/Native SNI on Windows,

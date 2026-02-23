@@ -4,12 +4,11 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  # Platform.
   - name: platform
     type: string
     default: $(Platform)
 
-  # Build Configuration.
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
@@ -25,12 +24,10 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
-  # Build Number.
   - name: buildNumber
     type: string
     default: $(Build.BuildNumber)
 
-  # Operating System.
   - name: operatingSystem
     type: string
     default: deferedToRuntime
@@ -40,7 +37,6 @@ parameters:
       - MacOS
       - deferedToRuntime
 
-  # Build.
   - name: build
     type: string
     default: MDS
