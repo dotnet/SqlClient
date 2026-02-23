@@ -3,12 +3,19 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This stage depends on the secrets_stage.
+
 parameters:
   - name: abstractionsArtifactsName
     type: string
 
   - name: abstractionsPackageVersion
     type: string
+
+  - name: additionalDependsOn
+    type: object
+    default: []
 
   - name: buildConfiguration
     type: string
@@ -19,10 +26,6 @@ parameters:
   - name: debug
     type: boolean
     default: false
-
-  - name: dependsOn
-    type: object
-    default: []
 
   - name: mdsArtifactsName
     type: string
@@ -56,7 +59,16 @@ stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
-      dependsOn: ${{ parameters.dependsOn }}
+      dependsOn:
+        - secrets_stage
+        - ${{ each dep in parameters.additionalDependsOn }}:
+          - ${{ dep }}
+
+      variables:
+        # Bring the SA password from the secrets_stage into scope here.
+        - name: saPassword
+          value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
+
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:
@@ -81,12 +93,10 @@ stages:
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
-                  ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
-                    ${{ if eq(codeCoveTF, targetFramework) }}:
-                      publishTestResults: true
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                  saPassword: $(saPassword)
                   ${{if ne(config.value.configProperties, '{}') }}:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
@@ -117,12 +127,10 @@ stages:
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
-                    ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
-                      ${{ if eq(codeCoveTF, targetFramework) }}:
-                        publishTestResults: true
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                    saPassword: $(saPassword)
                     ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:

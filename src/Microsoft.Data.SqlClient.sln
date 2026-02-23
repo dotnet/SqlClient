@@ -150,6 +150,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventArgs.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventArgs.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SspiAuthenticationParameters.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SspiAuthenticationParameters.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SspiContextProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SspiContextProvider.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.DataClassification", "Microsoft.Data.SqlClient.DataClassification", "{5D1F0032-7B0D-4FB6-A969-FCFB25C9EA1D}"
@@ -213,6 +215,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj", "{9A8996A8-6484-4AA7-B50F-F861430EDE2F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eng", "eng", "{4600328C-C134-499F-AAE2-964E8AD5472C}"
+	ProjectSection(SolutionItems) = preProject
+		..\build.proj = ..\build.proj
+		..\build2.proj = ..\build2.proj
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{4CAE9195-4F1A-4D48-854C-1C9FBC512C66}"
 	ProjectSection(SolutionItems) = preProject
@@ -221,6 +227,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{
 		..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml
+		..\eng\pipelines\sqlclient-pr-package-ref-pipeline.yml = ..\eng\pipelines\sqlclient-pr-package-ref-pipeline.yml
+		..\eng\pipelines\sqlclient-pr-project-ref-pipeline.yml = ..\eng\pipelines\sqlclient-pr-project-ref-pipeline.yml
+		..\eng\pipelines\stress-tests-pipeline.yml = ..\eng\pipelines\stress-tests-pipeline.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{FD4D7A96-79B1-4F89-B64D-29FACCC9232F}"
@@ -245,10 +254,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D}"
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml
-		..\eng\pipelines\common\templates\steps\build-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\build-all-tests-step.yml
 		..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml
 		..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml
-		..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml = ..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml
 		..\eng\pipelines\common\templates\steps\ci-project-build-step.yml = ..\eng\pipelines\common\templates\steps\ci-project-build-step.yml
 		..\eng\pipelines\common\templates\steps\code-analyze-step.yml = ..\eng\pipelines\common\templates\steps\code-analyze-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml
@@ -265,7 +272,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 		..\eng\pipelines\common\templates\steps\publish-test-results-step.yml = ..\eng\pipelines\common\templates\steps\publish-test-results-step.yml
 		..\eng\pipelines\common\templates\steps\run-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\run-all-tests-step.yml
 		..\eng\pipelines\common\templates\steps\update-config-file-step.yml = ..\eng\pipelines\common\templates\steps\update-config-file-step.yml
-		..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml = ..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD}"
@@ -289,26 +295,28 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-878F-4F55-8AA2-6E47F1AD37D5}"
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\jobs\build-akv-official-job.yml = ..\eng\pipelines\jobs\build-akv-official-job.yml
+		..\eng\pipelines\jobs\pack-abstractions-package-ci-job.yml = ..\eng\pipelines\jobs\pack-abstractions-package-ci-job.yml
+		..\eng\pipelines\jobs\pack-azure-package-ci-job.yml = ..\eng\pipelines\jobs\pack-azure-package-ci-job.yml
 		..\eng\pipelines\jobs\stress-tests-ci-job.yml = ..\eng\pipelines\jobs\stress-tests-ci-job.yml
+		..\eng\pipelines\jobs\test-abstractions-package-ci-job.yml = ..\eng\pipelines\jobs\test-abstractions-package-ci-job.yml
+		..\eng\pipelines\jobs\test-azure-package-ci-job.yml = ..\eng\pipelines\jobs\test-azure-package-ci-job.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8}"
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\steps\compound-build-akv-step.yml = ..\eng\pipelines\steps\compound-build-akv-step.yml
+		..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml
+		..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml
 		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
 		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
 		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
-		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
-		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
 		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
 		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
-		..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml
-		..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml
+		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
+		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Microsoft.Data.SqlClient\tests\Common\Common.csproj", "{67128EC0-30F5-6A98-448B-55F88A1DE707}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Stress", "Stress", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
@@ -355,6 +363,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{134A5E42-015B-3575-2B2B-722614F4C835}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2B71F605-037E-5629-6E23-0FA3C297446D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{E9D12AEC-2F11-4871-89BB-343BF1CAEA4C}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\stages\build-abstractions-package-ci-stage.yml = ..\eng\pipelines\stages\build-abstractions-package-ci-stage.yml
+		..\eng\pipelines\stages\build-azure-package-ci-stage.yml = ..\eng\pipelines\stages\build-azure-package-ci-stage.yml
+		..\eng\pipelines\stages\stress-tests-ci-stage.yml = ..\eng\pipelines\stages\stress-tests-ci-stage.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -618,18 +633,6 @@ Global
 		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x64.Build.0 = Release|x64
 		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x86.ActiveCfg = Release|x86
 		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x86.Build.0 = Release|x86
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x64.ActiveCfg = Debug|x64
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x64.Build.0 = Debug|x64
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x86.ActiveCfg = Debug|x86
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x86.Build.0 = Debug|x86
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|Any CPU.Build.0 = Release|Any CPU
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.ActiveCfg = Release|x64
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.Build.0 = Release|x64
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.ActiveCfg = Release|x86
-		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.Build.0 = Release|x86
 		{1A29B520-D16A-35F2-5CAC-64573C86E63D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1A29B520-D16A-35F2-5CAC-64573C86E63D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A29B520-D16A-35F2-5CAC-64573C86E63D}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -805,7 +808,6 @@ Global
 		{09352F1D-878F-4F55-8AA2-6E47F1AD37D5} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{4461063D-2F2B-274C-7E6F-F235119D258E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{67128EC0-30F5-6A98-448B-55F88A1DE707} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{1A29B520-D16A-35F2-5CAC-64573C86E63D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{2AA12D54-540B-E515-CB82-80D691C9DCF1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
@@ -827,6 +829,7 @@ Global
 		{7E0602AC-7F0A-362A-D734-0FDDFCC600B5} = {7289C27E-D7DF-2C71-84B4-151F3A162493}
 		{134A5E42-015B-3575-2B2B-722614F4C835} = {7E0602AC-7F0A-362A-D734-0FDDFCC600B5}
 		{2B71F605-037E-5629-6E23-0FA3C297446D} = {7289C27E-D7DF-2C71-84B4-151F3A162493}
+		{E9D12AEC-2F11-4871-89BB-343BF1CAEA4C} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

@@ -20,9 +20,13 @@ parameters:
     values:
       - Debug
       - Release
-  
+
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - task: PublishTestResults@2
@@ -39,23 +43,23 @@ steps:
       testResultsFiles: |
         TestResults/*.trx
         TestResults/**/*.coverage
-      testRunTitle: 'Linux Tests'
+      testRunTitle: 'Unix Tests'
   condition: succeededOrFailed()
 
 - powershell: |
    cd TestResults
    $TF="${{parameters.targetFramework }}"
-   Get-ChildItem -Filter “*.coverage” -Recurse | Rename-Item -NewName {"$TF" + $_.name} 
+   Get-ChildItem -Filter "*.coverage" -Recurse | Rename-Item -NewName {"$TF" + $_.name}
   displayName: 'Rename coverage files'
 
 - ${{ if eq(parameters.debug, true)}}:
   - powershell: |
       cd TestResults
-      Get-ChildItem -Filter “*.coverage” -Recurse
+      Get-ChildItem -Filter "*.coverage" -Recurse
     displayName: '[Debug] List test result coverage files'
 
 - task: PublishPipelineArtifact@1
-  displayName: 'Publish Pipeline Artifacts'
+  displayName: 'Publish Test Artifacts'
   inputs:
     targetPath: TestResults
     artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'

@@ -712,6 +712,8 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public Microsoft.Data.SqlClient.SqlCredential Credential { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+        public SspiContextProvider SspiContextProvider { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override string Database { get { throw null; } }
@@ -1852,6 +1854,8 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/BaselineTransientErrors/*' />
+        public static System.Collections.ObjectModel.ReadOnlyCollection<int> BaselineTransientErrors { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateIncrementalRetryProvider/*' />
@@ -1860,6 +1864,41 @@ namespace Microsoft.Data.SqlClient
         public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider() { throw null; }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+    public abstract class SspiContextProvider
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/ctor/*'/>
+        protected SspiContextProvider() { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/GenerateContext/*'/>
+        protected abstract bool GenerateContext(System.ReadOnlySpan<byte> incomingBlob, System.Buffers.IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/*'/>
+    public sealed class SspiAuthenticationParameters
+    {
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ctor'/>
+        public SspiAuthenticationParameters(
+            string serverName, 
+            string resource,
+            string userId = null,
+            string databaseName = null,
+            string password = null){}
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Resource'/>
+        public string Resource { get { throw null; } }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ServerName'/>
+        public string ServerName { get { throw null; } }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/UserId'/>
+        public string UserId { get { throw null; } }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/DatabaseName'/>
+        public string DatabaseName { get { throw null; } }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Password'/>
+        public string Password { get { throw null; } }
     }
 }
 namespace Microsoft.Data.SqlClient.Diagnostics

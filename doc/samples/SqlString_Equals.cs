@@ -3,7 +3,7 @@ using System.Data;
 // <Snippet1>
 using System.Data.SqlTypes;
 
-namespace SqlNullsCS
+namespace SqlString_Equals
 {
     class Program
     {

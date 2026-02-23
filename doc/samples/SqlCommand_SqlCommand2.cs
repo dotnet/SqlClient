@@ -4,7 +4,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 
 
-namespace SqlCommandCS
+namespace SqlCommand_SqlCommand2
 {
     class Program
     {

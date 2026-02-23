@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace SqlCommand_SqlCommand1;
+
 // <Snippet1>
 using System;
 using System.Xml;
@@ -22,3 +25,4 @@ public class Form1 : Form
     // </Snippet1>
 
 }
+#endif

@@ -49,7 +49,11 @@ parameters:
 
   - name: operatingSystem
     type: string
-    default: 'Windows'
+    values:
+      - Linux
+      - Mac
+      - Windows
+    default: Windows
 
   - name: retryCountOnManualTests
     type: number
@@ -222,7 +226,6 @@ steps:
           -p:Filter="category=flaky"
           -p:CollectCodeCoverage=false
     continueOnError: true
-    retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
 - ${{ else }}: # Linux or macOS
   - ${{if eq(parameters.referenceType, 'Project')}}:
@@ -238,9 +241,7 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:platform=${{ parameters.platform }}
+          -p:Platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
         verbosityRestore: Detailed
         verbosityPack: Detailed
@@ -257,11 +258,10 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:platform=${{ parameters.platform }}
+          -p:Platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:Filter="category=flaky"
+          -p:CollectCodeCoverage=false
         verbosityRestore: Detailed
         verbosityPack: Detailed
       continueOnError: true
@@ -280,7 +280,7 @@ steps:
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:platform=${{ parameters.platform }}
+        -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
@@ -299,9 +299,10 @@ steps:
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:platform=${{ parameters.platform }}
+        -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:Filter="category=flaky"
+        -p:CollectCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true
@@ -340,10 +341,10 @@ steps:
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:platform=${{ parameters.platform }}
+        -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:Filter="category=flaky"
+        -p:CollectCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true
-    retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}

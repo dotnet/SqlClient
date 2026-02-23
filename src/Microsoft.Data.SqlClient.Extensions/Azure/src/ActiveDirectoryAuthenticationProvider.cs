@@ -358,20 +358,36 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             if (ex is MsalServiceException svcEx &&
                 svcEx.StatusCode == MsalRetryStatusCode)
             {
-                int retryPeriod = 0;
-
                 var retryAfter = svcEx.Headers.RetryAfter;
                 if (retryAfter is not null)
                 {
+                    // Prefer the Delta value over Date.
+                    double totalMilliseconds = 0;
+
                     if (retryAfter.Delta.HasValue)
                     {
-                        retryPeriod = retryAfter.Delta.Value.Milliseconds;
+                        totalMilliseconds = retryAfter.Delta.Value.TotalMilliseconds;
                     }
                     else if (retryAfter.Date.HasValue)
                     {
-                        retryPeriod = Convert.ToInt32(retryAfter.Date.Value.Offset.TotalMilliseconds);
+                        var now = DateTimeOffset.UtcNow;
+                        if (retryAfter.Date.Value > now)
+                        {
+                            totalMilliseconds = (retryAfter.Date.Value - now).TotalMilliseconds;
+                        }
                     }
 
+                    int retryPeriod =
+                        // Ignore nonsensical values.
+                        totalMilliseconds <= 0
+                        ? 0
+                        // Avoid overflow when converting to an int.
+                        : totalMilliseconds > int.MaxValue
+                            ? int.MaxValue
+                            // Convert from double to int safely.
+                            : Convert.ToInt32(totalMilliseconds);
+
+                    // Report the retryable error.
                     throw new Extensions.Azure.AuthenticationException(
                         parameters.AuthenticationMethod,
                         ex.ErrorCode,

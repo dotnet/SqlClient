@@ -15,8 +15,6 @@ using Microsoft.Data.Common;
 
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.Versioning;
 using System.Security.Permissions;
 #endif
 
@@ -458,13 +456,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             }
         }
 
-        [PrePrepareMethod]
         private void ExitOrUnloadEventHandler(object sender, EventArgs e)
         {
             RemovePerformanceCounters();
         }
 
-        [PrePrepareMethod]
         private void ExceptionEventHandler(object sender, UnhandledExceptionEventArgs e)
         {
             if (e != null && e.IsTerminating)
@@ -516,10 +512,6 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             }
         }
 
-        // SxS: this method uses GetCurrentProcessId to construct the instance name.
-        // TODO: VSDD 534795 - remove the Resource* attributes if you do not use GetCurrentProcessId after the fix
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static string GetInstanceName()
         {
             string result;
@@ -530,7 +522,6 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 instanceName = AppDomain.CurrentDomain?.FriendlyName;
             }
 
-            // TODO: If you do not use GetCurrentProcessId after fixing VSDD 534795, please remove Resource* attributes from this method
             int pid = Kernel32Safe.GetCurrentProcessId();
 
             // SQLBUDT #366157 -there are several characters which have special meaning

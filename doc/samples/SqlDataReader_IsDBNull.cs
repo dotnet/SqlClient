@@ -1,3 +1,5 @@
+namespace SqlDataReader_IsDBNull;
+
 using System;
 using System.Data;
 // <Snippet1>

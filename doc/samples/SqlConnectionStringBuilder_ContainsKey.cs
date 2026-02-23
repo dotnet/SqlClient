@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder_ContainsKey;
+
 using System;
 using System.Data;
 // <Snippet1>

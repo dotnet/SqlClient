@@ -1,3 +1,5 @@
+namespace SqlTransactionScope;
+
 // <Snippet1>
 using System;
 using System.Transactions;

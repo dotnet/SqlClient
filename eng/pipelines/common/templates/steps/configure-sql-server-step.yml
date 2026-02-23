@@ -17,6 +17,11 @@ parameters:
     type: string
     default: $(saUser)
 
+  # The SA password to set when configuring SQL Server.  This will also be used for user accounts
+  # if necessary.
+  - name: saPassword
+    type: string
+
   - name: SQLRootPath
     type: string
     default: ''
@@ -54,19 +59,19 @@ parameters:
     default: $(LocalDbSharedInstanceName)
 
 # Common parameters
-  - name: password
-    type: string
-    default: $(password)
-
   - name: netcoreVersionTestUtils
     type: string
 
   - name: databaseName
     type: string
     default: Northwind
-  
+
   - name: operatingSystem
     type: string
+    values:
+      - Linux
+      - Mac
+      - Windows
 
 steps:
 - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
@@ -76,6 +81,7 @@ steps:
       instanceName: ${{parameters.instanceName}}
       user: ${{parameters.user}}
       saUser: ${{parameters.saUser}}
+      saPassword: ${{parameters.saPassword}}
       SQLRootPath: ${{parameters.SQLRootPath}}
       fileStreamDirectory: ${{parameters.fileStreamDirectory}}
       x64AliasRegistryPath: ${{parameters.x64AliasRegistryPath}}
@@ -85,19 +91,18 @@ steps:
       enableLocalDB: ${{parameters.enableLocalDB}}
       localDbAppName: ${{parameters.localDbAppName}}
       localDbSharedInstanceName: ${{parameters.localDbSharedInstanceName}}
-      password: ${{parameters.password}}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
   # Linux only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
     parameters:
-      password: ${{parameters.password}}
+      saPassword: ${{ parameters.saPassword }}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
   # macOS only steps
   - template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
     parameters:
-      password: ${{parameters.password}}
+      saPassword: ${{ parameters.saPassword }}
 
 # Common steps
 - task: DotNetCoreCLI@2

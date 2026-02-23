@@ -1,3 +1,5 @@
+namespace SqlException_Error2;
+
 using System;
 using System.Data;
 // <Snippet1>

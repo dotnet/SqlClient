@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace ConnectionStringSettings_RetrieveFromConfigByName;
+
+using System;
 using System.Configuration;
 
 class Program

@@ -9,7 +9,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -88,10 +87,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             private readonly WaitHandle[] _handlesWithCreate;
             private readonly WaitHandle[] _handlesWithoutCreate;
 
-#if NETFRAMEWORK
-            [ResourceExposure(ResourceScope.None)] // SxS: this method does not create named objects
-            [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-#endif
             internal PoolWaitHandles()
             {
                 _poolSemaphore = new Semaphore(0, MAX_Q_SIZE);
@@ -934,8 +929,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
 #if NETFRAMEWORK
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")] // copied from Triaged.cs
-        [ResourceExposure(ResourceScope.None)] // SxS: this method does not expose resources
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
 #endif
         private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
@@ -1225,10 +1218,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return obj;
         }
 
-#if NETFRAMEWORK
-        [ResourceExposure(ResourceScope.None)] // SxS: this method does not expose resources
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-#endif
         private void PoolCreateRequest(object state)
         {
             // called by pooler to ensure pool requests are currently being satisfied -

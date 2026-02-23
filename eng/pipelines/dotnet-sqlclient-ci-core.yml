@@ -58,12 +58,6 @@ parameters:
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
-# Frameworks to expect code coverage information for, and to compile into
-# reports.
-- name: codeCovTargetFrameworks
-  type: object
-  default: [net462, net8.0, net9.0, net10.0]
-
 # The way we will reference sibling projects in the .csproj files:
 #   Project - use <ProjectReference> references.
 #   Package - use <PackageReference> references to NuGet packages in the
@@ -122,6 +116,11 @@ variables:
 
 stages:
 
+  # Generate secrets used throughout the pipeline.
+  - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
@@ -173,7 +172,7 @@ stages:
       # When building via packages, we must depend on the Abstractions and MDS
       # packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
-        dependsOn:
+        additionalDependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -186,7 +185,7 @@ stages:
     - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        dependsOn:
+        additionalDependsOn:
           - build_mds_akv_packages_stage
           - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
@@ -209,7 +208,7 @@ stages:
       # When testing MDS via packages, we must depend on the Abstractions,
       # MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
-        dependsOn:
+        additionalDependsOn:
           - build_abstractions_package_stage
           - build_mds_akv_packages_stage
           - build_azure_package_stage
@@ -233,9 +232,6 @@ stages:
         - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
-            image: ADO-MMS22-CodeCov
-            pool: ${{ parameters.defaultPoolName }}
-            targetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
             # We only want to upload coverage results to CodeCov from certain
             # pipelines.  We use the pipeline name (Build.DefinitionName) to
             # choose.  This is a predefined variable that is available at
@@ -249,10 +245,9 @@ stages:
             # - PR-SqlClient-Project
             # - CI-SqlClient
             #
-            # Other pipelines that share this template and use a Project
-            # buildType don't add much, if any, value to the coverage reports.
-            # They have not been configured with suitable CodeCov credentials to
-            # perform the upload.
+            # Other pipelines that share this template don't add much, if any,
+            # value to the coverage reports.  They have not been configured with
+            # suitable CodeCov credentials to perform the upload.
             #
             upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
@@ -268,7 +263,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
           useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
           configSqlFor: local # setup Sql Server (local | azure | enclave)
           operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
           configProperties:
@@ -277,7 +271,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -309,7 +303,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
           useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
           configSqlFor: local # setup Sql Server (local | azure | enclave)
           operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
           configProperties:
@@ -318,7 +311,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -351,7 +344,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
@@ -360,7 +352,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -380,7 +372,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: [false]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
@@ -389,7 +380,7 @@ stages:
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             UserManagedIdentityClientId: $(UserManagedIdentityClientId)
             FileStreamDirectory: $(FileStreamDirectory)
             LocalDbAppName: $(LocalDbAppName)
@@ -410,14 +401,13 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_INSTANCE_CONN_STRING)
             NPConnectionString: $(SQL_NP_INSTANCE_CONN_STRING)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            SupportsIntegratedSecurity: true
             # extra config properties
             SQLRootPath: $(SQL22RootPath)
             instanceName: $(NamedInstance)
@@ -434,7 +424,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
@@ -442,10 +431,10 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
-            # Note: Using the isFork variable to determine if secrets are available is not ideal since
-            # it's an indirect association. But everything else (referencing secret variables various
-            # ways to detect if they were present) won't run consistently across forks and non-forks.
-            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+            # Pipeline runs against forks of the repo don't have access to Library secrets, so we
+            # omit them entirely from the configProperties, which causes the dependent tests to be
+            # skipped.
+            ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AADServicePrincipalId: $(AADServicePrincipalId)
@@ -466,7 +455,6 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
@@ -474,7 +462,7 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
             AADAuthorityURL: $(AADAuthorityURL)
-            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+            ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AADServicePrincipalId: $(AADServicePrincipalId)
@@ -496,7 +484,6 @@ stages:
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Linux
           configProperties:
@@ -521,7 +508,6 @@ stages:
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
@@ -529,7 +515,7 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
-            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+            ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AADServicePrincipalId: $(AADServicePrincipalId)
@@ -551,7 +537,6 @@ stages:
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Mac
           configProperties:
@@ -565,9 +550,9 @@ stages:
 
         # Enclave tests
         #
-        # Only run the AE tests if enable and if we have access to the necessary
-        # secrets.
-        ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['system.pullRequest.isFork'], 'False')) }}:
+        # Only run these tests if explicitly enabled, and if we're not a forked repo (which won't
+        # have access to the necessary Library secrets).
+        ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['System.PullRequest.IsFork'], 'False')) }}:
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
@@ -577,7 +562,6 @@ stages:
             buildPlatforms: ${{parameters.buildPlatforms }}
             testSets: [AE]
             useManagedSNI: ${{parameters.useManagedSNI }}
-            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
             configSqlFor: enclave
             operatingSystem: Windows
             configProperties:
@@ -588,11 +572,10 @@ stages:
               EnclaveEnabled: true
               AADAuthorityURL: $(AADAuthorityURL)
               AADServicePrincipalId: $(AADServicePrincipalId)
-              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
-                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)
               AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-              SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+              SupportsIntegratedSecurity: true
               UserManagedIdentityClientId: $(UserManagedIdentityClientId)
               AliasName: $(SQLAliasName)
               LocalDbAppName: $(LocalDbAppName)
@@ -607,7 +590,6 @@ stages:
             buildPlatforms: [AnyCPU]
             testSets: [AE]
             useManagedSNI: [true]
-            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
             configSqlFor: enclave
             operatingSystem: Linux
             configProperties:
@@ -617,8 +599,7 @@ stages:
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
               EnclaveEnabled: true
               AADServicePrincipalId: $(AADServicePrincipalId)
-              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
-                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)
               AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
               SupportsIntegratedSecurity: false

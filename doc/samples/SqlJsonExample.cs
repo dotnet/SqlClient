@@ -1,3 +1,5 @@
+namespace SqlJsonExample;
+
 // JSONConsoleApp: End-to-end demo of working with
 // SQL Server JSON datatype via Microsoft.Data.SqlClient
 //
@@ -17,6 +19,8 @@ using Microsoft.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlTypes;
 using System.Text.Json;
+using System;
+using System.IO;
 
 class Program
 {
@@ -273,4 +277,3 @@ class Program
     }
 }
 //</Snippet1>
-

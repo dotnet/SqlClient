@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder_IntegratedSecurity;
+
 using System;
 using System.Data;
 // <Snippet1>

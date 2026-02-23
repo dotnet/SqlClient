@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
-namespace CustomCRL_Doc
+namespace SqlConfigurableRetryLogic_StepByStep_CustomProvider
 {
     class Program
     {
