@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void InvalidateMetadataCache_ClearsCachedMetadata()
+        public void ClearCachedMetadata_ClearsCachedMetadata()
         {
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
 
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
 
-            bulkCopy.InvalidateMetadataCache();
+            bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
 
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void InvalidateMetadataCache_CanBeCalledMultipleTimes()
+        public void ClearCachedMetadata_CanBeCalledMultipleTimes()
         {
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
 
@@ -65,9 +65,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
 
-            bulkCopy.InvalidateMetadataCache();
-            bulkCopy.InvalidateMetadataCache();
-            bulkCopy.InvalidateMetadataCache();
+            bulkCopy.ClearCachedMetadata();
+            bulkCopy.ClearCachedMetadata();
+            bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
 
@@ -75,21 +75,21 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void InvalidateMetadataCache_WhenNoCachedData_DoesNotThrow()
+        public void ClearCachedMetadata_WhenNoCachedData_DoesNotThrow()
         {
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
 
             Assert.Null(bulkCopy._cachedMetadata);
 
 
-            bulkCopy.InvalidateMetadataCache();
+            bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
 
         }
 
         [Fact]
-        public void InvalidateMetadataCache_WithoutCacheMetadataOption_ClearsCachedMetadata()
+        public void ClearCachedMetadata_WithoutCacheMetadataOption_ClearsCachedMetadata()
         {
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.Default, null);
 
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
 
-            bulkCopy.InvalidateMetadataCache();
+            bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
 

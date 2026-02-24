@@ -360,14 +360,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentOutOfRange(nameof(DestinationTableName));
                 }
-
-                // Invalidate cached metadata if the destination table name changes
-                if (!string.Equals(_destinationTableName, value, StringComparison.Ordinal))
+                else if (string.Equals(_destinationTableName, value, StringComparison.Ordinal))
                 {
-                    _cachedMetadata = null;
-                    _operationMetaData = null;
+                    return;
                 }
 
+                _cachedMetadata = null;
+                _operationMetaData = null;
                 _destinationTableName = value;
             }
         }
@@ -925,12 +924,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/InvalidateMetadataCache/*'/>
-        public void InvalidateMetadataCache()
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ClearCachedMetadata/*'/>
+        public void ClearCachedMetadata()
         {
             _cachedMetadata = null;
             _operationMetaData = null;
-            SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.InvalidateMetadataCache | Info | Metadata cache invalidated");
+            SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.ClearCachedMetadata | Info | Metadata cache invalidated");
         }
 
         // Terminates the bulk copy operation.

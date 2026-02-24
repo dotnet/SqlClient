@@ -212,8 +212,8 @@ public sealed class SqlBulkCopy : System.IDisposable
     public event Microsoft.Data.SqlClient.SqlRowsCopiedEventHandler SqlRowsCopied { add { } remove { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
     public void Close() { }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/InvalidateMetadataCache/*'/>
-    public void InvalidateMetadataCache() { }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ClearCachedMetadata/*'/>
+    public void ClearCachedMetadata() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/System.IDisposable.Dispose/*'/>
     void System.IDisposable.Dispose() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DbDataReaderParameter"]/*'/>

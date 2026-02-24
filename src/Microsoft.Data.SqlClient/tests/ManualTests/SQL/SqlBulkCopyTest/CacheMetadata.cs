@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(20), col3 nvarchar(10))";
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
 
-        // Test that InvalidateMetadataCache forces a fresh metadata query.
+        // Test that ClearCachedMetadata forces a fresh metadata query.
         public static void Test(string srcConstr, string dstConstr, string dstTable)
         {
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Helpers.VerifyResults(dstConn, dstTable, 3, 5);
 
                 // Invalidate the cache and write again: should still succeed after re-querying metadata.
-                bulkcopy.InvalidateMetadataCache();
+                bulkcopy.ClearCachedMetadata();
 
                 using (SqlConnection srcConn = new(srcConstr))
                 {
