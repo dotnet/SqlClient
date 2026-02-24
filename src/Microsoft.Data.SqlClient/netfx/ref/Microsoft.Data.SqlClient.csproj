@@ -9,13 +9,10 @@
     <Product>Framework $(BaseProduct)</Product>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
-  <!--Generating Strong Name-->
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+
+  <!-- Strong name signing ============================================= -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
-    <KeyFile>$(SigningKeyPath)</KeyFile>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 

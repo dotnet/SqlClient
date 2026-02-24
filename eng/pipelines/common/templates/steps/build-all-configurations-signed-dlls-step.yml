@@ -35,7 +35,7 @@ steps:
     displayName: 'Download Key Pair'
     inputs:
       secureFile: netfxKeypair.snk
-      retryCount: 5
+    name: keyFile
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -49,7 +49,7 @@ steps:
         -t:BuildAllConfigurations
         -p:ReferenceType=Package
         -p:GenerateNuget=false
-        -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
+        -p:SigningKeyPath=$(keyFile.secureFilePath)
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}

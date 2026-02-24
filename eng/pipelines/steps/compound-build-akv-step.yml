@@ -35,8 +35,8 @@ steps:
   - task: DownloadSecureFile@1
     displayName: 'Download Signing Key'
     inputs:
-        retryCount: 5
         secureFile: 'netfxKeypair.snk'
+    name: keyFile
 
   - task: MSBuild@1
     displayName: 'Build.proj - BuildAkv'
@@ -51,7 +51,7 @@ steps:
             -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
             -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:ReferenceType=Package
-            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            -p:SigningKeyPath=$(keyFile.secureFilePath)
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree

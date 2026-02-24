@@ -33,8 +33,8 @@ steps:
   - task: DownloadSecureFile@1
     displayName: Download Signing Key
     inputs:
-      retryCount: 5
       secureFile: netfxKeypair.snk
+    name: keyFile
 
   - task: MSBuild@1
     displayName: Build.proj - ${{ parameters.buildTarget }}
@@ -44,7 +44,7 @@ steps:
       msbuildArguments: >-
           -t:${{ parameters.buildTarget }}
           -p:ReferenceType=Package
-          -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+          -p:SigningKeyPath=$(keyFile.secureFilePath)
           ${{ parameters.versionProperties }}
 
   - script: tree /a /f $(BUILD_OUTPUT)
