@@ -30,6 +30,12 @@ parameters:
     - name: mdsPackageVersion
       type: string
 
+    - name: loggingPackageVersion
+      type: string
+
+    - name: abstractionsPackageVersion
+      type: string
+
 steps:
     - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
       displayName: 'Roslyn Analyzers'
@@ -42,6 +48,8 @@ steps:
               -p:Configuration=${{ parameters.buildConfiguration }}
               -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
               -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+              -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
               -p:ReferenceType=Package
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022

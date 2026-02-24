@@ -871,7 +871,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
-            using (TryEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 SqlStatistics statistics = null;
                 try
@@ -1482,7 +1482,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 try
                 {
@@ -3492,7 +3492,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsOperationStatus result;
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
             {
                 try
                 {
@@ -3662,7 +3662,7 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
                 try
                 {
@@ -4597,7 +4597,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -4927,7 +4927,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 if (IsClosed)

@@ -32,7 +32,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -86,16 +86,14 @@ parameters:
   - name: poolName
     type: string
 
-  # The reference type to use:
-  #
-  # Project - dependent projects are referenced directly.
-  # Package - dependent projects are referenced via NuGet packages.
-  #
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
-    - Package
-    - Project
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
   # The SA password set by the sqlServerSetupSteps, if relevant.
   - name: saPassword
@@ -141,19 +139,14 @@ jobs:
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
 
-      # dotnet CLI arguments common to all commands.
-      - name: commonArguments
+      # dotnet CLI arguments for build/test/pack commands.
+      - name: buildArguments
         value: >-
+          --configuration ${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-
-      # dotnet CLI arguments for build/test/pack commands.
-      - name: buildArguments
-        value: >-
-          $(commonArguments)
-          --configuration ${{ parameters.buildConfiguration }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
@@ -244,26 +237,13 @@ jobs:
       # Perform any local SQL Server setup.
       - ${{ parameters.sqlServerSetupSteps }}
 
-      # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't
-      # support all of our argument combinations for the different build steps.
-
-      # Restore the project.
-      - task: DotNetCoreCLI@2
-        displayName: Restore Project
-        inputs:
-          command: custom
-          custom: restore
-          projects: $(project)
-          arguments: $(commonArguments)
-
       # Build the project.
       - task: DotNetCoreCLI@2
         displayName: Build Project
         inputs:
-          command: custom
-          custom: build
+          command: build
           projects: $(project)
-          arguments: $(buildArguments) --no-restore
+          arguments: $(buildArguments)
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:
@@ -295,8 +275,7 @@ jobs:
             #
             # https://sqlclientdrivers.visualstudio.com/public/_settings/adminservices?resourceId=ec9623b2-829c-497f-ae1f-7461766f9a9c
             connectedServiceName: dotnetMSI-managed-identity
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)
@@ -314,8 +293,7 @@ jobs:
               TEST_DEBUG_EMIT: 1
           inputs:
             connectedServiceName: dotnetMSI-managed-identity
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)
@@ -335,8 +313,7 @@ jobs:
               TEST_DEBUG_EMIT: 1
           inputs:
             connectedServiceName: dotnetMSI-managed-identity
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)
@@ -354,8 +331,7 @@ jobs:
               TEST_DEBUG_EMIT: 1
           inputs:
             connectedServiceName: dotnetMSI-managed-identity
-            command: custom
-            custom: test
+            command: test
             projects: $(project)
             arguments: >-
               $(buildArguments)

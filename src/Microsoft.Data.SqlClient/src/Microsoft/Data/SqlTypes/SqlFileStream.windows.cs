@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlTypes
             #endif
 
             long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(scopeFormat, _objectId, (int)access, (int)options, path);
-            using (TryEventScope.Create(scopeId))
+            using (SqlClientEventScope.Create(scopeId))
             {
                 //-----------------------------------------------------------------
                 // precondition validation

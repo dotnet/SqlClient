@@ -5,9 +5,11 @@
 #################################################################################
 parameters:
 
+  # The name of the pipeline artifacts to download prior to building the tests.
   - name: artifactName
     type: string
 
+  # True if this build is a preview.
   - name: isPreview
     type: boolean
 

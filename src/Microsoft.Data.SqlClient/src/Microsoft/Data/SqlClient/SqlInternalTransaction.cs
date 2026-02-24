@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Commit()
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Commit | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Commit | API | Object Id {0}", ObjectID))
             {
                 if (_innerConnection.IsLockedForBulkCopy)
                 {
@@ -330,7 +330,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback()
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID))
             {
                 if (_innerConnection.IsLockedForBulkCopy)
                 {
@@ -370,7 +370,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback(string transactionName)
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}, Transaction Name {1}", ObjectID, transactionName))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}, Transaction Name {1}", ObjectID, transactionName))
             {
                 if (_innerConnection.IsLockedForBulkCopy)
                 {
@@ -406,7 +406,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Save(string savePointName)
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Save | API | Object Id {0}, Save Point Name {1}", ObjectID, savePointName))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Save | API | Object Id {0}, Save Point Name {1}", ObjectID, savePointName))
             {
                 _innerConnection.ValidateConnectionForExecute(null);
 

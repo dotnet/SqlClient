@@ -5,12 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
-  </ItemGroup>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
 
-  <ItemGroup>
-    <ProjectReference Include="..\SqlClient.Stress.Common\SqlClient.Stress.Common.csproj" />
+    <ProjectReference Include="$(StressRoot)/SqlClient.Stress.Common/SqlClient.Stress.Common.csproj" />
   </ItemGroup>
 
 </Project>

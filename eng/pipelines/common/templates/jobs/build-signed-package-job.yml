@@ -3,34 +3,38 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This file is only included in MDS OneBranch Official pipelines.
+
 parameters:
-  - name: symbolsFolder
-    type: string
-    default: symbols
-
-  - name: softwareFolder
-    type: string
-    default: software
-
+  # True to publish symbols to public and private feeds after the build completes.
   - name: publishSymbols
     type: boolean
 
+  # True if this is a preview build, which uses the preview version numbers from
+  # common-variables.yml.
   - name: isPreview
     type: boolean
 
 jobs:
-- job: build_signed_package
-  displayName: 'Build Signed MDS Package'
+- job: build_package_SqlClient
+  displayName: 'Build Microsoft.Data.SqlClient'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
 
   variables:
-  - template: /eng/pipelines/libraries/variables.yml@self
-  - ${{ if parameters.isPreview }}:
-    - name: abstractionsPackageVersion
-      value: $(abstractionsPackagePreviewVersion)
-    - name: mdsPackageVersion
-      value: $(previewMdsPackageVersion)
+    ob_outputDirectory: $(PACK_OUTPUT)
+    # APIScan configuration for this Extension package
+    ob_sdl_apiscan_enabled: true
+    ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/dlls
+    ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/pdbs
+    ob_sdl_apiscan_softwarename: Microsoft.Data.SqlClient
+    ob_sdl_apiscan_versionNumber: $(assemblyBuildNumber)
+
+    ${{ if parameters.isPreview }}:
+      abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
+      loggingPackageVersion: $(loggingPackagePreviewVersion)
+      mdsPackageVersion: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -41,6 +45,21 @@ jobs:
     # This variable is used far away in validate-signed-packages-job.yml.
     name: GetBuildType
     displayName: Get Build Type
+
+  # Download the Abstractions and Logging packages from the previous stage into
+  # packages/ so that they're available via the local NuGet feed when restoring MDS.
+  # MDS depends on both Extensions.Abstractions and Extensions.Logging.
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Abstractions Package
+    inputs:
+      artifactName: $(abstractionsArtifactsName)
+      targetPath: $(Build.SourcesDirectory)/packages
+
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Logging Package
+    inputs:
+      artifactName: $(loggingArtifactsName)
+      targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -63,6 +82,8 @@ jobs:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
+      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
       mdsPackageVersion: $(mdsPackageVersion)
 
@@ -74,21 +95,41 @@ jobs:
     parameters:
       buildConfiguration: Release
       displayName: 'Create MDS NuGet Package'
+      generateSymbolsPackage: true
       installNuget: false
       nuspecPath: $(nuspecPath)
-      outputDirectory: $(artifactDirectory)
+      outputDirectory: $(PACK_OUTPUT)
       packageVersion: $(mdsPackageVersion)
-      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion)'
+      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)'
       referenceType: Package
 
   - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: pkg
 
-  - template: /eng/pipelines/common/templates/steps/copy-dlls-for-test-step.yml@self
+  # Copy signed DLLs and PDBs to APIScan folders.
+  - task: CopyFiles@2
+    displayName: Copy DLLs for APIScan
+    inputs:
+      SourceFolder: $(BUILD_OUTPUT)/Package/bin
+      Contents: '**/Microsoft.Data.SqlClient*.dll'
+      TargetFolder: $(ob_sdl_apiscan_softwareFolder)
+      # We must preserve the folder structure since our C# projects may produce multiple
+      # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
+      # etc.), and we need to keep those separate for APIScan to work correctly.
+      flattenFolders: false
+
+  - task: CopyFiles@2
+    displayName: Copy PDBs for APIScan
+    inputs:
+      SourceFolder: $(BUILD_OUTPUT)/Package/bin
+      Contents: '**/Microsoft.Data.SqlClient*.pdb'
+      TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
+      flattenFolders: false
 
   # Publish symbols to servers
   - ${{ if eq(parameters.publishSymbols, true) }}:
     - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
       parameters:
-        symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)
+        packageFullName: Microsoft.Data.SqlClient
+        packageVersion: $(mdsPackageVersion)

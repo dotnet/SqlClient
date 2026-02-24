@@ -5,60 +5,98 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
-trigger:
-  branches:
-    include:
 
-    # This pipeline is intended to only run against the ADO.Net dotnet-sqlclient
-    # repo.
-    - internal/main
-  paths:
-    include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng/pipelines
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
+# No automated triggers; this pipeline must be run manually.
+pr: none
+trigger: none
 
-parameters: # parameters are shown up in ADO UI in a build queue time
-- name: 'debug'
-  displayName: 'Enable debug output'
-  type: boolean
-  default: false
+# These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
+parameters:
+  # True to enable debug information and steps.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
 
-- name: publishSymbols
-  displayName: 'Publish symbols'
-  type: boolean
-  default: false
+  # True if this is a preview build.
+  - name: isPreview
+    displayName: Is this a preview build?
+    type: boolean
+    default: false
 
-- name: CurrentNetFxVersion
-  displayName: 'Lowest supported .NET Framework version (MDS validation)'
-  type: string
-  default: 'net462'
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    displayName: Publish symbols
+    type: boolean
+    default: false
 
-- name: isPreview
-  displayName: 'Is this a preview build?'
-  type: boolean
-  default: false
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    displayName: Test job timeout (in minutes)
+    type: number
+    default: 60
 
-# The timeout, in minutes, for each test job.
-- name: testJobTimeout
-  displayName: 'Test job timeout (in minutes)'
-  type: number
-  default: 60
+  # Build parameters — select which packages to build.
+
+  # Build the Microsoft.SqlServer.Server package.
+  - name: buildSqlServerServer
+    displayName: Build Microsoft.SqlServer.Server
+    type: boolean
+    default: true
+
+  # Build Microsoft.Data.SqlClient and Extensions packages.
+  - name: buildSqlClient
+    displayName: Build Microsoft.Data.SqlClient and Extensions
+    type: boolean
+    default: true
+
+  # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
+  - name: buildAKVProvider
+    displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    type: boolean
+    default: true
+
+  # Release parameters — select which packages to publish to NuGet.
+  # All default to false; toggle at queue time for on-demand selective release.
+
+  # Release the Microsoft.SqlServer.Server package.
+  - name: releaseSqlServerServer
+    displayName: Release Microsoft.SqlServer.Server
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Logging package.
+  - name: releaseLogging
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Logging
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Abstractions package.
+  - name: releaseAbstractions
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Abstractions
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient package.
+  - name: releaseSqlClient
+    displayName: Release Microsoft.Data.SqlClient
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
+  - name: releaseExtAzure
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
+  - name: releaseAKVProvider
+    displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    type: boolean
+    default: false
 
 variables:
-  - template: /eng/pipelines/libraries/variables.yml@self
-  - name: mdsArtifactName
-    value: drop_buildMDS_build_signed_package
-  - name: PublishSymbols
-    value: ${{ parameters['publishSymbols'] }}
-  - name: CurrentNetFxVersion
-    value: ${{ parameters['CurrentNetFxVersion'] }}
+  - template: /eng/pipelines/libraries/onebranch-variables.yml@self
 
 resources:
   repositories:
@@ -68,77 +106,73 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  # See: https://aka.ms/obpipelines/templates
+  template: /v2/OneBranch.NonOfficial.CrossPlat.yml@templates
   parameters:
+    release:
+       # This indicates the pipeline category to deploy Box products.  See:
+       # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+      category: NonAzure
     featureFlags:
-      # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
       EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
-    globalSdl: # https://aka.ms/obpipelines/sdl
+    # See: https://aka.ms/obpipelines/sdl
+    globalSdl:
       tsa:
-        # The OneBranch template will set 'break' to false for the other SDL
-        # tools when TSA is enabled.  This allows TSA to gather the results
-        # and publish them for downstream analysis.
+        # We disable TSA for non-official pipelines.  This inhibits spurious TSA alerts and ADO
+        # task creation, since non-official builds are often done against development branches.
         enabled: false
       apiscan:
         enabled: true
-        softwareFolder: $(softwareFolder)
-        symbolsFolder: $(symbolsFolder)
-        softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(mdsAssemblyFileVersion)
+        break: false
+        # Other ApiScan options are set by the jobs via ob_sdl_apiscan_* variables.
       codeql:
         compiled:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
       sbom:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: true
         packageName: Microsoft.Data.SqlClient
         packageVersion: $(mdsPackageVersion)
       policheck:
-        enabled: ${{ not(parameters['isPreview']) }}
-        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-        exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
+        enabled: true
+        break: true
+        exclusionsFile: $(REPO_ROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
         credscan:
-          enabled: ${{ not(parameters['isPreview']) }}
-          suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
+          enabled: true
+          suppressionsFile: $(REPO_ROOT)/.config/CredScanSuppressions.json
         binskim:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
         armory:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           break: true
-        eslint: # TypeScript and JavaScript
+        eslint:
           enabled: false
         roslyn:
-          enabled: ${{ not(parameters['isPreview']) }}
+          enabled: true
           break: true
         publishLogs:
-          enabled: ${{ not(parameters['isPreview']) }}
-        tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
+          enabled: true
+        tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-    - stage: buildMDS
-      displayName: 'Build MDS'
-      jobs:
-      - template: /eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
+      - template: /eng/pipelines/stages/sqlclient-onebranch-stages.yml@self
         parameters:
-          symbolsFolder: $(symbolsFolder)
-          softwareFolder: $(softwareFolder)
-          publishSymbols: ${{ parameters['publishSymbols'] }}
-          isPreview: ${{ parameters['isPreview'] }}
-
-    - stage: mds_package_validation
-      displayName: 'MDS Package Validation'
-      dependsOn: buildMDS
-      jobs:
-      - template: /eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
-        parameters:
-          artifactName: $(mdsArtifactName)
-          isPreview: ${{ parameters['isPreview'] }}
-
-# Disabling as of 10/15/2025 due to OneBranch apparently disallowing MSBuild tasks in validation stages.
-#      - template: /eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
-#        parameters:
-#          artifactName: $(mdsArtifactName)
-#          isPreview: ${{ parameters['isPreview'] }}
-#          timeout: ${{ parameters.testJobTimeout }}
+          debug: ${{ parameters.debug }}
+          # This is not an official pipeline.
+          isOfficial: false
+          isPreview: ${{ parameters.isPreview }}
+          publishSymbols: ${{ parameters.publishSymbols }}
+          # Non-Official pipelines must always be a dry-run.
+          releaseDryRun: true
+          testJobTimeout: ${{ parameters.testJobTimeout }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
+          releaseLogging: ${{ parameters.releaseLogging }}
+          releaseAbstractions: ${{ parameters.releaseAbstractions }}
+          releaseSqlClient: ${{ parameters.releaseSqlClient }}
+          releaseExtAzure: ${{ parameters.releaseExtAzure }}
+          releaseAKVProvider: ${{ parameters.releaseAKVProvider }}

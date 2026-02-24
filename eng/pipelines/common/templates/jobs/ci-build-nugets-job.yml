@@ -5,49 +5,71 @@
 #################################################################################
 parameters:
 
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
 
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
+  # The name of Azure Pipelines pool to use.
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
 
+  # The name of the Azure Pipelines image to use within the pool.
   - name: imageOverride
     type: string
     default: ADO-MMS22-SQL19
 
+  # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName
     type: string
     default: Abstractions.Artifacts
 
+  # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The name of the SqlClient pipeline artifact to publish.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
+  # The C# project platform to build (e.g. AnyCPU, x64, x86).
   - name: platform
     type: string
     default: $(Platform)
 
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Pipeline steps to run before the build starts, if any.
   - name: prebuildSteps
     type: stepList
     default: []
 
+  # The version of the Abstractions package to depend on when referenceType is 'Package'.
   - name: abstractionsPackageVersion
     type: string
 
+  # The version of the Logging package to depend on when referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+
+  # The version to apply to the SqlClient package.
   - name: mdsPackageVersion
     type: string
 
@@ -75,12 +97,18 @@ jobs:
      # configuration
     - ${{ parameters.prebuildSteps }}
 
-  # If we're testing in Package mode, then we must download the Abstractions package artifacts.
+  # If we're testing in Package mode, then we must download dependent package artifacts.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(packagePath)
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Logging Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.loggingArtifactsName }}
         targetPath: $(packagePath)
 
   # Install the .NET SDK.
@@ -97,6 +125,7 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
+        assemblyBuildNumber: $(assemblyBuildNumber)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -105,8 +134,9 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
+      assemblyBuildNumber: $(assemblyBuildNumber)
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
-      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
@@ -116,7 +146,7 @@ jobs:
       nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
       outputDirectory: $(packagePath)
       packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}'
+      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
@@ -126,6 +156,7 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: AKV
+      assemblyBuildNumber: $(assemblyBuildNumber)
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self

@@ -14,6 +14,18 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
+
   <!-- Compiler Config -->
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -40,8 +52,6 @@
     <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
     <Version>$(AbstractionsPackageVersion)</Version>
-
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -49,16 +59,23 @@
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-  <!--
-    Our unit tests have access to our internal types, but only for non-official
-    builds.  This prevents downstream consumers from creating an assembly with
-    our test assembly name and gaining non-reflective access to our internals.
 
-    CDP_BUILD_TYPE is a OneBranch governed pipeline variable.
-  -->
-  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
-    <InternalsVisibleTo Include="$(AssemblyName).Test" />
-  </ItemGroup>
+  <!-- Build Output Config-->
+  <PropertyGroup>
+
+    <!--
+      The obj/ folder for each target framework.  This contains intermediate files used during the
+      build process.
+    -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
+
+    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+
+    <!-- We put our docs in the bin/ directory as well. -->
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+
+  </PropertyGroup>
 
   <!--
     NuGet Package Config
@@ -78,9 +95,11 @@
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
   <!--

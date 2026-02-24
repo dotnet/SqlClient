@@ -1,0 +1,99 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the SqlClient (MDS) package (and for legacy reasons, the AKV NuGet package as
+# well) and publishes them as pipeline artifacts.
+#
+# This template defines a stage named 'build_sqlclient_package_stage' that can be depended on by
+# downstream stages.
+
+parameters:
+
+  # The name of the Abstractions pipeline artifacts to download.
+  - name: abstractionsArtifactsName
+    type: string
+    default: Abstractions.Artifacts
+
+  # The Abstractions package version.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
+
+  # Build Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # The name of the Logging pipeline artifacts to download.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The Logging package version.
+  - name: loggingPackageVersion
+    type: string
+
+  # The name of the MDS pipeline artifacts to publish.
+  - name: mdsArtifactsName
+    type: string
+    default: MDS.Artifacts
+
+  # The MDS package version.
+  - name: mdsPackageVersion
+    type: string
+
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
+
+  # SNI Version Override.
+  - name: SNIVersion
+    type: string
+    default: ''
+
+  # SNI Version Override NuGet Feed.
+  - name: SNIValidationFeed
+    type: string
+    default: ''
+
+stages:
+
+  - stage: build_sqlclient_package_stage
+    displayName: Build MDS & AKV Packages
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
+
+    jobs:
+    - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
+      parameters:
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        referenceType: ${{ parameters.referenceType }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+        loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+        ${{ if ne(parameters.SNIVersion, '') }}:
+          prebuildSteps:
+            - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
+              parameters:
+                SNIVersion: ${{ parameters.SNIVersion }}
+                SNIValidationFeed: ${{ parameters.SNIValidationFeed }}

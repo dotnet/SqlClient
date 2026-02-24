@@ -4,6 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false

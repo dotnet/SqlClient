@@ -26,25 +26,31 @@ parameters:
     - name: mdsPackageVersion
       type: string
 
+    - name: loggingPackageVersion
+      type: string
+
+    - name: abstractionsPackageVersion
+      type: string
+
     - name: publishSymbols
       type: boolean
 
-    - name: signingAppRegistrationClientId
+    - name: appRegistrationClientId
       type: string
 
-    - name: signingAppRegistrationTenantId
+    - name: appRegistrationTenantId
       type: string
 
-    - name: signingAuthAkvName
+    - name: authAkvName
       type: string
 
-    - name: signingAuthSignCertName
+    - name: authSignCertName
       type: string
 
-    - name: signingEsrpClientId
+    - name: esrpClientId
       type: string
 
-    - name: signingEsrpConnectedServiceName
+    - name: esrpConnectedServiceName
       type: string
 
     - name: symbolsAzureSubscription
@@ -63,9 +69,9 @@ parameters:
       type: string
 
     # @TODO: This should be determined from build output, or at a higher level
-    - # Note: not intended to be passed in, is only used for copying files for ApiScan.
-      # This is only defined as a parameter since ADO pipelines do not support array variables.
-      name: targetFrameworks
+    # Note: not intended to be passed in, is only used for copying files for ApiScan.
+    # This is only defined as a parameter since ADO pipelines do not support array variables.
+    - name: targetFrameworks
       type: object
       default:
           - net462
@@ -74,12 +80,18 @@ parameters:
 
 jobs:
     - job: buildSignedAkvPackage
-      displayName: 'Build Signed AKV Package'
+      displayName: 'Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
       pool:
           type: windows
 
       variables:
-          ob_outputDirectory: '$(ARTIFACT_PATH)'
+          ob_outputDirectory: '$(PACK_OUTPUT)'
+          # APIScan configuration for AKV Provider
+          ob_sdl_apiscan_enabled: true
+          ob_sdl_apiscan_softwareFolder: '${{ parameters.apiScanDllPath }}'
+          ob_sdl_apiscan_symbolsFolder: '${{ parameters.apiScanPdbPath }}'
+          ob_sdl_apiscan_softwarename: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+          ob_sdl_apiscan_versionNumber: '${{ parameters.akvAssemblyFileVersion }}'
 
       steps:
           - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
@@ -88,6 +100,21 @@ jobs:
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
+
+          # Download SqlClient (MDS) and Logging packages from previous stages into
+          # packages/ so that they're available via the local NuGet feed when restoring.
+          # AKV Provider depends on both SqlClient and Extensions.Logging.
+          - task: DownloadPipelineArtifact@2
+            displayName: Download SqlClient Package
+            inputs:
+                artifactName: $(sqlClientArtifactsName)
+                targetPath: $(Build.SourcesDirectory)/packages
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Logging Package
+            inputs:
+                artifactName: $(loggingArtifactsName)
+                targetPath: $(Build.SourcesDirectory)/packages
 
           # Install the .NET SDK.
           - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -99,6 +126,8 @@ jobs:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+                abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
           - template: /eng/pipelines/steps/compound-build-akv-step.yml@self
             parameters:
@@ -106,6 +135,8 @@ jobs:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+                abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
           - ${{ each targetFramework in parameters.targetFrameworks }}:
               - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
@@ -118,12 +149,12 @@ jobs:
 
           - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
             parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+                authAkvName: '${{ parameters.authAkvName }}'
+                authSignCertName: '${{ parameters.authSignCertName }}'
+                esrpClientId: '${{ parameters.esrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
                 pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
           - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
@@ -132,18 +163,18 @@ jobs:
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.akvPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
-                outputDirectory: '$(ARTIFACT_PATH)'
+                outputDirectory: '$(PACK_OUTPUT)'
                 referenceType: Package
-                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
           - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+                appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+                authAkvName: '${{ parameters.authAkvName }}'
+                authSignCertName: '${{ parameters.authSignCertName }}'
+                esrpClientId: '${{ parameters.esrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
 
           - ${{ if parameters.publishSymbols }}:
             - template: /eng/pipelines/steps/compound-publish-symbols-step.yml@self

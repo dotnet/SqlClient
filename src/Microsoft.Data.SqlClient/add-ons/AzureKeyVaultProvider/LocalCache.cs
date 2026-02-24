@@ -61,13 +61,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (TimeToLive <= TimeSpan.Zero)
             {
-                AKVEventSource.Log.TryTraceEvent("Key caching found disabled, fetching key information.");
+                SqlClientEventSource.Log.TryTraceEvent("Key caching found disabled, fetching key information.");
                 return createItem();
             }
 
             if (!_cache.TryGetValue(key, out TValue cacheEntry))
             {
-                AKVEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
+                SqlClientEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
                 if (_cache.Count == _maxSize)
                 {
                     _cache.Compact(Max(0.10, 1.0 / _maxSize));
@@ -80,11 +80,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 };
 
                 _cache.Set(key, cacheEntry, cacheEntryOptions);
-                AKVEventSource.Log.TryTraceEvent("Entry added to local cache.");
+                SqlClientEventSource.Log.TryTraceEvent("Entry added to local cache.");
             }
             else
             {
-                AKVEventSource.Log.TryTraceEvent("Cached entry found.");
+                SqlClientEventSource.Log.TryTraceEvent("Cached entry found.");
             }
 
             return cacheEntry;

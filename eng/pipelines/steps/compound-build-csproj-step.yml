@@ -1,0 +1,54 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic build step for csproj-based Extension packages (Logging, Abstractions, Azure).  Each
+# project uses a build.proj target that runs Build only and produces assemblies within
+# $(BUILD_OUTPUT).  Downstream ESRP DLL signing must locate the assemblies within $(BUILD_OUTPUT)
+# for all target frameworks that the csproj targets.  NuGet packaging is done separately via
+# compound-pack-csproj-step.yml after DLL signing.
+
+parameters:
+  # The MSBuild build target in build.proj (e.g. BuildLogging, BuildAbstractions,
+  # BuildAzure).
+  - name: buildTarget
+    type: string
+
+  # Build Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Additional MSBuild arguments for version properties, e.g.
+  # -p:LoggingPackageVersion=1.0.0 -p:LoggingAssemblyFileVersion=1.0.123
+  - name: versionProperties
+    type: string
+    default: ''
+
+steps:
+  - task: DownloadSecureFile@1
+    displayName: Download Signing Key
+    inputs:
+      secureFile: netfxKeypair.snk
+    name: keyFile
+
+  - task: MSBuild@1
+    displayName: Build.proj - ${{ parameters.buildTarget }}
+    inputs:
+      solution: $(REPO_ROOT)/build.proj
+      configuration: ${{ parameters.buildConfiguration }}
+      msbuildArguments: >-
+          -t:${{ parameters.buildTarget }}
+          -p:ReferenceType=Package
+          -p:SigningKeyPath=$(keyFile.secureFilePath)
+          ${{ parameters.versionProperties }}
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: List Build Output Tree
+
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: List Pack Output Tree

@@ -341,7 +341,7 @@ namespace Microsoft.Data.ProviderBase
 
             Activate(transaction);
 
-            SqlClientEventSource.Metrics.EnterActiveConnection();
+            SqlClientDiagnostics.Metrics.EnterActiveConnection();
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -454,7 +454,7 @@ namespace Microsoft.Data.ProviderBase
                             // and transactions may not get cleaned up...
                             Deactivate();
 
-                            SqlClientEventSource.Metrics.HardDisconnectRequest();
+                            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
 
                             // To prevent an endless recursion, we need to clear the owning object
                             // before we call dispose so that we can't get here a second time...
@@ -469,7 +469,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                SqlClientEventSource.Metrics.ExitNonPooledConnection();
+                                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
                                 Dispose();
                             }
                         }
@@ -495,7 +495,7 @@ namespace Microsoft.Data.ProviderBase
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
-            SqlClientEventSource.Metrics.ExitActiveConnection();
+            SqlClientDiagnostics.Metrics.ExitActiveConnection();
 
             if (!IsConnectionDoomed && Pool.UseLoadBalancing)
             {
@@ -555,7 +555,7 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks
                 // in.
-                SqlClientEventSource.Metrics.ExitNonPooledConnection();
+                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
 
                 Dispose();
             }
@@ -776,7 +776,7 @@ namespace Microsoft.Data.ProviderBase
             IsTxRootWaitingForTxEnd = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
 
-            SqlClientEventSource.Metrics.EnterStasisConnection();
+            SqlClientDiagnostics.Metrics.EnterStasisConnection();
         }
 
         /// <remarks>
@@ -939,7 +939,7 @@ namespace Microsoft.Data.ProviderBase
                 : "Delegated Transaction has ended, connection is closed/leaked.  Disposing.";
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, {1}", ObjectID, message);
 
-            SqlClientEventSource.Metrics.ExitStasisConnection();
+            SqlClientDiagnostics.Metrics.ExitStasisConnection();
 
             IsTxRootWaitingForTxEnd = false;
         }

@@ -14,6 +14,7 @@ parameters:
     type: string
     default: '$(Build.SourcesDirectory)/packages'
 
+  # The C# build configuration (e.g. Debug or Release) to use when building the NuGet package.
   - name: buildConfiguration
     type: string
     default: Debug
@@ -31,14 +32,16 @@ parameters:
     type: boolean
     default: true
 
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
-  # Semi-colon separated properties to pass to nuget via the -properties
-  # argument.
+  # Semi-colon separated properties to pass to nuget pack via the -properties argument.
   - name: properties
     type: string
     default: ''

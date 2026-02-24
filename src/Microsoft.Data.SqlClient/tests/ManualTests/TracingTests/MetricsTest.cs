@@ -409,7 +409,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         static SqlClientEventSourceProps()
         {
             Type sqlClientEventSourceType =
-                Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientEventSource");
+                Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientDiagnostics");
             Debug.Assert(sqlClientEventSourceType != null);
             FieldInfo metricsField = sqlClientEventSourceType.GetField("Metrics", BindingFlags.Static | BindingFlags.Public);
             Debug.Assert(metricsField != null);

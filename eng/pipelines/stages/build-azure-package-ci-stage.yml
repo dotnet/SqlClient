@@ -63,6 +63,10 @@ parameters:
     type: string
     default: Azure.Artifacts
 
+  # The assembly file version to stamp into the DLLs.
+  - name: azureAssemblyFileVersion
+    type: string
+
   # The version to apply to the NuGet package and DLLs.
   - name: azurePackageVersion
     type: string
@@ -81,7 +85,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -110,16 +114,14 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
-  # The reference type to use:
-  #
-  # Project - dependent projects are referenced directly.
-  # Package - dependent projects are referenced via NuGet packages.
-  #
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
-    - Package
-    - Project
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
 stages:
 
@@ -267,6 +269,7 @@ stages:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           azureArtifactsName: ${{ parameters.azureArtifactsName }}
+          azureAssemblyFileVersion: ${{ parameters.azureAssemblyFileVersion }}
           azurePackageVersion: ${{ parameters.azurePackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}

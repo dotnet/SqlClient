@@ -4,6 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+# True to emit debug information and steps.
 - name: debug
   type: boolean
   default: false
@@ -58,14 +59,14 @@ parameters:
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
-# The way we will reference sibling projects in the .csproj files:
-#   Project - use <ProjectReference> references.
-#   Package - use <PackageReference> references to NuGet packages in the
-#             packages/ directory.
+# The C# project reference type to use when building and packing the packages.
 - name: referenceType
+  type: string
   values:
-    - Project
+    # Reference sibling packages as NuGet packages.
     - Package
+    # Reference sibling packages as C# projects.
+    - Project
 
 - name: buildConfiguration
   type: string
@@ -111,6 +112,9 @@ variables:
   - name: azureArtifactsName
     value: Azure.Artifacts
 
+  - name: loggingArtifactsName
+    value: Logging.Artifacts
+
   - name: mdsArtifactsName
     value: MDS.Artifacts
 
@@ -126,38 +130,46 @@ stages:
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
-  # Build MDS and its NuGet packages.
-  - stage: build_mds_akv_packages_stage
-    displayName: 'Build MDS & AKV Packages'
+  # Build the Logging package, and publish it to the pipeline artifacts
+  # under the given artifact name.  This runs in parallel with the Abstractions
+  # stage since neither depends on the other.
+  - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
+    parameters:
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
+      loggingPackageVersion: $(loggingPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
-    # When building MDS via packages, we must depend on the Abstractions
-    # package.
-    ${{ if eq(parameters.referenceType, 'Package') }}:
-      dependsOn:
-        - build_abstractions_package_stage
-    ${{ else }}:
-      dependsOn: []
-
-    jobs:
-    - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
-      parameters:
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        abstractionsPackageVersion: $(abstractionsPackageVersion)
-        abstractionsArtifactsName: $(abstractionsArtifactsName)
-        mdsPackageVersion: $(mdsPackageVersion)
-        mdsArtifactsName: $(mdsArtifactsName)
-        ${{if ne(parameters.SNIVersion, '')}}:
-          prebuildSteps:
-            - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
-              parameters:
-                SNIVersion: ${{parameters.SNIVersion}}
-                SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+  # Build the SqlClienet package.
+  #
+  # For legacy reasons, this also builds the AKV package.
+  #
+  - template: /eng/pipelines/stages/build-sqlclient-package-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      abstractionsPackageVersion: $(abstractionsPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
+      mdsArtifactsName: $(mdsArtifactsName)
+      mdsPackageVersion: $(mdsPackageVersion)
+      referenceType: ${{ parameters.referenceType }}
+      SNIVersion: ${{ parameters.SNIVersion }}
+      SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
+      # When building SqlClient via packages, we must depend on the Abstractions and Logging
+      # packages.
+      ${{ if eq(parameters.referenceType, 'Package') }}:
+        additionalDependsOn:
+          - build_abstractions_package_stage
+          - build_logging_package_stage
 
   # Build the Azure package, and publish it to the pipeline artifacts under the
   # given artifact name.
@@ -166,15 +178,17 @@ stages:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
       azureArtifactsName: $(azureArtifactsName)
+      azureAssemblyFileVersion: $(azureAssemblyFileVersion)
       azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
-      # When building via packages, we must depend on the Abstractions and MDS
-      # packages.
+      # When building via packages, we must depend on the Abstractions, Logging,
+      # and MDS packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
-          - build_mds_akv_packages_stage
+          - build_logging_package_stage
+          - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
@@ -186,7 +200,7 @@ stages:
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         additionalDependsOn:
-          - build_mds_akv_packages_stage
+          - build_sqlclient_package_stage
           - build_azure_package_stage
         mdsArtifactsName: $(mdsArtifactsName)
         mdsPackageVersion: $(mdsPackageVersion)
@@ -201,16 +215,19 @@ stages:
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       abstractionsPackageVersion: $(abstractionsPackageVersion)
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
-      # MDS, and Azure packages.
+      # Logging, MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
-          - build_mds_akv_packages_stage
+          - build_logging_package_stage
+          - build_sqlclient_package_stage
           - build_azure_package_stage
 
       # Steps to run prior to building and running tests on each job.
@@ -251,22 +268,24 @@ stages:
             #
             upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
-# test stages configurations
-  # self hosted SQL Server on Windows
+      # Configuration of test jobs.  Each entry in this object will become a test job, and the
+      # properties of each entry will be supplied as parameters to the test job template.
       testConfigurations:
-        windows_sql_19_x64: # configuration name
-          pool: ${{parameters.defaultPoolName }} # pool name
-          images: # list of images to run tests on
-            Win22_Sql19: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
+
+        # Windows Server 22 with local SQL Server 2019, x64 build platform.
+        windows_sql_19_x64:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql19: ADO-MMS22-SQL19
+          TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
-          useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          configSqlFor: local # setup Sql Server (local | azure | enclave)
-          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          configSqlFor: local
+          operatingSystem: Windows
+          # config.json properties
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -277,36 +296,22 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
-            # instanceName: default: MSSQLSERVER
-            # user: default: $(user)
-            # saUser: default: $(saUser)
-            # fileStreamDirectory: default: ''
-            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
-            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
-            # SQLAliasName: default: $(SQLAliasName)
-            # SQLAliasPort: default: $(SQLAliasPort)
-            # databaseName: default: Northwind
-            # localDbAppName: default: $(LocalDbAppName)
-            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
-            # skipSqlConfiguration: # skips the SQL configuration step
 
-
-        windows_sql_19_x86: # configuration name
-          pool: ${{parameters.defaultPoolName }} # pool name
-          images: # list of images to run tests on
-            Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
+        # Windows Server 22 with local SQL Server 2019, x86 build platform.
+        windows_sql_19_x86:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql19_x86: ADO-MMS22-SQL19
           TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
-          useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
-          configSqlFor: local # setup Sql Server (local | azure | enclave)
-          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [false]
+          configSqlFor: local
+          operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -317,24 +322,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
-            # instanceName: default: MSSQLSERVER
-            # user: default: $(user)
-            # saUser: default: $(saUser)
-            # fileStreamDirectory: default: ''
-            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
-            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
-            # SQLAliasName: default: $(SQLAliasName)
-            # SQLAliasPort: default: $(SQLAliasPort)
-            # databaseName: default: Northwind
-            # localDbAppName: default: $(LocalDbAppName)
-            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
-            # skipSqlConfiguration: # skips the SQL configuration step
 
-
+        # Windows Server 22 with local SQL Server 2022, x64 build platform.
         windows_sql_22_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -347,7 +339,6 @@ stages:
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -358,11 +349,10 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
-
+        # Windows Server 22 with local SQL Server 2022, x86 build platform.
         windows_sql_22_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -375,7 +365,6 @@ stages:
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -386,12 +375,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            # extra config properties
             x86TestTargetFrameworks: [net462, net8.0, net9.0]
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
-
+        # Windows Server 22 with local SQL Server 2022 Named Instance, x64 build platform.
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -404,16 +392,13 @@ stages:
           configSqlFor: local
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_INSTANCE_CONN_STRING)
             NPConnectionString: $(SQL_NP_INSTANCE_CONN_STRING)
             SupportsIntegratedSecurity: true
-            # extra config properties
             SQLRootPath: $(SQL22RootPath)
             instanceName: $(NamedInstance)
 
-
-    # Azure SQL Server - Windows
+        # Windows Server 2022 and Windows 11, x64 build platform, with Azure SQL Server.
         windows_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -427,7 +412,6 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
@@ -445,6 +429,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
+        # Windows 11 on ARM64 with Azure SQL Server.
         windows_azure_arm64_sql:
           pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
           images:
@@ -458,7 +443,6 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            # config.json properties
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
             AADAuthorityURL: $(AADAuthorityURL)
@@ -473,11 +457,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-    # self hosted SQL Server on Linux
+        # Linux Ubuntu 20 and 22 with local SQL Server 2022, x64 build platform.
         linux_ub20_22_sql_22:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Sql22: ADO-UB20-SQL22 # drop testing against UB20 image post April 2025
+            Ubuntu20_Sql22: ADO-UB20-SQL22
             Ubuntu22_Sql22: ADO-UB22-SQL22
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
@@ -487,7 +471,6 @@ stages:
           configSqlFor: local
           operatingSystem: Linux
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -498,7 +481,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
 
-    # Azure Sql Server - Linux
+        # Linux Ubuntu 22 with Azure SQL Server, x64 build platform.
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
@@ -511,7 +494,6 @@ stages:
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
-            # config.json properties
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
@@ -526,7 +508,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        # Self hosted SQL Server on Mac
+        # macOS with local SQL Server 2022, x64 build platform.
         mac_sql_22:
           pool: Azure Pipelines
           hostedPool: true
@@ -540,7 +522,6 @@ stages:
           configSqlFor: local
           operatingSystem: Mac
           configProperties:
-            # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
             SupportsIntegratedSecurity: false
@@ -553,6 +534,8 @@ stages:
         # Only run these tests if explicitly enabled, and if we're not a forked repo (which won't
         # have access to the necessary Library secrets).
         ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['System.PullRequest.IsFork'], 'False')) }}:
+
+          # Windows Server 22 with remote Enclave-enabled SQL Server 2019, x64 build platform.
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
@@ -565,7 +548,6 @@ stages:
             configSqlFor: enclave
             operatingSystem: Windows
             configProperties:
-              # config.json properties
               TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
@@ -581,6 +563,7 @@ stages:
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
+          # Linux Ubuntu 22 with remote Enclave-enabled SQL Server 2019, x64 build platform.
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
@@ -593,7 +576,6 @@ stages:
             configSqlFor: enclave
             operatingSystem: Linux
             configProperties:
-              # config.json properties
               TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
