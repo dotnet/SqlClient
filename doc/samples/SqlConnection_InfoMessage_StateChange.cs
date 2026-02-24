@@ -2,7 +2,7 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace ClassLibraryTest
+namespace SqlConnection_InfoMessage_StateChange
 {
     public class Class1
     {

@@ -21,20 +21,25 @@
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <!-- CLS Compliance attribute -->
   <ItemGroup>
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!-- Files -->
   <ItemGroup>
-    <Compile Include="Microsoft.Data.SqlClient.cs" />
-    <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
+    <Compile Include="../../ref/Microsoft.Data.cs" />
+    <Compile Include="../../ref/Microsoft.Data.Sql.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.DataClassification.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.Diagnostics.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.Server.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlTypes.cs" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetGroup) == 'netcoreapp'">
-    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.cs" />
-    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
-  </ItemGroup>
+
+  <!-- References -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />

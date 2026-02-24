@@ -1,4 +1,6 @@
-﻿// <Snippet1>
+﻿namespace SqlDataReader_DataDiscoveryAndClassification;
+
+// <Snippet1>
 using System;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.DataClassification;
@@ -170,7 +172,7 @@ class Program
                     Console.WriteLine($"Sensitivity Rank: {sp.SensitivityRank.ToString()}");
                 }
             }
-            Console.Writeline($"reader.SensitivityClassification.SensitivityRank : {reader.SensitivityClassification.SensitivityRank.ToString()}");
+            Console.WriteLine($"reader.SensitivityClassification.SensitivityRank : {reader.SensitivityClassification.SensitivityRank.ToString()}");
         }
     }
 

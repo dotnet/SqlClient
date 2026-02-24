@@ -81,7 +81,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
-    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
+    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
   </PropertyGroup>
@@ -91,15 +91,9 @@
     <Optimize>True</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
     <Reference Include="System.Configuration" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Security" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Transactions" />
     <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Transactions" />
   </ItemGroup>
 
   <!-- OS Constants ==================================================== -->

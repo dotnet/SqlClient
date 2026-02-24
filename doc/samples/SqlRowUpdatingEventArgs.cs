@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace SqlRowUpdatingEventArgsCS;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -73,3 +76,4 @@ public class Form1 : Form
     }
 }
 // </Snippet1>
+#endif

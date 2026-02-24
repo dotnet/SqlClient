@@ -1,3 +1,5 @@
+namespace SqlConnection_Open;
+
 using System;
 using System.Data;
 // <Snippet1>

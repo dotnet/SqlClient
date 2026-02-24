@@ -4,6 +4,7 @@
   <Import Project="src/Directory.Build.props" />
   <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
   <Import Project="$(ToolsDir)targets\add-ons\GenerateAkvPackage.targets" />
+  <Import Project="$(ToolsDir)targets\CompareMdsRefAssemblies.targets" />
 
   <PropertyGroup>
     <!-- SourceLink variable-->
