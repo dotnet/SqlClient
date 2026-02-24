@@ -109,6 +109,17 @@
     <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
   </PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+
+    <!-- We also define a constant used for conditional compilation. -->
+    <DefineConstants>$(DefineConstants);STRONG_NAME_SIGNING</DefineConstants>
+  </PropertyGroup>
+
   <!-- Packaging  for source link-->
   <PropertyGroup>
     <DebugType>portable</DebugType>
