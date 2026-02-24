@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
-        private _SqlMetaDataSet _operationMetaData;
+        internal _SqlMetaDataSet _operationMetaData;
 
 #if DEBUG
         internal static bool s_setAlwaysTaskOnWrite; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task
@@ -367,6 +367,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _cachedMetadata = null;
                     _cachedDestinationTableName = null;
+                    _operationMetaData = null;
                 }
 
                 _destinationTableName = value;
@@ -933,6 +934,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             _cachedMetadata = null;
             _cachedDestinationTableName = null;
+            _operationMetaData = null;
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.InvalidateMetadataCache | Info | Metadata cache invalidated");
         }
 
