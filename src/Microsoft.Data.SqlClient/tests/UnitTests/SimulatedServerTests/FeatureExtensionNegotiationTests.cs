@@ -4,8 +4,10 @@
 
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -31,13 +33,16 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
         _connectionString = builder.ConnectionString;
     }
 
-    [Fact]
-    public void EnhancedRouting_EnabledByServer_ShouldBeEnabled()
+    [Theory]
+    [InlineData(FeatureExtensionEnablementTriState.Enabled, (byte[])[1])]
+    [InlineData(FeatureExtensionEnablementTriState.Disabled, (byte[])[0])]
+    [InlineData(FeatureExtensionEnablementTriState.DoNotAcknowledge, null)]
+    public void EnhancedRouting_EnabledByServer_ShouldBeEnabled(FeatureExtensionEnablementTriState serverBehavior, byte[]? expectedAckData)
     {
         // Arrange
-        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Enabled;
+        _server.EnableEnhancedRouting = serverBehavior;
 
-        bool clientFeatureExtensionFound = false;
+        bool clientRequestedFeatureExtension = false;
         _server.OnLogin7Validated = loginToken =>
         {
             var token = loginToken.FeatureExt
@@ -50,7 +55,23 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
 
             Assert.Equal((byte)TDSFeatureID.EnhancedRoutingSupport, (byte)token.FeatureID);
 
-            clientFeatureExtensionFound = true;
+            clientRequestedFeatureExtension = true;
+        };
+
+        bool serverAcknowledgedFeatureExtension = false;
+        _server.OnAuthenticationResponseCompleted = responseMessage =>
+        {
+            var ackToken = responseMessage.OfType<TDSFeatureExtAckToken>()
+                           .FirstOrDefault()?
+                           .Options
+                           .FirstOrDefault(t => t.FeatureID == TDSFeatureID.EnhancedRoutingSupport);
+            
+            if (ackToken is not null) {
+                serverAcknowledgedFeatureExtension = true;
+            }
+
+            var ackData = ((TDSFeatureExtAckGenericOption?)ackToken)?.FeatureAckData;
+            Assert.Equal(expectedAckData, ackData);
         };
 
         using SqlConnection sqlConnection = new(_connectionString);
@@ -60,41 +81,28 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
 
 
         // Assert
-        Assert.True(clientFeatureExtensionFound);
-        Assert.True(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
+        Assert.True(clientRequestedFeatureExtension);
+        
+        if (serverBehavior == FeatureExtensionEnablementTriState.DoNotAcknowledge)
+        {
+            // In DoNotAcknowledge mode, server should not acknowledge the feature extension even if client requested it
+            Assert.False(serverAcknowledgedFeatureExtension);
+        }
+        else
+        {
+            Assert.True(serverAcknowledgedFeatureExtension);
+        }
+
+        if (serverBehavior == FeatureExtensionEnablementTriState.Enabled)
+        {
+            Assert.True(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
+        }
+        else
+        {
+            Assert.False(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
+        }
     }
 
-    [Fact]
-    public void EnhancedRouting_DisabledByServer_ShouldBeDisabled()
-    {
-        // Arrange
-        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.Disabled;
-
-        using SqlConnection sqlConnection = new(_connectionString);
-
-        // Act
-        sqlConnection.Open();
-
-
-        // Assert
-        Assert.False(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
-    }
-
-    [Fact]
-    public void EnhancedRouting_NotAcknowledgedByServer_ShouldBeDisabled()
-    {
-        // Arrange
-        _server.EnableEnhancedRouting = FeatureExtensionEnablementTriState.DoNotAcknowledge;
-
-        using SqlConnection sqlConnection = new(_connectionString);
-
-        // Act
-        sqlConnection.Open();
-
-
-        // Assert
-        Assert.False(((SqlConnectionInternal)sqlConnection.InnerConnection).IsEnhancedRoutingSupportEnabled);
-    }
 
     public class SimulatedServerFixture : IDisposable
     {
