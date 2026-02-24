@@ -81,11 +81,11 @@ jobs:
       $badDlls = @()
       foreach ($file in $dllFiles)
       {
-        # Run sn.k to verify the strong name on each dll
+        # Run sn.exe to verify the strong name on each dll
         $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
         Write-OutPut $result
 
-        # if thhe dll is not valid, it would be delay signed or test-signed which is not meant for production
+        # if the dll is not valid, it would be delay signed or test-signed which is not meant for production
         if($result[$result.Length-1] -notlike "* is valid")
         {
           $badDlls += $result[$result.Length-1]
@@ -93,7 +93,7 @@ jobs:
       }
       if($badDlls.Count -gt 0)
       {
-        Write-OutPut "Error: Invalid dlls are detected. Chek below list:"
+        Write-OutPut "Error: Invalid dlls are detected. Check the list below:"
         foreach($dll in $badDlls)
         {
           Write-Output $dll
