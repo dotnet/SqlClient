@@ -237,7 +237,6 @@ namespace Microsoft.Data.SqlClient
 
         // Metadata caching fields for CacheMetadata option
         internal BulkCopySimpleResultSet _cachedMetadata;
-        internal string _cachedDestinationTableName;
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
@@ -366,7 +365,6 @@ namespace Microsoft.Data.SqlClient
                 if (!string.Equals(_destinationTableName, value, StringComparison.Ordinal))
                 {
                     _cachedMetadata = null;
-                    _cachedDestinationTableName = null;
                     _operationMetaData = null;
                 }
 
@@ -516,8 +514,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             // Check if we have valid cached metadata for the current destination table
             if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata) &&
-                _cachedMetadata != null &&
-                string.Equals(_cachedDestinationTableName, _destinationTableName, StringComparison.Ordinal))
+                _cachedMetadata != null)
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
                 result = _cachedMetadata;
@@ -563,7 +560,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
             {
                 _cachedMetadata = result;
-                _cachedDestinationTableName = _destinationTableName;
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
             }
         }
@@ -933,7 +929,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         public void InvalidateMetadataCache()
         {
             _cachedMetadata = null;
-            _cachedDestinationTableName = null;
             _operationMetaData = null;
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.InvalidateMetadataCache | Info | Metadata cache invalidated");
         }
@@ -959,7 +954,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _columnMappings = null;
                 _parser = null;
                 _cachedMetadata = null;
-                _cachedDestinationTableName = null;
                 _operationMetaData = null;
                 try
                 {
