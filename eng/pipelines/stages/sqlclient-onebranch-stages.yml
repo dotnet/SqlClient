@@ -235,7 +235,7 @@ stages:
         dependsOn: build_dependent
 
         variables:
-          # Legacy AKV job variables; to be replaced with ob_sql_apiscan_* variables within the job
+          # Legacy AKV job variables; to be replaced with ob_sdl_apiscan_* variables within the job
           # definition itself, like the other job templates to.
           - name: PACKAGE_NAME
             value: "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"

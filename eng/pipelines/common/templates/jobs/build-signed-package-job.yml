@@ -113,7 +113,7 @@ jobs:
     inputs:
       SourceFolder: $(BUILD_OUTPUT)/Package/bin
       Contents: '**/Microsoft.Data.SqlClient*.dll'
-      TargetFolder: $(ob_sql_apiscan_softwareFolder)
+      TargetFolder: $(ob_sdl_apiscan_softwareFolder)
       # We must preserve the folder structure since our C# projects may produce multiple
       # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
       # etc.), and we need to keep those separate for APIScan to work correctly.
@@ -124,7 +124,7 @@ jobs:
     inputs:
       SourceFolder: $(BUILD_OUTPUT)/Package/bin
       Contents: '**/Microsoft.Data.SqlClient*.pdb'
-      TargetFolder: $(ob_sql_apiscan_symbolsFolder)
+      TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
       flattenFolders: false
 
   # Publish symbols to servers

@@ -5,11 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" />
-  </ItemGroup>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
 
-  <ItemGroup>
-    <ProjectReference Include="..\SqlClient.Stress.Framework\SqlClient.Stress.Framework.csproj" />
+    <ProjectReference Include="$(StressRoot)/SqlClient.Stress.Framework/SqlClient.Stress.Framework.csproj" />
   </ItemGroup>
 
 </Project>

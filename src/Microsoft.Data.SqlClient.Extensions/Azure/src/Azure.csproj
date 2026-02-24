@@ -124,6 +124,8 @@
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
+    <PackageReference Include="Microsoft.Identity.Client" />
   </ItemGroup>
 
   <!--
