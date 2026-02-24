@@ -340,6 +340,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\CachedContexts.cs">
       <Link>Microsoft\Data\SqlClient\Connection\CachedContexts.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\ConnectionCapabilities.cs">
+      <Link>Microsoft\Data\SqlClient\Connection\ConnectionCapabilities.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Connection\ServerInfo.cs">
       <Link>Microsoft\Data\SqlClient\Connection\ServerInfo.cs</Link>
     </Compile>

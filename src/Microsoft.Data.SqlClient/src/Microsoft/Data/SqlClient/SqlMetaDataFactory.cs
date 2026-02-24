@@ -38,12 +38,13 @@ namespace Microsoft.Data.SqlClient
         private readonly DataSet _collectionDataSet;
         private readonly string _serverVersion;
 
-        public SqlMetaDataFactory(Stream xmlStream, string serverVersion)
+        public SqlMetaDataFactory(Stream xmlStream, ConnectionCapabilities connectionCapabilities)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
-            ADP.CheckArgumentNull(serverVersion, nameof(serverVersion));
+            ADP.CheckArgumentNull(connectionCapabilities, nameof(connectionCapabilities));
+            ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
-            _serverVersion = serverVersion;
+            _serverVersion = connectionCapabilities.ServerVersion;
 
             _collectionDataSet = LoadDataSetFromXml(xmlStream);
         }

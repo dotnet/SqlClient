@@ -118,14 +118,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParserSessionPool _sessionPool = null;  // initialized only when we're a MARS parser.
 
-        // Version variables
-
-        private bool _is2008 = false;
-
-        private bool _is2012 = false;
-
-        private bool _is2022 = false;
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -166,25 +158,30 @@ namespace Microsoft.Data.SqlClient
         private static XmlWriterSettings SyncXmlWriterSettings =>
             s_syncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment };
 
+        // Capability records
+        internal ConnectionCapabilities Capabilities { get; }
+
         /// <summary>
         /// Get or set if column encryption is supported by the server.
         /// </summary>
-        internal bool IsColumnEncryptionSupported { get; set; } = false;
+        internal bool IsColumnEncryptionSupported =>
+            TceVersionSupported != TdsEnums.TCE_NOT_ENABLED;
 
         /// <summary>
         /// TCE version supported by the server
         /// </summary>
-        internal byte TceVersionSupported { get; set; }
+        internal byte TceVersionSupported => Capabilities.ColumnEncryptionVersion;
 
         /// <summary>
         /// Server supports retrying when the enclave CEKs sent by the client do not match what is needed for the query to run.
         /// </summary>
-        internal bool AreEnclaveRetriesSupported { get; set; }
+        internal bool AreEnclaveRetriesSupported =>
+            TceVersionSupported >= TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_RETRY_SUPPORT;
 
         /// <summary>
         /// Type of enclave being used by the server
         /// </summary>
-        internal string EnclaveType { get; set; }
+        internal string EnclaveType => Capabilities.ColumnEncryptionEnclaveType;
 
         internal bool isTcpProtocol { get; set; }
         internal string FQDNforDNSCache { get; set; }
@@ -198,7 +195,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get or set data classification version.  A value of 0 means that sensitivity classification is not enabled.
         /// </summary>
-        internal int DataClassificationVersion { get; set; }
+        internal int DataClassificationVersion => Capabilities.DataClassificationVersion;
 
         private SqlCollation _cachedCollation;
 
@@ -217,8 +214,9 @@ namespace Microsoft.Data.SqlClient
         {
             _fMARS = MARS; // may change during Connect to pre 2005 servers
 
+            Capabilities = new(ObjectID);
+
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
-            DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
         internal SqlConnectionInternal Connection
@@ -274,13 +272,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer
-        {
-            get
-            {
-                return _is2008;
-            }
-        }
+        internal bool Is2008OrNewer => Capabilities.Is2008R2OrNewer;
 
         internal bool MARSOn
         {
@@ -335,13 +327,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IncludeTraceHeader
-        {
-            get
-            {
-                return (_is2012 && SqlClientEventSource.Log.IsEnabled());
-            }
-        }
+        private bool IncludeTraceHeader => Capabilities.Is2012OrNewer && SqlClientEventSource.Log.IsEnabled();
 
         internal int IncrementNonTransactedOpenResultCount()
         {
@@ -402,9 +388,6 @@ namespace Microsoft.Data.SqlClient
 
             _connHandler = connHandler;
             _loginWithFailover = withFailover;
-
-            // Clean up IsSQLDNSCachingSupported flag from previous status
-            _connHandler.IsSQLDNSCachingSupported = false;
 
             uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
@@ -1564,6 +1547,8 @@ namespace Microsoft.Data.SqlClient
 
             _defaultEncoding = null;
             _defaultCollation = null;
+
+            Capabilities.Reset();
         }
 
         // Fires a single InfoMessageEvent
@@ -2768,8 +2753,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLLOGINACK:
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryRun|SEC> Received login acknowledgement token");
-                            SqlLoginAck ack;
-                            result = TryProcessLoginAck(stateObj, out ack);
+                            result = TryProcessLoginAck(stateObj, out SqlLoginAck ack);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -3735,6 +3719,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (featureId != TdsEnums.FEATUREEXT_TERMINATOR)
                 {
+                    // Unknown feature ack
+                    if (!IsFeatureExtSupported(featureId))
+                    {
+                        throw SQL.ParsingError();
+                    }
+
                     uint dataLen;
                     result = stateObj.TryReadUInt32(out dataLen);
                     if (result != TdsOperationStatus.Done)
@@ -3750,18 +3740,23 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
                     }
-                    _connHandler.OnFeatureExtAck(featureId, data);
+
+                    if (_connHandler.ShouldProcessFeatureExtAck(featureId))
+                    {
+                        Capabilities.ProcessFeatureExtAck(featureId, data);
+                        _connHandler.OnFeatureExtAck(featureId, data);
+                    }
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
 
             // Write to DNS Cache or clean up DNS Cache for TCP protocol
             bool ret = false;
-            if (_connHandler._cleanSQLDNSCaching)
+            if (!Capabilities.DnsCaching)
             {
                 ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCache);
             }
 
-            if (_connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null
+            if (Capabilities.DnsCaching && _connHandler.pendingSQLDNSObject != null
                     && !SQLFallbackDNSCache.Instance.IsDuplicate(_connHandler.pendingSQLDNSObject))
             {
                 ret = SQLFallbackDNSCache.Instance.AddDNSInfo(_connHandler.pendingSQLDNSObject);
@@ -3817,6 +3812,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             return TdsOperationStatus.Done;
+
+            static bool IsFeatureExtSupported(byte fId) =>
+                fId is TdsEnums.FEATUREEXT_SRECOVERY or TdsEnums.FEATUREEXT_FEDAUTH or TdsEnums.FEATUREEXT_TCE
+                    or TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS or TdsEnums.FEATUREEXT_AZURESQLSUPPORT
+                    or TdsEnums.FEATUREEXT_DATACLASSIFICATION or TdsEnums.FEATUREEXT_UTF8SUPPORT
+                    or TdsEnums.FEATUREEXT_SQLDNSCACHING or TdsEnums.FEATUREEXT_JSONSUPPORT
+                    or TdsEnums.FEATUREEXT_VECTORSUPPORT or TdsEnums.FEATUREEXT_USERAGENT;
         }
 
         private bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
@@ -4195,9 +4197,7 @@ namespace Microsoft.Data.SqlClient
 
         private TdsOperationStatus TryProcessLoginAck(TdsParserStateObject stateObj, out SqlLoginAck sqlLoginAck)
         {
-            SqlLoginAck a = new SqlLoginAck();
-
-            sqlLoginAck = null;
+            sqlLoginAck = default;
 
             // read past interface type and version
             TdsOperationStatus result = stateObj.TrySkipBytes(1);
@@ -4212,50 +4212,15 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            a.tdsVersion = (uint)((((((b[0] << 8) | b[1]) << 8) | b[2]) << 8) | b[3]); // bytes are in motorola order (high byte first)
-            uint majorMinor = a.tdsVersion & 0xff00ffff;
-            uint increment = (a.tdsVersion >> 16) & 0xff;
-
-            // Server responds:
-            // 0x07000000 -> 7.0         // Notice server response format is different for bwd compat
-            // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
-            // 0x71000001 -> 2000 SP1
-            // 0x72xx0002 -> 2005 RTM
-            // information provided by S. Ashwin
-            switch (majorMinor)
-            {
-                case TdsEnums.SQL2005_MAJOR << 24 | TdsEnums.SQL2005_RTM_MINOR:     // 2005
-                    if (increment != TdsEnums.SQL2005_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    break;
-                case TdsEnums.SQL2008_MAJOR << 24 | TdsEnums.SQL2008_MINOR:
-                    if (increment != TdsEnums.SQL2008_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    _is2008 = true;
-                    break;
-                case TdsEnums.SQL2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
-                    if (increment != TdsEnums.SQL2012_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    _is2012 = true;
-                    break;
-                case TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
-                    if (increment != TdsEnums.TDS8_INCREMENT)
-                    {
-                        throw SQL.InvalidTDSVersion();
-                    }
-                    _is2022 = true;
-                    break;
-                default:
-                    throw SQL.InvalidTDSVersion();
-            }
-            _is2012 |= _is2022;
-            _is2008 |= _is2012;
+            // When connecting to SQL Server 2000, the TDS version sent
+            // by the client would be a completely different value to the
+            // TDS version received by the server.
+            // From SQL Server 2000 SP1, the TDS version is identical. As
+            // an artifact of this historical difference, the client sends
+            // its TDS version to the server in a little-endian layout, and
+            // receives the server's TDS version in a big-endian layout.
+            // Reference: MS-TDS, 2.2.7.14, footnote on TDSVersion field.
+            uint tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -4270,29 +4235,32 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            result = stateObj.TryReadByte(out a.majorVersion);
+            result = stateObj.TryReadByte(out byte majorVersion);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
-            result = stateObj.TryReadByte(out a.minorVersion);
+            result = stateObj.TryReadByte(out byte minorVersion);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
-            byte buildNumHi, buildNumLo;
-            result = stateObj.TryReadByte(out buildNumHi);
+            result = stateObj.TryReadByte(out byte buildNumHi);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
-            result = stateObj.TryReadByte(out buildNumLo);
+            result = stateObj.TryReadByte(out byte buildNumLo);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
 
-            a.buildNum = (short)((buildNumHi << 8) + buildNumLo);
+            ushort buildNumber = (ushort)((buildNumHi << 8) | buildNumLo);
+
+            sqlLoginAck = new SqlLoginAck(majorVersion, minorVersion, buildNumber, tdsVersion);
+
+            Capabilities.ProcessLoginAck(sqlLoginAck);
 
             Debug.Assert(_state == TdsParserState.OpenNotLoggedIn, "ProcessLoginAck called with state not TdsParserState.OpenNotLoggedIn");
             _state = TdsParserState.OpenLoggedIn;
@@ -4312,7 +4280,6 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(stateObj);
             }
 
-            sqlLoginAck = a;
             return TdsOperationStatus.Done;
         }
 
@@ -9253,11 +9220,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (encrypt == SqlConnectionEncryptOption.Strict)
                     {
-                        WriteInt((TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR, _physicalStateObj);
+                        WriteUnsignedInt(TdsEnums.TDS80_VERSION, _physicalStateObj);
                     }
                     else
                     {
-                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                        WriteUnsignedInt(TdsEnums.TDS7X_VERSION, _physicalStateObj);
                     }
                 }
                 else
@@ -10211,7 +10178,7 @@ namespace Microsoft.Data.SqlClient
                                 continue;
                             }
 
-                            if (!_is2008 && !mt.Is90Supported)
+                            if (!Is2008OrNewer && !mt.Is90Supported)
                             {
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
@@ -10965,7 +10932,7 @@ namespace Microsoft.Data.SqlClient
             ParameterPeekAheadValue peekAhead;
             SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
 
-            if (!_is2008)
+            if (!Is2008OrNewer)
             {
                 MetaType mt = MetaType.GetMetaTypeFromSqlDbType(metaData.SqlDbType, metaData.IsMultiValued);
                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
