@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             ref string spn,
             int timeout,
-            out byte[] instanceName,
+            out string instanceName,
             bool flushCache,
             bool fSync,
             bool fParallel,
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient
             : base(IntPtr.Zero, true)
         {
             _fSync = fSync;
-            instanceName = new byte[256]; // Size as specified by netlibs.
+            instanceName = null;
             // Option ignoreSniOpenTimeout is no longer available
             //if (ignoreSniOpenTimeout)
             //{
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient
                 serverName,
                 ref base.handle,
                 ref spn,
-                instanceName,
+                ref instanceName,
                 flushCache,
                 fSync,
                 timeout,
@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient
                 serverName,
                 ref base.handle,
                 ref spn,
-                instanceName,
+                ref instanceName,
                 flushCache,
                 fSync,
                 timeout,

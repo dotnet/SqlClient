@@ -463,6 +463,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\TelemetryConstants.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\TelemetryConstants.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DisposableTemporaryOnStack.cs">
       <Link>Microsoft\Data\SqlClient\DisposableTemporaryOnStack.cs</Link>
     </Compile>
@@ -1008,6 +1011,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)System\Text\EncodingExtensions.cs">
+      <Link>System\Text\EncodingExtensions.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
