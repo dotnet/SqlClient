@@ -21,10 +21,16 @@
   </PropertyGroup>
 
   <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
   <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <InternalsVisibleTo Include="UnitTests" />
+  </ItemGroup>
 
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
@@ -36,9 +42,6 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
-    <InternalsVisibleTo Include="UnitTests" />
-  </ItemGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
