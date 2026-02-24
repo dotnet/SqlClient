@@ -44,16 +44,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
 
-            // Simulate cached state
             bulkCopy._cachedMetadata = new BulkCopySimpleResultSet();
-
-            bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
 
             bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
-
-            Assert.Null(bulkCopy._operationMetaData);
         }
 
         [Fact]
@@ -63,15 +58,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             bulkCopy._cachedMetadata = new BulkCopySimpleResultSet();
 
-            bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
-
             bulkCopy.ClearCachedMetadata();
             bulkCopy.ClearCachedMetadata();
             bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
-
-            Assert.Null(bulkCopy._operationMetaData);
         }
 
         [Fact]
@@ -81,11 +72,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             Assert.Null(bulkCopy._cachedMetadata);
 
-
             bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
-
         }
 
         [Fact]
@@ -95,17 +84,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             bulkCopy._cachedMetadata = new BulkCopySimpleResultSet();
 
-            bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
-
             bulkCopy.ClearCachedMetadata();
 
             Assert.Null(bulkCopy._cachedMetadata);
-
-            Assert.Null(bulkCopy._operationMetaData);
         }
 
         [Fact]
-        public void DestinationTableName_Change_InvalidatesCachedMetadata()
+        public void DestinationTableName_Change_ClearsCachedMetadata()
         {
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
 
@@ -114,18 +99,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // Simulate cached state after a WriteToServer call
             bulkCopy._cachedMetadata = new BulkCopySimpleResultSet();
-            bulkCopy._operationMetaData = new _SqlMetaDataSet(1);
 
             // Setting the same name should NOT clear the cache
             bulkCopy.DestinationTableName = "Table1";
             Assert.NotNull(bulkCopy._cachedMetadata);
-            Assert.NotNull(bulkCopy._operationMetaData);
 
             // Changing to a different table should clear the cache
             bulkCopy.DestinationTableName = "Table2";
             Assert.Null(bulkCopy._cachedMetadata);
-
-            Assert.Null(bulkCopy._operationMetaData);
         }
 
         [Fact]
