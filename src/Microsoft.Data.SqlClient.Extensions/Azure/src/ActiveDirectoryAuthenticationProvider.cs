@@ -709,6 +709,19 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 ClientVersion = Extensions.Azure.ThisAssembly.InformationalVersion,
                 RedirectUri = publicClientAppKey.RedirectUri,
             })
+            // The Authority contains the tenant-specific Azure AD endpoint, e.g.
+            // "https://login.microsoftonline.com/72f988bf-...".  The tenant ID is not determined by
+            // the client; it originates from the SQL Server FEDAUTHINFO TDS token that the server
+            // sends during the login handshake.  The flow is:
+            //
+            //   1. TdsParser.TryProcessFedAuthInfo parses the FEDAUTHINFO token and extracts the
+            //      STSURL (authority with tenant) and SPN (resource).
+            //   2. SqlConnectionInternal passes the STSURL as the 'authority' parameter when
+            //      constructing SqlAuthenticationParametersBuilder.
+            //   3. AcquireTokenAsync stores the full authority (including tenant) in
+            //      PublicClientAppKey.Authority.
+            //   4. Here, WithAuthority directs MSAL to authenticate against the correct Azure AD
+            //      tenant.
             .WithAuthority(publicClientAppKey.Authority);
 
         #if NETFRAMEWORK

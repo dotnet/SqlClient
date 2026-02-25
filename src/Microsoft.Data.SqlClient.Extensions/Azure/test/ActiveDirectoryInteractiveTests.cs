@@ -21,8 +21,8 @@ public class ActiveDirectoryInteractiveTests
     {
         SqlConnectionStringBuilder builder = new()
         {
-            DataSource = "server.database.windows.net",
-            InitialCatalog = "free",
+            // This is a sample Kusto database that can be accessed by any EntraID account.
+            DataSource = "help.kusto.windows.nett",
             Encrypt = true,
             TrustServerCertificate = false,
             ConnectTimeout = 180,
