@@ -4,7 +4,6 @@
 
 using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
@@ -37,7 +36,7 @@ public class FeatureExtensionNegotiationTests : IClassFixture<FeatureExtensionNe
     [InlineData(FeatureExtensionEnablementTriState.Enabled, (byte[])[1])]
     [InlineData(FeatureExtensionEnablementTriState.Disabled, (byte[])[0])]
     [InlineData(FeatureExtensionEnablementTriState.DoNotAcknowledge, null)]
-    public void EnhancedRouting_EnabledByServer_ShouldBeEnabled(FeatureExtensionEnablementTriState serverBehavior, byte[]? expectedAckData)
+    public void EnhancedRoutingNegotiationTest(FeatureExtensionEnablementTriState serverBehavior, byte[]? expectedAckData)
     {
         // Arrange
         _server.EnableEnhancedRouting = serverBehavior;
