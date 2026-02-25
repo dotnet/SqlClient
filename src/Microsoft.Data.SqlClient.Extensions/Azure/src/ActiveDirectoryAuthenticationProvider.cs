@@ -224,7 +224,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 */
             string redirectUri = s_nativeClientRedirectUri;
 
-            #if NET || NETSTANDARD
+            #if NETSTANDARD
             if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 redirectUri = "http://localhost";
@@ -500,7 +500,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             {
                 using CancellationTokenSource ctsInteractive = new();
 
-                #if NET || NETSTANDARD
+                #if NETSTANDARD
                 // On .NET Core, MSAL will start the system browser as a
                 // separate process. MSAL does not have control over this
                 // browser, but once the user finishes authentication, the web
