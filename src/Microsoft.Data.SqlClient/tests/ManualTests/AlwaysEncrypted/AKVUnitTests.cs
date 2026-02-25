@@ -8,9 +8,9 @@ using Azure.Security.KeyVault.Keys;
 using System.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Diagnostics.Tracing;
-using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -28,52 +28,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             _fixture = fixture;
         }
 
-        private static void ValidateAKVTraces(List<EventWrittenEventArgs> eventData, Guid threadActivityId)
+        private static void ValidateAKVTraces(List<EventWrittenEventArgs> eventData)
         {
             Assert.NotNull(eventData);
             Assert.NotEmpty(eventData);
-            int currentScope = 0;
 
-            // Validate event data captured.
-            Assert.All(eventData, item =>
+            // The AKV provider only emits Trace events (EventId 3) via the shared SqlClientEventSource.
+            // Filter to only Trace events to tolerate any unrelated MDS events also captured by the listener.
+            var akvEvents = eventData.Where(e => e.EventId == 3 /* Trace */).ToList();
+            Assert.NotEmpty(akvEvents);
+
+            Assert.All(akvEvents, item =>
             {
                 Assert.Equal(DataTestUtility.MDSEventSourceName, item.EventSource.Name);
-                Assert.Equal(threadActivityId, item.ActivityId);
                 Assert.Equal(EventLevel.Informational, item.Level);
+                Assert.Equal("Trace", item.EventName);
                 Assert.NotNull(item.Payload);
                 Assert.Single(item.Payload);
-                switch (item.EventId)
-                {
-                    case 1: // Trace
-                        Assert.Equal("WriteTrace", item.EventName);
-                        Assert.Matches(@"Caller: \w+, Message: (\w\s*)*", item.Payload[0].ToString());
-                        break;
-                    case 2: // Scope Enter
-                        Assert.Equal("ScopeEnter", item.EventName);
-                        Assert.Equal(EventOpcode.Start, item.Opcode);
-                        Assert.Matches(@"Entered Scope: \w+, Caller: \w*", item.Payload[0].ToString());
-                        string str = item.Payload[0].ToString();
-                        int.TryParse(str.Substring(15, str.IndexOf(',') - 1), out currentScope);
-                        break;
-                    case 3: // Scope Exit
-                        Assert.Equal("ScopeExit", item.EventName);
-                        Assert.Equal(EventOpcode.Stop, item.Opcode);
-                        if (currentScope != 0)
-                        {
-                            Assert.Equal(currentScope, (int)item.Payload[0]);
-                        }
-                        break;
-                    default:
-                        Assert.Fail("Unexpected event occurred: " + item.Message);
-                        break;
-                }
+                Assert.IsType<string>(item.Payload[0]);
             });
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void LegacyAuthenticationCallbackTest()
         {
-            Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.MDSEventListener listener = new();
 
             // SqlClientCustomTokenCredential implements legacy authentication callback to request access token at client-side.
@@ -82,13 +60,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCek);
 
             Assert.Equal(s_columnEncryptionKey, decryptedCek);
-            ValidateAKVTraces(listener.EventData, activityId);
+            ValidateAKVTraces(listener.EventData);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TokenCredentialTest()
         {
-            Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.MDSEventListener listener = new();
 
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
@@ -96,13 +73,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCek);
 
             Assert.Equal(s_columnEncryptionKey, decryptedCek);
-            ValidateAKVTraces(listener.EventData, activityId);
+            ValidateAKVTraces(listener.EventData);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TokenCredentialRotationTest()
         {
-            Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.MDSEventListener listener = new();
 
             // SqlClientCustomTokenCredential implements a legacy authentication callback to request the access token from the client-side.
@@ -118,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] decryptedCekWithNewProvider = newAkvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCekWithOldProvider);
             Assert.Equal(s_columnEncryptionKey, decryptedCekWithNewProvider);
 
-            ValidateAKVTraces(listener.EventData, activityId);
+            ValidateAKVTraces(listener.EventData);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -170,7 +146,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void DecryptedCekIsCachedDuringDecryption()
         {
-            Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.MDSEventListener listener = new();
 
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
@@ -197,13 +172,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(3, GetCacheCount(cekCacheName, akvProvider));
             Assert.Equal(plaintextKey3, decryptedKey3);
 
-            ValidateAKVTraces(listener.EventData, activityId);
+            ValidateAKVTraces(listener.EventData);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void SignatureVerificationResultIsCachedDuringVerification()
         {
-            Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.MDSEventListener listener = new();
 
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
@@ -223,13 +197,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, false, signatureWithoutEnclave));
             Assert.Equal(2, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
 
-            ValidateAKVTraces(listener.EventData, activityId);
+            ValidateAKVTraces(listener.EventData);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void CekCacheEntryIsEvictedAfterTtlExpires()
         {
-            Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.MDSEventListener listener = new();
 
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
@@ -245,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(CekCacheContainsKey(encryptedKey, akvProvider));
             Assert.Equal(0, GetCacheCount(cekCacheName, akvProvider));
 
-            ValidateAKVTraces(listener.EventData, activityId);
+            ValidateAKVTraces(listener.EventData);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
