@@ -10,6 +10,16 @@
 				"x-mcp-ec-branch": "internal/main"
 			}
 		},
+		"bluebird-mcp-1es-docs": {
+			"url": "https://mcp.bluebird-ai.net/",
+			"type": "http",
+			   "headers": {
+				"x-mcp-ec-organization": "mseng",
+				"x-mcp-ec-project": "1ES",
+				"x-mcp-ec-repository": "1ES-on-EngHub",
+				"x-mcp-ec-branch": "main"
+			}
+		},
 		"icm": {
 			"url": "https://icm-mcp-prod.azure-api.net/v1/",
 			"type": "http"
