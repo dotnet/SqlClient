@@ -511,8 +511,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             // Check if we have valid cached metadata for the current destination table
-            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata) &&
-                _cachedMetadata != null)
+            if (_cachedMetadata != null)
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
                 result = _cachedMetadata;
@@ -617,7 +616,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // on the first call, then more on the second) would permanently lose metadata
             // entries from the cache.
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
-            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata) && _cachedMetadata != null)
+            if (_cachedMetadata != null)
             {
                 metaDataSet = metaDataSet.Clone();
             }
