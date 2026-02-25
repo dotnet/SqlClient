@@ -253,6 +253,15 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
           <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
           property is changed to a different table name.
         </para>
+        <para>
+          The cache is not automatically invalidated when the
+          connection context changes. Call this method if the
+          underlying
+          <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
+          changes database (for example, via
+          <see cref="M:System.Data.Common.DbConnection.ChangeDatabase(System.String)" />)
+          or reconnects to a different server due to failover.
+        </para>
       </remarks>
     </ClearCachedMetadata>
     <EnableStreaming>

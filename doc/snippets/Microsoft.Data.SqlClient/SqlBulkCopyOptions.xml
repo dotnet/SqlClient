@@ -96,6 +96,17 @@ To see how the option changes the way the bulk load works, run the sample with t
           because the cached metadata describes only the destination
           table schema, not the source-to-destination column mapping.
         </para>
+        <para>
+          The cache is not automatically invalidated when the
+          connection context changes. If the underlying
+          <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
+          changes database (for example, via
+          <see cref="M:System.Data.Common.DbConnection.ChangeDatabase(System.String)" />)
+          or reconnects to a different server due to failover, callers
+          should call
+          <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.ClearCachedMetadata" />
+          to ensure the metadata is refreshed.
+        </para>
       </summary>
     </CacheMetadata>
   </members>
