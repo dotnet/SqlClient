@@ -53,7 +53,7 @@
     <!-- Collect code coverage unless explicitly disabled -->
     <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
     <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
-    <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectStatement>
+    <CollectArgument Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectArgument>
 
     <!-- Set up tests to fail after hangs and report via blame -->
     <BlameArgument>$(Blame)</BlameArgument>
