@@ -160,14 +160,14 @@
     </AbstractionsProperties>
   </PropertyGroup>
 
-  <Target Name="RestoreAbstractions">
+  <Target Name="RestoreAbstractions" DependsOnTargets="RestoreLogging">
     <MSBuild
       Projects="@(Abstractions)"
       Targets="Restore"
       Properties="$(AbstractionsProperties)" />
   </Target>
 
-  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions">
+  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions;BuildLogging">
     <MSBuild
       Projects="@(Abstractions)"
       Targets="Build"
