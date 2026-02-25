@@ -55,7 +55,17 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 // Try to load our Azure extension.
+                #if STRONG_NAME_SIGNING
+                // When strong-name signing is enabled, build a fully-qualified AssemblyName
+                // that includes the expected public key token.  The runtime then enforces the
+                // token during binding, so an untrusted assembly with the same simple name
+                // is never loaded (and its module initializers never run).
+                var qualifiedName = new AssemblyName(assemblyName);
+                qualifiedName.SetPublicKeyToken([0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5]);
+                var assembly = Assembly.Load(qualifiedName);
+                #else
                 var assembly = Assembly.Load(assemblyName);
+                #endif
 
                 if (assembly is null)
                 {
@@ -65,23 +75,6 @@ namespace Microsoft.Data.SqlClient
                         "no default Active Directory provider installed");
                     return;
                 }
-
-                #if STRONG_NAME_SIGNING
-                // When assembly strong name signing is enabled, check the public key token, which
-                // gives us a mediocre level of confidence that this assembly is actually ours.
-                byte[] expectedToken = [0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5];
-                byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
-
-                if (actualToken is null || !actualToken.AsSpan().SequenceEqual(expectedToken))
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        nameof(SqlAuthenticationProviderManager) +
-                        $": Azure extension assembly={assemblyName} has an " +
-                        "unexpected public key token; " +
-                        "no default Active Directory provider installed");
-                    return;
-                }
-                #endif
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
