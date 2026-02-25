@@ -9190,6 +9190,27 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Writes the Enhanced Routing Support feature request to the physical state object.
+        /// The request does not contain a payload.
+        /// </summary>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        internal int WriteEnhancedRoutingSupportFeatureRequest(bool write)
+        {
+            const int len = 5;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT);
+                // We don't send any data
+                WriteInt(0, _physicalStateObj);
+            }
+
+            return len;
+        }
+
+        /// <summary>
         ///   Writes the User Agent feature request to the physical state
         ///   object.  The request includes the feature ID, feature data length,
         ///   and UCS-2 little-endian encoded payload.
@@ -9585,6 +9606,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                     {
                         length += WriteVectorSupportFeatureRequest(write);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.EnhancedRoutingSupport) != 0)
+                    {
+                        length += WriteEnhancedRoutingSupportFeatureRequest(write);
                     }
 
                     length++; // for terminator

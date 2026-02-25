@@ -188,6 +188,12 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Should be private and accessed via internal property
         internal bool IsVectorSupportEnabled = false;
 
+        /// <summary>
+        /// Flag indicating whether enhanced routing is supported by the server.
+        /// </summary>
+        // @TODO: Should be private and accessed via internal property
+        internal bool IsEnhancedRoutingSupportEnabled = false;
+
         // @TODO: This should be private
         internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
 
@@ -1725,6 +1731,27 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     break;
                 }
+                case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for ENHANCEDROUTINGSUPPORT");
+
+                    if (data.Length != 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for ENHANCEDROUTINGSUPPORT");
+
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    // A value of 1 indicates that the server supports the feature.
+                    IsEnhancedRoutingSupportEnabled = data[0] == 1;
+                    break;
+                }
                 case TdsEnums.FEATUREEXT_USERAGENT:
                 {
                     // Unexpected ack from server but we ignore it entirely
@@ -3071,6 +3098,7 @@ namespace Microsoft.Data.SqlClient.Connection
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.EnhancedRoutingSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
