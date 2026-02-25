@@ -19,7 +19,7 @@ public class ActiveDirectoryInteractiveTests
     [Trait("Category", "Interactive")]
     public async Task TestConnection()
     {
-        SqlConnectionStringBuilder builder = new()
+        string connectionString = new SqlConnectionStringBuilder()
         {
             // This is an Azure SQL database accessible via MSFT-AzVPN.
             //
@@ -38,14 +38,37 @@ public class ActiveDirectoryInteractiveTests
             Encrypt = true,
             TrustServerCertificate = false,
             ConnectTimeout = 180,
+            // Force each Open() call below to establish a new connection.
+            Pooling = false,
             Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive
-        };
-
-        var connection = new SqlConnection(builder.ConnectionString);
+        }.ConnectionString;
 
         try
         {
-            connection.Open();
+            // Establish a connection using all of our Open() variants.
+            //
+            // Note that this won't necessarily prompt the user for interactive authentication due
+            // to caching within the Azure package and/or the Microsoft Authentication Library
+            // (MSAL), but it will verify that at least one interaction is required.
+            //
+            {
+                using SqlConnection connection = new(connectionString);
+                connection.Open();
+            }
+            {
+                using SqlConnection connection = new(connectionString);
+                connection.Open(SqlConnectionOverrides.OpenWithoutRetry);
+            }
+            {
+                using SqlConnection connection = new(connectionString);
+                await connection.OpenAsync(CancellationToken.None);
+            }
+            {
+                using SqlConnection connection = new(connectionString);
+                await connection.OpenAsync(
+                    SqlConnectionOverrides.OpenWithoutRetry,
+                    CancellationToken.None);
+            }
         }
         catch (SqlException ex)
         {

@@ -139,19 +139,19 @@ By default, the tests will be executed on all supported .NET/.NET framework vers
 specific version, pass the `-f` parameter with the desired version (eg `net9.0`).
 
 The `--filter` parameter is used to select which tests run. The default `category!=failing&
-category!=flaky` prevents tests that are known to be failing or flaky from running. To run a
-specific test, use `FullyQualifiedName=[fully qualified name of the test method]` as the filter
-parameter. To run all possible tests, even known failing and flaky ones, simply omit the filter
-parameter. Please note, however, that this will still omit tests that cannot run on the current
-platform or with the current test configuration (eg, Windows tests on Linux, or SQL DB tests when
-Azure Synapse is configured).
+category!=flaky&category!=interactive` prevents tests that are known to be failing or flaky from
+running. To run a specific test, use `FullyQualifiedName=[fully qualified name of the test method]`
+as the filter parameter. To run all possible tests, even known failing and flaky ones, simply omit
+the filter parameter. Please note, however, that this will still omit tests that cannot run on the
+current platform or with the current test configuration (eg, Windows tests on Linux, or SQL DB tests
+when Azure Synapse is configured).
 
 ### Run Functional Tests
 
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
   -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 
 ```
 
@@ -160,14 +160,14 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.S
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" \
   -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
 ### Run Unit Tests
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" \
   -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
 ## Testing with Package References

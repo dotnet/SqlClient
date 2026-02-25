@@ -151,7 +151,7 @@ jobs:
               $(buildArguments)
               --no-build
               -f ${{ runtime }}
-              --filter "category != failing & category != flaky"
+              --filter "category != failing & category != flaky & category != interactive"
 
         - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
@@ -175,7 +175,7 @@ jobs:
               $(buildArguments)
               --no-build
               -f ${{ runtime }}
-              --filter "category != failing & category != flaky"
+              --filter "category != failing & category != flaky & category != interactive"
 
         - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]

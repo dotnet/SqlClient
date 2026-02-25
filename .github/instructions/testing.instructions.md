@@ -158,9 +158,9 @@ msbuild -t:RunManualTests -p:TestSet=1
 dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" \
   -p:Configuration=Release
 
-# Functional tests with filter (excludes failing and flaky)
+# Functional tests with filter (excludes failing, flaky, and interactive tests)
 dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 
 # Run ONLY quarantined flaky tests (for investigation)
 dotnet test ... --filter "category=flaky"
@@ -180,10 +180,10 @@ public class FeatureNameTests
     {
         // Arrange
         var sut = new SystemUnderTest();
-        
+
         // Act
         var result = sut.PerformAction();
-        
+
         // Assert
         Assert.Equal(expected, result);
     }
