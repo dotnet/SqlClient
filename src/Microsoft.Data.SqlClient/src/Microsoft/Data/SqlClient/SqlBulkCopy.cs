@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
         private SourceColumnMetadata[] _currentRowMetadata;
 
         // Metadata caching fields for CacheMetadata option
-        internal BulkCopySimpleResultSet _cachedMetadata;
+        internal BulkCopySimpleResultSet CachedMetadata { get; private set; }
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
@@ -365,7 +365,7 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                _cachedMetadata = null;
+                CachedMetadata = null;
                 _destinationTableName = value;
             }
         }
@@ -511,10 +511,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             // Check if we have valid cached metadata for the current destination table
-            if (_cachedMetadata != null)
+            if (CachedMetadata != null)
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
-                result = _cachedMetadata;
+                result = CachedMetadata;
                 return null;
             }
 
@@ -556,7 +556,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
             {
-                _cachedMetadata = result;
+                CachedMetadata = result;
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
             }
         }
@@ -616,7 +616,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // on the first call, then more on the second) would permanently lose metadata
             // entries from the cache.
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
-            if (_cachedMetadata != null)
+            if (CachedMetadata != null)
             {
                 metaDataSet = metaDataSet.Clone();
             }
@@ -925,7 +925,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ClearCachedMetadata/*'/>
         public void ClearCachedMetadata()
         {
-            _cachedMetadata = null;
+            CachedMetadata = null;
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.ClearCachedMetadata | Info | Metadata cache cleared");
         }
 
@@ -949,7 +949,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // Dispose dependent objects
                 _columnMappings = null;
                 _parser = null;
-                _cachedMetadata = null;
+                CachedMetadata = null;
                 _operationMetaData = null;
                 try
                 {
