@@ -1,7 +1,7 @@
 ﻿# Licensed to the .NET Foundation under one or more agreements.
 # The .NET Foundation licenses this file to you under the MIT license.
 # See the LICENSE file in the project root for more information.
-# Script: Invoke-SqlServerCertificateCommand# 
+# Script: Invoke-SqlServerCertificateCommand#
 # Author: SqlClient Team
 # Date: March 20, 2024
 # Comments: This scripts creates SSL Self-Signed Certificate for TestTdsServer in pfx format.
@@ -21,6 +21,9 @@ function Invoke-SqlServerCertificateCommand {
     [string] $LoopBackIPV4 = "127.0.0.1",
     [string] $LoopBackIPV6 = "::1"
   )
+
+  Set-PSDebug -Trace 1
+
   Write-Output "Certificate generation started..."
 
   # Change directory to where the tests are
@@ -31,7 +34,9 @@ function Invoke-SqlServerCertificateCommand {
   try {
     # Get FQDN of the machine
     Write-Output "Get FQDN of the machine..."
-    $fqdn = [System.Net.Dns]::GetHostByName(($env:computerName)).HostName
+    $hostname = [System.Environment]::MachineName
+    Write-Output "Hostname = $hostname"
+    $fqdn = [System.Net.Dns]::GetHostEntry(($hostname)).HostName
     Write-Output "FQDN = $fqdn"
 
     $OS = [System.Environment]::OSVersion.Platform
@@ -40,8 +45,11 @@ function Invoke-SqlServerCertificateCommand {
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
         chmod 777 $OutDir
-        # Install OpenSSL module
-        Install-Module -Name OpenSSL -Repository PSGallery -Force
+        # Install OpenSSL module if not already installed
+        if (-not (Get-Module -ListAvailable -Name OpenSSL))
+        {
+            Install-Module -Name OpenSSL -Repository PSGallery -Force
+        }
         # Show version of OpenSSL just to make sure it is installed
         openssl version
 
@@ -72,9 +80,9 @@ function Invoke-SqlServerCertificateCommand {
         openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/localhostcert.pem
 
         # Import the certificate to the Root store ------------------------------------------------------------------------------
-        # NOTE:  The process must have root privileges to add the certificate to the Root store. If not, then use  
-        #        "chmod 777 /usr/local/share/ca-certificates" to give read, write and execute privileges to anyone on that folder 
-        # Copy the certificate to /usr/local/share/ca-certificates folder while changing the extension to "crt". 
+        # NOTE:  The process must have root privileges to add the certificate to the Root store. If not, then use
+        #        "chmod 777 /usr/local/share/ca-certificates" to give read, write and execute privileges to anyone on that folder
+        # Copy the certificate to /usr/local/share/ca-certificates folder while changing the extension to "crt".
         # Only certificates with extension "crt" gets added for some reason.
         Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
         cp $OutDir/localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
@@ -135,13 +143,13 @@ function Invoke-SqlServerCertificateCommand {
         # Suppress the 'PSAvoidUsingConvertToSecureStringWithPlainText' rule for the next line as this is a test certificate with no password
         [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "", Justification="Test certificate with no real secret")]
         $pwd = ConvertTo-SecureString -String 'nopassword' -Force -AsPlainText
-        
+
         # Export the certificate to a pfx format
         Export-PfxCertificate -Password $pwd -FilePath "$OutDir\localhostcert.pfx" -Cert "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
 
         # Write the certificate thumbprint to a file
         echo $certificate.Thumbprint | Out-File -FilePath "$OutDir\thumbprint.txt" -Encoding ascii
-    } 
+    }
 
     Write-Output "Done creating pfx certificate..."
   }
