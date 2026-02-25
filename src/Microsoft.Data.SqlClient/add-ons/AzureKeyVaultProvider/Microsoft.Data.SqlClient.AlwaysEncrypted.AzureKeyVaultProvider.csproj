@@ -15,23 +15,9 @@
   </PropertyGroup>
 
   <!-- Trim/AOT Support ================================================ -->
-<<<<<<< HEAD
-  <PropertyGroup>
-    <IsTrimmable Condition="'$(TargetFramework)' != 'net462'">true</IsTrimmable>
-    <IsAotCompatible Condition="'$(TargetFramework)' != 'net462'">true</IsAotCompatible>
-  </PropertyGroup>
-
-  <!-- Strong name signing ============================================= -->
-
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
-  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-=======
   <PropertyGroup Condition="'$(TargetFramework)' != 'net462'">
     <IsTrimmable>true</IsTrimmable>
     <IsAotCompatible>true</IsAotCompatible>
->>>>>>> 4cfecec7 (Task 42666: Verify Azure DLL via public key token)
   </PropertyGroup>
 
   <!-- References ====================================================== -->
