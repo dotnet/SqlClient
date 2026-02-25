@@ -22,6 +22,7 @@ The `.github/instructions/` directory contains comprehensive guides:
 | [architecture.instructions.md](.github/instructions/architecture.instructions.md) | Project structure, unified project model |
 | [tds-protocol.instructions.md](.github/instructions/tds-protocol.instructions.md) | TDS protocol, packet handling |
 | [ado-pipelines.instructions.md](.github/instructions/ado-pipelines.instructions.md) | Azure DevOps CI/CD pipelines |
+| [onebranch-pipeline-design.instructions.md](.github/instructions/onebranch-pipeline-design.instructions.md) | OneBranch multi-product pipeline design spec |
 | [testing.instructions.md](.github/instructions/testing.instructions.md) | Test framework, running tests |
 | [connection-pooling.instructions.md](.github/instructions/connection-pooling.instructions.md) | Connection pool internals |
 | [api-design.instructions.md](.github/instructions/api-design.instructions.md) | Public API design principles |

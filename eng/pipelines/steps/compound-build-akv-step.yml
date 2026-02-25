@@ -15,6 +15,7 @@ parameters:
   - name: akvPackageVersion
     type: string
 
+  # The C# build configuration to use (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
@@ -24,12 +25,18 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  - name: loggingPackageVersion
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
 steps:
   - task: DownloadSecureFile@1
     displayName: 'Download Signing Key'
     inputs:
-        retryCount: 5
         secureFile: 'netfxKeypair.snk'
+    name: keyFile
 
   - task: MSBuild@1
     displayName: 'Build.proj - BuildAkv'
@@ -41,8 +48,10 @@ steps:
             -p:AssemblyFileVersion=${{ parameters.akvAssemblyFileVersion }}
             -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
             -p:ReferenceType=Package
-            -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+            -p:SigningKeyPath=$(keyFile.secureFilePath)
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree

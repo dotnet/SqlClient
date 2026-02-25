@@ -1,0 +1,184 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic job template for building and signing simple csproj-based packages, currently:
+#
+#  - Abstractions
+#  - Azure
+#  - Logging
+#  - SqlServer
+#
+# The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet packages from the
+# signed DLLs, and finally ESRP signs the NuGet packages.
+
+parameters:
+  # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
+  # the default Build and Pack targets if those aren't specified.
+  - name: packageName
+    type: string
+    values:
+      - Abstractions
+      - Azure
+      - Logging
+      - SqlServer
+
+  # The full name of the package.  This is used in the job name, and to form DLL and PDB filenames
+  # for APIScan.
+  - name: packageFullName
+    type: string
+
+  # The version of the package.  This is used for symbol publishing.  It is not used for the DLL or
+  # NuGet package versions since those are supplied via the versionProperties parameter.
+  - name: packageVersion
+    type: string
+
+  # The MSBuild build target in build.proj (e.g. BuildLogging).  If not specified, defaults to
+  # Build<packageName>.
+  - name: buildTarget
+    type: string
+    default: ''
+
+  # The MSBuild pack target in build.proj (e.g. PackLogging).  If not specified, defaults to
+  # Pack<packageName>.
+  - name: packTarget
+    type: string
+    default: ''
+
+  # The C# build configuration to build (e.g. Debug or Release).
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+    default: Release
+
+  # Additional MSBuild -p: arguments for version properties.  These may include versions of
+  # packages this package depends on, or versions for this package itself.
+  - name: versionProperties
+    type: string
+    default: ''
+
+  # Assembly file version for APIScan (e.g. 1.0.0.12345).
+  - name: assemblyFileVersion
+    type: string
+
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    type: boolean
+
+  # Values required by ESRP tasks.
+  - name: esrpConnectedServiceName
+    type: string
+
+  - name: esrpClientId
+    type: string
+
+  - name: appRegistrationClientId
+    type: string
+
+  - name: appRegistrationTenantId
+    type: string
+
+  - name: authAkvName
+    type: string
+
+  - name: authSignCertName
+    type: string
+
+jobs:
+  - job: build_package_${{ parameters.packageName }}
+    displayName: Build ${{ parameters.packageFullName }}
+    pool:
+      type: windows
+
+    variables:
+      ob_outputDirectory: $(PACK_OUTPUT)
+      # APIScan configuration for this Extension package
+      ob_sdl_apiscan_enabled: true
+      ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
+      ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
+      ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.assemblyFileVersion }}
+
+      buildTarget: ${{ coalesce(parameters.buildTarget, format('Build{0}', parameters.packageName)) }}
+      packTarget: ${{ coalesce(parameters.packTarget, format('Pack{0}', parameters.packageName)) }}
+
+    steps:
+      - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
+
+      # The Azure package depends on Abstractions.  The other packages we build have no
+      # inter-package dependencies.
+      - ${{ if eq(parameters.packageName, 'Azure') }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Abstractions Package
+          inputs:
+            artifactName: $(abstractionsArtifactsName)
+            targetPath: $(Build.SourcesDirectory)/packages
+
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+      # Build the package, producing DLLs only (no NuGet package yet).
+      - template: /eng/pipelines/steps/compound-build-csproj-step.yml@self
+        parameters:
+          buildTarget: $(buildTarget)
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          versionProperties: ${{ parameters.versionProperties }}
+
+      # ESRP sign the DLLs.
+      - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
+        parameters:
+          appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+          appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+          authAkvName: ${{ parameters.authAkvName }}
+          authSignCertName: ${{ parameters.authSignCertName }}
+          esrpClientId: ${{ parameters.esrpClientId }}
+          esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+          pattern: ${{ parameters.packageFullName }}.dll
+
+      # Copy signed DLLs and PDBs to APIScan folders.
+      - task: CopyFiles@2
+        displayName: Copy DLLs for APIScan
+        inputs:
+          SourceFolder: $(BUILD_OUTPUT)/Package/bin
+          Contents: '**/${{ parameters.packageFullName }}.dll'
+          TargetFolder: $(ob_sdl_apiscan_softwareFolder)
+          # We must preserve the folder structure since our C# projects may produce multiple
+          # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
+          # etc.), and we need to keep those separate for APIScan to work correctly.
+          flattenFolders: false
+
+      - task: CopyFiles@2
+        displayName: Copy PDBs for APIScan
+        inputs:
+          SourceFolder: $(BUILD_OUTPUT)/Package/bin
+          Contents: '**/${{ parameters.packageFullName }}.pdb'
+          TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
+          flattenFolders: false
+
+      # Pack the signed DLLs into NuGet package (NoBuild=true).
+      - template: /eng/pipelines/steps/compound-pack-csproj-step.yml@self
+        parameters:
+          packTarget: $(packTarget)
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          versionProperties: ${{ parameters.versionProperties }}
+
+      # ESRP sign the NuGet package.
+      - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
+        parameters:
+          appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+          appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+          authAkvName: ${{ parameters.authAkvName }}
+          authSignCertName: ${{ parameters.authSignCertName }}
+          esrpClientId: ${{ parameters.esrpClientId }}
+          esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+
+      # Publish symbols to servers
+      - ${{ if eq(parameters.publishSymbols, true) }}:
+        - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
+          parameters:
+            packageFullName: ${{ parameters.packageFullName }}
+            packageVersion: ${{ parameters.packageVersion }}

@@ -1,3 +1,9 @@
+#if NET
+namespace SqlBatch_ExecuteReader;
+
+using System;
+using System.Collections.Generic;
+
 // <Snippet1>
 using Microsoft.Data.SqlClient;
 
@@ -41,3 +47,4 @@ class Program
     }
 }
 // </Snippet1>
+#endif

@@ -52,7 +52,7 @@ trigger: none
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use; defaults to Debug.
+  # The C# build configuration to use; defaults to Debug.
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
@@ -66,11 +66,13 @@ parameters:
     type: object
     default: [AnyCPU]
 
+  # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
     type: boolean
     default: false
 
+  # True to run the stress tests stage.
   - name: enableStressTests
     displayName: Enable Stress Tests
     type: boolean

@@ -10,7 +10,7 @@
 
 parameters:
 
-  # True to include debug steps.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false

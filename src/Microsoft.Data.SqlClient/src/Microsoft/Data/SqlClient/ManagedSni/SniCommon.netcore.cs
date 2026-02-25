@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(Guid connectionId, string targetServerName, string hostNameInCertificate, X509Certificate serverCert, string validationCertFileName, SslPolicyErrors policyErrors)
         {
-            using (TrySNIEventScope.Create(nameof(SniCommon)))
+            using (SqlClientSNIEventScope.Create(nameof(SniCommon)))
             {
                 if (policyErrors == SslPolicyErrors.None)
                 {
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal static IPAddress[] GetDnsIpAddresses(string serverName)
         {
-            using (TrySNIEventScope.Create(nameof(SniCommon)))
+            using (SqlClientSNIEventScope.Create(nameof(SniCommon)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
                 return Dns.GetHostAddresses(serverName);

@@ -1,3 +1,5 @@
+namespace SqlVectorExample;
+
 // VectorConsoleApp: End-to-end demo of working with
 // SQL Server vector datatype via Microsoft.Data.SqlClient
 //
@@ -18,7 +20,9 @@
 using Microsoft.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlTypes;
+using System;
 using System.Data;
+using System.Threading.Tasks;
 
 class VectorConsoleApp
 {
@@ -225,7 +229,7 @@ END
         var p = new SqlParameter("@VectorData", SqlDbTypeExtensions.Vector);
         cmd.Parameters.Add(p);
 
-        await cmd.PrepareAsync();
+        cmd.Prepare();
 
         for (int i = 0; i < rowCount; i++)
         {

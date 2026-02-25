@@ -8,6 +8,10 @@ parameters:
   - name: abstractionsPackageVersion
     type: string
 
+  - name: loggingPackageVersion
+    type: string
+
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -22,17 +26,22 @@ parameters:
     type: string
     default: $(Platform)
 
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
+    type: string
     default: Package
     values:
-      - Project
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
   - name: testSet
     type: string
@@ -43,7 +52,8 @@ parameters:
       - x64
       - x86
 
-  - name: dotnetx86RootPath # full path to the x86 dotnet root folder with trailing slash
+  # Full path to the x86 dotnet root folder with trailing slash.
+  - name: dotnetx86RootPath
     type: string
     default: ''
 
@@ -127,6 +137,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -135,6 +146,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
@@ -153,6 +165,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Filter="category=flaky"
           -p:CollectCodeCoverage=false
@@ -163,6 +176,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:Filter="category=flaky"
@@ -184,6 +198,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -192,6 +207,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
@@ -211,6 +227,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Filter="category=flaky"
           -p:CollectCodeCoverage=false
@@ -221,6 +238,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:Filter="category=flaky"
@@ -241,6 +259,9 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
         verbosityRestore: Detailed
@@ -258,6 +279,9 @@ steps:
           -p:TF=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:Platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:Filter="category=flaky"
@@ -279,6 +303,7 @@ steps:
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
@@ -298,6 +323,7 @@ steps:
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
@@ -320,6 +346,7 @@ steps:
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}
@@ -340,6 +367,7 @@ steps:
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
         -p:Platform=${{ parameters.platform }}
         -p:Configuration=${{ parameters.buildConfiguration }}

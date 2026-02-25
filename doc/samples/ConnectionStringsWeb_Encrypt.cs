@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+#if NETFRAMEWORK
+namespace ConnectionStringsWeb_Encrypt;
+
+using System;
 using System.Configuration;
 using System.Web.Configuration;
 
@@ -35,3 +39,5 @@ class Program
     }
     // </Snippet1>
 }
+#endif
+*/

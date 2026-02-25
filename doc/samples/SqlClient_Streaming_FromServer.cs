@@ -6,7 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace StreamingFromServer
+namespace SqlClient_Streaming_FromServer
 {
     class Program
     {

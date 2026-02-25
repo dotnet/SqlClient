@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace NextResultCS
+namespace SqlDataReader_NextResult
 {
     class Program
     {

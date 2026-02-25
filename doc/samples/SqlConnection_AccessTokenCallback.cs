@@ -1,3 +1,5 @@
+namespace SqlConnection_AccessTokenCallback;
+
 // <Snippet1>
 using System;
 using System.Collections.Concurrent;

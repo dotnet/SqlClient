@@ -4,7 +4,7 @@ using Microsoft.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Samples
+namespace SqlClient_AsyncProgramming_Cancellation
 {
    class CancellationSample
    {

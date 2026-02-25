@@ -5,6 +5,7 @@
 #################################################################################
 
 parameters:
+    # The C# build configuration to use (e.g. Debug or Release).
     - name: buildConfiguration
       type: string
       values:
@@ -23,14 +24,16 @@ parameters:
     - name: outputDirectory
       type: string
 
+    # The C# project reference type to use when building and packing the packages.
     - name: referenceType
       type: string
       values:
+        # Reference sibling packages as NuGet packages.
         - Package
+        # Reference sibling packages as C# projects.
         - Project
-    
-    # Semi-colon separated properties to pass to nuget via the -properties
-    # argument.
+
+    # Semi-colon separated properties to pass to nuget via the -properties argument.
     - name: properties
       type: string
       default: ''
@@ -75,7 +78,7 @@ steps:
             displayName: 'Generate NuGet Package'
             inputs:
                 command: custom
-                arguments: >- 
+                arguments: >-
                     pack
                     ${{ parameters.nuspecPath }}
                     -Version ${{ parameters.packageVersion }}

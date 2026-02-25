@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace ConnectionStringSettings_RetrieveFromConfigByProvider;
+
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Configuration;

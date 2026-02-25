@@ -5,9 +5,11 @@
 #################################################################################
 parameters:
 
+  # The name of the pipeline artifacts to download prior to building the tests.
   - name: artifactName
     type: string
 
+  # True if this build is a preview.
   - name: isPreview
     type: boolean
 
@@ -26,11 +28,6 @@ jobs:
 
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.artifactName }}
-
-  - name: BuildType
-    # This variable is set in the build-signed-package-job.yml job. Any changes
-    # to the names of the stage, job, or variable must be reflected here.
-    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
 
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath
@@ -78,42 +75,33 @@ jobs:
     displayName: 'Verify nuget signature'
 
   - powershell: |
-      $buildType = [string]"$(BuildType)"
-
-      if($buildType -eq 'Official')
+      # Recursively find all .dll files in TempFolder (installed nuget folder)
+      # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
+      $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
+      $badDlls = @()
+      foreach ($file in $dllFiles)
       {
-          # Recursively find all .dll files in TempFolder (installed nuget folder)
-          # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
-          $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
-          $badDlls = @()
-          foreach ($file in $dllFiles)
-          {
-            # Run sn.k to verify the strong name on each dll
-            $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
-            Write-OutPut $result
+        # Run sn.exe to verify the strong name on each dll
+        $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
+        Write-OutPut $result
 
-            # if thhe dll is not valid, it would be delay signed or test-signed which is not meant for production
-            if($result[$result.Length-1] -notlike "* is valid")
-            {
-              $badDlls += $result[$result.Length-1]
-            }
-          }
-          if($badDlls.Count -gt 0)
-          {
-            Write-OutPut "Error: Invalid dlls are detected. Chek below list:"
-            foreach($dll in $badDlls)
-            {
-              Write-Output $dll
-            }
-            Exit -1
+        # if the dll is not valid, it would be delay signed or test-signed which is not meant for production
+        if($result[$result.Length-1] -notlike "* is valid")
+        {
+          $badDlls += $result[$result.Length-1]
         }
-        Write-Host "Strong name has been verified for all dlls"
       }
-      else
+      if($badDlls.Count -gt 0)
       {
-        Write-OutPut "Strong name verification is not required for non-official builds"
+        Write-OutPut "Error: Invalid dlls are detected. Check the list below:"
+        foreach($dll in $badDlls)
+        {
+          Write-Output $dll
+        }
+        Exit -1
       }
-    displayName: 'Verify strong name is generated for production'
+      Write-Host "Strong name has been verified for all dlls"
+    displayName: 'Verify assembly strong names'
 
   - powershell: |
       # Checks the expected folder names such as lib, ref, runtimes

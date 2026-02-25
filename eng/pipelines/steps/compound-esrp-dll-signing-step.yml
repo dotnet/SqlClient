@@ -5,64 +5,71 @@
 #################################################################################
 
 parameters:
+  # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
 
+  # App Registration Tenant Id.
   - name: appRegistrationTenantId
     type: string
 
-  - # Name of the Azure Key Vault to retrieve certificates from.
-    # note: This has nothing to do with the AKV provider package.
-    name: authAkvName
+  # Name of the Azure Key Vault to retrieve certificates from.
+  # note: This has nothing to do with the AKV provider package.
+  - name: authAkvName
     type: string
 
+  # Auth Sign Cert Name.
   - name: authSignCertName
     type: string
 
+  # Esrp Connected Service Name.
   - name: esrpConnectedServiceName
     type: string
 
+  # Esrp Client Id.
   - name: esrpClientId
     type: string
-    
-  - # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) and all subdirectories
-    # that match this pattern will be scanned and signed. This should end with ".dll". 
-    name: pattern
+
+  # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT)/Package/bin
+  # that match this pattern will be scanned and signed. This should end with ".dll".
+  - name: pattern
     type: string
-  
+
 steps:
-  - task: EsrpMalwareScanning@5
-    displayName: 'ESRP DLL Malware Scanning'
+  # See: https://aka.ms/esrp.scantask
+  - task: EsrpMalwareScanning@6
+    displayName: ESRP DLL Malware Scanning
     inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
       CleanupTempStorage: 1
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(BUILD_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
+      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+      EsrpClientId: ${{ parameters.esrpClientId }}
+      FolderPath: $(BUILD_OUTPUT)/Package/bin
+      Pattern: ${{ parameters.pattern }}
       UseMSIAuthentication: true
       VerboseLogin: 1
-      
-  - task: EsrpCodeSigning@5
-    displayName: 'ESRP DLL Signing'
+
+  # See: https://aka.ms/esrp.signtask
+  - task: EsrpCodeSigning@6
+    displayName: ESRP DLL Signing
     inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-      AuthAKVName: '${{ parameters.authAkvName }}'
-      AuthSignCertName: '${{ parameters.authSignCertName }}'
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(BUILD_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
-      signConfigType: 'inlineSignParams'
+      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+      AuthAKVName: ${{ parameters.authAkvName }}
+      AuthSignCertName: ${{ parameters.authSignCertName }}
+      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+      EsrpClientId: ${{ parameters.esrpClientId }}
+      FolderPath: $(BUILD_OUTPUT)/Package/bin
+      Pattern: ${{ parameters.pattern }}
+      signConfigType: inlineSignParams
       UseMSIAuthentication: true
       inlineOperation: |
-        [ 
+        [
             {
                 "keyCode": "CP-230012",
                 "operationSetCode": "SigntoolSign",
-                "parameters": 
+                "parameters":
                     [
                         {
                             "parameterName": "OpusName",

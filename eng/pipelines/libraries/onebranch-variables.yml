@@ -1,0 +1,55 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This file is only included in MDS OneBranch Official pipelines.
+
+variables:
+  - template: /eng/pipelines/libraries/build-variables.yml@self
+
+  # onebranch template variables
+  - name: ob_sdl_binskim_break
+    value: true # https://aka.ms/obpipelines/sdl
+  - name: Packaging.EnableSBOMSigning
+    value: true
+  - name: WindowsContainerImage
+    value: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+
+  # OneBranch automatically publishes pipeline artifacts from all jobs.  Use of the
+  # PublishPipelineArtifacts task is prohibited.  All content in the ob_outputDirectory is
+  # published.  The artifacts are named according to this pattern:
+  #
+  #   drop_<stageName>_<jobName>
+  #
+  # Downstream stages and jobs may download these artifacts via the DownloadPipelineArtifact task,
+  # but they must know the artifact name.
+  #
+  # Here we define the artifact names that our OneBranch pipelines produce to avoid hardcoding them
+  # throughout the pipeline files.  If any of the stage or job names change, we only need to update
+  # the artifact names here.
+
+  # The Abstractions package artifacts.
+  - name: abstractionsArtifactsName
+    value: drop_build_independent_build_package_Abstractions
+
+  # The AKV package artifacts.
+  - name: akvArtifactsName
+    value: drop_build_dependent_build_package_AKV
+
+  # The Azure package artifacts.
+  - name: azureArtifactsName
+    value: drop_build_dependent_build_package_Azure
+
+  # The Logging package artifacts.
+  - name: loggingArtifactsName
+    value: drop_build_independent_build_package_Logging
+
+  # The SqlServer package artifacts.
+  - name: sqlServerArtifactsName
+    value: drop_build_independent_build_package_SqlServer
+
+  # The SqlClient package artifacts.
+  - name: sqlClientArtifactsName
+    value: drop_build_dependent_build_package_SqlClient

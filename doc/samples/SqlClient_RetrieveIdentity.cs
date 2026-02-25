@@ -2,7 +2,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace AutoNumberTest
+namespace SqlClient_RetrieveIdentity
 {
     class Program
     {

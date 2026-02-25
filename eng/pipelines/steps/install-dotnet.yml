@@ -24,11 +24,11 @@ parameters:
       - arm64
     default: x64
 
-  # True to enable debug logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
-  
+
   # The directory to install to.
   - name: installDir
     type: string
@@ -53,7 +53,7 @@ steps:
 
   # Use the UseDotNet@2 task for all architectures except ARM64.
   - ${{ if ne(parameters.architecture, 'arm64') }}:
-  
+
     # Install the SDK listed in the global.json file.
     - task: UseDotNet@2
       displayName: Install .NET SDK (global.json)
@@ -65,7 +65,7 @@ steps:
         env:
           PROCESSOR_ARCHITECTURE: x86
 
-    # Install the desired Runtimes, if any.      
+    # Install the desired Runtimes, if any.
     - ${{ each version in parameters.runtimes }}:
       - task: UseDotNet@2
         displayName: Install .NET ${{ version }} Runtime

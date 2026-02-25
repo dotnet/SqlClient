@@ -2,9 +2,9 @@
 <Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="src/Directory.Build.props" />
-  <Import Project="$(ToolsDir)targets\GenerateSqlServerPackage.targets" />
   <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
   <Import Project="$(ToolsDir)targets\add-ons\GenerateAkvPackage.targets" />
+  <Import Project="$(ToolsDir)targets\CompareMdsRefAssemblies.targets" />
 
   <PropertyGroup>
     <!-- SourceLink variable-->
@@ -29,7 +29,6 @@
     <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
     <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
-    <SqlServerLibProperties>$(CommonProperties);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
@@ -54,7 +53,7 @@
     <!-- Collect code coverage unless explicitly disabled -->
     <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
     <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
-    <CollectStatement Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectStatement>
+    <CollectArgument Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectArgument>
 
     <!-- Set up tests to fail after hangs and report via blame -->
     <BlameArgument>$(Blame)</BlameArgument>
@@ -74,9 +73,10 @@
   <!-- Populate all managed projects -->
   <ItemGroup>
     <Tools Include="tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj" />
-    <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
+    <SqlServer Include="**/Microsoft.SqlServer.Server.csproj" />
     <Abstractions Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
     <Azure Include="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+    <Logging Include="src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <!-- Used to build .NET Standard DLL for lib folder from this project. -->
@@ -95,9 +95,41 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
-  <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
+  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard;BuildLogging;BuildAzure" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildSqlServer;PackSqlServer;GenerateMdsPackage" />
+
+  <!-- SqlServer Targets -->
+  <PropertyGroup>
+    <SqlServerProperties>$(CommonProperties)</SqlServerProperties>
+
+    <SqlServerProperties
+      Condition="'$(SqlServerPackageVersion)' != ''">
+      $(SqlServerProperties);SqlServerPackageVersion=$(SqlServerPackageVersion)
+    </SqlServerProperties>
+
+    <SqlServerProperties
+      Condition="'$(SqlServerAssemblyFileVersion)' != ''">
+      $(SqlServerProperties);SqlServerAssemblyFileVersion=$(SqlServerAssemblyFileVersion)
+    </SqlServerProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreSqlServer">
+    <MSBuild Projects="@(SqlServer)" Targets="restore" Properties="$(SqlServerProperties)" />
+  </Target>
+
+  <Target Name="BuildSqlServer" DependsOnTargets="RestoreSqlServer">
+    <MSBuild
+      Projects="@(SqlServer)"
+      Targets="Build"
+      Properties="$(CI);$(SqlServerProperties)" />
+  </Target>
+
+  <Target Name="PackSqlServer">
+    <MSBuild
+      Projects="@(SqlServer)"
+      Targets="Pack"
+      Properties="$(SqlServerProperties);NoBuild=true" />
+  </Target>
 
   <!-- Abstractions Targets -->
   <PropertyGroup>
@@ -138,8 +170,58 @@
   <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions">
     <MSBuild
       Projects="@(Abstractions)"
-      Targets="Build;Pack"
-      Properties="$(AbstractionsProperties)" />
+      Targets="Build"
+      Properties="$(CI);$(AbstractionsProperties)" />
+  </Target>
+
+  <Target Name="PackAbstractions">
+    <MSBuild
+      Projects="@(Abstractions)"
+      Targets="Pack"
+      Properties="$(AbstractionsProperties);NoBuild=true" />
+  </Target>
+
+  <!-- Logging Targets -->
+  <PropertyGroup>
+    <LoggingProperties>$(CommonProperties)</LoggingProperties>
+
+    <!--
+      If the LoggingPackageVersion property was supplied on the command-line,
+      then pass it along to the Logging build.  Otherwise, omit it entirely
+      to avoid it expanding as empty here and thus overriding the default
+      behaviour in the Logging project.
+    -->
+    <LoggingProperties
+      Condition="'$(LoggingPackageVersion)' != ''">
+      $(LoggingProperties);LoggingPackageVersion=$(LoggingPackageVersion)
+    </LoggingProperties>
+
+    <!-- Do the same for the LoggingAssemblyFileVersion property. -->
+    <LoggingProperties
+      Condition="'$(LoggingAssemblyFileVersion)' != ''">
+      $(LoggingProperties);LoggingAssemblyFileVersion=$(LoggingAssemblyFileVersion)
+    </LoggingProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Restore"
+      Properties="$(LoggingProperties)" />
+  </Target>
+
+  <Target Name="BuildLogging" DependsOnTargets="RestoreLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Build"
+      Properties="$(CI);$(LoggingProperties)" />
+  </Target>
+
+  <Target Name="PackLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Pack"
+      Properties="$(LoggingProperties);NoBuild=true" />
   </Target>
 
   <!-- Azure Targets -->
@@ -180,20 +262,23 @@
   <Target Name="BuildAzure" DependsOnTargets="RestoreAzure">
     <MSBuild
       Projects="@(Azure)"
-      Targets="Build;Pack"
-      Properties="$(AzureProperties)" />
+      Targets="Build"
+      Properties="$(CI);$(AzureProperties)" />
+  </Target>
+
+  <Target Name="PackAzure">
+    <MSBuild
+      Projects="@(Azure)"
+      Targets="Pack"
+      Properties="$(AzureProperties);NoBuild=true" />
   </Target>
 
   <!-- Other Targets -->
-  <Target Name="RestoreSqlServerLib">
-    <MSBuild Projects="@(SqlServerLib)" Targets="restore" Properties="$(SqlServerLibProperties)" />
-  </Target>
-
-  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions">
+  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
-  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServerLib;RestoreAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
@@ -205,28 +290,15 @@
     <MSBuild Projects="@(Tools)" Properties="$(CommonProperties)" />
   </Target>
 
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServerLib;BuildAbstractions" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServer;BuildAbstractions;BuildLogging" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
   </Target>
 
-  <Target Name="BuildSqlServerLibAnyOS" DependsOnTargets="RestoreSqlServerLib">
-    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;OSGroup=AnyOS" RemoveProperties="TargetsWindows;TargetsUnix;" />
-  </Target>
-
-  <Target Name="BuildSqlServerLib" DependsOnTargets="RestoreSqlServerLib">
-    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=AnyCPU] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=$(Platform)] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServerLib;BuildAbstractions">
+  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
-  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServerLib;BuildAbstractions">
+  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />

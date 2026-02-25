@@ -5,15 +5,27 @@
 #################################################################################
 parameters:
 
+  # The assembly file version to apply to the Abstractions package.
   - name: abstractionsAssemblyFileVersion
     type: string
 
+  # The version to apply to the Abstractions package.
   - name: abstractionsPackageVersion
     type: string
 
+  # The assembly file version to apply to the Logging package.
+  - name: loggingAssemblyFileVersion
+    type: string
+
+  # The version to apply to the Logging package.
+  - name: loggingPackageVersion
+    type: string
+
+  # The assembly file version to apply to the Mds package.
   - name: mdsAssemblyFileVersion
     type: string
 
+  # The version to apply to the Mds package.
   - name: mdsPackageVersion
     type: string
 
@@ -23,7 +35,7 @@ steps:
     displayName: 'Download Key Pair'
     inputs:
       secureFile: netfxKeypair.snk
-      retryCount: 5
+    name: keyFile
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -37,9 +49,10 @@ steps:
         -t:BuildAllConfigurations
         -p:ReferenceType=Package
         -p:GenerateNuget=false
-        -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
+        -p:SigningKeyPath=$(keyFile.secureFilePath)
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
         -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}

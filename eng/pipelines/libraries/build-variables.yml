@@ -4,8 +4,18 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in MDS OneBranch Official pipelines.
+# Official build variable groups and shared variable templates.
+# Included transitively by onebranch-variables.yml in all OneBranch pipelines.
 
 variables:
   - group: Release Variables
+
+  # Symbols publishing credentials
+  - group: 'Symbols publishing'
+    # SymbolsAzureSubscription
+    # SymbolsPublishProjectName
+    # SymbolsPublishServer
+    # SymbolsPublishTokenUri
+    # SymbolsUploadAccount
+
   - template: /eng/pipelines/libraries/common-variables.yml@self

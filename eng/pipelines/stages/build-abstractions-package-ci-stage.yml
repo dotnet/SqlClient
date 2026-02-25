@@ -30,9 +30,18 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
+  # The assembly file version to stamp into the DLLs.
+  - name: abstractionsAssemblyFileVersion
+    type: string
+
   # The version to apply to the NuGet package and DLLs.
   - name: abstractionsPackageVersion
     type: string
+
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
 
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
@@ -42,7 +51,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -62,6 +71,11 @@ stages:
 
   - stage: build_abstractions_package_stage
     displayName: Build Abstractions Package
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     jobs:
 
@@ -116,6 +130,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsAssemblyFileVersion: ${{ parameters.abstractionsAssemblyFileVersion }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}

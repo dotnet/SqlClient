@@ -1,0 +1,41 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic pack step for csproj-based Extension packages (Logging, Abstractions,
+# Azure).  This step runs the Pack target after DLLs have been signed.  The
+# NoBuild=true property ensures the DLLs are not rebuilt.
+
+parameters:
+  # The MSBuild pack target in build.proj (e.g. PackLogging, PackAbstractions,
+  # PackAzure).
+  - name: packTarget
+    type: string
+
+  # Build Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Additional MSBuild arguments for version properties.
+  - name: versionProperties
+    type: string
+    default: ''
+
+steps:
+  - task: MSBuild@1
+    displayName: Build.proj - ${{ parameters.packTarget }}
+    inputs:
+      solution: $(REPO_ROOT)/build.proj
+      configuration: ${{ parameters.buildConfiguration }}
+      msbuildArguments: >-
+          -t:${{ parameters.packTarget }}
+          -p:ReferenceType=Package
+          ${{ parameters.versionProperties }}
+
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: List Pack Output Tree After Pack
