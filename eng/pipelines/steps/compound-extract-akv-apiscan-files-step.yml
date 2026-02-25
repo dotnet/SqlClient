@@ -7,29 +7,33 @@
 # @TODO: This can be made generic when the output folders match the package names.
 
 parameters:
+    # The C# build configuration to use (e.g. Debug or Release).
     - name: buildConfiguration
       type: string
       values:
           - Debug
           - Release
-    
-    - # Path where the dll files should be copied
-      name: dllPath
+
+    # Path where the dll files should be copied
+    - name: dllPath
       type: string
-    
-    - # Path where the pdb files should be copied
-      name: pdbPath
+
+    # Path where the pdb files should be copied
+    - name: pdbPath
       type: string
-    
+
+    # The C# project reference type to use when building and packing the packages.
     - name: referenceType
       type: string
       values:
-          - Package
-          - Project
-      
-    - # Short form of the target framework version to extract. Used to build the path to the files
-      # to extract. Eg, net462
-      name: targetFramework
+        # Reference sibling packages as NuGet packages.
+        - Package
+        # Reference sibling packages as C# projects.
+        - Project
+
+    # Short form of the target framework version to extract. Used to build the path to the files
+    # to extract. Eg, net462
+    - name: targetFramework
       type: string
 
 steps:
@@ -39,11 +43,10 @@ steps:
           contents: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll'
           sourceFolder: '$(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin/Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/${{ parameters.targetFramework }}/'
           targetFolder: '${{ parameters.dllPath }}/win/${{ parameters.targetFramework }}/'
-          
+
     - task: CopyFiles@2
       displayName: 'Copy ${{ parameters.targetFramework }} PDB'
       inputs:
           contents: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb'
           sourceFolder: '$(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin/Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/${{ parameters.targetFramework }}/'
           targetFolder: '${{ parameters.pdbPath }}/win/${{ parameters.targetFramework }}/'
-    

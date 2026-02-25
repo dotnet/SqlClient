@@ -4,68 +4,36 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: downloadPackageStep
-    type: step
-    default:
-      script: echo <empty step>
 
-  - name: packageFolderName
+  # The name of the pipeline artifacts to download prior to building the tests.
+  - name: artifactName
     type: string
-    default: drop_build_build_signed_package
 
-  - name: dependsOn
-    type: string
-    default: ''
-
-  - name: packageType
-    type: string
-    default: both
-    values:
-    - dll
-    - pdb
-    - both
-
-  - name: assembly_file_version_netfx
-    type: string
-    default: $(AssemblyFileVersion)
-
-  - name: assembly_file_version_core
-    type: string
-    default: $(AssemblyFileVersion)
-
+  # True if this build is a preview.
   - name: isPreview
     type: boolean
 
 jobs:
 - job: validate_signed_package
   displayName: 'Verify signed package'
-  ${{ if ne(parameters.dependsOn, '')}}:
-    dependsOn: '${{parameters.dependsOn }}'
+
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     isCustom: true
     name: ADO-1ES-Pool
     vmImage: 'ADO-MMS22-SQL19'
-    
-  variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-  - template: ../../../libraries/mds-validation-variables.yml@self
-  
-  - name: pathToDownloadedNuget # path to the downloaded nuget files
-    value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
-  
-  - name: ProductVersion    #MDS product version (MDS validation)
-    value: $(NugetPackageVersion)
 
-  - name: BuildType
-    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
+  variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+  - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
+
+  - name: pathToDownloadedNuget # path to the downloaded nuget files
+    value: $(Pipeline.Workspace)\${{parameters.artifactName }}
 
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath
-      value: $(extractedNugetRootPath).$(PreviewNugetPackageVersion)
-    - name: NugetPackageVersion
-      value: $(PreviewNugetPackageVersion)
-    - name: ProductVersion
-      value: $(PreviewNugetPackageVersion)
+      value: $(extractedNugetRootPath).$(previewMdsPackageVersion)
+    - name: mdsPackageVersion
+      value: $(previewMdsPackageVersion)
 
   steps:
   - script: SET
@@ -75,25 +43,17 @@ jobs:
     displayName: 'Use NuGet'
 
   - powershell: |
-      #Sets Variables for AssemblyFileVersion, AssemblyVersion and NugetPackageVersion
-      
-      [Xml] $versionprops = Get-Content -Path ".\tools\props\Versions.props" 
-      Write-Host $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
-      
-      $AssemblyVersion =  $versionprops.Project.PropertyGroup[0].AssemblyVersion
-      
-      Write-Host "##vso[task.setvariable variable=ASSEMBLY_VERSION;]$AssemblyVersion"
-    displayName: 'Update assembly version property'
-
-  - powershell: |
       # Displays the paths of all the local cache directories
       nuget locals all -List
-      
+
       #Clears all files from all local cache directories
       nuget locals all -Clear
     displayName: 'Clear local cache'
 
-  - ${{parameters.downloadPackageStep }}
+  - download: current
+    artifact: ${{parameters.artifactName}}
+    patterns: '**/*.*nupkg'
+    displayName: 'Download NuGet Package'
 
   - powershell: |
       # Install nuget package
@@ -106,60 +66,42 @@ jobs:
     displayName: 'Extract Nuget in temp folder'
 
   - powershell: |
-      # Artifact is stored in the Nuget folder
-      $packageType = '${{parameters.packageType}}'
-
       Write-Host "--------------------------------------------------"
       Write-Host "This will verify the artifact signature" -ForegroundColor Green
       Write-Host "--------------------------------------------------"
-      
-      if ($packageType -eq 'dll' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.nupkg
-      }
-      if ($packageType -eq 'pdb' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.snupkg
-      }
+
+      nuget verify -All $(pathToDownloadedNuget)\*.nupkg
+      nuget verify -All $(pathToDownloadedNuget)\*.snupkg
     displayName: 'Verify nuget signature'
 
   - powershell: |
-      $buildType = [string]"$(BuildType)" 
-
-      if($buildType -eq 'Official')
+      # Recursively find all .dll files in TempFolder (installed nuget folder)
+      # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
+      $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
+      $badDlls = @()
+      foreach ($file in $dllFiles)
       {
-          # Recursively find all .dll files in TempFolder (installed nuget folder)
-          # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
-          $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
-          $badDlls = @()
-          foreach ($file in $dllFiles) 
-          {
-            # Run sn.k to verify the strong name on each dll
-            $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
-            Write-OutPut $result
+        # Run sn.exe to verify the strong name on each dll
+        $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
+        Write-OutPut $result
 
-            # if thhe dll is not valid, it would be delay signed or test-signed which is not meant for production
-            if($result[$result.Length-1] -notlike "* is valid")
-            {
-              $badDlls += $result[$result.Length-1]
-            }
-          }
-          if($badDlls.Count -gt 0)
-          {
-            Write-OutPut "Error: Invalid dlls are detected. Chek below list:"
-            foreach($dll in $badDlls)
-            {
-              Write-Output $dll
-            }        
-            Exit -1
+        # if the dll is not valid, it would be delay signed or test-signed which is not meant for production
+        if($result[$result.Length-1] -notlike "* is valid")
+        {
+          $badDlls += $result[$result.Length-1]
         }
-        Write-Host "Strong name has been verified for all dlls"
       }
-      else
+      if($badDlls.Count -gt 0)
       {
-        Write-OutPut "Strong name verification is not required for non-official builds"
+        Write-OutPut "Error: Invalid dlls are detected. Check the list below:"
+        foreach($dll in $badDlls)
+        {
+          Write-Output $dll
+        }
+        Exit -1
       }
-    displayName: 'Verify strong name is generated for production'
+      Write-Host "Strong name has been verified for all dlls"
+    displayName: 'Verify assembly strong names'
 
   - powershell: |
       # Checks the expected folder names such as lib, ref, runtimes
@@ -192,7 +134,7 @@ jobs:
             }
           }
         }
-    
+
         elseif ($_.Name -eq 'runtimes'){
           Get-ChildItem -Depth 3 -Path $_.FullName -Exclude $excludNamesFromRuntimeFolder -Directory | foreach{
             if('$(expectedDotnetVersions)'.Contains($_.Name)){
@@ -224,15 +166,15 @@ jobs:
 
   - powershell: |
       # list all the child items of created temp folder
-      
+
       #Verify all DLLs unzipped match "expected" hierarchy
-      
+
       foreach( $folderName in (Get-ChildItem -Path $(extractedNugetPath) -Directory).Name)
       {
         # List all Childerns of the Path
-        Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File 
-        $subFiles = Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File 
-      
+        Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File
+        $subFiles = Get-ChildItem -Path $(extractedNugetPath)\$folderName -Recurse -File
+
         foreach($file in $subFiles)
         {
           if($subFiles[0].Name -like "*.dll" )
@@ -251,7 +193,7 @@ jobs:
                 Write-Host "Expected file pattern for localization did not match to *.dll" -ForegroundColor Red
                 Exit -1
               }
-            } 
+            }
           }
           else
           {
@@ -265,7 +207,7 @@ jobs:
     displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
   - powershell: |
       # Verify all dlls status are Valid
-      
+
       $dlls = Get-ChildItem -Path $(extractedNugetPath) -Recurse -Include *.dll
       foreach ($status in $dlls | Get-AuthenticodeSignature)
       {
@@ -283,72 +225,54 @@ jobs:
     displayName: 'Verify all dlls status are Valid'
 
   - powershell: |
-      # This will check for ProductVersion and FileVersion.
-      #
-      # For NetFx we have a different FileVersion, but product versions are all
-      # the same.  Some may have extra numbering at the end.  We only check for
-      # the first parts.
+      # This will check each DLL's ProductVersion and FileVersion against
+      # expected values.
+      $failed = 0
 
-      foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo ) 
+      foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo )
       {
-          if ($pVersion.ProductVersion -Like '$(ProductVersion)*') 
+          if ($pVersion.ProductVersion -Like '$(mdsPackageVersion)*')
           {
-              Write-Host Valid Product Version:"$pVersion.ProductVersion" $pVersion.ProductVersion detected for $pVersion.FileName -ForegroundColor Green
-          }
-          else
-          { 
-                Write-Host "Wrong ProductVersion detected. Expected: '$(ProductVersion)', but Detected: "$pVersion.ProductVersion""
-                Exit -1
-          }
-      
-          if($pVersion.FileName -like '*lib\$(CurrentNetFxVersion)*'){
-      
-              if($pVersion.FileVersion -eq '${{parameters.assembly_file_version_netfx }}')
-              {
-                  Write-Host 'Correct File version Detected for net46,' $pVersion.FileVersion -ForegroundColor Green
-              }
-              else
-              {
-                  Write-Host 'Wrong File version Detected for net46,' $pVersion.FileVersion -ForegroundColor Red
-                  Exit -1
-              }
+              Write-Host -ForegroundColor Green "Correct ProductVersion detected for $($pVersion.FileName): $($pVersion.ProductVersion)"
           }
           else
           {
-              
-              if($pVersion.FileVersion -eq '${{parameters.assembly_file_version_core}}')
-              {
-                    Write-Host 'Correct File version Detected for netcore,' $pVersion.FileVersion -ForegroundColor Green
-              }
-              else
-              {
-                  Write-Host 'Wrong File version Detected for netcore and ref folder,' $pVersion.FileVersion -ForegroundColor Red
-                  Exit -1
-              }
+                Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $(mdsPackageVersion); found: $($pVersion.ProductVersion)"
+                $failed = 1
+          }
+
+          if ($pVersion.FileVersion -eq '$(mdsAssemblyFileVersion)')
+          {
+              Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
+          }
+          else
+          {
+              Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $(mdsAssemblyFileVersion); found: $($pVersion.FileVersion)"
+              $failed = 1
           }
       }
-      
-      Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo
-    displayName: 'Verify "File Version" matches provided pipeline variable "ASSEMBLY_FILE_VERSION" for DLLs'
 
-  - powershell: |
-      # Change TestMicrosoftDataSqlClientVersion
+      if ($failed -ne 0)
+      {
+          Exit -1
+      }
 
-      [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
-      $versionpropspath = "tools\props\Versions.props"
-      $versionprops.Project.PropertyGroup[$versionprops.Project.PropertyGroup.Count-1].TestMicrosoftDataSqlClientVersion ="$(NugetPackageVersion)"
-      Write-Host "Saving Test nuget version at $rootfolder\props ...." -ForegroundColor Green
-      $versionprops.Save($versionpropspath)
-
-    displayName: 'Modify TestMicrosoftDataSqlClientVersion'
+      Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object VersionInfo | Format-List
+    displayName: 'Verify "File Version" matches expected values for DLLs'
 
   - powershell: |
       # Check assembly versions.
+      #
+      # GOTCHA: This expects the Versions.props file having XML elements in a
+      # certain order.  If the order changes, this check will fail!
+      #
+      # TODO: This also isn't checking the versions of the actual assemblies in
+      # the package, so it isn't terribly useful.
 
-      [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
-      $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
-      $AssemblyVersion = $versionprops.Project.PropertyGroup[0].AssemblyVersion
-      
+      [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props"
+      $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[2].AssemblyFileVersion
+      $AssemblyVersion = $versionprops.Project.PropertyGroup[2].AssemblyVersion
+
       if($AssemblyFileVersion -eq $AssemblyVersion)
       {
           Write-Host AssemblyFileVersion: $AssemblyFileVersion should not be equal to: $AssemblyVersion

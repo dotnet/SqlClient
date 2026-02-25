@@ -1,10 +1,11 @@
-﻿// <Snippet1>
+﻿#if NETFRAMEWORK
+// <Snippet1>
 using System;
 using Microsoft.Data.SqlClient;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace PerformanceCounterTest
+namespace SqlClient_PerformanceCounter
 {
     class Program
     {
@@ -171,3 +172,4 @@ namespace PerformanceCounterTest
     }
 }
 // </Snippet1>
+#endif

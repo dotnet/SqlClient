@@ -10,7 +10,7 @@ using System.Text;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.SqlClient.Samples
+namespace SqlCommand_BeginExecuteReaderAsyncBehavior
 {
     public partial class Form1 : Form
     {

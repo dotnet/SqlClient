@@ -3,14 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-
-#if NETFRAMEWORK
-using System.Runtime.Versioning;
-#endif
-
-#if _WINDOWS
 using System.Security.Principal;
-#endif
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -59,10 +52,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return _hashCode;
         }
 
-        #if NETFRAMEWORK
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        [ResourceExposure(ResourceScope.None)] // SxS: this method does not create named objects
-        #endif
         internal static DbConnectionPoolIdentity GetCurrent()
         {
             #if NETFRAMEWORK

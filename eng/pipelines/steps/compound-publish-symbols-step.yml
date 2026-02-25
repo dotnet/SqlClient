@@ -7,63 +7,66 @@
 # For more details, see https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
 
 parameters:
-    - # Name of the symbols artifact that will be published
-      name: artifactName
+    # Name of the symbols artifact that will be published
+    - name: artifactName
       type: string
 
-    - # Azure subscription where the publishing task will execute
-      name: azureSubscription
+    # Azure subscription where the publishing task will execute
+    - name: azureSubscription
       type: string
 
-    - # Package name, typically the name of the nuget package being built
-      name: packageName
+    # Package name, typically the name of the nuget package being built
+    - name: packageName
       type: string
 
-    - # Project that symbols will belong to (decided during symbols onboarding)
-      name: publishProjectName
+    # Project that symbols will belong to (decided during symbols onboarding)
+    - name: publishProjectName
       type: string
 
-    - # Where symbols publishing service is hosted, will be prepended to trafficmanager.net
-      name: publishServer
+    # Where symbols publishing service is hosted, will be prepended to trafficmanager.net
+    - name: publishServer
       type: string
 
-    - # Whether to publish the uploaded symbols to the internal symbols servers
-      name: publishToInternal
+    # Whether to publish the uploaded symbols to the internal symbols servers
+    - name: publishToInternal
       type: boolean
 
-    - # Whether to publish the uploaded symbols to the public symbols servers
-      name: publishToPublic
+    # Whether to publish the uploaded symbols to the public symbols servers
+    - name: publishToPublic
       type: boolean
 
-    - # URI to use for requesting a bearer-token for publishing the symbols
-      name: publishTokenUri
+    # URI to use for requesting a bearer-token for publishing the symbols
+    - name: publishTokenUri
       type: string
 
-    - # Type of build, used to determine path to search for symbols files
-      # @TODO: Can we remove this?
-      name: referenceType
+    # The C# project reference type to use when building and packing the packages.
+    - name: referenceType
       type: string
       values:
-        - Project
+        # Reference sibling packages as NuGet packages.
         - Package
+        # Reference sibling packages as C# projects.
+        - Project
 
-    - # Pattern to use to search for pdb symbols files to upload/publish
-      name: searchPattern
+    # Pattern to use to search for pdb symbols files to upload/publish
+    - name: searchPattern
       type: string
 
-    - # Account/org where the symbols will be uploaded
-      name: uploadAccount
+    # Account/org where the symbols will be uploaded
+    - name: uploadAccount
       type: string
 
-    - # Version of the symbols to publish, typically the same as the NuGet package version
-      name: version
+    # Version of the symbols to publish, typically the same as the NuGet package version
+    - name: version
       type: string
 
 steps:
-    - # Set variable for downstream tasks (allegedly)
-      # Note: Because variables cannot be set in top-level of template, this has to be done during
-      #    runtime.
-      script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
+    # Set variable for downstream tasks (allegedly).
+    #
+    # Note: Because variables cannot be set in top-level of template, this has to be done during
+    # runtime.
+    #
+    - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
       displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
     - task: PublishSymbols@2
@@ -90,28 +93,28 @@ steps:
           # Propagate parameters to PS variables ################################################
           $artifactName = "${{ parameters.artifactName }}"
           echo "artifactName= $artifactName"
-          
+
           $publishProjectName = "${{ parameters.publishProjectName }}"
           echo "publishProjectName= $publishProjectName"
-          
+
           $publishToInternal = "${{ parameters.publishToInternal }}".ToLower()
           echo "publishToInternal= $publishToInternal"
-          
+
           $publishToPublic = "${{ parameters.publishToPublic }}".ToLower()
           echo "publishToPublic= $publishToPublic"
-          
+
           $publishServer = "${{ parameters.publishServer }}"
           echo "publishServer= $publishServer"
-          
+
           $publishTokenUri = "${{ parameters.publishTokenUri }}"
           echo "publishTokenUri= $publishTokenUri"
-          
-          # Publish symbols #####################################################################      
+
+          # Publish symbols #####################################################################
           # 1) Get the access token for the symbol publishing service
           echo ">  1.Acquiring symbol publishing token..."
           $symbolPublishingToken = az account get-access-token --resource $publishTokenUri --query accessToken -o tsv
           echo ">  1.Symbol publishing token acquired."
-          
+
           # 2) Register the request name
           echo ">  2.Registering request name..."
           $requestNameRegistrationBody = "{'requestName': '$artifactName'}"
@@ -122,7 +125,7 @@ steps:
             -ContentType "application/json" `
             -Body $requestNameRegistrationBody
           echo ">  2.Request name registered successfully."
-          
+
           # 3) Publish the symbols
           echo ">  3.Submitting request to publish symbols..."
           $publishSymbolsBody = "{'publishToInternalServer': $publishToInternal, 'publishToPublicServer': $publishToPublic}"
@@ -133,7 +136,7 @@ steps:
             -ContentType "application/json" `
             -Body $publishSymbolsBody
           echo ">  3.Request to publish symbols submitted successfully."
-          
+
           # The following REST calls are used to check publishing status.
           echo ">  4.Checking the status of the request ..."
           Invoke-RestMethod `
@@ -141,23 +144,19 @@ steps:
             -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests/$artifactName" `
             -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
             -ContentType "application/json"
-          
+
           echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-          
+
           echo "PublishingStatus"
           echo "-----------------"
           echo "0	NotRequested; The request has not been requested to publish."
           echo "1	Submitted; The request is submitted to be published"
           echo "2	Processing; The request is still being processed"
           echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-          
+
           echo "PublishingResult"
           echo "-----------------"
           echo "0	Pending; The request has not completed or has not been requested."
           echo "1	Succeeded; The request has published successfully"
           echo "2	Failed; The request has failed to publish"
           echo "3	Cancelled; The request was cancelled"
-
-    
-
-

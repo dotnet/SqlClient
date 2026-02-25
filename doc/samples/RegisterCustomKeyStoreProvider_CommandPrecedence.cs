@@ -1,7 +1,14 @@
-﻿// <Snippet1>
+﻿namespace RegisterCustomKeyStoreProvider_CommandPrecedence;
+
+using System.Collections.Generic;
+using Azure.Identity;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
+
+// <Snippet1>
 class Program
 {
-    static void Main()
+    static void Main(string connectionString)
     {
         Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
         MyCustomKeyStoreProvider firstProvider = new MyCustomKeyStoreProvider();
@@ -20,7 +27,7 @@ class Program
             using (SqlCommand command = connection.CreateCommand())
             {
                 customKeyStoreProviders.Clear();
-                SqlColumnEncryptionAzureKeyVaultProvider azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider();
+                SqlColumnEncryptionAzureKeyVaultProvider azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential());
                 customKeyStoreProviders.Add(SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, azureKeyVaultProvider);
                 // Registers the provider on the command
                 // These providers will take precedence over connection-level providers and globally registered providers
@@ -30,3 +37,17 @@ class Program
     }
 }
 // </Snippet1>
+
+class MyCustomKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
+{
+    public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
+    {
+        // Custom decryption logic here
+        return new byte[0];
+    }
+    public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
+    {
+        // Custom encryption logic here
+        return new byte[0];
+    }
+}

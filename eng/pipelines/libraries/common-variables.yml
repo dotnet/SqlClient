@@ -4,6 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# Common variables shared across all OneBranch Official pipelines.
+# Included transitively by build-variables.yml -> onebranch-variables.yml.
+
 variables:
   - group: ESRP Federated Creds (AME)
     # ESRPConnectedServiceName
@@ -14,35 +17,173 @@ variables:
     # AuthSignCertName
 
   - name: CommitHead
-    value: '' # the value will be extracted from the repo's head  
-  - name: REPOROOT
+    value: '' # the value will be extracted from the repo's head
+
+  # Aliases required by compound step templates (compound-esrp-dll-signing-step,
+  # compound-esrp-nuget-signing-step, compound-nuget-pack-step, etc.).
+
+  # The root of our repo.
+  - name: REPO_ROOT
     value: $(Build.SourcesDirectory)
-  - name: softwareFolder
-    value: $(REPOROOT)/software
-  - name: symbolsFolder
-    value: $(REPOROOT)/symbols
-  - name: artifactDirectory
-    value: '$(REPOROOT)/packages'
 
-  # Update this after every release. This is used to generate the MDS NuGet package version.
-  - name: Major
-    value: '7'
-  - name: Minor
-    value: '0'
-  - name: Patch
-    value: '0'
+  # This is where our C# projects place their build outputs (see Directory.Build.props
+  # <ArtifactsPath>).  We exclude the reference type here since Official pipelines always use
+  # Package mode.
+  - name: BUILD_OUTPUT
+    value: $(REPO_ROOT)/artifacts
 
-    # Update this for preview releases.
-  - name: Preview
-    value: '-preview'
-  - name: Revision
-    value: '3'
+  # THis is where our C# projects place their NuGet package outputs (see Directory.Build.props
+  # <PackagesDir>).
+  - name: PACK_OUTPUT
+    value: $(REPO_ROOT)/packages
 
-  - name: NugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)
-  - name: PreviewNugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
-  - name: AssemblyFileVersion
-    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
+  # must be a positive 16-bit integer less than 65535.  Simply concatenating
+  # both parts of $(Build.BuildNumber) could produce values larger than 65534,
+  # so we must omit the second part entirely.  Unfortunately, this may result
+  # in multiple subsequent pipline builds using the same C# assembly versions.
+  # The package versions will not be affected and will show the complete
+  # $(Build.BuildNumber) values.
+  - name: assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+
+  # ----------------------------------------------------------------------------
+  # Abstractions Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: abstractionsPackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: abstractionsPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the Abstractions package.
+  - name: abstractionsAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
+  # MDS Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: mdsPackageVersion
+    value: '7.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: previewMdsPackageVersion
+    value: 7.0.0-preview4.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the MDS package.
+  - name: mdsAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # The path to the NuGet packaging specification file used to generate the MDS NuGet package.
   - name: nuspecPath
-    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+    value: '$(REPO_ROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+
+  # ----------------------------------------------------------------------------
+  # Logging Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: loggingPackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: loggingPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the Logging package.
+  - name: loggingAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
+  # Azure Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: azurePackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: azurePackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the Azure package.
+  - name: azureAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
+  # SqlServer.Server Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: sqlServerPackageVersion
+    value: '1.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: sqlServerPackagePreviewVersion
+    value: 1.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the SqlServer.Server package.
+  - name: sqlServerAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # ----------------------------------------------------------------------------
+  # AKV Provider Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  # The NuGet package version for GA releases (non-preview).
+  - name: akvPackageVersion
+    value: '7.0.0'
+
+  # The NuGet package version for preview releases.
+  - name: akvPackagePreviewVersion
+    value: 7.0.0-preview1.$(Build.BuildNumber)
+
+  # The AssemblyFileVersion for all assemblies in the AKV Provider package.
+  - name: akvAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # The MDS package version that AKV Provider depends on.
+  - name: akvMdsPackageVersion
+    value: '7.0.0-preview4.$(Build.BuildNumber)'
+
+  # The path to the NuGet packaging specification file for the AKV Provider.
+  - name: akvNuspecPath
+    value: '$(REPO_ROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+
+  # ----------------------------------------------------------------------------
+  # MDS Symbols Publishing
+  #
+  # Alias variables for MDS publish-symbols-step.yml, which defaults to
+  # $(SymbolServer) and $(SymbolTokenUri).  These map to the values provided
+  # by the akv-variables-v2 variable group.
+  - name: SymbolServer
+    value: $(SymbolsPublishServer)
+  - name: SymbolTokenUri
+    value: $(SymbolsPublishTokenUri)
+
+  # ----------------------------------------------------------------------------
+  # Release Variables
+  #
+  # NuGet service connection used by the release stage to push packages.
+  # This should match the name of an ADO service connection configured with
+  # NuGet.org credentials (API key or federated auth).
+  - name: NuGetServiceConnection
+    value: 'NuGet-Org-ServiceConnection'

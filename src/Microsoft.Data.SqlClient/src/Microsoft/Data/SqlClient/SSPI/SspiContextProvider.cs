@@ -11,7 +11,8 @@ using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SspiContextProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+    public abstract class SspiContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
@@ -21,6 +22,7 @@ namespace Microsoft.Data.SqlClient
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/ctor/*'/>
         protected SspiContextProvider()
         {
         }
@@ -55,23 +57,25 @@ namespace Microsoft.Data.SqlClient
 
             Initialize();
 
-            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(connString.DataSource, serverSpn)
-            {
-                DatabaseName = connString.InitialCatalog,
-                UserId = connString.UserID,
-                Password = connString.Password,
-            };
+            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(
+                resource: serverSpn,
+                serverName: connString.DataSource,
+                databaseName: connString.InitialCatalog,
+                userId: connString.UserID,
+                password: connString.Password
+            );
         }
 
         private protected virtual void Initialize()
         {
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/GenerateContext/*'/>
         protected abstract bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
         internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
-            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
+            using var _ = SqlClientSNIEventScope.Create(nameof(SspiContextProvider));
 
             if (_primaryAuthParams is { })
             {

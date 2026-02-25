@@ -2200,6 +2200,19 @@ The following sample tries to open a connection to an invalid database to simula
         Returns 0 if the connection is inactive on the client side.
       </remarks>
     </ServerProcessId>
+    <SspiContextProvider>
+      <summary>
+        Gets or sets the <see cref="SspiContextProvider"/> instance for customizing the SSPI context. If not set, the default for the platform will be used.
+      </summary>
+      <value>
+        An <see cref="T:Microsoft.Data.SqlClient.SspiContextProvider" /> instance.
+      </value>
+      <remarks>
+        <para>
+          The SspiContextProvider is a part of the connection pool key. Care should be taken when using this property to ensure the implementation returns a stable identity per resource.
+        </para>
+      </remarks>
+    </SspiContextProvider>
     <State>
       <summary>
         Indicates the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> during the most recent network operation performed on the connection.

@@ -58,6 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTable metaDataSourceInfo = conn.GetSchema(DbMetaDataCollectionNames.DataSourceInformation);
                 Assert.True(metaDataSourceInfo != null && metaDataSourceInfo.Rows.Count > 0);
 
+                //TODO: lots of contention on data types. need to fix locking in other tests to make this more reliable
                 DataTable metaDataTypes = conn.GetSchema(DbMetaDataCollectionNames.DataTypes);
                 Assert.True(metaDataTypes != null && metaDataTypes.Rows.Count > 0);
 

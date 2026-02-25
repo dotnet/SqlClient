@@ -4,19 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: downloadPackageStep
-    type: step
-    default:
-      script: echo <empty step>
 
-  - name: packageFolderName
+  # The name of the pipeline artifacts to download prior to building the tests.
+  - name: artifactName
     type: string
-    default: drop_build_build_signed_package
 
-  - name: dependsOn
-    type: string
-    default: empty
-
+  # True if this build is a preview.
   - name: isPreview
     type: boolean
 
@@ -25,10 +18,9 @@ parameters:
     type: number
 
 jobs:
+
 - job: run_tests_package_reference
   displayName: 'Run tests with package reference'
-  ${{ if ne(parameters.dependsOn, 'empty')}}:
-    dependsOn: '${{parameters.dependsOn }}'
 
   # Some of our tests take longer than the default 60 minutes to run on some
   # OSes and configurations.
@@ -39,41 +31,37 @@ jobs:
     isCustom: true
     name: ADO-1ES-Pool
     vmImage: 'ADO-MMS22-SQL19'
-    
+
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-  - template: ../../../libraries/mds-validation-variables.yml@self
+  - template: /eng/pipelines/libraries/mds-validation-variables.yml@self
 
   steps:
-  - template: ../steps/pre-build-step.yml
- 
-  - ${{parameters.downloadPackageStep }}
+  - template: /eng/pipelines/common/templates/steps/pre-build-step.yml
 
-  - template: ../steps/update-nuget-config-local-feed-step.yml
+  - download: current
+    artifact: ${{parameters.artifactName}}
+    patterns: '**/*.*nupkg'
+    displayName: 'Download NuGet Package'
+
+  - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml
     parameters:
-      downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
-      ${{ if parameters.isPreview }}:
-        nugetPackageVersion: $(PreviewNugetPackageVersion)
-
-  - template: ../steps/update-config-file-step.yml
-    parameters: 
+      # We use the Library $(Password) variable as the SA password in this pipeline.
+      saPassword: $(Password)
       TCPConnectionString: $(SQL_TCP_CONN_STRING)
       NPConnectionString: $(SQL_NP_CONN_STRING)
       SupportsIntegratedSecurity: false
 
-  - template: ../steps/prepare-test-db-step.yml
+  - template: /eng/pipelines/common/templates/steps/prepare-test-db-step.yml
 
-# build & test
-  - template: ../steps/build-and-run-tests-netfx-step.yml
+  # build & test
+  - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netfx-step.yml
     parameters:
-      referenceType: Package
-      buildConfiguration: Release
       ${{ if parameters.isPreview }}:
-        nugetPackageVersion: $(PreviewNugetPackageVersion)
+        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
+        mdsPackageVersion: $(previewMdsPackageVersion)
 
-  - template: ../steps/build-and-run-tests-netcore-step.yml
+  - template: /eng/pipelines/common/templates/steps/build-and-run-tests-netcore-step.yml
     parameters:
-      referenceType: Package
-      buildConfiguration: Release
-      cleanFirst: true
       ${{ if parameters.isPreview }}:
-        nugetPackageVersion: $(PreviewNugetPackageVersion)
+        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
+        mdsPackageVersion: $(previewMdsPackageVersion)

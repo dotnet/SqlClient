@@ -1,3 +1,5 @@
+namespace SqlDataReader_Read;
+
 using System;
 using System.Data;
 // <Snippet1>

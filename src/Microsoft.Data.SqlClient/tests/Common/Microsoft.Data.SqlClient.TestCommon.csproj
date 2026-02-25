@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.TestCommon</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.TestCommon</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+
+  <!-- References ====================================================== -->
+  <!-- Test target reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+  <!-- References for netfx -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Security.KeyVault.Keys" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Security.KeyVault.Keys" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+</Project>

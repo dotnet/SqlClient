@@ -1,4 +1,7 @@
-﻿// <Snippet1>
+﻿namespace RegisterCustomKeyStoreProvider_Example;
+
+// <Snippet1>
+using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using System.Collections.Generic;
@@ -15,7 +18,7 @@ class Program
         if (azureKeyVaultProvider is null)
         {
             // Create a new SqlColumnEncryptionAzureKeyVaultProvider with the user's credentials and save it for future use
-            azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider();
+            azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential());
             providerByUser[user] = azureKeyVaultProvider;
         }
 
@@ -35,7 +38,7 @@ class Program
         if (azureKeyVaultProvider is null)
         {
             // Create a new SqlColumnEncryptionAzureKeyVaultProvider with the user's credentials and save it for future use
-            azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider();
+            azureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential());
             providerByUser[user] = azureKeyVaultProvider;
         }
 

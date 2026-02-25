@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SspiAuthenticationParameters">
+    <SspiAuthenticationParameters>
+      <summary>Provides parameters used during SSPI authentication.</summary>
+    </SspiAuthenticationParameters>
+    <ctor>
+      <summary>Creates an instance of the SspiAuthenticationParameters.</summary>
+      <param name="serverName">The name of the server.</param>
+      <param name="resource">The resource (often the server service principal name).</param>
+      <param name="userId">The user id if available.</param>
+      <param name="databaseName">The database name if available.</param>
+      <param name="password">The password if available.</param>
+    </ctor>
+    <Resource>
+      <summary>Gets the resource (often the server service principal name).</summary>
+    </Resource>
+    <ServerName>
+      <summary>Gets the server name.</summary>
+    </ServerName>
+    <UserId>
+      <summary>Gets the user id if available.</summary>
+    </UserId>
+    <DatabaseName>
+      <summary>Gets the database name if available.</summary>
+    </DatabaseName>
+    <Password>
+      <summary>Gets the password if available.</summary>
+    </Password>
+  </members>
+</docs>

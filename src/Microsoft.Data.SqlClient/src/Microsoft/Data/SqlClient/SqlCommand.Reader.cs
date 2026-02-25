@@ -10,6 +10,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -112,7 +114,7 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             Exception e = null;
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
             // @TODO: Do we want to have a correlation trace event here like nonquery and xml?
             // @TODO: Basically, this doesn't follow the same pattern as nonquery, scalar, or xml. Doesn't seem right.
 
@@ -979,11 +981,9 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
-                    context = Interlocked.Exchange(
-                        ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
-                        null);
+                    context = sqlInternalConnection.CachedContexts.TakeCommandExecuteReaderAsyncContext();
                 }
 
                 context ??= new ExecuteReaderAsyncCallContext();
@@ -1577,7 +1577,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (decrementAsyncCountOnFailure)
                 {
-                    if (_activeConnection.InnerConnection is SqlInternalConnectionTds innerConnectionTds)
+                    if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnectionTds)
                     {
                         // It may be closed
                         innerConnectionTds.DecrementAsyncCount();
@@ -1785,18 +1785,6 @@ namespace Microsoft.Data.SqlClient
                 this,
                 () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
 
-        private void SetCachedCommandExecuteReaderAsyncContext(ExecuteReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                // @TODO: This should be part of the sql internal connection class.
-                Interlocked.CompareExchange(
-                    ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext,
-                    instance,
-                    null);
-            }
-        }
-
         #endregion
 
         internal sealed class ExecuteReaderAsyncCallContext
@@ -1824,7 +1812,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-                owner?.SetCachedCommandExecuteReaderAsyncContext(this);
+                DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetCommandExecuteReaderAsyncContext(this);
+                }
             }
 
             protected override void Clear()

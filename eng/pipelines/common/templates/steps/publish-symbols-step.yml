@@ -6,78 +6,61 @@
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
 ####################################################################################
 parameters:
-  - name: SymAccount
-    type: string
-    default: 'SqlClientDrivers'
 
-  - name: publishSymbols
+  # The full name of the package whose symbols are being published.
+  - name: packageFullName
     type: string
 
-  - name: symbolsVersion
+  # The version of the package whose symbols are being published.
+  - name: packageVersion
     type: string
-    default: '$(NuGetPackageVersion)'
 
+  # Our symbols account name.
+  - name: symbolsAccount
+    type: string
+    default: SqlClientDrivers
+
+  # The symbols server to publish to.
   - name: symbolServer
     type: string
-    default: '$(SymbolServer)'
-  
+    default: $(SymbolServer)
+
+  # The token URI for the symbol publishing service.
   - name: symbolTokenUri
     type: string
-    default: '$(SymbolTokenUri)'
-  
-  - name: symbolsArtifactName
-    type: string
-  
+    default: $(SymbolTokenUri)
+
+  # A pair of flags indicating whether to publish to the internal and public symbol servers.  Both
+  # default to true.
   - name: publishToServers
     type: object
-    default: 
+    default:
       internal: true
       public: true
 
-  - name: referenceType
-    default: project
-    values:
-    - project
-    - package
-
-  - name: product
-    default: MDS
-    values:
-    - MDS
-    - MSS
-
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
 steps:
-- powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
-  displayName: 'Update Symbol.AccountName with ${{parameters.SymAccount}}'
-  condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
+- pwsh: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.symbolsAccount}}"'
+  displayName: 'Set ArtifactServices.Symbol.AccountName to ${{parameters.symbolsAccount}}'
 
-- ${{ if eq(parameters.product, 'MDS') }}:
-  - task: PublishSymbols@2
-    displayName: 'Upload symbols to ${{parameters.SymAccount }} org'
-    inputs:
-      SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
-      SearchPattern: |
-        Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
-        Unix/${{ parameters.buildConfiguration }}.AnyCPU/**/Microsoft.Data.SqlClient.pdb
-      IndexSources: false
-      SymbolServerType: TeamServices
-      SymbolsMaximumWaitTime: 60
-      SymbolExpirationInDays: 1825 # 5 years
-      SymbolsProduct: Microsoft.Data.SqlClient
-      SymbolsVersion: ${{parameters.symbolsVersion }}
-      SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
-      Pat: $(System.AccessToken)
-    condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
+- pwsh: 'Write-Host "##vso[task.setvariable variable=symbolsArtifactName;]${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)"'
+  displayName: 'Set symbolsArtifactName variable'
+
+- task: PublishSymbols@2
+  displayName: 'Upload symbols to ${{parameters.symbolsAccount }} org'
+  inputs:
+    SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\Package\bin'
+    SearchPattern: '**/*.pdb'
+    IndexSources: false
+    SymbolServerType: TeamServices
+    SymbolsMaximumWaitTime: 60
+    SymbolExpirationInDays: 1825 # 5 years
+    SymbolsProduct: ${{ parameters.packageFullName }}
+    SymbolsVersion: ${{ parameters.packageVersion }}
+    SymbolsArtifactName: $(symbolsArtifactName)
+    Pat: $(System.AccessToken)
 
 - task: AzureCLI@2
   displayName: 'Publish symbols'
-  condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
   inputs:
     azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
     scriptType: ps
@@ -86,9 +69,9 @@ steps:
       $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
       $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
 
-      echo "Publishing request name: ${{parameters.symbolsArtifactName }}"
+      echo "Publishing request name: $(symbolsArtifactName)"
       echo "Publish to internal server: $publishToInternalServer"
-      echo "Publish to public server: $publishToPublicServer"      
+      echo "Publish to public server: $publishToPublicServer"
 
       $symbolServer = "${{parameters.symbolServer }}"
       $tokenUri = "${{parameters.symbolTokenUri }}"
@@ -101,7 +84,7 @@ steps:
       echo ">  1.Symbol publishing token acquired."
 
       echo "Registering the request name ..."
-      $requestName = "${{parameters.symbolsArtifactName }}"
+      $requestName = "$(symbolsArtifactName)"
       $requestNameRegistrationBody = "{'requestName': '$requestName'}"
       Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
 
@@ -118,16 +101,16 @@ steps:
       echo ">  4.Checking the status of the request ..."
 
       Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
-      
+
       echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-      
+
       echo "PublishingStatus"
       echo "-----------------"
       echo "0	NotRequested; The request has not been requested to publish."
       echo "1	Submitted; The request is submitted to be published"
       echo "2	Processing; The request is still being processed"
       echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-      
+
       echo "PublishingResult"
       echo "-----------------"
       echo "0	Pending; The request has not completed or has not been requested."

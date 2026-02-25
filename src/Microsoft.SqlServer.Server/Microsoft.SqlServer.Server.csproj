@@ -1,15 +1,81 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
     <Description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.</Description>
     <BaseProduct>Microsoft SqlServer Server</BaseProduct>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\</OutputPath>
-    <DocumentationFile>$(OutputPath)$(TargetFramework)\Microsoft.SqlServer.Server.xml</DocumentationFile>
     <DebugType>portable</DebugType>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <!-- Build Output Config-->
+  <PropertyGroup>
+
+    <!--
+      The obj/ folder for each target framework.  This contains intermediate files used during the
+      build process.
+    -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
+
+    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+
+    <!-- The doc/ folder for each target framework. -->
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+
+  </PropertyGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(SqlServerPackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Title>Microsoft.SqlServer.Server</Title>
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
+
+Available Types:
+Microsoft.SqlServer.Server.IBinarySerializer
+Microsoft.SqlServer.Server.InvalidUdtException
+Microsoft.SqlServer.Server.SqlFacetAttribute
+Microsoft.SqlServer.Server.SqlFunctionAttribute
+Microsoft.SqlServer.Server.SqlMethodAttribute
+Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute
+Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute
+Microsoft.SqlServer.Server.DataAccessKind
+Microsoft.SqlServer.Server.SystemDataAccessKind
+Microsoft.SqlServer.Server.Format</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlserver microsoft.sqlserver.server</PackageTags>
+    <PackageReleaseNotes>https://go.microsoft.com/fwlink/?linkid=2185441</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+  <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

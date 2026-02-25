@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+
+    Azure versioning information found in our sibling file AzureVersions.props
+    is imported via tools/props/Versions.props.
+  -->
+
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
+
+  <!-- Compiler Config -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
+
+    <!--
+      Clear the root namespace since our directory structure doesn't match our
+      namespace definitions.  Otherwise, if omitted it would default to the
+      AssemblyName.
+    -->
+    <RootNamespace></RootNamespace>
+
+    <!--
+      We pin the AssemblyVersion of our package to the default major version
+      number, with all remaining parts set to 0.
+    -->
+    <AssemblyVersion>$(AzureDefaultMajorVersion).0.0.0</AssemblyVersion>
+
+    <AssemblyFileVersion>$(AzureAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(AzureAssemblyFileVersion)</FileVersion>
+    <Version>$(AzurePackageVersion)</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Our API is CLS Compliant. -->
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- Build Output Config-->
+  <PropertyGroup>
+
+    <!--
+      The obj/ folder for each target framework.  This contains intermediate files used during the
+      build process.
+    -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
+
+    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+
+    <!-- We put our docs in the bin/ directory as well. -->
+    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+
+  </PropertyGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(AzurePackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>Microsoft.Data.SqlClient Extensions Azure</Description>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
+    <PackageReference Include="Microsoft.Identity.Client" />
+  </ItemGroup>
+
+  <!--
+    Generate ThisAssembly.cs which contains some version information that is
+    used at runtime and otherwise would not be available.
+  -->
+  <PropertyGroup>
+    <!--
+      We must specify a unique namespace for ThisAssembly since MDS puts its
+      ThisAssembly class in the System namespace, and we cannot have two
+      classes with the same name in the same namespace.
+    -->
+    <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
+  </PropertyGroup>
+  <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
+
+</Project>

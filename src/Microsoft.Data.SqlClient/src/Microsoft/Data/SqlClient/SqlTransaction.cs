@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -28,7 +29,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isFromApi;
 
         internal SqlTransaction(
-            SqlInternalConnection internalConnection,
+            SqlConnectionInternal internalConnection,
             SqlConnection con,
             IsolationLevel iso,
             SqlInternalTransaction internalTransaction)
@@ -41,11 +42,15 @@ namespace Microsoft.Data.SqlClient
 
             if (internalTransaction == null)
             {
-                InternalTransaction = new SqlInternalTransaction(internalConnection, TransactionType.LocalFromAPI, this);
+                InternalTransaction = new SqlInternalTransaction(
+                    internalConnection,
+                    TransactionType.LocalFromAPI,
+                    this);
             }
             else
             {
-                Debug.Assert(internalConnection.CurrentTransaction == internalTransaction, "Unexpected Parser.CurrentTransaction state!");
+                Debug.Assert(internalConnection.CurrentTransaction == internalTransaction,
+                    "Unexpected Parser.CurrentTransaction state!");
                 InternalTransaction = internalTransaction;
                 InternalTransaction.InitParent(this);
             }
@@ -91,7 +96,7 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectId))
+            using (SqlClientEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectId))
             {
                 SqlStatistics statistics = null;
 
@@ -174,7 +179,7 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                using (TryEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectId))
+                using (SqlClientEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectId))
                 {
                     SqlClientEventSource.Log.TryCorrelationTraceEvent(
                         "SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}",
@@ -224,7 +229,7 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            var eventScopeEnter = TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(
+            var eventScopeEnter = SqlClientEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(
                 "SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}",
                 ObjectId,
                 transactionName,
@@ -268,7 +273,7 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectId, savePointName))
+            using (SqlClientEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectId, savePointName))
             {
                 try
                 {
@@ -289,7 +294,7 @@ namespace Microsoft.Data.SqlClient
             // For Yukon, we have to defer "zombification" until we get past the users' next
             // rollback, else we'll throw an exception there that is a breaking change. Of course,
             // if the connection is already closed, then we're free to zombify...
-            if (_connection.InnerConnection is SqlInternalConnection internalConnection && !_isFromApi)
+            if (_connection.InnerConnection is SqlConnectionInternal && !_isFromApi)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie",

@@ -1,3 +1,5 @@
+namespace SqlDataSourceEnumeratorExample;
+
 using System;
 //<Snippet1>
 using Microsoft.Data.Sql;  

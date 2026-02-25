@@ -242,7 +242,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #endif
-            using (TryEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
+            using (SqlClientEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
             {
                 ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 

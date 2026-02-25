@@ -1,3 +1,4 @@
+/* This does not compile, as multiple methods are missing.
 // <Snippet1>
 using System;
 using System.Collections.Generic;
@@ -188,3 +189,4 @@ namespace Microsoft.AdoDotNet.CodeSamples
     }
 }
 // </Snippet1>
+*/

@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ColumnMappingDestinationOrdinal;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -93,3 +95,5 @@ class Program
     }
 }
 // </Snippet1>
+
+

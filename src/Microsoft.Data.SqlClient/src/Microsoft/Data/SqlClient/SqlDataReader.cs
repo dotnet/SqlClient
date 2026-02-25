@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
@@ -870,7 +871,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
-            using (TryEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 SqlStatistics statistics = null;
                 try
@@ -1481,7 +1482,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 try
                 {
@@ -3491,7 +3492,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsOperationStatus result;
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
             {
                 try
                 {
@@ -3661,7 +3662,7 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
                 try
                 {
@@ -4101,10 +4102,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // reset snapshot to save memory use.  We can safely do that here because all SqlDataReader values are stable.
                     // The retry logic can use the current values to get back to the right state.
-                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+                    if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
-                        sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
+                        sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
                     }
+
                     _snapshot = null;
                     PrepareAsyncInvocation(useSnapshot: true);
                 }
@@ -4595,7 +4597,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -4925,7 +4927,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 if (IsClosed)
@@ -5038,9 +5040,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 ReadAsyncCallContext context = null;
-                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                 {
-                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderReadAsyncContext, null);
+                    context = sqlInternalConnection.CachedContexts.TakeDataReaderReadAsyncContext();
                 }
                 if (context is null)
                 {
@@ -5085,10 +5087,11 @@ namespace Microsoft.Data.SqlClient
                     if (!hasReadRowToken)
                     {
                         hasReadRowToken = true;
-                        if (reader.Connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+                        if (reader.Connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                         {
-                            sqlInternalConnection.CachedDataReaderSnapshot = reader._snapshot;
+                            sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(reader._snapshot);
                         }
+
                         reader._snapshot = null;
                         reader.PrepareAsyncInvocation(useSnapshot: true);
                     }
@@ -5104,14 +5107,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return reader.ExecuteAsyncCall(context);
-        }
-
-        private void SetCachedReadAsyncCallContext(ReadAsyncCallContext instance)
-        {
-            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                Interlocked.CompareExchange(ref sqlInternalConnection.CachedDataReaderReadAsyncContext, instance, null);
-            }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*' />
@@ -5214,9 +5209,9 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     IsDBNullAsyncCallContext context = null;
-                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
-                        context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
+                        context = sqlInternalConnection.CachedContexts.TakeDataReaderIsDbNullContext();
                     }
                     if (context is null)
                     {
@@ -5254,14 +5249,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return reader.ExecuteAsyncCall(context);
-            }
-        }
-
-        private void SetCachedIDBNullAsyncCallContext(IsDBNullAsyncCallContext instance)
-        {
-            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                Interlocked.CompareExchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, instance, null);
             }
         }
 
@@ -5503,7 +5490,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlDataReader owner)
             {
-                owner.SetCachedReadAsyncCallContext(this);
+                DbConnectionInternal internalConnection = owner?._connection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetDataReaderReadAsyncContext(this);
+                }
             }
         }
 
@@ -5519,7 +5510,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlDataReader owner)
             {
-                owner.SetCachedIDBNullAsyncCallContext(this);
+                DbConnectionInternal internalConnection = owner?._connection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetDataReaderIsDbNullContext(this);
+                }
             }
         }
 
@@ -5800,9 +5795,9 @@ namespace Microsoft.Data.SqlClient
 
                 if (_snapshot == null)
                 {
-                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
                     {
-                        _snapshot = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderSnapshot, null) ?? new Snapshot();
+                        _snapshot = sqlInternalConnection.CachedContexts.TakeDataReaderSnapshot() ?? new Snapshot();
                     }
                     else
                     {
@@ -5880,10 +5875,11 @@ namespace Microsoft.Data.SqlClient
             stateObj._permitReplayStackTraceToDiffer = false;
 #endif
 
-            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+            if (_snapshot is not null && _connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
-                sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
+                sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
+
             // We are setting this to null inside the if-statement because stateObj==null means that the reader hasn't been initialized or has been closed (either way _snapshot should already be null)
             _snapshot = null;
         }
@@ -5922,10 +5918,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_snapshot != null, "Should currently have a snapshot");
             Debug.Assert(_stateObj != null && !_stateObj._asyncReadWithoutSnapshot, "Already in async without snapshot");
 
-            if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection && sqlInternalConnection.CachedDataReaderSnapshot is null)
+            if (_connection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
-                sqlInternalConnection.CachedDataReaderSnapshot = _snapshot;
+                sqlInternalConnection.CachedContexts.TrySetDataReaderSnapshot(_snapshot);
             }
+
             _snapshot = null;
             _stateObj.ResetSnapshot();
             _stateObj._asyncReadWithoutSnapshot = true;

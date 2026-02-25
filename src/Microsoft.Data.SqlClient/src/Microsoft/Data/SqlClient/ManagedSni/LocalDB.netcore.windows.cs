@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         private bool LoadUserInstanceDll()
         {
-            using (TrySNIEventScope.Create(nameof(LocalDB)))
+            using (SqlClientSNIEventScope.Create(nameof(LocalDB)))
             {
                 // Check in a non thread-safe way if the handle is already set for performance.
                 if (_sqlUserInstanceLibraryHandle != null)
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns></returns>
         private string GetUserInstanceDllPath(out LocalDBErrorState errorState)
         {
-            using (TrySNIEventScope.Create(nameof(LocalDB)))
+            using (SqlClientSNIEventScope.Create(nameof(LocalDB)))
             {
                 string dllPath = null;
                 using (RegistryKey key = Registry.LocalMachine.OpenSubKey(LocalDBInstalledVersionRegistryKey))

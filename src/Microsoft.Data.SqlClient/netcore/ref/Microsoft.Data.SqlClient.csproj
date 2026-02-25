@@ -1,39 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net8.0;net9.0;netstandard2.0</TargetFrameworks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
-    <!-- When building for library distribution (BuildForLib=true), set the output path to a netstandard-specific directory.  
+    <!-- When building for library distribution (BuildForLib=true), set the output path to a netstandard-specific directory.
      This condition also ensures that netcoreapp builds are excluded from this path adjustment. -->
     <OutputPath Condition="'$(BuildForLib)' == 'true' AND '$(TargetGroup)' != 'netcoreapp'">$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\netstandard\</OutputPath>
-    <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <Product>Core $(BaseProduct)</Product>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
-  <!--Generating Strong Name-->
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+
+  <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
-    <KeyFile>$(SigningKeyPath)</KeyFile>
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-   
+
+  <!-- CLS Compliance attribute -->
   <ItemGroup>
-    <Compile Include="Microsoft.Data.SqlClient.cs" />
-    <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
-  <ItemGroup Condition="$(TargetGroup) == 'netcoreapp'">
-    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.cs" />
-    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
-  </ItemGroup>
+
+  <!-- Files -->
   <ItemGroup>
-    <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
+    <Compile Include="../../ref/Microsoft.Data.cs" />
+    <Compile Include="../../ref/Microsoft.Data.Sql.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.DataClassification.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.Diagnostics.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlClient.Server.cs" />
+    <Compile Include="../../ref/Microsoft.Data.SqlTypes.cs" />
+  </ItemGroup>
+
+  <!-- References -->
+  <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
@@ -49,7 +58,18 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
-   
+
+  <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+  </ItemGroup>
+
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <!-- Trim docs for intellisense for ref folder (netcore/netstandard) but not when building for lib folder (only netstandard is built for lib from here) -->

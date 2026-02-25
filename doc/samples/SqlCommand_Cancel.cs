@@ -1,3 +1,5 @@
+namespace SqlCommand_Cancel;
+
 // <Snippet1>
 using System;
 using System.Data;

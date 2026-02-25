@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlCommand cmd2 = new SqlCommand(insertParamStr, conn);
 
                     cmd2.Parameters.Add("@x", SqlDbType.Xml);
-                    XmlReader xr = XmlReader.Create("data.xml");
+                    XmlReader xr = XmlReader.Create("DDDataTypesTest_Data.xml");
                     cmd2.Parameters[0].Value = new SqlXml(xr);
                     cmd2.ExecuteNonQuery();
 

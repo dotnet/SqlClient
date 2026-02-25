@@ -4,7 +4,7 @@
 # file in the project root for more information.
 ################################################################################
 
-# This stage builds and runs stress tests against an MDS NuGet package available
+# This job builds and runs stress tests against an MDS NuGet package available
 # as a pipeline artifact.
 #
 # The stress tests are located here:
@@ -39,17 +39,11 @@ parameters:
     default: ''
 
   # The pipeline step to run to configure SQL Server.
-  #
-  # This step is expected to require no parameters.  It must configure a SQL
-  # Server instance listening on localhost for SQL auth via the 'sa' user with
-  # the pipeline variable $(Password) as the password.
   - name: sqlSetupStep
-    type: string
-    default: ''
+    type: step
 
-  # The name of the pipeline artifact to download that contains the MDS package
-  # to stress test.
-  - name: pipelineArtifactName
+  # The name of the MDS pipeline artifacts to download.
+  - name: mdsArtifactsName
     type: string
     default: ''
 
@@ -84,9 +78,6 @@ parameters:
     default: []
 
   # The stress test config file contents to write to the config file.
-  #
-  # This should point to the SQL Server configured via the sqlSetupStep
-  # parameter, with user 'sa' and password of $(Password).
   - name: configContent
     type: string
     default: ''
@@ -131,31 +122,20 @@ jobs:
 
   steps:
 
-  # Install the .NET 9.0 SDK.
-  - task: UseDotNet@2
-    displayName: Install .NET 9.0 SDK
-    inputs:
-      packageType: sdk
-      version: 9.x
-
-  # Install the .NET 8.0 runtime.
-  - task: UseDotNet@2
-    displayName: Install .NET 8.0 Runtime
-    inputs:
-      packageType: runtime
-      version: 8.x
+  # Install the .NET SDK and Runtimes.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+    parameters:
+      runtimes: [8.x, 9.x]
 
   # Download the pipeline artifact that contains the MDS package to test.
   - task: DownloadPipelineArtifact@2
-    displayName: Download Pipeline Artifact
+    displayName: Download MDS Artifacts
     inputs:
-      artifactName: ${{ parameters.pipelineArtifactName }}
-      # The stress tests solution has a NuGet.config file that configures
-      # sources to look in this packages/ directory.
+      artifactName: ${{ parameters.mdsArtifactsName }}
       targetPath: $(Build.SourcesDirectory)/packages
 
   # Setup the local SQL Server.
-  - template: ${{ parameters.sqlSetupStep }}@self
+  - ${{ parameters.sqlSetupStep }}
 
   # We use the 'custom' command because the DotNetCoreCLI@2 task doesn't support
   # all of our argument combinations for the different build steps.

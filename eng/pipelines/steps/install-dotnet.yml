@@ -1,0 +1,125 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+# This template installs a single .NET SDK and zero or more .NET Runtimes.  The
+# SDK version is always read from the root global.json file.  The Runtimes to
+# install, if any, may be provided as an array of version strings.
+#
+# Special handling is required for ARM64 due to a bug in UseDotNet@2:
+#
+# [BUG]: UseDotNet@2 task installs x86 build
+# https://github.com/microsoft/azure-pipelines-tasks/issues/20300
+
+parameters:
+
+  # The architecture to install for.
+  - name: architecture
+    type: string
+    values:
+      - x64
+      - x86
+      - arm64
+    default: x64
+
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The directory to install to.
+  - name: installDir
+    type: string
+    default: $(Agent.ToolsDirectory)/dotnet
+
+  # The list of .NET Runtimes to install, if any.
+  #
+  # When architecture is arm64, these must adhere to the format expected by the
+  # dotnet-install.ps1 script's -Channel option:
+  #
+  # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script
+  #
+  # Otherwise, these must adhere to the format expected by the UseDotNet@2 task:
+  #
+  # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/use-dotnet-v2
+  #
+  - name: runtimes
+    type: object
+    default: []
+
+steps:
+
+  # Use the UseDotNet@2 task for all architectures except ARM64.
+  - ${{ if ne(parameters.architecture, 'arm64') }}:
+
+    # Install the SDK listed in the global.json file.
+    - task: UseDotNet@2
+      displayName: Install .NET SDK (global.json)
+      inputs:
+        installationPath: ${{ parameters.installDir }}
+        packageType: sdk
+        useGlobalJson: true
+      ${{ if eq(parameters.architecture, 'x86') }}:
+        env:
+          PROCESSOR_ARCHITECTURE: x86
+
+    # Install the desired Runtimes, if any.
+    - ${{ each version in parameters.runtimes }}:
+      - task: UseDotNet@2
+        displayName: Install .NET ${{ version }} Runtime
+        inputs:
+          installationPath: ${{ parameters.installDir }}
+          packageType: runtime
+          version: ${{ version }}
+        ${{ if eq(parameters.architecture, 'x86') }}:
+          env:
+            PROCESSOR_ARCHITECTURE: x86
+
+  # Special handling for ARM64.
+  - ${{ else }}:
+
+    # Use the install script for ARM64.
+    - task: PowerShell@2
+      displayName: Install .NET SDK and Runtimes for ARM64
+      inputs:
+        targetType: filePath
+        pwsh: true
+        filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
+        # Arguments:
+        #
+        # -Debug:
+        #    This must be a PowerShell $true/$false value.  The first '$' is not
+        #    expanded.  The ${{ }} evaluates to the string "true" or "false",
+        #    and the whole value then becomes either $true or $false.
+        #
+        # -GlobalJson:
+        #    The path to the global.json file to read the SDK version from.
+        #    Double-quoted in case there are spaces in the path.
+        #
+        # -InstallDir:
+        #    The directory to install to.  Double-quoted in case there are
+        #    spaces in the path.
+        #
+        # -Runtimes:
+        #    The list of runtimes to install.  This must be a single string with
+        #    each runtime quoted and separated by commas.  If the runtimes are
+        #    8.0 and 9.0, the ${{ join() }} function will result in:
+        #
+        #      8.0","9.0
+        #
+        #    We enclose the join() in double-quotes to get the exact string we
+        #    want:
+        #
+        #      "8.0","9.0"
+        #
+        arguments: >
+          -Debug:$${{ parameters.debug }}
+          -GlobalJson "$(Build.SourcesDirectory)/global.json"
+          -InstallDir "${{ parameters.installDir }}"
+          -Runtimes "${{ join('","', parameters.runtimes) }}"
+
+  # Report what was installed.
+  - pwsh: dotnet --info
+    displayName: Report installed .NET SDK and Runtimes

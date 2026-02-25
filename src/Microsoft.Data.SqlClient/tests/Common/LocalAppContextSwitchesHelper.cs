@@ -1,106 +1,65 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System;
-using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
 /// <summary>
-/// This class provides read/write access to LocalAppContextSwitches values
-/// for the duration of a test.  It is intended to be constructed at the start
-/// of a test and disposed of at the end.  It captures the original values of
-/// the switches and restores them when disposed.
+/// This class provides read/write access to LocalAppContextSwitches values for
+/// the duration of a test.  It is intended to be constructed at the start of a
+/// test and disposed of at the end.  It captures the original values of the
+/// switches and restores them when disposed.
 ///
 /// This follows the RAII pattern to ensure that the switches are always
 /// restored, which is important for global state like LocalAppContextSwitches.
 ///
 /// https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization
-/// 
-/// This class is not thread-aware and should not be used concurrently.
+///
+/// As with all global state, care must be taken when using this class in tests
+/// that may run in parallel.  This class enforces a single instance policy
+/// using a semaphore.  Overlapping constructor calls will wait up to 5 seconds
+/// for the previous instance to be disposed.  Any tests that use this class
+/// should not keep an instance alive for longer than 5 seconds, or they risk
+/// causing failures in other tests.
 /// </summary>
 public sealed class LocalAppContextSwitchesHelper : IDisposable
 {
     #region Private Fields
 
-    // These fields are used to expose LocalAppContextSwitches's properties.
-    private readonly PropertyInfo _legacyRowVersionNullBehaviorProperty;
-    private readonly PropertyInfo _suppressInsecureTlsWarningProperty;
-    private readonly PropertyInfo _makeReadAsyncBlockingProperty;
-    private readonly PropertyInfo _useMinimumLoginTimeoutProperty;
-    private readonly PropertyInfo _legacyVarTimeZeroScaleBehaviourProperty;
-    private readonly PropertyInfo _useCompatibilityProcessSniProperty;
-    private readonly PropertyInfo _useCompatibilityAsyncBehaviourProperty;
-    private readonly PropertyInfo _useConnectionPoolV2Property;
-    private readonly PropertyInfo _truncateScaledDecimalProperty;
-    private readonly PropertyInfo _ignoreServerProvidedFailoverPartner;
-    private readonly PropertyInfo _enableUserAgent;
-    private readonly PropertyInfo _enableMultiSubnetFailoverByDefaultProperty;
-#if NET
-    private readonly PropertyInfo _globalizationInvariantModeProperty;
-    #endif
-    
-    #if NET && _WINDOWS
-    private readonly PropertyInfo _useManagedNetworkingProperty;
-    #endif
-    
-    #if NETFRAMEWORK
-    private readonly PropertyInfo _disableTnirByDefaultProperty;
-    #endif
-
-    // These fields are used to capture the original switch values.
-    private readonly FieldInfo _legacyRowVersionNullBehaviorField;
-    private readonly Tristate _legacyRowVersionNullBehaviorOriginal;
-    private readonly FieldInfo _suppressInsecureTlsWarningField;
-    private readonly Tristate _suppressInsecureTlsWarningOriginal;
-    private readonly FieldInfo _makeReadAsyncBlockingField;
-    private readonly Tristate _makeReadAsyncBlockingOriginal;
-    private readonly FieldInfo _useMinimumLoginTimeoutField;
-    private readonly Tristate _useMinimumLoginTimeoutOriginal;
-    private readonly FieldInfo _legacyVarTimeZeroScaleBehaviourField;
-    private readonly Tristate _legacyVarTimeZeroScaleBehaviourOriginal;
-    private readonly FieldInfo _useCompatibilityProcessSniField;
-    private readonly Tristate _useCompatibilityProcessSniOriginal;
-    private readonly FieldInfo _useCompatibilityAsyncBehaviourField;
-    private readonly Tristate _useCompatibilityAsyncBehaviourOriginal;
-    private readonly FieldInfo _useConnectionPoolV2Field;
-    private readonly Tristate _useConnectionPoolV2Original;
-    private readonly FieldInfo _truncateScaledDecimalField;
-    private readonly Tristate _truncateScaledDecimalOriginal;
-    private readonly FieldInfo _ignoreServerProvidedFailoverPartnerField;
-    private readonly Tristate _ignoreServerProvidedFailoverPartnerOriginal;
-    private readonly FieldInfo _enableUserAgentField;
-    private readonly Tristate _enableUserAgentOriginal;
-    private readonly FieldInfo _multiSubnetFailoverByDefaultField;
-    private readonly Tristate _multiSubnetFailoverByDefaultOriginal;
-#if NET
-    private readonly FieldInfo _globalizationInvariantModeField;
-    private readonly Tristate _globalizationInvariantModeOriginal;
-    #endif
-    
-    #if NET && _WINDOWS
-    private readonly FieldInfo _useManagedNetworkingField;
-    private readonly Tristate _useManagedNetworkingOriginal;
-    #endif    
-
-    #if NETFRAMEWORK
-    private readonly FieldInfo _disableTnirByDefaultField;
-    private readonly Tristate _disableTnirByDefaultOriginal;
-    #endif
-
-    #endregion
-
-    #region Public Types
+    /// <summary>
+    /// This semaphore ensures that only one instance of this class may exist at
+    /// a time.
+    /// </summary>
+    private static readonly SemaphoreSlim s_instanceLock = new(1, 1);
 
     /// <summary>
-    /// This enum is used to represent the state of a switch.
-    ///
-    /// It is a copy of the Tristate enum from LocalAppContextSwitches.
+    /// These fields are used to capture the original switch values.
     /// </summary>
-    public enum Tristate : byte
-    {
-        NotInitialized = 0,
-        False = 1,
-        True = 2
-    }
+    #if NETFRAMEWORK
+    private readonly bool? _disableTnirByDefaultOriginal;
+    #endif
+    private readonly bool? _enableMultiSubnetFailoverByDefaultOriginal;
+    private readonly bool? _enableUserAgentOriginal;
+    #if NET
+    private readonly bool? _globalizationInvariantModeOriginal;
+    #endif
+    private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
+    private readonly bool? _legacyRowVersionNullBehaviorOriginal;
+    private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
+    private readonly bool? _makeReadAsyncBlockingOriginal;
+    private readonly bool? _suppressInsecureTlsWarningOriginal;
+    private readonly bool? _truncateScaledDecimalOriginal;
+    private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
+    private readonly bool? _useCompatibilityProcessSniOriginal;
+    private readonly bool? _useConnectionPoolV2Original;
+    #if NET && _WINDOWS
+    private readonly bool? _useManagedNetworkingOriginal;
+    #endif    
+    private readonly bool? _useMinimumLoginTimeoutOriginal;
 
     #endregion
 
@@ -108,585 +67,379 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
     /// <summary>
     /// Construct to capture all existing switch values.
+    ///
+    /// This call will block for at most 5 seconds, waiting for any previous
+    /// instance to be disposed before completing construction.  Failure to
+    /// acquire the lock in that time will result in an exception being thrown.
     /// </summary>
-    /// 
-    /// <exception cref="Exception">
-    /// Throws if any values cannot be captured.
-    /// </exception>
     public LocalAppContextSwitchesHelper()
     {
-        // Acquire a handle to the LocalAppContextSwitches type.
-        var assembly = typeof(SqlCommandBuilder).Assembly;
-        var switchesType = assembly.GetType(
-            "Microsoft.Data.SqlClient.LocalAppContextSwitches");
-        if (switchesType == null)
+        // Wait for any previous instance to be disposed.
+        //
+        // We are only willing to wait a short time to avoid deadlocks.
+        //
+        if (! s_instanceLock.Wait(TimeSpan.FromSeconds(5)))
         {
-            throw new Exception("Unable to find LocalAppContextSwitches type.");
+            throw new InvalidOperationException(
+                "Timeout waiting for previous LocalAppContextSwitchesHelper " +
+                "instance to be disposed.");
         }
 
-        // A local helper to acquire a handle to a property.
-        void InitProperty(string name, out PropertyInfo property)
+        try
         {
-            var prop = switchesType.GetProperty(
-                name, BindingFlags.Public | BindingFlags.Static);
-            if (prop == null)
-            {
-                throw new Exception($"Unable to find {name} property.");
-            }
-            property = prop;
+            #if NETFRAMEWORK
+            _disableTnirByDefaultOriginal =
+                GetSwitchValue("s_disableTnirByDefault");
+            #endif
+            _enableMultiSubnetFailoverByDefaultOriginal =
+                GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
+            _enableUserAgentOriginal =
+                GetSwitchValue("s_enableUserAgent");
+            #if NET
+            _globalizationInvariantModeOriginal =
+                GetSwitchValue("s_globalizationInvariantMode");
+            #endif
+            _ignoreServerProvidedFailoverPartnerOriginal =
+                GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+            _legacyRowVersionNullBehaviorOriginal =
+                GetSwitchValue("s_legacyRowVersionNullBehavior");
+            _legacyVarTimeZeroScaleBehaviourOriginal =
+                GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+            _makeReadAsyncBlockingOriginal =
+                GetSwitchValue("s_makeReadAsyncBlocking");
+            _suppressInsecureTlsWarningOriginal =
+                GetSwitchValue("s_suppressInsecureTlsWarning");
+            _truncateScaledDecimalOriginal =
+                GetSwitchValue("s_truncateScaledDecimal");
+            _useCompatibilityAsyncBehaviourOriginal =
+                GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+            _useCompatibilityProcessSniOriginal =
+                GetSwitchValue("s_useCompatibilityProcessSni");
+            _useConnectionPoolV2Original =
+                GetSwitchValue("s_useConnectionPoolV2");
+            #if NET && _WINDOWS
+            _useManagedNetworkingOriginal =
+                GetSwitchValue("s_useManagedNetworking");
+            #endif
+            _useMinimumLoginTimeoutOriginal =
+                GetSwitchValue("s_useMinimumLoginTimeout");
         }
-
-        // Acquire handles to all of the public properties of
-        // LocalAppContextSwitches.
-        InitProperty(
-            "LegacyRowVersionNullBehavior",
-            out _legacyRowVersionNullBehaviorProperty);
-
-        InitProperty(
-            "SuppressInsecureTlsWarning",
-            out _suppressInsecureTlsWarningProperty);
-
-        InitProperty(
-            "MakeReadAsyncBlocking",
-            out _makeReadAsyncBlockingProperty);
-
-        InitProperty(
-            "UseMinimumLoginTimeout",
-            out _useMinimumLoginTimeoutProperty);
-
-        InitProperty(
-            "LegacyVarTimeZeroScaleBehaviour",
-            out _legacyVarTimeZeroScaleBehaviourProperty);
-
-        InitProperty(
-            "UseCompatibilityProcessSni",
-            out _useCompatibilityProcessSniProperty);
-
-        InitProperty(
-            "UseCompatibilityAsyncBehaviour",
-            out _useCompatibilityAsyncBehaviourProperty);
-
-        InitProperty(
-            "UseConnectionPoolV2",
-            out _useConnectionPoolV2Property);
-
-        InitProperty(
-            "TruncateScaledDecimal",
-            out _truncateScaledDecimalProperty);
-
-        InitProperty(
-            "IgnoreServerProvidedFailoverPartner",
-            out _ignoreServerProvidedFailoverPartner);
-
-        InitProperty(
-            "EnableUserAgent",
-            out _enableUserAgent);
-
-        InitProperty(
-            "EnableMultiSubnetFailoverByDefault",
-            out _enableMultiSubnetFailoverByDefaultProperty);
-
-#if NET
-        InitProperty(
-            "GlobalizationInvariantMode",
-            out _globalizationInvariantModeProperty);
-        #endif
-        
-        #if NET && _WINDOWS
-        InitProperty(
-            "UseManagedNetworking",
-            out _useManagedNetworkingProperty);
-        #endif
-
-        #if NETFRAMEWORK
-        InitProperty(
-            "DisableTnirByDefault",
-            out _disableTnirByDefaultProperty);
-        #endif
-
-        // A local helper to capture the original value of a switch.
-        void InitField(string name, out FieldInfo field, out Tristate value)
+        catch
         {
-            var fieldInfo =
-                switchesType.GetField(
-                    name, BindingFlags.NonPublic | BindingFlags.Static);
-            if (fieldInfo == null)
-            {
-                throw new Exception($"Unable to find {name} field.");
-            }
-            field = fieldInfo;
-            value = GetValue(field);
+            // If we fail to capture the original values, release the lock
+            // immediately to avoid deadlocks.
+            s_instanceLock.Release();
+            throw;
         }
-
-        // Capture the original value of each switch.
-        InitField(
-            "s_legacyRowVersionNullBehavior",
-            out _legacyRowVersionNullBehaviorField,
-            out _legacyRowVersionNullBehaviorOriginal);
-
-        InitField(
-            "s_suppressInsecureTlsWarning",
-            out _suppressInsecureTlsWarningField,
-            out _suppressInsecureTlsWarningOriginal);
-
-        InitField(
-            "s_makeReadAsyncBlocking",
-            out _makeReadAsyncBlockingField,
-            out _makeReadAsyncBlockingOriginal);
-
-        InitField(
-            "s_useMinimumLoginTimeout",
-            out _useMinimumLoginTimeoutField,
-            out _useMinimumLoginTimeoutOriginal);
-
-        InitField(
-            "s_legacyVarTimeZeroScaleBehaviour",
-            out _legacyVarTimeZeroScaleBehaviourField,
-            out _legacyVarTimeZeroScaleBehaviourOriginal);
-
-        InitField(
-            "s_useCompatibilityProcessSni",
-            out _useCompatibilityProcessSniField,
-            out _useCompatibilityProcessSniOriginal);
-
-        InitField(
-            "s_useCompatibilityAsyncBehaviour",
-            out _useCompatibilityAsyncBehaviourField,
-            out _useCompatibilityAsyncBehaviourOriginal);
-
-        InitField(
-            "s_useConnectionPoolV2",
-            out _useConnectionPoolV2Field,
-            out _useConnectionPoolV2Original);
-
-        InitField(
-            "s_truncateScaledDecimal",
-            out _truncateScaledDecimalField,
-            out _truncateScaledDecimalOriginal);
-
-        InitField(
-            "s_ignoreServerProvidedFailoverPartner",
-            out _ignoreServerProvidedFailoverPartnerField,
-            out _ignoreServerProvidedFailoverPartnerOriginal);
-        
-        InitField(
-            "s_enableUserAgent",
-            out _enableUserAgentField,
-            out _enableUserAgentOriginal);
-
-        InitField(
-            "s_multiSubnetFailoverByDefault",
-            out _multiSubnetFailoverByDefaultField,
-            out _multiSubnetFailoverByDefaultOriginal);
-
-#if NET
-        InitField(
-            "s_globalizationInvariantMode",
-            out _globalizationInvariantModeField,
-            out _globalizationInvariantModeOriginal);
-        #endif
-        
-        #if NET && _WINDOWS
-        InitField(
-            "s_useManagedNetworking",
-            out _useManagedNetworkingField,
-            out _useManagedNetworkingOriginal);
-#endif
-
-        #if NETFRAMEWORK
-        InitField(
-            "s_disableTnirByDefault",
-            out _disableTnirByDefaultField,
-            out _disableTnirByDefaultOriginal);
-        #endif
     }
 
     /// <summary>
-    /// Disposal restores all original switch values as a best effort.
+    /// Disposal restores all original switch values and releases the instance
+    /// lock.
     /// </summary>
-    /// 
-    /// <exception cref="Exception">
-    /// Throws if any values could not be restored after trying to restore all
-    /// values.
-    /// </exception>
     public void Dispose()
     {
-        List<string> failedFields = new();
-
-        void RestoreField(FieldInfo field, Tristate value)
+        try
         {
-            try
-            {
-                SetValue(field, value);
-            }
-            catch (Exception)
-            {
-                failedFields.Add(field.Name);
-            }
+            #if NETFRAMEWORK
+            SetSwitchValue(
+                "s_disableTnirByDefault",
+                _disableTnirByDefaultOriginal);
+            #endif
+            SetSwitchValue(
+                "s_enableMultiSubnetFailoverByDefault",
+                _enableMultiSubnetFailoverByDefaultOriginal);
+            SetSwitchValue(
+                "s_enableUserAgent",
+                _enableUserAgentOriginal);
+            #if NET
+            SetSwitchValue(
+                "s_globalizationInvariantMode",
+                _globalizationInvariantModeOriginal);
+            #endif
+            SetSwitchValue(
+                "s_ignoreServerProvidedFailoverPartner",
+                _ignoreServerProvidedFailoverPartnerOriginal);
+            SetSwitchValue(
+                "s_legacyRowVersionNullBehavior", 
+                _legacyRowVersionNullBehaviorOriginal);
+            SetSwitchValue(
+                "s_legacyVarTimeZeroScaleBehaviour",
+                _legacyVarTimeZeroScaleBehaviourOriginal);
+            SetSwitchValue(
+                "s_makeReadAsyncBlocking",
+                _makeReadAsyncBlockingOriginal);
+            SetSwitchValue(
+                "s_suppressInsecureTlsWarning",
+                _suppressInsecureTlsWarningOriginal);
+            SetSwitchValue(
+                "s_truncateScaledDecimal",
+                _truncateScaledDecimalOriginal);
+            SetSwitchValue(
+                "s_useCompatibilityAsyncBehaviour",
+                _useCompatibilityAsyncBehaviourOriginal);
+            SetSwitchValue(
+                "s_useCompatibilityProcessSni",
+                _useCompatibilityProcessSniOriginal);
+            SetSwitchValue(
+                "s_useConnectionPoolV2",
+                _useConnectionPoolV2Original);
+            #if NET && _WINDOWS
+            SetSwitchValue(
+                "s_useManagedNetworking",
+                _useManagedNetworkingOriginal);
+            #endif
+            SetSwitchValue(
+                "s_useMinimumLoginTimeout",
+                _useMinimumLoginTimeoutOriginal);
         }
-
-        RestoreField(
-            _legacyRowVersionNullBehaviorField,
-            _legacyRowVersionNullBehaviorOriginal);
-
-        RestoreField(
-            _suppressInsecureTlsWarningField,
-            _suppressInsecureTlsWarningOriginal);
-
-        RestoreField(
-            _makeReadAsyncBlockingField,
-            _makeReadAsyncBlockingOriginal);
-
-        RestoreField(
-            _useMinimumLoginTimeoutField,
-            _useMinimumLoginTimeoutOriginal);
-
-        RestoreField(
-            _legacyVarTimeZeroScaleBehaviourField,
-            _legacyVarTimeZeroScaleBehaviourOriginal);
-
-        RestoreField(
-            _useCompatibilityProcessSniField,
-            _useCompatibilityProcessSniOriginal);
-
-        RestoreField(
-            _useCompatibilityAsyncBehaviourField,
-            _useCompatibilityAsyncBehaviourOriginal);
-
-        RestoreField(
-            _useConnectionPoolV2Field,
-            _useConnectionPoolV2Original);
-
-        RestoreField(
-            _truncateScaledDecimalField,
-            _truncateScaledDecimalOriginal);
-
-        RestoreField(
-            _ignoreServerProvidedFailoverPartnerField,
-            _ignoreServerProvidedFailoverPartnerOriginal);
-
-        RestoreField(
-            _enableUserAgentField,
-            _enableUserAgentOriginal);
-
-        RestoreField(
-            _multiSubnetFailoverByDefaultField,
-            _multiSubnetFailoverByDefaultOriginal);
-
-        #if NET
-        RestoreField(
-            _globalizationInvariantModeField,
-            _globalizationInvariantModeOriginal);
-        #endif
-        
-        #if NET && _WINDOWS
-        RestoreField(
-            _useManagedNetworkingField,
-            _useManagedNetworkingOriginal);
-        #endif
-        
-        #if NETFRAMEWORK
-        RestoreField(
-            _disableTnirByDefaultField,
-            _disableTnirByDefaultOriginal);
-        #endif
-
-        if (failedFields.Count > 0)
+        finally
         {
-            throw new Exception(
-                "Failed to restore the following fields: " +
-                string.Join(", ", failedFields));
+            // Release the lock to allow another instance to be created.
+            s_instanceLock.Release();
         }
     }
 
     #endregion
 
-    #region Public Properties
+    #region Switch Value Getters and Setters
 
+    // These properties get or set the like-named underlying switch field value.
+    //
+    // They all throw if the value cannot be retrieved or set.
+
+    #if NETFRAMEWORK
     /// <summary>
-    /// Access the LocalAppContextSwitches.LegacyRowVersionNullBehavior
-    /// property.
+    /// Get or set the DisableTnirByDefault switch value.
     /// </summary>
-    public bool LegacyRowVersionNullBehavior
+    public bool? DisableTnirByDefault
     {
-        get => (bool)_legacyRowVersionNullBehaviorProperty.GetValue(null);
+        get => GetSwitchValue("s_disableTnirByDefault");
+        set => SetSwitchValue("s_disableTnirByDefault", value);
     }
+    #endif
 
     /// <summary>
-    /// Access the LocalAppContextSwitches.SuppressInsecureTlsWarning property.
+    /// Get or set the EnableMultiSubnetFailoverByDefault switch value.
     /// </summary>
-    public bool SuppressInsecureTlsWarning
+    public bool? EnableMultiSubnetFailoverByDefault
     {
-        get => (bool)_suppressInsecureTlsWarningProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.MakeReadAsyncBlocking property.
-    /// </summary>
-    public bool MakeReadAsyncBlocking
-    {
-        get => (bool)_makeReadAsyncBlockingProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseMinimumLoginTimeout property.
-    /// </summary>
-    public bool UseMinimumLoginTimeout
-    {
-        get => (bool)_useMinimumLoginTimeoutProperty.GetValue(null);
+        get => GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
+        set => SetSwitchValue("s_enableMultiSubnetFailoverByDefault", value);
     }
 
     /// <summary>
-    /// Access the LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour
-    /// property.
+    /// Get or set the EnableUserAgent switch value.
     /// </summary>
-    public bool LegacyVarTimeZeroScaleBehaviour
+    public bool? EnableUserAgent
     {
-        get => (bool)_legacyVarTimeZeroScaleBehaviourProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseCompatibilityProcessSni property.
-    /// </summary>
-    public bool UseCompatibilityProcessSni
-    {
-        get => (bool)_useCompatibilityProcessSniProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
-    /// property.
-    /// </summary>
-    public bool UseCompatibilityAsyncBehaviour
-    {
-        get => (bool)_useCompatibilityAsyncBehaviourProperty.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.UseConnectionPoolV2 property.
-    /// </summary>
-    public bool UseConnectionPoolV2
-    {
-        get => (bool)_useConnectionPoolV2Property.GetValue(null);
-    }
-
-    /// <summary>
-    /// Access the LocalAppContextSwitches.TruncateScaledDecimal property.
-    /// </summary>
-    public bool TruncateScaledDecimal
-    {
-        get => (bool)_truncateScaledDecimalProperty.GetValue(null);
-    }
-
-    public bool IgnoreServerProvidedFailoverPartner
-    {
-        get => (bool)_ignoreServerProvidedFailoverPartner.GetValue(null);
-    }
-
-    public bool EnableUserAgent
-    {
-        get => (bool)_enableUserAgent.GetValue(null);
-    }
-
-    public bool EnableMultiSubnetFailoverByDefault
-    {
-        get => (bool)_enableMultiSubnetFailoverByDefaultProperty.GetValue(null);
+        get => GetSwitchValue("s_enableUserAgent");
+        set => SetSwitchValue("s_enableUserAgent", value);
     }
 
     #if NET
     /// <summary>
-    /// Access the LocalAppContextSwitches.GlobalizationInvariantMode property.
+    /// Get or set the GlobalizationInvariantMode switch value.
     /// </summary>
-    public bool GlobalizationInvariantMode
+    public bool? GlobalizationInvariantMode
     {
-        get => (bool)_globalizationInvariantModeProperty.GetValue(null);
+        get => GetSwitchValue("s_globalizationInvariantMode");
+        set => SetSwitchValue("s_globalizationInvariantMode", value);
     }
     #endif
+
+    /// <summary>
+    /// Get or set the IgnoreServerProvidedFailoverPartner switch value.
+    /// </summary>
+    public bool? IgnoreServerProvidedFailoverPartner
+    {
+        get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+        set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
+    }
+
+    /// <summary>
+    /// Get or set the LegacyRowVersionNullBehavior switch value.
+    /// </summary>
+    public bool? LegacyRowVersionNullBehavior
+    {
+        get => GetSwitchValue("s_legacyRowVersionNullBehavior");
+        set => SetSwitchValue("s_legacyRowVersionNullBehavior", value);
+    }
+
+    /// <summary>
+    /// Get or set the LegacyVarTimeZeroScaleBehaviour switch value.
+    /// </summary>
+    public bool? LegacyVarTimeZeroScaleBehaviour
+    {
+        get => GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+        set => SetSwitchValue("s_legacyVarTimeZeroScaleBehaviour", value);
+    }
+
+    /// <summary>
+    /// Get or set the MakeReadAsyncBlocking switch value.
+    /// </summary>
+    public bool? MakeReadAsyncBlocking
+    {
+        get => GetSwitchValue("s_makeReadAsyncBlocking");
+        set => SetSwitchValue("s_makeReadAsyncBlocking", value);
+    }
+
+    /// <summary>
+    /// Get or set the SuppressInsecureTlsWarning switch value.
+    /// </summary>
+    public bool? SuppressInsecureTlsWarning
+    {
+        get => GetSwitchValue("s_suppressInsecureTlsWarning");
+        set => SetSwitchValue("s_suppressInsecureTlsWarning", value);
+    }
+
+    /// <summary>
+    /// Get or set the TruncateScaledDecimal switch value.
+    /// </summary>
+    public bool? TruncateScaledDecimal
+    {
+        get => GetSwitchValue("s_truncateScaledDecimal");
+        set => SetSwitchValue("s_truncateScaledDecimal", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseCompatibilityAsyncBehaviour switch value.
+    /// </summary>
+    public bool? UseCompatibilityAsyncBehaviour
+    {
+        get => GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+        set => SetSwitchValue("s_useCompatibilityAsyncBehaviour", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseCompatibilityProcessSni switch value.
+    /// </summary>
+    public bool? UseCompatibilityProcessSni
+    {
+        get => GetSwitchValue("s_useCompatibilityProcessSni");
+        set => SetSwitchValue("s_useCompatibilityProcessSni", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseConnectionPoolV2 switch value.
+    /// </summary>
+    public bool? UseConnectionPoolV2
+    {
+        get => GetSwitchValue("s_useConnectionPoolV2");
+        set => SetSwitchValue("s_useConnectionPoolV2", value);
+    }
 
     #if NET && _WINDOWS
     /// <summary>
-    /// Access the LocalAppContextSwitches.UseManagedNetworking property.
+    /// Get or set the UseManagedNetworking switch value.
     /// </summary>
-    public bool UseManagedNetworking
+    public bool? UseManagedNetworking
     {
-        get => (bool)_useManagedNetworkingProperty.GetValue(null);
-    }
-    #endif
-    
-    #if NETFRAMEWORK
-    /// <summary>
-    /// Access the LocalAppContextSwitches.DisableTnirByDefault property.
-    /// </summary>
-    public bool DisableTnirByDefault
-    {
-        get => (bool)_disableTnirByDefaultProperty.GetValue(null);
+        get => GetSwitchValue("s_useManagedNetworking");
+        set => SetSwitchValue("s_useManagedNetworking", value);
     }
     #endif
 
-    // These properties get or set the like-named underlying switch field value.
-    //
-    // They all fail the test if the value cannot be retrieved or set.
-
     /// <summary>
-    /// Get or set the LocalAppContextSwitches.LegacyRowVersionNullBehavior
-    /// switch value.
+    /// Get or set the UseMinimumLoginTimeout switch value.
     /// </summary>
-    public Tristate LegacyRowVersionNullBehaviorField
+    public bool? UseMinimumLoginTimeout
     {
-        get => GetValue(_legacyRowVersionNullBehaviorField);
-        set => SetValue(_legacyRowVersionNullBehaviorField, value);
+        get => GetSwitchValue("s_useMinimumLoginTimeout");
+        set => SetSwitchValue("s_useMinimumLoginTimeout", value);
     }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.SuppressInsecureTlsWarning
-    /// switch value.
-    /// </summary>
-    public Tristate SuppressInsecureTlsWarningField
-    {
-        get => GetValue(_suppressInsecureTlsWarningField);
-        set => SetValue(_suppressInsecureTlsWarningField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.MakeReadAsyncBlocking switch
-    /// value.
-    /// </summary>
-    public Tristate MakeReadAsyncBlockingField
-    {
-        get => GetValue(_makeReadAsyncBlockingField);
-        set => SetValue(_makeReadAsyncBlockingField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseMinimumLoginTimeout switch
-    /// value.
-    /// </summary>
-    public Tristate UseMinimumLoginTimeoutField
-    {
-        get => GetValue(_useMinimumLoginTimeoutField);
-        set => SetValue(_useMinimumLoginTimeoutField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour
-    /// switch value.
-    /// </summary>
-    public Tristate LegacyVarTimeZeroScaleBehaviourField
-    {
-        get => GetValue(_legacyVarTimeZeroScaleBehaviourField);
-        set => SetValue(_legacyVarTimeZeroScaleBehaviourField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseCompatibilityProcessSni switch
-    /// value.
-    /// </summary>
-    public Tristate UseCompatibilityProcessSniField
-    {
-        get => GetValue(_useCompatibilityProcessSniField);
-        set => SetValue(_useCompatibilityProcessSniField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseCompatibilityAsyncBehaviour
-    /// switch value.
-    /// </summary>
-    public Tristate UseCompatibilityAsyncBehaviourField
-    {
-        get => GetValue(_useCompatibilityAsyncBehaviourField);
-        set => SetValue(_useCompatibilityAsyncBehaviourField, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseConnectionPoolV2 switch value.
-    /// </summary>
-    public Tristate UseConnectionPoolV2Field
-    {
-        get => GetValue(_useConnectionPoolV2Field);
-        set => SetValue(_useConnectionPoolV2Field, value);
-    }
-
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.TruncateScaledDecimal switch value.
-    /// </summary>
-    public Tristate TruncateScaledDecimalField
-    {
-        get => GetValue(_truncateScaledDecimalField);
-        set => SetValue(_truncateScaledDecimalField, value);
-    }
-
-    public Tristate IgnoreServerProvidedFailoverPartnerField
-    {
-        get => GetValue(_ignoreServerProvidedFailoverPartnerField);
-        set => SetValue(_ignoreServerProvidedFailoverPartnerField, value);
-    }
-
-    public Tristate EnableUserAgentField
-    {
-        get => GetValue(_enableUserAgentField);
-        set => SetValue(_enableUserAgentField, value);
-    }
-
-    public Tristate EnableMultiSubnetFailoverByDefaultField
-    {
-        get => GetValue(_multiSubnetFailoverByDefaultField);
-        set => SetValue(_multiSubnetFailoverByDefaultField, value);
-    }
-
-#if NET
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.GlobalizationInvariantMode switch value.
-    /// </summary>
-    public Tristate GlobalizationInvariantModeField
-    {
-        get => GetValue(_globalizationInvariantModeField);
-        set => SetValue(_globalizationInvariantModeField, value);
-    }
-    #endif
-
-    #if NET && _WINDOWS
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.UseManagedNetworking switch value.
-    /// </summary>
-    public Tristate UseManagedNetworkingField
-    {
-        get => GetValue(_useManagedNetworkingField);
-        set => SetValue(_useManagedNetworkingField, value);
-    }
-    #endif
-    
-    #if NETFRAMEWORK
-    /// <summary>
-    /// Get or set the LocalAppContextSwitches.DisableTnirByDefault switch
-    /// value.
-    /// </summary>
-    public Tristate DisableTnirByDefaultField
-    {
-        get => GetValue(_disableTnirByDefaultField);
-        set => SetValue(_disableTnirByDefaultField, value);
-    }
-    #endif
 
     #endregion
 
-    #region Private Helpers
+    #region Helpers
 
-    // Get the value of the given field, or throw if it is null.
-    private static Tristate GetValue(FieldInfo field)
+    /// <summary>
+    /// Use reflection to get a switch field value from LocalAppContextSwitches.
+    /// </summary>
+    private static bool? GetSwitchValue(string fieldName)
     {
-        var value = field.GetValue(null);
-        if (value is null)
+        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
+        if (assembly is null)
         {
-            throw new Exception($"Field {field.Name} has a null value.");
+            throw new InvalidOperationException(
+                "Could not get assembly for Microsoft.Data.SqlClient");
+        }
+        
+        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        if (type is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get type LocalAppContextSwitches");
         }
 
-        return (Tristate)value;
+        var field = type.GetField(
+            fieldName,
+            BindingFlags.Static | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException(
+                $"Field '{fieldName}' not found in LocalAppContextSwitches");
+        }
+
+        var value = field.GetValue(null);
+        if (value is not null)
+        {
+            // GOTCHA: This assumes that switch values map to bytes as:
+            //
+            //   None = 0
+            //   True = 1
+            //   False = 2
+            //
+            // See the LocalAppContextSwitches.SwitchValue enum definition.
+            //
+            byte underlyingValue = (byte)value;
+            return underlyingValue == 0 ? null : underlyingValue == 1;
+        }
+
+        throw new InvalidOperationException(
+            $"Field '{fieldName}' is not of type byte");
     }
 
-    // Set the value of the given field.
-    private static void SetValue(FieldInfo field, Tristate value)
+    /// <summary>
+    /// Use reflection to set a switch field value in LocalAppContextSwitches.
+    /// </summary>
+    private static void SetSwitchValue(string fieldName, bool? value)
     {
-        field.SetValue(null, (byte)value);
+        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
+        if (assembly is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get assembly for Microsoft.Data.SqlClient");
+        }
+        
+        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        if (type is null)
+        {
+            throw new InvalidOperationException(
+                "Could not get type LocalAppContextSwitches");
+        }
+
+        var field = type.GetField(
+            fieldName,
+            BindingFlags.Static | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            throw new InvalidOperationException(
+                $"Field '{fieldName}' not found in LocalAppContextSwitches");
+        }
+
+        // GOTCHA: This assumes that switch values map to bytes as:
+        //
+        //   None = 0
+        //   True = 1
+        //   False = 2
+        //
+        // See the LocalAppContextSwitches.SwitchValue enum definition.
+        //
+        byte byteValue =
+            (byte)(!value.HasValue ? 0 : value.Value ? 1 : 2);
+
+        field.SetValue(null, Enum.ToObject(field.FieldType, byteValue));
     }
 
     #endregion

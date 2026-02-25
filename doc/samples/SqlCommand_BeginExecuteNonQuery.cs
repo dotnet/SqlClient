@@ -1,3 +1,5 @@
+namespace SqlCommand_BeginExecuteNonQuery;
+
 // <Snippet1>
 using System;
 using System.Data;

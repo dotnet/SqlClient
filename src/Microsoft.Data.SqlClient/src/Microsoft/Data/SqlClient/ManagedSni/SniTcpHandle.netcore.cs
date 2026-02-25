@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Setting server name = {1}", args0: _connectionId, args1: serverName);
 
@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private Socket TryConnectParallel(string hostName, int port, TimeoutTimer timeout, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {
                 Socket availableSocket = null;
                 bool isInfiniteTimeOut = timeout.IsInfinite;
@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
                 bool isInfiniteTimeout = timeout.IsInfinite;
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private static Socket ParallelConnect(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {
                 if (serverAddresses == null)
                 {
@@ -726,7 +726,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public override uint EnableSsl(uint options)
         {
-            using (TrySNIEventScope.Create(nameof(SniHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
 
@@ -767,7 +767,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public override void DisableSsl()
         {
-            using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {
                 _sslStream.Dispose();
                 _sslStream = null;
@@ -1001,7 +1001,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
+            using (SqlClientSNIEventScope.Create(nameof(SniTcpHandle)))
             {
                 packet.WriteToStreamAsync(_stream, _sendCallback, SniProviders.TCP_PROV);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Data sent to stream asynchronously", args0: _connectionId);

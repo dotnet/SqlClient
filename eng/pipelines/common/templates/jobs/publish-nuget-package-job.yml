@@ -1,0 +1,91 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Reusable job template for publishing a signed NuGet package to a NuGet feed.  Downloads the
+# pipeline artifact produced by a build job and pushes .nupkg and .snupkg files using
+# NuGetCommand@2.
+#
+# Uses a deployment job with ADO environment for approval gates.
+#
+# OneBranch Requirements:
+# - All deployment jobs must use releaseJob syntax per 1ES Pipeline Templates v2.
+# - Must declare inputs via templateContext since deploy lifecycle doesn't auto-download.
+# - See:
+#   https://eng.ms/docs/products/onebranch/build/releasepipelines/releaseworkflows/deploymentjob
+
+parameters:
+  # Human-readable package name (used in display strings).
+  - name: packageDisplayName
+    type: string
+
+  # The pipeline artifact name to download (OneBranch naming: drop_<stage>_<job>).
+  - name: artifactName
+    type: string
+
+  # NuGet service connection name for authentication.
+  - name: nugetServiceConnection
+    type: string
+
+  # Indicates whether this is a production release (enables additional 1ES PT checks).
+  - name: isProduction
+    type: boolean
+    default: false
+
+  # Globbing pattern to match .nupkg and .snupkg files within the downloaded artifact.
+  - name: packagePattern
+    type: string
+    default: '**/*.nupkg;**/*.snupkg'
+
+  # When true, list packages that would be published without actually pushing.  Use for non-official
+  # pipelines to validate the release stage without risk.
+  - name: dryRun
+    type: boolean
+    default: false
+
+# Read more: https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/pipelinebasics#what-is-a-onebranch-release-yaml-pipeline
+jobs:
+  - job: publish_${{ replace(parameters.packageDisplayName, '.', '_') }}
+    displayName: Publish ${{ parameters.packageDisplayName }}
+
+    # Template context inputs are used to pass parameters to the deployment job since it doesn't
+    # automatically download pipeline artifacts.
+    templateContext:
+      type: releaseJob
+      isProduction: ${{ parameters.isProduction }}
+      inputs:
+      - input: pipelineArtifact
+        artifactName: ${{ parameters.artifactName }}
+        targetPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
+
+    variables:
+      - name: ob_outputDirectory
+        value: $(Build.SourcesDirectory)/packages
+
+    pool:
+      type: release
+
+    steps:
+
+      # Artifacts are downloaded via templateContext.inputs per OneBranch requirements.
+
+      - ${{ if eq(parameters.dryRun, true) }}:
+        - pwsh: |
+            Write-Host "##[section]DRY RUN — the following packages may be published:"
+            $nupkgs = Get-ChildItem -Path "$(Pipeline.Workspace)/${{ parameters.artifactName }}" -Filter "*.nupkg" -Recurse -ErrorAction SilentlyContinue
+            $snupkgs = Get-ChildItem -Path "$(Pipeline.Workspace)/${{ parameters.artifactName }}" -Filter "*.snupkg" -Recurse -ErrorAction SilentlyContinue
+            if ($nupkgs) { $nupkgs | ForEach-Object { Write-Host $_.FullName } } else { Write-Host "(no .nupkg found)" }
+            if ($snupkgs) { $snupkgs | ForEach-Object { Write-Host $_.FullName } } else { Write-Host "(no .snupkg found)" }
+            Write-Host "##[warning]Dry run mode — no packages were pushed."
+          displayName: Dry Run — List ${{ parameters.packageDisplayName }} packages
+
+      - ${{ else }}:
+        - task: NuGetCommand@2
+          displayName: Push ${{ parameters.packageDisplayName }} to NuGet
+          inputs:
+            command: push
+            packagesToPush: $(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.packagePattern }}
+            nuGetFeedType: external
+            publishFeedCredentials: ${{ parameters.nugetServiceConnection }}

@@ -1,3 +1,5 @@
+namespace SqlCommand_ExecuteReader2;
+
 // <Snippet1>
 using System;
 using System.Data;
@@ -29,5 +31,5 @@ class Program
             }
         }
     }
-    // </Snippet1>
 }
+// </Snippet1>

@@ -97,12 +97,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (_keyDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey key))
             {
-                AKVEventSource.Log.TryTraceEvent("Fetched key name={0} from cache", key.Name);
+                SqlClientEventSource.Log.TryTraceEvent("Fetched key name={0} from cache", key.Name);
                 return key;
             }
 
             // Not a public exception - not likely to occur.
-            AKVEventSource.Log.TryTraceEvent("Key not found; URI={0}", keyIdentifierUri);
+            SqlClientEventSource.Log.TryTraceEvent("Key not found; URI={0}", keyIdentifierUri);
             throw ADP.MasterKeyNotFound(keyIdentifierUri);
         }
 
@@ -128,21 +128,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         internal bool VerifyData(byte[] message, byte[] signature, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
-            AKVEventSource.Log.TryTraceEvent("Sending request to verify data");
+            SqlClientEventSource.Log.TryTraceEvent("Sending request to verify data");
             return cryptographyClient.VerifyData(RS256, message, signature).IsValid;
         }
 
         internal byte[] UnwrapKey(KeyWrapAlgorithm keyWrapAlgorithm, byte[] encryptedKey, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
-            AKVEventSource.Log.TryTraceEvent("Sending request to unwrap key.");
+            SqlClientEventSource.Log.TryTraceEvent("Sending request to unwrap key.");
             return cryptographyClient.UnwrapKey(keyWrapAlgorithm, encryptedKey).Key;
         }
 
         internal byte[] WrapKey(KeyWrapAlgorithm keyWrapAlgorithm, byte[] key, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
-            AKVEventSource.Log.TryTraceEvent("Sending request to wrap key.");
+            SqlClientEventSource.Log.TryTraceEvent("Sending request to wrap key.");
             return cryptographyClient.WrapKey(keyWrapAlgorithm, key).EncryptedKey;
         }
 
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyVersion">The version of the Azure Key Vault key</param>
         private KeyVaultKey FetchKeyFromKeyVault(KeyClient keyClient, string keyName, string keyVersion)
         {
-            AKVEventSource.Log.TryTraceEvent("Fetching key name={0}", keyName);
+            SqlClientEventSource.Log.TryTraceEvent("Fetching key name={0}", keyName);
 
             Azure.Response<KeyVaultKey> keyResponse = keyClient?.GetKey(keyName, keyVersion);
 
@@ -175,10 +175,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // In such cases, we log the error and throw an exception.
             if (keyResponse == null || keyResponse.Value == null || keyResponse.GetRawResponse().IsError)
             {
-                AKVEventSource.Log.TryTraceEvent("Get Key failed to fetch Key from Azure Key Vault for key {0}, version {1}", keyName, keyVersion);
+                SqlClientEventSource.Log.TryTraceEvent("Get Key failed to fetch Key from Azure Key Vault for key {0}, version {1}", keyName, keyVersion);
                 if (keyResponse?.GetRawResponse() is Azure.Response response)
                 {
-                    AKVEventSource.Log.TryTraceEvent("Response status {0} : {1}", response.Status, response.ReasonPhrase);
+                    SqlClientEventSource.Log.TryTraceEvent("Response status {0} : {1}", response.Status, response.ReasonPhrase);
                 }
                 throw ADP.GetKeyFailed(keyName);
             }
@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (key.KeyType != KeyType.Rsa && key.KeyType != KeyType.RsaHsm)
             {
-                AKVEventSource.Log.TryTraceEvent("Non-RSA KeyType received: {0}", key.KeyType);
+                SqlClientEventSource.Log.TryTraceEvent("Non-RSA KeyType received: {0}", key.KeyType);
                 throw ADP.NonRsaKeyFormat(key.KeyType.ToString());
             }
 
@@ -231,8 +231,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             masterKeyName = masterKeyPathUri.Segments[2];
             masterKeyVersion = masterKeyPathUri.Segments.Length > 3 ? masterKeyPathUri.Segments[3] : null;
 
-            AKVEventSource.Log.TryTraceEvent("Received Key Name: {0}", masterKeyName);
-            AKVEventSource.Log.TryTraceEvent("Received Key Version: {0}", masterKeyVersion);
+            SqlClientEventSource.Log.TryTraceEvent("Received Key Name: {0}", masterKeyName);
+            SqlClientEventSource.Log.TryTraceEvent("Received Key Version: {0}", masterKeyVersion);
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -36,7 +37,7 @@ namespace Microsoft.Data.SqlClient
         private readonly TransactionType _transactionType;
         private long _transactionId;             // passed in the MARS headers
         private int _openResultCount;           // passed in the MARS headers
-        private SqlInternalConnection _innerConnection;
+        private SqlConnectionInternal _innerConnection;
         private bool _disposing;                 // used to prevent us from throwing exceptions while we're disposing
         private WeakReference<SqlTransaction> _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
 
@@ -46,11 +47,19 @@ namespace Microsoft.Data.SqlClient
         internal bool RestoreBrokenConnection { get; set; }
         internal bool ConnectionHasBeenRestored { get; set; }
 
-        internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction) : this(innerConnection, type, outerTransaction, NullTransactionId)
+        internal SqlInternalTransaction(
+            SqlConnectionInternal innerConnection,
+            TransactionType type,
+            SqlTransaction outerTransaction)
+            : this(innerConnection, type, outerTransaction, NullTransactionId)
         {
         }
 
-        internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction, long transactionId)
+        internal SqlInternalTransaction(
+            SqlConnectionInternal innerConnection,
+            TransactionType type,
+            SqlTransaction outerTransaction,
+            long transactionId)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.ctor | RES | CPOOL | Object Id {0}, Created for connection {1}, outer transaction {2}, Type {3}", ObjectID, innerConnection.ObjectID, outerTransaction?.ObjectId, (int)type);
             _innerConnection = innerConnection;
@@ -187,7 +196,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void CloseFromConnection()
         {
-            SqlInternalConnection innerConnection = _innerConnection;
+            SqlConnectionInternal innerConnection = _innerConnection;
 
             Debug.Assert(innerConnection != null, "How can we be here if the connection is null?");
             SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.CloseFromConnection | RES | CPOOL | Object Id {0}, Closing transaction", ObjectID);
@@ -216,7 +225,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Commit()
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Commit | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Commit | API | Object Id {0}", ObjectID))
             {
                 if (_innerConnection.IsLockedForBulkCopy)
                 {
@@ -321,7 +330,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback()
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID))
             {
                 if (_innerConnection.IsLockedForBulkCopy)
                 {
@@ -361,7 +370,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback(string transactionName)
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}, Transaction Name {1}", ObjectID, transactionName))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}, Transaction Name {1}", ObjectID, transactionName))
             {
                 if (_innerConnection.IsLockedForBulkCopy)
                 {
@@ -397,7 +406,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Save(string savePointName)
         {
-            using (TryEventScope.Create("SqlInternalTransaction.Save | API | Object Id {0}, Save Point Name {1}", ObjectID, savePointName))
+            using (SqlClientEventScope.Create("SqlInternalTransaction.Save | API | Object Id {0}, Save Point Name {1}", ObjectID, savePointName))
             {
                 _innerConnection.ValidateConnectionForExecute(null);
 
@@ -452,7 +461,7 @@ namespace Microsoft.Data.SqlClient
 
             ZombieParent();
 
-            SqlInternalConnection innerConnection = _innerConnection;
+            SqlConnectionInternal innerConnection = _innerConnection;
             _innerConnection = null;
 
             if (innerConnection != null)

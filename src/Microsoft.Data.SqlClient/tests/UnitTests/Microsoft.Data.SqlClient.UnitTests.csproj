@@ -1,71 +1,77 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!-- @TODO: Use full assembly name here -->
     <AssemblyName>UnitTests</AssemblyName>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <RootNamespace />
     <IsTestProject>true</IsTestProject>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <!-- Common references -->
+
+  <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
-    <PackageReference Include="System.Configuration.ConfigurationManager" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="$(TargetGroup) == 'netfx'">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="xunit.runner.console">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)Common\Common.csproj" />
-  </ItemGroup>
-  <!-- .NET Framework references -->
-  <ItemGroup Condition="$(TargetGroup) == 'netfx'">
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
-    <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-	  <Reference Include="System.Transactions" />
-  </ItemGroup>
-  <!-- .NET references -->
-  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
-    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>%(Filename)%(Extension)</TargetPath>
-    </ContentWithTargetPath>
-  </ItemGroup>
-  <ItemGroup>
-    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </ContentWithTargetPath>
-  </ItemGroup>
-  <!-- Resources -->
-  <ItemGroup>
+    <EmbeddedResource Update="Resources.resx">
+      <LogicalName>Microsoft.Data.SqlClient.UnitTests.Resources.resources</LogicalName>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <Compile Update="Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+  </ItemGroup>
 
-    <EmbeddedResource Update="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+  <!-- References ====================================================== -->
+  <!-- Test target reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+  <!-- References for netframework -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System.Transactions" />
+
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.console"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+
+    <ProjectReference Include="$(TestsPath)Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+  </ItemGroup>
+
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.console"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
+                      PrivateAssets="all" />
+
+    <ProjectReference Include="$(TestsPath)Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
   </ItemGroup>
 </Project>

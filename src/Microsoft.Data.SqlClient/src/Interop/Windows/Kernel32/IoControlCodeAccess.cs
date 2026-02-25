@@ -13,7 +13,7 @@ namespace Interop.Windows.Kernel32
     /// Indicates the type of access that a caller must request when opening the file object that represents the device (see IRP_MJ_CREATE).
     /// </summary>
     [Flags]
-    public enum IoControlCodeAccess
+    internal enum IoControlCodeAccess
     {
         /// <summary>
         /// The I/O manager sends the IRP for any caller that has a handle to the file object that represents the target device object.
