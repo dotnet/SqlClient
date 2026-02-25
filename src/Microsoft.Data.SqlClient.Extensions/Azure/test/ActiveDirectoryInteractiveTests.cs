@@ -21,8 +21,20 @@ public class ActiveDirectoryInteractiveTests
     {
         SqlConnectionStringBuilder builder = new()
         {
-            // This is a sample Kusto database that can be accessed by any EntraID account.
-            DataSource = "help.kusto.windows.nett",
+            // This is an Azure SQL database accessible via MSFT-AzVPN.
+            //
+            // To successfully login, you must add your EntraID identity to the database using
+            // commands like this:
+            //
+            //   use [Northwind];
+            //   create user [<you>@microsoft.com] from external provider;
+            //   alter role db_datareader add member [paulmedynski@microsoft.com];
+            //
+            // You must connect to the database as an admin in order run these commands, for example
+            // as the testodbc@microsoft.com user via SQL username/password authentication.
+            //
+            DataSource = "adotest.database.windows.net",
+            InitialCatalog = "Northwind",
             Encrypt = true,
             TrustServerCertificate = false,
             ConnectTimeout = 180,
