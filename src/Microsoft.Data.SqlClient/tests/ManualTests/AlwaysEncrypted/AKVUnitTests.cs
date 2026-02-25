@@ -8,9 +8,7 @@ using Azure.Security.KeyVault.Keys;
 using System.Reflection;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Diagnostics.Tracing;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
