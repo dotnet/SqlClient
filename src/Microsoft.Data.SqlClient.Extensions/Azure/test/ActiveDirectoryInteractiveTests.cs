@@ -16,6 +16,7 @@ public class ActiveDirectoryInteractiveTests
     }
 
     [Fact]
+    [Trait("Category", "Interactive")]
     public async Task TestConnection()
     {
         SqlConnectionStringBuilder builder = new()
@@ -36,6 +37,8 @@ public class ActiveDirectoryInteractiveTests
         }
         catch (SqlException ex)
         {
+            _output.WriteLine($"Exception: {ex}");
+
             // SqlException doesn't emit all of its errors via its ToString(), so we must do that
             // ourselves if we want to see everything.
             //
