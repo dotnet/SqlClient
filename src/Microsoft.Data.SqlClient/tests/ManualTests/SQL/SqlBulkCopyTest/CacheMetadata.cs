@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -391,6 +392,73 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     object result = verifyCmd.ExecuteScalar();
                     Assert.Equal("Smith", result);
                 }
+            }
+            finally
+            {
+                Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+            }
+        }
+    }
+
+    public class CacheMetadataAsync
+    {
+        private static readonly string sourceTable = "employees";
+        private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(20), col3 nvarchar(10))";
+        private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
+
+        // Test that CacheMetadata works correctly with WriteToServerAsync.
+        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        {
+            Task t = TestAsync(srcConstr, dstConstr, dstTable);
+            t.Wait();
+            Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
+        }
+
+        private static async Task TestAsync(string srcConstr, string dstConstr, string dstTable)
+        {
+            string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
+            string initialQuery = string.Format(initialQueryTemplate, dstTable);
+
+            using SqlConnection dstConn = new(dstConstr);
+            using SqlCommand dstCmd = dstConn.CreateCommand();
+            dstConn.Open();
+
+            try
+            {
+                Helpers.TryExecute(dstCmd, initialQuery);
+
+                using SqlBulkCopy bulkcopy = new(dstConn, SqlBulkCopyOptions.CacheMetadata, null);
+                bulkcopy.DestinationTableName = dstTable;
+
+                // First WriteToServerAsync: metadata is queried and cached.
+                using (SqlConnection srcConn = new(srcConstr))
+                {
+                    await srcConn.OpenAsync().ConfigureAwait(false);
+                    using SqlCommand srcCmd = new(sourceQuery, srcConn);
+                    using IDataReader reader = await srcCmd.ExecuteReaderAsync().ConfigureAwait(false);
+                    await bulkcopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+                Helpers.VerifyResults(dstConn, dstTable, 3, 5);
+
+                // Second WriteToServerAsync: should reuse cached metadata.
+                using (SqlConnection srcConn = new(srcConstr))
+                {
+                    await srcConn.OpenAsync().ConfigureAwait(false);
+                    using SqlCommand srcCmd = new(sourceQuery, srcConn);
+                    using IDataReader reader = await srcCmd.ExecuteReaderAsync().ConfigureAwait(false);
+                    await bulkcopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+                Helpers.VerifyResults(dstConn, dstTable, 3, 10);
+
+                // Third WriteToServerAsync: should still reuse cached metadata.
+                using (SqlConnection srcConn = new(srcConstr))
+                {
+                    await srcConn.OpenAsync().ConfigureAwait(false);
+                    using SqlCommand srcCmd = new(sourceQuery, srcConn);
+                    using IDataReader reader = await srcCmd.ExecuteReaderAsync().ConfigureAwait(false);
+                    await bulkcopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+                Helpers.VerifyResults(dstConn, dstTable, 3, 15);
             }
             finally
             {

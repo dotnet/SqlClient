@@ -356,5 +356,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             CacheMetadataCombinedWithKeepNulls.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataKeepNulls"));
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataAsyncTest()
+        {
+            CacheMetadataAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CacheMetadataAsync"));
+        }
     }
 }
