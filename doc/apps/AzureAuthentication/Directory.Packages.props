@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- We purposely do not include any parent Directory.Packages.props files. -->
+
+  <PropertyGroup>
+    <!-- Use SqlClient 6.1.4 if no version was specified. -->
+    <SqlClientVersion>6.1.4</SqlClientVersion>
+
+    <!-- Use AKV Provider 6.1.2 if no version was specified. -->
+    <AKVProviderVersion>6.1.2</AKVProviderVersion>
+  </PropertyGroup>
+
+  <!-- SqlClient Packages -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(SqlClientVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="$(AKVProviderVersion)" />
+
+    <!-- Declare a version for the Azure package if one was specified. -->
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzureVersion)"
+      Condition="'$(AzureVersion)' != ''" />
+  </ItemGroup>
+
+  <!-- Other Packages -->
+  <ItemGroup>
+    <PackageVersion Include="Azure.Identity" Version="1.17.1" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.3" />
+  </ItemGroup>
+
+</Project>
