@@ -34,7 +34,7 @@ Package versions are controlled through MSBuild properties. Pass them on the com
 | Property | Default | Description |
 | --- | --- | --- |
 | `SqlClientVersion` | `6.1.4` | Version of `Microsoft.Data.SqlClient` to reference. |
-| `AKVProviderVersion` | `6.1.2` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
+| `AkvProviderVersion` | `6.1.2` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
 | `AzureVersion` | None | Version of `Microsoft.Data.SqlClient.Extensions.Azure` to reference.  When omitted, the `Azure` package will not be referenced. |
 
 ## Local Package Source
@@ -60,18 +60,26 @@ The app has built-in help:
 dotnet run -- --help
 
 Description:
+  Azure Authentication Tester
+  ---------------------------
+
   Validates SqlClient connectivity using EntraID (formerly Azure Active Directory) authentication.
-  Connects to SQL Server using the supplied connection string, which must specify the authentication
-  method.
+  Connects to SQL Server using the supplied connection string, which must specify the authentication method.
+
+  Supply specific package versions when building to test different versions of the SqlClient suite, for example:
+
+    -p:SqlClientVersion=7.0.0.preview4
+    -p:AkvProviderVersion=7.0.1-preview2
+    -p:AzureVersion=1.0.0-preview1
 
 Usage:
   AzureAuthentication [options]
 
 Options:
-  -c, --connection-string <connection-string> (REQUIRED)  The ADO.NET connection string used to
-                                                          connect to SQL Server. Supports SQL, Azure
-                                                          AD, and integrated authentication modes.
-  -l, --log-sqlclient-events                              Enable SqlClient event emission to the console.
+  -c, --connection-string <connection-string> (REQUIRED)  The ADO.NET connection string used to connect to SQL Server.
+                                                          Supports SQL, Azure AD, and integrated authentication modes.
+  -l, --log-events                                        Enable SqlClient event emission to the console.
+  -t, --trace                                             Pauses execution to allow dotnet-trace to be attached.
   -v, --verbose                                           Enable verbose output with detailed error information.
   -?, -h, --help                                          Show help and usage information
   --version                                               Show version information
@@ -107,6 +115,7 @@ Connection details:
 
 Testing connectivity...
 Connected successfully!
+    Server version: 12.00.1017
 ```
 
 Errors will be emitted to standard error:
@@ -136,7 +145,7 @@ Run against locally-built packages (drop `.nupkg` files into the `packages/` fol
 dotnet run -p:SqlClientVersion=7.0.0-preview4 -- -c "<connection string>"
 ```
 
-Run usinb the optional `Azure` extensions package:
+Run including the `Azure` extensions package:
 
 ```bash
 dotnet run -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
@@ -145,11 +154,12 @@ dotnet run -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
 Override all three versions at once:
 
 ```bash
-dotnet run -p:SqlClientVersion=7.0.0-preview1 -p:AKVProviderVersion=7.0.0-preview1 -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
+dotnet run -p:SqlClientVersion=7.0.0-preview1 -p:AkvProviderVersion=7.0.0-preview1 -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
 ```
 
 ## Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download) or later
-- A SQL Server or Azure SQL instance accessible with Azure AD credentials
-- Azure credentials available to `DefaultAzureCredential` (e.g. Azure CLI login, environment variables, or managed identity)
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download) and .NET Framework 4.8.1 or later.
+- A SQL Server or Azure SQL instance accessible with Azure AD credentials.
+- Azure credentials available to `DefaultAzureCredential` (e.g. Azure CLI login, environment
+  variables, or managed identity).

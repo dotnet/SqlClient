@@ -8,13 +8,13 @@
     <SqlClientVersion>6.1.4</SqlClientVersion>
 
     <!-- Use AKV Provider 6.1.2 if no version was specified. -->
-    <AKVProviderVersion>6.1.2</AKVProviderVersion>
+    <AkvProviderVersion>6.1.2</AkvProviderVersion>
   </PropertyGroup>
 
   <!-- SqlClient Packages -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(SqlClientVersion)" />
-    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="$(AKVProviderVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="$(AkvProviderVersion)" />
 
     <!-- Declare a version for the Azure package if one was specified. -->
     <PackageVersion

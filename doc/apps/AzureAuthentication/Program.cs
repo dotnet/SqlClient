@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
 using Azure.Identity;
@@ -7,7 +8,7 @@ using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
 namespace AzureAuthentication;
 
-public class Program
+public class Program : IDisposable
 {
     static int Main(string[] args)
     {
@@ -35,12 +36,19 @@ public class Program
         };
 
         RootCommand rootCommand = new(
-            "Azure Authentication Tester" + Environment.NewLine +
+            AppName + Environment.NewLine +
             "---------------------------" + Environment.NewLine +
             Environment.NewLine +
             "Validates SqlClient connectivity using EntraID (formerly Azure Active Directory) " +
             "authentication.  Connects to SQL Server using the supplied connection string, " +
-            "which must specify the authentication method.")
+            "which must specify the authentication method." + Environment.NewLine +
+            Environment.NewLine +
+            "Supply specific package versions when building to test different versions of the " +
+            "SqlClient suite, for example:" + Environment.NewLine +
+            Environment.NewLine +
+            "  -p:SqlClientVersion=7.0.0.preview4" + Environment.NewLine +
+            "  -p:AkvProviderVersion=7.0.1-preview2" + Environment.NewLine +
+            "  -p:AzureVersion=1.0.0-preview1")
         {
             connectionStringOption,
             logOption,
@@ -54,15 +62,22 @@ public class Program
             bool logEvents = parseResult.GetValue(logOption);
             bool trace = parseResult.GetValue(traceOption);
             bool verbose = parseResult.GetValue(verboseOption);
-            return new Program().Run(connectionString, logEvents, trace, verbose);
+
+            using Program app = new();
+            return app.Run(connectionString, logEvents, trace, verbose);
         });
 
         return rootCommand.Parse(args).Invoke();
     }
 
+    public void Dispose()
+    {
+        _eventListener?.Dispose();
+    }
+
     internal int Run(string connectionString, bool logEvents, bool trace, bool verbose)
     {
-        Out("Azure Authentication Tester");
+        Out(AppName);
         Out("---------------------------");
         Out("");
         Out("Packages used:");
@@ -115,7 +130,7 @@ public class Program
         {
             Out("Execution paused; attach dotnet-trace and press Enter to resume:");
             Out("");
-            Out($"  dotnet-trace collect -p {Environment.ProcessId} " +
+            Out($"  dotnet-trace collect -p {Process.GetCurrentProcess().Id} " +
                 "--providers Microsoft.Data.SqlClient.EventSource:1FFF:5");
             Out("");
             Console.ReadLine();
@@ -154,14 +169,16 @@ public class Program
         }
     }
 
+    private const string AppName = "Azure Authentication Tester";
+
     private SqlClientEventListener? _eventListener;
 
-    internal void Out(string message)
+    internal static void Out(string message)
     {
         Console.Out.WriteLine(message);
     }
 
-    internal void Err(string message)
+    internal static void Err(string message)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Error.WriteLine(message);
