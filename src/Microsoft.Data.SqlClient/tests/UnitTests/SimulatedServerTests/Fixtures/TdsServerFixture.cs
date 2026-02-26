@@ -21,5 +21,5 @@ public class TdsServerFixture : IDisposable
         TdsServer.Dispose();
     }
 
-    public TdsServer TdsServer { get; private set; }
+    public TdsServer TdsServer { get; }
 }
