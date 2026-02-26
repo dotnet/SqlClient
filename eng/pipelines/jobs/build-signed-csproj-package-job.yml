@@ -121,6 +121,21 @@ jobs:
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
+      # Perform Roslyn analysis before building, since this step will clobber build output.
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+        displayName: Roslyn Analyzers
+        inputs:
+          msBuildArchitecture: x64
+          msBuildCommandLine: >-
+              msbuild
+              $(REPO_ROOT)/build.proj
+              -t:$(buildTarget)
+              -p:Configuration=${{ parameters.buildConfiguration }}
+              -p:ReferenceType=Package
+              ${{ parameters.versionProperties }}
+          msBuildVersion: 17.0
+          setupCommandLinePicker: vs2022
+
       # Build the package, producing DLLs only (no NuGet package yet).
       - template: /eng/pipelines/steps/compound-build-csproj-step.yml@self
         parameters:
