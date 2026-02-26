@@ -45,17 +45,33 @@
 
 	<!-- Imports ======================================================= -->
 	<Import Project="src/Directory.Build.props" />
-  
+
   <!-- =============================================================== -->
 	<!-- Microsoft.Data.SqlClient Build Targets -->
 	<PropertyGroup>
     <MdsArtifactsFolder>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</MdsArtifactsFolder>
     <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
     <MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
+    <MdsRefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
 	</PropertyGroup>
 
 	<!-- BuildMds: Builds all binaries for MDS -->
-	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows" />
+	<Target Name="BuildMds" DependsOnTargets="BuildMdsRef;BuildMdsUnix;BuildMdsWindows" />
+
+  <!-- BuildMdsRef: Builds the ref binaries project for MDS, which is OS-agnostic -->
+  <Target Name="BuildMdsRef">
+    <PropertyGroup>
+      <DotnetCommand>
+        $(DotnetPath)dotnet build $(MdsRefProjectPath)
+          -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building MDS ref binaries via command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 
 	<!-- BuildMdsUnix: Builds all unix-specific MDS binaries -->
 	<Target Name="BuildMdsUnix">
@@ -68,6 +84,7 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
 		</PropertyGroup>
+
 		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
@@ -86,13 +103,9 @@
 		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)" />
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
-  
+
   <!-- PackMds: Packages MDS binaries into a NuGet package -->
   <Target Name="PackMds">
-    <!-- Verify that the appropriate build has ran -->
-    <Error Condition="!Exists('$(MdsArtifactsFolder)$(Configuration)')"
-           Text="Build output for $(MdsArtifactsFolder)$(Configuration) was not found. Run BuildMds target before running PackMds." />
-
     <PropertyGroup>
       <GitCommand>
         git rev-parse HEAD
@@ -102,7 +115,7 @@
     <Exec Command="$(GitCommand)" ConsoleToMsBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitHash" />
     </Exec>
-    
+
     <PropertyGroup>
       <NugetCommand>
         nuget pack &quot;$(MdsNuspecPath)&quot;
@@ -118,31 +131,31 @@
     <Message Text=">>> Packageing MDS via command: $(NugetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(NugetCommand)" />
   </Target>
-  
+
   <!-- TestMds: Runs all test projects for MDS -->
   <Target Name="TestMds" DependsOnTargets="TestMdsFunctional;TestMdsManual;TestMdsUnit" />
-  
+
   <!-- TestMdsFunctional: Runs functional tests for MDS -->
   <Target Name="TestMdsFunctional">
     <!-- @TODO -->
   </Target>
-  
+
   <!-- TestMdsManual: Runs manual tests for MDS -->
   <Target Name="TestMdsManual">
     <!-- @TODO -->
   </Target>
-  
+
   <!-- TestMdsUnit: Runs unit tests for MDS -->
   <Target Name="TestMdsUnit">
     <!-- @TODO -->
   </Target>
-  
+
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Targets -->
   <PropertyGroup>
     <AkvProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProjectPath>
   </PropertyGroup>
-  
+
   <!-- BuildAkv: Builds all binaries for AKV -->
   <Target Name="BuildAkv">
     <PropertyGroup>
