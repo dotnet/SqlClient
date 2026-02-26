@@ -31,7 +31,7 @@ public class ConnectionEnhancedRoutingTests
             clientProvidedCorrectDatabase = routingDatabaseName == loginToken.Database;
         };
 
-        RoutingTdsServer router = new(
+        using RoutingTdsServer router = new(
             new RoutingTdsServerArguments()
             {
                 RoutingTCPHost = "localhost",
@@ -77,7 +77,7 @@ public class ConnectionEnhancedRoutingTests
             clientProvidedCorrectDatabase = routingDatabaseName == loginToken.Database;
         };
 
-        RoutingTdsServer router = new(
+        using RoutingTdsServer router = new(
             new RoutingTdsServerArguments()
             {
                 RoutingTCPHost = "localhost",
@@ -123,7 +123,7 @@ public class ConnectionEnhancedRoutingTests
             clientProvidedCorrectDatabase = null == loginToken.Database;
         };
 
-        RoutingTdsServer router = new(
+        using RoutingTdsServer router = new(
             new RoutingTdsServerArguments()
             {
                 RoutingTCPHost = "localhost",
@@ -168,7 +168,7 @@ public class ConnectionEnhancedRoutingTests
             clientProvidedCorrectDatabase = null == loginToken.Database;
         };
 
-        RoutingTdsServer router = new(
+        using RoutingTdsServer router = new(
             new RoutingTdsServerArguments()
             {
                 RoutingTCPHost = "localhost",
