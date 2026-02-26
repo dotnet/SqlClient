@@ -12,11 +12,23 @@
   </ItemGroup>
 
   <!-- Strong name signing ============================================= -->
-
   <!-- When a signing key is specified, we will perform strong name assembly signing. -->
   <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: Move to directory.build.props? -->
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
+    <!--
+      MSBuild will add the target framework to the end of this path by default. Telling it not to
+      is possible but also requires specifying the IntermediateOutputPath. So while it would be
+      nice to have a flatter directory structure, it's more hassle than its worth.
+    -->
+    <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(Configuration)/</OutputPath>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
