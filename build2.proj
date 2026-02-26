@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<!-- Build Parameters ============================================== -->
+	<!-- Build Parameters ================================================ -->
 	<PropertyGroup>
 		<!--
 		    Configuration
@@ -43,11 +43,11 @@
     <NugetPath Condition="'$(NugetPath)' == ''" />
 	</PropertyGroup>
 
-	<!-- Imports ======================================================= -->
+	<!-- Imports ========================================================= -->
 	<Import Project="src/Directory.Build.props" />
 
-  <!-- =============================================================== -->
-	<!-- Microsoft.Data.SqlClient Build Targets -->
+  <!-- ================================================================= -->
+	<!-- Microsoft.Data.SqlClient Targets -->
 	<PropertyGroup>
     <MdsArtifactsFolder>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</MdsArtifactsFolder>
     <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
@@ -55,6 +55,7 @@
     <MdsRefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
 	</PropertyGroup>
 
+  <!-- Build MDS Targets =============================================== -->
 	<!-- BuildMds: Builds all binaries for MDS -->
 	<Target Name="BuildMds" DependsOnTargets="BuildMdsRef;BuildMdsUnix;BuildMdsWindows" />
 
@@ -104,6 +105,7 @@
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
 
+  <!-- Pack MDS Target ===================================================== -->
   <!-- PackMds: Packages MDS binaries into a NuGet package -->
   <Target Name="PackMds">
     <PropertyGroup>
@@ -132,6 +134,7 @@
     <Exec ConsoleToMsBuild="true" Command="$(NugetCommand)" />
   </Target>
 
+  <!-- Test MDS Targets ==================================================== -->
   <!-- TestMds: Runs all test projects for MDS -->
   <Target Name="TestMds" DependsOnTargets="TestMdsFunctional;TestMdsManual;TestMdsUnit" />
 
@@ -148,25 +151,5 @@
   <!-- TestMdsUnit: Runs unit tests for MDS -->
   <Target Name="TestMdsUnit">
     <!-- @TODO -->
-  </Target>
-
-  <!-- ================================================================= -->
-  <!-- Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Targets -->
-  <PropertyGroup>
-    <AkvProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProjectPath>
-  </PropertyGroup>
-
-  <!-- BuildAkv: Builds all binaries for AKV -->
-  <Target Name="BuildAkv">
-    <PropertyGroup>
-      <DotnetCommand>
-        $(DotnetPath)dotnet build $(AkvProjectPath)
-          -p:Configuration=$(Configuration)
-      </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV provider via command: $(DotnetCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 </Project>
