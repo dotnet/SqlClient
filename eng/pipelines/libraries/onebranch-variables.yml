@@ -15,7 +15,7 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
   - name: WindowsContainerImage
-    value: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest" # Docker image which is used to build the project https://aka.ms/obpipelines/containers
 
   # OneBranch automatically publishes pipeline artifacts from all jobs.  Use of the
   # PublishPipelineArtifacts task is prohibited.  All content in the ob_outputDirectory is
@@ -32,7 +32,7 @@ variables:
 
   # The Abstractions package artifacts.
   - name: abstractionsArtifactsName
-    value: drop_build_independent_build_package_Abstractions
+    value: drop_build_abstractions_build_package_Abstractions
 
   # The AKV package artifacts.
   - name: akvArtifactsName

@@ -4,104 +4,104 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-# True to emit debug information and steps.
-- name: debug
-  type: boolean
-  default: false
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+    default: false
 
-# The target frameworks to build and run tests for on Windows.
-#
-# These are _not_ the target frameworks to build the driver packages for.
-#
-- name: targetFrameworks
-  type: object
-  default: [net462, net8.0, net9.0, net10.0]
+  # The target frameworks to build and run tests for on Windows.
+  #
+  # These are _not_ the target frameworks to build the driver packages for.
+  #
+  - name: targetFrameworks
+    type: object
+    default: [net462, net8.0, net9.0, net10.0]
 
-# The target frameworks to build and run tests for on Unix.
-#
-# These are _not_ the target frameworks to build the driver packages for.
-#
-- name: targetFrameworksUnix
-  type: object
-  default: [net8.0, net9.0, net10.0]
+  # The target frameworks to build and run tests for on Unix.
+  #
+  # These are _not_ the target frameworks to build the driver packages for.
+  #
+  - name: targetFrameworksUnix
+    type: object
+    default: [net8.0, net9.0, net10.0]
 
-# Netcore Version for Test Utilities
-- name: netcoreVersionTestUtils
-  type: object
-  default: net10.0
+  # Netcore Version for Test Utilities
+  - name: netcoreVersionTestUtils
+    type: object
+    default: net10.0
 
-# Build Platforms on Windows
-- name: buildPlatforms
-  type: object
-  default: [AnyCPU]
+  # Build Platforms on Windows
+  - name: buildPlatforms
+    type: object
+    default: [AnyCPU]
 
-# Test sets to run
-- name: testSets
-  type: object
-  default: [1, 2, 3]
+  # Test sets to run
+  - name: testSets
+    type: object
+    default: [1, 2, 3]
 
-#  Use Managed/Native SNI on Windows; valid values are:
-#    [true, false]
-#    [false, true]
-#    [false]
-#    [true]
-- name: useManagedSNI
-  type: object
-  default: [false, true]
+  #  Use Managed/Native SNI on Windows; valid values are:
+  #    [true, false]
+  #    [false, true]
+  #    [false]
+  #    [true]
+  - name: useManagedSNI
+    type: object
+    default: [false, true]
 
-# SNI Version Override
-- name: SNIVersion
-  type: string
-  default: ''
+  # SNI Version Override
+  - name: SNIVersion
+    type: string
+    default: ""
 
-# SNI Version Override Nuget Feed
-- name: SNIValidationFeed
-  type: string
-  default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
+  # SNI Version Override Nuget Feed
+  - name: SNIValidationFeed
+    type: string
+    default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
-# The C# project reference type to use when building and packing the packages.
-- name: referenceType
-  type: string
-  values:
-    # Reference sibling packages as NuGet packages.
-    - Package
-    # Reference sibling packages as C# projects.
-    - Project
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
-- name: buildConfiguration
-  type: string
-  values:
-    - Debug
-    - Release
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
-- name: defaultPoolName
-  type: string
-  default: $(ci_var_defaultPoolName)
+  - name: defaultPoolName
+    type: string
+    default: $(ci_var_defaultPoolName)
 
-# True to add a Stress Test stage to the pipeline.
-- name: enableStressTests
-  type: boolean
-  default: false
+  # True to add a Stress Test stage to the pipeline.
+  - name: enableStressTests
+    type: boolean
+    default: false
 
-# The timeout, in minutes, for each test job.
-- name: testJobTimeout
-  type: number
+  # The timeout, in minutes, for each test job.
+  - name: testJobTimeout
+    type: number
 
-# If true, the Always Encrypted (AE) test set will be run, which requires
-# Enclave-enabled SQL Server instances.
-- name: runAlwaysEncryptedTests
-  type: boolean
-  default: true
+  # If true, the Always Encrypted (AE) test set will be run, which requires
+  # Enclave-enabled SQL Server instances.
+  - name: runAlwaysEncryptedTests
+    type: boolean
+    default: true
 
-- name: dotnetVerbosity
-  type: string
-  default: normal
-  values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
 
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
@@ -119,7 +119,6 @@ variables:
     value: MDS.Artifacts
 
 stages:
-
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
@@ -127,6 +126,9 @@ stages:
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
+  #
+  # When building via packages, this depends on the Logging stage since
+  # Abstractions has a package dependency on Logging.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
@@ -135,10 +137,15 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      # When building Abstractions via packages, we must depend on the Logging
+      # package.
+      ${{ if eq(parameters.referenceType, 'Package') }}:
+        additionalDependsOn:
+          - build_logging_package_stage
 
   # Build the Logging package, and publish it to the pipeline artifacts
-  # under the given artifact name.  This runs in parallel with the Abstractions
-  # stage since neither depends on the other.
+  # under the given artifact name.  This runs in parallel with the Secrets
+  # generation stage since it has no package dependencies.
   - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
     parameters:
       loggingArtifactsName: $(loggingArtifactsName)
@@ -196,16 +203,16 @@ stages:
 
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
-    - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
-      parameters:
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        additionalDependsOn:
-          - build_sqlclient_package_stage
-          - build_azure_package_stage
-        mdsArtifactsName: $(mdsArtifactsName)
-        mdsPackageVersion: $(mdsPackageVersion)
-        azurePackageVersion: $(azurePackageVersion)
-        dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          additionalDependsOn:
+            - build_sqlclient_package_stage
+            - build_azure_package_stage
+          mdsArtifactsName: $(mdsArtifactsName)
+          mdsPackageVersion: $(mdsPackageVersion)
+          azurePackageVersion: $(azurePackageVersion)
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
@@ -233,45 +240,44 @@ stages:
       # Steps to run prior to building and running tests on each job.
       prebuildSteps:
         - ${{if ne(parameters.SNIVersion, '')}}:
-          - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
-            parameters:
-              SNIVersion: ${{parameters.SNIVersion}}
-              SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+            - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
+              parameters:
+                SNIVersion: ${{parameters.SNIVersion}}
+                SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
         - ${{if eq(parameters.debug, true)}}:
-          - pwsh: 'Get-ChildItem env: | Sort-Object Name'
-            displayName: '[Debug] List Environment Variables'
+            - pwsh: "Get-ChildItem env: | Sort-Object Name"
+              displayName: "[Debug] List Environment Variables"
 
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:
-         # Jobs to run as part of the tests stage, after the tests are done.
+        # Jobs to run as part of the tests stage, after the tests are done.
         postTestJobs:
-        - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
-          parameters:
-            debug: ${{ parameters.debug }}
-            # We only want to upload coverage results to CodeCov from certain
-            # pipelines.  We use the pipeline name (Build.DefinitionName) to
-            # choose.  This is a predefined variable that is available at
-            # template expansion time, so we can use it to supply a true boolean
-            # value to the upload parameter.
-            #
-            # https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
-            #
-            # We're choosing to upload from these pipelines only:
-            #
-            # - PR-SqlClient-Project
-            # - CI-SqlClient
-            #
-            # Other pipelines that share this template don't add much, if any,
-            # value to the coverage reports.  They have not been configured with
-            # suitable CodeCov credentials to perform the upload.
-            #
-            upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
+          - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              # We only want to upload coverage results to CodeCov from certain
+              # pipelines.  We use the pipeline name (Build.DefinitionName) to
+              # choose.  This is a predefined variable that is available at
+              # template expansion time, so we can use it to supply a true boolean
+              # value to the upload parameter.
+              #
+              # https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
+              #
+              # We're choosing to upload from these pipelines only:
+              #
+              # - PR-SqlClient-Project
+              # - CI-SqlClient
+              #
+              # Other pipelines that share this template don't add much, if any,
+              # value to the coverage reports.  They have not been configured with
+              # suitable CodeCov credentials to perform the upload.
+              #
+              upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
 
       # Configuration of test jobs.  Each entry in this object will become a test job, and the
       # properties of each entry will be supplied as parameters to the test job template.
       testConfigurations:
-
         # Windows Server 22 with local SQL Server 2019, x64 build platform.
         windows_sql_19_x64:
           pool: ${{parameters.defaultPoolName }}
@@ -534,7 +540,6 @@ stages:
         # Only run these tests if explicitly enabled, and if we're not a forked repo (which won't
         # have access to the necessary Library secrets).
         ${{ if and(eq(parameters.runAlwaysEncryptedTests, true), eq(variables['System.PullRequest.IsFork'], 'False')) }}:
-
           # Windows Server 22 with remote Enclave-enabled SQL Server 2019, x64 build platform.
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool

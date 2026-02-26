@@ -24,9 +24,9 @@ Both pipelines use the **OneBranch (1ES) governed template** infrastructure and 
 |---|---------|-------------|
 | 1 | `Microsoft.SqlServer.Server` | — |
 | 2 | `Microsoft.Data.SqlClient.Extensions.Logging` | — |
-| 3 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | — |
+| 3 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `Extensions.Logging` |
 | 4 | `Microsoft.Data.SqlClient` | `Extensions.Logging`, `Extensions.Abstractions` |
-| 5 | `Microsoft.Data.SqlClient.Extensions.Azure` | `Extensions.Abstractions` |
+| 5 | `Microsoft.Data.SqlClient.Extensions.Azure` | `Extensions.Abstractions`, `Extensions.Logging` |
 | 6 | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Extensions.Logging` |
 
 ---
@@ -38,8 +38,8 @@ sequenceDiagram
     participant T as Trigger / User
     participant P as Pipeline Orchestrator
     participant B1a as Job: Build Extensions.Logging
-    participant B1b as Job: Build Extensions.Abstractions
     participant B1c as Job: Build SqlServer.Server
+    participant B1b as Job: Build Extensions.Abstractions
     participant B2a as Job: Build SqlClient
     participant B2b as Job: Build Extensions.Azure
     participant V as Job: Validate MDS Package
@@ -56,28 +56,31 @@ sequenceDiagram
         P->>B1a: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Logging)
         B1a-->>P: ✅ Signed .nupkg
     and
-        P->>B1b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Abstractions)
-        B1b-->>P: ✅ Signed .nupkg
-    and
         P->>B1c: Build + ESRP sign + pack SqlServer.Server
         B1c-->>P: ✅ Signed .nupkg
     end
 
-    Note over P: Stage 2 — buildMDS (dependsOn: build_independent)
+    Note over P: Stage 2 — build_abstractions (dependsOn: build_independent)
 
-    par Stage 2 jobs (parallel)
+    P->>B1b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Abstractions)
+    Note right of B1b: Downloads: Extensions.Logging artifact
+    B1b-->>P: ✅ Signed .nupkg
+
+    Note over P: Stage 3 — build_dependent (dependsOn: build_abstractions)
+
+    par Stage 3 jobs (parallel)
         P->>B2a: Build + ESRP sign + pack SqlClient
         Note right of B2a: Downloads: Extensions.Logging,<br/>Extensions.Abstractions artifacts
         B2a-->>P: ✅ Signed .nupkg + .snupkg
     and
         P->>B2b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Azure)
-        Note right of B2b: Downloads:<br/>Extensions.Abstractions artifact
+        Note right of B2b: Downloads: Extensions.Abstractions,<br/>Extensions.Logging artifacts
         B2b-->>P: ✅ Signed .nupkg
     end
 
-    Note over P: Validation + Stage 3 (both dependsOn: buildMDS, run in parallel)
+    Note over P: Validation + Stage 4 (both dependsOn: build_dependent, run in parallel)
 
-    par Validation and Stage 3 (parallel)
+    par Validation and Stage 4 (parallel)
         P->>V: Validate signed MDS package
         V-->>P: ✅ Package validation passed
     and
@@ -107,14 +110,13 @@ sequenceDiagram
 
 ### 4.1 Build Phase
 
-The build phase runs automatically on every CI trigger, scheduled run, or manual queue. It is divided into three build stages plus a validation stage, based on the dependency graph.
+The build phase runs automatically on every CI trigger, scheduled run, or manual queue. It is divided into four build stages plus a validation stage, based on the dependency graph.
 
 #### Stage 1 — `build_independent`: Independent Packages (no dependencies)
 
 | Job Template | Package | Build Target | Condition |
 |--------------|---------|--------------|-----------|
 | `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` / `PackLogging` | `buildAKVProvider OR buildSqlClient` |
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` | `buildSqlClient` |
 | `build-signed-csproj-package-job.yml` | `Microsoft.SqlServer.Server` | `PackSqlServer` | `buildSqlServerServer` |
 
 - **`dependsOn`**: none
@@ -122,47 +124,58 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 - **Conditional builds**: Each job is wrapped with compile-time `${{ if }}` conditionals based on build parameters
 - csproj-based jobs (`build-signed-csproj-package-job.yml`) perform: **Build DLLs → ESRP DLL signing → NuGet pack (NoBuild=true) → ESRP NuGet signing** → publish artifact
 
-#### Stage 2 — `buildMDS`: Core Packages (depend on Stage 1)
+#### Stage 2 — `build_abstractions`: Abstractions Package (depends on Stage 1)
+
+| Job Template | Package | Build Target | Artifact Dependencies |
+|--------------|---------|--------------|----------------------|
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` | `Extensions.Logging` |
+
+- **Stage condition**: `buildSqlClient = true` (entire stage is excluded when false)
+- **`dependsOn`**: `build_independent`
+- Downloads `Microsoft.Data.SqlClient.Extensions.Logging.nupkg` (from Stage 1) pipeline artifact
+
+#### Stage 3 — `build_dependent`: Core Packages (depend on Stage 2)
 
 | Job Template | Package | Build Target | Artifact Dependencies |
 |--------------|---------|--------------|----------------------|
 | `build-signed-package-job.yml` | `Microsoft.Data.SqlClient` | *(nuspec-based)* | `Extensions.Logging`, `Extensions.Abstractions` |
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `BuildAzure` / `PackAzure` | `Extensions.Abstractions` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `BuildAzure` / `PackAzure` | `Extensions.Abstractions`, `Extensions.Logging` |
 
 - **Stage condition**: `buildSqlClient = true` (entire stage is excluded when false)
-- **`dependsOn`**: `build_independent`
+- **`dependsOn`**: `build_abstractions`
 - **Parallelism**: Both jobs run in parallel
 - The MDS (SqlClient) job also publishes symbol packages (`.snupkg`) when `publishSymbols` is true
 - All jobs configure APIScan with job-level `ob_sdl_apiscan_*` variables targeting package-specific folders
 
-#### Stage 3 — `build_addons`: Add-on Packages (depend on Stage 2)
+#### Stage 4 — `build_addons`: Add-on Packages (depend on Stage 3)
 
 | Job Template | Package | Artifact Dependencies |
 |--------------|---------|----------------------|
 | `build-akv-official-job.yml` | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Extensions.Logging` |
 
 - **Stage condition**: `buildAKVProvider AND buildSqlClient` (both must be true)
-- **`dependsOn`**: `buildMDS`
-- Downloads `Microsoft.Data.SqlClient.nupkg` (from Stage 2) and `Microsoft.Data.SqlClient.Extensions.Logging.nupkg` (from Stage 1) pipeline artifacts
+- **`dependsOn`**: `build_dependent`
+- Downloads `Microsoft.Data.SqlClient.nupkg` (from Stage 3) and `Microsoft.Data.SqlClient.Extensions.Logging.nupkg` (from Stage 1) pipeline artifacts
 - Uses separate ESRP signing credentials (`Signing`-prefixed variables from `esrp-variables-v2` group)
 
 ### 4.2 Validation Stage — `mds_package_validation`
 
-Validates the signed MDS (SqlClient) package after Stage 2 completes.
+Validates the signed MDS (SqlClient) package after Stage 3 completes.
 
 - **Stage condition**: `buildSqlClient = true`
-- **`dependsOn`**: `buildMDS`
-- Runs in parallel with Stage 3 (`build_addons`)
+- **`dependsOn`**: `build_dependent`
+- Runs in parallel with Stage 4 (`build_addons`)
 - Uses `validate-signed-package-job.yml` template
-- Downloads the `drop_buildMDS_build_signed_package` artifact and validates against `CurrentNetFxVersion` (default: `net462`)
+- Downloads the `drop_build_dependent_build_signed_package` artifact and validates against `CurrentNetFxVersion` (default: `net462`)
 
 ### 4.3 Release Phase — `release`
 
 The release stage is gated and only executes on demand when at least one release parameter is set to `true` at queue time.
 
 - **`dependsOn`**: Conditional based on which build stages are enabled:
-  - `build_independent` (always)
-  - `buildMDS`, `mds_package_validation` (when `buildSqlClient = true`)
+  - `build_independent` (when releasing SqlServer.Server or Logging)
+  - `build_abstractions` (when releasing Abstractions)
+  - `build_dependent`, `mds_package_validation` (when `buildSqlClient = true`)
   - `build_addons` (when `buildAKVProvider AND buildSqlClient`)
 - **Gate**: ADO Environment approvals (official pipeline only):
   - Official: `NuGet-Production` environment with configured approvals
@@ -186,11 +199,11 @@ The release stage is gated and only executes on demand when at least one release
 
 | Package | Artifact Name | Publish Job |
 |---------|---------------|-------------|
-| `Microsoft.SqlServer.Server` | `drop_build_independent_build_signed_sqlserver_package` | `publish_SqlServer_Server` |
-| `Microsoft.Data.SqlClient.Extensions.Logging` | `drop_build_independent_build_signed_Logging_package` | `publish_Logging` |
-| `Microsoft.Data.SqlClient.Extensions.Abstractions` | `drop_build_independent_build_signed_Abstractions_package` | `publish_Abstractions` |
-| `Microsoft.Data.SqlClient` | `drop_buildMDS_build_signed_package` | `publish_SqlClient` |
-| `Microsoft.Data.SqlClient.Extensions.Azure` | `drop_buildMDS_build_signed_Azure_package` | `publish_Extensions_Azure` |
+| `Microsoft.SqlServer.Server` | `drop_build_independent_build_package_SqlServer` | `publish_SqlServer_Server` |
+| `Microsoft.Data.SqlClient.Extensions.Logging` | `drop_build_independent_build_package_Logging` | `publish_Logging` |
+| `Microsoft.Data.SqlClient.Extensions.Abstractions` | `drop_build_abstractions_build_package_Abstractions` | `publish_Abstractions` |
+| `Microsoft.Data.SqlClient` | `drop_build_dependent_build_package_SqlClient` | `publish_SqlClient` |
+| `Microsoft.Data.SqlClient.Extensions.Azure` | `drop_build_dependent_build_package_Azure` | `publish_Extensions_Azure` |
 | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `drop_build_addons_buildSignedAkvPackage` | `publish_AKVProvider` |
 
 Each publish job uses the reusable `publish-nuget-package-job.yml` template, which downloads the artifact and pushes `.nupkg`/`.snupkg` files via `NuGetCommand@2` with an external feed service connection.
@@ -442,7 +455,7 @@ Each job copies its signed DLLs and PDBs to a package-specific folder under `$(B
 ## 9. Artifact Strategy
 
 - Each build job publishes its output as a **pipeline artifact** managed by OneBranch's `ob_outputDirectory` convention.
-- Artifact names follow the OneBranch auto-generated pattern: `drop_<stageName>_<jobName>` (e.g., `drop_buildMDS_build_signed_package`).
+- Artifact names follow the OneBranch auto-generated pattern: `drop_<stageName>_<jobName>` (e.g., `drop_build_dependent_build_package_SqlClient`).
 - Downstream stages use `DownloadPipelineArtifact@2` to pull required packages into a local directory.
 - A local NuGet source is configured at build time pointing to the downloaded artifacts directory so `dotnet restore` resolves internal dependencies.
 

@@ -19,7 +19,6 @@
 #
 
 parameters:
-
   # ── General parameters ─────────────────────────────────────────────────
 
   # True to enable debug information and steps.
@@ -87,7 +86,7 @@ parameters:
 stages:
   # ====================================================================
   # Stage 1: Independent packages (no cross-package dependencies)
-  # Logging, Abstractions, and SqlServer.Server build in parallel.
+  # Logging and SqlServer.Server build in parallel.
   # ====================================================================
   - stage: build_independent
     displayName: "Build Independent Packages"
@@ -128,24 +127,6 @@ stages:
               authAkvName: $(AuthAKVName)
               authSignCertName: $(AuthSignCertName)
 
-      - ${{ if eq(parameters.buildSqlClient, true) }}:
-          - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
-            parameters:
-              packageName: Abstractions
-              packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              packageVersion: $(effectiveAbstractionsVersion)
-              versionProperties: >-
-                -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-                -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-              assemblyFileVersion: $(abstractionsAssemblyFileVersion)
-              publishSymbols: ${{ parameters.publishSymbols }}
-              esrpConnectedServiceName: $(ESRPConnectedServiceName)
-              esrpClientId: $(ESRPClientId)
-              appRegistrationClientId: $(AppRegistrationClientId)
-              appRegistrationTenantId: $(AppRegistrationTenantId)
-              authAkvName: $(AuthAKVName)
-              authSignCertName: $(AuthSignCertName)
-
       - ${{ if eq(parameters.buildSqlServerServer, true) }}:
           - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
             parameters:
@@ -165,14 +146,55 @@ stages:
               authSignCertName: $(AuthSignCertName)
 
   # ====================================================================
-  # Stage 2: Core packages (depend on independent packages)
-  # MDS and Extensions.Azure build in parallel after Stage 1 completes.
+  # Stage 2: Abstractions package (depends on Logging from Stage 1)
+  # Abstractions must build after Logging since it has a package
+  # dependency on Extensions.Logging.
+  # ====================================================================
+  - ${{ if eq(parameters.buildSqlClient, true) }}:
+      - stage: build_abstractions
+        displayName: "Build Abstractions Package"
+        dependsOn: build_independent
+
+        variables:
+          - ${{ if parameters.isPreview }}:
+              - name: effectiveLoggingVersion
+                value: $(loggingPackagePreviewVersion)
+              - name: effectiveAbstractionsVersion
+                value: $(abstractionsPackagePreviewVersion)
+          - ${{ else }}:
+              - name: effectiveLoggingVersion
+                value: $(loggingPackageVersion)
+              - name: effectiveAbstractionsVersion
+                value: $(abstractionsPackageVersion)
+
+        jobs:
+          - template: /eng/pipelines/jobs/build-signed-csproj-package-job.yml@self
+            parameters:
+              packageName: Abstractions
+              packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
+              packageVersion: $(effectiveAbstractionsVersion)
+              versionProperties: >-
+                -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+                -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
+                -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+              assemblyFileVersion: $(abstractionsAssemblyFileVersion)
+              publishSymbols: ${{ parameters.publishSymbols }}
+              esrpConnectedServiceName: $(ESRPConnectedServiceName)
+              esrpClientId: $(ESRPClientId)
+              appRegistrationClientId: $(AppRegistrationClientId)
+              appRegistrationTenantId: $(AppRegistrationTenantId)
+              authAkvName: $(AuthAKVName)
+              authSignCertName: $(AuthSignCertName)
+
+  # ====================================================================
+  # Stage 3: Core packages (depend on Abstractions)
+  # MDS and Extensions.Azure build in parallel after Abstractions.
   # Stage name kept as 'build_dependent' for validate job compatibility.
   # ====================================================================
   - ${{ if eq(parameters.buildSqlClient, true) }}:
       - stage: build_dependent
         displayName: "Build Core Packages"
-        dependsOn: build_independent
+        dependsOn: build_abstractions
 
         variables:
           # Resolved package versions: use preview versions when isPreview is true
@@ -216,6 +238,7 @@ stages:
                 -p:AzurePackageVersion=$(effectiveAzureVersion)
                 -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
                 -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+                -p:LoggingPackageVersion=$(effectiveLoggingVersion)
               assemblyFileVersion: $(azureAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               esrpConnectedServiceName: $(ESRPConnectedServiceName)
@@ -226,7 +249,7 @@ stages:
               authSignCertName: $(AuthSignCertName)
 
   # ====================================================================
-  # Stage 3: Add-on packages (depend on core packages)
+  # Stage 4: Add-on packages (depend on core packages)
   # AKV Provider builds after MDS completes.
   # ====================================================================
   - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
@@ -321,8 +344,10 @@ stages:
           - stage: Production_Release
             displayName: "Release to NuGet"
             dependsOn:
-              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
+              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
                   - build_independent
+              - ${{ if parameters.releaseAbstractions }}:
+                  - build_abstractions
               - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
                   - build_dependent
                   - mds_package_validation
@@ -355,7 +380,7 @@ stages:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
-                      artifactName: drop_build_independent_build_package_Abstractions
+                      artifactName: drop_build_abstractions_build_package_Abstractions
                       nugetServiceConnection: $(NuGetServiceConnection)
                       isProduction: true
                       dryRun: ${{ parameters.releaseDryRun }}
@@ -392,8 +417,10 @@ stages:
           - stage: Test_Release
             displayName: "Release to NuGet (Dry Run)"
             dependsOn:
-              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions) }}:
+              - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
                   - build_independent
+              - ${{ if parameters.releaseAbstractions }}:
+                  - build_abstractions
               - ${{ if or(parameters.releaseSqlClient, parameters.releaseExtAzure) }}:
                   - build_dependent
                   - mds_package_validation
@@ -424,7 +451,7 @@ stages:
                   - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
                     parameters:
                       packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
-                      artifactName: drop_build_independent_build_package_Abstractions
+                      artifactName: drop_build_abstractions_build_package_Abstractions
                       nugetServiceConnection: $(NuGetServiceConnection)
                       dryRun: true
 

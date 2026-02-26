@@ -39,13 +39,13 @@ parameters:
   # Build<packageName>.
   - name: buildTarget
     type: string
-    default: ''
+    default: ""
 
   # The MSBuild pack target in build.proj (e.g. PackLogging).  If not specified, defaults to
   # Pack<packageName>.
   - name: packTarget
     type: string
-    default: ''
+    default: ""
 
   # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
@@ -59,7 +59,7 @@ parameters:
   # packages this package depends on, or versions for this package itself.
   - name: versionProperties
     type: string
-    default: ''
+    default: ""
 
   # Assembly file version for APIScan (e.g. 1.0.0.12345).
   - name: assemblyFileVersion
@@ -109,14 +109,27 @@ jobs:
     steps:
       - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
 
-      # The Azure package depends on Abstractions.  The other packages we build have no
-      # inter-package dependencies.
+      # The Abstractions package depends on Logging.  The Azure package depends
+      # on both Abstractions and Logging (Logging transitively via Abstractions).
+      - ${{ if eq(parameters.packageName, 'Abstractions') }}:
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Logging Package
+            inputs:
+              artifactName: $(loggingArtifactsName)
+              targetPath: $(Build.SourcesDirectory)/packages
+
       - ${{ if eq(parameters.packageName, 'Azure') }}:
-        - task: DownloadPipelineArtifact@2
-          displayName: Download Abstractions Package
-          inputs:
-            artifactName: $(abstractionsArtifactsName)
-            targetPath: $(Build.SourcesDirectory)/packages
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Abstractions Package
+            inputs:
+              artifactName: $(abstractionsArtifactsName)
+              targetPath: $(Build.SourcesDirectory)/packages
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Logging Package
+            inputs:
+              artifactName: $(loggingArtifactsName)
+              targetPath: $(Build.SourcesDirectory)/packages
 
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -144,7 +157,7 @@ jobs:
         displayName: Copy DLLs for APIScan
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
-          Contents: '**/${{ parameters.packageFullName }}.dll'
+          Contents: "**/${{ parameters.packageFullName }}.dll"
           TargetFolder: $(ob_sdl_apiscan_softwareFolder)
           # We must preserve the folder structure since our C# projects may produce multiple
           # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
@@ -155,7 +168,7 @@ jobs:
         displayName: Copy PDBs for APIScan
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
-          Contents: '**/${{ parameters.packageFullName }}.pdb'
+          Contents: "**/${{ parameters.packageFullName }}.pdb"
           TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
           flattenFolders: false
 
@@ -178,7 +191,7 @@ jobs:
 
       # Publish symbols to servers
       - ${{ if eq(parameters.publishSymbols, true) }}:
-        - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
-          parameters:
-            packageFullName: ${{ parameters.packageFullName }}
-            packageVersion: ${{ parameters.packageVersion }}
+          - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
+            parameters:
+              packageFullName: ${{ parameters.packageFullName }}
+              packageVersion: ${{ parameters.packageVersion }}
