@@ -88,6 +88,13 @@ parameters:
   - name: authSignCertName
     type: string
 
+  # Optional list of pipeline artifacts to download before building.  Each entry is an object
+  # with 'artifactName' (the pipeline artifact name) and 'displayName' (used in the task label).
+  # This replaces hard-coded packageName conditionals so callers declare their own dependencies.
+  - name: downloadArtifacts
+    type: object
+    default: []
+
 jobs:
   - job: build_package_${{ parameters.packageName }}
     displayName: Build ${{ parameters.packageFullName }}
@@ -109,26 +116,12 @@ jobs:
     steps:
       - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
 
-      # The Abstractions package depends on Logging.  The Azure package depends
-      # on both Abstractions and Logging (Logging transitively via Abstractions).
-      - ${{ if eq(parameters.packageName, 'Abstractions') }}:
+      # Download any pipeline artifacts this package depends on.
+      - ${{ each artifact in parameters.downloadArtifacts }}:
           - task: DownloadPipelineArtifact@2
-            displayName: Download Logging Package
+            displayName: Download ${{ artifact.displayName }}
             inputs:
-              artifactName: $(loggingArtifactsName)
-              targetPath: $(Build.SourcesDirectory)/packages
-
-      - ${{ if eq(parameters.packageName, 'Azure') }}:
-          - task: DownloadPipelineArtifact@2
-            displayName: Download Abstractions Package
-            inputs:
-              artifactName: $(abstractionsArtifactsName)
-              targetPath: $(Build.SourcesDirectory)/packages
-
-          - task: DownloadPipelineArtifact@2
-            displayName: Download Logging Package
-            inputs:
-              artifactName: $(loggingArtifactsName)
+              artifactName: ${{ artifact.artifactName }}
               targetPath: $(Build.SourcesDirectory)/packages
 
       # Install the .NET SDK.

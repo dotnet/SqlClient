@@ -195,9 +195,9 @@ Then, you can specify `Package` references be used, for example:
 dotnet build -t:BuildLogging
 dotnet build -t:PackLogging
 dotnet build -t:BuildAbstractions -p:ReferenceType=Package
-dotnet build -t:PackAbstractions
+dotnet build -t:PackAbstractions -p:ReferenceType=Package
 dotnet build -t:BuildAzure -p:ReferenceType=Package
-dotnet build -t:PackAzure
+dotnet build -t:PackAzure -p:ReferenceType=Package
 dotnet build -t:BuildAll -p:ReferenceType=Package
 dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage

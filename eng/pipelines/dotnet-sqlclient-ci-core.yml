@@ -124,6 +124,18 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
 
+  # Build the Logging package, and publish it to the pipeline artifacts
+  # under the given artifact name.  This runs in parallel with the Secrets
+  # generation stage since it has no package dependencies.
+  - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
+    parameters:
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
+      loggingPackageVersion: $(loggingPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
   #
@@ -142,18 +154,6 @@ stages:
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_logging_package_stage
-
-  # Build the Logging package, and publish it to the pipeline artifacts
-  # under the given artifact name.  This runs in parallel with the Secrets
-  # generation stage since it has no package dependencies.
-  - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
-    parameters:
-      loggingArtifactsName: $(loggingArtifactsName)
-      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
-      loggingPackageVersion: $(loggingPackageVersion)
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      debug: ${{ parameters.debug }}
-      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Build the SqlClienet package.
   #

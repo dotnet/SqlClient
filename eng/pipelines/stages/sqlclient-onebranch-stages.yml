@@ -185,6 +185,9 @@ stages:
               appRegistrationTenantId: $(AppRegistrationTenantId)
               authAkvName: $(AuthAKVName)
               authSignCertName: $(AuthSignCertName)
+              downloadArtifacts:
+                - artifactName: $(loggingArtifactsName)
+                  displayName: Logging Package
 
   # ====================================================================
   # Stage 3: Core packages (depend on Abstractions)
@@ -247,6 +250,11 @@ stages:
               appRegistrationTenantId: $(AppRegistrationTenantId)
               authAkvName: $(AuthAKVName)
               authSignCertName: $(AuthSignCertName)
+              downloadArtifacts:
+                - artifactName: $(abstractionsArtifactsName)
+                  displayName: Abstractions Package
+                - artifactName: $(loggingArtifactsName)
+                  displayName: Logging Package
 
   # ====================================================================
   # Stage 4: Add-on packages (depend on core packages)
