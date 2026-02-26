@@ -28,7 +28,7 @@ public class ActiveDirectoryInteractiveTests
             //
             //   use [Northwind];
             //   create user [<you>@microsoft.com] from external provider;
-            //   alter role db_datareader add member [paulmedynski@microsoft.com];
+            //   alter role db_datareader add member [<you>@microsoft.com];
             //
             // You must connect to the database as an admin in order run these commands, for example
             // as the testodbc@microsoft.com user via SQL username/password authentication.
