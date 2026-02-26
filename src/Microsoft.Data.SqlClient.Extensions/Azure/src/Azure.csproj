@@ -11,7 +11,7 @@
 
   <!-- Target Config -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Strong name signing ============================================= -->

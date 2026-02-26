@@ -7,6 +7,19 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure.Test</AssemblyName>
+
+    <!--
+      Exclude Interactive tests by default since they require user interaction (e.g. browser
+      sign-in).
+
+      To run them explicitly:
+
+        dotnet test -filter "Category=Interactive"
+
+      Note that the "filter" argument actually requires two dashes, but that character sequence
+      isn't permitted within an XML comment, so we only show a single dash above.
+    -->
+    <VSTestTestCaseFilter>Category!=Interactive</VSTestTestCaseFilter>
   </PropertyGroup>
 
   <ItemGroup>
