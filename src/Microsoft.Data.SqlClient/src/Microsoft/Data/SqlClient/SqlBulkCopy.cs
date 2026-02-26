@@ -235,6 +235,13 @@ namespace Microsoft.Data.SqlClient
 
         private SourceColumnMetadata[] _currentRowMetadata;
 
+        // Metadata caching fields for CacheMetadata option
+        internal BulkCopySimpleResultSet CachedMetadata { get; private set; }
+        // Per-operation clone of the destination table metadata, used when CacheMetadata is
+        // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
+        // mutate the cached BulkCopySimpleResultSet.
+        private _SqlMetaDataSet _operationMetaData;
+
 #if DEBUG
         internal static bool s_setAlwaysTaskOnWrite; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task
         internal static bool SetAlwaysTaskOnWrite
@@ -353,6 +360,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentOutOfRange(nameof(DestinationTableName));
                 }
+                else if (string.Equals(_destinationTableName, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                CachedMetadata = null;
                 _destinationTableName = value;
             }
         }
@@ -497,6 +510,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // We need to have a _parser.RunAsync to make it real async.
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
+            // Check if we have valid cached metadata for the current destination table
+            if (CachedMetadata != null)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
+                result = CachedMetadata;
+                return null;
+            }
+
             string TDSCommand = CreateInitialQuery();
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Initial Query: '{0}'", TDSCommand);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -506,6 +527,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 result = new BulkCopySimpleResultSet();
                 RunParser(result);
+                CacheMetadataIfEnabled(result);
                 return null;
             }
             else
@@ -523,17 +545,31 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {
                         var internalResult = new BulkCopySimpleResultSet();
                         RunParserReliably(internalResult);
+                        CacheMetadataIfEnabled(internalResult);
                         return internalResult;
                     }
                 }, TaskScheduler.Default);
             }
         }
 
+        private void CacheMetadataIfEnabled(BulkCopySimpleResultSet result)
+        {
+            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
+            {
+                CachedMetadata = result;
+                SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
+            }
+        }
+
         // Matches associated columns with metadata from initial query.
         // Builds and executes the update bulk command.
-        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults)
+        // metaDataSet is passed in by the caller so that when CacheMetadata is enabled, the
+        // caller can supply a clone, allowing this method to null-prune unmatched/rejected
+        // columns freely without mutating the shared cache.
+        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, _SqlMetaDataSet metaDataSet)
         {
             Debug.Assert(internalResults != null, "Where are the results from the initial query?");
+            Debug.Assert(metaDataSet != null, "metaDataSet must not be null");
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
@@ -577,8 +613,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // the next column in the command text.
             bool appendComma = false;
 
-            // Loop over the metadata for each result column.
-            _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
+            // Loop over the metadata for each result column, null-pruning unmatched/rejected
+            // columns. metaDataSet is safe to mutate here — see the call site for clone logic.
+            _operationMetaData = metaDataSet;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
@@ -875,9 +912,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             _stateObj.SetTimeoutSeconds(BulkCopyTimeout);
 
-            _SqlMetaDataSet metadataCollection = internalResults[MetaDataResultId].MetaData;
+            _SqlMetaDataSet metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
             _stateObj._outputMessageType = TdsEnums.MT_BULK;
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ClearCachedMetadata/*'/>
+        public void ClearCachedMetadata()
+        {
+            CachedMetadata = null;
+            SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.ClearCachedMetadata | Info | Metadata cache cleared");
         }
 
         // Terminates the bulk copy operation.
@@ -900,6 +944,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // Dispose dependent objects
                 _columnMappings = null;
                 _parser = null;
+                CachedMetadata = null;
+                _operationMetaData = null;
                 try
                 {
                     // Just in case there is a lingering transaction (which there shouldn't be)
@@ -2667,7 +2713,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 // Load encryption keys now (if needed)
                 _parser.LoadColumnEncryptionKeys(
-                    internalResults[MetaDataResultId].MetaData,
+                    _operationMetaData ?? internalResults[MetaDataResultId].MetaData,
                     _connection);
 
                 Task task = CopyRowsAsync(0, _savedBatchSize, cts); // This is copying 1 batch of rows and setting _hasMoreRowToCopy = true/false.
@@ -2840,7 +2886,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             try
             {
-                updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults);
+                // When CacheMetadata is enabled, internalResults IS the cached result set (see
+                // CreateAndExecuteInitialQueryAsync). Clone the metadata set so that
+                // AnalyzeTargetAndCreateUpdateBulkCommand can null-prune unmatched/rejected
+                // columns without mutating the cache across WriteToServer calls.
+                _SqlMetaDataSet metaDataSet = CachedMetadata != null
+                    ? internalResults[MetaDataResultId].MetaData.Clone()
+                    : internalResults[MetaDataResultId].MetaData;
+                updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults, metaDataSet);
 
                 if (_sortedColumnMappings.Count != 0)
                 {
@@ -3194,6 +3247,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _dataTableSource = null;
             _dbDataReaderRowSource = null;
             _isAsyncBulkCopy = false;
+            _operationMetaData = null;
             _rowEnumerator = null;
             _rowSource = null;
             _rowSourceType = ValueSourceType.Unspecified;

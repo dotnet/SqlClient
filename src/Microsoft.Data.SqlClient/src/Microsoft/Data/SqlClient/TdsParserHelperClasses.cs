@@ -359,6 +359,7 @@ namespace Microsoft.Data.SqlClient
             _visibleColumnMap = original._visibleColumnMap;
             dbColumnSchema = original.dbColumnSchema;
             schemaTable = original.schemaTable;
+            cekTable = original.cekTable;
 
             if (original._metaDataArray == null)
             {
@@ -584,6 +585,10 @@ namespace Microsoft.Data.SqlClient
                 xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
                 xmlSchemaCollection.CopyFrom(original.xmlSchemaCollection);
             }
+
+            this.isEncrypted = original.isEncrypted;
+            this.baseTI = original.baseTI;
+            this.cipherMD = original.cipherMD;
         }
     }
 
