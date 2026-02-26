@@ -563,9 +563,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
         // Matches associated columns with metadata from initial query.
         // Builds and executes the update bulk command.
-        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults)
+        // metaDataSet is passed in by the caller so that when CacheMetadata is enabled, the
+        // caller can supply a clone, allowing this method to null-prune unmatched/rejected
+        // columns freely without mutating the shared cache.
+        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, _SqlMetaDataSet metaDataSet)
         {
             Debug.Assert(internalResults != null, "Where are the results from the initial query?");
+            Debug.Assert(metaDataSet != null, "metaDataSet must not be null");
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
@@ -609,17 +613,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // the next column in the command text.
             bool appendComma = false;
 
-            // Loop over the metadata for each result column.
-            // When using cached metadata, clone the metadata set so that null-pruning of
-            // unmatched/rejected columns does not mutate the shared cache. Without this,
-            // changing ColumnMappings between WriteToServer calls (e.g. mapping fewer columns
-            // on the first call, then more on the second) would permanently lose metadata
-            // entries from the cache.
-            _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
-            if (CachedMetadata != null)
-            {
-                metaDataSet = metaDataSet.Clone();
-            }
+            // Loop over the metadata for each result column, null-pruning unmatched/rejected
+            // columns. metaDataSet is safe to mutate here — see the call site for clone logic.
             _operationMetaData = metaDataSet;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
@@ -2891,7 +2886,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             try
             {
-                updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults);
+                // When CacheMetadata is enabled, internalResults IS the cached result set (see
+                // CreateAndExecuteInitialQueryAsync). Clone the metadata set so that
+                // AnalyzeTargetAndCreateUpdateBulkCommand can null-prune unmatched/rejected
+                // columns without mutating the cache across WriteToServer calls.
+                _SqlMetaDataSet metaDataSet = CachedMetadata != null
+                    ? internalResults[MetaDataResultId].MetaData.Clone()
+                    : internalResults[MetaDataResultId].MetaData;
+                updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults, metaDataSet);
 
                 if (_sortedColumnMappings.Count != 0)
                 {
