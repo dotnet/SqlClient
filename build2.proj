@@ -3,44 +3,96 @@
 	<!-- Build Parameters ================================================ -->
 	<PropertyGroup>
 		<!--
-		    Configuration
-		    Applies to:     All targets
-		    Description:    Which build configuration to build
-		    Default value:  Debug
-		    Allowed values: Debug, Release
+		  Configuration
+		  Applies to:     All targets
+		  Description:    Which build configuration to build
+		  Default value:  Debug
+		  Allowed values: Debug, Release
 		-->
 		<Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
 
     <!--
-        DotnetPath
-        Applies to:  Build* and Test* targets
-        Description: Path to folder containing the `dotnet` binary. Override this if a specific
+      DotnetPath
+      Applies to:    All targets
+      Description:   Path to folder containing the `dotnet` binary. Override this if a specific
                      version (eg, x86) is required. Otherwise, this defaults to using the dotnet
                      binary in the PATH variable. The provided path should end with a `\` (or `/`)
                      character.
-        Example:     C:\x86\
+      Default value: [blank]
+      Example:       C:\x86\
     -->
     <DotnetPath Condition="'$(DotnetPath)' == ''" />
 
     <!--
-        MdsPackageVersion
-        Applies to:  PackMds
-        Description: Version to assign to the MDS package. Should follow
-                     `major.minor.patch[-previewstring]` formatting.
-        @TODO: is this necessary or should we always pull from a versions file?
+      TestBlameTimeout
+      Applies to:     Test* targets
+      Description:    How long to wait on a test before timing it out. This will be fed to the
+                      dotnet blame-hang-timeout argument. If 0 is specified, hang timeout will be
+                      disabled. For more details and supported suffixed see:
+                      https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-vstest#options
+      Default value:  10m
+      Allowed values: (time_expression|0)
     -->
-    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''" />
+    <TestBlameTimeout Condition="'$(TestBlameTimeout)' == ''">10m</TestBlameTimeout>
+    <TestBlameTimeout Condition="'$(TestBlameTimeout)' == '0'" />
+    <TestBlameArgument Condition="'$(TestBlameTimeout)' != ''">
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout $(TestBlameTimeout)
+    </TestBlameArgument>
 
     <!--
-        NugetPath
-        Applies to:  Pack* targets
-        Description: Path to folder containing `nuget` binary. Override this if a specific version
-                     is required. Othrwise, this defaults to the `nuget` binary in the PATH
-                     variable. The provided path should end with a `\` (or `/`) character. In
-                     majority of cases, this is not necessary.
-        Example:     C:\x86\
+      TestCollectCodeCoverage
+      Applies to:     Test* targets
+      Description:    Whether code coverage data should be collected during test target execution.
+      Default value:  true
+      Allowed value:  (true|false)
     -->
-    <NugetPath Condition="'$(NugetPath)' == ''" />
+    <TestCollectCodeCoverage Condition="'$(TestCollectCodeCoverage)' == ''">true</TestCollectCodeCoverage>
+    <TestCollectArgument Condition="'$(TestCollectCodeCoverage.ToLower())' == 'true'">
+      --collect "Code coverage"
+      --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
+    </TestCollectArgument>
+
+    <!--
+      TestFilters
+      Applies to:     Test* targets
+      Description:    Filter to use to include or exclude any tests. If not specified, this defaults
+                      to including all tests that are not in the category "failing" or "flaky". Use
+                      "none" to disable filtering and run all tests in the target.
+                      For more information see:
+                      https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
+      Default value:  category!=failing&category!=flaky
+      Allowed values: (category_expression|none)
+    -->
+    <TestFilter Condition="'$(TestFilter)' == ''">category!=failing&amp;category!=flaky</TestFilter>
+    <TestFilter Condition="'$(TestFilter.ToLower())' == 'none'" />
+    <TestFilterArgument Condition="'$(TestFilter)' != ''">
+      --filter "$(TestFilter)"
+    </TestFilterArgument>
+
+    <!--
+      TestFramework
+      Applies to:    Test* targets
+      Description:   Target framework moniker for the version of the .NET to use to execute the
+                     specified test target. If not specified, this defaults to running tests for
+                     *all* framework versions supported for the project.
+      Default value: [blank]
+      Example:       net462
+    -->
+    <TestFramework Condition="'$(TestFramework)' == ''" />
+    <TestFrameworkArgument Condition="'$(TestFramework)' != ''">-f $(TestFramework)</TestFrameworkArgument>
+
+    <!--
+      TestResultsFolderPath
+      Applies to:    Test* targets
+      Description:   Absolute path to directory where any test results should be dumped. If not
+                     specified, this path will default to test_results in the root of the
+                     repository.
+      Default value: $(REPO_ROOT)\test_results
+      Example:       C:\my_test_results\my_extra_specaial_test_run_folder\
+    -->
+    <TestResultsFolderPath Condition="'$(TestResultsFolderPath)' == ''">$(REPO_ROOT)\test_results</TestResultsFolderPath>
 	</PropertyGroup>
 
 	<!-- Imports ========================================================= -->
@@ -49,10 +101,16 @@
   <!-- ================================================================= -->
 	<!-- Microsoft.Data.SqlClient Targets -->
 	<PropertyGroup>
-    <MdsArtifactsFolder>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</MdsArtifactsFolder>
+    <!-- Root for MDS projects -->
+    <MdsRoot>$(RepoRoot)src/Microsoft.Data.SqlClient/</MdsRoot>
+
+    <!-- Tools/Specs Paths -->
     <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
-    <MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
-    <MdsRefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
+
+    <!-- Project Paths -->
+    <MdsProjectPath>$(MdsRoot)src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
+    <MdsRefProjectPath>$(MdsRoot)ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
+    <MdsUnitTestProjectPath>$(MdsRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</MdsUnitTestProjectPath>
 	</PropertyGroup>
 
   <!-- Build MDS Targets =============================================== -->
@@ -140,7 +198,7 @@
 
   <!-- TestMdsFunctional: Runs functional tests for MDS -->
   <Target Name="TestMdsFunctional">
-    <!-- @TODO -->
+
   </Target>
 
   <!-- TestMdsManual: Runs manual tests for MDS -->
@@ -150,6 +208,28 @@
 
   <!-- TestMdsUnit: Runs unit tests for MDS -->
   <Target Name="TestMdsUnit">
-    <!-- @TODO -->
+    <PropertyGroup>
+      <!--
+        Note: This test exclusively uses project references, so neither ReferenceType nor any
+            package version arguments are not specified in this command.
+      -->
+      <LogFilePrefix>Unit-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+      <DotnetCommand>
+        $(DotnetPath)dotnet test "$(MdsUnitTestProjectPath)"
+          -p:Configuration=$(Configuration)
+          $(TestBlameArgument)
+          $(TestCollectArgument)
+          $(TestFilterArgument)
+          $(TestFrameworkArgument)
+          --results-directory "$(TestResultsFolderPath)"
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)
+      </DotnetCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running unit tests for MDS via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 </Project>
