@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -31,7 +31,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
     private const string s_defaultScopeSuffix = "/.default";
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
-    private readonly SqlClientLogger _logger = new();
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
     private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
@@ -102,13 +101,13 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
     public override void BeforeLoad(SqlAuthenticationMethod authentication)
     {
-        _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
+        SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|INFO>{2}", _type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
     public override void BeforeUnload(SqlAuthenticationMethod authentication)
     {
-        _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
+        SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|INFO>{2}", _type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
     }
 
     #if NETFRAMEWORK
@@ -902,41 +901,4 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
         public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
     }
-
-    #region Stubs for logging
-
-    /// <summary>
-    /// This is a stub class for logging.
-    ///
-    /// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
-    /// Implement proper logging mechanism.
-    /// </summary>
-    private class SqlClientLogger
-    {
-        internal void LogInfo(string type, string method, string message)
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
-        }
-    }
-
-    /// <summary>
-    /// This is a stub class for logging.
-    ///
-    /// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
-    /// Implement proper logging mechanism.
-    /// </summary>
-    private class SqlClientEventSource
-    {
-        internal class Logger
-        {
-            internal void TryTraceEvent(string message, params object?[] args)
-            {
-            }
-        }
-
-        internal static readonly Logger Log = new();
-    }
-
-    #endregion
 }

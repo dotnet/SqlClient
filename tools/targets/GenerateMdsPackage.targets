@@ -9,6 +9,6 @@
     <Message Text="Commit Id = $(CommitId)" />
     <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
       -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
-    <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(MdsPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(AbstractionsPackageVersion)&quot;" />
+    <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(MdsPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(AbstractionsPackageVersion);LoggingPackageVersion=$(LoggingPackageVersion)&quot;" />
   </Target>
 </Project>
