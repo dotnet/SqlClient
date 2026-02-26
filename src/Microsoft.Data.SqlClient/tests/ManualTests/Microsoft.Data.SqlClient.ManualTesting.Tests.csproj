@@ -301,6 +301,7 @@
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandExecuteScalarTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
   </ItemGroup>

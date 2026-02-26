@@ -1176,6 +1176,12 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 } while (returnLastResult && ds.NextResult());
+
+                // Drain any remaining results to ensure errors are propagated
+                if (!returnLastResult)
+                {
+                    while (ds.NextResult()) { }
+                }
             }
             finally
             {
@@ -3001,7 +3007,7 @@ namespace Microsoft.Data.SqlClient
                     retval = reader.GetValue(0); // no async untyped value getter, this will work ok as long as the value is in the current packet
                 }
             }
-            while (_batchRPCMode && !cancellationToken.IsCancellationRequested && await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
+            while (!cancellationToken.IsCancellationRequested && await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
             return retval;
         }
 
