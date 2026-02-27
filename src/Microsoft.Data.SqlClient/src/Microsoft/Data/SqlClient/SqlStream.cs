@@ -505,8 +505,10 @@ namespace Microsoft.Data.SqlClient
             ((IDisposable)_xmlReader).Dispose();
             _reader = null;
             _xmlReader = null;
+            _canReadChunk = false;
             _xmlWriter = null;
             _memoryStream = null;
+            _charsRemoved = 0;
         }
 
         public int ColumnOrdinal => _columnOrdinal;
