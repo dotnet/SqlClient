@@ -4335,6 +4335,9 @@
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>잘못된 라우팅 정보가 수신되었습니다.</value>
   </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Invalid enhanced routing information received.</value>
+  </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>서버에서 라우팅 정보를 제공했지만 이미 제한 시간이 만료되었습니다.</value>
   </data>

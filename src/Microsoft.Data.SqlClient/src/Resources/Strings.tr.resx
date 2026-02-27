@@ -4335,6 +4335,9 @@
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Geçersiz yönlendirme bilgisi alındı.</value>
   </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Invalid enhanced routing information received.</value>
+  </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Sunucu yönlendirme bilgisi sağladı ancak zaman aşımı gerçekleşmişti.</value>
   </data>
