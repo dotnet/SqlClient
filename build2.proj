@@ -130,6 +130,18 @@
       Example:       C:\my_test_results\my_extra_specaial_test_run_folder\
     -->
     <TestResultsFolderPath Condition="'$(TestResultsFolderPath)' == ''">$(RepoRoot)test_results</TestResultsFolderPath>
+
+    <!--
+      TestSet
+      Applies to:     TestMdsManual target
+      Description:    Used to select a set of tests to run from the MDS manual tests project. If not
+                      specified, all tests will be executed.
+      Default value:  [blank]
+      Allowed values: ([1][2][3][AE])
+      Examples:       "1", "12", "AE", "12AE"
+    -->
+    <TestSet Condition="'$(TestSet)' == ''" />
+    <TestSetArgument Condition="'$(TestSet)' != ''">-p:TestSet="$(TestSet)"</TestSetArgument>
 	</PropertyGroup>
 
   <!-- ================================================================= -->
@@ -143,6 +155,7 @@
 
     <!-- Project Paths -->
     <MdsFunctionalTestProjectPath>$(MdsRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</MdsFunctionalTestProjectPath>
+    <MdsManualTestProjectPath>$(MdsRoot)tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</MdsManualTestProjectPath>
     <MdsProjectPath>$(MdsRoot)src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
     <MdsRefProjectPath>$(MdsRoot)ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
     <MdsUnitTestProjectPath>$(MdsRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</MdsUnitTestProjectPath>
@@ -249,7 +262,6 @@
           --results-directory "$(TestResultsFolderPath)"
           --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
-
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
@@ -259,7 +271,27 @@
 
   <!-- TestMdsManual: Runs manual tests for MDS -->
   <Target Name="TestMdsManual">
+    <PropertyGroup>
+      <LogFilePrefix>MdsManual-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
 
+      <DotnetCommand>
+        $(DotnetPath)dotnet test "$(MdsManualTestProjectPath)"
+          -p:Configuration=$(Configuration)
+          $(TestBlameArgument)
+          $(TestFilterArgument)
+          $(TestFrameworkArgument)
+          $(TestPackageReferenceArgument)
+          $(TestSetArgument)
+          --results-directory "$(TestResultsFolderPath)"
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running manual tests for MDS via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- TestMdsUnit: Runs unit tests for MDS -->
