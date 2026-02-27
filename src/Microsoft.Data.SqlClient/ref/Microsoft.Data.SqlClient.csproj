@@ -4,6 +4,28 @@
     <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Platform Not Supported (PNSE) generation ======================= -->
+  <PropertyGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true'">
+    <GeneratePlatformNotSupportedAssemblyMessage>Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
+    <ContractAssemblyPath>$(TargetDir)$(AssemblyName).dll</ContractAssemblyPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
+    <NotSupportedSourceFile>$(IntermediateOutputPath)\$(TargetFramework)\$(AssemblyName).notsupported.cs</NotSupportedSourceFile>
+    <CoreCompileDependsOn>$(CoreCompileDependsOn);GenerateNotSupportedSource</CoreCompileDependsOn>
+    <!-- Not supported sources are created from the ref assembly, we currently don't produce finalizers in dummmy assemblies, so we disable ApiCompat to not fail. -->
+    <RunApiCompat>false</RunApiCompat>
+    <GenerateDocumentationFile Condition="'$(TargetOs)' != 'Windows_NT'">false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true'">
+    <ResolvedMatchingContract Include="$(ContractAssemblyPath)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
+    <AssemblyMetadata Include="NotSupported">
+      <Value>True</Value>
+    </AssemblyMetadata>
+  </ItemGroup>
+
   <!-- CLS Compliance ================================================== -->
   <ItemGroup>
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
@@ -92,4 +114,36 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
+
+  <!-- GenerateNotSupportedSource ===================================== -->
+  <Target Name="GenerateNotSupportedSource"
+          AfterTargets="ResolveCodeAnalysisRuleSet"
+          DependsOnTargets="ResolveMatchingContract"
+          Inputs="@(ReferencePath);@(ResolvedMatchingContract)"
+          Outputs="$(NotSupportedSourceFile)"
+          Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
+    <ItemGroup>
+      <!-- build out a list of directories where dependencies are located -->
+      <_referencePathDirectoriesWithDuplicates Include="@(ReferencePath->'%(RootDir)%(Directory)'->TrimEnd('\'))" />
+      <!-- strip metadata, removing duplicates -->
+      <_referencePathDirectories Include="%(_referencePathDirectoriesWithDuplicates.Identity)" />
+    </ItemGroup>
+
+    <Error Text="No single matching contract found." Condition="'@(ResolvedMatchingContract->Count())' != '1'" />
+
+    <PropertyGroup>
+      <GenAPIArgs>"%(ResolvedMatchingContract.Identity)"</GenAPIArgs>
+      <GenAPIArgs>$(GenAPIArgs) -l:"@(_referencePathDirectories)"</GenAPIArgs>
+      <GenAPIArgs>$(GenAPIArgs) -o:"$(NotSupportedSourceFile)"</GenAPIArgs>
+      <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">$(GenAPIArgs) -t:"$(GeneratePlatformNotSupportedAssemblyMessage)"</GenAPIArgs>
+      <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssemblyWithGlobalPrefix)' == 'true'">$(GenAPIArgs) -global</GenAPIArgs>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotnetPath)dotnet" "$(ToolsArtifactsDir)net8.0/Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
+    </PropertyGroup>
+    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)"/>
+    <ItemGroup>
+      <FileWrites Include="$(NotSupportedSourceFile)" />
+      <Compile Include="$(NotSupportedSourceFile)" />
+    </ItemGroup>
+  </Target>
 </Project>
