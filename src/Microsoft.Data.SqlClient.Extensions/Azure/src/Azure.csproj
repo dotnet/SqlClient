@@ -14,14 +14,7 @@
     <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
-
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
-  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
+  <!-- When we're not signing, we are permitted to expose our internals to tests. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
