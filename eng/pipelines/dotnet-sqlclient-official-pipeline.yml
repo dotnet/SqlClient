@@ -145,7 +145,11 @@ extends:
         enabled: true
       apiscan:
         enabled: true
-        break: true
+        # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42858):
+        # We have temporarily disabled breaking the build on ApiScan results until we can:
+        #   - Register our new packages with API Scan, and/or
+        #   - Publish MSDN/Learn/etc documentation for the new packages.
+        break: false
         # Other ApiScan options are set by the jobs via ob_sdl_apiscan_* variables.
       codeql:
         compiled:
