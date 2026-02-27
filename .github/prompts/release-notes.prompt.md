@@ -3,19 +3,26 @@ name: release-notes
 description: Generate release notes for a specific milestone of the Microsoft.Data.SqlClient project.
 argument-hint: <milestone>
 agent: agent
-tools: ['github/search_issues', 'edit/createFile', 'edit/editFiles', 'read/readFile']
+tools: ['edit/createFile', 'edit/editFiles', 'read/readFile']
 ---
 
 Generate release notes for the milestone "${input:milestone}".
 
-Steps:
+## Skills
+
+This prompt uses the following skill:
+- [fetch-milestone-prs](.github/skills/fetch-milestone-prs/SKILL.md) — Fetches all merged PR metadata for the milestone
+
+## Steps
+
 1. Fetch Milestone Items
-    - Search for all **merged** Pull Requests associated with the milestone "${input:milestone}" in the `dotnet/SqlClient` repository.
-    - Use `github/search_issues` with query `is:pr is:merged milestone:"${input:milestone}" repo:dotnet/SqlClient`.
+    - Follow the instructions in the [fetch-milestone-prs](.github/skills/fetch-milestone-prs/SKILL.md) skill to fetch all merged PRs for the milestone "${input:milestone}".
+    - The output will be saved to `.milestone-prs/${input:milestone}/` with individual JSON files per PR and an `_index.json` summary.
 2. Analyze and Categorize
-    - Review the title and body of each PR. For PRs that are porting other PRs to current branch use `github/search_issues` with query `is:pr is:merged repo:dotnet/SqlClient <original PR number>` to get more context.
+    - Read the `_index.json` file to get an overview of all PRs. Read individual PR JSON files for full details (title, body, labels).
+    - For PRs that are porting other PRs to the current branch, read the original PR's JSON file or look up the original PR number mentioned in the body for more context.
     - Categorize them into: `Added`, `Fixed`, `Changed`, `Removed`.
-    - Ignore PRs that are labelled as `Area\Engineering`
+    - Ignore PRs that are labelled as `Area\Engineering` (use the `has_engineering_label` field in the JSON).
     - Identify the contributors for the "Contributors" section.
 3. Create Release Notes File
     - Determine the correct path: `release-notes/<Major.Minor>/<Version>.md`.
