@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This update brings the below changes over the previous preview release:
 
+Also released as part of this milestone:
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0-preview1. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0-preview1. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Logging 1.0.0-preview1. See [release notes](release-notes/Extensions/Logging/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0-preview4. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0-preview4.md).
+
 ### Changed
 
 - **Breaking:** Removed Azure dependencies from the core package. Azure AD / Entra authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Azure AD authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
