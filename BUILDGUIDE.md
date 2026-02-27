@@ -72,6 +72,7 @@ The following build targets are defined in `build.proj`:
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
+|`BuildSqlClient`|Build the driver for all target frameworks.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
@@ -197,8 +198,8 @@ dotnet build -t:BuildSqlServer,PackSqlServer
 dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
 dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
 dotnet build -t:BuildSqlClient -p:ReferenceType=Package
-dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
+dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateAkvPackage
 ```
 
