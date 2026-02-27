@@ -33,6 +33,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public QueryEngine(TdsServerArguments arguments)
         {
+            Log = arguments.Log;
             ServerArguments = arguments;
         }
 
@@ -327,8 +328,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
             else
             {
-                // Create an info token that contains the query received
-                TDSInfoToken infoToken = new TDSInfoToken(2012, 2, 0, lowerBatchText);
+                // Create an info token that contains the verbatim query text we
+                // received (not the lower-cased version).
+                TDSInfoToken infoToken = new TDSInfoToken(2012, 2, 0, batchRequest.Text);
 
                 // Log response
                 TDSUtilities.Log(Log, "Response", infoToken);
