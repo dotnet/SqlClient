@@ -192,13 +192,11 @@ packages in the root packages/ directory, and will be automatically searched by 
 Then, you can specify `Package` references be used, for example:
 
 ```bash
-dotnet build -t:BuildLogging
-dotnet build -t:PackLogging
-dotnet build -t:BuildAbstractions -p:ReferenceType=Package
-dotnet build -t:PackAbstractions -p:ReferenceType=Package
-dotnet build -t:BuildAzure -p:ReferenceType=Package
-dotnet build -t:PackAzure -p:ReferenceType=Package
-dotnet build -t:BuildAll -p:ReferenceType=Package
+dotnet build -t:BuildLogging,PackLogging
+dotnet build -t:BuildSqlServer,PackSqlServer
+dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
+dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
+dotnet build -t:BuildSqlClient -p:ReferenceType=Package
 dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
 dotnet build -t:GenerateAkvPackage
