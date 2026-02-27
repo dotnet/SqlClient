@@ -477,7 +477,12 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlStreamingXml
     {
-        private static readonly XmlWriterSettings s_writerSettings = new() { CloseOutput = true, ConformanceLevel = ConformanceLevel.Fragment, Encoding = new UTF8Encoding(false) };
+        private static readonly XmlWriterSettings s_writerSettings = new() {
+            CloseOutput = true,
+            ConformanceLevel = ConformanceLevel.Fragment,
+            // Potentially limits XML to not supporting UTF-16 characters, but this is required to avoid writing
+            // a byte order mark and is consistent with prior default used within StringWriter/StringBuilder.
+            Encoding = new UTF8Encoding(false) };
 
         private readonly int _columnOrdinal;
         private SqlDataReader _reader;
@@ -525,7 +530,8 @@ namespace Microsoft.Data.SqlClient
             }
             else if (dataIndex > _charsRemoved)
             {
-                charsToSkip = (int)(dataIndex - _charsRemoved);
+                //dataIndex is zero-based, but _charsRemoved is one-based, so the difference is the number of chars to skip in the MemoryStream before we start copying data to the buffer
+                charsToSkip = dataIndex - _charsRemoved;
             }
 
             // If buffer parameter is null, we have to return -1 since there is no way for us to know the
@@ -550,7 +556,7 @@ namespace Microsoft.Data.SqlClient
                 //_xmlWriter.WriteNode(_xmlReader, true);
                 //  _xmlWriter.Flush();
                 WriteXmlElement();
-                // Update memoryStreamRemaining based on the number of chars just written to the MemoryStream
+                // Update memoryStreamRemaining based on the number of bytes/chars just written to the MemoryStream
                 memoryStreamRemaining = _memoryStream.Length - _memoryStream.Position;
                 if (charsToSkip > 0)
                 {
@@ -583,6 +589,7 @@ namespace Microsoft.Data.SqlClient
             cnt = memoryStreamRemaining < length ? memoryStreamRemaining : length;
             for (int i = 0; i < cnt; i++)
             {
+                // ReadByte moves the Position forward
                 buffer[bufferIndex + i] = (char)_memoryStream.ReadByte();
             }
             _charsRemoved += cnt;
@@ -598,10 +605,15 @@ namespace Microsoft.Data.SqlClient
             const int WriteNodeBufferSize = 1024;
 
             long memoryStreamPosition = _memoryStream.Position;
+            // Move the Position to the end of the MemoryStream since we are always appending.
+            _memoryStream.Seek(0, SeekOrigin.End);
 
             _xmlReader.Read();
             switch (_xmlReader.NodeType)
             {
+                // Note: Whitespace, CDATA, EntityReference, XmlDeclaration, ProcessingInstruction, DocumentType, and Comment node types
+                // are not expected in the XML returned from SQL Server as it normalizes them out, but handle them just in case.
+                // SignificantWhitespace will occur when used with xml:space="preserve"
                 case XmlNodeType.Element:
                     _xmlWriter.WriteStartElement(_xmlReader.Prefix, _xmlReader.LocalName, _xmlReader.NamespaceURI);
                     _xmlWriter.WriteAttributes(_xmlReader, true);
@@ -651,6 +663,7 @@ namespace Microsoft.Data.SqlClient
                     break;
             }
             _xmlWriter.Flush();
+            // Reset the Position back to where it was before writing this element so that the caller can continue reading from the expected position.
             _memoryStream.Position = memoryStreamPosition;
         }
     }
