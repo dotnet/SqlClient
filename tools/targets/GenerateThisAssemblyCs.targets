@@ -2,6 +2,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Target Name="GenerateThisAssemblyCs"
+          Inputs="$(MSBuildThisFileFullPath)"
+          Outputs="$(IntermediateOutputPath)ThisAssembly.cs"
           BeforeTargets="CoreCompile">
 
     <PropertyGroup>
@@ -10,6 +12,9 @@
       <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">System</ThisAssemblyNamespace>
 
       <ThisAssemblyCsContents>
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 namespace $(ThisAssemblyNamespace)
 {
     internal static class ThisAssembly
@@ -21,9 +26,9 @@ namespace $(ThisAssemblyNamespace)
       </ThisAssemblyCsContents>
     </PropertyGroup>
 
-    <!-- Unconditionally write the ThisAssembly.cs file. -->
+    <!-- Write ThisAssembly.cs if this is a new version number, or if it is missing. -->
     <WriteLinesToFile
-      File="$(IntermediateOutputPath)/ThisAssembly.cs"
+      File="$(IntermediateOutputPath)ThisAssembly.cs"
       Lines="$(ThisAssemblyCsContents)"
       Overwrite="true"
       Encoding="Unicode"/>
@@ -32,6 +37,7 @@ namespace $(ThisAssemblyNamespace)
 
   <!-- Ensure the generated ThisAssembly.cs is included in the compilation. -->
   <ItemGroup>
-    <Compile Include="$(IntermediateOutputPath)/ThisAssembly.cs"/>
+    <Compile Include="$(IntermediateOutputPath)ThisAssembly.cs"/>
+    <FileWrites Include="$(IntermediateOutputPath)ThisAssembly.cs"/>
   </ItemGroup>
 </Project>
