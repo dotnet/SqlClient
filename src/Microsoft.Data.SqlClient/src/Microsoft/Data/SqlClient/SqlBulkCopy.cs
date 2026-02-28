@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (!string.IsNullOrEmpty(CatalogName))
             {
-                CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
+                CatalogName = SqlServerEscapeHelper.EscapeStringAsLiteral(SqlServerEscapeHelper.EscapeIdentifier(CatalogName));
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
@@ -484,16 +484,19 @@ namespace Microsoft.Data.SqlClient
             return $"""
 SELECT @@TRANCOUNT;
 
+DECLARE @Object_ID INT = OBJECT_ID('{escapedObjectName}');
+DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
 IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
 BEGIN
-    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;
+    SET @Column_Name_Query = N'SELECT @Column_Names = COALESCE(@Column_Names + '', '', '''') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;';
 END
 ELSE
 BEGIN
-    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') ORDER BY [column_id] ASC;
+    SET @Column_Name_Query = N'SELECT @Column_Names = COALESCE(@Column_Names + '', '', '''') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID ORDER BY [column_id] ASC;';
 END
 
+EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
 
 SET FMTONLY ON;

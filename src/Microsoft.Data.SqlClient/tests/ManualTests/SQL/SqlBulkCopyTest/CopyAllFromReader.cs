@@ -61,9 +61,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersReceived"], "Unexpected BuffersReceived value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersSent"], "Unexpected BuffersSent value.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, stats["IduCount"], "Unexpected IduCount value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)6, stats["SelectCount"], "Unexpected SelectCount value.");
+                            DataTestUtility.AssertEqualsWithDescription((long)8, stats["SelectCount"], "Unexpected SelectCount value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["ServerRoundtrips"], "Unexpected ServerRoundtrips value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)9, stats["SelectRows"], "Unexpected SelectRows value.");
+                            DataTestUtility.AssertEqualsWithDescription((long)11, stats["SelectRows"], "Unexpected SelectRows value.");
                             DataTestUtility.AssertEqualsWithDescription((long)2, stats["SumResultSets"], "Unexpected SumResultSets value.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, stats["Transactions"], "Unexpected Transactions value.");
                         }
