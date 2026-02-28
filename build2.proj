@@ -1,28 +1,167 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<!-- Build Parameters ============================================== -->
+  <!-- Imports ========================================================= -->
+  <Import Project="src/Directory.Build.props" />
+
+  <!-- Build Parameters ================================================ -->
 	<PropertyGroup>
-		<!-- Configuration:  Which build configuration to build                                 -->
-		<!-- Allowed values: Debug, Release                                                     -->
-		<!-- Default value:  Debug                                                              -->
+		<!--
+		  Configuration
+		  Applies to:     All targets
+		  Description:    Which build configuration to build
+		  Default value:  Debug
+		  Allowed values: Debug, Release
+		-->
 		<Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
 
-		<!-- DotnetPath: Path to folder containing the `dotnet` binary. Override this if a      -->
-		<!--    specific version (eg, x86) is required. Otherwise, this defaults to using the   -->
-		<!--    dotnet binary in the PATH variable. The provided path should end with a `\` (or -->
-		<!--    `/`) character. Eg. C:\x86\                                                     -->
-		<DotnetPath Condition="'$(DotnetPath)' == ''" />
+    <!--
+      DotnetPath
+      Applies to:    All targets
+      Description:   Path to folder containing the `dotnet` binary. Override this if a specific
+                     version (eg, x86) is required. Otherwise, this defaults to using the dotnet
+                     binary in the PATH variable. The provided path should end with a `\` (or `/`)
+                     character.
+      Default value: [blank]
+      Example:       C:\x86\
+    -->
+    <DotnetPath Condition="'$(DotnetPath)' == ''" />
+
+    <!--
+      MdsPackageVersion
+      Applies to:     TestMdsFunctional, TestMdsManual targets
+      Description:    Specifies what version of the Microsoft.Data.SqlClient package to run tests
+                      against. If not specified, the version defined in Versions.props is used.
+                      This argument only has effect if the ReferenceType argument is set to
+                      "Package".
+      Default value:  [blank]
+      Example:        7.0.0-preview4
+    -->
+    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''" />
+    <TestPackageBuildArgument Condition="'$(MdsPackageVersion)' != ''">
+      $(TestPackageBuildArgument)
+      -p:MdsPackageVersion=$(MdsPackageVersion)
+    </TestPackageBuildArgument>
+
+    <!--
+      ReferenceType
+      Applies to:     TestMdsFunctional, TestMdsManual targets
+      Description:    Determines what mode to put test runs into. If set to "Project", the test
+                      projects will reference their test target as a ProjectReference, ie, running
+                      against the code as-is in the repository. This will also trigger a build of
+                      the target project, if necessary. If set to "Package", the test projects will
+                      reference their test target as a PackageReference, ie, running against a
+                      packaged version of the project.
+      Default value:  Project
+      Allowed values: (Package|Project)
+    -->
+    <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
+    <TestPackageBuildArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
+      $(TestPackageBuildArgument)
+      -p:ReferenceType=Package
+    </TestPackageBuildArgument>
+
+    <!--
+      TestBlameTimeout
+      Applies to:     Test* targets
+      Description:    How long to wait on a test before timing it out. This will be fed to the
+                      dotnet blame-hang-timeout argument. If 0 is specified, hang timeout will be
+                      disabled. For more details and supported suffixed see:
+                      https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-vstest#options
+      Default value:  10m
+      Allowed values: (time_expression|0)
+    -->
+    <TestBlameTimeout Condition="'$(TestBlameTimeout)' == ''">10m</TestBlameTimeout>
+    <TestBlameTimeout Condition="'$(TestBlameTimeout)' == '0'" />
+    <TestBlameArgument Condition="'$(TestBlameTimeout)' != ''">
+      --blame-hang
+      --blame-hang-dump-type full
+      --blame-hang-timeout $(TestBlameTimeout)
+    </TestBlameArgument>
+
+    <!--
+      TestCollectCodeCoverage
+      Applies to:     Test* targets
+      Description:    Whether code coverage data should be collected during test target execution.
+      Default value:  true
+      Allowed value:  (true|false)
+    -->
+    <TestCollectCodeCoverage Condition="'$(TestCollectCodeCoverage)' == ''">true</TestCollectCodeCoverage>
+    <TestCollectArgument Condition="'$(TestCollectCodeCoverage.ToLower())' == 'true'">
+      --collect "Code coverage"
+      --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
+    </TestCollectArgument>
+
+    <!--
+      TestFilters
+      Applies to:     Test* targets
+      Description:    Filter to use to include or exclude any tests. If not specified, this defaults
+                      to including all tests that are not in the category "failing" or "flaky". Use
+                      "none" to disable filtering and run all tests in the target.
+                      For more information see:
+                      https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
+      Default value:  category!=failing&category!=flaky
+      Allowed values: (category_expression|none)
+    -->
+    <TestFilter Condition="'$(TestFilter)' == ''">category!=failing&amp;category!=flaky</TestFilter>
+    <TestFilter Condition="'$(TestFilter.ToLower())' == 'none'" />
+    <TestFilterArgument Condition="'$(TestFilter)' != ''">
+      --filter "$(TestFilter)"
+    </TestFilterArgument>
+
+    <!--
+      TestFramework
+      Applies to:    Test* targets
+      Description:   Target framework moniker for the version of the .NET to use to execute the
+                     specified test target. If not specified, this defaults to running tests for
+                     *all* framework versions supported for the project.
+      Default value: [blank]
+      Example:       net462
+    -->
+    <TestFramework Condition="'$(TestFramework)' == ''" />
+    <TestFrameworkArgument Condition="'$(TestFramework)' != ''">-f $(TestFramework)</TestFrameworkArgument>
+
+    <!--
+      TestResultsFolderPath
+      Applies to:    Test* targets
+      Description:   Absolute path to directory where any test results should be dumped. If not
+                     specified, this path will default to test_results in the root of the
+                     repository.
+      Default value: $(REPO_ROOT)\test_results
+      Example:       C:\my_test_results\my_extra_specaial_test_run_folder\
+    -->
+    <TestResultsFolderPath Condition="'$(TestResultsFolderPath)' == ''">$(RepoRoot)test_results</TestResultsFolderPath>
+
+    <!--
+      TestSet
+      Applies to:     TestMdsManual target
+      Description:    Used to select a set of tests to run from the MDS manual tests project. If not
+                      specified, all tests will be executed.
+      Default value:  [blank]
+      Allowed values: ([1][2][3][AE])
+      Examples:       "1", "12", "AE", "12AE"
+    -->
+    <TestSet Condition="'$(TestSet)' == ''" />
+    <TestSetArgument Condition="'$(TestSet)' != ''">-p:TestSet="$(TestSet)"</TestSetArgument>
 	</PropertyGroup>
 
-	<!-- Imports ======================================================= -->
-	<Import Project="src/Directory.Build.props" />
-  
-  <!-- =============================================================== -->
-	<!-- Microsoft.Data.SqlClient Build Targets -->
+  <!-- ================================================================= -->
+	<!-- Microsoft.Data.SqlClient Targets -->
 	<PropertyGroup>
-		<MdsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
+    <!-- Root for MDS projects -->
+    <MdsRoot>$(RepoRoot)src/Microsoft.Data.SqlClient/</MdsRoot>
+
+    <!-- Tools/Specs Paths -->
+    <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
+
+    <!-- Project Paths -->
+    <MdsFunctionalTestProjectPath>$(MdsRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</MdsFunctionalTestProjectPath>
+    <MdsManualTestProjectPath>$(MdsRoot)tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</MdsManualTestProjectPath>
+    <MdsProjectPath>$(MdsRoot)src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
+    <MdsRefProjectPath>$(MdsRoot)ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
+    <MdsUnitTestProjectPath>$(MdsRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</MdsUnitTestProjectPath>
 	</PropertyGroup>
 
+  <!-- Build MDS Targets =============================================== -->
 	<!-- BuildMds: Builds all binaries for MDS -->
 	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows" />
 
@@ -37,6 +176,7 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
 		</PropertyGroup>
+
 		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
@@ -55,47 +195,92 @@
 		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)" />
 		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 	</Target>
-  
+
+  <!-- Pack MDS Target ===================================================== -->
   <!-- PackMds: Packages MDS binaries into a NuGet package -->
   <Target Name="PackMds">
     <!-- @TODO -->
   </Target>
-  
+
+  <!-- Test MDS Targets ==================================================== -->
   <!-- TestMds: Runs all test projects for MDS -->
   <Target Name="TestMds" DependsOnTargets="TestMdsFunctional;TestMdsManual;TestMdsUnit" />
-  
+
   <!-- TestMdsFunctional: Runs functional tests for MDS -->
   <Target Name="TestMdsFunctional">
-    <!-- @TODO -->
-  </Target>
-  
-  <!-- TestMdsManual: Runs manual tests for MDS -->
-  <Target Name="TestMdsManual">
-    <!-- @TODO -->
-  </Target>
-  
-  <!-- TestMdsUnit: Runs unit tests for MDS -->
-  <Target Name="TestMdsUnit">
-    <!-- @TODO -->
-  </Target>
-  
-  <!-- ================================================================= -->
-  <!-- Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Targets -->
-  <PropertyGroup>
-    <AkvProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProjectPath>
-  </PropertyGroup>
-  
-  <!-- BuildAkv: Builds all binaries for AKV -->
-  <Target Name="BuildAkv">
+    <!-- @TODO: Prevent from running in non-admin user mode -->
     <PropertyGroup>
+      <LogFilePrefix>MdsFunctional-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
       <DotnetCommand>
-        $(DotnetPath)dotnet build $(AkvProjectPath)
+        $(DotnetPath)dotnet test "$(MdsFunctionalTestProjectPath)"
           -p:Configuration=$(Configuration)
+          $(TestBlameArgument)
+          $(TestCollectArgument)
+          $(TestFilterArgument)
+          $(TestFrameworkArgument)
+          $(TestPackageReferenceArgument)
+          --results-directory "$(TestResultsFolderPath)"
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Building AKV provider via command: $(DotnetCommand)" />
+    <Message Text=">>> Running functional tests for MDS via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- TestMdsManual: Runs manual tests for MDS -->
+  <Target Name="TestMdsManual">
+    <PropertyGroup>
+      <LogFilePrefix>MdsManual-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
+
+      <DotnetCommand>
+        $(DotnetPath)dotnet test "$(MdsManualTestProjectPath)"
+          -p:Configuration=$(Configuration)
+          $(TestBlameArgument)
+          $(TestFilterArgument)
+          $(TestFrameworkArgument)
+          $(TestPackageReferenceArgument)
+          $(TestSetArgument)
+          --results-directory "$(TestResultsFolderPath)"
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running manual tests for MDS via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- TestMdsUnit: Runs unit tests for MDS -->
+  <Target Name="TestMdsUnit">
+    <PropertyGroup>
+      <!--
+        Note: This test exclusively uses project references, so neither ReferenceType nor any
+            package version arguments are not specified in this command.
+      -->
+      <LogFilePrefix>MdsUnit-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        $(DotnetPath)dotnet test "$(MdsUnitTestProjectPath)"
+          -p:Configuration=$(Configuration)
+          $(TestBlameArgument)
+          $(TestCollectArgument)
+          $(TestFilterArgument)
+          $(TestFrameworkArgument)
+          --results-directory "$(TestResultsFolderPath)"
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)
+      </DotnetCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running unit tests for MDS via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 </Project>
