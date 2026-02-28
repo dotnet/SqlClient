@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!--
+    Everybody hold onto your pants because this is going to get a bit ugly.
+
+    The purpose of this project is to generate a "Not Supported" version of the MDS assembly. At a
+    high level, this is done by:
+      * Building the ref project (as a dependency to this project)
+      * Feeding the ref assembly to GenAPI (in the /tools folder) as a contract assembly
+      * GenAPI generates a single cs file with the entire API surface implemented to throw
+        PlatformNotSupportedExceptions
+      * This cs file is included as a compilation item in this project.
+
+    The big question might be: Why do we need a "Not Supported" version of MDS?
+    In some situations, most importantly PowerShell, including a NuGet package will automatically
+    reference the appropriate assembly in the /lib folder of the package, which is inherently OS-
+    agnostic. MDS implementation assemblies are placed in the /runtimes folder to provide the OS-
+    specific versions of MDS. The "Not Supported" binary is thus placed in the lib folder so that
+    in OS-agnostic situations, the user is reminded to reference an OS-specific version of MDS.
+
+    The next big question might be: Why is this a separate project?
+    In previous iterations, generating the "Not Supported" binaries was part of the netcore ref
+    project and netcore src project. This made it necessary to conditionally switch the project
+    and all associated variables from "implementation" mode into "not supported" mode. It was
+    very difficult to understand what was going on. Creating a separate project just for
+    "not supported" mode simplifies this considerably. It also makes it much cleaner to excise
+    when this project is no longer required.
+
+    @TODO: Remove this project
+    The primary prerequisite for removing this project is making the "common" MDS project OS-
+    agnostic. Once that happens, the lib binary will be able to switch OS implementation at runtime
+    and a "not supported" error is no longer necessary.
+
+    alternatively:
+    @TODO: Replace the GenAPI project with a C# Source Generator
+  -->
+
+  <!-- References ====================================================== -->
+
+</Project>

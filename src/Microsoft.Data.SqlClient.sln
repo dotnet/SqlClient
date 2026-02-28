@@ -379,6 +379,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj", "{AA77C107-9A78-4A99-98BB-21FF7A1E0B01}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notsupported", "notsupported", "{351BE847-A0BF-450C-A5BC-8337AFA49EAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\notsupported\Microsoft.Data.SqlClient.csproj", "{1DB299CE-95EA-4566-84DD-171768758291}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -791,6 +795,18 @@ Global
 		{AA77C107-9A78-4A99-98BB-21FF7A1E0B01}.Release|x64.Build.0 = Release|Any CPU
 		{AA77C107-9A78-4A99-98BB-21FF7A1E0B01}.Release|x86.ActiveCfg = Release|Any CPU
 		{AA77C107-9A78-4A99-98BB-21FF7A1E0B01}.Release|x86.Build.0 = Release|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Debug|x64.Build.0 = Debug|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Debug|x86.Build.0 = Debug|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Release|x64.ActiveCfg = Release|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Release|x64.Build.0 = Release|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Release|x86.ActiveCfg = Release|Any CPU
+		{1DB299CE-95EA-4566-84DD-171768758291}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -866,6 +882,8 @@ Global
 		{020A7E7B-04C9-4326-985F-045B42CC2200} = {7289C27E-D7DF-2C71-84B4-151F3A162493}
 		{D433ED2D-5E47-4A4B-B94A-EC71482715C7} = {020A7E7B-04C9-4326-985F-045B42CC2200}
 		{AA77C107-9A78-4A99-98BB-21FF7A1E0B01} = {2B71F605-037E-5629-6E23-0FA3C297446D}
+		{351BE847-A0BF-450C-A5BC-8337AFA49EAA} = {7289C27E-D7DF-2C71-84B4-151F3A162493}
+		{1DB299CE-95EA-4566-84DD-171768758291} = {351BE847-A0BF-450C-A5BC-8337AFA49EAA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
