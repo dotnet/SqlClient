@@ -163,7 +163,22 @@
 
   <!-- Build MDS Targets =============================================== -->
 	<!-- BuildMds: Builds all binaries for MDS -->
-	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows" />
+	<Target Name="BuildMds" DependsOnTargets="BuildMdsRef;BuildMdsUnix;BuildMdsWindows" />
+
+  <!-- BuildMdsRef: Builds the ref binaries project for MDS, which is OS-agnostic -->
+  <Target Name="BuildMdsRef">
+    <PropertyGroup>
+      <DotnetCommand>
+        $(DotnetPath)dotnet build $(MdsRefProjectPath)
+          -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building MDS ref binaries via command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 
 	<!-- BuildMdsUnix: Builds all unix-specific MDS binaries -->
 	<Target Name="BuildMdsUnix">
