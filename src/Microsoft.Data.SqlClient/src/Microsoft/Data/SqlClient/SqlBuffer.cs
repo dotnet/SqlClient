@@ -271,11 +271,11 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 catch (OverflowException)
                                 {
-                                    throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                                    throw SQL.ConversionOverflow();
                                 }
                             }
                         }
-                        throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                        throw SQL.ConversionOverflow();
                     }
                     return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
                 }

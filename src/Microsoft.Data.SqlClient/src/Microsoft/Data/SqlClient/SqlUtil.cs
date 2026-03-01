@@ -813,9 +813,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception ConversionOverflow()
+        {
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_ConversionOverflowMessage));
+        }
+
         internal static Exception DateTimeOverflow()
         {
-            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_DateTimeOverflowMessage));
         }
 
         //
@@ -2267,6 +2272,10 @@ namespace Microsoft.Data.SqlClient
         internal static string ExRoutingDestination()
         {
             return StringsHelper.GetString(Strings.SQL_ExRoutingDestination);
+        }
+        internal static string NullString()
+        {
+            return StringsHelper.GetString(Strings.SqlMisc_NullString);
         }
     }
 

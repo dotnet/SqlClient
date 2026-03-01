@@ -41,7 +41,7 @@ where T : unmanaged
     {
         if (length < 0)
         {
-            throw ADP.ArgumentOutOfRange(nameof(length), SQLResource.InvalidArraySizeMessage);
+            throw ADP.InvalidArraySize(nameof(length));
         }
 
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
@@ -92,7 +92,7 @@ where T : unmanaged
     {
         if (IsNull)
         {
-            return SQLResource.NullString;
+            return SQLMessage.NullString();
         }
         return JsonSerializer.Serialize(Memory);
     }

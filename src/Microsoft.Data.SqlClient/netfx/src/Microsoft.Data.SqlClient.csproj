@@ -979,9 +979,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVector.cs">
       <Link>Microsoft\Data\SqlTypes\SqlVector.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SQLResource.cs">
-      <Link>Microsoft\Data\SqlTypes\SQLResource.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
     </Compile>
