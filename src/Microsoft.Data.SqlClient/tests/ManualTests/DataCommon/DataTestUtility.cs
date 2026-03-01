@@ -93,6 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // SQL Server capabilities
         private static bool? s_isDataClassificationSupported;
+        private static bool? s_isJsonSupported;
         private static bool? s_isVectorSupported;
 
         // Azure Synapse EngineEditionId == 6
@@ -143,6 +144,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsDataClassificationSupported =>
             s_isDataClassificationSupported ??= IsTCPConnStringSetup() &&
                 IsObjectPresent("SYS.SENSITIVITY_CLASSIFICATIONS");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'json' data type.
+        /// </summary>
+        /// <remarks>
+        /// This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'json' data type.
+        /// </remarks>
+        public static bool IsJsonSupported =>
+            s_isJsonSupported ??= IsTCPConnStringSetup() &&
+                IsTypePresent("json");
 
         /// <summary>
         /// Determines whether the SQL Server supports the 'vector' data type.
