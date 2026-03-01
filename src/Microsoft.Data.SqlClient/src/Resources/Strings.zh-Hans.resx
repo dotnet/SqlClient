@@ -4336,7 +4336,7 @@
     <value>收到了无效的路由信息。</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>收到的增强型路由信息无效。</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>服务器提供了路由信息，但超时时间已到。</value>

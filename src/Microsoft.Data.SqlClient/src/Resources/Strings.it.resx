@@ -4336,7 +4336,7 @@
     <value>Ricevute informazioni di routing non valide.</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>Ricevute informazioni di routing avanzato non valide.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Il server ha fornito le informazioni di routing, ma il timeout era già scaduto.</value>

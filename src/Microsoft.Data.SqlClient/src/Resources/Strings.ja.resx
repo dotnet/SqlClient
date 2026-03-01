@@ -4336,7 +4336,7 @@
     <value>無効なルーティング情報を受信しました。</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>無効な拡張ルーティング情報を受信しました。</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>サーバーからルーティング情報が提供されましたが、既にタイムアウトしています。</value>

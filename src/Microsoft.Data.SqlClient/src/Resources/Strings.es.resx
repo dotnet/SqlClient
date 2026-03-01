@@ -4336,7 +4336,7 @@
     <value>Se recibió información de enrutamiento no válida.</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>Se recibió información de enrutamiento mejorada no válida.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>El servidor proporcionó información de enrutamiento, pero ya ha caducado el tiempo de espera.</value>

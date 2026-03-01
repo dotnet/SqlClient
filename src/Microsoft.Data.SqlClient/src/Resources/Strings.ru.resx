@@ -4336,7 +4336,7 @@
     <value>Получены недопустимые данные маршрутизации.</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>Получены недопустимые сведения расширенной маршрутизации.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Сервер предоставил сведения о маршрутизации, но время ожидания уже истекло.</value>
