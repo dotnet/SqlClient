@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Data;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -18,96 +19,96 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetTablesFromSchema()
+        public static async Task GetTablesFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Tables, new string[] { "TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "TABLE_TYPE" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Tables, new string[] { "TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "TABLE_TYPE" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetProceduresFromSchema()
+        public static async Task GetProceduresFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Procedures, new string[] { "ROUTINE_SCHEMA", "ROUTINE_NAME", "ROUTINE_TYPE" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Procedures, new string[] { "ROUTINE_SCHEMA", "ROUTINE_NAME", "ROUTINE_TYPE" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetProcedureParametersFromSchema()
+        public static async Task GetProcedureParametersFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.ProcedureParameters, new string[] { "PARAMETER_MODE", "PARAMETER_NAME" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.ProcedureParameters, new string[] { "PARAMETER_MODE", "PARAMETER_NAME" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetDatabasesFromSchema()
+        public static async Task GetDatabasesFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Databases, new string[] { "database_name", "dbid", "create_date" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Databases, new string[] { "database_name", "dbid", "create_date" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetForeignKeysFromSchema()
+        public static async Task GetForeignKeysFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.ForeignKeys, new string[] { "CONSTRAINT_TYPE", "IS_DEFERRABLE", "INITIALLY_DEFERRED" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.ForeignKeys, new string[] { "CONSTRAINT_TYPE", "IS_DEFERRABLE", "INITIALLY_DEFERRED" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetIndexesFromSchema()
+        public static async Task GetIndexesFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Indexes, new string[] { "index_name", "constraint_name" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Indexes, new string[] { "index_name", "constraint_name" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetIndexColumnsFromSchema()
+        public static async Task GetIndexColumnsFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.IndexColumns, new string[] { "index_name", "KeyType", "column_name" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.IndexColumns, new string[] { "index_name", "KeyType", "column_name" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetColumnsFromSchema()
+        public static async Task GetColumnsFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Columns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Columns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetAllColumnsFromSchema()
+        public static async Task GetAllColumnsFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.AllColumns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT", "IS_FILESTREAM", "IS_SPARSE", "IS_COLUMN_SET" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.AllColumns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT", "IS_FILESTREAM", "IS_SPARSE", "IS_COLUMN_SET" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetColumnSetColumnsFromSchema()
+        public static async Task GetColumnSetColumnsFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.ColumnSetColumns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT", "IS_FILESTREAM", "IS_SPARSE", "IS_COLUMN_SET" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.ColumnSetColumns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT", "IS_FILESTREAM", "IS_SPARSE", "IS_COLUMN_SET" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetUsersFromSchema()
+        public static async Task GetUsersFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Users, new string[] { "uid", "user_name" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Users, new string[] { "uid", "user_name" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetViewsFromSchema()
+        public static async Task GetViewsFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.Views, new string[] { "TABLE_NAME", "CHECK_OPTION", "IS_UPDATABLE" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.Views, new string[] { "TABLE_NAME", "CHECK_OPTION", "IS_UPDATABLE" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetViewColumnsFromSchema()
+        public static async Task GetViewColumnsFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.ViewColumns, new string[] { "VIEW_CATALOG", "VIEW_SCHEMA", "VIEW_NAME" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.ViewColumns, new string[] { "VIEW_CATALOG", "VIEW_SCHEMA", "VIEW_NAME" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetUserDefinedTypesFromSchema()
+        public static async Task GetUserDefinedTypesFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.UserDefinedTypes, new string[] { "assembly_name", "version_revision", "culture_info" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.UserDefinedTypes, new string[] { "assembly_name", "version_revision", "culture_info" });
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
-        public static void GetStructuredTypeMembersFromSchema()
+        public static async Task GetStructuredTypeMembersFromSchema()
         {
-            VerifySchemaTable(SqlClientMetaDataCollectionNames.StructuredTypeMembers, new string[] { "TYPE_CATALOG", "TYPE_SCHEMA", "TYPE_NAME", "MEMBER_NAME", "ORDINAL_POSITION" });
+            await VerifySchemaTable(SqlClientMetaDataCollectionNames.StructuredTypeMembers, new string[] { "TYPE_CATALOG", "TYPE_SCHEMA", "TYPE_NAME", "MEMBER_NAME", "ORDINAL_POSITION" });
         }
 
-        private static void VerifySchemaTable(string schemaItemName, string[] testColumnNames)
+        private static async Task VerifySchemaTable(string schemaItemName, string[] testColumnNames)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
@@ -118,17 +119,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Connect to the database then retrieve the schema information
                 connection.Open();
-                DataTable table = connection.GetSchema(schemaItemName);
+                DataTable syncTable = connection.GetSchema(schemaItemName);
+                DataTable asyncTable = await connection.GetSchemaAsync(schemaItemName);
 
                 // Get all table columns
-                HashSet<string> columnNames = new HashSet<string>();
+                HashSet<string> syncColumnNames = new HashSet<string>();
+                HashSet<string> asyncColumnNames = new HashSet<string>();
 
-                foreach (DataColumn column in table.Columns)
+                foreach (DataColumn column in syncTable.Columns)
                 {
-                    columnNames.Add(column.ColumnName);
+                    syncColumnNames.Add(column.ColumnName);
+                }
+                foreach (DataColumn column in asyncTable.Columns)
+                {
+                    asyncColumnNames.Add(column.ColumnName);
                 }
 
-                Assert.All<string>(testColumnNames, column => Assert.Contains<string>(column, columnNames));
+                Assert.All<string>(testColumnNames, column => Assert.Contains<string>(column, syncColumnNames));
+                Assert.All<string>(testColumnNames, column => Assert.Contains<string>(column, asyncColumnNames));
             }
         }
     }

@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 
@@ -159,13 +161,20 @@ namespace Microsoft.Data.SqlClient
 
         }
 
-        public DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions)
+        public DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions) =>
+            GetSchemaCore(connection, collectionName, restrictions, isAsync: false, default).Result;
+
+        public async Task<DataTable> GetSchemaAsync(DbConnection connection, string collectionName, string[] restrictions, CancellationToken cancellationToken) =>
+            await GetSchemaCore(connection, collectionName, restrictions, isAsync: true, cancellationToken).ConfigureAwait(false);
+
+        public async ValueTask<DataTable> GetSchemaCore(DbConnection connection, string collectionName, string[] restrictions, bool isAsync, CancellationToken cancellationToken)
         {
             const string DataTableKey = "DataTable";
             const string SqlCommandKey = "SQLCommand";
             const string PrepareCollectionKey = "PrepareCollection";
 
             Debug.Assert(_collectionDataSet is not null);
+            cancellationToken.ThrowIfCancellationRequested();
 
             DataTable metaDataCollectionsTable = _collectionDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationMechanismColumn = metaDataCollectionsTable.Columns[PopulationMechanismKey];
@@ -187,6 +196,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             string populationMechanism = requestedCollectionRow[populationMechanismColumn, DataRowVersion.Current] as string;
 
             DataTable requestedSchema;
@@ -207,11 +217,11 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlCommandKey:
-                    requestedSchema = ExecuteCommand(requestedCollectionRow, restrictions, connection);
+                    requestedSchema = await ExecuteCommandAsync(requestedCollectionRow, restrictions, connection, isAsync, cancellationToken);
                     break;
 
                 case PrepareCollectionKey:
-                    requestedSchema = PrepareCollection(exactCollectionName, restrictions, connection);
+                    requestedSchema = await PrepareCollectionAsync(exactCollectionName, restrictions, connection, isAsync, cancellationToken);
                     break;
 
                 default:
@@ -360,7 +370,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
+        private async ValueTask<DataTable> ExecuteCommandAsync(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             Debug.Assert(requestedCollectionRow is not null);
 
@@ -410,7 +420,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    reader = command.ExecuteReader();
+                    reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken) : command.ExecuteReader();
                 }
                 catch (Exception e)
                 {
@@ -427,16 +437,26 @@ namespace Microsoft.Data.SqlClient
                     Locale = CultureInfo.InvariantCulture
                 };
 
+                // reader.GetColumnSchema waits synchronously for the reader to receive its type metadata.
+                // Instead, we invoke reader.ReadAsync outside of the while loop, which will implicitly ensure that
+                // the metadata is available. ReadAsync/Read will throw an exception if necessary, so we can trust
+                // that the list of fields is available if the call returns.
+                bool firstResultAvailable = isAsync ? await reader.ReadAsync(cancellationToken) : reader.Read();
                 System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> colSchema = reader.GetColumnSchema();
+
                 foreach (DbColumn col in colSchema)
                 {
                     resultTable.Columns.Add(col.ColumnName, col.DataType);
                 }
-                object[] values = new object[resultTable.Columns.Count];
-                while (reader.Read())
+
+                if (firstResultAvailable)
                 {
-                    reader.GetValues(values);
-                    resultTable.Rows.Add(values);
+                    object[] values = new object[resultTable.Columns.Count];
+                    do
+                    {
+                        reader.GetValues(values);
+                        resultTable.Rows.Add(values);
+                    } while (isAsync ? await reader.ReadAsync(cancellationToken) : reader.Read());
                 }
             }
             finally
@@ -448,7 +468,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region GetSchema Helpers: PrepareCollection Population Method
-        private static void AddUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)
+        private static async ValueTask AddUDTsToDataTypesTableAsync(DataTable dataTypesTable, SqlConnection connection, string serverVersion, bool isAsync, CancellationToken cancellationToken)
         {
             const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
             const string ListUdtSqlCommand =
@@ -487,7 +507,7 @@ namespace Microsoft.Data.SqlClient
             using SqlCommand command = connection.CreateCommand();
 
             command.CommandText = GetEngineEditionSqlCommand;
-            int engineEdition = (int)command.ExecuteScalar();
+            int engineEdition = (int)(isAsync ? await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) : command.ExecuteScalar());
 
             if (s_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
             {
@@ -516,10 +536,10 @@ namespace Microsoft.Data.SqlClient
             // Execute the SELECT statement
             command.CommandText = ListUdtSqlCommand;
 
-            using SqlDataReader reader = command.ExecuteReader();
+            using SqlDataReader reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false) : command.ExecuteReader();
             object[] values = new object[11];
 
-            while (reader.Read())
+            while (isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read())
             {
                 reader.GetValues(values);
                 DataRow newRow = dataTypesTable.NewRow();
@@ -577,10 +597,12 @@ namespace Microsoft.Data.SqlClient
                     dataTypesTable.Rows.Add(newRow);
                     newRow.AcceptChanges();
                 } // if assembly name
+
+                cancellationToken.ThrowIfCancellationRequested();
             }//end while
         }
 
-        private static void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string serverVersion)
+        private static async ValueTask AddTVPsToDataTypesTableAsync(DataTable dataTypesTable, SqlConnection connection, string serverVersion, bool isAsync, CancellationToken cancellationToken)
         {
             const string ListTvpsSqlCommand =
                 "select " +
@@ -618,10 +640,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(typeName is not null, "typeName column not found");
             Debug.Assert(isNullable is not null, "isNullable column not found");
 
-            using SqlDataReader reader = command.ExecuteReader();
+            using SqlDataReader reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false) : command.ExecuteReader();
 
             object[] values = new object[11];
-            while (reader.Read())
+            while (isAsync ? await reader.ReadAsync(cancellationToken) : reader.Read())
             {
 
                 reader.GetValues(values);
@@ -641,10 +663,12 @@ namespace Microsoft.Data.SqlClient
 
                 dataTypesTable.Rows.Add(newRow);
                 newRow.AcceptChanges();
+
+                cancellationToken.ThrowIfCancellationRequested();
             }//end while
         }
 
-        private DataTable GetDataTypesTable(SqlConnection connection)
+        private async ValueTask<DataTable> GetDataTypesTable(SqlConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             // verify the existence of the table in the data set
             Debug.Assert(_collectionDataSet.Tables.Contains(DbMetaDataCollectionNames.DataTypes), "DataTypes collection not found in the DataSet");
@@ -652,14 +676,14 @@ namespace Microsoft.Data.SqlClient
             // copy the table filtering out any rows that don't apply to tho current version of the provider
             DataTable dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, []);
 
-            AddUDTsToDataTypesTable(dataTypesTable, connection, _serverVersion);
-            AddTVPsToDataTypesTable(dataTypesTable, connection, _serverVersion);
+            await AddUDTsToDataTypesTableAsync(dataTypesTable, connection, _serverVersion, isAsync, cancellationToken).ConfigureAwait(false);
+            await AddTVPsToDataTypesTableAsync(dataTypesTable, connection, _serverVersion, isAsync, cancellationToken).ConfigureAwait(false);
 
             dataTypesTable.AcceptChanges();
             return dataTypesTable;
         }
 
-        private DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
+        private async ValueTask<DataTable> PrepareCollectionAsync(string collectionName, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             SqlConnection sqlConnection = (SqlConnection)connection;
             DataTable resultTable = null;
@@ -670,7 +694,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.TooManyRestrictions(DbMetaDataCollectionNames.DataTypes);
                 }
-                resultTable = GetDataTypesTable(sqlConnection);
+                resultTable = await GetDataTypesTable(sqlConnection, isAsync, cancellationToken).ConfigureAwait(false);
             }
 
             if (resultTable == null)

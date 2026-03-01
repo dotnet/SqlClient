@@ -7,6 +7,7 @@ using System.Data;
 using System.Collections.Generic;
 using Xunit;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
@@ -349,6 +350,47 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema(null, null));
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+        }
+
+        [Fact]
+        public async Task GetSchemaAsync_Connection_Closed()
+        {
+            SqlConnection cn = new SqlConnection();
+
+            InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync());
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+
+            ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync("Tables"));
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+
+            ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync(null));
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+
+            ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync("Tables", new string[] { "master" }));
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+
+            ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync(null, new string[] { "master" }));
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+
+            ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync("Tables", null));
+            // Invalid operation. The connection is closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+
+            ex = await Assert.ThrowsAsync<InvalidOperationException>(() => cn.GetSchemaAsync(null, null));
             // Invalid operation. The connection is closed
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);

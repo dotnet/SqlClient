@@ -1357,12 +1357,28 @@ For more information on working with events, see [Connection Events](https://lea
     </FireInfoMessageEventOnUserErrors>
     <GetSchema2>
       <summary>
-        Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about scheme, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+        Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
       </summary>
       <returns>
         A <see cref="T:System.Data.DataTable" /> that contains schema information.
       </returns>
     </GetSchema2>
+    <GetSchemaAsync>
+      <param name="cancellationToken">
+        The cancellation token.
+      </param>
+      <summary>
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema()" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+      </summary>
+      <returns>
+        A task representing the asynchronous operation.
+      </returns>
+      <remarks>
+        <para>
+          For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        </para>
+      </remarks>
+    </GetSchemaAsync>
     <GetSchemaCollectionName>
       <param name="collectionName">
         Specifies the name of the schema to return.
@@ -1648,6 +1664,28 @@ For more information on working with events, see [Connection Events](https://lea
         <paramref name="collectionName" /> is specified as null.
       </exception>
     </GetSchemaCollectionName>
+    <GetSchemaCollectionNameAsync>
+      <param name="collectionName">
+        Specifies the name of the schema to return.
+      </param>
+      <param name="cancellationToken">
+        The cancellation token.
+      </param>
+      <summary>
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
+      </summary>
+      <returns>
+        A task representing the asynchronous operation.
+      </returns>
+      <remarks>
+        <para>
+          For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        <paramref name="collectionName" /> is specified as null.
+      </exception>
+    </GetSchemaCollectionNameAsync>
     <GetSchemaCollectionNameRestrictionValues>
       <param name="collectionName">
         Specifies the name of the schema to return.
@@ -1677,6 +1715,35 @@ For more information on working with events, see [Connection Events](https://lea
       </exception>
       <seealso cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />
     </GetSchemaCollectionNameRestrictionValues>
+    <GetSchemaCollectionNameRestrictionValuesAsync>
+      <param name="collectionName">
+        Specifies the name of the schema to return.
+      </param>
+      <param name="restrictionValues">
+        A set of restriction values for the requested schema.
+      </param>
+      <param name="cancellationToken">
+        The cancellation token.
+      </param>
+      <summary>
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string, string[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
+      </summary>
+      <returns>
+        A task representing the asynchronous operation.
+      </returns>
+      <remarks>
+        <para>
+          The <paramref name="restrictionValues" /> parameter can supply <i>n</i> depth of values, which are specified by the restrictions collection for a specific collection. In order to set values on a given restriction, and not set the values of other restrictions, you need to set the preceding restrictions to <see langword="null" /> and then put the appropriate value in for the restriction that you would like to specify a value for.
+        </para>
+        <para>
+          An example of this is the "Tables" collection. If the "Tables" collection has three restrictions--database, owner, and table name--and you want to get back only the tables associated with the owner "Carl", you need to pass in the following values: null, "Carl". If a restriction value is not passed in, the default values are used for that restriction. This is the same mapping as passing in <see langword="null" />, which is different from passing in an empty string for the parameter value. In that case, the empty string ("") is considered to be the value for the specified parameter.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        <paramref name="collectionName" /> is specified as null.
+      </exception>
+      <seealso cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />
+    </GetSchemaCollectionNameRestrictionValuesAsync>
     <InfoMessage>
       <summary>
         Occurs when SQL Server returns a warning or informational message.
