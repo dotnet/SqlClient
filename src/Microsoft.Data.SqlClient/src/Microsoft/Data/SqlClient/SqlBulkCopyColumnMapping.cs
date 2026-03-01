@@ -18,6 +18,14 @@ namespace Microsoft.Data.SqlClient
         // _sourceColumnOrdinal(s) will be copied to _internalSourceColumnOrdinal when WriteToServer executes.
         internal int _internalDestinationColumnOrdinal;
         internal int _internalSourceColumnOrdinal;   // -1 indicates an undetermined value
+        internal string _mappedDestinationColumn;
+
+        // Used by SqlBulkCopy to generate the correct column name after mapping alternate names.
+        internal string MappedDestinationColumn
+        {
+            get => _mappedDestinationColumn ?? DestinationColumn;
+            set => _mappedDestinationColumn = value;
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationColumn/*'/>
         public string DestinationColumn
