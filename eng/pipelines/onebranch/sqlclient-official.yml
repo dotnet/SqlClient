@@ -105,7 +105,7 @@ parameters:
     default: false
 
   # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
-  - name: releaseExtAzure
+  - name: releaseAzure
     displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
     type: boolean
     default: false
@@ -117,7 +117,7 @@ parameters:
     default: false
 
 variables:
-  - template: /eng/pipelines/libraries/onebranch-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
 
 resources:
   repositories:
@@ -182,21 +182,29 @@ extends:
         tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-      - template: /eng/pipelines/stages/sqlclient-onebranch-stages.yml@self
+      - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          # This is an official pipeline.
-          isOfficial: true
           isPreview: ${{ parameters.isPreview }}
           publishSymbols: ${{ parameters.publishSymbols }}
-          releaseDryRun: ${{ parameters.releaseDryRun }}
-          testJobTimeout: ${{ parameters.testJobTimeout }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
+
+      - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          isDryRun: ${{ parameters.releaseDryRun }}
+          # This is an official pipeline.
+          isOfficial: true
+          stageNameSuffix: production
+          ${{ if eq(parameters.releaseDryRun, true) }}:
+            stageDisplayName: Release Production (Dry Run)
+          ${{ else }}:
+            stageDisplayName: Release Production
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
-          releaseExtAzure: ${{ parameters.releaseExtAzure }}
+          releaseAzure: ${{ parameters.releaseAzure }}
           releaseAKVProvider: ${{ parameters.releaseAKVProvider }}
