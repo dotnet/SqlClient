@@ -171,8 +171,8 @@ extends:
           debug: ${{ parameters.debug }}
           # Non-official pipelines must always be a dry run.
           isDryRun: true
-          # This is an official pipeline.
-          isOfficial: true
+          # This is _not_ official pipeline.
+          isOfficial: false
           stageNameSuffix: test
           stageDisplayName: Release Test (Dry Run)
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
