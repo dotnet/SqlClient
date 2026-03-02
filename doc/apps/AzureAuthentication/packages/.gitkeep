@@ -1,0 +1,2 @@
+# This presence of this file ensures that git creates the packages/ directory, which must exist
+# because it is declared in our NuGet.config.
