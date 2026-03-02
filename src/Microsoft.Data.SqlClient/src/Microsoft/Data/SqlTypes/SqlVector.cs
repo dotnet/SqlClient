@@ -50,6 +50,10 @@ where T : unmanaged
 
         Length = length;
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
+        if (_size > TdsEnums.MAXSIZE)
+        {
+            throw ADP.ArgumentOutOfRange(nameof(length), SQLResource.InvalidArraySizeMessage);
+        }
 
         _tdsBytes = Array.Empty<byte>();
         Memory = new();
@@ -67,6 +71,10 @@ where T : unmanaged
 
         Length = memory.Length;
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
+        if (_size > TdsEnums.MAXSIZE)
+        {
+            throw ADP.ArgumentOutOfRange(nameof(memory), SQLResource.InvalidArraySizeMessage);
+        }
 
         _tdsBytes = MakeTdsBytes(memory);
         Memory = memory;
@@ -145,6 +153,8 @@ where T : unmanaged
 
     private byte[] MakeTdsBytes(ReadOnlyMemory<T> values)
     {
+        Debug.Assert(Length <= ushort.MaxValue);
+
         //Refer to TDS section 2.2.5.5.7 for vector header format
         // +------------------------+-----------------+----------------------+------------------+----------------------------+--------------+
         // | Field                  | Size (bytes)    | Example Value         | Description                                                 |
@@ -158,32 +168,42 @@ where T : unmanaged
         // +------------------------+-----------------+----------------------+--------------------------------------------------------------+
 
         byte[] result = new byte[_size];
+        ReadOnlySpan<T> valueSpan = values.Span;
 
         // Header Bytes
         result[0] = VecHeaderMagicNo;
         result[1] = VecVersionNo;
-        result[2] = (byte)(Length & 0xFF);
-        result[3] = (byte)((Length >> 8) & 0xFF);
+        BinaryPrimitives.WriteUInt16LittleEndian(result.AsSpan(2), (ushort)Length);
         result[4] = _elementType;
         result[5] = 0x00;
         result[6] = 0x00;
         result[7] = 0x00;
 
-#if NETFRAMEWORK
-        // Copy data via marshaling.
-        if (MemoryMarshal.TryGetArray(values, out ArraySegment<T> segment))
+        // If .NET is running on a little-endian architecture, cast directly to a byte array and proceed.
+        // This optimisation relies upon the base type of the vector transporting values in a format and
+        // endianness which is identical to the client. This is true for all little-endian clients reading
+        // float32-based vectors.
+        if (BitConverter.IsLittleEndian)
         {
-            Buffer.BlockCopy(segment.Array, segment.Offset * _elementSize, result, TdsEnums.VECTOR_HEADER_SIZE, segment.Count * _elementSize);
+            ReadOnlySpan<byte> valuesAsBytes = MemoryMarshal.AsBytes(valueSpan);
+
+            valuesAsBytes.CopyTo(result.AsSpan(TdsEnums.VECTOR_HEADER_SIZE));
         }
         else
         {
-            Buffer.BlockCopy(values.ToArray(), 0, result, TdsEnums.VECTOR_HEADER_SIZE, values.Length * _elementSize);
+            if (typeof(T) == typeof(float))
+            {
+                for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < values.Length; i++, currPosition += _elementSize)
+                {
+                    #if NET
+                    BinaryPrimitives.WriteSingleLittleEndian(result.AsSpan(currPosition), (float)(object)valueSpan[i]);
+                    #else
+                    BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(currPosition), BitConverterCompatible.SingleToInt32Bits((float)(object)valueSpan[i]));
+                    #endif
+                }
+            }
         }
-#else
-        // Fast span-based copy.
-        var byteSpan = MemoryMarshal.AsBytes(values.Span);
-        byteSpan.CopyTo(result.AsSpan(TdsEnums.VECTOR_HEADER_SIZE));
-#endif
+
         return result;
     }
 
@@ -227,16 +247,33 @@ where T : unmanaged
             return Array.Empty<T>();
         }
 
-#if NETFRAMEWORK
         // Allocate array and copy bytes into it
         T[] result = new T[Length];
-        Buffer.BlockCopy(_tdsBytes, 8, result, 0, _elementSize * Length);
+
+        // See the comment in MakeTdsBytes for more information on this optimisation.
+        if (BitConverter.IsLittleEndian)
+        {
+            Span<byte> valuesAsBytes = MemoryMarshal.AsBytes(result.AsSpan());
+
+            _tdsBytes.AsSpan(TdsEnums.VECTOR_HEADER_SIZE).CopyTo(valuesAsBytes);
+        }
+        else
+        {
+            if (typeof(T) == typeof(float))
+            {
+                for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < Length; i++, currPosition += _elementSize)
+                {
+                    #if NET
+                    result[i] = (T)(object)BinaryPrimitives.ReadSingleLittleEndian(_tdsBytes.AsSpan(currPosition));
+                    #else
+                    result[i] = (T)(object)BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_tdsBytes.AsSpan(currPosition)));
+                    #endif
+                }
+            }
+        }
+
         return result;
-#else
-        ReadOnlySpan<byte> dataSpan = _tdsBytes.AsSpan(8, _elementSize * Length);
-        return MemoryMarshal.Cast<byte, T>(dataSpan).ToArray();
-#endif
     }
     
-    #endregion
+#endregion
 }
