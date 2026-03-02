@@ -18,4 +18,4 @@ variables:
     # SymbolsPublishTokenUri
     # SymbolsUploadAccount
 
-  - template: /eng/pipelines/libraries/common-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self

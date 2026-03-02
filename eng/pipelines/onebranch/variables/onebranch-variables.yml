@@ -7,7 +7,7 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 variables:
-  - template: /eng/pipelines/libraries/build-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/build-variables.yml@self
 
   # onebranch template variables
   - name: ob_sdl_binskim_break

@@ -68,10 +68,10 @@ jobs:
       msbuildArguments: -t:BuildTools
 
   # Perform analysis before building, since this step will clobber build output.
-  - template: /eng/pipelines/common/templates/steps/code-analyze-step.yml@self
+  - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
 
   # Build MDS, producing signed DLLs.
-  - template: /eng/pipelines/common/templates/steps/build-all-configurations-signed-dlls-step.yml@self
+  - template: /eng/pipelines/onebranch/steps/build-all-configurations-signed-dlls-step.yml@self
     parameters:
       # These variables are sourced from common-variables.yml.
       abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
@@ -81,7 +81,7 @@ jobs:
       mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
       mdsPackageVersion: $(mdsPackageVersion)
 
-  - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
+  - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: dll
 
@@ -97,7 +97,7 @@ jobs:
       properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)'
       referenceType: Package
 
-  - template: /eng/pipelines/common/templates/steps/esrp-code-signing-step.yml@self
+  - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: pkg
 
@@ -123,7 +123,7 @@ jobs:
 
   # Publish symbols to servers
   - ${{ if eq(parameters.publishSymbols, true) }}:
-    - template: /eng/pipelines/common/templates/steps/publish-symbols-step.yml@self
+    - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
       parameters:
         packageFullName: Microsoft.Data.SqlClient
         packageVersion: $(mdsPackageVersion)
