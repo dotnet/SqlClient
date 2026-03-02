@@ -7,6 +7,93 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 7.0.0-preview4] - 2026-02-27
+
+This update brings the below changes over the previous preview release:
+
+Also released as part of this milestone:
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0-preview1. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0-preview1. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Logging 1.0.0-preview1. See [release notes](release-notes/Extensions/Logging/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0-preview4. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0-preview4.md).
+
+### Changed
+
+- **Breaking:** Removed Azure dependencies from the core package. Azure AD / Entra authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Azure AD authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
+  ([#1108](https://github.com/dotnet/SqlClient/issues/1108),
+   [#3680](https://github.com/dotnet/SqlClient/pull/3680),
+   [#3902](https://github.com/dotnet/SqlClient/pull/3902),
+   [#3904](https://github.com/dotnet/SqlClient/pull/3904),
+   [#3908](https://github.com/dotnet/SqlClient/pull/3908),
+   [#3917](https://github.com/dotnet/SqlClient/pull/3917),
+   [#3982](https://github.com/dotnet/SqlClient/pull/3982),
+   [#3978](https://github.com/dotnet/SqlClient/pull/3978),
+   [#3986](https://github.com/dotnet/SqlClient/pull/3986))
+
+- Introduced `Microsoft.Data.SqlClient.Extensions.Abstractions` and `Microsoft.Data.SqlClient.Extensions.Logging` packages to support the extensions model.
+  ([#3626](https://github.com/dotnet/SqlClient/pull/3626),
+   [#3628](https://github.com/dotnet/SqlClient/pull/3628),
+   [#3967](https://github.com/dotnet/SqlClient/pull/3967))
+
+- Updated UserAgent feature to use a pipe-delimited format.
+  ([#3826](https://github.com/dotnet/SqlClient/pull/3826))
+
+- Minor improvements to Managed SNI tracing.
+  ([#3859](https://github.com/dotnet/SqlClient/pull/3859))
+
+- Reverted public visibility of internal interop enums that were accidentally made public during the project merge.
+  ([#3900](https://github.com/dotnet/SqlClient/pull/3900))
+
+- Performance improvements:
+  ([#3791](https://github.com/dotnet/SqlClient/pull/3791),
+   [#3772](https://github.com/dotnet/SqlClient/pull/3772))
+
+- Codebase merge and cleanup:
+  ([#3773](https://github.com/dotnet/SqlClient/pull/3773),
+   [#3818](https://github.com/dotnet/SqlClient/pull/3818),
+   [#3836](https://github.com/dotnet/SqlClient/pull/3836),
+   [#3810](https://github.com/dotnet/SqlClient/pull/3810),
+   [#3837](https://github.com/dotnet/SqlClient/pull/3837),
+   [#3963](https://github.com/dotnet/SqlClient/pull/3963))
+
+### Added
+
+- Added `SspiContextProvider` abstract class and `SqlConnection.SspiContextProvider` property, enabling custom SSPI authentication for scenarios like cross-domain Kerberos negotiation and NTLM username/password authentication.
+  ([#2253](https://github.com/dotnet/SqlClient/issues/2253),
+   [#2494](https://github.com/dotnet/SqlClient/pull/2494))
+
+- Added `SqlConfigurableRetryFactory.BaselineTransientErrors` static property exposing the default transient error codes list as a `ReadOnlyCollection<int>`.
+  ([#3903](https://github.com/dotnet/SqlClient/pull/3903))
+
+- Added new app context switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection strings.
+  ([#3841](https://github.com/dotnet/SqlClient/pull/3841))
+
+- Added support for enhanced routing, a TDS feature extension that allows the server to redirect connections to a specific server and database, enabling Azure SQL Hyperscale read replica load balancing.
+  ([#3641](https://github.com/dotnet/SqlClient/issues/3641),
+   [#3969](https://github.com/dotnet/SqlClient/pull/3969),
+   [#3970](https://github.com/dotnet/SqlClient/pull/3970),
+   [#3973](https://github.com/dotnet/SqlClient/pull/3973))
+
+### Fixed
+
+- Fixed `ExecuteScalar` to propagate errors when the server sends data followed by an error token.
+  ([#3912](https://github.com/dotnet/SqlClient/pull/3912))
+
+- Fixed `NullReferenceException` in `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3857](https://github.com/dotnet/SqlClient/pull/3857))
+
+- Fixed reading of multiple app context switches from a single `AppContextSwitchOverrides` configuration field.
+  ([#3960](https://github.com/dotnet/SqlClient/pull/3960))
+
+- Fixed a connection performance regression where SPN generation was triggered for non-integrated authentication modes (e.g., SQL authentication) on the native SNI path.
+  ([#3929](https://github.com/dotnet/SqlClient/pull/3929))
+
+- Fixed an edge case in `TdsParserStateObject.TryReadPlpBytes` where zero-length reads returned `null` instead of an empty array.
+  ([#3872](https://github.com/dotnet/SqlClient/pull/3872))
+
+- Fixed `ActiveDirectoryInteractive` authentication failure caused by the Azure package targeting only .NET Standard 2.0, which omitted necessary conditional compilation paths.
+  ([#3986](https://github.com/dotnet/SqlClient/pull/3986))
+
 ## [Stable release 6.0.5] - 2026-01-15
 
 This update brings the below changes over the previous stable release:
