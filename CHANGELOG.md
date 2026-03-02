@@ -91,9 +91,6 @@ Also released as part of this milestone:
 - Fixed an edge case in `TdsParserStateObject.TryReadPlpBytes` where zero-length reads returned `null` instead of an empty array.
   ([#3872](https://github.com/dotnet/SqlClient/pull/3872))
 
-- Fixed `ActiveDirectoryInteractive` authentication failure caused by the Azure package targeting only .NET Standard 2.0, which omitted necessary conditional compilation paths.
-  ([#3986](https://github.com/dotnet/SqlClient/pull/3986))
-
 ## [Stable release 6.0.5] - 2026-01-15
 
 This update brings the below changes over the previous stable release:

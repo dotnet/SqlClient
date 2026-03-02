@@ -5,4 +5,4 @@ The following `Microsoft.Data.SqlClient.Extensions.Abstractions`
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
-| 2026-02-27 | 1.0.0-preview1 | [Release Notes](1.0.0-preview1.md) |
+| 2026-03-02 | 1.0.0-preview1 | [Release Notes](1.0.0-preview1.md) |
