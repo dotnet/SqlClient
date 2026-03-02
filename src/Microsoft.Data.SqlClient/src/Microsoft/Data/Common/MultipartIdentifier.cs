@@ -2,29 +2,28 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics;
 using System.Text;
+
+#nullable enable
 
 namespace Microsoft.Data.Common
 {
     internal class MultipartIdentifier
     {
+        private const char IdentifierSeparator = '.';
+        // The indexes of identifier start and end characters in these strings need to
+        // align 1-to-1. An identifier which starts with [ can only end with ]. As such,
+        // both of the below constants must be the same length.
+        // Separately, neither constant may contain the identifier separator.
+        private const string IdentifierStartCharacters = "[\"";
+        private const string IdentifierEndCharacters = "]\"";
+
         private const int MaxParts = 4;
         internal const int ServerIndex = 0;
         internal const int CatalogIndex = 1;
         internal const int SchemaIndex = 2;
         internal const int TableIndex = 3;
-
-        /*
-            Left quote strings need to correspond 1 to 1 with the right quote strings
-            example: "ab" "cd",  passed in for the left and the right quote
-            would set a or b as a starting quote character.  
-            If a is the starting quote char then c would be the ending quote char
-            otherwise if b is the starting quote char then d would be the ending quote character.                        
-        */
-        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, string property, bool ThrowOnEmptyMultipartName)
-        {
-            return ParseMultipartIdentifier(name, leftQuote, rightQuote, '.', MaxParts, true, property, ThrowOnEmptyMultipartName);
-        }
 
         private enum MPIState
         {
@@ -36,83 +35,74 @@ namespace Microsoft.Data.Common
             MPI_RightQuote,
         }
 
-        /* Core function  for parsing the multipart identifier string.
-            * parameters: name - string to parse
-            * leftquote:  set of characters which are valid quoting characters to initiate a quote
-            * rightquote: set of characters which are valid to stop a quote, array index's correspond to the leftquote array.
-            * separator:  separator to use
-            * limit:      number of names to parse out
-            * removequote:to remove the quotes on the returned string 
-            */
-        private static void IncrementStringCount(string name, string[] ary, ref int position, string property)
+        private static void IncrementStringCount(string identifier, string?[] ary, ref int position, string property)
         {
             ++position;
             int limit = ary.Length;
             if (position >= limit)
             {
-                throw ADP.InvalidMultipartNameToManyParts(property, name, limit);
+                throw ADP.InvalidMultipartNameToManyParts(property, identifier, limit);
             }
             ary[position] = string.Empty;
         }
 
-        private static bool IsWhitespace(char ch)
+        private static bool ContainsChar(string str, char ch) =>
+#if NET
+            str.Contains(ch);
+#else
+            str.IndexOf(ch) != -1;
+#endif
+
+        /// <summary>
+        /// Core function for parsing the multipart identifier string.
+        /// </summary>
+        /// <param name="identifier">String to parse.</param>
+        /// <param name="property">Name of the property containing the multipart identifier. If an exception is thrown, its message will include this property name.</param>
+        /// <param name="throwOnEmptyMultipartIdentifier">If <c>true</c>, throw <see cref="ADP.InvalidMultipartName"/> if the multipart identifier is whitespace.</param>
+        /// <param name="limit">Number of parts to parse out. Defaults to four (to allow for an identifier formatted as [server].[database].[schema].[object].)</param>
+        /// <returns>An array of <paramref name="limit"/> strings containing the various parts in the identifier.</returns>
+        internal static string?[] ParseMultipartIdentifier(string identifier, string property, bool throwOnEmptyMultipartIdentifier, int limit = MaxParts)
         {
-            return char.IsWhiteSpace(ch);
-        }
+            Debug.Assert(limit > 0 && limit <= MaxParts);
 
-        internal static string[] ParseMultipartIdentifier(string name, string leftQuote, string rightQuote, char separator, int limit, bool removequotes, string property, bool ThrowOnEmptyMultipartName)
-        {
-            if (limit <= 0)
-            {
-                throw ADP.InvalidMultipartNameToManyParts(property, name, limit);
-            }
-
-            if (-1 != leftQuote.IndexOf(separator) || -1 != rightQuote.IndexOf(separator) || leftQuote.Length != rightQuote.Length)
-            {
-                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
-            }
-
-            string[] parsedNames = new string[limit];   // return string array                     
+            string?[] parts = new string?[limit];   // return string array                     
             int stringCount = 0;                        // index of current string in the buffer
             MPIState state = MPIState.MPI_Value;        // Initialize the starting state
 
-            StringBuilder sb = new StringBuilder(name.Length); // String buffer to hold the string being currently built, init the string builder so it will never be resized
-            StringBuilder whitespaceSB = null;                  // String buffer to hold whitespace used when parsing nonquoted strings  'a b .  c d' = 'a b' and 'c d'
-            char rightQuoteChar = ' ';                          // Right quote character to use given the left quote character found.
-            for (int index = 0; index < name.Length; ++index)
+            StringBuilder sb = new StringBuilder(identifier.Length); // String buffer to hold the string being currently built, init the string builder so it will never be resized
+            StringBuilder? whitespaceSB = null;                       // String buffer to hold whitespace used when parsing nonquoted strings  'a b .  c d' = 'a b' and 'c d'
+            char rightQuoteChar = ' ';                               // Right quote character to use given the left quote character found.
+            for (int index = 0; index < identifier.Length; ++index)
             {
-                char testchar = name[index];
+                char testchar = identifier[index];
                 switch (state)
                 {
                     case MPIState.MPI_Value:
                         {
                             int quoteIndex;
-                            if (IsWhitespace(testchar))
-                            {    // Is White Space then skip the whitespace
+                            if (char.IsWhiteSpace(testchar))
+                            {
+                                // Skip whitespace
                                 continue;
                             }
-                            else
-                            if (testchar == separator)
-                            {  // If we found a separator, no string was found, initialize the string we are parsing to Empty and the next one to Empty.
-                               // This is NOT a redundant setting of string.Empty it solves the case where we are parsing ".foo" and we should be returning null, null, empty, foo
-                                parsedNames[stringCount] = string.Empty;
-                                IncrementStringCount(name, parsedNames, ref stringCount, property);
+                            else if (testchar == IdentifierSeparator)
+                            {
+                                // If we found a separator, no string was found, initialize the string we are parsing to Empty and the next one to Empty.
+                                // This is NOT a redundant setting of string.Empty. It solves the case where we are parsing ".foo" and we should be returning null, null, empty, foo
+                                parts[stringCount] = string.Empty;
+                                IncrementStringCount(identifier, parts, ref stringCount, property);
                             }
-                            else
-                            if (-1 != (quoteIndex = leftQuote.IndexOf(testchar)))
-                            { // If we are a left quote                                                                                                                          
-                                rightQuoteChar = rightQuote[quoteIndex]; // record the corresponding right quote for the left quote
+                            else if ((quoteIndex = IdentifierStartCharacters.IndexOf(testchar)) != -1)
+                            {
+                                // If we are a left quote, record the corresponding right quote for the left quote
+                                rightQuoteChar = IdentifierEndCharacters[quoteIndex];
                                 sb.Length = 0;
-                                if (!removequotes)
-                                {
-                                    sb.Append(testchar);
-                                }
                                 state = MPIState.MPI_ParseQuote;
                             }
-                            else
-                            if (-1 != rightQuote.IndexOf(testchar))
-                            { // If we shouldn't see a right quote
-                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
+                            else if (ContainsChar(IdentifierEndCharacters, testchar))
+                            {
+                                // If we shouldn't see a right quote
+                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, identifier);
                             }
                             else
                             {
@@ -125,32 +115,31 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_ParseNonQuote:
                         {
-                            if (testchar == separator)
+                            if (testchar == IdentifierSeparator)
                             {
-                                parsedNames[stringCount] = sb.ToString(); // set the currently parsed string
-                                IncrementStringCount(name, parsedNames, ref stringCount, property);
+                                // Set the currently parsed string
+                                parts[stringCount] = sb.ToString();
+                                IncrementStringCount(identifier, parts, ref stringCount, property);
                                 state = MPIState.MPI_Value;
                             }
-                            else // Quotes are not valid inside a non-quoted name
-                            if (-1 != rightQuote.IndexOf(testchar))
+                            else if (ContainsChar(IdentifierEndCharacters, testchar))
                             {
-                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
+                                // Quotes are not valid inside a non-quoted identifier
+                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, identifier);
                             }
-                            else
-                            if (-1 != leftQuote.IndexOf(testchar))
+                            else if (ContainsChar(IdentifierStartCharacters, testchar))
                             {
-                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
+                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, identifier);
                             }
-                            else
-                            if (IsWhitespace(testchar))
-                            { // If it is Whitespace 
-                                parsedNames[stringCount] = sb.ToString(); // Set the currently parsed string
-                                if (whitespaceSB == null)
-                                {
-                                    whitespaceSB = new StringBuilder();
-                                }
+                            else if (char.IsWhiteSpace(testchar))
+                            {
+                                // If it is whitespace, set the currently parsed string
+                                parts[stringCount] = sb.ToString();
+
+                                whitespaceSB ??= new StringBuilder();
+                                // Start to record the whitespace. If we are parsing an identifier like "foo bar" we should return "foo bar"
                                 whitespaceSB.Length = 0;
-                                whitespaceSB.Append(testchar);  // start to record the whitespace, if we are parsing a name like "foo bar" we should return "foo bar"
+                                whitespaceSB.Append(testchar);
                                 state = MPIState.MPI_LookForNextCharOrSeparator;
                             }
                             else
@@ -162,23 +151,22 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_LookForNextCharOrSeparator:
                         {
-                            if (!IsWhitespace(testchar))
-                            { // If it is not whitespace
-                                if (testchar == separator)
-                                {
-                                    IncrementStringCount(name, parsedNames, ref stringCount, property);
-                                    state = MPIState.MPI_Value;
-                                }
-                                else
-                                { // If its not a separator and not whitespace
-                                    sb.Append(whitespaceSB);
-                                    sb.Append(testchar);
-                                    parsedNames[stringCount] = sb.ToString(); // Need to set the name here in case the string ends here.
-                                    state = MPIState.MPI_ParseNonQuote;
-                                }
+                            if (testchar == IdentifierSeparator)
+                            {
+                                IncrementStringCount(identifier, parts, ref stringCount, property);
+                                state = MPIState.MPI_Value;
+                            }
+                            else if (!char.IsWhiteSpace(testchar))
+                            {
+                                sb.Append(whitespaceSB);
+                                sb.Append(testchar);
+                                // Need to set the identifier part here in case the string ends here.
+                                parts[stringCount] = sb.ToString();
+                                state = MPIState.MPI_ParseNonQuote;
                             }
                             else
                             {
+                                whitespaceSB ??= new StringBuilder();
                                 whitespaceSB.Append(testchar);
                             }
                             break;
@@ -186,17 +174,14 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_ParseQuote:
                         {
+                            // If we are on a right quote, see if we are escaping the right quote or ending the quoted string
                             if (testchar == rightQuoteChar)
-                            {    // if se are on a right quote see if we are escaping the right quote or ending the quoted string                            
-                                if (!removequotes)
-                                {
-                                    sb.Append(testchar);
-                                }
+                            {
                                 state = MPIState.MPI_RightQuote;
                             }
                             else
                             {
-                                sb.Append(testchar); // Append what we are currently parsing
+                                sb.Append(testchar);
                             }
                             break;
                         }
@@ -204,25 +189,27 @@ namespace Microsoft.Data.Common
                     case MPIState.MPI_RightQuote:
                         {
                             if (testchar == rightQuoteChar)
-                            { // If the next char is another right quote then we were escaping the right quote
+                            {
+                                // If the next char is another right quote then we were escaping the right quote
                                 sb.Append(testchar);
                                 state = MPIState.MPI_ParseQuote;
                             }
-                            else
-                            if (testchar == separator)
-                            {      // If its a separator then record what we've parsed
-                                parsedNames[stringCount] = sb.ToString();
-                                IncrementStringCount(name, parsedNames, ref stringCount, property);
+                            else if (testchar == IdentifierSeparator)
+                            {
+                                // If it's a separator then record what we've parsed
+                                parts[stringCount] = sb.ToString();
+                                IncrementStringCount(identifier, parts, ref stringCount, property);
                                 state = MPIState.MPI_Value;
                             }
-                            else
-                            if (!IsWhitespace(testchar))
-                            { // If it is not whitespace we got problems
-                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
+                            else if (!char.IsWhiteSpace(testchar))
+                            {
+                                // If it is not whitespace then we have problems
+                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, identifier);
                             }
                             else
-                            {                          // It is a whitespace character so the following char should be whitespace, separator, or end of string anything else is bad
-                                parsedNames[stringCount] = sb.ToString();
+                            {
+                                // It is a whitespace character so the following char should be whitespace, separator, or end of string. Anything else is bad
+                                parts[stringCount] = sb.ToString();
                                 state = MPIState.MPI_LookForSeparator;
                             }
                             break;
@@ -230,17 +217,16 @@ namespace Microsoft.Data.Common
 
                     case MPIState.MPI_LookForSeparator:
                         {
-                            if (!IsWhitespace(testchar))
-                            { // If it is not whitespace
-                                if (testchar == separator)
-                                { // If it is a separator 
-                                    IncrementStringCount(name, parsedNames, ref stringCount, property);
-                                    state = MPIState.MPI_Value;
-                                }
-                                else
-                                { // Otherwise not a separator
-                                    throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
-                                }
+                            if (testchar == IdentifierSeparator)
+                            {
+                                // If it is a separator 
+                                IncrementStringCount(identifier, parts, ref stringCount, property);
+                                state = MPIState.MPI_Value;
+                            }
+                            else if (!char.IsWhiteSpace(testchar))
+                            {
+                                // Otherwise not a separator
+                                throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, identifier);
                             }
                             break;
                         }
@@ -250,42 +236,46 @@ namespace Microsoft.Data.Common
             // Resolve final states after parsing the string            
             switch (state)
             {
-                case MPIState.MPI_Value:       // These states require no extra action
+                // These states require no extra action
+                case MPIState.MPI_Value:
                 case MPIState.MPI_LookForSeparator:
                 case MPIState.MPI_LookForNextCharOrSeparator:
                     break;
 
-                case MPIState.MPI_ParseNonQuote: // Dump what ever was parsed
+                // Dump whatever was parsed
+                case MPIState.MPI_ParseNonQuote:
                 case MPIState.MPI_RightQuote:
-                    parsedNames[stringCount] = sb.ToString();
+                    parts[stringCount] = sb.ToString();
                     break;
 
-                case MPIState.MPI_ParseQuote: // Invalid Ending States
+                // Invalid Ending States
+                case MPIState.MPI_ParseQuote:
                 default:
-                    throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, name);
+                    throw ADP.InvalidMultipartNameIncorrectUsageOfQuotes(property, identifier);
             }
 
-            if (parsedNames[0] == null)
+            if (parts[0] == null)
             {
-                if (ThrowOnEmptyMultipartName)
+                // Identifier is entirely made up of whitespace
+                if (throwOnEmptyMultipartIdentifier)
                 {
-                    throw ADP.InvalidMultipartName(property, name); // Name is entirely made up of whitespace
+                    throw ADP.InvalidMultipartName(property, identifier);
                 }
             }
             else
             {
-                // Shuffle the parsed name, from left justification to right justification, i.e. [a][b][null][null] goes to [null][null][a][b]
+                // Shuffle the identifier parts, from left justification to right justification, i.e. [a][b][null][null] goes to [null][null][a][b]
                 int offset = limit - stringCount - 1;
                 if (offset > 0)
                 {
                     for (int x = limit - 1; x >= offset; --x)
                     {
-                        parsedNames[x] = parsedNames[x - offset];
-                        parsedNames[x - offset] = null;
+                        parts[x] = parts[x - offset];
+                        parts[x - offset] = null;
                     }
                 }
             }
-            return parsedNames;
+            return parts;
         }
     }
 }
