@@ -12,13 +12,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// </summary>
     public class OutputParameterTests
     {
-        private readonly string _connStr;
-
-        public OutputParameterTests()
-        {
-            _connStr = DataTestUtility.TCPConnectionString;
-        }
-
         /// <summary>
         /// Tests that setting an output SqlParameter to an invalid value (e.g. a string in a decimal param)
         /// doesn't throw, since the value is cleared before execution starts.
@@ -27,6 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void InvalidValueInOutputParameter_ShouldSucceed()
         {
+            // Arrange
             using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
@@ -46,9 +40,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Set value of param to invalid value (string instead of decimal)
             decimalParam.Value = "Not a decimal";
 
+            // Act
             // Execute - should not throw
             command.ExecuteNonQuery();
 
+            // Assert
             // Validate - the output value should be set correctly by SQL Server
             Assert.Equal(new decimal(1.23), (decimal)decimalParam.Value);
         }
