@@ -1,12 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <ExcludeFromSourceBuild>true</ExcludeFromSourceBuild>
     <PackageType>MSBuildSdk</PackageType>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <IsPackable>true</IsPackable>
     <NoWarn>$(NoWarn);0436</NoWarn>
+  </PropertyGroup>
+
+  <!-- Target Framework ================================================ -->
+  <PropertyGroup>
+    <!--
+      We only need one version of this project to be built.
+      NOTE: This should not be changed to a netfx target, as we expect to be able to run GenAPI on
+          any OS via the dotnet command.
+    -->
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
 
   <!-- References ====================================================== -->

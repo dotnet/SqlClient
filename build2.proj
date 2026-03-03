@@ -152,10 +152,13 @@
 
     <!-- Tools/Specs Paths -->
     <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
+    <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/</GenApiPath>
+    <GenApiProjectPath>$(GenApiPath)Microsoft.DotNet.GenAPI.csproj</GenApiProjectPath>
 
     <!-- Project Paths -->
     <MdsFunctionalTestProjectPath>$(MdsRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</MdsFunctionalTestProjectPath>
     <MdsManualTestProjectPath>$(MdsRoot)tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</MdsManualTestProjectPath>
+    <MdsNotSupportedProjectPath>$(MdsRoot)notsupported/Microsoft.Data.SqlClient.csproj</MdsNotSupportedProjectPath>
     <MdsProjectPath>$(MdsRoot)src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
     <MdsRefProjectPath>$(MdsRoot)ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
     <MdsUnitTestProjectPath>$(MdsRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</MdsUnitTestProjectPath>
@@ -163,7 +166,39 @@
 
   <!-- Build MDS Targets =============================================== -->
 	<!-- BuildMds: Builds all binaries for MDS -->
-	<Target Name="BuildMds" DependsOnTargets="BuildMdsRef;BuildMdsUnix;BuildMdsWindows" />
+	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows;BuildMdsRef;BuildMdsNotSupported" />
+
+  <Target Name="BuildMdsNotSupported">
+    <PropertyGroup>
+      <DotNetCommand>
+        "$(DotNetPath)dotnet" build "$(GenApiPath)/Microsoft.DotNet.GenAPI.csproj"
+          -p:Configuration=$(Configuration)
+      </DotNetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building GenAPI project via command: '$(DotnetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- Get the path to the GenAPI artifact -->
+    <ItemGroup>
+      <GenApiArtifactPath Include="$(GenApiPath)bin/**/Microsoft.DotNet.GenAPI.dll" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <DotNetCommand>
+        "$(DotNetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
+          -p:Configuration=$(Configuration)
+          -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
+      </DotNetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building not supported binaries project via command: '$(DotnetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 
   <!-- BuildMdsRef: Builds the ref binaries project for MDS, which is OS-agnostic -->
   <Target Name="BuildMdsRef">
