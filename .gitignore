@@ -363,3 +363,6 @@ MigrationBackup/
 
 # Config Json file
 **/config.json
+
+# MDS "Not Supported" GenAPI code
+**/notsupported/*.cs
