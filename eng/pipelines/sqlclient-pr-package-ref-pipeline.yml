@@ -29,22 +29,24 @@ name: $(DayOfYear)$(Rev:rr)
 pr:
   branches:
     include:
-    # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/*
-    - feat/*
-    - main
+      # GitHub repo branch targets that will trigger PR validation builds.
+      - dev/*
+      - feat/*
+      - main
 
   paths:
     include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng/pipelines
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
+      - .azuredevops
+      - .config
+      - doc
+      - eng/pipelines
+      - src
+      - tools
+      - azurepipelines-coverage.yml
+      - build.proj
+      - NuGet.config
+    exclude:
+      - eng/pipelines/onebranch
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none
