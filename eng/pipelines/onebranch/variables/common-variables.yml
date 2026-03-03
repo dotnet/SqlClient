@@ -195,4 +195,4 @@ variables:
   # This should match the name of an ADO service connection configured with
   # NuGet.org credentials (API key or federated auth).
   - name: NuGetServiceConnection
-    value: 'NuGet-Org-ServiceConnection'
+    value: ADO Nuget Org Connection
