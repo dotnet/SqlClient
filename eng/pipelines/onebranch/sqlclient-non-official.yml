@@ -30,12 +30,6 @@ parameters:
     type: boolean
     default: false
 
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: Test job timeout (in minutes)
-    type: number
-    default: 60
-
   # Build parameters — select which packages to build.
 
   # Build the Microsoft.SqlServer.Server package.
