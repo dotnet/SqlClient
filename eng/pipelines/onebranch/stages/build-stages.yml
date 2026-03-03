@@ -13,6 +13,15 @@
 #   - build_abstractions: builds the Abstractions package, which depends on Logging
 #   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
 #   - build_addons: builds add-on packages with dependencies on the core packages (AKV Provider)
+#
+# This template depends on the following runtime (i.e. macro expansion) variables being defined:
+#
+#  - effectiveSqlServerVersion
+#  - effectiveLoggingVersion
+#  - effectiveAbstractionsVersion
+#  - effectiveSqlClientVersion
+#  - effectiveAzureVersion
+#  - effectiveAkvProviderVersion
 
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
@@ -48,23 +57,6 @@ stages:
   # ====================================================================
   - stage: build_independent
     displayName: "Build Independent Packages"
-
-    variables:
-      # Resolved package versions: use preview versions when isPreview is true
-      - ${{ if parameters.isPreview }}:
-        - name: effectiveLoggingVersion
-          value: $(loggingPackagePreviewVersion)
-        - name: effectiveAbstractionsVersion
-          value: $(abstractionsPackagePreviewVersion)
-        - name: effectiveSqlServerVersion
-          value: $(sqlServerPackagePreviewVersion)
-      - ${{ else }}:
-        - name: effectiveLoggingVersion
-          value: $(loggingPackageVersion)
-        - name: effectiveAbstractionsVersion
-          value: $(abstractionsPackageVersion)
-        - name: effectiveSqlServerVersion
-          value: $(sqlServerPackageVersion)
 
     jobs:
       - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
@@ -113,18 +105,6 @@ stages:
       displayName: "Build Abstractions Package"
       dependsOn: build_independent
 
-      variables:
-        - ${{ if parameters.isPreview }}:
-          - name: effectiveLoggingVersion
-            value: $(loggingPackagePreviewVersion)
-          - name: effectiveAbstractionsVersion
-            value: $(abstractionsPackagePreviewVersion)
-        - ${{ else }}:
-          - name: effectiveLoggingVersion
-            value: $(loggingPackageVersion)
-          - name: effectiveAbstractionsVersion
-            value: $(abstractionsPackageVersion)
-
       jobs:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
@@ -156,31 +136,6 @@ stages:
     - stage: build_dependent
       displayName: "Build Core Packages"
       dependsOn: build_abstractions
-
-      variables:
-        # Resolved package versions: use preview versions when isPreview is true
-        - ${{ if parameters.isPreview }}:
-          - name: effectiveLoggingVersion
-            value: $(loggingPackagePreviewVersion)
-          - name: effectiveAbstractionsVersion
-            value: $(abstractionsPackagePreviewVersion)
-          - name: effectiveAzureVersion
-            value: $(azurePackagePreviewVersion)
-          - name: effectiveSqlServerVersion
-            value: $(sqlServerPackagePreviewVersion)
-          - name: effectiveMdsVersion
-            value: $(previewMdsPackageVersion)
-        - ${{ else }}:
-          - name: effectiveLoggingVersion
-            value: $(loggingPackageVersion)
-          - name: effectiveAbstractionsVersion
-            value: $(abstractionsPackageVersion)
-          - name: effectiveAzureVersion
-            value: $(azurePackageVersion)
-          - name: effectiveSqlServerVersion
-            value: $(sqlServerPackageVersion)
-          - name: effectiveMdsVersion
-            value: $(mdsPackageVersion)
 
       jobs:
         - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
@@ -233,39 +188,15 @@ stages:
         - name: apiScanPdbPath
           value: "$(Build.SourcesDirectory)/apiScan/pdbs"
 
-        # Resolved package versions: use preview versions when isPreview is true
-        - ${{ if parameters.isPreview }}:
-          - name: effectiveLoggingVersion
-            value: $(loggingPackagePreviewVersion)
-          - name: effectiveAbstractionsVersion
-            value: $(abstractionsPackagePreviewVersion)
-          - name: effectiveSqlServerVersion
-            value: $(sqlServerPackagePreviewVersion)
-          - name: effectiveAkvVersion
-            value: $(akvPackagePreviewVersion)
-          - name: effectiveMdsVersion
-            value: $(previewMdsPackageVersion)
-        - ${{ else }}:
-          - name: effectiveLoggingVersion
-            value: $(loggingPackageVersion)
-          - name: effectiveAbstractionsVersion
-            value: $(abstractionsPackageVersion)
-          - name: effectiveSqlServerVersion
-            value: $(sqlServerPackageVersion)
-          - name: effectiveAkvVersion
-            value: $(akvPackageVersion)
-          - name: effectiveMdsVersion
-            value: $(mdsPackageVersion)
-
       jobs:
         - template: /eng/pipelines/onebranch/jobs/build-akv-official-job.yml@self
           parameters:
             akvAssemblyFileVersion: $(akvAssemblyFileVersion)
-            akvPackageVersion: $(effectiveAkvVersion)
+            akvPackageVersion: $(effectiveAkvProviderVersion)
             apiScanDllPath: $(apiScanDllPath)
             apiScanPdbPath: $(apiScanPdbPath)
             buildConfiguration: Release
-            mdsPackageVersion: $(effectiveMdsVersion)
+            mdsPackageVersion: $(effectiveSqlClientVersion)
             loggingPackageVersion: $(effectiveLoggingVersion)
             abstractionsPackageVersion: $(effectiveAbstractionsVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
