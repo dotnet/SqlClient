@@ -31,9 +31,9 @@ jobs:
 
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath
-      value: $(extractedNugetRootPath).$(previewMdsPackageVersion)
+      value: $(extractedNugetRootPath).$(mdsPackagePreviewVersion)
     - name: mdsPackageVersion
-      value: $(previewMdsPackageVersion)
+      value: $(mdsPackagePreviewVersion)
 
   steps:
   - script: SET

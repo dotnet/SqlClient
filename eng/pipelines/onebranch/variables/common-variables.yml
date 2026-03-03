@@ -86,7 +86,7 @@ variables:
     value: '7.0.0'
 
   # The NuGet package version for preview releases.
-  - name: previewMdsPackageVersion
+  - name: mdsPackagePreviewVersion
     value: 7.0.0-preview4.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the MDS package.
@@ -195,4 +195,4 @@ variables:
   # This should match the name of an ADO service connection configured with
   # NuGet.org credentials (API key or federated auth).
   - name: NuGetServiceConnection
-    value: 'NuGet-Org-ServiceConnection'
+    value: ADO Nuget Org Connection

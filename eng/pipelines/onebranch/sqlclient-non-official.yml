@@ -30,12 +30,6 @@ parameters:
     type: boolean
     default: false
 
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: Test job timeout (in minutes)
-    type: number
-    default: 60
-
   # Build parameters — select which packages to build.
 
   # Build the Microsoft.SqlServer.Server package.
@@ -97,6 +91,34 @@ parameters:
 
 variables:
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+
+  # Define the effective versions for all of the packages we build and release.
+  - ${{ if parameters.isPreview }}:
+    - name: effectiveSqlServerVersion
+      value: $(sqlServerPackagePreviewVersion)
+    - name: effectiveLoggingVersion
+      value: $(loggingPackagePreviewVersion)
+    - name: effectiveAbstractionsVersion
+      value: $(abstractionsPackagePreviewVersion)
+    - name: effectiveSqlClientVersion
+      value: $(mdsPackagePreviewVersion)
+    - name: effectiveAzureVersion
+      value: $(azurePackagePreviewVersion)
+    - name: effectiveAkvProviderVersion
+      value: $(akvPackagePreviewVersion)
+  - ${{ else }}:
+    - name: effectiveSqlServerVersion
+      value: $(sqlServerPackageVersion)
+    - name: effectiveLoggingVersion
+      value: $(loggingPackageVersion)
+    - name: effectiveAbstractionsVersion
+      value: $(abstractionsPackageVersion)
+    - name: effectiveSqlClientVersion
+      value: $(mdsPackageVersion)
+    - name: effectiveAzureVersion
+      value: $(azurePackageVersion)
+    - name: effectiveAkvProviderVersion
+      value: $(akvPackageVersion)
 
 resources:
   repositories:
