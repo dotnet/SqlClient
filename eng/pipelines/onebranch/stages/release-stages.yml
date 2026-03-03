@@ -123,53 +123,53 @@ stages:
         - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Microsoft.SqlServer.Server
+              packageName: Microsoft.SqlServer.Server
               artifactName: drop_build_independent_build_package_SqlServer
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
-              dryRun: ${{ parameters.isDryRun }}
+              isDryRun: ${{ parameters.isDryRun }}
 
         - ${{ if eq(parameters.releaseLogging, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Microsoft.Data.SqlClient.Extensions.Logging
+              packageName: Microsoft.Data.SqlClient.Extensions.Logging
               artifactName: drop_build_independent_build_package_Logging
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
-              dryRun: ${{ parameters.isDryRun }}
+              isDryRun: ${{ parameters.isDryRun }}
 
         - ${{ if eq(parameters.releaseAbstractions, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Microsoft.Data.SqlClient.Extensions.Abstractions
+              packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: drop_build_abstractions_build_package_Abstractions
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
-              dryRun: ${{ parameters.isDryRun }}
+              isDryRun: ${{ parameters.isDryRun }}
 
         - ${{ if eq(parameters.releaseSqlClient, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Microsoft.Data.SqlClient
+              packageName: Microsoft.Data.SqlClient
               artifactName: drop_build_dependent_build_package_SqlClient
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
-              dryRun: ${{ parameters.isDryRun }}
+              isDryRun: ${{ parameters.isDryRun }}
 
         - ${{ if eq(parameters.releaseAzure, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Microsoft.Data.SqlClient.Extensions.Azure
+              packageName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: drop_build_dependent_build_package_Azure
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
-              dryRun: ${{ parameters.isDryRun }}
+              isDryRun: ${{ parameters.isDryRun }}
 
         - ${{ if eq(parameters.releaseAKVProvider, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageDisplayName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: drop_build_addons_buildSignedAkvPackage
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
-              dryRun: ${{ parameters.isDryRun }}
+              isDryRun: ${{ parameters.isDryRun }}
