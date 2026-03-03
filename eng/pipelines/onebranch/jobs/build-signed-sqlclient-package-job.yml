@@ -34,7 +34,7 @@ jobs:
     ${{ if parameters.isPreview }}:
       abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
       loggingPackageVersion: $(loggingPackagePreviewVersion)
-      mdsPackageVersion: $(previewMdsPackageVersion)
+      mdsPackageVersion: $(mdsPackagePreviewVersion)
 
   steps:
   - script: SET
