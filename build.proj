@@ -95,8 +95,9 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard;BuildLogging;BuildAzure" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildSqlServer;PackSqlServer;GenerateMdsPackage" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard" />
+  <!-- TODO: This doesn't really build everything; just the SqlClient driver and its NuGet package. -->
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
 
   <!-- SqlServer Targets -->
   <PropertyGroup>

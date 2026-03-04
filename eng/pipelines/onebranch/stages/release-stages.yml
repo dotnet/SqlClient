@@ -1,0 +1,190 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Unified release stages template for dotnet-sqlclient OneBranch pipelines.
+# Consumed by both the official and non-official pipeline definitions via:
+#
+#   stages:
+#     - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+#       parameters:
+#         isOfficial: true   # or false
+#         isDryRun:   true   # or false
+#         ...
+#
+# The isOfficial flag controls release-stage behaviour:
+#   - Official  → Production environment, approval gate, dryRun parameter
+#   - Non-Official → Test environment, dry-run always enforced
+#
+# This template depends on stages defined by the build-stages.yml template.
+#
+# This template depends on the following runtime (i.e. macro expansion) variables being defined:
+#
+#  - effectiveSqlServerVersion
+#  - effectiveLoggingVersion
+#  - effectiveAbstractionsVersion
+#  - effectiveSqlClientVersion
+#  - effectiveAzureVersion
+#  - effectiveAkvProviderVersion
+
+parameters:
+  # ── General parameters ─────────────────────────────────────────────────
+
+  # True to enable debug information and steps.
+  - name: debug
+    type: boolean
+
+  # True for this to be a dry-run of the release portion of the pipeline.  A dry run will ask
+  # for approvals and list the packages that would be released.
+  #
+  # When false, a release will actually push packages to NuGet.
+  #
+  - name: isDryRun
+    type: boolean
+    default: true
+
+  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
+  - name: isOfficial
+    type: boolean
+
+  # We must take these names as parameters because they are used in the stage name and display name,
+  # which cannot be computed within the template.
+
+  # The stage name suffix.
+  - name: stageNameSuffix
+    type: string
+    values:
+      - production
+      - test
+
+  # The stage display name.
+  - name: stageDisplayName
+    type: string
+
+  # ── Release parameters ─────────────────────────────────────────────────
+
+  - name: releaseSqlServerServer
+    type: boolean
+
+  - name: releaseLogging
+    type: boolean
+
+  - name: releaseAbstractions
+    type: boolean
+
+  - name: releaseSqlClient
+    type: boolean
+
+  - name: releaseAzure
+    type: boolean
+
+  - name: releaseAKVProvider
+    type: boolean
+
+stages:
+  # ====================================================================
+  # Release Stage — on-demand selective publish to NuGet
+  #
+  # Compile-time conditional: stage is removed entirely when no release
+  # parameters are selected, avoiding OneBranch validation errors.
+  #
+  # Official pipeline  → Production environment, approval gate,
+  #                       dryRun controlled by releaseDryRun parameter.
+  # Non-official pipeline → Test/DryRun environment, dryRun always true.
+  # ====================================================================
+  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAKVProvider) }}:
+    - stage: release_${{ parameters.stageNameSuffix }}
+      displayName: ${{ parameters.stageDisplayName }}
+      dependsOn:
+        - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
+          - build_independent
+        - ${{ if parameters.releaseAbstractions }}:
+          - build_abstractions
+        - ${{ if or(parameters.releaseSqlClient, parameters.releaseAzure) }}:
+          - build_dependent
+          - mds_package_validation
+        - ${{ if parameters.releaseAKVProvider }}:
+          - build_addons
+
+      variables:
+        - name: onebranchReleaseEnvironment
+          ${{ if eq(parameters.isOfficial, true) }}:
+            value: Production
+          ${{ else }}:
+            value: Test
+
+        - name: onebranchDeploymentEnvironment
+          ${{ if eq(parameters.isOfficial, true) }}:
+            value: NuGet-Production
+          ${{ else }}:
+            value: NuGet-DryRun
+
+        - name: ob_release_environment
+          value: ${{ variables.onebranchReleaseEnvironment }}
+        - name: ob_release_usedeploymentjob
+          value: true
+        - name: ob_deploymentjob_environment
+          value: ${{ variables.onebranchDeploymentEnvironment }}
+
+      jobs:
+        - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.SqlServer.Server
+              artifactName: drop_build_independent_build_package_SqlServer
+              packagePath: Microsoft.SqlServer.Server.$(effectiveSqlServerVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: ${{ parameters.isOfficial }}
+              isDryRun: ${{ parameters.isDryRun }}
+
+        - ${{ if eq(parameters.releaseLogging, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.Extensions.Logging
+              artifactName: drop_build_independent_build_package_Logging
+              packagePath: Microsoft.Data.SqlClient.Extensions.Logging.$(effectiveLoggingVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: ${{ parameters.isOfficial }}
+              isDryRun: ${{ parameters.isDryRun }}
+
+        - ${{ if eq(parameters.releaseAbstractions, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
+              artifactName: drop_build_abstractions_build_package_Abstractions
+              packagePath: Microsoft.Data.SqlClient.Extensions.Abstractions.$(effectiveAbstractionsVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: ${{ parameters.isOfficial }}
+              isDryRun: ${{ parameters.isDryRun }}
+
+        - ${{ if eq(parameters.releaseSqlClient, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient
+              artifactName: drop_build_dependent_build_package_SqlClient
+              packagePath: Microsoft.Data.SqlClient.$(effectiveSqlClientVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: ${{ parameters.isOfficial }}
+              isDryRun: ${{ parameters.isDryRun }}
+
+        - ${{ if eq(parameters.releaseAzure, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.Extensions.Azure
+              artifactName: drop_build_dependent_build_package_Azure
+              packagePath: Microsoft.Data.SqlClient.Extensions.Azure.$(effectiveAzureVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: ${{ parameters.isOfficial }}
+              isDryRun: ${{ parameters.isDryRun }}
+
+        - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              artifactName: drop_build_addons_buildSignedAkvPackage
+              packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: ${{ parameters.isOfficial }}
+              isDryRun: ${{ parameters.isDryRun }}

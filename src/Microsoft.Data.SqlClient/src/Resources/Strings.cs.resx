@@ -4336,7 +4336,7 @@
     <value>Byly přijaty neplatné informace o směrování.</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>Byly přijaty neplatné informace o rozšířeném směrování.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Server poskytl informace o směrování, ale časový limit již vypršel.</value>

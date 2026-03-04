@@ -163,7 +163,7 @@ steps:
       projects: build.proj
       custom: msbuild
       arguments: >-
-        -t:BuildAll
+        -t:BuildSqlClient
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:TestEnabled=true
         -p:GenerateNuget=false

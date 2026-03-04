@@ -4336,7 +4336,7 @@
     <value>Ungültige Routinginformationen empfangen.</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>Ungültige erweiterte Routinginformationen empfangen.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Es wurden Routinginformationen vom Server empfangen, aber das Timeout ist bereits abgelaufen.</value>

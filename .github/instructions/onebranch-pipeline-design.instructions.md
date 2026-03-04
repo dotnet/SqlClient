@@ -189,7 +189,7 @@ The release stage is gated and only executes on demand when at least one release
 - **Publish jobs**: Each package has a conditional publish job that is included at compile time only when its parameter is `true`:
   ```yaml
   - ${{ if eq(parameters.releaseXxx, true) }}:
-    - template: /eng/pipelines/common/templates/jobs/publish-nuget-package-job.yml@self
+    - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
   ```
 - **Environment variables**: Stage sets `ob_release_usedeploymentjob: true` for OneBranch integration:
   - Official: `ob_release_environment: 'NuGet-Production'`
@@ -308,7 +308,7 @@ parameters:
     type: boolean
     default: false
 
-  - name: releaseExtAzure
+  - name: releaseAzure
     displayName: 'Release Microsoft.Data.SqlClient.Extensions.Azure'
     type: boolean
     default: false
@@ -363,7 +363,7 @@ All package versions are centralized in `libraries/common-variables.yml`:
 | Logging | `loggingPackageVersion` | `loggingPackagePreviewVersion` | `loggingAssemblyFileVersion` |
 | Abstractions | `abstractionsPackageVersion` | `abstractionsPackagePreviewVersion` | `abstractionsAssemblyFileVersion` |
 | SqlServer.Server | `sqlServerPackageVersion` | `sqlServerPackagePreviewVersion` | `sqlServerAssemblyFileVersion` |
-| SqlClient (MDS) | `mdsPackageVersion` | `previewMdsPackageVersion` | `mdsAssemblyFileVersion` |
+| SqlClient (MDS) | `mdsPackageVersion` | `mdsPackagePreviewVersion` | `mdsAssemblyFileVersion` |
 | Extensions.Azure | `azurePackageVersion` | `azurePackagePreviewVersion` | `azureAssemblyFileVersion` |
 | AKV Provider | `akvPackageVersion` | `akvPackagePreviewVersion` | `akvAssemblyFileVersion` |
 

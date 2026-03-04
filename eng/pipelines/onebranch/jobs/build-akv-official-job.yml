@@ -94,7 +94,7 @@ jobs:
           ob_sdl_apiscan_versionNumber: '${{ parameters.akvAssemblyFileVersion }}'
 
       steps:
-          - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
@@ -121,7 +121,7 @@ jobs:
 
           # Perform analysis before building, since this step will clobber build
           # output.
-          - template: /eng/pipelines/steps/roslyn-analyzers-akv-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-akv-step.yml@self
             parameters:
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
@@ -129,7 +129,7 @@ jobs:
                 loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
                 abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
-          - template: /eng/pipelines/steps/compound-build-akv-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/compound-build-akv-step.yml@self
             parameters:
                 akvAssemblyFileVersion: '${{ parameters.akvAssemblyFileVersion }}'
                 akvPackageVersion: '${{ parameters.akvPackageVersion }}'
@@ -139,7 +139,7 @@ jobs:
                 abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
           - ${{ each targetFramework in parameters.targetFrameworks }}:
-              - template: /eng/pipelines/steps/compound-extract-akv-apiscan-files-step.yml@self
+              - template: /eng/pipelines/onebranch/steps/compound-extract-akv-apiscan-files-step.yml@self
                 parameters:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
                     dllPath: '${{ parameters.apiScanDllPath }}'
@@ -147,7 +147,7 @@ jobs:
                     referenceType: Package
                     targetFramework: '${{ targetFramework }}'
 
-          - template: /eng/pipelines/steps/compound-esrp-dll-signing-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
@@ -157,7 +157,7 @@ jobs:
                 esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
                 pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
-          - template: /eng/pipelines/steps/compound-nuget-pack-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/compound-nuget-pack-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
@@ -167,7 +167,7 @@ jobs:
                 referenceType: Package
                 properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
 
-          - template: /eng/pipelines/steps/compound-esrp-nuget-signing-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:
                 appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
@@ -177,7 +177,7 @@ jobs:
                 esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
 
           - ${{ if parameters.publishSymbols }}:
-            - template: /eng/pipelines/steps/compound-publish-symbols-step.yml@self
+            - template: /eng/pipelines/onebranch/steps/compound-publish-symbols-step.yml@self
               parameters:
                   artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.akvPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'

@@ -4336,7 +4336,7 @@
     <value>Odebrano nieprawidłowe informacje routingu.</value>
   </data>
   <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
-    <value>Invalid enhanced routing information received.</value>
+    <value>Odebrano nieprawidłowe rozszerzone informacje routingu.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Serwer dostarczył informacje routingu, ale upłynął już limit czasu.</value>

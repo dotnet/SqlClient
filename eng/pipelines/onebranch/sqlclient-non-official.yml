@@ -6,24 +6,9 @@
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
-# No PR-based triggers.
+# No automated triggers; this pipeline must be run manually.
 pr: none
-
-# We trigger runs on activity on the internal/main branch, but not on any other branches.  This
-# pipeline is intended to only run against the ADO.Net dotnet-sqlclient repo.
-trigger:
-  branches:
-    include:
-      - internal/main
-
-# We run this pipeline on a daily schedule.
-schedules:
-  - cron: "30 4 * * *"
-    displayName: Daily 04:30 UTC Build
-    branches:
-      include:
-        - internal/main
-    always: true
+trigger: none
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
@@ -44,18 +29,6 @@ parameters:
     displayName: Publish symbols
     type: boolean
     default: false
-
-  # Release Dry Run (do not push to NuGet)
-  - name: releaseDryRun
-    displayName: Release Dry Run (do not push to NuGet)
-    type: boolean
-    default: true
-
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: Test job timeout (in minutes)
-    type: number
-    default: 60
 
   # Build parameters — select which packages to build.
 
@@ -105,7 +78,7 @@ parameters:
     default: false
 
   # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
-  - name: releaseExtAzure
+  - name: releaseAzure
     displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
     type: boolean
     default: false
@@ -117,7 +90,35 @@ parameters:
     default: false
 
 variables:
-  - template: /eng/pipelines/libraries/onebranch-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+
+  # Define the effective versions for all of the packages we build and release.
+  - ${{ if parameters.isPreview }}:
+    - name: effectiveSqlServerVersion
+      value: $(sqlServerPackagePreviewVersion)
+    - name: effectiveLoggingVersion
+      value: $(loggingPackagePreviewVersion)
+    - name: effectiveAbstractionsVersion
+      value: $(abstractionsPackagePreviewVersion)
+    - name: effectiveSqlClientVersion
+      value: $(mdsPackagePreviewVersion)
+    - name: effectiveAzureVersion
+      value: $(azurePackagePreviewVersion)
+    - name: effectiveAkvProviderVersion
+      value: $(akvPackagePreviewVersion)
+  - ${{ else }}:
+    - name: effectiveSqlServerVersion
+      value: $(sqlServerPackageVersion)
+    - name: effectiveLoggingVersion
+      value: $(loggingPackageVersion)
+    - name: effectiveAbstractionsVersion
+      value: $(abstractionsPackageVersion)
+    - name: effectiveSqlClientVersion
+      value: $(mdsPackageVersion)
+    - name: effectiveAzureVersion
+      value: $(azurePackageVersion)
+    - name: effectiveAkvProviderVersion
+      value: $(akvPackageVersion)
 
 resources:
   repositories:
@@ -128,7 +129,7 @@ resources:
 
 extends:
   # See: https://aka.ms/obpipelines/templates
-  template: /v2/OneBranch.Official.CrossPlat.yml@templates
+  template: /v2/OneBranch.NonOfficial.CrossPlat.yml@templates
   parameters:
     release:
        # This indicates the pipeline category to deploy Box products.  See:
@@ -140,15 +141,11 @@ extends:
     # See: https://aka.ms/obpipelines/sdl
     globalSdl:
       tsa:
-        # The OneBranch template will set 'break' to false for the other SDL tools when TSA is
-        # enabled.  This allows TSA to gather the results and publish them for downstream analysis.
-        enabled: true
+        # We disable TSA for non-official pipelines.  This inhibits spurious TSA alerts and ADO
+        # task creation, since non-official builds are often done against development branches.
+        enabled: false
       apiscan:
         enabled: true
-        # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42858):
-        # We have temporarily disabled breaking the build on ApiScan results until we can:
-        #   - Register our new packages with API Scan, and/or
-        #   - Publish MSDN/Learn/etc documentation for the new packages.
         break: false
         # Other ApiScan options are set by the jobs via ob_sdl_apiscan_* variables.
       codeql:
@@ -182,21 +179,27 @@ extends:
         tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-      - template: /eng/pipelines/stages/sqlclient-onebranch-stages.yml@self
+      - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          # This is an official pipeline.
-          isOfficial: true
           isPreview: ${{ parameters.isPreview }}
           publishSymbols: ${{ parameters.publishSymbols }}
-          releaseDryRun: ${{ parameters.releaseDryRun }}
-          testJobTimeout: ${{ parameters.testJobTimeout }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
+
+      - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          # Non-official pipelines must always be a dry run.
+          isDryRun: true
+          # This is _not_ official pipeline.
+          isOfficial: false
+          stageNameSuffix: test
+          stageDisplayName: Release Test (Dry Run)
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
-          releaseExtAzure: ${{ parameters.releaseExtAzure }}
+          releaseAzure: ${{ parameters.releaseAzure }}
           releaseAKVProvider: ${{ parameters.releaseAKVProvider }}

@@ -72,6 +72,7 @@ The following build targets are defined in `build.proj`:
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
+|`BuildSqlClient`|Build the driver for all target frameworks.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
@@ -192,15 +193,13 @@ packages in the root packages/ directory, and will be automatically searched by 
 Then, you can specify `Package` references be used, for example:
 
 ```bash
-dotnet build -t:BuildLogging
-dotnet build -t:PackLogging
-dotnet build -t:BuildAbstractions -p:ReferenceType=Package
-dotnet build -t:PackAbstractions -p:ReferenceType=Package
-dotnet build -t:BuildAzure -p:ReferenceType=Package
-dotnet build -t:PackAzure -p:ReferenceType=Package
-dotnet build -t:BuildAll -p:ReferenceType=Package
-dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
+dotnet build -t:BuildLogging,PackLogging
+dotnet build -t:BuildSqlServer,PackSqlServer
+dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
+dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
+dotnet build -t:BuildSqlClient -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
+dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateAkvPackage
 ```
 

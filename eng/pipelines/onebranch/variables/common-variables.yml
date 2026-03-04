@@ -5,9 +5,18 @@
 #################################################################################
 
 # Common variables shared across all OneBranch Official pipelines.
-# Included transitively by build-variables.yml -> onebranch-variables.yml.
 
 variables:
+  - group: Release Variables
+
+  # Symbols publishing credentials
+  - group: Symbols publishing
+    # SymbolsAzureSubscription
+    # SymbolsPublishProjectName
+    # SymbolsPublishServer
+    # SymbolsPublishTokenUri
+    # SymbolsUploadAccount
+
   - group: ESRP Federated Creds (AME)
     # ESRPConnectedServiceName
     # ESRPClientId
@@ -78,7 +87,7 @@ variables:
     value: '7.0.0'
 
   # The NuGet package version for preview releases.
-  - name: previewMdsPackageVersion
+  - name: mdsPackagePreviewVersion
     value: 7.0.0-preview4.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the MDS package.
@@ -174,7 +183,7 @@ variables:
   #
   # Alias variables for MDS publish-symbols-step.yml, which defaults to
   # $(SymbolServer) and $(SymbolTokenUri).  These map to the values provided
-  # by the akv-variables-v2 variable group.
+  # by the "Symbols publishing" library group.
   - name: SymbolServer
     value: $(SymbolsPublishServer)
   - name: SymbolTokenUri
@@ -187,4 +196,4 @@ variables:
   # This should match the name of an ADO service connection configured with
   # NuGet.org credentials (API key or federated auth).
   - name: NuGetServiceConnection
-    value: 'NuGet-Org-ServiceConnection'
+    value: ADO Nuget Org Connection
