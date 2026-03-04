@@ -32,10 +32,11 @@ variables:
   - name: BUILD_OUTPUT
     value: $(REPO_ROOT)/artifacts
 
-  # THis is where our C# projects place their NuGet package outputs (see Directory.Build.props
-  # <PackagesDir>).
+  # This is where our C# projects place their NuGet package outputs.  This is intentionally
+  # separate from packages/ (where downloaded pipeline artifacts go) so that ESRP signing and
+  # OneBranch artifact publishing only operate on packages built by the current job.
   - name: PACK_OUTPUT
-    value: $(REPO_ROOT)/packages
+    value: $(REPO_ROOT)/output
 
   # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
   # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
