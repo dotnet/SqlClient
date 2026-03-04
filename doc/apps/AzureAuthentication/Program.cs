@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
@@ -48,7 +48,12 @@ public class Program : IDisposable
             Environment.NewLine +
             "  -p:SqlClientVersion=7.0.0.preview4" + Environment.NewLine +
             "  -p:AkvProviderVersion=7.0.1-preview2" + Environment.NewLine +
-            "  -p:AzureVersion=1.0.0-preview1")
+            "  -p:AzureVersion=1.0.0-preview1" + Environment.NewLine +
+            Environment.NewLine +
+            " Current package versions:" + Environment.NewLine +
+            $"  SqlClient:     {PackageVersions.MicrosoftDataSqlClient}" + Environment.NewLine +
+            $"  AKV Provider:  {PackageVersions.MicrosoftDataSqlClientAlwaysEncryptedAzureKeyVaultProvider}" + Environment.NewLine +
+            $"  Azure:         {PackageVersions.MicrosoftDataSqlClientExtensionsAzure}")
         {
             connectionStringOption,
             logOption,
@@ -136,10 +141,9 @@ public class Program : IDisposable
             Console.ReadLine();
         }
 
-        // Instantiate the AKV Provider to ensure its assembly is present.
-        #pragma warning disable CA1806
-        new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential(true));
-        #pragma warning restore CA1806
+        // Instantiate the AKV Provider to ensure its assembly is present, loadable, contains the
+        // expected types, and at least the constructor functions.
+        _ = new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential(true));
 
         try
         {
