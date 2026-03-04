@@ -75,6 +75,8 @@
       injects into downstream projects, and how the MDS project configures its output directories.
     -->
     <PackageReference Include="Microsoft.Data.SqlClient.SNI" />
+
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 
   <!-- References for netcore -->
@@ -87,5 +89,7 @@
 
     <!-- We explicitly depend on SNI.runtime for netcore for the same reason as in netfx -->
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 </Project>
