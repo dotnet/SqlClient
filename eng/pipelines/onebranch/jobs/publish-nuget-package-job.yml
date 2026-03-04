@@ -87,6 +87,11 @@ jobs:
 
     steps:
 
+      # ob_outputDirectory must exist for OneBranch even though this job doesn't
+      # produce any new artifacts.
+      - pwsh: New-Item -ItemType Directory -Force -Path "$(ob_outputDirectory)" | Out-Null
+        displayName: Ensure output directory exists
+
       # Artifacts are downloaded via templateContext.inputs per OneBranch requirements.
 
       - ${{ if eq(parameters.isDryRun, true) }}:
