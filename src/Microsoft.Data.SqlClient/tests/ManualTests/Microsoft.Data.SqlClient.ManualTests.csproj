@@ -9,6 +9,17 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if we
+      are building for Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
+
   <!-- Test Set ======================================================== -->
   <PropertyGroup>
     <!-- This is a measure to allow parallelizing this test project across multiple jobs. By -->
