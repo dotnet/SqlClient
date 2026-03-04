@@ -64,7 +64,7 @@
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
-  <!-- BUild Output ==================================================== -->
+  <!-- Build Output ==================================================== -->
   <PropertyGroup>
     <!--
       MSBuild will add the target framework to the end of this path by default. Telling it not to
@@ -78,7 +78,7 @@
   <!--
     Reference the ref project to cause it to be built, so we can use it as the contract to build
     not supported assemblies against. Note, this must be set to output item type of none otherwise
-    the assemblies for the ref project will be compied to the output for this project, causing
+    the assemblies for the ref project will be copied to the output for this project, causing
     conflicts that fail the build.
   -->
   <PropertyGroup>
@@ -197,7 +197,7 @@
       <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s+", " "))</GenApiCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building MDS ref binaries via command: $(DotnetCommand)"/>
+    <Message Text=">>> Building MDS 'Not Supported' binaries via command: $(GenApiCommand)"/>
     <Exec Command="$(GenApiCommand)" ConsoleToMsBuild="true" />
 
     <!-- Include the "Not Supported" source file into this project -->

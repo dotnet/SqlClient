@@ -40,7 +40,7 @@
     <PropertyGroup>
       <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/bin/$(Configuration)/$(TargetFramework)/</GenApiPath>
       <GenApiExec Condition="'$(MSBuildRuntimeType)' == 'core'">"$(DotnetPath)dotnet" "$(GenApiPath)Microsoft.DotNet.GenAPI.dll"</GenApiExec>
-      <GenApiExec Condition="'$(MSBuildRuntimeType)' != 'core'">"$(GenApiPath)Microsoft.DotNet.GenAPI.exe</GenApiExec>
+      <GenApiExec Condition="'$(MSBuildRuntimeType)' != 'core'">"$(GenApiPath)Microsoft.DotNet.GenAPI.exe"</GenApiExec>
 
       <GenApiCommand>
         $(GenApiExec)
@@ -56,8 +56,8 @@
       <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s+", " "))</GenApiCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building MDS ref binaries via command: $(DotnetCommand)"/>
-    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)"/>
+    <Message Text=">>> Building MDS 'not supported' binaries via command: $(GenApiCommand)"/>
+    <Exec Command="$(GenApiPath) $(GenApiArgs)" WorkingDirectory="$(ToolRuntimePath)"/>
 
     <ItemGroup>
       <FileWrites Include="$(NotSupportedSourceFile)" />

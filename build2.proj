@@ -65,7 +65,7 @@
       Applies to:     Test* targets
       Description:    How long to wait on a test before timing it out. This will be fed to the
                       dotnet blame-hang-timeout argument. If 0 is specified, hang timeout will be
-                      disabled. For more details and supported suffixed see:
+                      disabled. For more details and supported suffixes see:
                       https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-vstest#options
       Default value:  10m
       Allowed values: (time_expression|0)
@@ -102,11 +102,11 @@
       Default value:  category!=failing&category!=flaky
       Allowed values: (category_expression|none)
     -->
-    <TestFilter Condition="'$(TestFilter)' == ''">category!=failing&amp;category!=flaky</TestFilter>
-    <TestFilter Condition="'$(TestFilter.ToLower())' == 'none'" />
-    <TestFilterArgument Condition="'$(TestFilter)' != ''">
-      --filter "$(TestFilter)"
-    </TestFilterArgument>
+    <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky</TestFilters>
+    <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
+    <TestFiltersArgument Condition="'$(TestFilters)' != ''">
+      --filter "$(TestFilters)"
+    </TestFiltersArgument>
 
     <!--
       TestFramework
@@ -127,7 +127,7 @@
                      specified, this path will default to test_results in the root of the
                      repository.
       Default value: $(REPO_ROOT)\test_results
-      Example:       C:\my_test_results\my_extra_specaial_test_run_folder\
+      Example:       C:\my_test_results\my_extra_special_test_run_folder\
     -->
     <TestResultsFolderPath Condition="'$(TestResultsFolderPath)' == ''">$(RepoRoot)test_results</TestResultsFolderPath>
 
@@ -268,9 +268,9 @@
           -p:Configuration=$(Configuration)
           $(TestBlameArgument)
           $(TestCollectArgument)
-          $(TestFilterArgument)
+          $(TestFiltersArgument)
           $(TestFrameworkArgument)
-          $(TestPackageReferenceArgument)
+          $(TestPackageBuildArgument)
           --results-directory "$(TestResultsFolderPath)"
           --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
@@ -292,12 +292,12 @@
         $(DotnetPath)dotnet test "$(MdsManualTestProjectPath)"
           -p:Configuration=$(Configuration)
           $(TestBlameArgument)
-          $(TestFilterArgument)
+          $(TestFiltersArgument)
           $(TestFrameworkArgument)
-          $(TestPackageReferenceArgument)
+          $(TestPackageBuildArgument)
           $(TestSetArgument)
           --results-directory "$(TestResultsFolderPath)"
-          --logger:"trx;LogFilePrefix=$(LogFilePrefix)
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -311,7 +311,7 @@
     <PropertyGroup>
       <!--
         Note: This test exclusively uses project references, so neither ReferenceType nor any
-            package version arguments are not specified in this command.
+            package version arguments are specified in this command.
       -->
       <LogFilePrefix>MdsUnit-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
@@ -321,10 +321,10 @@
           -p:Configuration=$(Configuration)
           $(TestBlameArgument)
           $(TestCollectArgument)
-          $(TestFilterArgument)
+          $(TestFiltersArgument)
           $(TestFrameworkArgument)
           --results-directory "$(TestResultsFolderPath)"
-          --logger:"trx;LogFilePrefix=$(LogFilePrefix)
+          --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
 
       <!-- Convert more than one whitespace character into one space -->
