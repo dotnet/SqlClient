@@ -271,6 +271,86 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void GetChars_NonAsciiContent()
+        {
+            SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            // XML containing non-ASCII characters:
+            //   - \u00E9 (e-acute) - 2 bytes in UTF-8
+            //   - \u00F1 (n-tilde) - 2 bytes in UTF-8
+            //   - \u00FC (u-umlaut) - 2 bytes in UTF-8
+            string xml = "<r>caf\u00E9 se\u00F1or \u00FCber</r>";
+            int expectedLength = xml.Length;
+            string commandText = $"SELECT Convert(xml, N'{xml}')";
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                connection.Open();
+                command.CommandText = commandText;
+
+                SqlDataReader sqlDataReader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                Assert.True(sqlDataReader.Read(), "Expected to read a row");
+
+                (long length, string result) = ReadAllChars(sqlDataReader, expectedLength + 10);
+
+                Assert.Equal(expectedLength, length);
+                Assert.Equal(xml, result.Substring(0, (int)length));
+                connection.Close();
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void GetChars_NonAsciiContent_BulkRead()
+        {
+            SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            // Same non-ASCII XML but read in a single bulk GetChars call
+            string xml = "<name>Jos\u00E9 Garc\u00EDa</name>";
+            int expectedLength = xml.Length;
+            string commandText = $"SELECT Convert(xml, N'{xml}')";
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                connection.Open();
+                command.CommandText = commandText;
+
+                SqlDataReader sqlDataReader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                Assert.True(sqlDataReader.Read(), "Expected to read a row");
+
+                char[] buffer = new char[expectedLength + 10];
+                long charsRead = sqlDataReader.GetChars(0, 0, buffer, 0, buffer.Length);
+
+                Assert.Equal(expectedLength, charsRead);
+                string result = new string(buffer, 0, (int)charsRead);
+                Assert.Equal(xml, result);
+                connection.Close();
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void GetChars_CjkContent()
+        {
+            SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            // CJK characters: 3 bytes each in UTF-8
+            string xml = "<data>\u65E5\u672C\u8A9E\u30C6\u30B9\u30C8</data>";
+            int expectedLength = xml.Length;
+            string commandText = $"SELECT Convert(xml, N'{xml}')";
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                connection.Open();
+                command.CommandText = commandText;
+
+                SqlDataReader sqlDataReader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                Assert.True(sqlDataReader.Read(), "Expected to read a row");
+
+                (long length, string result) = ReadAllChars(sqlDataReader, expectedLength + 10);
+
+                Assert.Equal(expectedLength, length);
+                Assert.Equal(xml, result.Substring(0, (int)length));
+                connection.Close();
+            }
+        }
+
         private static TimeSpan TimedExecution(string commandTextBase, int scale)
         {
             SqlConnection connection = new(DataTestUtility.TCPConnectionString);
