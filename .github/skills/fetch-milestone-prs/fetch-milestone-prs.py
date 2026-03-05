@@ -12,7 +12,7 @@ Examples:
 
 Requires:
     - gh CLI (https://cli.github.com/) authenticated via `gh auth login`
-    - OR set GITHUB_TOKEN environment variable
+    - OR set GH_TOKEN environment variable (or GITHUB_TOKEN when running in GitHub Actions)
 
 Each PR is saved as a separate JSON file: <output-dir>/<pr-number>.json
 A summary index is saved as: <output-dir>/_index.json
@@ -38,15 +38,33 @@ def run_gh_api(endpoint, method="GET"):
 
 
 def run_gh_api_paginated(endpoint):
-    """Call the GitHub REST API with pagination via `gh api --paginate`."""
+    """Call the GitHub REST API with pagination via `gh api --paginate`.
+
+    `gh api --paginate` prints one JSON array per page. For multi-page
+    results this produces concatenated arrays (e.g. `[...][...]`) which
+    is not valid JSON. We parse each line individually and merge them.
+    """
     cmd = ["gh", "api", "--paginate", endpoint]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="replace")
     if result.returncode != 0:
         print(f"Error calling gh api {endpoint}:", file=sys.stderr)
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
-    # --paginate concatenates JSON arrays, producing valid JSON
-    return json.loads(result.stdout)
+    items = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            page = json.loads(line)
+        except json.JSONDecodeError as exc:
+            print(f"Failed to parse paginated gh api output for {endpoint}: {exc}", file=sys.stderr)
+            sys.exit(1)
+        if isinstance(page, list):
+            items.extend(page)
+        else:
+            items.append(page)
+    return items
 
 
 def find_milestone_number(repo, milestone_title):
