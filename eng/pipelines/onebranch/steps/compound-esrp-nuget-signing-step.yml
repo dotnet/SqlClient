@@ -1,0 +1,78 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # App Registration Client Id.
+  - name: appRegistrationClientId
+    type: string
+
+  # App Registration Tenant Id.
+  - name: appRegistrationTenantId
+    type: string
+
+  # Name of the Azure Key Vault to retrieve certificates from.
+  # note: This has nothing to do with the AKV provider package.
+  - name: authAkvName
+    type: string
+
+  # Auth Sign Cert Name.
+  - name: authSignCertName
+    type: string
+
+  # Esrp Connected Service Name.
+  - name: esrpConnectedServiceName
+    type: string
+
+  # Esrp Client Id.
+  - name: esrpClientId
+    type: string
+
+steps:
+  # See: https://aka.ms/esrp.scantask
+  - task: EsrpMalwareScanning@6
+    displayName: 'ESRP Nuget Malware Scanning'
+    inputs:
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      CleanupTempStorage: 1
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      FolderPath: '$(PACK_OUTPUT)'
+      Pattern: '*.*nupkg'
+      UseMSIAuthentication: true
+      VerboseLogin: 1
+
+  # See: https://aka.ms/esrp.signtask
+  - task: EsrpCodeSigning@6
+    displayName: 'ESRP Signing NuGet Package'
+    inputs:
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      AuthAKVName: '${{ parameters.authAkvName }}'
+      AuthSignCertName: '${{ parameters.authSignCertName }}'
+      FolderPath: '$(PACK_OUTPUT)'
+      Pattern: '*.*nupkg'
+      signConfigType: 'inlineSignParams'
+      UseMSIAuthentication: true
+      inlineOperation: |
+        [
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetSign",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            },
+            {
+                "keyCode": "CP-401405",
+                "operationSetCode": "NuGetVerify",
+                "parameters": [ ],
+                "toolName": "sign",
+                "toolVersion": "1.0"
+            }
+        ]

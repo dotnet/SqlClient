@@ -12,59 +12,37 @@
 #   src/Microsoft.Data.SqlClient/tests/StressTests
 #
 # All tests use a localhost SQL Server configured for SQL auth via the 'sa' user
-# and password of '$(Password)'.  The $(Password) variable is defined in the ADO
-# Library "ADO Test Configuration properties", brought in by
-# common/templates/libraries/ci-build-variables.yml.
+# and the provided password.
+#
+# This stage depends on the secrets_stage.
 #
 # This template defines a stage named 'run_stress_tests_stage' that can be
 # depended on by downstream stages.
 
 parameters:
+
+  # The names of any additional stages this stage depends on, for example the stages that publish
+  # the MDS package artifacts we will test.
+  - name: additionalDependsOn
+    type: object
+    default: []
+
+  # The Azure package version to stress test.  This version must be available in
+  # one of the configured NuGet sources.
+  - name: azurePackageVersion
+    displayName: Azure Package Version
+    type: string
+
   # The type of build to produce (Debug or Release)
   - name: buildConfiguration
-    displayName: Build Configuration
     type: string
     default: Debug
     values:
       - Debug
       - Release
 
-  # The names of any stages this stage depends on, for example the stages
-  # that publish the MDS package artifacts we will test.
-  - name: dependsOn
-    displayName: Depends On Stages
-    type: object
-    default: []
-
-  # The name of the pipeline artifact to download that contains the MDS package
-  # to stress test.
-  - name: pipelineArtifactName
-    displayName: Pipeline Artifact Name
-    type: string
-    default: Artifacts
-
-  # The MDS package version to stress test.  This version must be available in
-  # one of the configured NuGet sources.
-  - name: mdsPackageVersion
-    displayName: MDS Package Version
-    type: string
-    default: ''
-
-  # The list of .NET runtimes to test against.
-  - name: netTestRuntimes
-    displayName: .NET Test Runtimes
-    type: object
-    default: [net8.0, net9.0]
-
-  # The list of .NET Framework runtimes to test against.
-  - name: netFrameworkTestRuntimes
-    displayName: .NET Framework Test Runtimes
-    type: object
-    default: [net462]
-
   # The verbosity level for the dotnet CLI commands.
-  - name: verbosity
-    displayName: Dotnet CLI verbosity
+  - name: dotnetVerbosity
     type: string
     default: normal
     values:
@@ -74,10 +52,32 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the MDS pipeline artifacts to download.
+  - name: mdsArtifactsName
+    type: string
+    default: MDS.Artifacts
+
+  # The MDS package version found in the pipeline artifacts we will download.
+  - name: mdsPackageVersion
+    type: string
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    type: object
+    default: [net462]
+
+  # The list of .NET runtimes to test against.
+  - name: netTestRuntimes
+    type: object
+    default: [net8.0, net9.0, net10.0]
+
 stages:
   - stage: run_stress_tests_stage
     displayName: Run Stress Tests
-    dependsOn: ${{ parameters.dependsOn }}
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     variables:
       # The directory where dotnet artifacts will be staged.  Not to be
@@ -96,15 +96,20 @@ stages:
       # dotnet CLI arguments common to all commands.
       - name: commonArguments
         value: >-
-          --verbosity ${{parameters.verbosity}}
+          --verbosity ${{parameters.dotnetVerbosity}}
           --artifacts-path $(dotnetArtifactsDir)
           -p:MdsPackageVersion=${{parameters.mdsPackageVersion}}
+          -p:AzurePackageVersion=${{parameters.azurePackageVersion}}
 
       # dotnet CLI arguments for build/run commands.
       - name: buildArguments
         value: >-
           $(commonArguments)
           --configuration ${{parameters.buildConfiguration}}
+
+      # Bring the SA password from the secrets_stage into scope here.
+      - name: saPassword
+        value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
 
       # The contents of the config file to use for all tests.  We will write
       # this to a JSON file for each test job, and then point to it via the
@@ -118,7 +123,7 @@ stages:
               "isDefault": true,
               "dataSource": "localhost",
               "user": "sa",
-              "password": "$(Password)",
+              "password": "$(saPassword)",
               "supportsWindowsAuthentication": false,
               "isLocal": false,
               "disableMultiSubnetFailover": true,
@@ -132,14 +137,17 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on Linux.
 
-    - template: ../jobs/stress-tests-ci-job.yml@self
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: linux
         displayNamePrefix: Linux
         poolName: $(ci_var_defaultPoolName)
-        vmImage: ADO-UB20-SQL22
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml
-        pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        vmImage: ADO-UB22-SQL22
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
+          parameters:
+            saPassword: $(saPassword)
+        mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
         restoreArguments: $(commonArguments)
@@ -150,7 +158,7 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on Windows
 
-    - template: ../jobs/stress-tests-ci-job.yml
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: windows
         displayNamePrefix: Win
@@ -158,8 +166,11 @@ stages:
         # The Windows images include a suitable .NET Framework runtime, so we
         # don't have to install one explicitly.
         vmImage: ADO-MMS22-SQL22
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml
-        pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
+          parameters:
+            saPassword: $(saPassword)
+        mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
         restoreArguments: $(commonArguments)
@@ -173,7 +184,7 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on macOS.
 
-    - template: ../jobs/stress-tests-ci-job.yml
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: macos
         displayNamePrefix: macOS
@@ -181,8 +192,11 @@ stages:
         # generic one from Azure Pipelines.
         poolName: Azure Pipelines
         vmImage: macos-latest
-        sqlSetupStep: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml
-        pipelineArtifactName: ${{ parameters.pipelineArtifactName }}
+        sqlSetupStep:
+          template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
+          parameters:
+            saPassword: $(saPassword)
+        mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         solution: $(solution)
         testProject: $(testProject)
         restoreArguments: $(commonArguments)

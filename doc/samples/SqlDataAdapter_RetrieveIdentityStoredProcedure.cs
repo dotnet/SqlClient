@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace SqlDataAdapter_RetrieveIdentityStoredProcedure;
+
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 

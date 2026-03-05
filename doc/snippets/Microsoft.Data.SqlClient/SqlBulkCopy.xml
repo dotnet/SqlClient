@@ -235,6 +235,35 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 ]]></format>
       </example>
     </Close>
+    <ClearCachedMetadata>
+      <summary>
+        Clears the cached destination table metadata when using the
+        <see cref="F:Microsoft.Data.SqlClient.SqlBulkCopyOptions.CacheMetadata" />
+        option.
+      </summary>
+      <remarks>
+        <para>
+          Call this method when you know the destination table schema
+          has changed and you want to force the next
+          <c>WriteToServer</c> operation to refresh the metadata
+          from the server.
+        </para>
+        <para>
+          The cache is automatically invalidated when the
+          <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" />
+          property is changed to a different table name.
+        </para>
+        <para>
+          The cache is not automatically invalidated when the
+          connection context changes. Call this method if the
+          underlying
+          <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
+          changes database (for example, via
+          <see cref="M:System.Data.Common.DbConnection.ChangeDatabase(System.String)" />)
+          or reconnects to a different server due to failover.
+        </para>
+      </remarks>
+    </ClearCachedMetadata>
     <EnableStreaming>
       <summary>
         Enables or disables a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object to stream data from an <see cref="T:System.Data.IDataReader" /> object

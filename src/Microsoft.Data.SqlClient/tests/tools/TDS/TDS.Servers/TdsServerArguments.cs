@@ -28,6 +28,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Log to which send TDS conversation
         /// </summary>
+        /// TODO: change this to expect ITestOutputHelper?
         public TextWriter Log { get; set; } = null;
 
         /// <summary>

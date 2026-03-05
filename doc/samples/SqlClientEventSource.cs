@@ -1,4 +1,6 @@
-﻿// <Snippet1>
+﻿namespace SqlClientEventSource;
+
+// <Snippet1>
 using System;
 using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient;

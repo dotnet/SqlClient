@@ -1,0 +1,30 @@
+﻿<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationToken">
+    <SqlAuthenticationToken>
+      <summary>Represents an authentication token.</summary>
+    </SqlAuthenticationToken>
+    <ctor>
+      <summary>
+        Construct with values for all properties.
+      </summary>
+      <param name="accessToken">The token string.</param>
+      <param name="expiresOn">The token expiration time.</param>
+      <throws cref="SqlAuthenticationProviderException">
+        <paramref name="accessToken"/> is null or empty.
+      </throws>
+    </ctor>
+    <AccessToken>
+      <summary>Gets the token string.</summary>
+      <value>The token string.</value>
+    </AccessToken>
+    <ExpiresOn>
+      <summary>Gets the token expiration time.</summary>
+      <value>The token expiration time.</value>
+    </ExpiresOn>
+  </members>
+</docs>

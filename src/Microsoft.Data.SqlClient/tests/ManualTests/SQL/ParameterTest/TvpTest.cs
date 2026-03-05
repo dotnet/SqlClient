@@ -42,16 +42,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // data value and server consts
         private readonly string _connStr;
 
-        // Synapse: The statement failed. Column 'blob' has a data type that cannot participate in a columnstore index.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void TestMain()
-        {
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US"); // To keep things consistent since we output dates as strings
-
-            // This test is additionally affected by #26, where a Cancel throws SqlException instead of InvalidOperationException on Linux.
-            Assert.True(RunTestCoreAndCompareWithBaseline());
-        }
-
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public async Task TestPacketNumberWraparound()
         {
@@ -193,123 +183,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _connStr = DataTestUtility.TCPConnectionString;
         }
 
-        private void RunTest()
-        {
-            Console.WriteLine("Starting test \'TvpTest\'");
-            StreamInputParam.Run(_connStr);
-            ColumnBoundariesTest();
-            QueryHintsTest();
-            SqlVariantParam.SendAllSqlTypesInsideVariant(_connStr);
-            DateTimeVariantTest.TestAllDateTimeWithDataTypeAndVariant(_connStr);
-            OutputParameter.Run(_connStr);
-        }
-
-        private bool RunTestCoreAndCompareWithBaseline()
-        {
-            string outputPath = "SqlParameterTest.out";
-            string baselinePath;
-#if DEBUG
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "SqlParameterTest_DebugMode.bsl";
-            }
-            else
-            {
-                baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
-            }
-#else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "SqlParameterTest_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "SqlParameterTest_ReleaseMode_Azure.bsl";
-            }
-#endif
-
-            var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
-            var swriter = new StreamWriter(fstream, Encoding.UTF8);
-            // Convert all string writes of '\n' to '\r\n' so output files can be 'text' not 'binary'
-            var twriter = new CarriageReturnLineFeedReplacer(swriter);
-            Console.SetOut(twriter); // "redirect" Console.Out
-
-            // Run Test
-            RunTest();
-
-            Console.Out.Flush();
-            Console.Out.Dispose();
-
-            // Recover the standard output stream
-            StreamWriter standardOutput = new(Console.OpenStandardOutput());
-            standardOutput.AutoFlush = true;
-            Console.SetOut(standardOutput);
-
-            // Compare output file
-            var comparisonResult = FindDiffFromBaseline(baselinePath, outputPath);
-
-            if (string.IsNullOrEmpty(comparisonResult))
-            {
-                return true;
-            }
-
-            Console.WriteLine("Test Failed!");
-            Console.WriteLine("Please compare baseline : {0} with output :{1}", Path.GetFullPath(baselinePath), Path.GetFullPath(outputPath));
-            Console.WriteLine("Comparison Results : ");
-            Console.WriteLine(comparisonResult);
-            return false;
-        }
-
-        private string FindDiffFromBaseline(string baselinePath, string outputPath)
-        {
-            var expectedLines = File.ReadAllLines(baselinePath);
-            var outputLines = File.ReadAllLines(outputPath);
-
-            var comparisonSb = new StringBuilder();
-
-            // Start compare results
-            var expectedLength = expectedLines.Length;
-            var outputLength = outputLines.Length;
-            var findDiffLength = Math.Min(expectedLength, outputLength);
-
-            // Find diff for each lines
-            for (var lineNo = 0; lineNo < findDiffLength; lineNo++)
-            {
-                if (!expectedLines[lineNo].Equals(outputLines[lineNo]))
-                {
-                    comparisonSb.AppendFormat("** DIFF at line {0} \n", lineNo);
-                    comparisonSb.AppendFormat("A : {0} \n", outputLines[lineNo]);
-                    comparisonSb.AppendFormat("E : {0} \n", expectedLines[lineNo]);
-                }
-            }
-
-            var startIndex = findDiffLength - 1;
-            if (startIndex < 0)
-            {
-                startIndex = 0;
-            }
-
-            if (findDiffLength < expectedLength)
-            {
-                comparisonSb.AppendFormat("** MISSING \n");
-                for (var lineNo = startIndex; lineNo < expectedLength; lineNo++)
-                {
-                    comparisonSb.AppendFormat("{0} : {1}", lineNo, expectedLines[lineNo]);
-                }
-            }
-            if (findDiffLength < outputLength)
-            {
-                comparisonSb.AppendFormat("** EXTRA \n");
-                for (var lineNo = startIndex; lineNo < outputLength; lineNo++)
-                {
-                    comparisonSb.AppendFormat("{0} : {1}", lineNo, outputLines[lineNo]);
-                }
-            }
-
-            return comparisonSb.ToString();
-        }
-
-        private sealed class CarriageReturnLineFeedReplacer : TextWriter
+        internal sealed class CarriageReturnLineFeedReplacer : TextWriter
         {
             private TextWriter _output;
             private int _lineFeedCount;
@@ -371,7 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region Main test methods
-        private void ColumnBoundariesTest()
+        internal void ColumnBoundariesTest()
         {
             _ = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
                         s_boundariesTestKeys);
@@ -464,7 +338,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void QueryHintsTest()
+        internal void QueryHintsTest()
         {
             using SqlConnection conn = new(_connStr);
             conn.Open();

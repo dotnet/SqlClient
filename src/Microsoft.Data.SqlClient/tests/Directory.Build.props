@@ -11,7 +11,6 @@
     <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
   </PropertyGroup>
 
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
@@ -36,4 +35,16 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+
+  <!-- Copy test utilities to output folder -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)tools\Microsoft.Data.SqlClient.TestUtilities\CodeCoverage.runsettings">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>CodeCoverage.runsettings</Link>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>xunit.runner.json</Link>
+    </None>
+  </ItemGroup>
 </Project>

@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
             if (appContextSwitches != null)
             {
-                ApplySwitchValues(appContextSwitches.Value?.Split('=', ';'));
+                ApplySwitchValues(appContextSwitches.Value?.Trim(';')?.Split('=', ';'));
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Exit point.", TypeName, methodName);
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
             if (switches == null || switches.Length == 0 || switches.Length % 2 == 1)
             { return false; }
 
-            for (int i = 0; i < switches.Length / 2; i++)
+            for (int i = 0; i < switches.Length; i += 2)
             {
                 try
                 {

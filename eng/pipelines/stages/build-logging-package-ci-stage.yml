@@ -1,0 +1,95 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Logging package and publishes the resulting NuGet
+# packages as pipeline artifacts.
+#
+# The NuGet packages have the following properties:
+#
+#   Name:     Microsoft.Data.SqlClient.Extensions.Logging
+#   Version:  <loggingPackageVersion> (from parameter)
+#
+# The following NuGet packages are published:
+#
+#   Microsoft.Data.SqlClient.Extensions.Logging.<version>.nupkg
+#   Microsoft.Data.SqlClient.Extensions.Logging.<version>.snupkg (symbols)
+#
+# The packages are published to pipeline artifacts with the name specified by
+# the loggingArtifactsName parameter.
+#
+# This template defines a stage named 'build_logging_package_stage' that
+# can be depended on by downstream stages.
+
+parameters:
+
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
+
+  # The name of the pipeline artifacts to publish.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The assembly file version to stamp into the DLLs.
+  - name: loggingAssemblyFileVersion
+    type: string
+
+  # The version to apply to the NuGet package and DLLs.
+  - name: loggingPackageVersion
+    type: string
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+
+  - stage: build_logging_package_stage
+    displayName: Build Logging Package
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
+
+    jobs:
+
+      # Create and publish the NuGet package.
+      # Note: No test jobs because the Logging project does not have a test
+      # project yet.  When a test project is added, test jobs should be added
+      # here (mirroring the Abstractions stage pattern) and the pack job should
+      # depend on them.
+
+      - template: /eng/pipelines/jobs/pack-logging-package-ci-job.yml@self
+        parameters:
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingAssemblyFileVersion: ${{ parameters.loggingAssemblyFileVersion }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

@@ -9,6 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
+    <readme>README.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
 
@@ -25,13 +26,13 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <tags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</tags>
     <dependencies>
       <group targetFramework="net462">
-        <dependency id="Microsoft.Data.SqlClient" version="(6.2,7.1)" />
+        <dependency id="Microsoft.Data.SqlClient" version="$MdsPackageVersion$" />
         <dependency id="Azure.Core" version="1.49.0" />
         <dependency id="Azure.Security.KeyVault.Keys" version="4.8.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
       </group>
       <group targetFramework="net8.0">
-        <dependency id="Microsoft.Data.SqlClient" version="(6.2,7.1)" />
+        <dependency id="Microsoft.Data.SqlClient" version="$MdsPackageVersion$" />
         <dependency id="Azure.Core" version="1.49.0" />
         <dependency id="Azure.Security.KeyVault.Keys" version="4.8.0" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
@@ -44,6 +45,12 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
   </metadata>
   <files>
     <file src="..\..\icons\dotnet.png" target="" />
+    <file src="../../../src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/PackageReadme.md" target="README.md" />
+
+    <!--
+      We require the $ReferenceType$ property to be supplied on the nuget pack
+      command line to indicate where the DLLs are.
+    -->
 
     <!--  NetFx Files  -->
     <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net462\" exclude="" />

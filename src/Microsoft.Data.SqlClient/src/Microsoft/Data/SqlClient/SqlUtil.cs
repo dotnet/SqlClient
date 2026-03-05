@@ -18,11 +18,7 @@ using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 
-#if NETFRAMEWORK
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using Interop.Windows.Kernel32;
-#else
+#if NET
 using System.Net.Sockets;
 #endif
 
@@ -1181,6 +1177,15 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
+            exc._doNotReconnect = true;
+            return exc;
+        }
+
+        internal static Exception ROR_InvalidEnhancedRoutingInfo(SqlConnectionInternal internalConnection)
+        {
+            SqlErrorCollection errors = new SqlErrorCollection();
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidEnhancedRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;

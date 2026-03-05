@@ -11,10 +11,10 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project is structured to support both .NET Framework and .NET Core, with platform-specific implementations in `netfx/` and `netcore/` directories.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj` that multi-targets `net462`, `net8.0`, and `net9.0`. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
 The project includes:
-- **Public APIs**: Defined in `ref/` directories for both .NET Framework and .NET Core.
-- **Implementations**: Actual code in `src/` directories for both platforms.
+- **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
+- **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
   - **Unit Tests**: Located in `tests/UnitTests/` directory, which includes tests for individual components and methods.
   - **Functional Tests**: Located in `tests/FunctionalTests/` directory, which includes tests for various features and functionalities that can be run without a SQL Server instance.
@@ -92,13 +92,15 @@ When a new issue is created, follow these steps:
     - If the issue is a feature request, review the proposal and assess its feasibility.
     - If the issue is a task, follow the instructions provided in the issue description.
     - If the issue is an epic, break it down into smaller tasks or bugs and create sub-issues as needed.
-- Cross-reference issue descriptions with code in `src/` folders, especially in `netfx/src/` and `netcore/src/`.
+- Cross-reference issue descriptions with code in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to the legacy `netfx/src/` or `netcore/src/` directories.
 - If public APIs are changed, update corresponding `ref/` projects.
 - Add or update tests in `tests/` to validate the fix.
 
 ### 🧪 Writing Tests
 - For every bug fix, ensure there are unit tests and manual (integration) tests that cover the scenario.
 - For new features, write tests that validate the functionality.
+- Follow a test-driven approach: write failing tests before implementing fixes.
+- **Cover both sync and async code paths** where the API exposes both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async implementations often differ internally.
 - Use the existing test framework in the `tests/` directory.
 - Follow the naming conventions and structure of existing tests.
 - Ensure tests are comprehensive and cover edge cases.
@@ -123,12 +125,14 @@ When a new issue is created, follow these steps:
 - Add a comment summarizing the fix and referencing the PR 
 
 ### ⚙️ Automating Workflows
-- Auto-label PRs based on folder paths (e.g., changes in `netcore/src` → `area-netcore`) and whether they add new public APIs or introduce a breaking change.
-- Suggest changelog entries for fixes in `CHANGELOG.md`
+- Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
+- Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
 
 ## 🧠 Contextual Awareness
-- Always check for platform-specific differences between `netfx` and `netcore`
+- All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
+- Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.
+- Check for platform-specific differences using file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) and conditional compilation (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`).
 - Respect API compatibility rules across .NET versions
 - Do not introduce breaking changes without proper justification and documentation
 - Use the `doc/` directory for any new documentation or updates to existing documentation
@@ -138,7 +142,7 @@ When a new issue is created, follow these steps:
 
 ## Constraints
 - Do not modify the `CODEOWNERS` file directly.
-- Do not modify the `CHANGELOG.md` file directly.
+- Do not modify `CHANGELOG.md` unless executing a release workflow (see `release-notes` prompt).
 - Do not close issues without a fix or without providing a clear reason.
 
 ## 📝 Notes

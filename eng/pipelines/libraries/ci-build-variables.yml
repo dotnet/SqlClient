@@ -4,20 +4,76 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This file is only included in PR and CI pipelines for the Abstractions, AKV,
+# Azure, Logging, and MDS projects.
+
 variables:
-  - group: 'ADO Build properties'
-  - group: 'ADO CI Packaging'
-  - group: 'ADO Test Configuration Properties'
-  
-  - name: buildNumber
-    value: '$(Build.BuildNumber)'
-  - name: SQLTarget
-    value: 'localhost'
-  - name: NugetPackageVersion
-    value: $(Major).$(Minor)$(Patch)-pull.1$(buildnumber)
-  - name: skipComponentGovernanceDetection
-    value: true
+  - group: ADO Build properties
+  - group: ADO Test Configuration Properties
+
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
+  # must be a positive 16-bit integer less than 65535.  Simply concatenating
+  # both parts of $(Build.BuildNumber) could produce values larger than 65534,
+  # so we must omit the second part entirely.  Unfortunately, this may result
+  # in multiple subsequent pipline builds using the same C# assembly versions.
+  # The package versions will not be affected and will show the complete
+  # $(Build.BuildNumber) values.
+  - name: assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+
+  # Abstractions library assembly file version
+  - name: abstractionsAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # Abstractions library NuGet package version
+  - name: abstractionsPackageVersion
+    value: 1.0.0.$(Build.BuildNumber)-ci
+
+  # AKV provider assembly file version
+  - name: akvAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # AKV provider NuGet package version
+  - name: akvPackageVersion
+    value: 7.0.0.$(Build.BuildNumber)-ci
+
+  # Azure library assembly file version
+  - name: azureAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # Azure library NuGet package version
+  - name: azurePackageVersion
+    value: 1.0.0.$(Build.BuildNumber)-ci
+
+  # Logging library assembly file version
+  - name: loggingAssemblyFileVersion
+    value: 1.0.0.$(assemblyBuildNumber)
+
+  # Logging library NuGet package version
+  - name: loggingPackageVersion
+    value: 1.0.0.$(Build.BuildNumber)-ci
+
+  # MDS library assembly file version
+  - name: mdsAssemblyFileVersion
+    value: 7.0.0.$(assemblyBuildNumber)
+
+  # MDS library NuGet package version
+  - name: mdsPackageVersion
+    value: 7.0.0.$(Build.BuildNumber)-ci
+
+  # Output path for built NuGet packages
+  - name: packagePath
+    value: $(Build.SourcesDirectory)/packages
+
+  # Disable codesign validation injection for CI builds
   - name: runCodesignValidationInjection
     value: false
-  - name: packagePath
-    value: '$(Build.SourcesDirectory)/packages'
+
+  # Skip component governance detection for CI builds
+  - name: skipComponentGovernanceDetection
+    value: true
+
+  # SQL Server target host for testing
+  - name: SQLTarget
+    value: localhost
