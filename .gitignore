@@ -367,5 +367,8 @@ MigrationBackup/
 # Config Json file
 **/config.json
 
+# Generated Milestone PR metadata files
+.milestone-prs/
+
 # MDS "Not Supported" GenAPI code
 **/notsupported/*.cs

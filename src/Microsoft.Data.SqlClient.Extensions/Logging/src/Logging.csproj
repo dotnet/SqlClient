@@ -82,11 +82,17 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <Authors>Microsoft Corporation</Authors>
+    <Title>Microsoft.Data.SqlClient.Extensions.Logging</Title>
+    <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing and diagnostics.</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient extensions logging</PackageTags>
+    <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIcon>dotnet.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

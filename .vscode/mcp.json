@@ -36,6 +36,15 @@
 				"@azure-devops/mcp",
 				"SqlClientDrivers"
 			]
+		},
+		"ado-devdiv": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"-y",
+				"@azure-devops/mcp",
+				"devdiv"
+			]
 		}
 	}
 }
