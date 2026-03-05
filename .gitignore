@@ -65,7 +65,6 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
-output/
 
 # StyleCop
 StyleCopReport.xml
@@ -198,6 +197,10 @@ PublishScripts/
 # Most of the packages folder can be ignored.
 **/[Pp]ackages/*
 !**/[Pp]ackages/.gitkeep
+
+# Most of the output folder can be ignored.
+**/[Oo]utput/*
+!**/[Oo]utput/.gitkeep
 
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
