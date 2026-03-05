@@ -60,14 +60,14 @@ namespace Microsoft.Data.SqlClient.Server
                 if (InstanceDetails.Count > 0)
                 {
                     dataRow = dataTable.NewRow();
-                    dataRow[0] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.ServerNameCol) == true ?
-                                 InstanceDetails[SqlDataSourceEnumeratorUtil.ServerNameCol] : string.Empty;
-                    dataRow[1] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.InstanceNameCol) == true ?
-                                 InstanceDetails[SqlDataSourceEnumeratorUtil.InstanceNameCol] : string.Empty;
-                    dataRow[2] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.IsClusteredCol) == true ?
-                                 InstanceDetails[SqlDataSourceEnumeratorUtil.IsClusteredCol] : string.Empty;
-                    dataRow[3] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.VersionNameCol) == true ?
-                                 InstanceDetails[SqlDataSourceEnumeratorUtil.VersionNameCol] : string.Empty;
+                    dataRow[0] = InstanceDetails.TryGetValue(SqlDataSourceEnumeratorUtil.ServerNameCol, out string serverName) ?
+                                 serverName : string.Empty;
+                    dataRow[1] = InstanceDetails.TryGetValue(SqlDataSourceEnumeratorUtil.InstanceNameCol, out string instanceName) ?
+                                 instanceName : string.Empty;
+                    dataRow[2] = InstanceDetails.TryGetValue(SqlDataSourceEnumeratorUtil.IsClusteredCol, out string isClustered) ?
+                                 isClustered : string.Empty;
+                    dataRow[3] = InstanceDetails.TryGetValue(SqlDataSourceEnumeratorUtil.VersionNameCol, out string versionName) ?
+                                 versionName : string.Empty;
 
                     dataTable.Rows.Add(dataRow);
                 }
