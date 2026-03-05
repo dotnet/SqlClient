@@ -15,11 +15,7 @@
   </ItemGroup>
 
   <!-- Strong name signing ============================================= -->
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
-  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+  <!-- Strong naming is being done in Directory.Build.props -->
   <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">

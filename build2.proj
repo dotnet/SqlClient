@@ -168,10 +168,15 @@
 	<!-- BuildMds: Builds all binaries for MDS -->
 	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows;BuildMdsRef;BuildMdsNotSupported" />
 
+  <!--
+    BuildMdsNotSupportd: Builds a version of the MDS assemblies that always throws
+    PlatformNotSupportedException. It generates the source for this using GenAPI which is built as
+    the first step of this target.
+  -->
   <Target Name="BuildMdsNotSupported">
     <PropertyGroup>
       <DotNetCommand>
-        "$(DotNetPath)dotnet" build "$(GenApiPath)/Microsoft.DotNet.GenAPI.csproj"
+        "$(DotNetPath)dotnet" build "$(GenApiProjectPath)"
           -p:Configuration=$(Configuration)
       </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -292,6 +297,7 @@
         $(DotnetPath)dotnet test "$(MdsManualTestProjectPath)"
           -p:Configuration=$(Configuration)
           $(TestBlameArgument)
+          $(TestCollectArgument)
           $(TestFiltersArgument)
           $(TestFrameworkArgument)
           $(TestPackageBuildArgument)
