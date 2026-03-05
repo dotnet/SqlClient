@@ -123,201 +123,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandType = CommandType.StoredProcedure;
                 SqlParameter param = cmd.Parameters.Add("@tvp", SqlDbType.Structured);
 
-                SqlMetaData[] columnMetadata;
-                List<SqlDataRecord> rows = new();
-                SqlDataRecord record;
-
-                Console.WriteLine("------- Sort order + uniqueness #1: simple -------");
-                columnMetadata = new SqlMetaData[] {
-                            new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 0),
-                            new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 1),
-                            new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
-                            new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
-                        };
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
-                rows.Add(record);
-
-                param.Value = rows;
-                using (SqlDataReader rdr = cmd.ExecuteReader())
-                {
-                    WriteReader(rdr);
-                }
-                rows.Clear();
-
-                Console.WriteLine("------- Sort order + uniqueness #2: mixed order -------");
-                columnMetadata = new SqlMetaData[] {
-                            new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
-                            new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 0),
-                            new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
-                            new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 1),
-                        };
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                param.Value = rows;
-                using (SqlDataReader rdr = cmd.ExecuteReader())
-                {
-                    WriteReader(rdr);
-                }
-                rows.Clear();
-
-                Console.WriteLine("------- default column #1: outer subset -------");
-                columnMetadata = new SqlMetaData[] {
-                            new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.NVarChar, 40, false, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.DateTime, false, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
-                        };
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                param.Value = rows;
-                using (SqlDataReader rdr = cmd.ExecuteReader())
-                {
-                    WriteReader(rdr);
-                }
-                rows.Clear();
-
-                Console.WriteLine("------- default column #1: middle subset -------");
-                columnMetadata = new SqlMetaData[] {
-                            new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
-                        };
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                param.Value = rows;
-                using (SqlDataReader rdr = cmd.ExecuteReader())
-                {
-                    WriteReader(rdr);
-                }
-                rows.Clear();
-
-                Console.WriteLine("------- default column #1: all -------");
-                columnMetadata = new SqlMetaData[] {
-                            new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
-                            new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
-                        };
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                rows.Add(record);
-
-                record = new SqlDataRecord(columnMetadata);
-                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                rows.Add(record);
-
-                param.Value = rows;
-                using (SqlDataReader rdr = cmd.ExecuteReader())
-                {
-                    WriteReader(rdr);
-                }
-                rows.Clear();
-
+                SortOrderSimple(cmd, param);
+                SortOrderMixed(cmd, param);
+                DefaultColumnOuterSubset(cmd, param);
+                DefaultColumnMiddleSubset(cmd, param);
+                DefaultColumnAll(cmd, param);
             }
             catch (Exception e)
             {
@@ -327,6 +137,232 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 SqlCommand cmd = new(dropSql, conn);
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static void SortOrderSimple(SqlCommand cmd, SqlParameter param)
+        {
+            List<SqlDataRecord> rows = new();
+
+            Console.WriteLine("------- Sort order + uniqueness #1: simple -------");
+            SqlMetaData[] columnMetadata = new SqlMetaData[]
+            {
+                new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 0),
+                new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 1),
+                new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
+                new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
+            };
+
+            SqlDataRecord record;
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
+            rows.Add(record);
+
+            param.Value = rows;
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                WriteReader(rdr);
+            }
+        }
+
+        private static void SortOrderMixed(SqlCommand cmd, SqlParameter param)
+        {
+            List<SqlDataRecord> rows = new();
+
+            Console.WriteLine("------- Sort order + uniqueness #2: mixed order -------");
+            SqlMetaData[] columnMetadata = new SqlMetaData[]
+            {
+                new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
+                new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 0),
+                new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
+                new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 1),
+            };
+
+            SqlDataRecord record;
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            param.Value = rows;
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                WriteReader(rdr);
+            }
+        }
+
+        private static void DefaultColumnOuterSubset(SqlCommand cmd, SqlParameter param)
+        {
+            List<SqlDataRecord> rows = new();
+
+            Console.WriteLine("------- default column #1: outer subset -------");
+            SqlMetaData[] columnMetadata = new SqlMetaData[]
+            {
+                new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.NVarChar, 40, false, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.DateTime, false, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
+            };
+
+            SqlDataRecord record;
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            param.Value = rows;
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                WriteReader(rdr);
+            }
+        }
+
+        private static void DefaultColumnMiddleSubset(SqlCommand cmd, SqlParameter param)
+        {
+            List<SqlDataRecord> rows = new();
+
+            Console.WriteLine("------- default column #1: middle subset -------");
+            SqlMetaData[] columnMetadata = new SqlMetaData[]
+            {
+                new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
+            };
+
+            SqlDataRecord record;
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            param.Value = rows;
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                WriteReader(rdr);
+            }
+        }
+
+        private static void DefaultColumnAll(SqlCommand cmd, SqlParameter param)
+        {
+            List<SqlDataRecord> rows = new();
+
+            Console.WriteLine("------- default column #1: all -------");
+            SqlMetaData[] columnMetadata = new SqlMetaData[]
+            {
+                new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
+                new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
+            };
+
+            SqlDataRecord record;
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            rows.Add(record);
+
+            record = new SqlDataRecord(columnMetadata);
+            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+            rows.Add(record);
+
+            param.Value = rows;
+            using (SqlDataReader rdr = cmd.ExecuteReader())
+            {
+                WriteReader(rdr);
             }
         }
 
