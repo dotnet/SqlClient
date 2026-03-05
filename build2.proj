@@ -4,18 +4,19 @@
   <Import Project="src/Directory.Build.props" />
 
   <!-- Build Parameters ================================================ -->
-	<PropertyGroup>
-		<!--
-		  Configuration
-		  Applies to:     All targets
-		  Description:    Which build configuration to build
-		  Default value:  Debug
-		  Allowed values: Debug, Release
-		-->
-		<Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+  <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
+  <PropertyGroup>
+    <!--
+      Configuration
+      Applies to:     All targets
+      Description:    Which build configuration to build
+      Default value:  Debug
+      Allowed values: Debug, Release
+    -->
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
 
     <!--
-      DotnetPath
+      DotNetPath
       Applies to:    All targets
       Description:   Path to folder containing the `dotnet` binary. Override this if a specific
                      version (eg, x86) is required. Otherwise, this defaults to using the dotnet
@@ -24,13 +25,13 @@
       Default value: [blank]
       Example:       C:\x86\
     -->
-    <DotnetPath Condition="'$(DotnetPath)' == ''" />
+    <DotNetPath Condition="'$(DotNetPath)' == ''" />
 
     <!--
       PackageVersionAbstractions
       Applies to:     BuildMds, BuildMdsRef, BuildMdsUnix, BuildMdsWindows
                       TestMdsFunctional, TestMdsManual
-      Description:    Specifies what version of the Microsoft.Data.SqlCLient.Abstractions to use
+      Description:    Specifies what version of the Microsoft.Data.SqlClient.Abstractions to use
                       when compiling MDS. If not specified, the version defined in
                       Directory.Packages.props is used. This argument only has effect if the
                       ReferenceType argument is set to "Package".
@@ -45,8 +46,8 @@
     <!--
       PackageVersionLogging
       Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
-                      TestMdsFunctiona, TestMdsManual
-      Description:    Specifies what version of the Microsoft.Data.SqlCLient.Logging to use
+                      TestMdsFunctional, TestMdsManual
+      Description:    Specifies what version of the Microsoft.Data.SqlClient.Logging to use
                       when compiling MDS. If not specified, the version defined in
                       Directory.Packages.props is used. This argument only has effect if the
                       ReferenceType argument is set to "Package".
@@ -107,8 +108,7 @@
       Allowed values: (time_expression|0)
     -->
     <TestBlameTimeout Condition="'$(TestBlameTimeout)' == ''">10m</TestBlameTimeout>
-    <TestBlameTimeout Condition="'$(TestBlameTimeout)' == '0'" />
-    <TestBlameArgument Condition="'$(TestBlameTimeout)' != ''">
+    <TestBlameArgument Condition="'$(TestBlameTimeout)' != '0'">
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout $(TestBlameTimeout)
@@ -147,7 +147,7 @@
     <!--
       TestFramework
       Applies to:    Test* targets
-      Description:   Target framework moniker for the version of the .NET to use to execute the
+      Description:   Target framework moniker for the version of .NET to use to execute the
                      specified test target. If not specified, this defaults to running tests for
                      *all* framework versions supported for the project.
       Default value: [blank]
@@ -178,11 +178,11 @@
     -->
     <TestSet Condition="'$(TestSet)' == ''" />
     <TestSetArgument Condition="'$(TestSet)' != ''">-p:TestSet="$(TestSet)"</TestSetArgument>
-	</PropertyGroup>
+  </PropertyGroup>
 
   <!-- ================================================================= -->
-	<!-- Microsoft.Data.SqlClient Targets -->
-	<PropertyGroup>
+  <!-- Microsoft.Data.SqlClient Targets -->
+  <PropertyGroup>
     <!-- Root for MDS projects -->
     <MdsRoot>$(RepoRoot)src/Microsoft.Data.SqlClient/</MdsRoot>
 
@@ -198,14 +198,14 @@
     <MdsProjectPath>$(MdsRoot)src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
     <MdsRefProjectPath>$(MdsRoot)ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
     <MdsUnitTestProjectPath>$(MdsRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</MdsUnitTestProjectPath>
-	</PropertyGroup>
+  </PropertyGroup>
 
   <!-- Build MDS Targets =============================================== -->
-	<!-- BuildMds: Builds all binaries for MDS -->
-	<Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows;BuildMdsRef;BuildMdsNotSupported" />
+  <!-- BuildMds: Builds all binaries for MDS -->
+  <Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows;BuildMdsRef;BuildMdsNotSupported" />
 
   <!--
-    BuildMdsNotSupportd: Builds a version of the MDS assemblies that always throws
+    BuildMdsNotSupported: Builds a version of the MDS assemblies that always throws
     PlatformNotSupportedException. It generates the source for this using GenAPI which is built as
     the first step of this target.
   -->
@@ -213,14 +213,14 @@
     <PropertyGroup>
       <DotNetCommand>
         "$(DotNetPath)dotnet" build "$(GenApiProjectPath)"
-          -p:Configuration=$(Configuration)
+        -p:Configuration=$(Configuration)
       </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building GenAPI project via command: '$(DotnetCommand)'"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Building GenAPI project via command: '$(DotNetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
 
     <!-- Get the path to the GenAPI artifact -->
     <ItemGroup>
@@ -230,74 +230,74 @@
     <PropertyGroup>
       <DotNetCommand>
         "$(DotNetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
-          -p:Configuration=$(Configuration)
-          -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
+        -p:Configuration=$(Configuration)
+        -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
       </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building not supported binaries project via command: '$(DotnetCommand)'"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Building not supported binaries project via command: '$(DotNetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
   </Target>
 
   <!-- BuildMdsRef: Builds the ref binaries project for MDS, which is OS-agnostic -->
   <Target Name="BuildMdsRef">
     <PropertyGroup>
-      <DotnetCommand>
-        $(DotnetPath)dotnet build $(MdsRefProjectPath)
-          -p:Configuration=$(Configuration)
-          $(ReferenceTypeArgument)
-          $(PackageVersionAbstractionsArgument)
-      </DotnetCommand>
+      <DotNetCommand>
+        $(DotNetPath)dotnet build $(MdsRefProjectPath)
+        -p:Configuration=$(Configuration)
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+      </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building MDS ref binaries via command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Building MDS ref binaries via command: $(DotNetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
   </Target>
 
-	<!-- BuildMdsUnix: Builds all unix-specific MDS binaries -->
-	<Target Name="BuildMdsUnix">
-		<PropertyGroup>
-			<DotnetCommand>
-				$(DotnetPath)dotnet build $(MdsProjectPath)
-				  -p:Configuration=$(Configuration)
-				  -p:TargetOs=Unix
+  <!-- BuildMdsUnix: Builds all unix-specific MDS binaries -->
+  <Target Name="BuildMdsUnix">
+    <PropertyGroup>
+      <DotNetCommand>
+        $(DotNetPath)dotnet build $(MdsProjectPath)
+        -p:Configuration=$(Configuration)
+        -p:TargetOs=Unix
 
-          <!-- Reference Type Arguments -->
-          $(ReferenceTypeArgument)
-          $(PackageVersionAbstractionsArgument)
-          $(PackageVersionLoggingArgument)
-			</DotnetCommand>
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+      </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-		</PropertyGroup>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
+    </PropertyGroup>
 
-		<Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
-		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-	</Target>
+    <Message Text=">>> Building MDS for Unix via command: $(DotNetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
+  </Target>
 
-	<!-- BuildMdsWindows: Builds all windows-specific MDS binaries -->
-	<Target Name="BuildMdsWindows">
-		<PropertyGroup>
-			<DotnetCommand>
-				$(DotnetPath)dotnet build $(MdsProjectPath)
-				  -p:Configuration=$(Configuration)
-				  -p:TargetOs=Windows_NT
+  <!-- BuildMdsWindows: Builds all windows-specific MDS binaries -->
+  <Target Name="BuildMdsWindows">
+    <PropertyGroup>
+      <DotNetCommand>
+        $(DotNetPath)dotnet build $(MdsProjectPath)
+        -p:Configuration=$(Configuration)
+        -p:TargetOs=Windows_NT
 
-          <!-- Reference Type Arguments -->
-          $(ReferenceTypeArgument)
-          $(PackageVersionAbstractionsArgument)
-          $(PackageVersionLoggingArgument)
-			</DotnetCommand>
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+      </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-		</PropertyGroup>
-		<Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)" />
-		<Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-	</Target>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Building MDS for Windows via command: $(DotNetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
+  </Target>
 
   <!-- Pack MDS Target ===================================================== -->
   <!-- PackMds: Packages MDS binaries into a NuGet package -->
@@ -316,27 +316,27 @@
       <LogFilePrefix>MdsFunctional-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
-      <DotnetCommand>
-        $(DotnetPath)dotnet test "$(MdsFunctionalTestProjectPath)"
-          -p:Configuration=$(Configuration)
-          $(TestBlameArgument)
-          $(TestCollectArgument)
-          $(TestFiltersArgument)
-          $(TestFrameworkArgument)
-          --results-directory "$(TestResultsFolderPath)"
-          --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      <DotNetCommand>
+        $(DotNetPath)dotnet test "$(MdsFunctionalTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCollectArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
         $(PackageVersionMdsArgument)
-      </DotnetCommand>
+      </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running functional tests for MDS via command: $(DotnetCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Running functional tests for MDS via command: $(DotNetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
   </Target>
 
   <!-- TestMdsManual: Runs manual tests for MDS -->
@@ -346,28 +346,28 @@
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
 
-      <DotnetCommand>
-        $(DotnetPath)dotnet test "$(MdsManualTestProjectPath)"
-          -p:Configuration=$(Configuration)
-          $(TestBlameArgument)
-          $(TestCollectArgument)
-          $(TestFiltersArgument)
-          $(TestFrameworkArgument)
-          $(TestSetArgument)
-          --results-directory "$(TestResultsFolderPath)"
-          --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      <DotNetCommand>
+        $(DotNetPath)dotnet test "$(MdsManualTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCollectArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        $(TestSetArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
-          <!-- Reference Type Arguments -->
-          $(ReferenceTypeArgument)
-          $(PackageVersionAbstractionsArgument)
-          $(PackageVersionLoggingArgument)
-          $(PackageVersionMdsArgument)
-      </DotnetCommand>
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionMdsArgument)
+      </DotNetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running manual tests for MDS via command: $(DotnetCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Running manual tests for MDS via command: $(DotNetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
   </Target>
 
   <!-- TestMdsUnit: Runs unit tests for MDS -->
@@ -380,21 +380,21 @@
       <LogFilePrefix>MdsUnit-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
-      <DotnetCommand>
-        $(DotnetPath)dotnet test "$(MdsUnitTestProjectPath)"
-          -p:Configuration=$(Configuration)
-          $(TestBlameArgument)
-          $(TestCollectArgument)
-          $(TestFiltersArgument)
-          $(TestFrameworkArgument)
-          --results-directory "$(TestResultsFolderPath)"
-          --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
-      </DotnetCommand>
+      <DotNetCommand>
+        $(DotNetPath)dotnet test "$(MdsUnitTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCollectArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotNetCommand>
 
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotNetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotNetCommand), "\s+", " "))</DotNetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running unit tests for MDS via command: $(DotnetCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Running unit tests for MDS via command: $(DotNetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotNetCommand)" />
   </Target>
 </Project>

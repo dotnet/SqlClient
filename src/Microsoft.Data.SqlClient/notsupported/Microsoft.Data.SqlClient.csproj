@@ -34,8 +34,11 @@
     generates. Unless we want to manually call csc (and who wants to do that) we need a project.
 
     NOTE: If you are trying to build this from your IDE - YOU ARE DOING IT WRONG.
-    This project depends on the ref binaries and the GenAPI project in a way that is not conducive
-    to building in a project. Build the not supported binaries in one command via build2.proj
+    This project can only be built after the GenAPI project has been built. Normally this would mean
+    adding a reference from this project to the GenAPI project. Although this is possible, it is
+    not a clean solution (due to reasons related to target frameworks). Thus, building this project
+    assumes the GenAPI project has already been built in a previous step. Instead, use the
+    following command in build2.proj to build the "not supported" binaries:
 
     > msbuild build2.proj /t:BuildMdsNotSupported
 
