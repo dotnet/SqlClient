@@ -19,132 +19,56 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// These tests run independently with their own baseline comparison.
     /// </summary>
     [Collection("ParameterBaselineTests")]
-    public class TvpQueryHintsTests
+    public sealed class TvpQueryHintsTests : IDisposable
     {
-        [Trait("Category", "flaky")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void TvpQueryHintsTest()
+        private readonly SqlConnection _conn;
+        private readonly SqlCommand _cmd;
+        private readonly SqlParameter _param;
+        private readonly string _procName;
+        private readonly string _typeName;
+
+        public TvpQueryHintsTests()
         {
-            Assert.True(RunTestAndCompareWithBaseline());
-        }
-
-        private bool RunTestAndCompareWithBaseline()
-        {
-            CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            try
-            {
-            string outputPath = "TvpQueryHints.out";
-            string baselinePath;
-#if DEBUG
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "TvpQueryHints_DebugMode.bsl";
-            }
-            else
-            {
-                baselinePath = "TvpQueryHints_DebugMode_Azure.bsl";
-            }
-#else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "TvpQueryHints_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "TvpQueryHints_ReleaseMode_Azure.bsl";
-            }
-#endif
-
-            var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
-            var swriter = new StreamWriter(fstream, Encoding.UTF8);
-            var twriter = new TvpTest.CarriageReturnLineFeedReplacer(swriter);
-            Console.SetOut(twriter);
-
-            // Run Test
-            QueryHintsTest();
-
-            Console.Out.Flush();
-            Console.Out.Dispose();
-
-            // Recover the standard output stream
-            StreamWriter standardOutput = new(Console.OpenStandardOutput());
-            standardOutput.AutoFlush = true;
-            Console.SetOut(standardOutput);
-
-            // Compare output file
-            var comparisonResult = FindDiffFromBaseline(baselinePath, outputPath);
-
-            if (string.IsNullOrEmpty(comparisonResult))
-            {
-                return true;
-            }
-
-            Console.WriteLine("TvpQueryHintsTest Failed!");
-            Console.WriteLine("Please compare baseline: {0} with output: {1}", Path.GetFullPath(baselinePath), Path.GetFullPath(outputPath));
-            Console.WriteLine("Comparison Results:");
-            Console.WriteLine(comparisonResult);
-            return false;
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentCulture = previousCulture;
-            }
-        }
-
-        private void QueryHintsTest()
-        {
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
-            conn.Open();
-
             Guid randomizer = Guid.NewGuid();
-            string typeName = string.Format("dbo.[QHint_{0}]", randomizer);
-            string procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
+            _typeName = string.Format("dbo.[QHint_{0}]", randomizer);
+            _procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
             string createTypeSql = string.Format(
                     "CREATE TYPE {0} AS TABLE("
                         + " c1 Int DEFAULT -1,"
                         + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
                         + " c3 DateTime DEFAULT '1/1/2006',"
                         + " c4 Int DEFAULT -1)",
-                        typeName);
+                        _typeName);
             string createProcSql = string.Format(
-                    "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", procName, typeName);
-            string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", procName, typeName);
+                    "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", _procName, _typeName);
 
-            try
-            {
-                SqlCommand cmd = new(createTypeSql, conn);
-                cmd.ExecuteNonQuery();
+            _conn = new SqlConnection(DataTestUtility.TCPConnectionString);
+            _conn.Open();
 
-                cmd.CommandText = createProcSql;
-                cmd.ExecuteNonQuery();
+            _cmd = new SqlCommand(createTypeSql, _conn);
+            _cmd.ExecuteNonQuery();
 
-                cmd.CommandText = procName;
-                cmd.CommandType = CommandType.StoredProcedure;
-                SqlParameter param = cmd.Parameters.Add("@tvp", SqlDbType.Structured);
+            _cmd.CommandText = createProcSql;
+            _cmd.ExecuteNonQuery();
 
-                SortOrderSimple(cmd, param);
-                SortOrderMixed(cmd, param);
-                DefaultColumnOuterSubset(cmd, param);
-                DefaultColumnMiddleSubset(cmd, param);
-                DefaultColumnAll(cmd, param);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            finally
-            {
-                SqlCommand cmd = new(dropSql, conn);
-                cmd.ExecuteNonQuery();
-            }
+            _cmd.CommandText = _procName;
+            _cmd.CommandType = CommandType.StoredProcedure;
+            _param = _cmd.Parameters.Add("@tvp", SqlDbType.Structured);
         }
 
-        private static void SortOrderSimple(SqlCommand cmd, SqlParameter param)
+        public void Dispose()
+        {
+            string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", _procName, _typeName);
+            using SqlCommand cmd = new(dropSql, _conn);
+            cmd.ExecuteNonQuery();
+            _conn.Dispose();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void SortOrderSimple()
         {
             List<SqlDataRecord> rows = new();
 
-            Console.WriteLine("------- Sort order + uniqueness #1: simple -------");
             SqlMetaData[] columnMetadata = new SqlMetaData[]
             {
                 new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 0),
@@ -153,40 +77,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
             };
 
-            SqlDataRecord record;
+            AddRow(rows, columnMetadata, 0, "Z-value", DateTime.Parse("03/01/2000"), 5);
+            AddRow(rows, columnMetadata, 1, "Y-value", DateTime.Parse("02/01/2000"), 6);
+            AddRow(rows, columnMetadata, 1, "X-value", DateTime.Parse("01/01/2000"), 7);
+            AddRow(rows, columnMetadata, 1, "X-value", DateTime.Parse("04/01/2000"), 8);
+            AddRow(rows, columnMetadata, 1, "X-value", DateTime.Parse("04/01/2000"), 4);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
-            rows.Add(record);
+            _param.Value = rows;
+            List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
-            rows.Add(record);
-
-            param.Value = rows;
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                WriteReader(rdr);
-            }
+            Assert.Equal(2, results.Count);
+            Assert.Equal(0, results[0].C1);
+            Assert.Equal("Z-value", results[0].C2);
+            Assert.Equal(new DateTime(2000, 3, 1), results[0].C3);
+            Assert.Equal(5, results[0].C4);
+            Assert.Equal(1, results[1].C1);
+            Assert.Equal("X-value", results[1].C2);
+            Assert.Equal(new DateTime(2000, 1, 1), results[1].C3);
+            Assert.Equal(7, results[1].C4);
         }
 
-        private static void SortOrderMixed(SqlCommand cmd, SqlParameter param)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void SortOrderMixed()
         {
             List<SqlDataRecord> rows = new();
 
-            Console.WriteLine("------- Sort order + uniqueness #2: mixed order -------");
             SqlMetaData[] columnMetadata = new SqlMetaData[]
             {
                 new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
@@ -195,44 +110,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 1),
             };
 
-            SqlDataRecord record;
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            AddRow(rows, columnMetadata, 5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-            rows.Add(record);
+            _param.Value = rows;
+            List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            param.Value = rows;
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                WriteReader(rdr);
-            }
+            Assert.Equal(2, results.Count);
+            Assert.Equal(4, results[0].C1);
+            Assert.Equal("X-value", results[0].C2);
+            Assert.Equal(new DateTime(2000, 1, 1), results[0].C3);
+            Assert.Equal(3, results[0].C4);
+            Assert.Equal(5, results[1].C1);
+            Assert.Equal("X-value", results[1].C2);
+            Assert.Equal(new DateTime(2000, 3, 1), results[1].C3);
+            Assert.Equal(3, results[1].C4);
         }
 
-        private static void DefaultColumnOuterSubset(SqlCommand cmd, SqlParameter param)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void DefaultColumnOuterSubset()
         {
             List<SqlDataRecord> rows = new();
 
-            Console.WriteLine("------- default column #1: outer subset -------");
             SqlMetaData[] columnMetadata = new SqlMetaData[]
             {
                 new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
@@ -241,44 +144,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
             };
 
-            SqlDataRecord record;
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            AddRow(rows, columnMetadata, 5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-            rows.Add(record);
+            _param.Value = rows;
+            List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            param.Value = rows;
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                WriteReader(rdr);
-            }
+            Assert.Equal(2, results.Count);
+            Assert.Equal(-1, results[0].C1);
+            Assert.Equal("Y-value", results[0].C2);
+            Assert.Equal(new DateTime(2000, 1, 1), results[0].C3);
+            Assert.Equal(-1, results[0].C4);
+            Assert.Equal(-1, results[1].C1);
+            Assert.Equal("Z-value", results[1].C2);
+            Assert.Equal(new DateTime(2000, 1, 1), results[1].C3);
+            Assert.Equal(-1, results[1].C4);
         }
 
-        private static void DefaultColumnMiddleSubset(SqlCommand cmd, SqlParameter param)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void DefaultColumnMiddleSubset()
         {
             List<SqlDataRecord> rows = new();
 
-            Console.WriteLine("------- default column #1: middle subset -------");
             SqlMetaData[] columnMetadata = new SqlMetaData[]
             {
                 new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
@@ -287,44 +178,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
             };
 
-            SqlDataRecord record;
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            AddRow(rows, columnMetadata, 5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-            rows.Add(record);
+            _param.Value = rows;
+            List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            param.Value = rows;
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                WriteReader(rdr);
-            }
+            Assert.Equal(2, results.Count);
+            Assert.Equal(4, results[0].C1);
+            Assert.Equal("DEFUALT", results[0].C2);
+            Assert.Equal(new DateTime(2006, 1, 1), results[0].C3);
+            Assert.Equal(3, results[0].C4);
+            Assert.Equal(5, results[1].C1);
+            Assert.Equal("DEFUALT", results[1].C2);
+            Assert.Equal(new DateTime(2006, 1, 1), results[1].C3);
+            Assert.Equal(3, results[1].C4);
         }
 
-        private static void DefaultColumnAll(SqlCommand cmd, SqlParameter param)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void DefaultColumnAll()
         {
             List<SqlDataRecord> rows = new();
 
-            Console.WriteLine("------- default column #1: all -------");
             SqlMetaData[] columnMetadata = new SqlMetaData[]
             {
                 new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
@@ -333,59 +212,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
             };
 
-            SqlDataRecord record;
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+            AddRow(rows, columnMetadata, 6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+            AddRow(rows, columnMetadata, 6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+            AddRow(rows, columnMetadata, 5, "X-value", DateTime.Parse("03/01/2000"), 3);
+            AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-            rows.Add(record);
+            _param.Value = rows;
+            List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-            rows.Add(record);
-
-            record = new SqlDataRecord(columnMetadata);
-            record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-            rows.Add(record);
-
-            param.Value = rows;
-            using (SqlDataReader rdr = cmd.ExecuteReader())
-            {
-                WriteReader(rdr);
-            }
+            Assert.Equal(2, results.Count);
+            Assert.Equal(-1, results[0].C1);
+            Assert.Equal("DEFUALT", results[0].C2);
+            Assert.Equal(new DateTime(2006, 1, 1), results[0].C3);
+            Assert.Equal(-1, results[0].C4);
+            Assert.Equal(-1, results[1].C1);
+            Assert.Equal("DEFUALT", results[1].C2);
+            Assert.Equal(new DateTime(2006, 1, 1), results[1].C3);
+            Assert.Equal(-1, results[1].C4);
         }
 
-        private static void WriteReader(SqlDataReader rdr)
+        private static void AddRow(List<SqlDataRecord> rows, SqlMetaData[] metadata, params object[] values)
         {
-            int colCount = rdr.FieldCount;
-
-            do
-            {
-                Console.WriteLine("-------------");
-                while (rdr.Read())
-                {
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        Console.Write("{0}  ", DataTestUtility.GetValueString(rdr.GetValue(i)));
-                    }
-                    Console.WriteLine();
-                }
-                Console.WriteLine();
-                Console.WriteLine("-------------");
-            }
-            while (rdr.NextResult());
+            SqlDataRecord record = new(metadata);
+            record.SetValues(values);
+            rows.Add(record);
         }
+
+        private static List<QueryHintResult> ExecuteAndGetResults(SqlCommand cmd)
+        {
+            List<QueryHintResult> results = new();
+            using SqlDataReader rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+            {
+                results.Add(new QueryHintResult(
+                    rdr.GetInt32(0),
+                    rdr.GetString(1),
+                    rdr.GetDateTime(2),
+                    rdr.GetInt32(3)));
+            }
+            return results;
+        }
+
+        private record QueryHintResult(int C1, string C2, DateTime C3, int C4);
 
         private static string FindDiffFromBaseline(string baselinePath, string outputPath)
         {
