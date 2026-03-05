@@ -5,10 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
-using System.IO;
-using System.Text;
-using System.Threading;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
@@ -16,9 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
     /// Tests for TVP query hints (sort order, uniqueness, default columns).
-    /// These tests run independently with their own baseline comparison.
     /// </summary>
-    [Collection("ParameterBaselineTests")]
     public sealed class TvpQueryHintsTests : IDisposable
     {
         private readonly SqlConnection _conn;
@@ -67,6 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SortOrderSimple()
         {
+            // Arrange
             List<SqlDataRecord> rows = new();
 
             SqlMetaData[] columnMetadata = new SqlMetaData[]
@@ -84,8 +79,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AddRow(rows, columnMetadata, 1, "X-value", DateTime.Parse("04/01/2000"), 4);
 
             _param.Value = rows;
+
+            // Act
             List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
+            // Assert
             Assert.Equal(2, results.Count);
             Assert.Equal(0, results[0].C1);
             Assert.Equal("Z-value", results[0].C2);
@@ -100,6 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SortOrderMixed()
         {
+            // Arrange
             List<SqlDataRecord> rows = new();
 
             SqlMetaData[] columnMetadata = new SqlMetaData[]
@@ -118,8 +117,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
             _param.Value = rows;
+
+            // Act
             List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
+            // Assert
             Assert.Equal(2, results.Count);
             Assert.Equal(4, results[0].C1);
             Assert.Equal("X-value", results[0].C2);
@@ -134,6 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void DefaultColumnOuterSubset()
         {
+            // Arrange
             List<SqlDataRecord> rows = new();
 
             SqlMetaData[] columnMetadata = new SqlMetaData[]
@@ -152,8 +155,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
             _param.Value = rows;
+
+            // Act
             List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
+            // Assert
             Assert.Equal(2, results.Count);
             Assert.Equal(-1, results[0].C1);
             Assert.Equal("Y-value", results[0].C2);
@@ -168,6 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void DefaultColumnMiddleSubset()
         {
+            // Arrange
             List<SqlDataRecord> rows = new();
 
             SqlMetaData[] columnMetadata = new SqlMetaData[]
@@ -186,8 +193,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
             _param.Value = rows;
+
+            // Act
             List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
+            // Assert
             Assert.Equal(2, results.Count);
             Assert.Equal(4, results[0].C1);
             Assert.Equal("DEFUALT", results[0].C2);
@@ -202,6 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void DefaultColumnAll()
         {
+            // Arrange
             List<SqlDataRecord> rows = new();
 
             SqlMetaData[] columnMetadata = new SqlMetaData[]
@@ -220,8 +231,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AddRow(rows, columnMetadata, 4, "X-value", DateTime.Parse("01/01/2000"), 3);
 
             _param.Value = rows;
+
+            // Act
             List<QueryHintResult> results = ExecuteAndGetResults(_cmd);
 
+            // Assert
             Assert.Equal(2, results.Count);
             Assert.Equal(-1, results[0].C1);
             Assert.Equal("DEFUALT", results[0].C2);
@@ -255,53 +269,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return results;
         }
 
-        private record QueryHintResult(int C1, string C2, DateTime C3, int C4);
-
-        private static string FindDiffFromBaseline(string baselinePath, string outputPath)
+        private sealed class QueryHintResult
         {
-            var expectedLines = File.ReadAllLines(baselinePath);
-            var outputLines = File.ReadAllLines(outputPath);
+            public int C1 { get; }
+            public string C2 { get; }
+            public DateTime C3 { get; }
+            public int C4 { get; }
 
-            var comparisonSb = new StringBuilder();
-
-            var expectedLength = expectedLines.Length;
-            var outputLength = outputLines.Length;
-            var findDiffLength = Math.Min(expectedLength, outputLength);
-
-            for (var lineNo = 0; lineNo < findDiffLength; lineNo++)
+            public QueryHintResult(int c1, string c2, DateTime c3, int c4)
             {
-                if (!expectedLines[lineNo].Equals(outputLines[lineNo]))
-                {
-                    comparisonSb.AppendFormat("** DIFF at line {0} \n", lineNo);
-                    comparisonSb.AppendFormat("A : {0} \n", outputLines[lineNo]);
-                    comparisonSb.AppendFormat("E : {0} \n", expectedLines[lineNo]);
-                }
+                C1 = c1;
+                C2 = c2;
+                C3 = c3;
+                C4 = c4;
             }
-
-            var startIndex = findDiffLength - 1;
-            if (startIndex < 0)
-            {
-                startIndex = 0;
-            }
-
-            if (findDiffLength < expectedLength)
-            {
-                comparisonSb.AppendFormat("** MISSING \n");
-                for (var lineNo = startIndex; lineNo < expectedLength; lineNo++)
-                {
-                    comparisonSb.AppendFormat("{0} : {1}", lineNo, expectedLines[lineNo]);
-                }
-            }
-            if (findDiffLength < outputLength)
-            {
-                comparisonSb.AppendFormat("** EXTRA \n");
-                for (var lineNo = startIndex; lineNo < outputLength; lineNo++)
-                {
-                    comparisonSb.AppendFormat("{0} : {1}", lineNo, outputLines[lineNo]);
-                }
-            }
-
-            return comparisonSb.ToString();
         }
     }
 }
