@@ -5,4 +5,4 @@ The following `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
-| 2026-03-02 | 7.0.0-preview1 | [Release Notes](7.0.0-preview1.md) |
+| 2026-03-05 | 7.0.0-preview1.26064.3 | [Release Notes](7.0.0-preview1.md) |

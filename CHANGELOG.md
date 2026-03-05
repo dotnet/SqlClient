@@ -7,15 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Preview Release 7.0.0-preview4] - 2026-02-27
+## [Preview Release 7.0.0-preview4.26064.3] - 2026-03-05
 
 This update brings the below changes over the previous preview release:
 
 Also released as part of this milestone:
-- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0-preview1. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0-preview1.md).
-- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0-preview1. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0-preview1.md).
-- Released Microsoft.Data.SqlClient.Extensions.Logging 1.0.0-preview1. See [release notes](release-notes/Extensions/Logging/1.0/1.0.0-preview1.md).
-- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0-preview1. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0-preview1.26064.3. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0-preview1.26064.3. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Logging 1.0.0-preview1.26064.3. See [release notes](release-notes/Extensions/Logging/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0-preview1.26064.3. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0-preview1.md).
 
 ### Changed
 

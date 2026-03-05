@@ -5,4 +5,4 @@ The following `Microsoft.Data.SqlClient.Extensions.Azure`
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
-| 2026-03-02 | 1.0.0-preview1 | [Release Notes](1.0.0-preview1.md) |
+| 2026-03-05 | 1.0.0-preview1.26064.3 | [Release Notes](1.0.0-preview1.md) |
