@@ -27,8 +27,40 @@
     <DotnetPath Condition="'$(DotnetPath)' == ''" />
 
     <!--
-      MdsPackageVersion
-      Applies to:     TestMdsFunctional, TestMdsManual targets
+      PackageVersionAbstractions
+      Applies to:     BuildMds, BuildMdsRef, BuildMdsUnix, BuildMdsWindows
+                      TestMdsFunctional, TestMdsManual
+      Description:    Specifies what version of the Microsoft.Data.SqlCLient.Abstractions to use
+                      when compiling MDS. If not specified, the version defined in
+                      Directory.Packages.props is used. This argument only has effect if the
+                      ReferenceType argument is set to "Package".
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''" />
+    <PackageVersionAbstractionsArgument Condition="'$(PackageVersionAbstractions)' != ''">
+      -p:AbstractionsPackageVersion=$(PackageVersionAbstractions)
+    </PackageVersionAbstractionsArgument>
+
+    <!--
+      PackageVersionLogging
+      Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
+                      TestMdsFunctiona, TestMdsManual
+      Description:    Specifies what version of the Microsoft.Data.SqlCLient.Logging to use
+                      when compiling MDS. If not specified, the version defined in
+                      Directory.Packages.props is used. This argument only has effect if the
+                      ReferenceType argument is set to "Package".
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''" />
+    <PackageVersionLoggingArgument Condition="'$(PackageVersionLogging)' != ''">
+      -p:LoggingPackageVersion=$(PackageVersionLogging)
+    </PackageVersionLoggingArgument>
+
+    <!--
+      PackageVersionMds
+      Applies to:     TestMdsFunctional, TestMdsManual
       Description:    Specifies what version of the Microsoft.Data.SqlClient package to run tests
                       against. If not specified, the version defined in Versions.props is used.
                       This argument only has effect if the ReferenceType argument is set to
@@ -36,29 +68,33 @@
       Default value:  [blank]
       Example:        7.0.0-preview4
     -->
-    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''" />
-    <TestPackageBuildArgument Condition="'$(MdsPackageVersion)' != ''">
-      $(TestPackageBuildArgument)
-      -p:MdsPackageVersion=$(MdsPackageVersion)
-    </TestPackageBuildArgument>
+    <PackageVersionMds Condition="'$(PackageVersionMds)' == ''" />
+    <PackageVersionMdsArgument Condition="'$(PackageVersionMds)' != ''">
+      -p:MdsPackageVersion=$(PackageVersionMds)
+    </PackageVersionMdsArgument>
 
     <!--
       ReferenceType
-      Applies to:     TestMdsFunctional, TestMdsManual targets
-      Description:    Determines what mode to put test runs into. If set to "Project", the test
-                      projects will reference their test target as a ProjectReference, ie, running
-                      against the code as-is in the repository. This will also trigger a build of
-                      the target project, if necessary. If set to "Package", the test projects will
-                      reference their test target as a PackageReference, ie, running against a
-                      packaged version of the project.
+      Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
+      Description:    Determines how to build MDS. If set to "Project", any cross-project
+                      references (eg, Abstractions from MDS) will be made as project references. If
+                      set to "Package", package references will be made instead. When running in
+                      package mode, target versions can be specified via PackageVersion* build
+                      parameters. If these are not provided, the central feed version will be used
+                      instead (see Directory.Packages.props). When running in project mode, the
+                      dependencies will be built automatically.
+
+      Applies to:     TestMdsFunctional, TestMdsManual
+      Description:    Determines whether to test against a project reference or a package version
+                      of the test targets. Same description above applies.
+
       Default value:  Project
       Allowed values: (Package|Project)
     -->
     <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
-    <TestPackageBuildArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
-      $(TestPackageBuildArgument)
+    <ReferenceTypeArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
       -p:ReferenceType=Package
-    </TestPackageBuildArgument>
+    </ReferenceTypeArgument>
 
     <!--
       TestBlameTimeout
@@ -211,6 +247,8 @@
       <DotnetCommand>
         $(DotnetPath)dotnet build $(MdsRefProjectPath)
           -p:Configuration=$(Configuration)
+          $(ReferenceTypeArgument)
+          $(PackageVersionAbstractionsArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -227,6 +265,11 @@
 				$(DotnetPath)dotnet build $(MdsProjectPath)
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Unix
+
+          <!-- Reference Type Arguments -->
+          $(ReferenceTypeArgument)
+          $(PackageVersionAbstractionsArgument)
+          $(PackageVersionLoggingArgument)
 			</DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -243,6 +286,11 @@
 				$(DotnetPath)dotnet build $(MdsProjectPath)
 				  -p:Configuration=$(Configuration)
 				  -p:TargetOs=Windows_NT
+
+          <!-- Reference Type Arguments -->
+          $(ReferenceTypeArgument)
+          $(PackageVersionAbstractionsArgument)
+          $(PackageVersionLoggingArgument)
 			</DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -275,9 +323,14 @@
           $(TestCollectArgument)
           $(TestFiltersArgument)
           $(TestFrameworkArgument)
-          $(TestPackageBuildArgument)
           --results-directory "$(TestResultsFolderPath)"
           --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionMdsArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -300,10 +353,15 @@
           $(TestCollectArgument)
           $(TestFiltersArgument)
           $(TestFrameworkArgument)
-          $(TestPackageBuildArgument)
           $(TestSetArgument)
           --results-directory "$(TestResultsFolderPath)"
           --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+          <!-- Reference Type Arguments -->
+          $(ReferenceTypeArgument)
+          $(PackageVersionAbstractionsArgument)
+          $(PackageVersionLoggingArgument)
+          $(PackageVersionMdsArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>

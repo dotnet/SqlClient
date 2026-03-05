@@ -412,10 +412,10 @@
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'"  />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
+
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <!-- @TODO: Should there be a package mode test for AKV? -->
   </ItemGroup>
 
