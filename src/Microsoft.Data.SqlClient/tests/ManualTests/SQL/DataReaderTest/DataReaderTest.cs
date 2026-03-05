@@ -1090,104 +1090,94 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task ReadEmptyAndNullPlpStringsAsyncWithNewBehavior()
         {
             string tableName = DataTestUtility.GenerateObjectName();
-            bool? originalSwitchValue = null;
 
             try
             {
-                // Save original switch value and disable compatibility mode to use new async behavior
+                // Disable compatibility mode to use new async behavior.
+                // SwitchesHelper restores original values automatically on dispose.
                 using (var switchHelper = new SwitchesHelper())
                 {
-                    originalSwitchValue = switchHelper.UseCompatibilityAsyncBehaviour;
                     switchHelper.UseCompatibilityAsyncBehaviour = false;
-                }
 
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-                {
-                    await connection.OpenAsync();
-
-                    // Create test table with PLP string columns
-                    using (SqlCommand cmd = connection.CreateCommand())
+                    using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                     {
-                        cmd.CommandText = $@"
-                            CREATE TABLE {tableName} (
-                                Id INT PRIMARY KEY,
-                                VarcharMaxCol VARCHAR(MAX),
-                                NVarcharMaxCol NVARCHAR(MAX),
-                                TextCol TEXT
-                            )";
-                        await cmd.ExecuteNonQueryAsync();
-                    }
+                        await connection.OpenAsync();
 
-                    // Insert test data: NULL, empty string, and non-empty values
-                    using (SqlCommand cmd = connection.CreateCommand())
-                    {
-                        cmd.CommandText = $@"
-                            INSERT INTO {tableName} (Id, VarcharMaxCol, NVarcharMaxCol, TextCol) VALUES
-                            (1, NULL, NULL, NULL),
-                            (2, '', '', ''),
-                            (3, 'test', N'test', 'test'),
-                            (4, NULL, '', 'value'),
-                            (5, '', NULL, NULL)";
-                        await cmd.ExecuteNonQueryAsync();
-                    }
-
-                    // Read data asynchronously - this should not throw ArgumentNullException
-                    using (SqlCommand cmd = connection.CreateCommand())
-                    {
-                        cmd.CommandText = $"SELECT Id, VarcharMaxCol, NVarcharMaxCol, TextCol FROM {tableName} ORDER BY Id";
-                        using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                        // Create test table with PLP string columns
+                        using (SqlCommand cmd = connection.CreateCommand())
                         {
-                            // Row 1: All NULL values
-                            Assert.True(await reader.ReadAsync());
-                            Assert.Equal(1, reader.GetInt32(0));
-                            Assert.True(reader.IsDBNull(1));
-                            Assert.True(reader.IsDBNull(2));
-                            Assert.True(reader.IsDBNull(3));
+                            cmd.CommandText = $@"
+                                CREATE TABLE {tableName} (
+                                    Id INT PRIMARY KEY,
+                                    VarcharMaxCol VARCHAR(MAX),
+                                    NVarcharMaxCol NVARCHAR(MAX),
+                                    TextCol TEXT
+                                )";
+                            await cmd.ExecuteNonQueryAsync();
+                        }
 
-                            // Row 2: All empty strings
-                            Assert.True(await reader.ReadAsync());
-                            Assert.Equal(2, reader.GetInt32(0));
-                            Assert.Equal(string.Empty, reader.GetString(1));
-                            Assert.Equal(string.Empty, reader.GetString(2));
-                            Assert.Equal(string.Empty, reader.GetString(3));
+                        // Insert test data: NULL, empty string, and non-empty values
+                        using (SqlCommand cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = $@"
+                                INSERT INTO {tableName} (Id, VarcharMaxCol, NVarcharMaxCol, TextCol) VALUES
+                                (1, NULL, NULL, NULL),
+                                (2, '', '', ''),
+                                (3, 'test', N'test', 'test'),
+                                (4, NULL, '', 'value'),
+                                (5, '', NULL, NULL)";
+                            await cmd.ExecuteNonQueryAsync();
+                        }
 
-                            // Row 3: Non-empty values
-                            Assert.True(await reader.ReadAsync());
-                            Assert.Equal(3, reader.GetInt32(0));
-                            Assert.Equal("test", reader.GetString(1));
-                            Assert.Equal("test", reader.GetString(2));
-                            Assert.Equal("test", reader.GetString(3));
+                        // Read data asynchronously - this should not throw ArgumentNullException
+                        using (SqlCommand cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = $"SELECT Id, VarcharMaxCol, NVarcharMaxCol, TextCol FROM {tableName} ORDER BY Id";
+                            using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                            {
+                                // Row 1: All NULL values
+                                Assert.True(await reader.ReadAsync());
+                                Assert.Equal(1, reader.GetInt32(0));
+                                Assert.True(reader.IsDBNull(1));
+                                Assert.True(reader.IsDBNull(2));
+                                Assert.True(reader.IsDBNull(3));
 
-                            // Row 4: Mixed NULL and values
-                            Assert.True(await reader.ReadAsync());
-                            Assert.Equal(4, reader.GetInt32(0));
-                            Assert.True(reader.IsDBNull(1));
-                            Assert.Equal(string.Empty, reader.GetString(2));
-                            Assert.Equal("value", reader.GetString(3));
+                                // Row 2: All empty strings
+                                Assert.True(await reader.ReadAsync());
+                                Assert.Equal(2, reader.GetInt32(0));
+                                Assert.Equal(string.Empty, reader.GetString(1));
+                                Assert.Equal(string.Empty, reader.GetString(2));
+                                Assert.Equal(string.Empty, reader.GetString(3));
 
-                            // Row 5: Mixed empty and NULL
-                            Assert.True(await reader.ReadAsync());
-                            Assert.Equal(5, reader.GetInt32(0));
-                            Assert.Equal(string.Empty, reader.GetString(1));
-                            Assert.True(reader.IsDBNull(2));
-                            Assert.True(reader.IsDBNull(3));
+                                // Row 3: Non-empty values
+                                Assert.True(await reader.ReadAsync());
+                                Assert.Equal(3, reader.GetInt32(0));
+                                Assert.Equal("test", reader.GetString(1));
+                                Assert.Equal("test", reader.GetString(2));
+                                Assert.Equal("test", reader.GetString(3));
 
-                            Assert.False(await reader.ReadAsync());
+                                // Row 4: Mixed NULL and values
+                                Assert.True(await reader.ReadAsync());
+                                Assert.Equal(4, reader.GetInt32(0));
+                                Assert.True(reader.IsDBNull(1));
+                                Assert.Equal(string.Empty, reader.GetString(2));
+                                Assert.Equal("value", reader.GetString(3));
+
+                                // Row 5: Mixed empty and NULL
+                                Assert.True(await reader.ReadAsync());
+                                Assert.Equal(5, reader.GetInt32(0));
+                                Assert.Equal(string.Empty, reader.GetString(1));
+                                Assert.True(reader.IsDBNull(2));
+                                Assert.True(reader.IsDBNull(3));
+
+                                Assert.False(await reader.ReadAsync());
+                            }
                         }
                     }
                 }
             }
             finally
             {
-                // Restore original switch value
-                if (originalSwitchValue.HasValue)
-                {
-                    using (var switchHelper = new SwitchesHelper())
-                    {
-                        switchHelper.UseCompatibilityAsyncBehaviour = originalSwitchValue;
-                    }
-                }
-
                 // Clean up test table
                 try
                 {
