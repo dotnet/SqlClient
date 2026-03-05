@@ -98,19 +98,19 @@ jobs:
     - ${{ parameters.prebuildSteps }}
 
   # If we're testing in Package mode, then we must download dependent package artifacts.
-  # Downloads go to packages/ (local NuGet source), not $(packagePath) (build output).
+  # Downloads go to localFeedPath (local NuGet source), not $(packagePath) (build output).
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
-        targetPath: $(Build.SourcesDirectory)/packages
+        targetPath: $(localFeedPath)
 
     - task: DownloadPipelineArtifact@2
       displayName: Download Logging Package Artifacts
       inputs:
         artifactName: ${{ parameters.loggingArtifactsName }}
-        targetPath: $(Build.SourcesDirectory)/packages
+        targetPath: $(localFeedPath)
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
