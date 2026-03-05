@@ -38,12 +38,9 @@
     <Error Text="No single matching contract found." Condition="'@(ResolvedMatchingContract->Count())' != '1'" />
 
     <PropertyGroup>
-      <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/bin/$(Configuration)/$(TargetFramework)/</GenApiPath>
-      <GenApiExec Condition="'$(MSBuildRuntimeType)' == 'core'">"$(DotnetPath)dotnet" "$(GenApiPath)Microsoft.DotNet.GenAPI.dll"</GenApiExec>
-      <GenApiExec Condition="'$(MSBuildRuntimeType)' != 'core'">"$(GenApiPath)Microsoft.DotNet.GenAPI.exe"</GenApiExec>
-
+      <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/bin/$(Configuration)/net10.0/</GenApiPath>
       <GenApiCommand>
-        $(GenApiExec)
+        "$(DotnetPath)dotnet" $(GenApiPath)Microsoft.DotNet.GenAPI.dll
           "%(ResolvedMatchingContract.Identity)"
           -l:"@(_referencePathDirectories)"
           -o:"$(NotSupportedSourceFile)"
@@ -57,7 +54,7 @@
     </PropertyGroup>
 
     <Message Text=">>> Building MDS 'not supported' binaries via command: $(GenApiCommand)"/>
-    <Exec Command="$(GenApiPath) $(GenApiArgs)" WorkingDirectory="$(ToolRuntimePath)"/>
+    <Exec Command="$(GenApiCommand)" WorkingDirectory="$(ToolRuntimePath)"/>
 
     <ItemGroup>
       <FileWrites Include="$(NotSupportedSourceFile)" />
