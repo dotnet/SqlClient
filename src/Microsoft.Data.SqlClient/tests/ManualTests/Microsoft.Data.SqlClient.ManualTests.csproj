@@ -85,6 +85,7 @@
     <Compile Include="SQL\DataReaderTest\DataReaderStreamsTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
     <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
+    <Compile Include="SQL\SqlStreamingXmlTest\SqlStreamingXmlTest.cs" />
     <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
     <Compile Include="SQL\DNSCachingTest\DNSCachingTest.cs" />
     <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
