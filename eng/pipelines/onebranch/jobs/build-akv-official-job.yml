@@ -165,7 +165,6 @@ jobs:
               arguments: >-
                 -t:PackAkvProvider
                 --configuration ${{ parameters.buildConfiguration }}
-                --no-build
                 --output $(PACK_OUTPUT)
                 -p:ReferenceType=Package
                 -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
