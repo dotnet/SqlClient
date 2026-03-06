@@ -157,9 +157,13 @@ jobs:
                 esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
                 pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
-          - script: >-
-                dotnet pack
-                $(REPO_ROOT)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
+          - task: DotNetCoreCLI@2
+            displayName: Create AKV NuGet Package
+            inputs:
+              command: build
+              projects: build.proj
+              arguments: >-
+                -t:PackAkvProvider
                 --configuration ${{ parameters.buildConfiguration }}
                 --no-build
                 --output $(PACK_OUTPUT)
@@ -167,7 +171,6 @@ jobs:
                 -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
                 -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-            displayName: 'Create AKV NuGet Package'
 
           - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:

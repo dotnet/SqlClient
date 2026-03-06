@@ -9,11 +9,11 @@
 
      LoggingPackageVersion
        The version of the Microsoft.Data.SqlClient.Extensions.Logging package that this package
-       depends on, to beincluded in the nuspec dependencies.
+       depends on.
 
      AbstractionsPackageVersion
        The version of the Microsoft.Data.SqlClient.Extensions.Abstractions package that this package
-       depends on, to be included in the nuspec dependencies.
+       depends on.
 
      ReferenceType
        The dependency reference type used during the build, either "Package" or "Project".

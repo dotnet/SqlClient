@@ -159,17 +159,20 @@ jobs:
       assemblyBuildNumber: $(assemblyBuildNumber)
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  - script: >-
-      dotnet pack
-      src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
-      --configuration ${{ parameters.buildConfiguration }}
-      --no-build
-      --output $(packagePath)
-      -p:ReferenceType=${{ parameters.referenceType }}
-      -p:AkvPackageVersion=$(akvPackageVersion)
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-      -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-    displayName: 'Create AKV NuGet Package'
+  - task: DotNetCoreCLI@2
+    displayName: Create AKV NuGet Package
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackAkvProvider
+        --configuration ${{ parameters.buildConfiguration }}
+        --no-build
+        --output $(packagePath)
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:AkvPackageVersion=$(akvPackageVersion)
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'
