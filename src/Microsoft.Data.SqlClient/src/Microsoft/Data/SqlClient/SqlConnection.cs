@@ -1661,6 +1661,7 @@ namespace Microsoft.Data.SqlClient
 
         private async Task ReconnectAsync(int timeout)
         {
+            CancellationTokenSource cts = new CancellationTokenSource();
             try
             {
                 long commandTimeoutExpiration = 0;
@@ -1668,7 +1669,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     commandTimeoutExpiration = ADP.TimerCurrent() + ADP.TimerFromSeconds(timeout);
                 }
-                CancellationTokenSource cts = new CancellationTokenSource();
                 _reconnectionCancellationSource = cts;
                 CancellationToken ctoken = cts.Token;
                 int retryCount = _connectRetryCount; // take a snapshot: could be changed by modifying the connection string
