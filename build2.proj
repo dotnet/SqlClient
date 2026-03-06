@@ -234,7 +234,7 @@
 
     <!-- Get the path to the GenAPI artifact -->
     <ItemGroup>
-      <GenApiArtifactPath Include="$(GenApiPath)bin/**/Microsoft.DotNet.GenAPI.dll" />
+      <GenApiArtifactPath Include="$(GenApiPath)bin/$(Configuration)/**/Microsoft.DotNet.GenAPI.dll" />
     </ItemGroup>
 
     <PropertyGroup>
