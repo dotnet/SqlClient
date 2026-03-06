@@ -159,17 +159,17 @@ jobs:
       assemblyBuildNumber: $(assemblyBuildNumber)
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create AKV NuGet Package'
-      generateSymbolsPackage: true
-      installNuget: false
-      nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: $(akvPackageVersion)
-      properties: 'MdsPackageVersion=${{ parameters.mdsPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  - script: >-
+      dotnet pack
+      src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
+      --configuration ${{ parameters.buildConfiguration }}
+      --no-build
+      --output $(packagePath)
+      -p:ReferenceType=${{ parameters.referenceType }}
+      -p:AkvPackageVersion=$(akvPackageVersion)
+      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+    displayName: 'Create AKV NuGet Package'
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'

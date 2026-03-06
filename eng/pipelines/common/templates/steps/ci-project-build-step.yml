@@ -123,36 +123,19 @@ steps:
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
-      displayName: 'Build AKV Provider NetFx [Win]'
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+      displayName: 'Build AKV Provider'
       inputs:
         solution: build.proj
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
-          -t:BuildAKVNetFx
+          -t:BuildAkvProvider
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:GenerateNuget=false
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-
-    - task: MSBuild@1
-      displayName: 'Build AKV Provider NetCore All OS [Win]'
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-      inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments: >-
-          -t:BuildAKVNetCoreAllOS
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:GenerateNuget=false
-          -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - task: DotNetCoreCLI@2

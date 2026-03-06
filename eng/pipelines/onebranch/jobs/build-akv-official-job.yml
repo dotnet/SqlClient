@@ -157,15 +157,17 @@ jobs:
                 esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
                 pattern: 'Microsoft.Data.SqlClient.AlwaysEncrypted.*.dll'
 
-          - template: /eng/pipelines/onebranch/steps/compound-nuget-pack-step.yml@self
-            parameters:
-                buildConfiguration: '${{ parameters.buildConfiguration }}'
-                generateSymbolsPackage: true    # Always generate symbols, even if they are not published
-                packageVersion: '${{ parameters.akvPackageVersion }}'
-                nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
-                outputDirectory: '$(PACK_OUTPUT)'
-                referenceType: Package
-                properties: MdsPackageVersion=${{ parameters.mdsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          - script: >-
+                dotnet pack
+                $(REPO_ROOT)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
+                --configuration ${{ parameters.buildConfiguration }}
+                --no-build
+                --output $(PACK_OUTPUT)
+                -p:ReferenceType=Package
+                -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
+                -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            displayName: 'Create AKV NuGet Package'
 
           - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
             parameters:

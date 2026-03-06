@@ -3,7 +3,6 @@
 
   <Import Project="src/Directory.Build.props" />
   <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
-  <Import Project="$(ToolsDir)targets\add-ons\GenerateAkvPackage.targets" />
   <Import Project="$(ToolsDir)targets\CompareMdsRefAssemblies.targets" />
 
   <PropertyGroup>
@@ -81,7 +80,7 @@
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <!-- Used to build .NET Standard DLL for lib folder from this project. -->
     <NetStandardDriver Include="**/netcore/ref/Microsoft.Data.SqlClient*.csproj" />
-    <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
+    <AkvProvider Include="src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
 
     <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
@@ -95,7 +94,7 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard;BuildAkvProvider" />
   <!-- TODO: This doesn't really build everything; just the SqlClient driver and its NuGet package. -->
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
 
@@ -272,6 +271,54 @@
       Projects="@(Azure)"
       Targets="Pack"
       Properties="$(AzureProperties);NoBuild=true" />
+  </Target>
+
+  <!-- AKV Provider Targets -->
+  <PropertyGroup>
+    <AkvProviderProperties>$(CommonProperties)</AkvProviderProperties>
+
+    <!--
+      If the AkvPackageVersion property was supplied on the command-line, then pass it along to the
+      AKV Provider build.  Otherwise, omit it entirely to avoid it expanding as empty here and thus
+      overriding the default behaviour in the AKV Provider project.  Command-line properties take
+      precedence over project defaults, even if their value is empty.  For example:
+
+        dotnet build -p:AkvPackageVersion=
+
+      That results in $(AkvPackageVersion) being defined as empty, and cannot be overridden by the
+      project.
+    -->
+    <AkvProviderProperties
+      Condition="'$(AkvPackageVersion)' != ''">
+      $(AkvProviderProperties);AkvPackageVersion=$(AkvPackageVersion)
+    </AkvProviderProperties>
+
+    <!-- Do the same for the AkvAssemblyFileVersion property. -->
+    <AkvProviderProperties
+      Condition="'$(AkvAssemblyFileVersion)' != ''">
+      $(AkvProviderProperties);AkvAssemblyFileVersion=$(AkvAssemblyFileVersion)
+    </AkvProviderProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreAkvProvider">
+    <MSBuild
+      Projects="@(AkvProvider)"
+      Targets="Restore"
+      Properties="$(AkvProviderProperties)" />
+  </Target>
+
+  <Target Name="BuildAkvProvider" DependsOnTargets="RestoreAkvProvider">
+    <MSBuild
+      Projects="@(AkvProvider)"
+      Targets="Build"
+      Properties="$(CI);$(AkvProviderProperties)" />
+  </Target>
+
+  <Target Name="PackAkvProvider">
+    <MSBuild
+      Projects="@(AkvProvider)"
+      Targets="Pack"
+      Properties="$(AkvProviderProperties);NoBuild=true" />
   </Target>
 
   <!-- Other Targets -->
@@ -490,66 +537,6 @@
       <PackagesToDelete Include="$(RepoRoot)/packages/*.snupkg" />
     </ItemGroup>
     <Delete Files="@(PackagesToDelete)" />
-  </Target>
-
-  <!-- AKV Targets ========================================================= -->
-  <Target Name="BuildAkv">
-    <!-- @TODO: TestTargetOS for restore poisons the project.assets.json file... We should remove it. -->
-    <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
-    <!-- @TODO: RemoveProperties shouldn't be necessary -->
-    <Message Text=">>> Restoring AKV project" />
-    <MSBuild Projects="@(AKVProvider)" Targets="Restore" Properties="$(CommonProperties)" />
-
-    <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV project for netfx [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
-
-    <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;</BuildAkvProperties>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV project for netcore/unix [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
-
-    <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT</BuildAkvProperties>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV project for netcore/windows [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" RemoveProperties="TargetsWindows;TargetsUnix;" />
-
-    <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;</BuildAkvProperties>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV project for netcore/anyos [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
-  </Target>
-
-  <Target Name="BuildAKVNetFx" DependsOnTargets="BuildNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="$(CommonProperties);TestTargetOS=$(TestOS)netfx" />
-    <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties);$(NugetPackProperties);" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties);$(NugetPackProperties);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildAKVNetCore" DependsOnTargets="BuildNetCore">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="$(CommonProperties);TestTargetOS=$(TestOS)netcoreapp" />
-    <Message Text=">>> Building AKVNetCore [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building AKVNetCore [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildAKVNetCoreAllOS" DependsOnTargets="BuildNetCore">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="$(CommonProperties);TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
 </Project>

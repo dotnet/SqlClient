@@ -44,7 +44,7 @@ steps:
           msBuildCommandLine: >-
               msbuild
               $(REPO_ROOT)/build.proj
-              -t:BuildAkv
+              -t:BuildAkvProvider
               -p:Configuration=${{ parameters.buildConfiguration }}
               -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
               -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}

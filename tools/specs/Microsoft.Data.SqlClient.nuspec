@@ -1,4 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This file uses the following properties that must be supplied on the nuget pack command line via
+  the -properties argument:
+
+     COMMITID
+       The git commit id to be included in the nuspec metadata.
+
+     LoggingPackageVersion
+       The version of the Microsoft.Data.SqlClient.Extensions.Logging package that this package
+       depends on, to beincluded in the nuspec dependencies.
+
+     AbstractionsPackageVersion
+       The version of the Microsoft.Data.SqlClient.Extensions.Abstractions package that this package
+       depends on, to beincluded in the nuspec dependencies.
+
+     ReferenceType
+       The dependency reference type used during the build, either "Package" or "Project".
+
+     Configuration
+       The build configuration ("Debug" or "Release") of the DLLs to be included in the package.
+-->
+
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata minClientVersion="2.12">
     <id>Microsoft.Data.SqlClient</id>
@@ -11,28 +34,26 @@
     <icon>dotnet.png</icon>
     <readme>README.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$" />
-    <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
+    <description>
+      The current data provider for SQL Server and Azure SQL databases. This has replaced
+      System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific
+      protocols, including tabular data stream (TDS).
 
       Commonly Used Types:
-      Microsoft.Data.SqlClient.SqlConnection
-      Microsoft.Data.SqlClient.SqlException
-      Microsoft.Data.SqlClient.SqlParameter
-      Microsoft.Data.SqlClient.SqlDataReader
-      Microsoft.Data.SqlClient.SqlCommand
-      Microsoft.Data.SqlClient.SqlTransaction
-      Microsoft.Data.SqlClient.SqlParameterCollection
-      Microsoft.Data.SqlClient.SqlClientFactory
+        Microsoft.Data.SqlClient.SqlConnection
+        Microsoft.Data.SqlClient.SqlException
+        Microsoft.Data.SqlClient.SqlParameter
+        Microsoft.Data.SqlClient.SqlDataReader
+        Microsoft.Data.SqlClient.SqlCommand
+        Microsoft.Data.SqlClient.SqlTransaction
+        Microsoft.Data.SqlClient.SqlParameterCollection
+        Microsoft.Data.SqlClient.SqlClientFactory
 
-      When using NuGet 3.x this package requires at least version 3.4.</description>
+      When using NuGet 3.x this package requires at least version 3.4.
+    </description>
     <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlclient microsoft.data.sqlclient</tags>
-
-    <!--
-      We require the $AbstractionsPackageVersion$ and $LoggingPackageVersion$
-      properties to be supplied on the nuget pack command line to indicate which
-      version of the Abstractions and Logging packages we depend on.
-    -->
 
     <dependencies>
       <group targetFramework="net462">
@@ -117,11 +138,6 @@
   <files>
     <file src="..\icons\dotnet.png" target="" />
     <file src="..\..\src\Microsoft.Data.SqlClient\src\PackageReadme.md" target="README.md" />
-
-    <!--
-      We require the $ReferenceType$ property to be supplied on the nuget pack
-      command line to indicate where the DLLs are.
-    -->
 
     <!-- ref NetFx -->
     <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />

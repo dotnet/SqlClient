@@ -66,6 +66,7 @@ The following build targets are defined in `build.proj`:
 |Target|Description|
 |-|-|
 |`BuildAbstractions`|Restore and build the Abstractions package.|
+|`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
 |`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
 |`BuildAzure`|Restore and build the Azure package.|
 |`BuildLogging`|Restore and build the Logging package.|
@@ -75,6 +76,7 @@ The following build targets are defined in `build.proj`:
 |`BuildSqlClient`|Build the driver for all target frameworks.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
+|`PackAkvProvider`|Pack the AKV Provider NuGet package into `packages/`. Requires `BuildAkvProvider` first.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`Restore`|Restores NuGet packages.|
@@ -82,7 +84,6 @@ The following build targets are defined in `build.proj`:
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
-|`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
 
 ### Parameters
 
@@ -199,8 +200,7 @@ dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
 dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
 dotnet build -t:BuildSqlClient -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
-dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
-dotnet build -t:GenerateAkvPackage
+dotnet build -t:BuildAkvProvider,PackAkvProvider -p:ReferenceType=Package
 ```
 
 The above will build the MDS and AKV components, place their NuGet packages into

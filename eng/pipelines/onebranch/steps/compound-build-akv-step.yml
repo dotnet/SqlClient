@@ -39,12 +39,12 @@ steps:
     name: keyFile
 
   - task: MSBuild@1
-    displayName: 'Build.proj - BuildAkv'
+    displayName: 'Build.proj - BuildAkvProvider'
     inputs:
         solution: '$(REPO_ROOT)/build.proj'
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
-            -t:BuildAkv
+            -t:BuildAkvProvider
             -p:AssemblyFileVersion=${{ parameters.akvAssemblyFileVersion }}
             -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
             -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
