@@ -36,9 +36,9 @@ namespace Microsoft.Data.SqlClient
         // Overrides the ConvertFrom method of TypeConverter.
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            if (value is string)
+            if (value is string s)
             {
-                return SqlConnectionEncryptOption.Parse(value.ToString());
+                return SqlConnectionEncryptOption.Parse(s);
             }
             throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionEncryptOption), null);
         }
