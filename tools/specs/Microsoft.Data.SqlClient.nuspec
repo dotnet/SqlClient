@@ -13,7 +13,7 @@
 
      AbstractionsPackageVersion
        The version of the Microsoft.Data.SqlClient.Extensions.Abstractions package that this package
-       depends on, to beincluded in the nuspec dependencies.
+       depends on, to be included in the nuspec dependencies.
 
      ReferenceType
        The dependency reference type used during the build, either "Package" or "Project".

@@ -92,9 +92,14 @@
     <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
   </ItemGroup>
 
-  <!-- Top Level Build targets -->
+  <!-- Compound Targets -->
+
+  <!-- TODO: Do we need this restore target? -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard;BuildAkvProvider" />
+
+  <Target Name="BuildAllPackages" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard;BuildAzure;BuildAkvProvider" />
+  <Target Name="PackAllPackages" DependsOnTargets="PackSqlServer;PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider" />
+
   <!-- TODO: This doesn't really build everything; just the SqlClient driver and its NuGet package. -->
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
 
@@ -129,6 +134,49 @@
       Projects="@(SqlServer)"
       Targets="Pack"
       Properties="$(SqlServerProperties);NoBuild=true" />
+  </Target>
+
+  <!-- Logging Targets -->
+  <PropertyGroup>
+    <LoggingProperties>$(CommonProperties)</LoggingProperties>
+
+    <!--
+      If the LoggingPackageVersion property was supplied on the command-line,
+      then pass it along to the Logging build.  Otherwise, omit it entirely
+      to avoid it expanding as empty here and thus overriding the default
+      behaviour in the Logging project.
+    -->
+    <LoggingProperties
+      Condition="'$(LoggingPackageVersion)' != ''">
+      $(LoggingProperties);LoggingPackageVersion=$(LoggingPackageVersion)
+    </LoggingProperties>
+
+    <!-- Do the same for the LoggingAssemblyFileVersion property. -->
+    <LoggingProperties
+      Condition="'$(LoggingAssemblyFileVersion)' != ''">
+      $(LoggingProperties);LoggingAssemblyFileVersion=$(LoggingAssemblyFileVersion)
+    </LoggingProperties>
+  </PropertyGroup>
+
+  <Target Name="RestoreLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Restore"
+      Properties="$(LoggingProperties)" />
+  </Target>
+
+  <Target Name="BuildLogging" DependsOnTargets="RestoreLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Build"
+      Properties="$(CI);$(LoggingProperties)" />
+  </Target>
+
+  <Target Name="PackLogging">
+    <MSBuild
+      Projects="@(Logging)"
+      Targets="Pack"
+      Properties="$(LoggingProperties);NoBuild=true" />
   </Target>
 
   <!-- Abstractions Targets -->
@@ -181,47 +229,42 @@
       Properties="$(AbstractionsProperties);NoBuild=true" />
   </Target>
 
-  <!-- Logging Targets -->
-  <PropertyGroup>
-    <LoggingProperties>$(CommonProperties)</LoggingProperties>
+  <!-- SqlClient Targets -->
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildTools;BuildNetFx;BuildNetCore;BuildNetStandard" />
+  <Target Name="PackSqlClient" DependsOnTargets="BuildSqlClient;GenerateMdsPackage" />
 
-    <!--
-      If the LoggingPackageVersion property was supplied on the command-line,
-      then pass it along to the Logging build.  Otherwise, omit it entirely
-      to avoid it expanding as empty here and thus overriding the default
-      behaviour in the Logging project.
-    -->
-    <LoggingProperties
-      Condition="'$(LoggingPackageVersion)' != ''">
-      $(LoggingProperties);LoggingPackageVersion=$(LoggingPackageVersion)
-    </LoggingProperties>
-
-    <!-- Do the same for the LoggingAssemblyFileVersion property. -->
-    <LoggingProperties
-      Condition="'$(LoggingAssemblyFileVersion)' != ''">
-      $(LoggingProperties);LoggingAssemblyFileVersion=$(LoggingAssemblyFileVersion)
-    </LoggingProperties>
-  </PropertyGroup>
-
-  <Target Name="RestoreLogging">
-    <MSBuild
-      Projects="@(Logging)"
-      Targets="Restore"
-      Properties="$(LoggingProperties)" />
+  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
-  <Target Name="BuildLogging" DependsOnTargets="RestoreLogging">
-    <MSBuild
-      Projects="@(Logging)"
-      Targets="Build"
-      Properties="$(CI);$(LoggingProperties)" />
+  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging" Condition="'$(IsEnabledWindows)' == 'true'">
+    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
   </Target>
 
-  <Target Name="PackLogging">
-    <MSBuild
-      Projects="@(Logging)"
-      Targets="Pack"
-      Properties="$(LoggingProperties);NoBuild=true" />
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServer;BuildAbstractions;BuildLogging" Condition="'$(IsEnabledWindows)' == 'true'">
+    <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
+  </Target>
+
+  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
+
+  <Target Name="BuildNetCoreUnix" DependsOnTargets="RestoreNetCore">
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"   RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
+
+  <!--
+    Build .NET Standard target DLLs for Lib folder from here.  This target enables BuildForLib for
+    the NetCore ref project.
+   -->
+  <Target Name="BuildNetStandard">
+    <MSBuild Projects="@(NetStandardDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;BuildForLib=True" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <!-- Azure Targets -->
@@ -322,44 +365,12 @@
   </Target>
 
   <!-- Other Targets -->
-  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
-    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
-  </Target>
-
-  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
-  </Target>
-
   <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
     <MSBuild Projects="@(Tools)" Targets="restore" Properties="$(CommonProperties)" />
   </Target>
 
   <Target Name="BuildTools" DependsOnTargets="RestoreTools" Condition="'$(BuildTools)' == 'true'">
     <MSBuild Projects="@(Tools)" Properties="$(CommonProperties)" />
-  </Target>
-
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServer;BuildAbstractions;BuildLogging" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
-  </Target>
-
-  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
-  </Target>
-
-  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-  </Target>
-
-  <Target Name="BuildNetCoreUnix" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"   RemoveProperties="TargetsWindows;TargetsUnix;" />
-   </Target>
-
-  <!-- Build .NET Standard target DLLs for Lib folder from here.
-   This target enables BuildForLib for the NetCore ref project. -->
-  <Target Name="BuildNetStandard">
-    <MSBuild Projects="@(NetStandardDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;BuildForLib=True" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <!-- Tests -->

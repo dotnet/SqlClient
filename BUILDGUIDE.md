@@ -67,18 +67,19 @@ The following build targets are defined in `build.proj`:
 |-|-|
 |`BuildAbstractions`|Restore and build the Abstractions package.|
 |`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
-|`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
+|`BuildAllConfigurations`|Default target. Builds and packs the SqlClient package.|
 |`BuildAzure`|Restore and build the Azure package.|
 |`BuildLogging`|Restore and build the Logging package.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
-|`BuildSqlClient`|Build the driver for all target frameworks.|
+|`BuildSqlClient`|Restore and build the SqlClient package.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
 |`PackAkvProvider`|Pack the AKV Provider NuGet package into `packages/`. Requires `BuildAkvProvider` first.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
+|`PackSqlClient`|Pack the SqlClient NuGet package into `packages/`. Requires `BuildSqlClient` first.|
 |`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|

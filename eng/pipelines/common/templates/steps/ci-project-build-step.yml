@@ -124,6 +124,7 @@ steps:
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
       displayName: 'Build AKV Provider'
+      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
         solution: build.proj
         msbuildArchitecture: x64
@@ -144,9 +145,9 @@ steps:
     inputs:
       command: custom
       projects: build.proj
-      custom: msbuild
+      custom: build
       arguments: >-
-        -t:BuildSqlClient
+        -t:BuildAllPackages
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:TestEnabled=true
         -p:GenerateNuget=false
