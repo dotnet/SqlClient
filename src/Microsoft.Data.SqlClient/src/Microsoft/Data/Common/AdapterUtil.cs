@@ -392,9 +392,7 @@ namespace Microsoft.Data.Common
             Debug.Assert(e != null, "Unexpected null exception!");
             Type type = e.GetType();
 
-            return ((type != typeof(StackOverflowException)) &&
-                    (type != typeof(OutOfMemoryException)) &&
-                    (type != typeof(ThreadAbortException)) &&
+            return ((type != typeof(ThreadAbortException)) &&
                     (type != typeof(NullReferenceException)) &&
                     (type != typeof(AccessViolationException)) &&
                     !typeof(SecurityException).IsAssignableFrom(type));
@@ -413,9 +411,7 @@ namespace Microsoft.Data.Common
             Debug.Assert(e != null, "Unexpected null exception!");
             Type type = e.GetType();
 
-            return ((type != typeof(StackOverflowException)) &&
-                    (type != typeof(OutOfMemoryException)) &&
-                    (type != typeof(ThreadAbortException)) &&
+            return ((type != typeof(ThreadAbortException)) &&
                     (type != typeof(NullReferenceException)) &&
                     (type != typeof(AccessViolationException)));
         }
