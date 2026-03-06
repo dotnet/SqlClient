@@ -95,9 +95,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentNull(nameof(destinationType));
                 }
-                if ((typeof(InstanceDescriptor) == destinationType) && (value is SqlParameter))
+                if ((typeof(InstanceDescriptor) == destinationType) && (value is SqlParameter parameter))
                 {
-                    return ConvertToInstanceDescriptor(value as SqlParameter);
+                    return ConvertToInstanceDescriptor(parameter);
                 }
                 return base.ConvertTo(context, culture, value, destinationType);
             }
