@@ -3,13 +3,15 @@
 
   <!-- Common Package Properties -->
   <PropertyGroup>
-    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <BuildNumber Condition="'$(BuildNumber)' == ''">0-dev</BuildNumber>
     <!--
-      Build numbers from CI pipelines may be in format "XXXXX.YY".
-      Extract just the first part before any decimal point for use in
-      assembly version components (which must be 16-bit unsigned integers).
+      Build numbers from CI pipelines may be in format "XXXXX.YY".  Extract just the first part
+      before any decimal point for use in assembly version components (which must be 16-bit unsigned
+      integers).
+
+      We also handle the case where we used the default build number above, which contains a dash.
     -->
-    <AssemblyBuildNumber>$(BuildNumber.Split('.')[0])</AssemblyBuildNumber>
+    <AssemblyBuildNumber>$(BuildNumber.Replace('-', '.').Split('.')[0])</AssemblyBuildNumber>
   </PropertyGroup>
 
   <!-- SqlServer Package Properties -->
@@ -19,7 +21,7 @@
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 1.0.0.0 -->
     <SqlServerAssemblyVersion>1.0.0.0</SqlServerAssemblyVersion>
     <SqlServerAssemblyFileVersion Condition="'$(SqlServerAssemblyFileVersion)' == ''">1.0.0.0</SqlServerAssemblyFileVersion>
-    <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0.$(BuildNumber)-dev</SqlServerPackageVersion>
+    <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0.$(BuildNumber)</SqlServerPackageVersion>
     <SqlServerVersion>$(SqlServerPackageVersion)</SqlServerVersion>
   </PropertyGroup>
 
@@ -33,7 +35,7 @@
   <PropertyGroup>
     <MdsVersionDefault>7.0.0</MdsVersionDefault>
 
-    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)-dev</MdsPackageVersion>
+    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</MdsPackageVersion>
 
     <!--
       TODO: The remaining properties in this group should be renamed to be
@@ -72,6 +74,6 @@
   <!-- AKV Package Properties -->
   <PropertyGroup>
     <AkvVersionDefault>7.0.0</AkvVersionDefault>
-    <AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvVersionDefault).$(BuildNumber)-dev</AkvPackageVersion>
+    <AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvVersionDefault).$(BuildNumber)</AkvPackageVersion>
   </PropertyGroup>
 </Project>

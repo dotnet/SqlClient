@@ -72,14 +72,17 @@ The following build targets are defined in `build.proj`:
 |`BuildLogging`|Restore and build the Logging package.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
+|`BuildNetCoreUnix`|Builds the .NET driver for Unix.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
 |`BuildSqlClient`|Restore and build the SqlClient package.|
+|`BuildSqlServer`|Restore and build the SqlServer package.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
 |`PackAkvProvider`|Pack the AKV Provider NuGet package into `packages/`. Requires `BuildAkvProvider` first.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`PackSqlClient`|Pack the SqlClient NuGet package into `packages/`. Requires `BuildSqlClient` first.|
+|`PackSqlServer`|Pack the SqlServer NuGet package into `packages/`. Requires `BuildSqlServer` first.|
 |`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|

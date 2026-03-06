@@ -230,8 +230,8 @@
   </Target>
 
   <!-- SqlClient Targets -->
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildTools;BuildNetFx;BuildNetCore;BuildNetStandard" />
-  <Target Name="PackSqlClient" DependsOnTargets="BuildSqlClient;GenerateMdsPackage" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildTools;BuildNetFx;BuildNetCore;BuildNetCoreUnix;BuildNetCoreAllOS;BuildNetStandard" />
+  <Target Name="PackSqlClient" DependsOnTargets="GenerateMdsPackage" />
 
   <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
