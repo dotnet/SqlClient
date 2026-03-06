@@ -277,6 +277,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Set the textreader as closed
                 SetClosed();
+                _disposalTokenSource.Dispose();
             }
 
             base.Dispose(disposing);

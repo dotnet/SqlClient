@@ -1419,6 +1419,7 @@ namespace Microsoft.Data.SqlClient
                         if (cts != null)
                         {
                             cts.Cancel();
+                            cts.Dispose();
                         }
                         AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
                         if (State != ConnectionState.Open)
@@ -1728,6 +1729,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+                _reconnectionCancellationSource = null;
+                cts.Dispose();
                 _recoverySessionData = null;
                 _suppressStateChangeForReconnection = false;
             }
