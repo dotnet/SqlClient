@@ -67,18 +67,20 @@ The following build targets are defined in `build.proj`:
 |-|-|
 |`BuildAbstractions`|Restore and build the Abstractions package.|
 |`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
-|`BuildAllConfigurations`|Default target. Builds and packs the SqlClient package.|
+|`BuildAllPackages`|Default target. Builds all packages.|
 |`BuildAzure`|Restore and build the Azure package.|
 |`BuildLogging`|Restore and build the Logging package.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetCoreUnix`|Builds the .NET driver for Unix.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
-|`BuildSqlClient`|Restore and build the SqlClient package.|
+|`BuildSqlClient`|Restore and build the SqlClient package.  Requires `BuildTools` first.|
 |`BuildSqlServer`|Restore and build the SqlServer package.|
+|`BuildTools`|Build tools required by other targets.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
 |`PackAkvProvider`|Pack the AKV Provider NuGet package into `packages/`. Requires `BuildAkvProvider` first.|
+|`PackAllPackages`|Pack all packages into `packages/`.  Requires all build targets to have run first.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`PackSqlClient`|Pack the SqlClient NuGet package into `packages/`. Requires `BuildSqlClient` first.|
@@ -97,7 +99,7 @@ build:
 |Name|Supported Values|Default|Description|
 |-|-|-|-|
 |`Configuration`|`Debug`, `Release`|`Debug`|Sets the release configuration.|
-|`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using `BuildAllConfigurations` or an `AnyOS` specific target|The operating system to target.|
+|`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using an `AnyOS` specific target|The operating system to target.|
 |`Platform`|`AnyCPU`, `x86`, `x64`, `ARM`, `ARM64`|`AnyCPU`|May only be set when using package reference type or running tests.|
 |`TestSet`|`1`, `2`, `3`, `AE`, or any combination thereof|`''`|Build or run a subset of the manual tests. Omit (default) to run all tests.|
 |`DotnetPath`|Absolute file path to an installed `dotnet` version.|The system default specified by the path variable|Set to run tests using a specific dotnet version (e.g. C:\net6-win-x86\)|

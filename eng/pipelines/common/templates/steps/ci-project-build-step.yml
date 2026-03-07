@@ -92,9 +92,8 @@ steps:
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: >-
-            -t:BuildAllConfigurations
+            -t:BuildTools,BuildAllPackages
             -p:ReferenceType=${{ parameters.referenceType }}
-            -p:GenerateNuget=false
             -p:GenerateDocumentationFile=false
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
@@ -112,9 +111,8 @@ steps:
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments:
-            -t:BuildAllConfigurations
+            -t:BuildTools,BuildAllPackages
             -p:ReferenceType=${{ parameters.referenceType }}
-            -p:GenerateNuget=false
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
             -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
@@ -147,10 +145,9 @@ steps:
       projects: build.proj
       custom: build
       arguments: >-
-        -t:BuildAllPackages
+        -t:BuildTools,BuildAllPackages
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:TestEnabled=true
-        -p:GenerateNuget=false
         -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:BuildNumber=${{ parameters.buildNumber }}

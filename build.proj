@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" DefaultTargets="BuildTools,BuildAllPackages" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="src/Directory.Build.props" />
   <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
@@ -11,8 +11,6 @@
 
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
-    <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
     <!-- Flag to control if Windows drivers should be built or not -->
     <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
     <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
@@ -25,7 +23,6 @@
     <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
     <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
-    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
     <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
     <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
@@ -97,11 +94,8 @@
   <!-- TODO: Do we need this restore target? -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
 
-  <Target Name="BuildAllPackages" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard;BuildAzure;BuildAkvProvider" />
+  <Target Name="BuildAllPackages" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider" />
   <Target Name="PackAllPackages" DependsOnTargets="PackSqlServer;PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider" />
-
-  <!-- TODO: This doesn't really build everything; just the SqlClient driver and its NuGet package. -->
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
 
   <!-- SqlServer Targets -->
   <PropertyGroup>
@@ -230,7 +224,7 @@
   </Target>
 
   <!-- SqlClient Targets -->
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildTools;BuildNetFx;BuildNetCore;BuildNetCoreUnix;BuildNetCoreAllOS;BuildNetStandard" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetCoreUnix;BuildNetCoreAllOS;BuildNetStandard" />
   <Target Name="PackSqlClient" DependsOnTargets="GenerateMdsPackage" />
 
   <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
@@ -365,11 +359,11 @@
   </Target>
 
   <!-- Other Targets -->
-  <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
+  <Target Name="RestoreTools">
     <MSBuild Projects="@(Tools)" Targets="restore" Properties="$(CommonProperties)" />
   </Target>
 
-  <Target Name="BuildTools" DependsOnTargets="RestoreTools" Condition="'$(BuildTools)' == 'true'">
+  <Target Name="BuildTools" DependsOnTargets="RestoreTools">
     <MSBuild Projects="@(Tools)" Properties="$(CommonProperties)" />
   </Target>
 

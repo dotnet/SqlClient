@@ -30,10 +30,10 @@ steps:
       msBuildVersion: 17.0
       msBuildArchitecture: x64
       setupCommandlinePicker: vs2022
+      # Note that we do _not_ build the tools here, since we don't want them analyzed.  The tools
+      # must be built before calling this template.
       msBuildCommandline: >-
         msbuild
         ${{parameters.sourceRoot}}\build.proj
-        -t:BuildAllConfigurations
+        -t:BuildAllPackages
         -p:configuration=Release
-        -p:GenerateNuget=false
-        -p:BuildTools=false

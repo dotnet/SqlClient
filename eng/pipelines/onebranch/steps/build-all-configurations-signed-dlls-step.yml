@@ -41,14 +41,13 @@ steps:
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
   - task: MSBuild@1
-    displayName: 'BuildAllConfigurations using build.proj'
+    displayName: Build All Packages
     inputs:
       solution: '**/build.proj'
       configuration: Release
       msbuildArguments: >-
-        -t:BuildAllConfigurations
+        -t:BuildTools,BuildAllPackages
         -p:ReferenceType=Package
-        -p:GenerateNuget=false
         -p:SigningKeyPath=$(keyFile.secureFilePath)
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}

@@ -56,8 +56,6 @@
     <ToolsDir Condition="'$(ToolsDir)'==''">$(RepoRoot)tools\</ToolsDir>
     <GenAPISrcDir Condition="'$(GenAPISrcDir)'==''">$(ToolsDir)GenAPI\</GenAPISrcDir>
     <PackagesDir Condition="'$(PackagesDir)'==''">$(RepoRoot)packages\</PackagesDir>
-    <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
-    <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>

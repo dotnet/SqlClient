@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <!-- We will download the latest NuGet executable unless otherwise inhibited. -->
   <PropertyGroup>
-    <InstallNuget Condition="'$(InstallNuget)' != 'false'">true</InstallNuget>
+    <!-- Assume we will use whatever NuGet executable is in the path. -->
+    <NugetCmd>nuget</NugetCmd>
+
+    <!-- If we do download NuGet, we will put it here. -->
+    <NugetRoot>$(RepoRoot)/.nuget</NugetRoot>
+
+    <!--
+      Set this as a global immutable property to anything other than 'true' to inhibit the download.
+    -->
+    <InstallNuget>true</InstallNuget>
+
+    <!-- If we're downloading NuGet, update our command to point to it. -->
+    <NugetCmd Condition="'$(InstallNuget)' == 'true'">$(NugetRoot)/nuget.exe</NugetCmd>
   </PropertyGroup>
 
-  <Target Name="GenerateMdsPackage" Condition="'$(GenerateNuget)' == 'true'">
+  <Target Name="GenerateMdsPackage">
 
     <!-- Get the current commit id and store it in CommitId property to be used in nuget pack command -->
     <Exec Command="git rev-parse HEAD" ConsoleToMSBuild="true">
@@ -22,4 +33,5 @@
     <!-- Invoke NuGet with the SqlClient nuspec. -->
     <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(MdsPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(AbstractionsPackageVersion);LoggingPackageVersion=$(LoggingPackageVersion)&quot;" />
   </Target>
+
 </Project>
