@@ -1951,9 +1951,9 @@ namespace Microsoft.Data.SqlClient
                     _value = _value.ToString();
                     valueType = typeof(string);
                 }
-                else if (valueType == typeof(char[]))
+                else if (_value is char[] chars)
                 {
-                    _value = new string((char[])_value);
+                    _value = new string(chars);
                     valueType = typeof(string);
                 }
                 return MetaType.GetMetaTypeFromType(valueType);
