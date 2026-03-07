@@ -204,10 +204,10 @@ namespace Microsoft.Data.SqlClient
                 switch (_rowSourceType)
                 {
                     case ValueSourceType.RowArray:
-                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf((DataRow)_rowEnumerator.Current);
                         break;
                     case ValueSourceType.DataTable:
-                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf((DataRow)_rowEnumerator.Current);
                         break;
                     case ValueSourceType.DbDataReader:
                     case ValueSourceType.IDataReader:

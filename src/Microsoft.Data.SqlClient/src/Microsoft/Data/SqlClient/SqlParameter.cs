@@ -2390,11 +2390,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {
-                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                            throw ADP.InvalidJsonStringForVector((string)value, ex);
                         }
                     }
                     else if (
