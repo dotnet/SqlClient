@@ -102,6 +102,17 @@
   </ItemGroup>
 
   <!--
+    Refer to the Abstractions package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+  </ItemGroup>
+
+  <!--
     Generate ThisAssembly.cs which contains some version information that is
     used at runtime and otherwise would not be available.
   -->
