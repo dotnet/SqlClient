@@ -66,6 +66,12 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Microsoft.Data.SqlClient.Extensions\Logging\src\SqlClientEventSource.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
+    </Compile>
+  </ItemGroup>
+
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
     <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->
