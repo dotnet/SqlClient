@@ -1503,7 +1503,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// A disposable scope for general event tracing. Automatically leaves the scope when disposed.
     /// </summary>
-    internal readonly ref struct SqlClientEventScope
+    internal readonly ref struct SqlClientEventScope : IDisposable
     {
         private readonly long _scopeId;
 
@@ -1543,5 +1543,45 @@ namespace Microsoft.Data.SqlClient
         /// Creates a new event scope with a pre-existing scope identifier.
         /// </summary>
         public static SqlClientEventScope Create(long scopeId) => new SqlClientEventScope(scopeId);
+    }
+
+    /// <summary>
+    /// A disposable scope for general event tracing. Automatically leaves the scope when disposed.
+    /// Variation of <see cref="SqlClientEventScope"/>, designed for use in async methods where the
+    /// instance may need to be stored across awaits.
+    /// </summary>
+    internal readonly struct SqlClientEventAsyncScope : IDisposable
+    {
+        private readonly long _scopeId;
+
+        public SqlClientEventAsyncScope(long scopeID) => _scopeId = scopeID;
+
+        public void Dispose()
+        {
+            if (_scopeId != 0)
+            {
+                SqlClientEventSource.Log.TryScopeLeaveEvent(_scopeId);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new event scope with one formatted argument.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create<T0>(string message, T0 args0) => new(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
+
+        /// <summary>
+        /// Creates a new event scope with two formatted arguments.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create<T0, T1>(string message, T0 args0, T1 args1) => new(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
+
+        /// <summary>
+        /// Creates a new event scope for a class with the calling member name.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create(string className, [CallerMemberName] string memberName = "") => new(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
+
+        /// <summary>
+        /// Creates a new event scope with a pre-existing scope identifier.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create(long scopeId) => new(scopeId);
     }
 }
