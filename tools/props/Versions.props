@@ -74,6 +74,8 @@
   <!-- AKV Package Properties -->
   <PropertyGroup>
     <AkvVersionDefault>7.0.0</AkvVersionDefault>
+    <AkvAssemblyVersion>7.0.0.0</AkvAssemblyVersion>
+    <AkvAssemblyFileVersion Condition="'$(AkvAssemblyFileVersion)' == ''">$(AkvVersionDefault).$(AssemblyBuildNumber)</AkvAssemblyFileVersion>
     <AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvVersionDefault).$(BuildNumber)</AkvPackageVersion>
   </PropertyGroup>
 </Project>

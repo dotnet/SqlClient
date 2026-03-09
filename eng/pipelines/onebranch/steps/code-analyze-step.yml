@@ -37,3 +37,4 @@ steps:
         ${{parameters.sourceRoot}}\build.proj
         -t:BuildAllPackages
         -p:configuration=Release
+        -p:ReferenceType=Project

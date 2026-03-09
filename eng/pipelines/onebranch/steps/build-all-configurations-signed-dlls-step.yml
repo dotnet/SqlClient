@@ -46,7 +46,7 @@ steps:
       solution: '**/build.proj'
       configuration: Release
       msbuildArguments: >-
-        -t:BuildTools,BuildAllPackages
+        -t:BuildTools,BuildSqlClient
         -p:ReferenceType=Package
         -p:SigningKeyPath=$(keyFile.secureFilePath)
         -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}

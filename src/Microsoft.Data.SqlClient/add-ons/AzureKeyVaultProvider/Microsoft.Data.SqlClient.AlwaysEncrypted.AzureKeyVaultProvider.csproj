@@ -25,6 +25,10 @@
   <PropertyGroup>
     <PackageId>$(AssemblyName)</PackageId>
     <PackageVersion>$(AkvPackageVersion)</PackageVersion>
+    <AssemblyFileVersion>$(AkvAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(AkvAssemblyFileVersion)</FileVersion>
+    <AssemblyVersion>$(AkvAssemblyVersion)</AssemblyVersion>
+    <Version>$(AkvPackageVersion)</Version>
     <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
