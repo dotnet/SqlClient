@@ -34,9 +34,9 @@ variables:
   - name: abstractionsArtifactsName
     value: drop_build_abstractions_build_package_Abstractions
 
-  # The AKV package artifacts.
-  - name: akvArtifactsName
-    value: drop_build_dependent_build_package_AKV
+  # The AKV Provider package artifacts.
+  - name: akvProviderArtifactsName
+    value: drop_build_addons_build_package_AkvProvider
 
   # The Azure package artifacts.
   - name: azureArtifactsName

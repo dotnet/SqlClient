@@ -210,7 +210,7 @@ jobs:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
   - ${{ if eq(parameters.referenceType, 'Project') }}:
-    - template: ../steps/ci-project-build-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
       parameters:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}

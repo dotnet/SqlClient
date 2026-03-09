@@ -29,7 +29,7 @@ variables:
     value: '' # the value will be extracted from the repo's head
 
   # Aliases required by compound step templates (compound-esrp-dll-signing-step,
-  # compound-esrp-nuget-signing-step, compound-nuget-pack-step, etc.).
+  # compound-esrp-nuget-signing-step, etc.).
 
   # The root of our repo.
   - name: REPO_ROOT
@@ -168,10 +168,6 @@ variables:
   # The AssemblyFileVersion for all assemblies in the AKV Provider package.
   - name: akvAssemblyFileVersion
     value: 7.0.0.$(assemblyBuildNumber)
-
-  # The MDS package version that AKV Provider depends on.
-  - name: akvMdsPackageVersion
-    value: '7.0.0-preview4.$(Build.BuildNumber)'
 
   # ----------------------------------------------------------------------------
   # MDS Symbols Publishing
