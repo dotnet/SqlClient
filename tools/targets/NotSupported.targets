@@ -38,15 +38,24 @@
     <Error Text="No single matching contract found." Condition="'@(ResolvedMatchingContract->Count())' != '1'" />
 
     <PropertyGroup>
-      <GenAPIArgs>"%(ResolvedMatchingContract.Identity)"</GenAPIArgs>
-      <GenAPIArgs>$(GenAPIArgs) -l:"@(_referencePathDirectories)"</GenAPIArgs>
-      <GenAPIArgs>$(GenAPIArgs) -o:"$(NotSupportedSourceFile)"</GenAPIArgs>
-      <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">$(GenAPIArgs) -t:"$(GeneratePlatformNotSupportedAssemblyMessage)"</GenAPIArgs>
-      <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssemblyWithGlobalPrefix)' == 'true'">$(GenAPIArgs) -global</GenAPIArgs>
-      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotnetPath)dotnet" "$(ToolsArtifactsDir)net8.0/Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
-      <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
+      <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/bin/$(Configuration)/net10.0/</GenApiPath>
+      <GenApiCommand>
+        "$(DotnetPath)dotnet" $(GenApiPath)Microsoft.DotNet.GenAPI.dll
+          "%(ResolvedMatchingContract.Identity)"
+          -l:"@(_referencePathDirectories)"
+          -o:"$(NotSupportedSourceFile)"
+      </GenApiCommand>
+      <GenApiCommand Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
+        $(GenApiCommand)
+        -t:"$(GeneratePlatformNotSupportedAssemblyMessage)"
+      </GenApiCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s+", " "))</GenApiCommand>
     </PropertyGroup>
-    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)"/>
+
+    <Message Text=">>> Building MDS 'not supported' binaries via command: $(GenApiCommand)"/>
+    <Exec Command="$(GenApiCommand)" WorkingDirectory="$(ToolRuntimePath)"/>
+
     <ItemGroup>
       <FileWrites Include="$(NotSupportedSourceFile)" />
       <Compile Include="$(NotSupportedSourceFile)" />
