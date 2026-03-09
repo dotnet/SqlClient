@@ -1,7 +1,13 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <!--
+      Transitive pinning promotes every transitive dependency that has a PackageVersion entry to a
+      direct dependency. That is useful for applications, but all projects in this repo produce
+      library NuGet packages. Enabling it here would cause each package to declare its entire
+      transitive closure as direct dependencies in its .nuspec, over-constraining consumers.
+    -->
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <!-- ===================================================================== -->
