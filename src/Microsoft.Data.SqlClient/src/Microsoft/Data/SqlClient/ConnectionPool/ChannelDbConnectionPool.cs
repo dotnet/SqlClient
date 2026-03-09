@@ -486,8 +486,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch (ChannelClosedException)
                 {
-                    //TODO: exceptions from resource file
-                    throw new Exception("The connection pool has been shut down.");
+                    throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown));
                 }
 
                 if (connection is not null && !IsLiveConnection(connection))
