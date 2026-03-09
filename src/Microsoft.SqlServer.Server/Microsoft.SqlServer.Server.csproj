@@ -39,7 +39,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <Title>Microsoft.SqlServer.Server</Title>
-    <Authors>Microsoft Corporation</Authors>
+    <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
 
