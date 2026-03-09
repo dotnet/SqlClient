@@ -65,8 +65,12 @@
     <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
     <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
 
-    <!-- We put our docs in the bin/ directory as well. -->
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+    <!--
+      Generate XML documentation from /// comments.  The compiler places the
+      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
+      this file automatically in the NuGet package under lib/<tfm>/.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
   </PropertyGroup>
 
@@ -84,7 +88,8 @@
 
     <Authors>Microsoft Corporation</Authors>
     <Company>Microsoft Corporation</Company>
-    <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing and diagnostics.</Description>
+    <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing
+      and diagnostics.</Description>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>dotnet.png</PackageIcon>
@@ -108,5 +113,30 @@
     <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
   </PropertyGroup>
   <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
+
+  <!--
+    Documentation post-processing targets.
+
+    After building, we save the full (untrimmed) XML documentation to the
+    artifacts/doc/ directory for use by public documentation workflows, then
+    trim the in-place copy (removing <remarks> and <example> nodes) so that
+    the NuGet package ships a cleaner IntelliSense XML file.
+  -->
+  <Target Name="SaveUntrimmedDocs" AfterTargets="Build"
+    Condition="'$(GenerateDocumentationFile)' == 'true' AND Exists('$(DocumentationFile)')">
+    <MakeDir Directories="$(Artifacts)/doc/$(TargetFramework)/" />
+    <Copy SourceFiles="$(DocumentationFile)"
+      DestinationFolder="$(Artifacts)/doc/$(TargetFramework)/" />
+  </Target>
+
+  <Target Name="TrimDocsForIntelliSense" AfterTargets="SaveUntrimmedDocs"
+    Condition="'$(GenerateDocumentationFile)' == 'true' AND Exists('$(DocumentationFile)')">
+    <Exec
+      Command="powershell.exe -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'&quot;"
+      Condition=" '$(OS)' == 'Windows_NT' " />
+    <Exec
+      Command="pwsh -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'&quot;"
+      Condition=" '$(OS)' != 'Windows_NT' " />
+  </Target>
 
 </Project>
