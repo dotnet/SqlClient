@@ -25,10 +25,21 @@ namespace Microsoft.Data.SqlClient
     /// independently to control the verbosity and scope of tracing.  Use the singleton <see cref="Log"/>
     /// instance to write events and query enablement status.
     /// </para>
+    /// <para>
+    /// <strong>Note:</strong> This API surface is primarily intended for internal use by the
+    /// Microsoft.Data.SqlClient driver. While public, it may be modified or reduced in future
+    /// versions without following the standard breaking-change deprecation policy.
+    /// </para>
     /// <example>
     /// Enable ETW tracing with PerfView:
     /// <code>
     /// PerfView.exe collect /Providers=*Microsoft.Data.SqlClient.EventSource
+    /// </code>
+    /// </example>
+    /// <example>
+    /// Collect traces with dotnet-trace:
+    /// <code>
+    /// dotnet-trace collect -p &lt;PID&gt; --providers Microsoft.Data.SqlClient.EventSource:1FFF:5
     /// </code>
     /// </example>
     /// </remarks>
@@ -1375,7 +1386,7 @@ namespace Microsoft.Data.SqlClient
         /// Writes a formatted advanced trace binary event with three arguments if advanced binary tracing is enabled.
         /// </summary>
         /// <typeparam name="T0">The type of the first argument.</typeparam>
-        /// <typeparam name="T1">The type of the second argument (may be <see cref="T:byte[]"/> for hex formatting).</typeparam>
+        /// <typeparam name="T1">The type of the second argument (may be <c>byte[]</c> for hex formatting).</typeparam>
         /// <typeparam name="T2">The type of the third argument.</typeparam>
         /// <param name="message">A composite format string for the advanced trace binary message.</param>
         /// <param name="args0">The first argument to format into the message.</param>

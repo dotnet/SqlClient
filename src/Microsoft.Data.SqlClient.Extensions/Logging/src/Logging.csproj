@@ -89,8 +89,10 @@
     <Title>Microsoft.Data.SqlClient.Extensions.Logging</Title>
     <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
-    <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing
-      and diagnostics.</Description>
+    <Description>
+      Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing
+      and diagnostics.
+    </Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageTags>sqlclient microsoft.data.sqlclient extensions logging</PackageTags>
     <RepositoryType>git</RepositoryType>
@@ -135,14 +137,19 @@
       DestinationFolder="$(Artifacts)/doc/$(TargetFramework)/" />
   </Target>
 
+  <!--
+    Select the correct PowerShell executable for the current OS so that the
+    TrimDocsForIntelliSense target below does not need to duplicate the command.
+  -->
+  <PropertyGroup>
+    <PowerShellCmd Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCmd>
+    <PowerShellCmd Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCmd>
+  </PropertyGroup>
+
   <Target Name="TrimDocsForIntelliSense" AfterTargets="SaveUntrimmedDocs"
     Condition="'$(GenerateDocumentationFile)' == 'true' AND Exists('$(DocumentationFile)')">
     <Exec
-      Command="powershell.exe -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'&quot;"
-      Condition=" '$(OS)' == 'Windows_NT' " />
-    <Exec
-      Command="pwsh -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'&quot;"
-      Condition=" '$(OS)' != 'Windows_NT' " />
+      Command="$(PowerShellCmd) -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'&quot;" />
   </Target>
 
 </Project>
