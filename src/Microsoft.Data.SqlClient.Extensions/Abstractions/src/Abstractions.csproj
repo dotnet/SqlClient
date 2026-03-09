@@ -105,6 +105,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Common/Abstractions/Logging/Logger.cs">
+      <Link>Logging/Logger.cs</Link>
+    </Compile>
+  </ItemGroup>
+
   <!--
     Generate ThisAssembly.cs which contains some version information that is
     used at runtime and otherwise would not be available.
