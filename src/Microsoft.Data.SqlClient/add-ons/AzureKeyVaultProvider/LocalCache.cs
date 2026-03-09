@@ -1,8 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.SqlClient.Extensions.Abstractions;
 using Microsoft.Extensions.Caching.Memory;
 using static System.Math;
 
@@ -61,13 +62,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (TimeToLive <= TimeSpan.Zero)
             {
-                SqlClientEventSource.Log.TryTraceEvent("Key caching found disabled, fetching key information.");
+                Logger.TraceLogger?.KeyCachingDisabled();
                 return createItem();
             }
 
             if (!_cache.TryGetValue(key, out TValue cacheEntry))
             {
-                SqlClientEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
+                Logger.TraceLogger?.CachedEntryNotFound();
                 if (_cache.Count == _maxSize)
                 {
                     _cache.Compact(Max(0.10, 1.0 / _maxSize));
@@ -80,11 +81,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 };
 
                 _cache.Set(key, cacheEntry, cacheEntryOptions);
-                SqlClientEventSource.Log.TryTraceEvent("Entry added to local cache.");
+                Logger.TraceLogger?.AddedEntryToCache();
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("Cached entry found.");
+                Logger.TraceLogger?.CachedEntryFound();
             }
 
             return cacheEntry;
