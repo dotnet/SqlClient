@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         public static readonly SqlClientEventSource Log = new();
 
         /// <summary>
-        /// A callback that is invoked when the EventSource receives an Enable command.
+        /// Gets or sets a callback that is invoked when the EventSource receives an Enable command.
         /// Can be used to hook metrics or other subsystems that need to respond to EventSource enablement.
         /// </summary>
         public static Action? OnEventSourceEnabled { get; set; }
@@ -99,97 +99,97 @@ namespace Microsoft.Data.SqlClient
         private const int EndExecuteEventId = 2;
 
         /// <summary>
-        /// Defines EventId for Trace() events
+        /// Defines EventId for Trace() events.
         /// </summary>
         private const int TraceEventId = 3;
 
         /// <summary>
-        /// Defines EventId for ScopeEnter() events
+        /// Defines EventId for ScopeEnter() events.
         /// </summary>
         private const int ScopeEnterId = 4;
 
         /// <summary>
-        /// Defines EventId for ScopeLeave() events
+        /// Defines EventId for ScopeLeave() events.
         /// </summary>
         private const int ScopeExitId = 5;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeEnter() events
+        /// Defines EventId for NotificationScopeEnter() events.
         /// </summary>
         private const int NotificationScopeEnterId = 6;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeLeave() events
+        /// Defines EventId for NotificationScopeLeave() events.
         /// </summary>
         private const int NotificationScopeExitId = 7;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeTrace() events
+        /// Defines EventId for NotificationScopeTrace() events.
         /// </summary>
         private const int NotificationTraceId = 8;
 
         /// <summary>
-        /// Defines EventId for PoolerScopeEnter() events
+        /// Defines EventId for PoolerScopeEnter() events.
         /// </summary>
         private const int PoolerScopeEnterId = 9;
 
         /// <summary>
-        /// Defines EventId for PoolerScopeLeave() events
+        /// Defines EventId for PoolerScopeLeave() events.
         /// </summary>
         private const int PoolerScopeExitId = 10;
 
         /// <summary>
-        /// Defines EventId for PoolerTrace() events
+        /// Defines EventId for PoolerTrace() events.
         /// </summary>
         private const int PoolerTraceId = 11;
 
         /// <summary>
-        /// Defines EventId for AdvancedTrace() events
+        /// Defines EventId for AdvancedTrace() events.
         /// </summary>
         private const int AdvancedTraceId = 12;
 
         /// <summary>
-        /// Defines EventId for AdvancedScopeEnter() events
+        /// Defines EventId for AdvancedScopeEnter() events.
         /// </summary>
         private const int AdvancedScopeEnterId = 13;
 
         /// <summary>
-        /// Defines EventId for AdvancedScopeLeave() events
+        /// Defines EventId for AdvancedScopeLeave() events.
         /// </summary>
         private const int AdvancedScopeExitId = 14;
 
         /// <summary>
-        /// Defines EventId for AdvancedTraceBin() events
+        /// Defines EventId for AdvancedTraceBin() events.
         /// </summary>
         private const int AdvancedTraceBinId = 15;
 
         /// <summary>
-        /// Defines EventId for AdvancedTraceError() events
+        /// Defines EventId for AdvancedTraceError() events.
         /// </summary>
         private const int AdvancedTraceErrorId = 16;
 
         /// <summary>
-        /// Defines EventId for CorrelationTrace() events
+        /// Defines EventId for CorrelationTrace() events.
         /// </summary>
         private const int CorrelationTraceId = 17;
 
         /// <summary>
-        /// Defines EventId for StateDump() events
+        /// Defines EventId for StateDump() events.
         /// </summary>
         private const int StateDumpEventId = 18;
 
         /// <summary>
-        /// Defines EventId for SNITrace() events
+        /// Defines EventId for SNITrace() events.
         /// </summary>
         private const int SNITraceEventId = 19;
 
         /// <summary>
-        /// Defines EventId for SNIEnterScope() events
+        /// Defines EventId for SNIEnterScope() events.
         /// </summary>
         private const int SNIScopeEnterId = 20;
 
         /// <summary>
-        /// Defines EventId for SNIExitScope() events
+        /// Defines EventId for SNIExitScope() events.
         /// </summary>
         private const int SNIScopeExitId = 21;
         #endregion
