@@ -2,8 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Extensions.Abstractions;
+using Microsoft.Data.SqlClient.Extensions.Abstractions.Logging;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -48,8 +49,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (assembly is null)
                 {
-                    Log($"MDS assembly={assemblyName} not found; " +
-                        "Get/SetProvider() will not function");
+                    Logger.TraceLogger?.AssemblyNotFound(assemblyName);
                     return;
                 }
 
@@ -62,8 +62,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (manager is null)
                 {
-                    Log($"MDS auth manager manager class={className} not found; " +
-                        "Get/SetProvider() will not function");
+                    Logger.TraceLogger?.AuthManagerClassNotFound(className);
                     return;
                 }
 
@@ -74,8 +73,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (_getProvider is null)
                 {
-                    Log($"MDS GetProvider() method not found; " +
-                        "GetProvider() will not function");
+                    Logger.TraceLogger?.GetProviderMethodNotFound();
                 }
 
                 _setProvider = manager.GetMethod(
@@ -84,8 +82,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (_setProvider is null)
                 {
-                    Log($"MDS SetProvider() method not found; " +
-                        "SetProvider() will not function");
+                    Logger.TraceLogger?.SetProviderMethodNotFound();
                 }
             }
             // All of these exceptions mean we couldn't find the get/set
@@ -96,8 +93,7 @@ public abstract partial class SqlAuthenticationProvider
                      or FileLoadException
                      or FileNotFoundException)
             {
-                Log($"MDS assembly={assemblyName} not found or not usable; " +
-                    $"Get/SetProvider() will not function: {ex} ");
+                Logger.TraceLogger?.AssemblyNotFoundOrUsable(assemblyName, ex.ToString());
             }
             // Any other exceptions are fatal.
         }
@@ -132,8 +128,7 @@ public abstract partial class SqlAuthenticationProvider
                      or NotSupportedException
                      or TargetInvocationException)
             {
-                Log($"GetProvider() invocation failed: " +
-                    $"{ex.GetType().Name}: {ex.Message}");
+                Logger.TraceLogger?.GetProviderInvocationFailed(ex.GetType().Name, ex.ToString());
                 return null;
             }
         }
@@ -169,8 +164,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (!result.HasValue)
                 {
-                    Log($"SetProvider() invocation returned null; " +
-                        "translating to false");
+                    Logger.TraceLogger?.SetProviderInvocationReturnedNull();
                     return false;
                 }
 
@@ -183,15 +177,9 @@ public abstract partial class SqlAuthenticationProvider
                      or NotSupportedException
                      or TargetInvocationException)
             {
-                Log($"SetProvider() invocation failed: " +
-                    $"{ex.GetType().Name}: {ex.Message}");
+                Logger.TraceLogger?.SetProviderInvocationFailed(ex.GetType().Name, ex.ToString());
                 return false;
             }
-        }
-
-        private static void Log(string message)
-        {
-            SqlClientEventSource.Log.TryTraceEvent("SqlAuthenticationProvider.Internal | {0}", message);
         }
     }
 }
