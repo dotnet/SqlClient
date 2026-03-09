@@ -25,7 +25,17 @@
       Default value: [blank]
       Example:       C:\x86\
     -->
-    <DotNetPath Condition="'$(DotnetPath)' == ''" />
+    <DotnetPath Condition="'$(DotnetPath)' == ''" />
+
+    <!--
+      NugetPath
+      Applies to:     PackMds
+      Description:    Path to NuGet executable. Override if `nuget` is not included in the PATH
+                      variable.
+      Default value:  nuget
+      Example:        C:\nuget\nuget.exe
+    -->
+    <NugetPath Condition="'$(NugetPath)' == ''">nuget</NugetPath>
 
     <!--
       PackageVersionAbstractions
@@ -222,7 +232,7 @@
   <Target Name="BuildMdsNotSupported">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotNetPath)dotnet" build "$(GenApiProjectPath)"
+        "$(DotnetPath)dotnet" build "$(GenApiProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -239,9 +249,14 @@
 
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotNetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
+        "$(DotnetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -318,6 +333,13 @@
   -->
   <!-- DependsOnTargets="BuildMds" -->
   <Target Name="PackMds" >
+    <Error Text="PackageVersionAbstractions must be set!"
+           Condition="'$(PackageVersionAbstractions)' == ''" />
+    <Error Text="PackageVersionLogging must be set!"
+           Condition="'$(PackageVersionLogging)' == ''" />
+    <Error Text="PackageVersionMds must be set !"
+           Condition="'$(PackageVersionMds)' == ''" />
+
     <PropertyGroup>
       <GitCommand>
         git rev-parse HEAD
@@ -331,29 +353,19 @@
     </Exec>
 
     <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" pack "$(MdsProjectPath)"
-        -p:NuspecFile="$(MdsNuspecPath)"
-        --no-build
-        --output "$(MdsArtifactRoot)"
-        --include-symbols
-        -p:SymbolPackageFormat=snupkg
-        $(PackageVersionMdsArgument)
-
-        <!-- Dependency versions -->
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-
-        <!-- Msc Metadata -->
-        -p:COMMITID="$(CommitId)"
-        -p:Configuration="$(Configuration)"
-        -p:ReferenceType="$(ReferenceType)"
-      </DotnetCommand>
+      <NuGetCommand>
+        "$(NugetPath)" pack "$(MdsNuspecPath)"
+        -Symbols
+        -SymbolPackageFormat snupkg
+        -Version "$(PackageVersionMds)"
+        -OutputDirectory "$(MdsArtifactRoot)/$(ReferenceType)-$(Configuration)"
+        -properties "COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(PackageVersionAbstractions);LoggingPackageVersion=$(PackageVersionLogging)"
+      </NuGetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <NuGetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(NuGetCommand), "\s+", " "))</NuGetCommand>
     </PropertyGroup>
-    <Message Text=">>> Packing MDS nuget via command: $(DotnetCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+    <Message Text=">>> Packing MDS nuget via command: $(NuGetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(NuGetCommand)" />
   </Target>
 
   <!-- Test MDS Targets ==================================================== -->
