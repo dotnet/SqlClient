@@ -5,6 +5,8 @@
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
@@ -62,7 +64,7 @@
     <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
     <!-- to is possible but requires also specifying the IntermediateOutputPath. So while it      -->
     <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
-    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
   <!-- Embedded resources ============================================== -->
