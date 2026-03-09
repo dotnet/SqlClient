@@ -92,7 +92,7 @@ steps:
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments: >-
-            -t:BuildTools,BuildAllPackages
+            -t:BuildTools,BuildSqlClient
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:GenerateDocumentationFile=false
             -p:BuildNumber=${{ parameters.buildNumber }}
@@ -111,7 +111,7 @@ steps:
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments:
-            -t:BuildTools,BuildAllPackages
+            -t:BuildTools,BuildSqlClient
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:BuildNumber=${{ parameters.buildNumber }}
             -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}

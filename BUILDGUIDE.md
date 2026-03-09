@@ -67,7 +67,7 @@ The following build targets are defined in `build.proj`:
 |-|-|
 |`BuildAbstractions`|Restore and build the Abstractions package.|
 |`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
-|`BuildAllPackages`|Default target. Builds all packages.|
+|`BuildAllPackages`|Builds all packages.  Intended for reference type `Project` only.|
 |`BuildAzure`|Restore and build the Azure package.|
 |`BuildLogging`|Restore and build the Logging package.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
@@ -90,6 +90,8 @@ The following build targets are defined in `build.proj`:
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
+
+The default build targets are `BuildTools` and `BuildAllPackages`.
 
 ### Parameters
 

@@ -167,7 +167,6 @@ jobs:
       arguments: >-
         -t:PackAkvProvider
         --configuration ${{ parameters.buildConfiguration }}
-        --output $(packagePath)
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:AkvPackageVersion=$(akvPackageVersion)
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
