@@ -1,6 +1,5 @@
 using System.Diagnostics;
 
-using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
@@ -127,9 +126,8 @@ public class App : IDisposable
             Console.ReadLine();
         }
 
-        // Instantiate the AKV Provider to ensure its assembly is present, loadable, contains the
-        // expected types, and at least the constructor functions.
-        _ = new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential(true));
+        // Touch the AKV Provider type to ensure its assembly is present and loadable.
+        _ = typeof(SqlColumnEncryptionAzureKeyVaultProvider);
 
         try
         {

@@ -36,7 +36,6 @@
 
   <!-- Other Packages -->
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
