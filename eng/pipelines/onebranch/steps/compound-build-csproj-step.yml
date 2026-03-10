@@ -48,6 +48,3 @@ steps:
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: List Build Output Tree
-
-  - script: tree /a /f $(PACK_OUTPUT)
-    displayName: List Pack Output Tree

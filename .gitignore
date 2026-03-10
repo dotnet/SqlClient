@@ -201,6 +201,10 @@ PublishScripts/
 **/[Pp]ackages/*
 !**/[Pp]ackages/.gitkeep
 
+# Most of the output folder can be ignored.
+**/[Oo]utput/*
+!**/[Oo]utput/.gitkeep
+
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets
