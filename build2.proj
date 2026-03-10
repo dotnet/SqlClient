@@ -6,6 +6,18 @@
   <!-- Build Parameters ================================================ -->
   <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
   <PropertyGroup>
+    <!-- @TODO: The parameters used for versioning is somewhat unclear. -->
+    <!--
+      AssemblyBuildNumber
+      Applies to:     BuildMds*
+      Description:    The build number is used as the fourth part of the assembly version.
+      Default value:  [blank]
+    -->
+    <AssemblyBuildNumber Condition="'$(AssemblyBuildNumber)' == ''" />
+    <AssemblyBuildNumberArgument Condition="'$(AssemblyBuildNumber)' != ''">
+      -p:AssemblyBuildNumber=$(AssemblyBuildNumber)
+    </AssemblyBuildNumberArgument>
+
     <!--
       Configuration
       Applies to:     All targets
@@ -252,6 +264,7 @@
         "$(DotnetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
+        $(AssemblyBuildNumberArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -272,6 +285,9 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(MdsRefProjectPath)
         -p:Configuration=$(Configuration)
+        $(AssemblyBuildNumberArgument)
+
+        <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
       </DotnetCommand>
@@ -290,6 +306,7 @@
         "$(DotnetPath)dotnet" build $(MdsProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
+        $(AssemblyBuildNumberArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -311,6 +328,7 @@
         "$(DotnetPath)dotnet" build $(MdsProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
+        $(AssemblyBuildNumberArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
