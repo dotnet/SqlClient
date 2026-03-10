@@ -1,6 +1,5 @@
 using System.Diagnostics;
 
-using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
@@ -82,15 +81,6 @@ public class App : IDisposable
                   Authentication:   {builder.Authentication}
 
                 """);
-
-            if (options.Verbose)
-            {
-                Out($"""
-                    Full connection string:
-                      {builder}
-
-                    """);
-            }
         }
         catch (Exception ex)
         {
@@ -109,10 +99,9 @@ public class App : IDisposable
         // Enable SqlClient event logging if requested.
         if (options.LogEvents)
         {
-            string prefix = "[EVENT]";
-            Out($"SqlClient event logging enabled; events will be prefixed with {prefix}");
+            Out($"SqlClient event logging enabled; events will be prefixed with {SqlClientEventListener.Prefix}");
 
-            _eventListener = new SqlClientEventListener(Out, prefix);
+            _eventListener = new SqlClientEventListener(Out, SqlClientEventListener.Prefix);
         }
 
         // Pause for trace attachment if requested.
@@ -127,9 +116,10 @@ public class App : IDisposable
             Console.ReadLine();
         }
 
-        // Instantiate the AKV Provider to ensure its assembly is present, loadable, contains the
-        // expected types, and at least the constructor functions.
-        _ = new SqlColumnEncryptionAzureKeyVaultProvider(new DefaultAzureCredential(true));
+        // Load the AKV Provider assembly to ensure it is present, loadable, and contains the
+        // expected types.  This is a lightweight check that detects transitive dependency conflicts
+        // without allocating a credential or invoking any external service.
+        _ = typeof(SqlColumnEncryptionAzureKeyVaultProvider).Assembly;
 
         try
         {

@@ -66,6 +66,7 @@ public static class EntryPoint
             verboseOption
         };
 
+        int exitCode = 0;
         rootCommand.SetAction(parseResult =>
         {
             App.RunOptions options = new()
@@ -77,9 +78,10 @@ public static class EntryPoint
             };
 
             using App app = new();
-            return app.Run(options);
+            exitCode = app.Run(options);
         });
 
-        return rootCommand.Parse(args).Invoke();
+        rootCommand.Parse(args).Invoke();
+        return exitCode;
     }
 }

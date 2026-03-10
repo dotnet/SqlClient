@@ -33,8 +33,8 @@ Package versions are controlled through MSBuild properties. Pass them on the com
 
 | Property | Default | Description |
 | --- | --- | --- |
-| `SqlClientVersion` | `6.1.4` | Version of `Microsoft.Data.SqlClient` to reference. |
-| `AkvProviderVersion` | `6.1.2` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
+| `SqlClientVersion` | `7.0.0-preview4.26064.3` | Version of `Microsoft.Data.SqlClient` to reference. |
+| `AkvProviderVersion` | `7.0.0-preview1.26064.3` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
 | `AzureVersion` | None | Version of `Microsoft.Data.SqlClient.Extensions.Azure` to reference.  When omitted, the `Azure` package will not be referenced. |
 
 ## Local Package Source
@@ -68,7 +68,7 @@ Description:
 
   Supply specific package versions when building to test different versions of the SqlClient suite, for example:
 
-    -p:SqlClientVersion=7.0.0.preview4
+    -p:SqlClientVersion=7.0.0-preview4
     -p:AkvProviderVersion=7.0.1-preview2
     -p:AzureVersion=1.0.0-preview1
 

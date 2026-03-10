@@ -25,6 +25,16 @@ internal sealed class SqlClientEventListener : EventListener
     #endregion
 
     // ──────────────────────────────────────────────────────────────────
+    #region Constants
+
+    /// <summary>
+    /// The default prefix prepended to each emitted event message.
+    /// </summary>
+    internal const string Prefix = "[EVENT]";
+
+    #endregion
+
+    // ──────────────────────────────────────────────────────────────────
     #region Derived Methods
 
     /// <inheritdoc />
