@@ -220,11 +220,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eng", "eng", "{4600328C-C13
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{4CAE9195-4F1A-4D48-854C-1C9FBC512C66}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\akv-official-pipeline.yml = ..\eng\pipelines\akv-official-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-core.yml = ..\eng\pipelines\dotnet-sqlclient-ci-core.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml
-		..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml
 		..\eng\pipelines\sqlclient-pr-package-ref-pipeline.yml = ..\eng\pipelines\sqlclient-pr-package-ref-pipeline.yml
 		..\eng\pipelines\sqlclient-pr-project-ref-pipeline.yml = ..\eng\pipelines\sqlclient-pr-project-ref-pipeline.yml
 		..\eng\pipelines\stress-tests-pipeline.yml = ..\eng\pipelines\stress-tests-pipeline.yml
@@ -236,12 +234,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{3850810F-535E-443A-A9B4-7EE85B327E0A}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml
 		..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml = ..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml
 		..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml = ..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml
 		..\eng\pipelines\common\templates\jobs\ci-run-tests-job.yml = ..\eng\pipelines\common\templates\jobs\ci-run-tests-job.yml
-		..\eng\pipelines\common\templates\jobs\run-tests-package-reference-job.yml = ..\eng\pipelines\common\templates\jobs\run-tests-package-reference-job.yml
-		..\eng\pipelines\common\templates\jobs\validate-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\validate-signed-package-job.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{01FA4774-E594-4A2D-B839-EA7A56D09A8B}"
@@ -251,22 +246,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{01FA47
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml
 		..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml
 		..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml
 		..\eng\pipelines\common\templates\steps\ci-project-build-step.yml = ..\eng\pipelines\common\templates\steps\ci-project-build-step.yml
-		..\eng\pipelines\common\templates\steps\code-analyze-step.yml = ..\eng\pipelines\common\templates\steps\code-analyze-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml
-		..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml = ..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml
-		..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml = ..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml
 		..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml = ..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml
 		..\eng\pipelines\common\templates\steps\override-sni-version.yml = ..\eng\pipelines\common\templates\steps\override-sni-version.yml
 		..\eng\pipelines\common\templates\steps\pre-build-step.yml = ..\eng\pipelines\common\templates\steps\pre-build-step.yml
 		..\eng\pipelines\common\templates\steps\prepare-test-db-step.yml = ..\eng\pipelines\common\templates\steps\prepare-test-db-step.yml
-		..\eng\pipelines\common\templates\steps\publish-symbols-step.yml = ..\eng\pipelines\common\templates\steps\publish-symbols-step.yml
 		..\eng\pipelines\common\templates\steps\publish-test-results-step.yml = ..\eng\pipelines\common\templates\steps\publish-test-results-step.yml
 		..\eng\pipelines\common\templates\steps\run-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\run-all-tests-step.yml
 		..\eng\pipelines\common\templates\steps\update-config-file-step.yml = ..\eng\pipelines\common\templates\steps\update-config-file-step.yml
@@ -274,27 +264,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\libraries\build-variables.yml = ..\eng\pipelines\libraries\build-variables.yml
 		..\eng\pipelines\libraries\ci-build-variables.yml = ..\eng\pipelines\libraries\ci-build-variables.yml
-		..\eng\pipelines\libraries\common-variables.yml = ..\eng\pipelines\libraries\common-variables.yml
-		..\eng\pipelines\libraries\mds-validation-variables.yml = ..\eng\pipelines\libraries\mds-validation-variables.yml
-		..\eng\pipelines\libraries\mds-variables.yml = ..\eng\pipelines\libraries\mds-variables.yml
-		..\eng\pipelines\libraries\variables.yml = ..\eng\pipelines\libraries\variables.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{1C796A8E-3529-481B-9D4F-88C67D03DCA2}"
-	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\variables\akv-official-variables.yml = ..\eng\pipelines\variables\akv-official-variables.yml
-		..\eng\pipelines\variables\common-variables.yml = ..\eng\pipelines\variables\common-variables.yml
-		..\eng\pipelines\variables\esrp-signing-variables.yml = ..\eng\pipelines\variables\esrp-signing-variables.yml
-		..\eng\pipelines\variables\onebranch-variables.yml = ..\eng\pipelines\variables\onebranch-variables.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-878F-4F55-8AA2-6E47F1AD37D5}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\jobs\build-akv-official-job.yml = ..\eng\pipelines\jobs\build-akv-official-job.yml
 		..\eng\pipelines\jobs\pack-abstractions-package-ci-job.yml = ..\eng\pipelines\jobs\pack-abstractions-package-ci-job.yml
 		..\eng\pipelines\jobs\pack-azure-package-ci-job.yml = ..\eng\pipelines\jobs\pack-azure-package-ci-job.yml
+		..\eng\pipelines\jobs\pack-logging-package-ci-job.yml = ..\eng\pipelines\jobs\pack-logging-package-ci-job.yml
 		..\eng\pipelines\jobs\stress-tests-ci-job.yml = ..\eng\pipelines\jobs\stress-tests-ci-job.yml
 		..\eng\pipelines\jobs\test-abstractions-package-ci-job.yml = ..\eng\pipelines\jobs\test-abstractions-package-ci-job.yml
 		..\eng\pipelines\jobs\test-azure-package-ci-job.yml = ..\eng\pipelines\jobs\test-azure-package-ci-job.yml
@@ -302,16 +279,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\steps\compound-build-akv-step.yml = ..\eng\pipelines\steps\compound-build-akv-step.yml
-		..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-dll-signing-step.yml
-		..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-nuget-signing-step.yml
-		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
-		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
-		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
 		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
 		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
-		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
-		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
@@ -370,6 +339,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{E9D12A
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\stages\build-abstractions-package-ci-stage.yml = ..\eng\pipelines\stages\build-abstractions-package-ci-stage.yml
 		..\eng\pipelines\stages\build-azure-package-ci-stage.yml = ..\eng\pipelines\stages\build-azure-package-ci-stage.yml
+		..\eng\pipelines\stages\build-logging-package-ci-stage.yml = ..\eng\pipelines\stages\build-logging-package-ci-stage.yml
+		..\eng\pipelines\stages\build-sqlclient-package-ci-stage.yml = ..\eng\pipelines\stages\build-sqlclient-package-ci-stage.yml
+		..\eng\pipelines\stages\generate-secrets-ci-stage.yml = ..\eng\pipelines\stages\generate-secrets-ci-stage.yml
 		..\eng\pipelines\stages\stress-tests-ci-stage.yml = ..\eng\pipelines\stages\stress-tests-ci-stage.yml
 	EndProjectSection
 EndProject
@@ -386,6 +358,52 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.DotNet.GenAPI", "..\tools\GenAPI\Microsoft.DotNet.GenAPI\Microsoft.DotNet.GenAPI.csproj", "{583E2B51-A90B-4F34-AD8B-4061504E855E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Cci.Extensions", "..\tools\GenAPI\Microsoft.Cci.Extensions\Microsoft.Cci.Extensions.csproj", "{2F900B8A-EA19-4274-9AE9-3E6A59856FCC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "onebranch", "onebranch", "{5EC4C165-25BB-4346-9DCC-5EFEEAC00C02}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\onebranch\sqlclient-non-official.yml = ..\eng\pipelines\onebranch\sqlclient-non-official.yml
+		..\eng\pipelines\onebranch\sqlclient-official.yml = ..\eng\pipelines\onebranch\sqlclient-official.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{B3061B34-2A1C-49B9-A3A9-D4D37B4704B2}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\onebranch\jobs\build-akv-official-job.yml = ..\eng\pipelines\onebranch\jobs\build-akv-official-job.yml
+		..\eng\pipelines\onebranch\jobs\build-signed-csproj-package-job.yml = ..\eng\pipelines\onebranch\jobs\build-signed-csproj-package-job.yml
+		..\eng\pipelines\onebranch\jobs\build-signed-sqlclient-package-job.yml = ..\eng\pipelines\onebranch\jobs\build-signed-sqlclient-package-job.yml
+		..\eng\pipelines\onebranch\jobs\publish-nuget-package-job.yml = ..\eng\pipelines\onebranch\jobs\publish-nuget-package-job.yml
+		..\eng\pipelines\onebranch\jobs\validate-signed-package-job.yml = ..\eng\pipelines\onebranch\jobs\validate-signed-package-job.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{3654906C-6852-48AF-BC7E-B3A62F3E9DB9}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\onebranch\stages\build-stages.yml = ..\eng\pipelines\onebranch\stages\build-stages.yml
+		..\eng\pipelines\onebranch\stages\release-stages.yml = ..\eng\pipelines\onebranch\stages\release-stages.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{45B9E5C3-DED5-4DB6-B1E6-4EAC4E68BA83}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\onebranch\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\onebranch\steps\build-all-configurations-signed-dlls-step.yml
+		..\eng\pipelines\onebranch\steps\code-analyze-step.yml = ..\eng\pipelines\onebranch\steps\code-analyze-step.yml
+		..\eng\pipelines\onebranch\steps\compound-build-akv-step.yml = ..\eng\pipelines\onebranch\steps\compound-build-akv-step.yml
+		..\eng\pipelines\onebranch\steps\compound-build-csproj-step.yml = ..\eng\pipelines\onebranch\steps\compound-build-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\compound-esrp-dll-signing-step.yml = ..\eng\pipelines\onebranch\steps\compound-esrp-dll-signing-step.yml
+		..\eng\pipelines\onebranch\steps\compound-esrp-nuget-signing-step.yml = ..\eng\pipelines\onebranch\steps\compound-esrp-nuget-signing-step.yml
+		..\eng\pipelines\onebranch\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\onebranch\steps\compound-extract-akv-apiscan-files-step.yml
+		..\eng\pipelines\onebranch\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\onebranch\steps\compound-nuget-pack-step.yml
+		..\eng\pipelines\onebranch\steps\compound-pack-csproj-step.yml = ..\eng\pipelines\onebranch\steps\compound-pack-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\compound-publish-symbols-step.yml
+		..\eng\pipelines\onebranch\steps\esrp-code-signing-step.yml = ..\eng\pipelines\onebranch\steps\esrp-code-signing-step.yml
+		..\eng\pipelines\onebranch\steps\publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\publish-symbols-step.yml
+		..\eng\pipelines\onebranch\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\onebranch\steps\roslyn-analyzers-akv-step.yml
+		..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{E849E6FB-1AB0-4922-A060-0062EA669FD0}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\onebranch\variables\common-variables.yml = ..\eng\pipelines\onebranch\variables\common-variables.yml
+		..\eng\pipelines\onebranch\variables\onebranch-variables.yml = ..\eng\pipelines\onebranch\variables\onebranch-variables.yml
+		..\eng\pipelines\onebranch\variables\sqlclient-validation-variables.yml = ..\eng\pipelines\onebranch\variables\sqlclient-validation-variables.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -861,7 +879,6 @@ Global
 		{01FA4774-E594-4A2D-B839-EA7A56D09A8B} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
 		{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
 		{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
-		{1C796A8E-3529-481B-9D4F-88C67D03DCA2} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{09352F1D-878F-4F55-8AA2-6E47F1AD37D5} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{4461063D-2F2B-274C-7E6F-F235119D258E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
@@ -896,6 +913,11 @@ Global
 		{1DB299CE-95EA-4566-84DD-171768758291} = {351BE847-A0BF-450C-A5BC-8337AFA49EAA}
 		{583E2B51-A90B-4F34-AD8B-4061504E855E} = {351BE847-A0BF-450C-A5BC-8337AFA49EAA}
 		{2F900B8A-EA19-4274-9AE9-3E6A59856FCC} = {351BE847-A0BF-450C-A5BC-8337AFA49EAA}
+		{5EC4C165-25BB-4346-9DCC-5EFEEAC00C02} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{B3061B34-2A1C-49B9-A3A9-D4D37B4704B2} = {5EC4C165-25BB-4346-9DCC-5EFEEAC00C02}
+		{3654906C-6852-48AF-BC7E-B3A62F3E9DB9} = {5EC4C165-25BB-4346-9DCC-5EFEEAC00C02}
+		{45B9E5C3-DED5-4DB6-B1E6-4EAC4E68BA83} = {5EC4C165-25BB-4346-9DCC-5EFEEAC00C02}
+		{E849E6FB-1AB0-4922-A060-0062EA669FD0} = {5EC4C165-25BB-4346-9DCC-5EFEEAC00C02}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
