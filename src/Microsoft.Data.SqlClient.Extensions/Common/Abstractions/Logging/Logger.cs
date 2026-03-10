@@ -88,11 +88,7 @@ internal static class Logger
             {
                 // If any exceptions occur, we can only swallow them silently - without
                 // the logger provider, we have no way to report them.
-                #if DEBUG
-                throw;
-                #else
                 return null;
-                #endif
             }
         }
     }
