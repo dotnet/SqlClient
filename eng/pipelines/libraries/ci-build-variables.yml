@@ -62,9 +62,16 @@ variables:
   - name: mdsPackageVersion
     value: 7.0.0.$(Build.BuildNumber)-ci
 
-  # Output path for built NuGet packages
-  - name: packagePath
+  # Local NuGet feed directory where downloaded pipeline artifacts are placed.
+  # NuGet.config references this as a local package source for restore.
+  - name: localFeedPath
     value: $(Build.SourcesDirectory)/packages
+
+  # Output path for built NuGet packages.  This is intentionally separate from
+  # localFeedPath (where downloaded pipeline artifacts go) so that artifact
+  # publishing only uploads packages built by the current job.
+  - name: packagePath
+    value: $(Build.SourcesDirectory)/output
 
   # Disable codesign validation injection for CI builds
   - name: runCodesignValidationInjection
