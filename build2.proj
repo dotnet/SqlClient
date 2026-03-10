@@ -6,17 +6,23 @@
   <!-- Build Parameters ================================================ -->
   <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
   <PropertyGroup>
-    <!-- @TODO: The parameters used for versioning is somewhat unclear. -->
     <!--
-      AssemblyBuildNumber
-      Applies to:     BuildMds*
-      Description:    The build number is used as the fourth part of the assembly version.
+      BuildNumber
+      Applies to:     BuildMds*, PackMds
+      Description:    Number that identifies the build.
+                      For local developer builds, this does not need to be used. The developer
+                      should either specify an entire package version override (via
+                      PackageVersionMds, et. al.) or by omitting the package version.
+                      For automated builds, this should always be specified instead of
+                      a package version. Thus, the version base is controlled via source and the
+                      build number is simply appended as a revision number.
       Default value:  [blank]
+      Example:        1234
     -->
-    <AssemblyBuildNumber Condition="'$(AssemblyBuildNumber)' == ''" />
-    <AssemblyBuildNumberArgument Condition="'$(AssemblyBuildNumber)' != ''">
-      -p:AssemblyBuildNumber=$(AssemblyBuildNumber)
-    </AssemblyBuildNumberArgument>
+    <BuildNumber Condition="'$(BuildNumber)' == ''" />
+    <BuildNumberArgument Condition="'$(BuildNumber)' != ''">
+      -p:BuildNumber=$(BuildNumber)
+    </BuildNumberArgument>
 
     <!--
       Configuration
@@ -85,15 +91,18 @@
 
     <!--
       PackageVersionMds
-      Applies to:     TestMdsFunctional, TestMdsManual
+      Applies to:     TestMdsFunctional, TestMdsManual (when ReferenceType is Package)
       Description:    Specifies what version of the Microsoft.Data.SqlClient package to run tests
-                      against. If not specified, the version defined in Versions.props is used.
-                      This argument only has effect if the ReferenceType argument is set to
-                      "Package".
+                      against. If not specified, the version pinned in Directory.Packages.props
+                      will be used.
+
+      Applies to:     BuildMds*
+      Description:    Specifies the version to assign to the MDS NuGet package and assembly files.
+                      If this is not specified, the version defined in MdsVersions.props is used.
 
       Applies to:     PackMds
-      Description:    REQUIRED
-                      Specifies the version to assign to the MDS NuGet package.
+      Description:    Specifies the version to assign to the MDS NuGet package. If not specified,
+                      the target will fail (@TODO).
 
       Default value:  [blank]
       Example:        7.0.0-preview4
@@ -328,7 +337,10 @@
         "$(DotnetPath)dotnet" build $(MdsProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
-        $(AssemblyBuildNumberArgument)
+
+        <!-- Versioning Arguments -->
+        $(BuildNumberArgument)
+        $(PackageVersionMdsArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)

@@ -1,13 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<!-- General Properties ============================================== -->
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-	</PropertyGroup>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsAssemblyVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
   <ItemGroup>
@@ -126,7 +134,7 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="System.ValueTuple" />
-	</ItemGroup>
+  </ItemGroup>
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">

@@ -1,0 +1,26 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- This file contains versioning information for the Microsoft.Data.SqlClient pacakge. -->
+  <PropertyGroup>
+    <MdsVersionDefault>8.1.0</MdsVersionDefault>
+
+    <!--
+      This is the version that is used as the version for the NuGet package. If it is not
+      overridden, the above default version will be used with the build number and a string suffix
+      appended (to indicate the version is pre-production).
+
+      NOTE/@TODO: Since the PackMds target in build2.proj directly calls nuget.exe, it will not
+          pick up this property.
+    -->
+    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)-dev</MdsPackageVersion>
+
+    <!--
+      This is the version that is used as the AssemblyVersion and FileVersion fields in the
+      assembly's manifest. If it is not overridden, it will default to the above default version
+      with the build number appended.
+      As a convenience feature, if a package version but not an assembly version is supplied, the
+      package version will have any suffix trimmed to generate valid assembly version.
+    -->
+    <MdsAssemblyVersion Condition="'$(MdsAssemblyVersion)' == '' AND '$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</MdsAssemblyVersion>
+    <MdsAssemblyVersion Condition="'$(MdsAssemblyVersion)' == '' AND '$(MdsPackageVersion)' != ''">$(MdsPackageVersion.Split('-')[0])</MdsAssemblyVersion>
+  </PropertyGroup>
+</Project>
