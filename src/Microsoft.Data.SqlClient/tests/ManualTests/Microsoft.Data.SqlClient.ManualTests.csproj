@@ -406,6 +406,8 @@
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
                       IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
                       PrivateAssets="all" />
@@ -443,6 +445,7 @@
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
