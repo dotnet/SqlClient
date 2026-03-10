@@ -76,7 +76,8 @@
   <!-- MDS Reference -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' != 'Package'"
+                      Private="false" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
