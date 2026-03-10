@@ -1,0 +1,109 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This template joins a Linux agent to an Active Directory domain using Kerberos
+# and acquires a TGT (Ticket-Granting Ticket) for the specified domain user.
+#
+# Prerequisites:
+#   - The agent must be running on Ubuntu/Debian (uses apt-get).
+#   - The domain controller must be reachable from the agent network.
+#
+# After this step completes successfully, the agent will have:
+#   - Kerberos packages installed (krb5-user, realmd, sssd, adcli, etc.)
+#   - Hostname set to FQDN within the domain
+#   - NTP synchronized with the domain controller
+#   - Machine joined to the AD domain
+#   - A valid Kerberos TGT for the specified user
+
+parameters:
+
+  # The Active Directory domain to join (e.g. mydomain.contoso.com).
+  - name: kerberosDomain
+    type: string
+
+  # The Organizational Unit in which to place the computer account.
+  - name: kerberosDomainOU
+    type: string
+
+  # The domain user account to authenticate with (sAMAccountName, without @realm).
+  - name: kerberosDomainUser
+    type: string
+
+  # The password for the domain user account.
+  - name: kerberosDomainPassword
+    type: string
+
+steps:
+
+  - bash: |
+      set -euo pipefail
+
+      DOMAIN="${{ parameters.kerberosDomain }}"
+      DOMAIN_OU="${{ parameters.kerberosDomainOU }}"
+      DOMAIN_USER="${{ parameters.kerberosDomainUser }}"
+      DOMAIN_PASSWORD="${{ parameters.kerberosDomainPassword }}"
+      DOMAIN_UPPER=$(echo "$DOMAIN" | tr '[:lower:]' '[:upper:]')
+
+      echo "Domain:   $DOMAIN"
+      echo "Realm:    $DOMAIN_UPPER"
+      echo "User:     $DOMAIN_USER"
+      echo "OU:       $DOMAIN_OU"
+
+      if [ -z "$DOMAIN_PASSWORD" ]; then
+        echo "##vso[task.logissue type=error]KerberosDomainPassword is empty"
+        exit 1
+      fi
+
+      # -----------------------------------------------------------------------
+      # Install Kerberos and AD integration packages
+      # -----------------------------------------------------------------------
+      echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+
+      sudo apt-get -y update
+      sudo apt-get install -y dialog apt-utils
+      sudo apt-get install -y \
+        krb5-user samba sssd sssd-tools libnss-sss libpam-sss \
+        ntp ntpdate realmd adcli
+
+      # -----------------------------------------------------------------------
+      # Set the hostname to FQDN within the domain
+      # -----------------------------------------------------------------------
+      sudo hostnamectl set-hostname "$(hostname).$DOMAIN"
+
+      # -----------------------------------------------------------------------
+      # Synchronize time with the domain controller (required for Kerberos)
+      # -----------------------------------------------------------------------
+      echo "server $DOMAIN" | sudo tee -a /etc/ntp.conf
+      sudo systemctl stop ntp
+      sudo ntpdate "$DOMAIN"
+      sudo systemctl start ntp
+
+      # -----------------------------------------------------------------------
+      # Configure Kerberos realm
+      # -----------------------------------------------------------------------
+      echo "[libdefaults]
+              default_realm = $DOMAIN_UPPER
+              rdns = false" | sudo tee /etc/krb5.conf
+
+      # -----------------------------------------------------------------------
+      # Discover and join the domain
+      # -----------------------------------------------------------------------
+      sudo realm discover "$DOMAIN_UPPER"
+
+      echo "$DOMAIN_PASSWORD" | sudo realm join --verbose "$DOMAIN_UPPER" \
+        -U "$DOMAIN_USER@$DOMAIN_UPPER" \
+        --computer-ou "OU=$DOMAIN_OU"
+
+      realm list
+
+      # -----------------------------------------------------------------------
+      # Acquire a Kerberos TGT
+      # -----------------------------------------------------------------------
+      echo "$DOMAIN_PASSWORD" | kinit "$DOMAIN_USER@$DOMAIN_UPPER"
+
+      klist
+      sudo ifconfig
+    displayName: 'Initialize Kerberos (domain join + kinit)'

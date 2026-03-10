@@ -1,0 +1,45 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This template leaves the Active Directory domain and destroys Kerberos
+# credentials.  It should be referenced at the end of any job that called
+# kerberos-init-step.yml.
+#
+# All steps use condition: always() so that cleanup runs even when previous
+# steps fail.
+
+parameters:
+
+  # The Active Directory domain to leave (e.g. mydomain.contoso.com).
+  - name: kerberosDomain
+    type: string
+
+  # The domain user account used during the join.
+  - name: kerberosDomainUser
+    type: string
+
+  # The password for the domain user account.
+  - name: kerberosDomainPassword
+    type: string
+
+steps:
+
+  - bash: |
+      set -uo pipefail
+
+      DOMAIN="${{ parameters.kerberosDomain }}"
+      DOMAIN_USER="${{ parameters.kerberosDomainUser }}"
+      DOMAIN_PASSWORD="${{ parameters.kerberosDomainPassword }}"
+      DOMAIN_UPPER=$(echo "$DOMAIN" | tr '[:lower:]' '[:upper:]')
+
+      # Leave the domain
+      echo "$DOMAIN_PASSWORD" | sudo realm leave "$DOMAIN_UPPER" --verbose \
+        -U "$DOMAIN_USER@$DOMAIN_UPPER" || true
+
+      # Destroy the TGT and credential cache
+      kdestroy || true
+    displayName: 'Clean up Kerberos (domain leave + kdestroy)'
+    condition: always()
