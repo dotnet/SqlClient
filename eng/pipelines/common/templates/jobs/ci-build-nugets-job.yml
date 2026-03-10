@@ -150,6 +150,16 @@ jobs:
       properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
+  # When building in Package mode, the AKV restore needs to find the MDS package
+  # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: CopyFiles@2
+      displayName: Copy MDS Package to Local Feed
+      inputs:
+        sourceFolder: $(packagePath)
+        contents: 'Microsoft.Data.SqlClient.*.nupkg'
+        targetFolder: $(localFeedPath)
+
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
