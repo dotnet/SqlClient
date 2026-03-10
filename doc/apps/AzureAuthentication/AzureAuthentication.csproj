@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net481;net10.0</TargetFrameworks>
+    <RootNamespace>Microsoft.Data.SqlClient.Samples.AzureAuthentication</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -22,6 +23,16 @@
       Include="Microsoft.Data.SqlClient.Extensions.Azure"
       Condition="'$(AzureVersion)' != ''" />
   </ItemGroup>
+
+  <!--
+    Define AZURE_EXTENSIONS so that C# code can use #if AZURE_EXTENSIONS to guard references to
+    types from the optional Extensions.Azure package.  Without this, the build would fail when the
+    package is absent because the compiler would still try to resolve those type references.  See
+    PackageVersions.Partial.cs for usage.
+  -->
+  <PropertyGroup Condition="'$(AzureVersion)' != ''">
+    <DefineConstants>$(DefineConstants);AZURE_EXTENSIONS</DefineConstants>
+  </PropertyGroup>
 
   <!-- Other Packages -->
   <ItemGroup>
