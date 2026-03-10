@@ -8,6 +8,7 @@ using System.Threading;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using Microsoft.Data.SqlClient.Extensions.Abstractions;
+using Microsoft.Data.SqlClient.Extensions.Abstractions.Logging;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -120,7 +121,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="trustedEndpoints">TrustedEndpoints are used to validate the master key path</param>
         public SqlColumnEncryptionAzureKeyVaultProvider(TokenCredential tokenCredential, string[] trustedEndpoints)
         {
-            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            using var _ = Logger.TraceLogger?.BeginMemberScope(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNotNull(tokenCredential, nameof(tokenCredential));
             ValidateNotNull(trustedEndpoints, nameof(trustedEndpoints));
             ValidateNotEmpty(trustedEndpoints, nameof(trustedEndpoints));
@@ -141,7 +142,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
-            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            using var _ = Logger.TraceLogger?.BeginMemberScope(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
 
             // Also validates key is of RSA type.
@@ -159,7 +160,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
-            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            using var _ = Logger.TraceLogger?.BeginMemberScope(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
 
             var key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
@@ -184,7 +185,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Plain text column encryption key</returns>
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
-            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            using var _ = Logger.TraceLogger?.BeginMemberScope(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             // Validate the input parameters
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
@@ -267,7 +268,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
-            using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            using var _ = Logger.TraceLogger?.BeginMemberScope(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             // Validate the input parameters
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
