@@ -4,11 +4,11 @@
   <!-- We purposely do not include any parent Directory.Packages.props files. -->
 
   <PropertyGroup>
-    <!-- Use SqlClient 6.1.4 if no version was specified. -->
-    <SqlClientVersion>6.1.4</SqlClientVersion>
+    <!-- Use SqlClient 7.0.0 Preview 4 if no version was specified. -->
+    <SqlClientVersion>7.0.0-preview4.26064.3</SqlClientVersion>
 
-    <!-- Use AKV Provider 6.1.2 if no version was specified. -->
-    <AkvProviderVersion>6.1.2</AkvProviderVersion>
+    <!-- Use AKV Provider 7.0.0 Preview 1 if no version was specified. -->
+    <AkvProviderVersion>7.0.0-preview1.26064.3</AkvProviderVersion>
   </PropertyGroup>
 
   <!-- SqlClient Packages -->

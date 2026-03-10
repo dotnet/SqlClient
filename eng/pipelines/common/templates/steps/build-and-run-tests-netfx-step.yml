@@ -52,7 +52,7 @@ steps:
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
-      --filter "category!=failing&category!=flaky"
+      --filter "category!=failing&category!=flaky&category!=interactive"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m
@@ -95,7 +95,7 @@ steps:
       -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
-      --filter "category!=failing&category!=flaky"
+      --filter "category!=failing&category!=flaky&category!=interactive"
       --blame-hang
       --blame-hang-dump-type full
       --blame-hang-timeout 10m

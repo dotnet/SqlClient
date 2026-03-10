@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private string _currentLanguage;
 
-        private int _currentPacketSize;
+
 
         /// <summary>
         /// Pool this connection is associated with, if any.
@@ -262,7 +262,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         private DbConnectionPoolAuthenticationContext _newDbConnectionPoolAuthenticationContext;
 
-        private Guid _originalClientConnectionId = Guid.Empty;
+
 
         private string _originalDatabase;
 
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to match naming conventions (remove f prefix)
         private readonly bool _fResetConnection;
 
-        private string _routingDestination = null;
+
 
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
@@ -669,17 +669,9 @@ namespace Microsoft.Data.SqlClient.Connection
             get => DelegatedTransaction?.IsActive == true;
         }
 
-        // @TODO: Make auto-property
-        internal Guid OriginalClientConnectionId
-        {
-            get => _originalClientConnectionId;
-        }
+        internal Guid OriginalClientConnectionId { get; private set; } = Guid.Empty;
 
-        // @TODO: Make auto-property
-        internal int PacketSize
-        {
-            get => _currentPacketSize;
-        }
+        internal int PacketSize { get; private set; }
 
         // @TODO: Make auto-property
         internal TdsParser Parser
@@ -706,11 +698,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         internal byte[] PromotedDtcToken { get; private set; }
 
-        // @TODO: Make auto-property
-        internal string RoutingDestination
-        {
-            get => _routingDestination;
-        }
+        internal string RoutingDestination { get; private set; }
 
         internal RoutingInfo RoutingInfo { get; private set; } = null;
 
@@ -1187,7 +1175,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_PACKETSIZE:
-                    _currentPacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
+                    PacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
                     break;
 
                 case TdsEnums.ENV_COLLATION:
@@ -1267,6 +1255,23 @@ namespace Microsoft.Data.SqlClient.Connection
                     RoutingInfo = rec._newRoutingInfo;
                     break;
 
+                case TdsEnums.ENV_ENHANCEDROUTING:
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnEnvChange | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received enhanced routing info");
+
+                    if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) ||
+                        string.IsNullOrEmpty(rec._newRoutingInfo.DatabaseName) ||
+                        rec._newRoutingInfo.Protocol != 0 ||
+                        rec._newRoutingInfo.Port == 0)
+                    {
+                        throw SQL.ROR_InvalidEnhancedRoutingInfo(this);
+                    }
+
+                    RoutingInfo = rec._newRoutingInfo;
+                    break;
+
                 default:
                     Debug.Fail("Missed token in EnvChange!");
                     break;
@@ -1303,7 +1308,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: This class should not do low-level parsing of data from the server.
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
+            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING && featureId != TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT)
             {
                 return;
             }
@@ -1733,11 +1738,6 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
                 case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
                 {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for ENHANCEDROUTINGSUPPORT");
-
                     if (data.Length != 1)
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
@@ -1750,6 +1750,12 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     // A value of 1 indicates that the server supports the feature.
                     IsEnhancedRoutingSupportEnabled = data[0] == 1;
+
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for " +
+                        $"ENHANCEDROUTINGSUPPORT = {IsEnhancedRoutingSupportEnabled}");
                     break;
                 }
                 case TdsEnums.FEATUREEXT_USERAGENT:
@@ -2967,7 +2973,7 @@ namespace Microsoft.Data.SqlClient.Connection
             // Gather all the settings the user set in the connection string or properties and do
             // the login
             CurrentDatabase = server.ResolvedDatabaseName;
-            _currentPacketSize = ConnectionOptions.PacketSize;
+            PacketSize = ConnectionOptions.PacketSize;
             _currentLanguage = ConnectionOptions.CurrentLanguage;
 
             int timeoutInSeconds = 0;
@@ -3018,7 +3024,7 @@ namespace Microsoft.Data.SqlClient.Connection
             // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
             login.useSSPI = ConnectionOptions.IntegratedSecurity || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
 
-            login.packetSize = _currentPacketSize;
+            login.packetSize = PacketSize;
             login.newPassword = newPassword;
             login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
             login.credential = _credential;
@@ -3282,6 +3288,17 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginNoFailover | " +
+                                $"Ignoring enhanced routing info because the server did not acknowledge the feature.");
+                            RoutingInfo = null;
+                            break;
+                        }
+
                         SqlClientEventSource.Log.TryTraceEvent(
                             $"SqlInternalConnectionTds.LoginNoFailover | " +
                             $"Routed to {serverInfo.ExtendedServerName}");
@@ -3302,11 +3319,11 @@ namespace Microsoft.Data.SqlClient.Connection
                             serverInfo.ResolvedServerName,
                             serverInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        _originalClientConnectionId = _clientConnectionId;
-                        _routingDestination = serverInfo.UserServerName;
+                        OriginalClientConnectionId = _clientConnectionId;
+                        RoutingDestination = serverInfo.UserServerName;
 
                         // Restore properties that could be changed by the environment tokens
-                        _currentPacketSize = ConnectionOptions.PacketSize;
+                        PacketSize = ConnectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
@@ -3583,6 +3600,17 @@ namespace Microsoft.Data.SqlClient.Connection
                     int routingAttempts = 0;
                     while (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginWithFailover | " +
+                                $"Ignoring enhanced routing info because the server did not acknowledge the feature.");
+                            RoutingInfo = null;
+                            continue;
+                        }
+
                         if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
@@ -3605,11 +3633,11 @@ namespace Microsoft.Data.SqlClient.Connection
                             currentServerInfo.ResolvedServerName,
                             currentServerInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        _originalClientConnectionId = _clientConnectionId;
-                        _routingDestination = currentServerInfo.UserServerName;
+                        OriginalClientConnectionId = _clientConnectionId;
+                        RoutingDestination = currentServerInfo.UserServerName;
 
                         // Restore properties that could be changed by the environment tokens
-                        _currentPacketSize = connectionOptions.PacketSize;
+                        PacketSize = connectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;

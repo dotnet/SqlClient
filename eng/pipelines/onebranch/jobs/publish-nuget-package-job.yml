@@ -1,0 +1,108 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Reusable job template for publishing a signed NuGet package to a NuGet feed.  Downloads the
+# pipeline artifact produced by a build job and pushes .nupkg and .snupkg files using
+# NuGetCommand@2.
+#
+# Uses a deployment job with ADO environment for approval gates.
+#
+# OneBranch Requirements:
+# - All deployment jobs must use releaseJob syntax per 1ES Pipeline Templates v2.
+# - Must declare inputs via templateContext since deploy lifecycle doesn't auto-download.
+# - See:
+#   https://eng.ms/docs/products/onebranch/build/releasepipelines/releaseworkflows/deploymentjob
+
+parameters:
+  # The NuGet package name, used to form the default packagePath and for display strings.
+  - name: packageName
+    type: string
+
+  # The pipeline artifact name to download (OneBranch naming: drop_<stage>_<job>).
+  - name: artifactName
+    type: string
+
+  # NuGet service connection name for authentication.
+  - name: nugetServiceConnection
+    type: string
+
+  # Indicates whether this is a production release (enables additional 1ES PT checks).
+  - name: isProduction
+    type: boolean
+    default: false
+
+  # The path to the NuGet package to publish, relative to the root of the downloaded pipeline
+  # artifact.  For example, if we're publishing the SqlClient package, and the build job publishes a
+  # pipeline artifact with the following structure:
+  #
+  #   drop_BuildAndTest_PackageReference/
+  #   ├── Microsoft.Data.SqlClient.5.0.0.nupkg
+  #   ├── Microsoft.Data.SqlClient.5.0.0.snupkg
+  #   ├── Microsoft.Data.SqlClient.Extensions.Abstractions.1.0.0.nupkg
+  #   └── other-file.txt
+  #
+  # Then the packagePath should be 'Microsoft.Data.SqlClient.5.0.0.nupkg'.
+  #
+  # Defaults to '${{ parameters.packageName }}.*.nupkg' to match any version of the package.
+  #
+  - name: packagePath
+    type: string
+    default: ''
+
+  # When true, lists the package that would be published without actually pushing.
+  - name: isDryRun
+    type: boolean
+    default: false
+
+# Read more: https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/pipelinebasics#what-is-a-onebranch-release-yaml-pipeline
+jobs:
+  - job: publish_${{ replace(parameters.packageName, '.', '_') }}
+    displayName: Publish ${{ parameters.packageName }}
+
+    variables:
+      - name: ob_outputDirectory
+        value: $(Build.SourcesDirectory)/packages
+
+      - name: artifactPath
+        value: $(Pipeline.Workspace)/${{ parameters.artifactName }}
+
+      - name: packageToPush
+        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('{0}.*.nupkg', parameters.packageName)) }}
+
+    # Template context inputs are used to pass parameters to the deployment job since it doesn't
+    # automatically download pipeline artifacts.
+    templateContext:
+      type: releaseJob
+      isProduction: ${{ parameters.isProduction }}
+      inputs:
+      - input: pipelineArtifact
+        artifactName: ${{ parameters.artifactName }}
+        targetPath: $(artifactPath)
+
+    pool:
+      type: release
+
+    steps:
+
+      # Artifacts are downloaded via templateContext.inputs per OneBranch requirements.
+
+      - ${{ if eq(parameters.isDryRun, true) }}:
+        - pwsh: |
+            Write-Host "##[section]DRY RUN — The following packages would be published:"
+
+            Get-ChildItem -Path "$(packageToPush)" -ErrorAction SilentlyContinue
+
+            Write-Host "##[warning]DRY RUN — No packages were pushed."
+          displayName: Dry Run — List ${{ parameters.packageName }} packages
+
+      - ${{ else }}:
+        - task: NuGetCommand@2
+          displayName: Push ${{ parameters.packageName }} to NuGet
+          inputs:
+            command: push
+            packagesToPush: $(packageToPush)
+            nuGetFeedType: external
+            publishFeedCredentials: ${{ parameters.nugetServiceConnection }}

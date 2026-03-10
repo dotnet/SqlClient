@@ -15,14 +15,6 @@
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
-
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
-  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-
   <!-- CLS Compliance attribute -->
   <ItemGroup>
     <AssemblyAttribute Include="System.CLSCompliantAttribute">

@@ -81,13 +81,13 @@ We thank the following public contributors. Their efforts toward this project ar
 
 ## Target Platform Support
 
-(Look at target frameworks in the netcore and netfx project files.)
+(Look at target frameworks in the project file for the package being released.)
 
 - [Target Framework Version] ([Supported Operating Systems])
 
 ### Dependencies
 
-(Use the dependencies listed at tools\specs\Microsoft.Data.SqlClient.nuspec)
+(Use the dependencies listed in the package's NuGet spec under tools/specs/ or the project file.)
 
 #### [Target Framework Version]
 

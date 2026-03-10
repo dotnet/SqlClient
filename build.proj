@@ -47,7 +47,7 @@
   <!-- Test configuration properties -->
   <PropertyGroup>
     <!-- Set up default filters for tests to exclude failing and flaky tests -->
-    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky</Filter>
+    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</Filter>
     <FilterArgument>--filter "$(Filter)"</FilterArgument>
 
     <!-- Collect code coverage unless explicitly disabled -->
@@ -95,8 +95,9 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetStandard;BuildLogging;BuildAzure" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;BuildLogging;BuildSqlServer;PackSqlServer;GenerateMdsPackage" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard" />
+  <!-- TODO: This doesn't really build everything; just the SqlClient driver and its NuGet package. -->
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
 
   <!-- SqlServer Targets -->
   <PropertyGroup>
@@ -160,14 +161,14 @@
     </AbstractionsProperties>
   </PropertyGroup>
 
-  <Target Name="RestoreAbstractions">
+  <Target Name="RestoreAbstractions" DependsOnTargets="RestoreLogging">
     <MSBuild
       Projects="@(Abstractions)"
       Targets="Restore"
       Properties="$(AbstractionsProperties)" />
   </Target>
 
-  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions">
+  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions;BuildLogging">
     <MSBuild
       Projects="@(Abstractions)"
       Targets="Build"

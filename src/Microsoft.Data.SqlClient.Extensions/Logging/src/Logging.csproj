@@ -14,14 +14,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
-
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
-  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
+  <!-- When we're not signing, we are permitted to expose our internals to tests. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
@@ -89,11 +82,17 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <Authors>Microsoft Corporation</Authors>
+    <Title>Microsoft.Data.SqlClient.Extensions.Logging</Title>
+    <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing and diagnostics.</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient extensions logging</PackageTags>
+    <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIcon>dotnet.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

@@ -61,18 +61,6 @@ trigger:
     # ADO internal/main branch.
     - internal/main
 
-  paths:
-    include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng/pipelines
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
-
 # Trigger this pipline on a schedule.
 schedules:
 

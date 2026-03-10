@@ -39,7 +39,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <Title>Microsoft.SqlServer.Server</Title>
-    <Authors>Microsoft Corporation</Authors>
+    <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
 
@@ -69,14 +69,6 @@ Microsoft.SqlServer.Server.Format</Description>
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
     <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
-
-  <!-- Strong name signing ============================================= -->
-
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
-  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
 
   <ItemGroup>
     <None Remove=".AssemblyAttributes" />

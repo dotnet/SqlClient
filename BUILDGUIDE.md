@@ -65,13 +65,18 @@ The following build targets are defined in `build.proj`:
 
 |Target|Description|
 |-|-|
-|`BuildAbstractions`|Restore, build, and pack the Abstractions package, publishing the resulting NuGet into `packages/`.|
+|`BuildAbstractions`|Restore and build the Abstractions package.|
 |`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
-|`BuildAzure`|Restore, build, and pack the Azure package, publishing the resulting NuGet into `packages/`.|
+|`BuildAzure`|Restore and build the Azure package.|
+|`BuildLogging`|Restore and build the Logging package.|
 |`BuildNetCore`|Builds the .NET driver for all target frameworks.|
 |`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
 |`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
+|`BuildSqlClient`|Build the driver for all target frameworks.|
 |`Clean`|Cleans all generated files.|
+|`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
+|`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
+|`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
@@ -139,19 +144,19 @@ By default, the tests will be executed on all supported .NET/.NET framework vers
 specific version, pass the `-f` parameter with the desired version (eg `net9.0`).
 
 The `--filter` parameter is used to select which tests run. The default `category!=failing&
-category!=flaky` prevents tests that are known to be failing or flaky from running. To run a
-specific test, use `FullyQualifiedName=[fully qualified name of the test method]` as the filter
-parameter. To run all possible tests, even known failing and flaky ones, simply omit the filter
-parameter. Please note, however, that this will still omit tests that cannot run on the current
-platform or with the current test configuration (eg, Windows tests on Linux, or SQL DB tests when
-Azure Synapse is configured).
+category!=flaky&category!=interactive` prevents tests that are known to be failing or flaky from
+running. To run a specific test, use `FullyQualifiedName=[fully qualified name of the test method]`
+as the filter parameter. To run all possible tests, even known failing and flaky ones, simply omit
+the filter parameter. Please note, however, that this will still omit tests that cannot run on the
+current platform or with the current test configuration (eg, Windows tests on Linux, or SQL DB tests
+when Azure Synapse is configured).
 
 ### Run Functional Tests
 
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
   -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 
 ```
 
@@ -160,14 +165,14 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.S
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" \
   -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
 ### Run Unit Tests
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" \
   -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky"
+  --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
 ## Testing with Package References
@@ -188,11 +193,13 @@ packages in the root packages/ directory, and will be automatically searched by 
 Then, you can specify `Package` references be used, for example:
 
 ```bash
-dotnet build -t:BuildAbstractions
-dotnet build -t:BuildAzure -p:ReferenceType=Package
-dotnet build -t:BuildAll -p:ReferenceType=Package
-dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
+dotnet build -t:BuildLogging,PackLogging
+dotnet build -t:BuildSqlServer,PackSqlServer
+dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
+dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
+dotnet build -t:BuildSqlClient -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
+dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateAkvPackage
 ```
 

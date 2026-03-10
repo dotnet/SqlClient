@@ -53,6 +53,9 @@ Generated\ Files/
 TestResult.xml
 nunit-*.xml
 
+# TRX format test results
+**/*.trx
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/
@@ -363,3 +366,9 @@ MigrationBackup/
 
 # Config Json file
 **/config.json
+
+# Generated Milestone PR metadata files
+.milestone-prs/
+
+# MDS "Not Supported" GenAPI code
+**/notsupported/*.cs

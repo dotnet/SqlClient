@@ -1,31 +1,45 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure.Test</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Azure.Test</RootNamespace>
+
     <ImplicitUsings>enable</ImplicitUsings>
+    <IsTestProject>true</IsTestProject>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure.Test</AssemblyName>
+
+    <!--
+      Exclude Interactive tests by default since they require user interaction (e.g. browser
+      sign-in).
+
+      To run them explicitly:
+        dotnet test -filter "Category=Interactive"
+
+      Note that the "filter" argument actually requires two dashes, but that character sequence
+      isn't permitted within an XML comment, so we only show a single dash above.
+    -->
+    <!-- @TODO: Integrate this into build.proj so that filters can be composed at command line -->
+    <VSTestTestCaseFilter>Category!=Interactive</VSTestTestCaseFilter>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../src/Azure.csproj" />
-  </ItemGroup>
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="xunit.runner.console" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-  </ItemGroup>
+    <!--
+      MDS is not built for net462 unless it is built for Windows. Thus, we will not be able to
+      fulfill the MDS for net462 reference unless we are building on Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
 
+  <!-- Global Usings =================================================== -->
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <!-- Copy the xUnit config file to our artifacts. -->
+  <!-- Embedded resources and content files ============================ -->
   <ItemGroup>
     <Content Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -33,17 +47,25 @@
     </Content>
   </ItemGroup>
 
-  <!--
-    Depend on the TestUtilities project because it copies the JSON config for
-    tests into the artifacts.  We don't refer to any of its assemblies.
-  -->
+  <!-- References ====================================================== -->
+  <!-- Test target references -->
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'"/>
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'"/>
+
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+    <!-- @TODO: Should we have a package mode reference for azure? -->
   </ItemGroup>
 
-  <!-- Conditional Project References -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  <!-- References for netfx -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.console" />
 
     <!--
       We explicitly depend on SNI for .NET Framework due to bugs in how its DLLs get published
@@ -52,12 +74,30 @@
       This is probably an incompatibility between the build targets that the SNI NuGet package
       injects into downstream projects, and how the MDS project configures its output directories.
     -->
-    <PackageReference Condition="'$(TargetFramework)' == 'net462'" Include="Microsoft.Data.SqlClient.SNI" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" />
+
+    <!--
+      We take a dependency on the TestUtilities project because it copies the JSON config
+      for tests into the build output.
+    -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
   </ItemGroup>
 
-  <!-- Conditional Package References -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient" />
-  </ItemGroup>
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.console" />
 
+    <!-- We explicitly depend on SNI.runtime for netcore for the same reason as in netfx -->
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+
+    <!--
+      We take a dependency on the TestUtilities project because it copies the JSON config
+      for tests into the build output.
+    -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
+  </ItemGroup>
 </Project>
