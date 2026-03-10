@@ -11,7 +11,13 @@
     <StressRoot>$(MSBuildThisFileDirectory)</StressRoot>
 
     <!-- Target all frameworks that MDS supports. -->
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      We can only build MDS for net462 if we are building for Windows, so we will only build this
+      for net462 if we are on Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
 
     <!--
       Use the latest C# language version, regardless of what a particular

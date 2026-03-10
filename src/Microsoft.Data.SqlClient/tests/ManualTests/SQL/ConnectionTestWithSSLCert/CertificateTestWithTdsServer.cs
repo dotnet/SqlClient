@@ -179,62 +179,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void RunPowershellScript(string script)
         {
             string currentDirectory = Directory.GetCurrentDirectory();
-            string powerShellCommand = "powershell.exe";
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            string powerShellCommand =
+              RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+              ? "powershell.exe"
+              : "pwsh";
+
+            if (! File.Exists(script))
             {
-                powerShellCommand = "pwsh";
+                throw new Exception($"Script {script} does not exist");
             }
 
-            if (File.Exists(script))
+            StringBuilder output = new();
+            Process proc = new()
             {
-                StringBuilder output = new();
-                Process proc = new()
+                StartInfo =
                 {
-                    StartInfo =
-                    {
-                        FileName = powerShellCommand,
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        Arguments = $"{script} -OutDir {currentDirectory} > result.txt",
-                        CreateNoWindow = false,
-                        Verb = "runas"
-                    }
-                };
-
-                proc.EnableRaisingEvents = true;
-
-                proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
-                {
-                    if (e.Data != null)
-                    {
-                        output.AppendLine(e.Data);
-                    }
-                });
-
-                proc.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
-                {
-                    if (e.Data != null)
-                    {
-                        output.AppendLine(e.Data);
-                    }
-                });
-
-                proc.Start();
-
-                proc.BeginOutputReadLine();
-                proc.BeginErrorReadLine();
-
-                if (!proc.WaitForExit(60000))
-                {
-                    proc.Kill();
-                    proc.WaitForExit(2000);
-                    throw new Exception($"Could not generate certificate. Error output: {output}");
+                    FileName = powerShellCommand,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    Arguments = $"{script} -OutDir {currentDirectory}",
+                    CreateNoWindow = false,
+                    Verb = "runas"
                 }
-            }
-            else
+            };
+
+            proc.EnableRaisingEvents = true;
+
+            proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
             {
-                throw new Exception($"Could not find makepfxcert.ps1");
+                if (e.Data != null)
+                {
+                    output.AppendLine($"[OUT] {e.Data}");
+                }
+            });
+
+            proc.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
+            {
+                if (e.Data != null)
+                {
+                    output.AppendLine($"[ERR] {e.Data}");
+                }
+            });
+
+            proc.Start();
+
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
+
+            if (!proc.WaitForExit(60000))
+            {
+                proc.Kill();
+                proc.WaitForExit(2000);
+                throw new Exception($"Could not generate certificate; script output: {output}");
             }
         }
 

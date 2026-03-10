@@ -2923,7 +2923,7 @@ namespace Microsoft.Data.SqlClient
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {
-                throw new InvalidOperationException(o.GetType() + ": invalid Size");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_InvalidUdtSize, o.GetType().FullName));
             }
 
             byte[] retval;

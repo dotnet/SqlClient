@@ -7,7 +7,6 @@
     <LangVersion>8.0</LangVersion>
     <IsPackable>true</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <OutputPath>$(ToolsArtifactsDir)</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
