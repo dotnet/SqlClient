@@ -65,8 +65,12 @@
     <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
     <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
 
-    <!-- We put our docs in the bin/ directory as well. -->
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+    <!--
+      Generate XML documentation from /// comments.  The compiler places the
+      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
+      this file automatically in the NuGet package under lib/<tfm>/.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
   </PropertyGroup>
 
@@ -85,7 +89,10 @@
     <Title>Microsoft.Data.SqlClient.Extensions.Logging</Title>
     <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
-    <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing and diagnostics.</Description>
+    <Description>
+      Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing
+      and diagnostics.
+    </Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageTags>sqlclient microsoft.data.sqlclient extensions logging</PackageTags>
     <RepositoryType>git</RepositoryType>

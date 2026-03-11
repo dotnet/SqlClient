@@ -35,6 +35,7 @@ steps:
       msbuildArguments: >-
           -t:${{ parameters.packTarget }}
           -p:ReferenceType=Package
+          -p:PackagesDir=$(PACK_OUTPUT)/
           ${{ parameters.versionProperties }}
 
   - script: tree /a /f $(PACK_OUTPUT)

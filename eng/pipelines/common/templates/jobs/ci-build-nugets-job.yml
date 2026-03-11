@@ -98,18 +98,19 @@ jobs:
     - ${{ parameters.prebuildSteps }}
 
   # If we're testing in Package mode, then we must download dependent package artifacts.
+  # Downloads go to localFeedPath (local NuGet source), not $(packagePath) (build output).
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
-        targetPath: $(packagePath)
+        targetPath: $(localFeedPath)
 
     - task: DownloadPipelineArtifact@2
       displayName: Download Logging Package Artifacts
       inputs:
         artifactName: ${{ parameters.loggingArtifactsName }}
-        targetPath: $(packagePath)
+        targetPath: $(localFeedPath)
 
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -148,6 +149,16 @@ jobs:
       packageVersion: ${{ parameters.mdsPackageVersion }}
       properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
+
+  # When building in Package mode, the AKV restore needs to find the MDS package
+  # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: CopyFiles@2
+      displayName: Copy MDS Package to Local Feed
+      inputs:
+        sourceFolder: $(packagePath)
+        contents: 'Microsoft.Data.SqlClient.*.nupkg'
+        targetFolder: $(localFeedPath)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:

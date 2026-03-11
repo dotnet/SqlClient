@@ -101,13 +101,20 @@ jobs:
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
-          # Download SqlClient (MDS) and Logging packages from previous stages into
-          # packages/ so that they're available via the local NuGet feed when restoring.
-          # AKV Provider depends on both SqlClient and Extensions.Logging.
+          # Download SqlClient (MDS), Abstractions, and Logging packages from previous
+          # stages into packages/ so that they're available via the local NuGet feed
+          # when restoring.  AKV Provider depends on SqlClient, which transitively
+          # requires Extensions.Abstractions and Extensions.Logging.
           - task: DownloadPipelineArtifact@2
             displayName: Download SqlClient Package
             inputs:
                 artifactName: $(sqlClientArtifactsName)
+                targetPath: $(Build.SourcesDirectory)/packages
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Abstractions Package
+            inputs:
+                artifactName: $(abstractionsArtifactsName)
                 targetPath: $(Build.SourcesDirectory)/packages
 
           - task: DownloadPipelineArtifact@2
