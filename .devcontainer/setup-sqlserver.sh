@@ -32,39 +32,13 @@ CONFIG_DIR="${REPO_ROOT}/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data
 CONFIG_DEFAULT_FILE="${CONFIG_DIR}/config.default.json"
 CONFIG_FILE="${CONFIG_DIR}/config.json"
 echo "Writing test config to ${CONFIG_FILE} (based on ${CONFIG_DEFAULT_FILE})..."
-export CONFIG_DEFAULT_FILE CONFIG_FILE SQL_HOST SQL_PORT SA_PASSWORD
-python3 - <<'PY'
-import json
-import os
-
-config_default_path = os.environ.get("CONFIG_DEFAULT_FILE")
-config_path = os.environ.get("CONFIG_FILE")
-sql_host = os.environ.get("SQL_HOST")
-sql_port = os.environ.get("SQL_PORT")
-sa_password = os.environ.get("SA_PASSWORD")
-
-if not config_default_path or not config_path:
-    raise SystemExit("CONFIG_DEFAULT_FILE and CONFIG_FILE environment variables must be set.")
-
-with open(config_default_path, "r", encoding="utf-8") as f:
-    config = json.load(f)
-
-tcp_connection_string = (
-    f"Data Source=tcp:{sql_host},{sql_port};"
-    f"Database=Northwind;"
-    f"User Id=sa;"
-    f"Password={sa_password};"
-    "Encrypt=false;"
-    "TrustServerCertificate=true"
-)
-
-config["TCPConnectionString"] = tcp_connection_string
-config["SupportsIntegratedSecurity"] = False
-
-with open(config_path, "w", encoding="utf-8") as f:
-    json.dump(config, f, indent=4)
-    f.write("\n")
-PY
+TCP_CONN_STR="Data Source=tcp:${SQL_HOST},${SQL_PORT};Database=Northwind;User Id=sa;Password=${SA_PASSWORD};Encrypt=false;TrustServerCertificate=true"
+# config.default.json contains JS-style comments (// ...) which are not valid JSON.
+# Strip single-line comments before feeding to jq.
+sed 's|//.*||' "${CONFIG_DEFAULT_FILE}" \
+  | jq --arg cs "${TCP_CONN_STR}" \
+       '.TCPConnectionString = $cs | .NPConnectionString = "" | .SupportsIntegratedSecurity = false' \
+       > "${CONFIG_FILE}"
 echo "Test config written."
 
 echo "Waiting for SQL Server at ${SQL_HOST}:${SQL_PORT} to become available..."

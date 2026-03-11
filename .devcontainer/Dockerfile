@@ -1,10 +1,16 @@
 FROM mcr.microsoft.com/devcontainers/dotnet:10.0-noble
 
-# Install .NET 8.0 and 9.0 sdks (needed to build and run tests targeting these TFMs).
+# Install .NET 8.0 and 9.0 runtimes and targeting packs (needed to build and run tests targeting these TFMs).
 # The base image ships the latest .NET SDK (10.0) which can build for older TFMs,
-# but the matching runtimes are required to *execute* those targets.
+# but the matching runtimes are required to *execute* those targets, and the
+# targeting packs (ref assemblies) are required to *compile* against them.
 COPY --from=mcr.microsoft.com/dotnet/sdk:8.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
 COPY --from=mcr.microsoft.com/dotnet/sdk:9.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
+COPY --from=mcr.microsoft.com/dotnet/sdk:8.0 /usr/share/dotnet/packs /usr/share/dotnet/packs
+COPY --from=mcr.microsoft.com/dotnet/sdk:9.0 /usr/share/dotnet/packs /usr/share/dotnet/packs
+
+# Install jq for JSON manipulation in setup scripts.
+RUN apt-get update && apt-get install -y --no-install-recommends jq && rm -rf /var/lib/apt/lists/*
 
 # Install go-sqlcmd (standalone binary, works on Ubuntu without dependency issues).
 ARG SQLCMD_VERSION=v1.9.0

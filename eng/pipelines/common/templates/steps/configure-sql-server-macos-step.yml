@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This step installs the latest SQL Server 2022 onto the macOS host as a docker container and
+# This step installs the latest SQL Server 2025 onto the macOS host as a docker container and
 # configures it for use.
 
 parameters:
