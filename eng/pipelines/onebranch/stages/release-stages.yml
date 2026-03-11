@@ -133,9 +133,9 @@ stages:
 
         - name: nugetServiceConnection
           ${{ if eq(parameters.releaseToProduction, true) }}:
-            value: $(NuGetServiceConnectionProd)
+            value: ${{ variables.NuGetServiceConnectionProd }}
           ${{ else }}:
-            value: $(NuGetServiceConnectionTest)
+            value: ${{ variables.NuGetServiceConnectionTest }}
 
         - name: nugetTargetSuffix
           ${{ if eq(parameters.releaseToProduction, true) }}:
@@ -150,7 +150,7 @@ stages:
               packageName: Microsoft.SqlServer.Server
               artifactName: drop_build_independent_build_package_SqlServer
               packagePath: Microsoft.SqlServer.Server.$(effectiveSqlServerVersion).nupkg
-              nugetServiceConnection: $(nugetServiceConnection)
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
@@ -160,7 +160,7 @@ stages:
               packageName: Microsoft.Data.SqlClient.Extensions.Logging
               artifactName: drop_build_independent_build_package_Logging
               packagePath: Microsoft.Data.SqlClient.Extensions.Logging.$(effectiveLoggingVersion).nupkg
-              nugetServiceConnection: $(nugetServiceConnection)
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
@@ -170,7 +170,7 @@ stages:
               packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: drop_build_abstractions_build_package_Abstractions
               packagePath: Microsoft.Data.SqlClient.Extensions.Abstractions.$(effectiveAbstractionsVersion).nupkg
-              nugetServiceConnection: $(nugetServiceConnection)
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
@@ -180,7 +180,7 @@ stages:
               packageName: Microsoft.Data.SqlClient
               artifactName: drop_build_dependent_build_package_SqlClient
               packagePath: Microsoft.Data.SqlClient.$(effectiveSqlClientVersion).nupkg
-              nugetServiceConnection: $(nugetServiceConnection)
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
@@ -190,7 +190,7 @@ stages:
               packageName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: drop_build_dependent_build_package_Azure
               packagePath: Microsoft.Data.SqlClient.Extensions.Azure.$(effectiveAzureVersion).nupkg
-              nugetServiceConnection: $(nugetServiceConnection)
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
@@ -200,6 +200,6 @@ stages:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: drop_build_addons_buildSignedAkvPackage
               packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
-              nugetServiceConnection: $(nugetServiceConnection)
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
