@@ -19,6 +19,7 @@
       Default value:  [blank]
       Example:        1234
     -->
+    <!-- @TODO: Currently this is defaulted to 0 by Directory.Build.props, which is the same default used later on anyhow. -->
     <BuildNumber Condition="'$(BuildNumber)' == ''" />
     <BuildNumberArgument Condition="'$(BuildNumber)' != ''">
       -p:BuildNumber=$(BuildNumber)
@@ -273,7 +274,6 @@
         "$(DotnetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
-        $(AssemblyBuildNumberArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -294,7 +294,6 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(MdsRefProjectPath)
         -p:Configuration=$(Configuration)
-        $(AssemblyBuildNumberArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -315,7 +314,10 @@
         "$(DotnetPath)dotnet" build $(MdsProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
-        $(AssemblyBuildNumberArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(PackageVersionMdsArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)

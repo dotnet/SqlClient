@@ -19,7 +19,7 @@ namespace $(ThisAssemblyNamespace)
 {
     internal static class ThisAssembly
     {
-        internal const string InformationalVersion = "$(AssemblyFileVersion)"%3B
+        internal const string InformationalVersion = "$(AssemblyVersion)"%3B
         internal const string NuGetPackageVersion = "$(Version)"%3B
     }
 }
