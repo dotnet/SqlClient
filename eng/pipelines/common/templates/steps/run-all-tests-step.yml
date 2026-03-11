@@ -81,19 +81,19 @@ steps:
       displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
       condition: succeededOrFailed()
       inputs:
-        solution: build.proj
+        solution: build2.proj
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           msbuildArguments: >-
-            -t:RunUnitTests
-            -p:TF=${{ parameters.targetFramework }}
+            -t:TestMdsUnit
+            -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
         ${{ else }}: # x86
           msbuildArguments: >-
-            -t:RunUnitTests
-            -p:TF=${{ parameters.targetFramework }}
+            -t:TestMdsUnit
+            -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
@@ -101,16 +101,16 @@ steps:
       displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
       condition: succeededOrFailed()
       inputs:
-        solution: build.proj
+        solution: build2.proj
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           msbuildArguments: >-
-            -t:RunUnitTests
-            -p:TF=${{ parameters.targetFramework }}
+            -t:TestMdsUnit
+            -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
-            -p:Filter="category=flaky"
+            -p:TestFilters="category=flaky"
             -p:CollectCodeCoverage=false
         ${{ else }}: # x86
           msbuildArguments: >-
@@ -118,97 +118,93 @@ steps:
             -p:TF=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-            -p:Filter="category=flaky"
-            -p:CollectCodeCoverage=false
+            -p:Filters="category=flaky"
+            -p:TestCodeCoverage=false
       continueOnError: true
 
   - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
     condition: succeededOrFailed()
     inputs:
-      solution: build.proj
+      solution: build2.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
-          -t:RunFunctionalTests
-          -p:TF=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
+          -t:RunTestsFunctional
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
-          -t:RunFunctionalTests
-          -p:TF=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
+          -t:RunTestsFunctional
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
 
   - task: MSBuild@1
     condition: succeededOrFailed()
     displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
     inputs:
-      solution: build.proj
+      solution: build2.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
-          -t:RunFunctionalTests
-          -p:TF=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
+          -t:TestMdsFunctional
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:Filter="category=flaky"
-          -p:CollectCodeCoverage=false
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
+          -p:TestFilters="category=flaky"
+          -p:TestCodeCoverage=false
       ${{ else }}: # x86
         msbuildArguments: >-
-          -t:RunFunctionalTests
-          -p:TF=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
+          -t:TestMdsFunctional
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:Filter="category=flaky"
-          -p:CollectCodeCoverage=false
+          -p:TestFilters="category=flaky"
+          -p:TestCodeCoverage=false
     continueOnError: true
 
   - task: MSBuild@1
     condition: succeededOrFailed()
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
     inputs:
-      solution: build.proj
+      solution: build2.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
-          -t:RunManualTests
-          -p:TF=${{ parameters.targetFramework }}
+          -t:TestMdsManual
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
-          -t:RunManualTests
-          -p:TF=${{ parameters.targetFramework }}
+          -t:TestMdsManual
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
@@ -216,33 +212,33 @@ steps:
     condition: succeededOrFailed()
     displayName: 'Run Flaky Manual Tests ${{parameters.msbuildArchitecture }}'
     inputs:
-      solution: build.proj
+      solution: build2.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
-          -t:RunManualTests
-          -p:TF=${{ parameters.targetFramework }}
+          -t:TestMdsManual
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:Filter="category=flaky"
-          -p:CollectCodeCoverage=false
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
+          -p:TestFilters="category=flaky"
+          -p:TestCodeCoverage=false
       ${{ else }}: # x86
         msbuildArguments: >-
-          -t:RunManualTests
-          -p:TF=${{ parameters.targetFramework }}
+          -t:TestMdsManual
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:Filter="category=flaky"
-          -p:CollectCodeCoverage=false
+          -p:TestFilters="category=flaky"
+          -p:TestCodeCoverage=false
     continueOnError: true
 
 - ${{ else }}: # Linux or macOS
@@ -252,17 +248,15 @@ steps:
       condition: succeededOrFailed()
       inputs:
         command: custom
-        projects: build.proj
+        projects: build2.proj
         custom: msbuild
         arguments: >-
-          -t:RunUnitTests
-          -p:TF=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
+          -t:TestMdsUnit
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:Platform=${{ parameters.platform }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:Configuration=${{ parameters.buildConfiguration }}
         verbosityRestore: Detailed
         verbosityPack: Detailed
@@ -272,20 +266,18 @@ steps:
       condition: succeededOrFailed()
       inputs:
         command: custom
-        projects: build.proj
+        projects: build2.proj
         custom: msbuild
         arguments: >-
-          -t:RunUnitTests
-          -p:TF=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
+          -t:TestMdsUnit
+          -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:Platform=${{ parameters.platform }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:Filter="category=flaky"
-          -p:CollectCodeCoverage=false
+          -p:TestFilters="category=flaky"
+          -p:TestCodeCoverage=false
         verbosityRestore: Detailed
         verbosityPack: Detailed
       continueOnError: true
@@ -295,17 +287,15 @@ steps:
     condition: succeededOrFailed()
     inputs:
       command: custom
-      projects: build.proj
+      projects: build2.proj
       custom: msbuild
       arguments: >-
-        -t:RunFunctionalTests
-        -p:TF=${{ parameters.targetFramework }}
-        -p:TestSet=${{ parameters.testSet }}
+        -t:TestMdsFunctional
+        -p:TargetFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
-        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:Platform=${{ parameters.platform }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
@@ -315,20 +305,18 @@ steps:
     displayName: 'Run Flaky Functional Tests'
     inputs:
       command: custom
-      projects: build.proj
+      projects: build2.proj
       custom: msbuild
       arguments: >-
-        -t:RunFunctionalTests
-        -p:TF=${{ parameters.targetFramework }}
-        -p:TestSet=${{ parameters.testSet }}
+        -t:TestMdsFunctional
+        -p:TargetFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
-        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:Platform=${{ parameters.platform }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:Filter="category=flaky"
-        -p:CollectCodeCoverage=false
+        -p:TestFilters="category=flaky"
+        -p:TestCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true
@@ -338,17 +326,16 @@ steps:
     condition: succeededOrFailed()
     inputs:
       command: custom
-      projects: build.proj
+      projects: build2.proj
       custom: msbuild
       arguments: >-
-        -t:RunManualTests
-        -p:TF=${{ parameters.targetFramework }}
+        -t:TestMdsManual
+        -p:TargetFramework=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
-        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:platform=${{ parameters.platform }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
@@ -359,20 +346,19 @@ steps:
     condition: succeededOrFailed()
     inputs:
       command: custom
-      projects: build.proj
+      projects: build2.proj
       custom: msbuild
       arguments: >-
-        -t:RunManualTests
-        -p:TF=${{ parameters.targetFramework }}
+        -t:TestMdsManual
+        -p:TargetFramework=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
-        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:Platform=${{ parameters.platform }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:Filter="category=flaky"
-        -p:CollectCodeCoverage=false
+        -p:TestFilters="category=flaky"
+        -p:TestCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
     continueOnError: true

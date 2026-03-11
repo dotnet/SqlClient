@@ -32,8 +32,6 @@ steps:
       setupCommandlinePicker: vs2022
       msBuildCommandline: >-
         msbuild
-        ${{parameters.sourceRoot}}\build.proj
-        -t:BuildAllConfigurations
+        ${{parameters.sourceRoot}}\build2.proj
+        -t:BuildMds
         -p:configuration=Release
-        -p:GenerateNuget=false
-        -p:BuildTools=false

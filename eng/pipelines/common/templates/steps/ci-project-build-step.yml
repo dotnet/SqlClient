@@ -46,10 +46,6 @@ parameters:
       - all
       - allNoDocs
 
-  # The build number suffix to apply to all assembly file versions built by this step.
-  - name: assemblyBuildNumber
-    type: string
-
   # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
   - name: abstractionsPackageVersion
     type: string
@@ -67,59 +63,23 @@ parameters:
 
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
-    - task: MSBuild@1
-      displayName: 'Restore [Win]'
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-      inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        msbuildArguments: >-
-          -t:restore
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-      retryCountOnTaskFailure: 1
-
-    - ${{ if eq(parameters.build, 'allNoDocs') }}:
-      - task: MSBuild@1
-        displayName: 'Build Driver (no docs) [Win]'
-        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-        inputs:
-          solution: build.proj
-          msbuildArchitecture: x64
-          platform: '${{ parameters.platform }}'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: >-
-            -t:BuildAllConfigurations
-            -p:ReferenceType=${{ parameters.referenceType }}
-            -p:GenerateNuget=false
-            -p:GenerateDocumentationFile=false
-            -p:BuildNumber=${{ parameters.buildNumber }}
-            -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-            -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-            -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-
+  - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
     - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
       - task: MSBuild@1
         displayName: 'Build Driver [Win]'
         condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
         inputs:
-          solution: build.proj
+          solution: build2.proj
           msbuildArchitecture: x64
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.buildConfiguration }}'
           msbuildArguments:
-            -t:BuildAllConfigurations
+            -t:BuildMdsWindows
             -p:ReferenceType=${{ parameters.referenceType }}
-            -p:GenerateNuget=false
             -p:BuildNumber=${{ parameters.buildNumber }}
-            -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-            -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-            -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-            -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+            -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+            -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
@@ -160,20 +120,16 @@ steps:
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
     inputs:
       command: custom
-      projects: build.proj
+      projects: build2.proj
       custom: msbuild
       arguments: >-
-        -t:BuildSqlClient
+        -t:BuildMdsUnix
         -p:ReferenceType=${{ parameters.referenceType }}
-        -p:TestEnabled=true
-        -p:GenerateNuget=false
-        -p:GenerateDocumentationFile=false
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:BuildNumber=${{ parameters.buildNumber }}
-        -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1
