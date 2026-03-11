@@ -516,6 +516,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authentication));
         }
 
+        internal static Exception CannotFindActiveDirectoryAuthProvider(string authentication)
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindActiveDirectoryAuthProvider, authentication));
+        }
+
         internal static Exception ParameterCannotBeEmpty(string paramName)
         {
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));

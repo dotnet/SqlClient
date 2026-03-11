@@ -9318,6 +9318,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot find an authentication provider for &apos;{0}&apos;. The &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package is required for Active Directory authentication methods. Install it via NuGet: Install-Package Microsoft.Data.SqlClient.Extensions.Azure.
+        /// </summary>
+        internal static string SQL_CannotFindActiveDirectoryAuthProvider {
+            get {
+                return ResourceManager.GetString("SQL_CannotFindActiveDirectoryAuthProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to read the config section for authentication providers..
         /// </summary>
         internal static string SQL_CannotGetAuthProviderConfig {

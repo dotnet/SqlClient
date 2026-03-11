@@ -2732,6 +2732,14 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlAuthenticationProvider? authProvider = SqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
+#pragma warning disable 0618 // ActiveDirectoryPassword is obsolete
+                if (ConnectionOptions.Authentication >= SqlAuthenticationMethod.ActiveDirectoryPassword
+                    && ConnectionOptions.Authentication <= SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
+#pragma warning restore 0618
+                {
+                    throw SQL.CannotFindActiveDirectoryAuthProvider(ConnectionOptions.Authentication.ToString());
+                }
+
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
             }
 
