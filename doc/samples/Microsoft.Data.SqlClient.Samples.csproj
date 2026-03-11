@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
   </ItemGroup>

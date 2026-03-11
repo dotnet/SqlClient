@@ -1,4 +1,6 @@
-﻿namespace ConnectionStringSettings_RetrieveFromConfigByName;
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
+namespace ConnectionStringSettings_RetrieveFromConfigByName;
 
 using System;
 using System.Configuration;

@@ -1,4 +1,6 @@
-﻿namespace SqlDataAdapterUpdateExample;
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
+namespace SqlDataAdapterUpdateExample;
 
 using System;
 using System.Data;

@@ -1,3 +1,5 @@
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
 using System.Collections.Generic;
 using Azure.Identity;
 using Microsoft.Data.SqlClient;
@@ -8,7 +10,9 @@ namespace AzureKeyVaultProvider_ColumnEncryptionKeyCacheScope
     // <Snippet1>
     class Program
     {
+#pragma warning disable CS0649 // Field is never assigned to
         private static string connectionString;
+#pragma warning restore CS0649
 
         static void Main()
         {

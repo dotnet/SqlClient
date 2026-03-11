@@ -1,4 +1,6 @@
-﻿using System;
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
+using System;
 using Microsoft.Data.SqlClient;
 using System.Data;
 

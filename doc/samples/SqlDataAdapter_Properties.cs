@@ -1,4 +1,6 @@
-﻿namespace SqlDataAdapter_Properties;
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
+namespace SqlDataAdapter_Properties;
 
 // <Snippet1>
 using System;

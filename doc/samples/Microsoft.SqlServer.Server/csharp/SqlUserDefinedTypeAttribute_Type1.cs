@@ -1,4 +1,6 @@
-﻿namespace SqlUserDefinedTypeAttribute_Type1;
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
+namespace SqlUserDefinedTypeAttribute_Type1;
 
 //-----------------------------------------------------------------------------
 //<Snippet5>

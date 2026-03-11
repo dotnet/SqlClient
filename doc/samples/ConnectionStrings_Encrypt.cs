@@ -1,4 +1,6 @@
-﻿namespace ConnectionStrings_Encrypt;
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
+namespace ConnectionStrings_Encrypt;
 
 using System;
 using System.Configuration;

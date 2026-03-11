@@ -1,3 +1,5 @@
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
 namespace SqlConnectionStringBuilder_TryGetValue;
 
 using System;

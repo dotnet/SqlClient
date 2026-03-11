@@ -1,3 +1,5 @@
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
 #if NETFRAMEWORK
 namespace SqlBytes_Stream;
 

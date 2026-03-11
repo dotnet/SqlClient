@@ -1,3 +1,5 @@
+// TODO: Remove #nullable disable and fix nullable warnings in this sample.
+#nullable disable
 #if NETFRAMEWORK
 namespace SqlDataAdapter_RowUpdated;
 
@@ -11,8 +13,10 @@ using System.Windows.Forms;
 
 public class Form1 : Form
 {
+#pragma warning disable CS0169 // Field is never used
     private DataSet DataSet1;
     private DataGrid dataGrid1;
+#pragma warning restore CS0169
 
     // handler for RowUpdating event
     private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
