@@ -59,6 +59,9 @@ stages:
             value: $(Build.StagingDirectory)/packages
 
         steps:
+          # We don't need the repo checked out for this work.
+          - checkout: none
+
           # Download all package artifacts into a common directory.
           - task: DownloadPipelineArtifact@2
             displayName: Download Abstractions Package Artifacts
