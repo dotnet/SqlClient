@@ -1,0 +1,115 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+  - group: ESRP Federated Creds (AME)
+    # ESRPConnectedServiceName
+    # ESRPClientId
+    # AppRegistrationClientId
+    # AppRegistrationTenantId
+    # AuthAKVName
+    # AuthSignCertName
+
+  - name: Configuration
+    value: Release
+  - name: CommitHead
+    value: '' # the value will be extracted from the repo's head  
+  - name: REPOROOT
+    value: $(Build.SourcesDirectory)
+  - name: softwareFolder
+    value: $(REPOROOT)/software
+  - name: symbolsFolder
+    value: $(REPOROOT)/symbols
+  - name: artifactDirectory
+    value: '$(REPOROOT)/packages'
+
+  # Update this after every release. This is used to generate the MDS NuGet package version.
+  - name: Major
+    value: '6'
+  - name: Minor
+    value: '1'
+  - name: Patch
+    value: '1'
+
+    # Update this for preview releases.
+  - name: Preview
+    value: '-preview'
+  - name: Revision
+    value: '3'
+
+  - name: NugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)
+  - name: PreviewNugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
+  - name: AssemblyFileVersion
+    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  - name: nuspecPath
+    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+
+  # NuGet service connection used by the release stage to push packages.
+  # This should match the name of an ADO service connection configured with
+  # NuGet.org credentials (API key or federated auth).
+  - name: NuGetServiceConnection
+    value: ADO Nuget Org Connection
+
+  # ----------------------------------------------------------------------------
+  # AKV Provider Package Versions
+  #
+  # These are version values that will be used by the official build.  They
+  # should be updated after each release to reflect the next release's versions.
+
+  - name: akvVersionMajor
+    value: '6'
+  - name: akvVersionMinor
+    value: '1'
+  - name: akvVersionPatch
+    value: '2'
+  - name: akvVersionPreview
+    value: '-preview1'
+
+  - name: akvPackageVersion
+    value: $(akvVersionMajor).$(akvVersionMinor).$(akvVersionPatch)
+  - name: akvPreviewPackageVersion
+    value: $(akvVersionMajor).$(akvVersionMinor).$(akvVersionPatch)$(akvVersionPreview).$(Build.BuildNumber)
+  - name: akvAssemblyFileVersion
+    value: '$(akvVersionMajor).$(akvVersionMinor)$(akvVersionPatch).$(Build.BuildNumber)'
+  - name: akvMdsPackageVersion
+    value: $(Major).$(Minor).$(Patch)
+  - name: akvNuspecPath
+    value: '$(REPOROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+
+  # AKV Provider artifact name (drop_<stage>_<job>)
+  - name: akvPackageFolderName
+    value: drop_build_addons_buildSignedAkvPackage
+
+  # AKV ApiScan paths
+  - name: apiScanDllPath
+    value: '$(Build.SourcesDirectory)/apiScan/dlls'
+  - name: apiScanPdbPath
+    value: '$(Build.SourcesDirectory)/apiScan/pdbs'
+
+  # ----------------------------------------------------------------------------
+  # Symbols Publishing
+  #
+  # Credentials for publishing symbols to symbol servers.
+  - group: 'akv-variables-v2'
+    # SymbolsAzureSubscription
+    # SymbolsPublishProjectName
+    # SymbolsPublishServer
+    # SymbolsPublishTokenUri
+    # SymbolsUploadAccount
+
+  # ----------------------------------------------------------------------------
+  # ESRP Signing (AKV pipeline)
+  #
+  # Signing credentials used by the AKV build job.
+  - group: 'esrp-variables-v2'
+    # SigningAppRegistrationClientId
+    # SigningAppRegistrationTenantId
+    # SigningAuthAkvName
+    # SigningAuthSignCertName
+    # SigningEsrpClientId
+    # SigningEsrpConnectedServiceName

@@ -1,0 +1,287 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+trigger:
+  branches:
+    include:
+    - internal/release/6.1
+  paths:
+    include:
+    - src
+    - eng
+    - tools
+    - .config
+    - build.proj
+    - Nuget.config
+    - '*.cmd'
+    - '*.sh'
+
+parameters: # parameters are shown up in ADO UI in a build queue time
+- name: 'debug'
+  displayName: 'Enable debug output'
+  type: boolean
+  default: true
+
+- name: publishSymbols
+  displayName: 'Publish symbols'
+  type: boolean
+  default: false
+
+- name: CurrentNetFxVersion
+  displayName: 'Lowest supported .NET Framework version (MDS validation)'
+  type: string
+  default: 'net462'
+
+- name: isPreview
+  displayName: 'Is this a preview build?'
+  type: boolean
+  default: false
+
+# The timeout, in minutes, for each test job.
+- name: testsTimeout
+  displayName: 'Tests timeout (in minutes)'
+  type: string
+  default: 90
+
+# Build the AKV Provider package.
+- name: buildAKVProvider
+  displayName: 'Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+  type: boolean
+  default: true
+
+# Release Dry Run (do not push to NuGet)
+- name: releaseDryRun
+  displayName: 'Release Dry Run (do not push to NuGet)'
+  type: boolean
+  default: true
+
+# Release the Microsoft.Data.SqlClient package.
+- name: releaseSqlClient
+  displayName: 'Release Microsoft.Data.SqlClient'
+  type: boolean
+  default: false
+
+# Release the AKV Provider package.
+- name: releaseAKVProvider
+  displayName: 'Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+  type: boolean
+  default: false
+
+variables:
+  - template: /eng/pipelines/onebranch/variables/variables.yml@self
+  - name: packageFolderName
+    value: drop_buildMDS_build_signed_package
+  - name: PublishSymbols
+    value: ${{ parameters['publishSymbols'] }}
+  - name: CurrentNetFxVersion
+    value: ${{ parameters['CurrentNetFxVersion'] }}
+  # The effective NuGet package version used by the release stage.
+  - ${{ if parameters.isPreview }}:
+    - name: effectiveMDSPackageVersion
+      value: $(PreviewNugetPackageVersion)
+    - name: effectiveAkvPackageVersion
+      value: $(akvPreviewPackageVersion)
+  - ${{ else }}:
+    - name: effectiveMDSPackageVersion
+      value: $(NugetPackageVersion)
+    - name: effectiveAkvPackageVersion
+      value: $(akvPackageVersion)
+
+resources:
+  repositories: 
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  parameters:
+    release:
+      # This indicates the pipeline category to deploy Box products.  See:
+      # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+      category: NonAzure
+    featureFlags:
+      # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
+      EnableCDPxPAT: false
+      WindowsHostVersion: 1ESWindows2022
+    globalSdl: # https://aka.ms/obpipelines/sdl
+      tsa:
+        # The OneBranch template will set 'break' to false for the other SDL
+        # tools when TSA is enabled.  This allows TSA to gather the results
+        # and publish them for downstream analysis.
+        enabled: false
+      apiscan:
+        enabled: true
+        break: false
+        softwareFolder: $(softwareFolder)
+        symbolsFolder: $(symbolsFolder)
+        softwarename: Microsoft.Data.SqlClient
+        versionNumber: $(AssemblyFileVersion)
+      codeql:
+        compiled:
+        enabled: ${{ not(parameters['isPreview']) }}
+      sbom:
+        enabled: ${{ not(parameters['isPreview']) }}
+        packageName: Microsoft.Data.SqlClient
+        packageVersion: $(NugetPackageVersion)
+      policheck:
+        enabled: ${{ not(parameters['isPreview']) }}
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+        exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
+      asyncSdl:
+        enabled: false        
+        credscan:
+          enabled: ${{ not(parameters['isPreview']) }}
+          suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
+        binskim:
+          enabled: ${{ not(parameters['isPreview']) }}
+        armory:
+          enabled: ${{ not(parameters['isPreview']) }}
+          break: true
+        eslint: # TypeScript and JavaScript
+          enabled: false
+        roslyn:
+          enabled: ${{ not(parameters['isPreview']) }}
+          break: true
+        publishLogs:
+          enabled: ${{ not(parameters['isPreview']) }}
+        tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
+        disableLegacyManifest: true
+    stages:
+    - stage: buildMDS
+      displayName: 'Build MDS'
+      jobs:
+      - template: /eng/pipelines/onebranch/jobs/build-signed-package-job.yml@self
+        parameters:
+          symbolsFolder: $(symbolsFolder)
+          softwareFolder: $(softwareFolder)
+          publishSymbols: ${{ parameters['publishSymbols'] }}
+          isPreview: ${{ parameters['isPreview'] }}
+
+    - stage: mds_package_validation
+      displayName: 'MDS Package Validation'
+      dependsOn: buildMDS
+      jobs:
+      - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
+        parameters:
+          packageFolderName: $(packageFolderName)
+          isPreview: ${{ parameters['isPreview'] }}
+          downloadPackageStep:
+            download: current
+            artifact: $(packageFolderName)
+            patterns: '**/*.*nupkg'
+            displayName: 'Download NuGet Package'
+
+      - template: /eng/pipelines/onebranch/jobs/run-tests-package-reference-job.yml@self
+        parameters:
+          packageFolderName: $(packageFolderName)
+          isPreview: ${{ parameters['isPreview'] }}
+          timeout: ${{ parameters.testsTimeout }}
+          downloadPackageStep:
+            download: current
+            artifact: $(packageFolderName)
+            patterns: '**/*.nupkg'
+            displayName: 'Download NuGet Package'
+
+    # ==================================================================
+    # Build Add-on Packages (AKV Provider)
+    # Depends on MDS build completing first.
+    # ==================================================================
+    - ${{ if eq(parameters.buildAKVProvider, true) }}:
+      - stage: build_addons
+        displayName: 'Build Add-on Packages'
+        dependsOn: buildMDS
+
+        variables:
+          - name: PACKAGE_NAME
+            value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+
+        jobs:
+          - template: /eng/pipelines/onebranch/jobs/build-akv-official-job.yml@self
+            parameters:
+              apiScanDllPath: $(apiScanDllPath)
+              apiScanPdbPath: $(apiScanPdbPath)
+              assemblyFileVersion: $(akvAssemblyFileVersion)
+              buildConfiguration: Release
+              nugetPackageVersion: $(effectiveAkvPackageVersion)
+              mdsPackageVersion: $(akvMdsPackageVersion)
+              publishSymbols: ${{ parameters['publishSymbols'] }}
+              signingAppRegistrationClientId: $(SigningAppRegistrationClientId)
+              signingAppRegistrationTenantId: $(SigningAppRegistrationTenantId)
+              signingAuthAkvName: $(SigningAuthAkvName)
+              signingAuthSignCertName: $(SigningAuthSignCertName)
+              signingEsrpClientId: $(SigningEsrpClientId)
+              signingEsrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+              symbolsAzureSubscription: $(SymbolsAzureSubscription)
+              symbolsPublishProjectName: $(SymbolsPublishProjectName)
+              symbolsPublishServer: $(SymbolsPublishServer)
+              symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
+              symbolsUploadAccount: $(SymbolsUploadAccount)
+
+    # ==================================================================
+    # Release Stage — on-demand publish to NuGet.org
+    #
+    # Compile-time conditional: stage is removed entirely when no
+    # release parameters are selected, avoiding OneBranch validation
+    # errors for empty stages.
+    #
+    # Official pipeline  → Production environment, approval gate,
+    #                       dryRun controlled by releaseDryRun parameter.
+    # Non-official       → Test environment, dryRun always enforced.
+    # ==================================================================
+    - ${{ if eq(parameters.releaseSqlClient, true) }}:
+      - stage: release_sqlclient
+        ${{ if eq(parameters.releaseDryRun, true) }}:
+          displayName: 'Release Microsoft.Data.SqlClient (Dry Run)'
+        ${{ else }}:
+          displayName: 'Release Microsoft.Data.SqlClient'
+        dependsOn:
+          - buildMDS
+          - mds_package_validation
+
+        variables:
+          - name: ob_release_environment
+            value: Test
+          - name: ob_release_usedeploymentjob
+            value: true
+          - name: ob_deploymentjob_environment
+            value: NuGet-DryRun
+
+        jobs:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient
+              artifactName: $(packageFolderName)
+              packagePath: Microsoft.Data.SqlClient.$(effectiveMDSPackageVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: false
+              isDryRun: true
+
+    - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+      - stage: release_akv_provider
+        displayName: 'Release AKV Provider (Dry Run)'
+        dependsOn:
+          - build_addons
+
+        variables:
+          - name: ob_release_environment
+            value: Test
+          - name: ob_release_usedeploymentjob
+            value: true
+          - name: ob_deploymentjob_environment
+            value: NuGet-DryRun
+
+        jobs:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              artifactName: $(akvPackageFolderName)
+              packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvPackageVersion).nupkg
+              nugetServiceConnection: $(NuGetServiceConnection)
+              isProduction: false
+              isDryRun: true

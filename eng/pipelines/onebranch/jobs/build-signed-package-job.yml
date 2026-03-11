@@ -25,7 +25,7 @@ jobs:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     
   variables:
-  - template: ../../../libraries/variables.yml@self
+  - template: ../variables/variables.yml@self
   - ${{ if parameters.isPreview }}:
     - name: NugetPackageVersion
       value: $(PreviewNugetPackageVersion)
@@ -48,7 +48,7 @@ jobs:
     parameters:
       artifactType: dll
   
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       OutputDirectory: $(artifactDirectory)
   
