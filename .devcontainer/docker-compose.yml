@@ -1,0 +1,42 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces/SqlClient:cached
+      - sql-config:/sql-config:ro
+    command: sleep infinity
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      - SQL_SERVER_HOST=sqlserver
+      - SQL_SERVER_PORT=1433
+      - SQL_SERVER_SA_PASSWORD_FILE=/sql-config/sa-password
+    networks:
+      - default
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    user: root
+    entrypoint: /sql-entrypoint/sqlserver-entrypoint.sh
+    volumes:
+      - sql-config:/sql-config
+      - ./sqlserver-entrypoint.sh:/sql-entrypoint/sqlserver-entrypoint.sh:ro
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$(cat /sql-config/sa-password)" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - default
+
+volumes:
+  sql-config:
