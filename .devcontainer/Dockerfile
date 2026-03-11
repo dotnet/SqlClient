@@ -7,7 +7,7 @@ COPY --from=mcr.microsoft.com/dotnet/runtime:8.0 /usr/share/dotnet/shared /usr/s
 COPY --from=mcr.microsoft.com/dotnet/runtime:9.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
 
 # Install go-sqlcmd (standalone binary, works on Ubuntu without dependency issues).
-ARG SQLCMD_VERSION=v1.9.1
+ARG SQLCMD_VERSION=v1.9.0
 ARG SQLCMD_SHA256=""
 RUN arch="$(dpkg --print-architecture)" \
     && case "$arch" in \
