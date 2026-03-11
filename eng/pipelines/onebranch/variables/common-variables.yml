@@ -192,8 +192,11 @@ variables:
   # ----------------------------------------------------------------------------
   # Release Variables
   #
-  # NuGet service connection used by the release stage to push packages.
-  # This should match the name of an ADO service connection configured with
+  # NuGet service connections used by the release stage to push packages.
+  # These should match the names of ADO service connections configured with
   # NuGet.org credentials (API key or federated auth).
-  - name: NuGetServiceConnection
+  - name: NuGetServiceConnectionProd
     value: ADO Nuget Org Connection
+
+  - name: NuGetServiceConnectionTest
+    value: ADO Nuget Org Test Connection

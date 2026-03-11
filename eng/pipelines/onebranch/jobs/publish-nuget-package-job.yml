@@ -52,15 +52,16 @@ parameters:
     type: string
     default: ''
 
-  # When true, lists the package that would be published without actually pushing.
-  - name: isDryRun
-    type: boolean
-    default: false
+  # Optional suffix appended to display names (e.g. ' (NuGet Test)').
+  - name: displaySuffix
+    type: string
+    default: ''
+
 
 # Read more: https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/pipelinebasics#what-is-a-onebranch-release-yaml-pipeline
 jobs:
   - job: publish_${{ replace(parameters.packageName, '.', '_') }}
-    displayName: Publish ${{ parameters.packageName }}
+    displayName: Publish ${{ parameters.packageName }}${{ parameters.displaySuffix }}
 
     variables:
       - name: ob_outputDirectory
@@ -89,20 +90,10 @@ jobs:
 
       # Artifacts are downloaded via templateContext.inputs per OneBranch requirements.
 
-      - ${{ if eq(parameters.isDryRun, true) }}:
-        - pwsh: |
-            Write-Host "##[section]DRY RUN — The following packages would be published:"
-
-            Get-ChildItem -Path "$(packageToPush)" -ErrorAction SilentlyContinue
-
-            Write-Host "##[warning]DRY RUN — No packages were pushed."
-          displayName: Dry Run — List ${{ parameters.packageName }} packages
-
-      - ${{ else }}:
-        - task: NuGetCommand@2
-          displayName: Push ${{ parameters.packageName }} to NuGet
-          inputs:
-            command: push
-            packagesToPush: $(packageToPush)
-            nuGetFeedType: external
-            publishFeedCredentials: ${{ parameters.nugetServiceConnection }}
+      - task: NuGetCommand@2
+        displayName: Push ${{ parameters.packageName }} to NuGet${{ parameters.displaySuffix }}
+        inputs:
+          command: push
+          packagesToPush: $(packageToPush)
+          nuGetFeedType: external
+          publishFeedCredentials: ${{ parameters.nugetServiceConnection }}
