@@ -33,7 +33,7 @@ parameters:
 
 steps:
     - ${{ if eq(parameters.artifactType, 'dll') }}:
-        - task: EsrpMalwareScanning@5
+        - task: EsrpMalwareScanning@6
           displayName: 'ESRP Malware Scanning Code'
           inputs:
               AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
@@ -46,7 +46,7 @@ steps:
               UseMSIAuthentication: true
               VerboseLogin: 1
 
-        - task: EsrpCodeSigning@5
+        - task: EsrpCodeSigning@6
           displayName: 'ESRP Signing Code'
           inputs:
               AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
@@ -100,7 +100,7 @@ steps:
                   ]
 
     - ${{ else }}:
-        - task: EsrpMalwareScanning@5
+        - task: EsrpMalwareScanning@6
           displayName: 'ESRP Malware Scanning NuGet Package'
           inputs:
               AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
@@ -113,7 +113,7 @@ steps:
               UseMSIAuthentication: true
               VerboseLogin: 1
 
-        - task: EsrpCodeSigning@5
+        - task: EsrpCodeSigning@6
           displayName: 'ESRP Signing NuGet Package'
           inputs:
             AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
