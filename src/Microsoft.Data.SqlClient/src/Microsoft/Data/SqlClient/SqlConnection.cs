@@ -2023,10 +2023,30 @@ namespace Microsoft.Data.SqlClient
             return GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*' />
+#if NET
+        public override Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
+#else
+        public Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
+#endif
+        {
+            return GetSchemaAsync(DbMetaDataCollectionNames.MetaDataCollections, cancellationToken);
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
         public override DataTable GetSchema(string collectionName)
         {
             return GetSchema(collectionName, null);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*' />
+#if NET
+        public override Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
+#else
+        public Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
+#endif
+        {
+            return GetSchemaAsync(collectionName, null, cancellationToken);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
@@ -2037,6 +2057,17 @@ namespace Microsoft.Data.SqlClient
             SqlConnection.ExecutePermission.Demand();
 #endif
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValuesAsync/*' />
+#if NET
+        public override Task<DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, CancellationToken cancellationToken = default)
+#else
+        public Task<DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, CancellationToken cancellationToken = default)
+#endif
+        {
+            SqlClientEventSource.Log.TryTraceEvent("SqlConnection.GetSchemaAsync | Info | Object Id {0}, Collection Name '{1}'", ObjectID, collectionName);
+            return InnerConnection.GetSchemaAsync(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues, cancellationToken);
         }
 
 #if NET
