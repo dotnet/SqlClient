@@ -2,9 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClient
 {
@@ -15,7 +19,7 @@ namespace Microsoft.Data.SqlClient
     /// ETW EventSource for Microsoft.Data.SqlClient tracing and diagnostics.
     /// </summary>
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    public class SqlClientEventSource : EventSource
+    internal sealed class SqlClientEventSource : EventSource
     {
         /// <summary>
         /// Defines the singleton instance for the Resources ETW provider.
@@ -177,7 +181,7 @@ namespace Microsoft.Data.SqlClient
         /// Each keyword must be a power of 2.
         /// </remarks>
         #region Keywords
-        public class Keywords
+        internal static class Keywords
         {
             /// <summary>
             /// Captures Start/Stop events before and after command execution.
@@ -250,7 +254,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Tasks supported by SqlClient's EventSource implementation.
         /// </summary>
-        public static class Tasks
+        internal static class Tasks
         {
             /// <summary>
             /// Task that tracks SqlCommand execution.
@@ -1450,7 +1454,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Constants for event type labels used in formatted event messages.
     /// </summary>
-    public static class EventType
+    internal static class EventType
     {
         /// <summary>
         /// Informational event type label.
@@ -1466,7 +1470,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// A disposable scope for SNI event tracing. Automatically leaves the scope when disposed.
     /// </summary>
-    public readonly struct SqlClientSNIEventScope : IDisposable
+    internal readonly struct SqlClientSNIEventScope : IDisposable
     {
         private readonly long _scopeId;
 
@@ -1499,7 +1503,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// A disposable scope for general event tracing. Automatically leaves the scope when disposed.
     /// </summary>
-    public readonly ref struct SqlClientEventScope
+    internal readonly ref struct SqlClientEventScope : IDisposable
     {
         private readonly long _scopeId;
 
@@ -1539,5 +1543,45 @@ namespace Microsoft.Data.SqlClient
         /// Creates a new event scope with a pre-existing scope identifier.
         /// </summary>
         public static SqlClientEventScope Create(long scopeId) => new SqlClientEventScope(scopeId);
+    }
+
+    /// <summary>
+    /// A disposable scope for general event tracing. Automatically leaves the scope when disposed.
+    /// Variation of <see cref="SqlClientEventScope"/>, designed for use in async methods where the
+    /// instance may need to be stored across awaits.
+    /// </summary>
+    internal readonly struct SqlClientEventAsyncScope : IDisposable
+    {
+        private readonly long _scopeId;
+
+        public SqlClientEventAsyncScope(long scopeID) => _scopeId = scopeID;
+
+        public void Dispose()
+        {
+            if (_scopeId != 0)
+            {
+                SqlClientEventSource.Log.TryScopeLeaveEvent(_scopeId);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new event scope with one formatted argument.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create<T0>(string message, T0 args0) => new(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
+
+        /// <summary>
+        /// Creates a new event scope with two formatted arguments.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create<T0, T1>(string message, T0 args0, T1 args1) => new(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
+
+        /// <summary>
+        /// Creates a new event scope for a class with the calling member name.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create(string className, [CallerMemberName] string memberName = "") => new(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
+
+        /// <summary>
+        /// Creates a new event scope with a pre-existing scope identifier.
+        /// </summary>
+        public static SqlClientEventAsyncScope Create(long scopeId) => new(scopeId);
     }
 }

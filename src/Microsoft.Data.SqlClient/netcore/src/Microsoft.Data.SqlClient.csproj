@@ -699,8 +699,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEventSource.cs">
-      <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientDiagnostics.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientDiagnostics.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientFactory.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientFactory.cs</Link>
@@ -1022,6 +1022,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)TypeForwards.netcore.cs">
       <Link>TypeForwards.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(RepoRoot)\src\Microsoft.Data.SqlClient.Extensions\Logging\src\SqlClientEventSource.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
   </ItemGroup>
 

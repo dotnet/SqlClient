@@ -43,4 +43,10 @@
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Common/Abstractions/Logging/Logger.cs">
+      <Link>Logging/Logger.cs</Link>
+    </Compile>
+  </ItemGroup>
 </Project>

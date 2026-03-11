@@ -101,15 +101,14 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
-  <!--
-    Refer to the Logging package via project or package reference
-    depending on our build parameters.
-  -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj"/>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Common/Abstractions/Logging/Logger.cs">
+      <Link>Logging/Logger.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!--
