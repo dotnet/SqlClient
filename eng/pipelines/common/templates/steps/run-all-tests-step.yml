@@ -90,12 +90,14 @@ steps:
             -t:TestMdsUnit
             -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
+            -p:TestResultsFolderPath=TestResults
         ${{ else }}: # x86
           msbuildArguments: >-
             -t:TestMdsUnit
             -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+            -p:TestResultsFolderPath=TestResults
 
     - task: MSBuild@1
       displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
@@ -111,7 +113,8 @@ steps:
             -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:TestFilters="category=flaky"
-            -p:CollectCodeCoverage=false
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
         ${{ else }}: # x86
           msbuildArguments: >-
             -t:TestMdsUnit
@@ -119,6 +122,7 @@ steps:
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
             -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
             -p:TestCodeCoverage=false
       continueOnError: true
 
@@ -138,6 +142,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
+          -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         msbuildArguments: >-
           -t:TestMdsFunctional
@@ -147,6 +152,7 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+          -p:TestResultsFolderPath=TestResults
 
   - task: MSBuild@1
     condition: succeededOrFailed()
@@ -165,6 +171,7 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -176,6 +183,7 @@ steps:
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
     continueOnError: true
 
@@ -196,6 +204,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
+          -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         msbuildArguments: >-
           -t:TestMdsManual
@@ -206,6 +215,7 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+          -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
   - task: MSBuild@1
@@ -226,6 +236,7 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
         msbuildArguments: >-
@@ -238,6 +249,7 @@ steps:
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
     continueOnError: true
 
@@ -277,6 +289,7 @@ steps:
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
         verbosityRestore: Detailed
         verbosityPack: Detailed
@@ -297,6 +310,7 @@ steps:
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:TestResultsFolderPath=TestResults
       verbosityRestore: Detailed
       verbosityPack: Detailed
 
@@ -316,6 +330,7 @@ steps:
         -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:TestFilters="category=flaky"
+        -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
@@ -337,6 +352,7 @@ steps:
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:TestResultsFolderPath=TestResults
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
@@ -358,6 +374,7 @@ steps:
         -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:TestFilters="category=flaky"
+        -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
       verbosityRestore: Detailed
       verbosityPack: Detailed
