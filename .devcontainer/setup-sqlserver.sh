@@ -81,10 +81,19 @@ for i in $(seq 1 30); do
 done
 echo "SQL Server is ready."
 
-# Create Northwind database
-echo "Creating Northwind database..."
-sqlcmd -S "${SQL_HOST},${SQL_PORT}" -U sa -P "${SA_PASSWORD}" -C \
-    -i "${REPO_ROOT}/tools/testsql/createNorthwindDb.sql" || true
+# Ensure Northwind database exists
+echo "Ensuring Northwind database exists..."
+DB_EXISTS_RAW="$(sqlcmd -S "${SQL_HOST},${SQL_PORT}" -U sa -P "${SA_PASSWORD}" -C -h -1 -W \
+    -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name = N'Northwind';" | tr -d '\r')"
+DB_EXISTS="$(echo "$DB_EXISTS_RAW" | tr -d ' ')"
+if [ "$DB_EXISTS" = "0" ]; then
+    echo "Northwind database not found, creating..."
+    sqlcmd -S "${SQL_HOST},${SQL_PORT}" -U sa -P "${SA_PASSWORD}" -C \
+        -i "${REPO_ROOT}/tools/testsql/createNorthwindDb.sql"
+    echo "Northwind database created."
+else
+    echo "Northwind database already exists; skipping creation script."
+fi
 
 echo "SQL Server test database setup complete."
 echo ""

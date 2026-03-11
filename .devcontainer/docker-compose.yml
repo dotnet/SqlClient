@@ -19,7 +19,6 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
-    user: root
     entrypoint: /sql-entrypoint/sqlserver-entrypoint.sh
     volumes:
       - sql-config:/sql-config

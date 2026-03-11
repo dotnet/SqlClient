@@ -9,7 +9,16 @@ set -euo pipefail
 
 PASSWORD_FILE="/sql-config/sa-password"
 
-# Ensure the directory is writable (needed when running as root with a fresh volume).
+# -------------------------------------------------------------------
+# 
+# These permissions are required for the sqlserver entrypoint to write the password file 
+# and for the devcontainer setup script to read it. The shared volume may be owned by root, 
+# so we set permissive permissions to ensure both sides can access it. 
+#
+# The sqlserver entrypoint will overwrite the password file on startup, 
+# so we don't need to worry about other users modifying it.
+# 
+# -------------------------------------------------------------------
 chmod 777 /sql-config 2>/dev/null || true
 
 # Generate a password only if one doesn't already exist (container restart).

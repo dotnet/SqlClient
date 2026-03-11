@@ -20,6 +20,6 @@
             }
         }
     },
-    "postCreateCommand": ".devcontainer/setup-sqlserver.sh",
+    "postCreateCommand": "bash .devcontainer/setup-sqlserver.sh",
     "remoteUser": "vscode"
 }
