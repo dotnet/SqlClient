@@ -1,0 +1,23 @@
+{
+    "name": "Microsoft.Data.SqlClient",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/powershell:2.0.1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csdevkit",
+                "ms-dotnettools.csharp",
+                "GitHub.copilot"
+            ],
+            "settings": {
+                "dotnet.defaultSolution": "src/Microsoft.Data.SqlClient.sln"
+            }
+        }
+    },
+    "postCreateCommand": "dotnet restore src/Microsoft.Data.SqlClient.sln --ignore-failed-sources || true && dotnet tool restore",
+    "remoteUser": "vscode"
+}
