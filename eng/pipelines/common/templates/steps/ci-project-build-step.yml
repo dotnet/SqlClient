@@ -66,24 +66,22 @@ parameters:
     default: $(mdsPackageVersion)
 
 steps:
-- ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
-    - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
-      - task: MSBuild@1
-        displayName: 'Build Driver [Win]'
-        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-        inputs:
-          solution: build2.proj
-          msbuildArchitecture: x64
-          platform: '${{ parameters.platform }}'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments:
-            -t:BuildMdsWindows
-            -p:ReferenceType=${{ parameters.referenceType }}
-            -p:BuildNumber=${{ parameters.buildNumber }}
-            -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-            -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-            -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
+    - task: MSBuild@1
+      displayName: 'Build Driver [Win]'
+      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+      inputs:
+        solution: build2.proj
+        msbuildArchitecture: x64
+        platform: '${{ parameters.platform }}'
+        configuration: '${{ parameters.buildConfiguration }}'
+        msbuildArguments:
+          -t:BuildMds
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:BuildNumber=${{ parameters.buildNumber }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
@@ -117,23 +115,3 @@ steps:
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-
-- ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - task: DotNetCoreCLI@2
-    displayName: 'Build Driver [${{ parameters.operatingSystem }}]'
-    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
-    inputs:
-      command: custom
-      projects: build2.proj
-      custom: msbuild
-      arguments: >-
-        -t:BuildMdsUnix
-        -p:ReferenceType=${{ parameters.referenceType }}
-        -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:BuildNumber=${{ parameters.buildNumber }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
-      verbosityRestore: Detailed
-      verbosityPack: Detailed
-    retryCountOnTaskFailure: 1
