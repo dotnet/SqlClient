@@ -19,6 +19,11 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
+    # Adding user: root lets the entrypoint script create the password file, 
+    # after which sqlservr internally drops privileges to the mssql user. 
+    # This is the officially supported approach for SQL Server Linux containers.
+    # https://learn.microsoft.com/sql/linux/sql-server-linux-docker-container-security
+    user: root
     entrypoint: /sql-entrypoint/sqlserver-entrypoint.sh
     volumes:
       - sql-config:/sql-config
