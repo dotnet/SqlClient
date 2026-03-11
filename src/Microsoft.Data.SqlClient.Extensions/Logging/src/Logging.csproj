@@ -122,34 +122,4 @@
   </PropertyGroup>
   <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
 
-  <!--
-    Documentation post-processing targets.
-
-    After building, we save the full (untrimmed) XML documentation to the
-    artifacts/doc/ directory for use by public documentation workflows, then
-    trim the in-place copy (removing <remarks> and <example> nodes) so that
-    the NuGet package ships a cleaner IntelliSense XML file.
-  -->
-  <Target Name="SaveUntrimmedDocs" AfterTargets="Build"
-    Condition="'$(GenerateDocumentationFile)' == 'true' AND Exists('$(DocumentationFile)')">
-    <MakeDir Directories="$(Artifacts)/doc/$(TargetFramework)/" />
-    <Copy SourceFiles="$(DocumentationFile)"
-      DestinationFolder="$(Artifacts)/doc/$(TargetFramework)/" />
-  </Target>
-
-  <!--
-    Select the correct PowerShell executable for the current OS so that the
-    TrimDocsForIntelliSense target below does not need to duplicate the command.
-  -->
-  <PropertyGroup>
-    <PowerShellCmd Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCmd>
-    <PowerShellCmd Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCmd>
-  </PropertyGroup>
-
-  <Target Name="TrimDocsForIntelliSense" AfterTargets="SaveUntrimmedDocs"
-    Condition="'$(GenerateDocumentationFile)' == 'true' AND Exists('$(DocumentationFile)')">
-    <Exec
-      Command="$(PowerShellCmd) -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'&quot;" />
-  </Target>
-
 </Project>

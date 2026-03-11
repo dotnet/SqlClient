@@ -1794,7 +1794,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Write Events
-        // Do not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format,
+        // Do not change the first 4 arguments in this Event writer as OpenTelemetry and Application Insights are related to the same format,
         // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
 
         /// <summary>
