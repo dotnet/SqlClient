@@ -136,6 +136,20 @@
       -p:ReferenceType=Package
     </ReferenceTypeArgument>
 
+
+    <!--
+      SigningKeyPath
+      Applies to:     Build*
+      Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
+                      will not be strong name signed.
+      Default value:  [blank]
+      Example:        C:\path\to\my\signing\key.snk
+    -->
+    <SigningKeyPath Condition="'$(SigningKeyPath)' == ''" />
+    <SigningKeyPathArgument Condition="'$(SigningKeyPath)' != ''">
+      -p:SigningKeyPath='$(SigningKeyPath)'
+    </SigningKeyPathArgument>
+
     <!--
       TestBlameTimeout
       Applies to:     Test* targets
@@ -154,17 +168,17 @@
     </TestBlameArgument>
 
     <!--
-      TestCollectCodeCoverage
+      TestCodeCoverage
       Applies to:     Test* targets
       Description:    Whether code coverage data should be collected during test target execution.
       Default value:  true
       Allowed value:  (true|false)
     -->
-    <TestCollectCodeCoverage Condition="'$(TestCollectCodeCoverage)' == ''">true</TestCollectCodeCoverage>
-    <TestCollectArgument Condition="'$(TestCollectCodeCoverage.ToLower())' == 'true'">
+    <TestCodeCoverage Condition="'$(TestCodeCoverage)' == ''">true</TestCodeCoverage>
+    <TestArgument Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
       --collect "Code coverage"
       --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
-    </TestCollectArgument>
+    </TestArgument>
 
     <!--
       TestFilters
@@ -274,6 +288,7 @@
         "$(DotnetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
+        $(SigningKeyPathArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -294,6 +309,7 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(MdsRefProjectPath)
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -314,6 +330,7 @@
         "$(DotnetPath)dotnet" build $(MdsProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
+        $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
@@ -339,6 +356,7 @@
         "$(DotnetPath)dotnet" build $(MdsProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
+        $(SigningKeyPathArgument)
 
         <!-- Versioning Arguments -->
         $(BuildNumberArgument)
@@ -363,8 +381,7 @@
     automatically build before packaging. Instead, we rely on target dependency to handle building
     the same binaries that will be packaged.
   -->
-  <!-- DependsOnTargets="BuildMds" -->
-  <Target Name="PackMds" >
+  <Target Name="PackMds" DependsOnTargets="BuildMds">
     <Error Text="PackageVersionAbstractions must be set!"
            Condition="'$(PackageVersionAbstractions)' == ''" />
     <Error Text="PackageVersionLogging must be set!"

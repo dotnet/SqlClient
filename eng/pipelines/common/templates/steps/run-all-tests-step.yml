@@ -114,11 +114,11 @@ steps:
             -p:CollectCodeCoverage=false
         ${{ else }}: # x86
           msbuildArguments: >-
-            -t:RunUnitTests
-            -p:TF=${{ parameters.targetFramework }}
+            -t:TestMdsUnit
+            -p:TargetFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
             -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-            -p:Filters="category=flaky"
+            -p:TestFilters="category=flaky"
             -p:TestCodeCoverage=false
       continueOnError: true
 
@@ -132,7 +132,7 @@ steps:
       configuration: '${{parameters.buildConfiguration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         msbuildArguments: >-
-          -t:RunTestsFunctional
+          -t:TestMdsFunctional
           -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
@@ -140,7 +140,7 @@ steps:
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
       ${{ else }}: # x86
         msbuildArguments: >-
-          -t:RunTestsFunctional
+          -t:TestMdsFunctional
           -p:TargetFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
@@ -274,7 +274,7 @@ steps:
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:TestFilters="category=flaky"
           -p:TestCodeCoverage=false
