@@ -201,6 +201,16 @@ stages:
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
 
+  # Verify that all NuGet packages comply with Microsoft metadata requirements.
+  # This runs on a Windows agent after all packages have been built and
+  # published as pipeline artifacts.
+  - template: /eng/pipelines/stages/verify-nuget-packages-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      azureArtifactsName: $(azureArtifactsName)
+      loggingArtifactsName: $(loggingArtifactsName)
+      mdsArtifactsName: $(mdsArtifactsName)
+
   # Run the stress tests, if desired.
   - ${{ if eq(parameters.enableStressTests, true) }}:
       - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self

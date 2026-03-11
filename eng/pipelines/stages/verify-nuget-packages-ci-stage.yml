@@ -1,0 +1,90 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage downloads all NuGet package pipeline artifacts and runs the
+# NuGet.VerifyMicrosoftPackage tool to validate that every package complies
+# with Microsoft metadata requirements for nuget.org.
+#
+# It runs on a Windows agent because the verification tool is Windows-only.
+#
+# This template defines a stage named 'verify_nuget_packages_stage' that can be
+# depended on by downstream stages.
+#
+# See: https://github.com/NuGet/NuGetGallery/tree/main/src/VerifyMicrosoftPackage
+
+parameters:
+
+  # The names of the pipeline artifacts to download and verify.
+  - name: abstractionsArtifactsName
+    type: string
+    default: Abstractions.Artifacts
+
+  - name: azureArtifactsName
+    type: string
+    default: Azure.Artifacts
+
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  - name: mdsArtifactsName
+    type: string
+    default: MDS.Artifacts
+
+stages:
+
+  - stage: verify_nuget_packages_stage
+    displayName: Verify NuGet Packages
+
+    dependsOn:
+      - build_abstractions_package_stage
+      - build_azure_package_stage
+      - build_logging_package_stage
+      - build_sqlclient_package_stage
+
+    jobs:
+      - job: verify_nuget_packages_job
+        displayName: Verify NuGet Package Metadata
+
+        pool:
+          name: Azure Pipelines
+          vmImage: windows-latest
+
+        variables:
+          # The directory where all package artifacts will be downloaded.
+          - name: packagesDir
+            value: $(Build.StagingDirectory)/packages
+
+        steps:
+          # Download all package artifacts into a common directory.
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Abstractions Package Artifacts
+            inputs:
+              artifactName: ${{ parameters.abstractionsArtifactsName }}
+              targetPath: $(packagesDir)
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Azure Package Artifacts
+            inputs:
+              artifactName: ${{ parameters.azureArtifactsName }}
+              targetPath: $(packagesDir)
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Logging Package Artifacts
+            inputs:
+              artifactName: ${{ parameters.loggingArtifactsName }}
+              targetPath: $(packagesDir)
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download MDS Package Artifacts
+            inputs:
+              artifactName: ${{ parameters.mdsArtifactsName }}
+              targetPath: $(packagesDir)
+
+          # Run the verification tool against all downloaded packages.
+          - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml@self
+            parameters:
+              packagePath: $(packagesDir)

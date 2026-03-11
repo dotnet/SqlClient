@@ -1,0 +1,56 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This step template downloads and runs the NuGet.VerifyMicrosoftPackage tool
+# to validate that NuGet packages comply with Microsoft metadata requirements.
+#
+# The verification tool checks package metadata such as authors, copyright,
+# license URL, and project URL against Microsoft's policies for nuget.org.
+#
+# This step requires a Windows agent because the verify.ps1 script and its
+# downloaded verification tool are Windows-only.
+#
+# See: https://github.com/NuGet/NuGetGallery/tree/main/src/VerifyMicrosoftPackage
+
+parameters:
+
+  # The path (including glob pattern) to the .nupkg files to verify.
+  # For example: '$(packagePath)/*.nupkg' or '$(dotnetPackagesDir)/*.nupkg'.
+  - name: packagePath
+    type: string
+
+steps:
+  - pwsh: |
+      $url = "https://raw.githubusercontent.com/NuGet/NuGetGallery/main/src/VerifyMicrosoftPackage/verify.ps1"
+      $downloadDir = Join-Path $env:TEMP "NuGet.VerifyMicrosoftPackage"
+
+      if (!(Test-Path $downloadDir)) {
+        New-Item -ItemType Directory $downloadDir | Out-Null
+      }
+
+      $scriptPath = Join-Path $downloadDir "verify.ps1"
+      Write-Host "Downloading verify.ps1 from $url..."
+      Invoke-WebRequest $url -OutFile $scriptPath
+
+      $packages = Get-ChildItem -Path "${{ parameters.packagePath }}" -Filter *.nupkg -Recurse | Where-Object { $_.Extension -eq '.nupkg' }
+      if ($packages.Count -eq 0) {
+        Write-Host "No .nupkg files found matching '${{ parameters.packagePath }}'. Skipping verification."
+        exit 0
+      }
+
+      Write-Host "Verifying $($packages.Count) package(s)..."
+      foreach ($pkg in $packages) {
+        Write-Host "  - $($pkg.FullName)"
+      }
+
+      & $scriptPath $packages.FullName
+      if ($LASTEXITCODE -ne 0) {
+        Write-Error "NuGet package verification failed."
+        exit 1
+      }
+
+      Write-Host "All packages passed Microsoft metadata verification."
+    displayName: 'Verify NuGet Package Metadata'
