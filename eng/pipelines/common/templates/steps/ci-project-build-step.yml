@@ -46,6 +46,10 @@ parameters:
       - all
       - allNoDocs
 
+  # The build number suffix to apply to all assembly file versions built by this step.
+  - name: assemblyBuildNumber
+    type: string
+
   # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
   - name: abstractionsPackageVersion
     type: string
