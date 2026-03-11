@@ -18,6 +18,6 @@
             }
         }
     },
-    "postCreateCommand": "dotnet restore src/Microsoft.Data.SqlClient.sln --ignore-failed-sources || true && dotnet tool restore",
+    "postCreateCommand": "dotnet restore src/Microsoft.Data.SqlClient.sln --ignore-failed-sources && dotnet tool restore",
     "remoteUser": "vscode"
 }

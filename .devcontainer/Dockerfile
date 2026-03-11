@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/dotnet:latest
+FROM mcr.microsoft.com/devcontainers/dotnet:1-10.0-bookworm
 
 # Install .NET 8.0 and 9.0 runtimes (needed to run tests targeting these TFMs).
 # The base image ships the latest .NET SDK (10.0) which can build for older TFMs,
