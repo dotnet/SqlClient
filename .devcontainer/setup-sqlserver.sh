@@ -29,43 +29,42 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Write test config file so the test suite can find the connection string.
 CONFIG_DIR="${REPO_ROOT}/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities"
+CONFIG_DEFAULT_FILE="${CONFIG_DIR}/config.default.json"
 CONFIG_FILE="${CONFIG_DIR}/config.json"
-echo "Writing test config to ${CONFIG_FILE}..."
-cat > "$CONFIG_FILE" <<EOF
-{
-    "TCPConnectionString": "Data Source=tcp:${SQL_HOST},${SQL_PORT};Database=Northwind;User Id=sa;Password=${SA_PASSWORD};Encrypt=false;TrustServerCertificate=true",
-    "NPConnectionString": "",
-    "TCPConnectionStringHGSVBS": "",
-    "TCPConnectionStringNoneVBS": "",
-    "TCPConnectionStringAASSGX": "",
-    "EnclaveEnabled": false,
-    "TracingEnabled": false,
-    "AADAuthorityURL": "",
-    "AADPasswordConnectionString": "",
-    "AADServicePrincipalId": "",
-    "AADServicePrincipalSecret": "",
-    "AzureKeyVaultURL": "",
-    "AzureKeyVaultTenantId": "",
-    "SupportsIntegratedSecurity": false,
-    "LocalDbAppName": "",
-    "LocalDbSharedInstanceName": "",
-    "SupportsFileStream": false,
-    "FileStreamDirectory": "",
-    "UseManagedSNIOnWindows": false,
-    "DNSCachingConnString": "",
-    "DNSCachingServerCR": "",
-    "DNSCachingServerTR": "",
-    "IsDNSCachingSupportedCR": false,
-    "IsDNSCachingSupportedTR": false,
-    "IsAzureSynapse": false,
-    "EnclaveAzureDatabaseConnString": "",
-    "ManagedIdentitySupported": false,
-    "UserManagedIdentityClientId": "",
-    "PowerShellPath": "",
-    "AliasName": "",
-    "WorkloadIdentityFederationServiceConnectionId": ""
-}
-EOF
+echo "Writing test config to ${CONFIG_FILE} (based on ${CONFIG_DEFAULT_FILE})..."
+export CONFIG_DEFAULT_FILE CONFIG_FILE SQL_HOST SQL_PORT SA_PASSWORD
+python3 - <<'PY'
+import json
+import os
+
+config_default_path = os.environ.get("CONFIG_DEFAULT_FILE")
+config_path = os.environ.get("CONFIG_FILE")
+sql_host = os.environ.get("SQL_HOST")
+sql_port = os.environ.get("SQL_PORT")
+sa_password = os.environ.get("SA_PASSWORD")
+
+if not config_default_path or not config_path:
+    raise SystemExit("CONFIG_DEFAULT_FILE and CONFIG_FILE environment variables must be set.")
+
+with open(config_default_path, "r", encoding="utf-8") as f:
+    config = json.load(f)
+
+tcp_connection_string = (
+    f"Data Source=tcp:{sql_host},{sql_port};"
+    f"Database=Northwind;"
+    f"User Id=sa;"
+    f"Password={sa_password};"
+    "Encrypt=false;"
+    "TrustServerCertificate=true"
+)
+
+config["TCPConnectionString"] = tcp_connection_string
+config["SupportsIntegratedSecurity"] = False
+
+with open(config_path, "w", encoding="utf-8") as f:
+    json.dump(config, f, indent=4)
+    f.write("\n")
+PY
 echo "Test config written."
 
 echo "Waiting for SQL Server at ${SQL_HOST}:${SQL_PORT} to become available..."
