@@ -80,10 +80,10 @@ The following build targets are defined in `build.proj`:
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
 |`PackAkvProvider`|Pack the AKV Provider NuGet package into `packages/`. Requires `BuildAkvProvider` first.|
-|`PackAllPackages`|Pack all packages into `packages/`.  Requires all build targets to have run first.|
+|`PackAllPackages`|Pack all packages into `packages/`.  Requires all build targets to have run first.  Windows only.|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
-|`PackSqlClient`|Pack the SqlClient NuGet package into `packages/`. Requires `BuildSqlClient` first.|
+|`PackSqlClient`|Pack the SqlClient NuGet package into `packages/`. Requires `BuildSqlClient` first. Windows only.|
 |`PackSqlServer`|Pack the SqlServer NuGet package into `packages/`. Requires `BuildSqlServer` first.|
 |`Restore`|Restores NuGet packages.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
