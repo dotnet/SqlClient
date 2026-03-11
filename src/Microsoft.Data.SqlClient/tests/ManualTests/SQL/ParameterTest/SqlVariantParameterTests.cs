@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Globalization;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
@@ -55,7 +56,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             yield return new object[] { new SqlSingle((float)123.45), "System.Data.SqlTypes.SqlSingle", "real" };
             yield return new object[] { new SqlSingle((double)123.45), "System.Data.SqlTypes.SqlSingle", "real" };
-            yield return new object[] { new SqlString("hello"), "System.Data.SqlTypes.SqlString", "nvarchar" };
+            // Use explicit LCID 1033 (en-US) because the default SqlString constructor uses
+            // CultureInfo.CurrentCulture.LCID, which on Linux can be 127 (InvariantCulture).
+            // LCID 127 is not a valid SQL Server collation and causes "invalid TDS collation"
+            // errors when sent through the TVP code path (which encodes the SqlString's LCID
+            // directly into the TDS stream, unlike the regular parameter path).
+            yield return new object[] { new SqlString("hello", 1033, SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth), "System.Data.SqlTypes.SqlString", "nvarchar" };
             yield return new object[] { new SqlDouble(123.45), "System.Data.SqlTypes.SqlDouble", "float" };
             yield return new object[] { new SqlBinary(new byte[] { 0x00, 0x11, 0x22 }), "System.Data.SqlTypes.SqlBinary", "varbinary" };
             yield return new object[] { new SqlGuid(Guid.NewGuid()), "System.Data.SqlTypes.SqlGuid", "uniqueidentifier" };
