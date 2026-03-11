@@ -5,24 +5,14 @@
 using System;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.UnitTests
 {
     public class SqlUtilErrorMessageTests
     {
         [Fact]
-        public void CannotFindActiveDirectoryAuthProvider_ReturnsActionableMessage()
-        {
-            Exception exception = SQL.CannotFindActiveDirectoryAuthProvider("ActiveDirectoryPassword");
-
-            Assert.IsType<ArgumentException>(exception);
-            Assert.Contains("ActiveDirectoryPassword", exception.Message);
-            Assert.Contains("Microsoft.Data.SqlClient.Extensions.Azure", exception.Message);
-        }
-
-        [Fact]
         public void CannotFindAuthProvider_ReturnsGenericMessage()
         {
-            Exception exception = SQL.CannotFindAuthProvider("SomeCustomAuth");
+            Exception exception = global::Microsoft.Data.SqlClient.SQL.CannotFindAuthProvider("SomeCustomAuth");
 
             Assert.IsType<ArgumentException>(exception);
             Assert.Contains("SomeCustomAuth", exception.Message);
@@ -41,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         [InlineData("ActiveDirectoryWorkloadIdentity")]
         public void CannotFindActiveDirectoryAuthProvider_ContainsInstallInstructions(string authMethod)
         {
-            Exception exception = SQL.CannotFindActiveDirectoryAuthProvider(authMethod);
+            Exception exception = global::Microsoft.Data.SqlClient.SQL.CannotFindActiveDirectoryAuthProvider(authMethod);
 
             Assert.IsType<ArgumentException>(exception);
             Assert.Contains(authMethod, exception.Message);
