@@ -330,6 +330,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logging", "Microsoft.Data.SqlClient.Extensions\Logging\src\Logging.csproj", "{A1B2C3D4-E5F6-7A8B-9C0D-1E2F3A4B5C6D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient", "{7289C27E-D7DF-2C71-84B4-151F3A162493}"
+	ProjectSection(SolutionItems) = preProject
+		Microsoft.Data.SqlClient\MdsVersions.props = Microsoft.Data.SqlClient\MdsVersions.props
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7E0602AC-7F0A-362A-D734-0FDDFCC600B5}"
 EndProject

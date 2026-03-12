@@ -1,7 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- This file contains versioning information for the Microsoft.Data.SqlClient package. -->
   <PropertyGroup>
-    <MdsVersionDefault>8.1.0</MdsVersionDefault>
+    <MdsVersionDefault>7.0.0</MdsVersionDefault>
 
     <!--
       This is the version that is used as the version for the NuGet package. If it is not
