@@ -17,13 +17,13 @@ using Interop.Windows.Kernel32;
 using Interop.Windows.NtDll;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Win32.SafeHandles;
 
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
 using System.Text;
-using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlTypes
