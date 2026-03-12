@@ -1,0 +1,346 @@
+name: Auto-Triage New Issues
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to triage manually"
+        required: true
+        type: number
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  validate-environment-details:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
+    name: Validate Issue Environment Details
+
+    steps:
+      - name: Check issue for required environment details
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.payload.issue?.number || ${{ inputs.issue_number || 0 }};
+            if (!issueNumber) {
+              core.setFailed('No issue number found.');
+              return;
+            }
+
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            const body = issue.body || '';
+            const labels = issue.labels.map(l => typeof l === 'string' ? l : l.name);
+            const title = issue.title || '';
+
+            // Determine if this is a bug report (by label or template markers)
+            const isBugReport =
+              labels.some(l => l.includes('Bug')) ||
+              body.includes('### Describe the bug') ||
+              body.includes('### To reproduce') ||
+              body.includes('### Further technical details');
+
+            if (!isBugReport) {
+              console.log('Issue is not a bug report. Skipping environment validation.');
+              core.exportVariable('IS_BUG', 'false');
+              return;
+            }
+
+            core.exportVariable('IS_BUG', 'true');
+
+            // --- Check for required environment fields ---
+            const requiredFields = [
+              {
+                name: 'Microsoft.Data.SqlClient version',
+                patterns: [
+                  /Microsoft\.Data\.SqlClient\s*version\s*[:=]?\s*\S+/i,
+                  /MDS\s*version\s*[:=]?\s*\S+/i,
+                  /SqlClient\s+\d+\.\d+/i,
+                  /Microsoft\.Data\.SqlClient\s+\d+\.\d+/i,
+                ],
+                question: 'Which version of **Microsoft.Data.SqlClient** are you using? (e.g., `6.0.0-preview4`, `5.2.2`). You can find this in your project\'s NuGet references or by inspecting the `Microsoft.Data.SqlClient.dll` file version.',
+              },
+              {
+                name: '.NET target framework',
+                patterns: [
+                  /\.NET\s*(Framework)?\s*\d+(\.\d+)*/i,
+                  /net\d+\.\d+/i,
+                  /net4\d{2}/i,
+                  /netcoreapp\d+\.\d+/i,
+                  /Target\s*framework\s*[:=]?\s*\S+/i,
+                ],
+                question: 'What is your **.NET target framework**? (e.g., `.NET 8.0`, `.NET Framework 4.8.1`, `.NET 9.0`)',
+              },
+              {
+                name: 'SQL Server version',
+                patterns: [
+                  /SQL\s*Server\s*(version)?\s*[:=]?\s*\d{4}/i,
+                  /SQL\s*Server\s*\d{4}/i,
+                  /Azure\s*SQL/i,
+                  /SQL\s*Database/i,
+                  /SQL\s*Managed\s*Instance/i,
+                  /MSSQL\s*\d+/i,
+                ],
+                question: 'Which **SQL Server version** are you connecting to? (e.g., `SQL Server 2022`, `Azure SQL Database`, `SQL Server 2019`)',
+              },
+              {
+                name: 'Operating system',
+                patterns: [
+                  /Operating\s*system\s*[:=]?\s*\S+/i,
+                  /Windows\s*(Server)?\s*\d*/i,
+                  /Ubuntu\s*\d*/i,
+                  /Linux/i,
+                  /macOS\s*\d*/i,
+                  /Docker/i,
+                  /Alpine/i,
+                  /Debian/i,
+                  /CentOS/i,
+                  /RHEL/i,
+                  /OS\s*[:=]?\s*(Windows|Linux|macOS)/i,
+                ],
+                question: 'What **operating system** are you running on? (e.g., `Windows Server 2022`, `Ubuntu 24.04`, `macOS 14.7.1`, `Docker container`)',
+              },
+              {
+                name: 'Reproduction steps or code',
+                patterns: [
+                  /```[\s\S]*?```/,       // code block
+                  /steps\s*to\s*reproduce/i,
+                  /repro\s*steps/i,
+                  /reproduction/i,
+                  /### To reproduce[\s\S]{20,}/i,  // template section with content
+                ],
+                question: 'Could you provide **minimal reproduction steps or code** that demonstrates the issue? A complete, runnable code sample helps us investigate much faster.',
+              },
+              {
+                name: 'Expected vs actual behavior',
+                patterns: [
+                  /expected\s*(behavior|result|outcome)/i,
+                  /actual\s*(behavior|result|outcome)/i,
+                  /instead\s*(I\s*get|it\s*(returns|throws|shows))/i,
+                  /but\s*(I\s*get|it\s*(returns|throws|shows))/i,
+                ],
+                question: 'Could you clarify the **expected behavior** vs the **actual behavior** you are seeing?',
+              },
+            ];
+
+            // Check for stack trace / error message (recommended but not blocking)
+            const hasStackTrace =
+              /stack\s*trace/i.test(body) ||
+              /Exception/i.test(body) ||
+              /at\s+\S+\.\S+\(/i.test(body) ||
+              /Error\s*message/i.test(body);
+
+            const missingFields = [];
+            for (const field of requiredFields) {
+              const found = field.patterns.some(pattern => pattern.test(body));
+              if (!found) {
+                missingFields.push(field);
+              }
+            }
+
+            if (missingFields.length === 0 && hasStackTrace) {
+              console.log('All required environment details are present.');
+              // Add a label indicating the issue is ready for investigation
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['Triage Needed :new:'],
+              });
+              return;
+            }
+
+            // --- Build comment requesting missing info ---
+            let comment = '👋 Thank you for reporting this issue!\n\n';
+
+            if (missingFields.length > 0) {
+              comment += 'To help us investigate efficiently, could you please provide the following missing details:\n\n';
+
+              for (const field of missingFields) {
+                comment += `- **${field.name}**: ${field.question}\n`;
+              }
+
+              comment += '\n';
+            }
+
+            if (!hasStackTrace) {
+              comment += '> 💡 **Tip**: If you are seeing an exception, including the **full exception message and stack trace** greatly speeds up investigation.\n\n';
+            }
+
+            comment += 'You can edit your original issue description to add these details, or reply to this comment.\n\n';
+
+            comment += '<details>\n<summary>Why do we need this information?</summary>\n\n';
+            comment += 'Microsoft.Data.SqlClient supports multiple .NET versions (`net462`, `net8.0`, `net9.0`), operating systems (Windows, Linux, macOS), and SQL Server versions. ';
+            comment += 'Behavior can vary across these combinations, so knowing your exact environment helps us reproduce and diagnose the issue accurately.\n';
+            comment += '</details>\n';
+
+            // Post the comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: comment,
+            });
+
+            // Add labels
+            const labelsToAdd = ['Triage Needed :new:'];
+            if (missingFields.length > 0) {
+              labelsToAdd.push('Needs More Info :information_source:');
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: labelsToAdd,
+            });
+
+            console.log(`Posted environment details request for issue #${issueNumber}. Missing: ${missingFields.map(f => f.name).join(', ')}`);
+
+  initial-area-labeling:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
+    name: Apply Initial Area Labels
+
+    steps:
+      - name: Auto-label based on issue content
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.payload.issue?.number || ${{ inputs.issue_number || 0 }};
+            if (!issueNumber) return;
+
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            const text = `${issue.title} ${issue.body}`.toLowerCase();
+            const labelsToAdd = [];
+
+            // Area detection rules
+            const areaRules = [
+              { keywords: ['connection pool', 'connectionpool', 'pool size', 'pool timeout', 'clearpool', 'clearallpools'], label: 'Area\\Connection Pooling' },
+              { keywords: ['always encrypted', 'column encryption', 'akv', 'azure key vault', 'keyvaultprovider'], label: 'Area\\AKV Provider' },
+              { keywords: ['json', 'sqljson', 'json data type'], label: 'Area\\Json' },
+              { keywords: ['sni', 'network interface', 'tcp connection', 'named pipe', 'shared memory'], label: 'Area\\SNI' },
+              { keywords: ['tds', 'tabular data stream', 'tdsparser', 'tds protocol'], label: 'Area\\TDS' },
+              { keywords: ['pipeline', 'ci/cd', 'build', 'yaml', 'onebranch', 'nuget publish'], label: 'Area\\Engineering' },
+              { keywords: ['active directory', 'azure ad', 'entra', 'authentication', 'activedirectory'], label: 'Area\\Authentication' },
+              { keywords: ['encrypt', 'tls', 'ssl', 'certificate', 'trust server certificate'], label: 'Area\\Encryption' },
+              { keywords: ['mars', 'multiple active result', 'multipleactiveresultsets'], label: 'Area\\MARS' },
+              { keywords: ['transaction', 'msdtc', 'distributed transaction', 'committable'], label: 'Area\\Transactions' },
+              { keywords: ['bulk copy', 'sqlbulkcopy', 'bcp'], label: 'Area\\BulkCopy' },
+              { keywords: ['performance', 'slow', 'latency', 'throughput', 'memory leak', 'cpu usage'], label: 'Performance :chart_with_upwards_trend:' },
+            ];
+
+            for (const rule of areaRules) {
+              if (rule.keywords.some(kw => text.includes(kw))) {
+                labelsToAdd.push(rule.label);
+              }
+            }
+
+            if (labelsToAdd.length > 0) {
+              // Only add labels that actually exist in the repo to avoid errors
+              const { data: repoLabels } = await github.rest.issues.listLabelsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              });
+              const existingLabelNames = repoLabels.map(l => l.name);
+              const validLabels = labelsToAdd.filter(l => existingLabelNames.includes(l));
+
+              if (validLabels.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: validLabels,
+                });
+                console.log(`Added area labels: ${validLabels.join(', ')}`);
+              }
+            }
+
+  duplicate-check:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
+    name: Check for Potential Duplicates
+
+    steps:
+      - name: Search for similar issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.payload.issue?.number || ${{ inputs.issue_number || 0 }};
+            if (!issueNumber) return;
+
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            // Extract key terms from the title for search
+            const title = issue.title || '';
+            const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'not', 'when', 'after', 'before', 'using', 'does', 'do', 'and', 'or', 'but', 'if', 'this', 'that', 'it']);
+            const keywords = title
+              .toLowerCase()
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .split(/\s+/)
+              .filter(w => w.length > 2 && !stopWords.has(w))
+              .slice(0, 5);
+
+            if (keywords.length < 2) {
+              console.log('Not enough keywords to search for duplicates.');
+              return;
+            }
+
+            const searchQuery = `repo:dotnet/SqlClient is:issue ${keywords.join(' ')}`;
+            console.log(`Searching: ${searchQuery}`);
+
+            const { data: searchResults } = await github.rest.search.issuesAndPullRequests({
+              q: searchQuery,
+              sort: 'updated',
+              order: 'desc',
+              per_page: 10,
+            });
+
+            // Filter out the current issue and closed-as-not-planned
+            const similar = searchResults.items.filter(i =>
+              i.number !== issueNumber &&
+              i.state !== 'closed' || (i.state === 'closed' && i.state_reason !== 'not_planned')
+            ).slice(0, 5);
+
+            if (similar.length === 0) {
+              console.log('No similar issues found.');
+              return;
+            }
+
+            // Post a comment with potentially related issues
+            let comment = '🔍 **Potentially related issues** found:\n\n';
+            for (const item of similar) {
+              const state = item.state === 'open' ? '🟢 Open' : '🔴 Closed';
+              comment += `- ${state} #${item.number}: ${item.title}\n`;
+            }
+            comment += '\nIf any of these address the same problem, please let us know so we can link or deduplicate.\n';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: comment,
+            });
+
+            console.log(`Found ${similar.length} potentially related issues.`);
