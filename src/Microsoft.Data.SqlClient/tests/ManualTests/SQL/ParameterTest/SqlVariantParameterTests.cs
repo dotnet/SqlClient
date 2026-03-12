@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Globalization;
+using System.Threading;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
@@ -55,12 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             yield return new object[] { new SqlSingle((float)123.45), "System.Data.SqlTypes.SqlSingle", "real" };
             yield return new object[] { new SqlSingle((double)123.45), "System.Data.SqlTypes.SqlSingle", "real" };
-            // Use explicit LCID 1033 (en-US) because the default SqlString constructor uses
-            // CultureInfo.CurrentCulture.LCID, which on Linux can be 127 (InvariantCulture).
-            // LCID 127 is not a valid SQL Server collation and causes "invalid TDS collation"
-            // errors when sent through the TVP code path (which encodes the SqlString's LCID
-            // directly into the TDS stream, unlike the regular parameter path).
-            yield return new object[] { new SqlString("hello", 1033, SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth), "System.Data.SqlTypes.SqlString", "nvarchar" };
+            yield return new object[] { new SqlString("hello"), "System.Data.SqlTypes.SqlString", "nvarchar" };
             yield return new object[] { new SqlDouble(123.45), "System.Data.SqlTypes.SqlDouble", "float" };
             yield return new object[] { new SqlBinary(new byte[] { 0x00, 0x11, 0x22 }), "System.Data.SqlTypes.SqlBinary", "varbinary" };
             yield return new object[] { new SqlGuid(Guid.NewGuid()), "System.Data.SqlTypes.SqlGuid", "uniqueidentifier" };
@@ -79,16 +76,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(SqlTypeTestData))]
         public void SqlType_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            // SqlMoney has a known limitation with BulkCopy where it converts to SqlDecimal/numeric.
-            // For BulkCopy, we expect SqlDecimal/numeric for SqlMoney values.
-            // The TvpTests used to handle this by including an expected exception in the baseline file!
-            bool isSqlMoney = paramValue is SqlMoney;
-            string bulkCopyExpectedType = isSqlMoney ? "System.Data.SqlTypes.SqlDecimal" : expectedTypeName;
-            string bulkCopyExpectedBaseType = isSqlMoney ? "numeric" : expectedBaseTypeName;
+            // Work around a product bug in ValueUtilsSmi.GetSqlValue where reading a SqlString
+            // back from a SqlDataRecord Variant column reconstructs it via new SqlString(string),
+            // which uses CultureInfo.CurrentCulture.LCID. On Linux, this LCID is 127
+            // (InvariantCulture), which is not a valid SQL Server collation and causes
+            // "invalid TDS collation" errors in the TVP code path.
+            CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+            try
+            {
+                // SqlMoney has a known limitation with BulkCopy where it converts to SqlDecimal/numeric.
+                // For BulkCopy, we expect SqlDecimal/numeric for SqlMoney values.
+                // The TvpTests used to handle this by including an expected exception in the baseline file!
+                bool isSqlMoney = paramValue is SqlMoney;
+                string bulkCopyExpectedType = isSqlMoney ? "System.Data.SqlTypes.SqlDecimal" : expectedTypeName;
+                string bulkCopyExpectedBaseType = isSqlMoney ? "numeric" : expectedBaseTypeName;
 
-            VerifyVariantBulkCopy(paramValue, bulkCopyExpectedType, bulkCopyExpectedBaseType);
-            VerifyVariantParam(paramValue, expectedTypeName, expectedBaseTypeName);
-            VerifyVariantTvp(paramValue, expectedTypeName, expectedBaseTypeName);
+                VerifyVariantBulkCopy(paramValue, bulkCopyExpectedType, bulkCopyExpectedBaseType);
+                VerifyVariantParam(paramValue, expectedTypeName, expectedBaseTypeName);
+                VerifyVariantTvp(paramValue, expectedTypeName, expectedBaseTypeName);
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = previousCulture;
+            }
         }
 
         /// <summary>
