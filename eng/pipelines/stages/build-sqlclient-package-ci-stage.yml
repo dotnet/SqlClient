@@ -4,8 +4,9 @@
 # file in the project root for more information.
 ################################################################################
 
-# This stage builds the SqlClient (MDS) and AKV Provider NuGet packages and publishes them as pipeline
-# artifacts.
+# This stage builds the SqlClient (MDS) packages and publishes it as pipeline artifacts.
+#
+# NOTE: For legacy reasons this also builds, packs, and publishes the AKV Provider.
 #
 # This template defines a stage named 'build_sqlclient_package_stage' that can be depended on by
 # downstream stages.
@@ -51,6 +52,10 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The AKV Provider package version.
+  - name: akvPackageVersion
+    type: string
+
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
@@ -91,6 +96,7 @@ stages:
         loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+        akvPackageVersion: ${{ parameters.akvPackageVersion }}
         ${{ if ne(parameters.SNIVersion, '') }}:
           prebuildSteps:
             - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self

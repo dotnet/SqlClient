@@ -73,6 +73,10 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The version to apply to the AKV Provider package.
+  - name: akvPackageVersion
+    type: string
+
 jobs:
 - job: build_mds_akv_packages_job
   displayName: Build MDS & AKV Packages
@@ -167,7 +171,10 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       build: AkvProvider
       assemblyBuildNumber: $(assemblyBuildNumber)
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+      akvPackageVersion: ${{ parameters.akvPackageVersion }}
 
   - task: MSBuild@1
     displayName: 'Create AKV Provider NuGet Package'
