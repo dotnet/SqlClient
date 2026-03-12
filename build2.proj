@@ -147,7 +147,7 @@
     -->
     <SigningKeyPath Condition="'$(SigningKeyPath)' == ''" />
     <SigningKeyPathArgument Condition="'$(SigningKeyPath)' != ''">
-      -p:SigningKeyPath='$(SigningKeyPath)'
+      -p:SigningKeyPath="$(SigningKeyPath)"
     </SigningKeyPathArgument>
 
     <!--
@@ -175,10 +175,10 @@
       Allowed value:  (true|false)
     -->
     <TestCodeCoverage Condition="'$(TestCodeCoverage)' == ''">true</TestCodeCoverage>
-    <TestArgument Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
+    <TestCodeCoverage Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
       --collect "Code coverage"
       --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
-    </TestArgument>
+    </TestCodeCoverage>
 
     <!--
       TestFilters
