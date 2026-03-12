@@ -10,6 +10,26 @@
 				"x-mcp-ec-branch": "internal/main"
 			}
 		},
+		"bluebird_ctaip": {
+			"url": "https://mcp.bluebird-ai.net/",
+			"type": "http",
+			"headers": {
+				"x-mcp-ec-organization": "sqlclientdrivers",
+				"x-mcp-ec-project": "ADO.NET",
+				"x-mcp-ec-repository": "Microsoft.Data.SqlClient.Ctaip",
+				"x-mcp-ec-branch": "certAuth"
+			}
+		},
+		"bluebird-mcp-sni": {
+			"url": "https://mcp.bluebird-ai.net/",
+			"type": "http",
+			   "headers": {
+				"x-mcp-ec-organization": "SqlClientDrivers",
+				"x-mcp-ec-project": "ADO.NET",
+				"x-mcp-ec-repository": "Microsoft.Data.SqlClient.SNI",
+				"x-mcp-ec-branch": "master"
+			}
+		},
 		"bluebird-mcp-1es-docs": {
 			"url": "https://mcp.bluebird-ai.net/",
 			"type": "http",
@@ -19,6 +39,20 @@
 				"x-mcp-ec-repository": "1ES-on-EngHub",
 				"x-mcp-ec-branch": "main"
 			}
+		},
+		"bluebird_onebranchwiki": {
+			"url": "https://mcp.bluebird-ai.net/",
+			"type": "http",
+			"headers": {
+				"x-mcp-ec-organization": "onebranch",
+				"x-mcp-ec-project": "OneBranch Customer Wiki",
+				"x-mcp-ec-repository": "OneBranch-Customer-Wiki.v2",
+				"x-mcp-ec-branch": "main"
+			}
+		},
+		"microsoft-learn": {
+			"type": "http",
+			"url": "https://learn.microsoft.com/api/mcp"
 		},
 		"icm": {
 			"url": "https://icm-mcp-prod.azure-api.net/v1/",
@@ -35,15 +69,6 @@
 				"-y",
 				"@azure-devops/mcp",
 				"SqlClientDrivers"
-			]
-		},
-		"ado-devdiv": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"@azure-devops/mcp",
-				"devdiv"
 			]
 		}
 	}
