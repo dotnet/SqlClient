@@ -54,7 +54,7 @@ parameters:
   # Build parameters — select which packages to build.
 
   # Build the Microsoft.SqlServer.Server package.
-  - name: buildSqlServerServer
+  - name: buildMss
     displayName: Build Microsoft.SqlServer.Server
     type: boolean
     default: true
@@ -66,7 +66,7 @@ parameters:
     default: true
 
   # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: buildAKVProvider
+  - name: buildAkvProvider
     displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     type: boolean
     default: true
@@ -75,7 +75,7 @@ parameters:
   # All default to false; toggle at queue time for on-demand selective release.
 
   # Release the Microsoft.SqlServer.Server package.
-  - name: releaseSqlServerServer
+  - name: releaseMss
     displayName: Release Microsoft.SqlServer.Server
     type: boolean
     default: false
@@ -105,7 +105,7 @@ parameters:
     default: false
 
   # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: releaseAKVProvider
+  - name: releaseAkvProvider
     displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     type: boolean
     default: false
@@ -209,9 +209,9 @@ extends:
           debug: ${{ parameters.debug }}
           isPreview: ${{ parameters.isPreview }}
           publishSymbols: ${{ parameters.publishSymbols }}
-          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildMss: ${{ parameters.buildMss }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+          buildAkvProvider: ${{ parameters.buildAkvProvider }}
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
@@ -224,9 +224,9 @@ extends:
             stageDisplayName: Release Production (Dry Run)
           ${{ else }}:
             stageDisplayName: Release Production
-          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
+          releaseMss: ${{ parameters.releaseMss }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
           releaseAzure: ${{ parameters.releaseAzure }}
-          releaseAKVProvider: ${{ parameters.releaseAKVProvider }}
+          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}

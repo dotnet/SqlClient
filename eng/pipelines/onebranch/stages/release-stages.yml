@@ -65,7 +65,7 @@ parameters:
 
   # ── Release parameters ─────────────────────────────────────────────────
 
-  - name: releaseSqlServerServer
+  - name: releaseMss
     type: boolean
 
   - name: releaseLogging
@@ -80,7 +80,7 @@ parameters:
   - name: releaseAzure
     type: boolean
 
-  - name: releaseAKVProvider
+  - name: releaseAkvProvider
     type: boolean
 
 stages:
@@ -94,18 +94,18 @@ stages:
   #                       dryRun controlled by releaseDryRun parameter.
   # Non-official pipeline → Test/DryRun environment, dryRun always true.
   # ====================================================================
-  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAKVProvider) }}:
+  - ${{ if or(parameters.releaseMss, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAkvProvider) }}:
     - stage: release_${{ parameters.stageNameSuffix }}
       displayName: ${{ parameters.stageDisplayName }}
       dependsOn:
-        - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
+        - ${{ if or(parameters.releaseMss, parameters.releaseLogging) }}:
           - build_independent
         - ${{ if parameters.releaseAbstractions }}:
           - build_abstractions
         - ${{ if or(parameters.releaseSqlClient, parameters.releaseAzure) }}:
           - build_dependent
           - mds_package_validation
-        - ${{ if parameters.releaseAKVProvider }}:
+        - ${{ if parameters.releaseAkvProvider }}:
           - build_addons
 
       variables:
@@ -129,7 +129,7 @@ stages:
           value: ${{ variables.onebranchDeploymentEnvironment }}
 
       jobs:
-        - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
+        - ${{ if eq(parameters.releaseMss, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.SqlServer.Server
@@ -179,7 +179,7 @@ stages:
               isProduction: ${{ parameters.isOfficial }}
               isDryRun: ${{ parameters.isDryRun }}
 
-        - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+        - ${{ if eq(parameters.releaseAkvProvider, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider

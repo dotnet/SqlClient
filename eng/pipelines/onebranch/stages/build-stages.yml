@@ -41,13 +41,13 @@ parameters:
 
   # ── Build parameters ───────────────────────────────────────────────────
 
-  - name: buildSqlServerServer
+  - name: buildMss
     type: boolean
 
   - name: buildSqlClient
     type: boolean
 
-  - name: buildAKVProvider
+  - name: buildAkvProvider
     type: boolean
 
 stages:
@@ -59,7 +59,7 @@ stages:
     displayName: "Build Independent Packages"
 
     jobs:
-      - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
+      - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
             packageName: Logging
@@ -77,7 +77,7 @@ stages:
             authAkvName: $(AuthAKVName)
             authSignCertName: $(AuthSignCertName)
 
-      - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+      - ${{ if eq(parameters.buildMss, true) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
             packageName: SqlServer
@@ -173,7 +173,7 @@ stages:
   # Stage 4: Add-on packages (depend on core packages)
   # AKV Provider builds after MDS completes.
   # ====================================================================
-  - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
+  - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
     - stage: build_addons
       displayName: "Build Add-on Packages"
       dependsOn: build_dependent
