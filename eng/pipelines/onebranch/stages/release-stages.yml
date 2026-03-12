@@ -131,11 +131,16 @@ stages:
         - name: ob_deploymentjob_environment
           value: ${{ variables.onebranchDeploymentEnvironment }}
 
+        # NuGet service connection names used by the release stage to push packages.
+        # These must match the ADO service connections configured with NuGet.org
+        # credentials (API key or federated auth).
         - name: nugetServiceConnection
           ${{ if eq(parameters.releaseToProduction, true) }}:
-            value: ${{ variables.NuGetServiceConnectionProd }}
+            # https://sqlclientdrivers.visualstudio.com/ADO.Net/_settings/adminservices?resourceId=ee834e3a-87ad-4e9d-aa19-23711cfe4500
+            value: ADO Nuget Org Connection
           ${{ else }}:
-            value: ${{ variables.NuGetServiceConnectionTest }}
+            # https://sqlclientdrivers.visualstudio.com/ADO.Net/_settings/adminservices?resourceId=4dd2f6b9-2696-4324-bee5-0b4f9c273098
+            value: ADO Nuget Org Test Connection
 
         - name: nugetTargetSuffix
           ${{ if eq(parameters.releaseToProduction, true) }}:
