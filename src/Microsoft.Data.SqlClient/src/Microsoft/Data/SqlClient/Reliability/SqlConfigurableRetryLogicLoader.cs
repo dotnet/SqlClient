@@ -6,12 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NET
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Loader;
-using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlClient
