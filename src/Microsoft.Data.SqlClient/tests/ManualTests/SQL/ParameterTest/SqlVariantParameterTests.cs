@@ -39,26 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
             string outputPath = "SqlVariantParameter.out";
-            string baselinePath;
-#if DEBUG
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "SqlVariantParameter_DebugMode.bsl";
-            }
-            else
-            {
-                baselinePath = "SqlVariantParameter_DebugMode_Azure.bsl";
-            }
-#else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "SqlVariantParameter_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "SqlVariantParameter_ReleaseMode_Azure.bsl";
-            }
-#endif
+            string baselinePath = "SqlVariantParameter.bsl";
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
             var swriter = new StreamWriter(fstream, Encoding.UTF8);
