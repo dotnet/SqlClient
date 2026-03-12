@@ -122,49 +122,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void Test_Copy_SqlParameter()
         {
             using var conn = new SqlConnection(s_connString);
-            string cTableName = DataTestUtility.GetLongName("#tmp");
-            try
+            conn.Open();
+
+            using Table binTable = new(conn, "#tmp", "(BinValue binary(16) null)");
+
+            using var dt = new DataTable("SourceDataTable");
+            dt.Columns.Add("SourceBinValue", typeof(byte[]));
+
+            dt.Rows.Add(Guid.NewGuid().ToByteArray());
+            dt.Rows.Add(DBNull.Value);
+
+            using var cmdInsert = new SqlCommand
             {
-                // Create tmp table
-                var sCreateTable = "IF NOT EXISTS(";
-                sCreateTable += $"SELECT * FROM sysobjects WHERE name= '{ cTableName }' and xtype = 'U')";
-                sCreateTable += $"CREATE TABLE { cTableName }( BinValue binary(16)  null)";
+                UpdatedRowSource = UpdateRowSource.None,
+                Connection = conn,
 
-                conn.Open();
-                var cmd = new SqlCommand(sCreateTable, conn);
-                cmd.ExecuteNonQuery();
+                CommandText = $"INSERT {binTable.Name} (BinValue) VALUES (@BinValue)"
+            };
+            cmdInsert.Parameters.Add("@BinValue", SqlDbType.Binary, 16, "SourceBinValue");
 
-                var dt = new DataTable("SourceDataTable");
-                dt.Columns.Add("SourceBinValue", typeof(byte[]));
-
-                dt.Rows.Add(Guid.NewGuid().ToByteArray());
-                dt.Rows.Add(DBNull.Value);
-
-                var cmdInsert = new SqlCommand
-                {
-                    UpdatedRowSource = UpdateRowSource.None,
-                    Connection = conn,
-
-                    CommandText = $"INSERT { cTableName } (BinValue) "
-                };
-                cmdInsert.CommandText += "Values(@BinValue)";
-                cmdInsert.Parameters.Add("@BinValue", SqlDbType.Binary, 16, "SourceBinValue");
-
-                var da = new SqlDataAdapter
-                {
-                    InsertCommand = cmdInsert,
-                    UpdateBatchSize = 2,
-                    AcceptChangesDuringUpdate = false
-                };
-                da.Update(dt);
-            }
-            finally
+            using var da = new SqlDataAdapter
             {
-                // End of test, cleanup tmp table;
-                var sDropTable = $"DROP TABLE IF EXISTS {cTableName}";
-                using SqlCommand cmd = new(sDropTable, conn);
-                cmd.ExecuteNonQuery();
-            }
+                InsertCommand = cmdInsert,
+                UpdateBatchSize = 2,
+                AcceptChangesDuringUpdate = false
+            };
+            da.Update(dt);
         }
 
         // TODO Synapse: Remove dependency on Northwind database
@@ -172,8 +155,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void Test_SqlParameter_Constructor()
         {
             using var conn = new SqlConnection(s_connString);
-            var dataTable = new DataTable();
-            var adapter = new SqlDataAdapter
+            using var dataTable = new DataTable();
+            using var adapter = new SqlDataAdapter
             {
                 SelectCommand = new SqlCommand("SELECT CustomerID, ContactTitle FROM dbo.Customers WHERE ContactTitle = @ContactTitle", conn)
             };
@@ -204,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using var conn = new SqlConnection(s_connString);
             conn.Open();
-            var cmd = new SqlCommand("select @input", conn);
+            using var cmd = new SqlCommand("select @input", conn);
             cmd.Parameters.AddWithValue("@input", MyEnum.B);
             object value = cmd.ExecuteScalar();
             Assert.Equal(MyEnum.B, (MyEnum)value);
@@ -215,7 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using var conn = new SqlConnection(s_connString);
             conn.Open();
-            var cmd = new SqlCommand("set @output = @input", conn);
+            using var cmd = new SqlCommand("set @output = @input", conn);
             cmd.Parameters.AddWithValue("@input", MyEnum.B);
             SqlParameter outputParam = cmd.CreateParameter();
             outputParam.ParameterName = "@output";
@@ -231,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using var conn = new SqlConnection(s_connString);
             conn.Open();
-            var cmd = new SqlCommand("select @foo", conn);
+            using var cmd = new SqlCommand("select @foo", conn);
             cmd.Parameters.AddWithValue("@foo", new SqlDecimal(0.5));
             var result = (decimal)cmd.ExecuteScalar();
             Assert.Equal((decimal)0.5, result);
@@ -244,7 +227,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var conn = new SqlConnection(s_connString);
             conn.Open();
             var expectedGuid = Guid.NewGuid();
-            var cmd = new SqlCommand("select @input", conn);
+            using var cmd = new SqlCommand("select @input", conn);
             cmd.Parameters.AddWithValue("@input", expectedGuid);
 
             var result = cmd.ExecuteScalar();
@@ -264,67 +247,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             int x = 4, y = 5;
 
-            DataTable table = new()
+            using DataTable table = new()
             {
                 Columns = { { "x", typeof(int) }, { "y", typeof(int) } },
                 Rows = { { x, y } }
             };
 
-            using SqlConnection connection = new(builder.ConnectionString);
-            string tableName = DataTestUtility.GetLongName("Table");
-            string procName = DataTestUtility.GetLongName("Proc");
-            string typeName = DataTestUtility.GetShortName("Type");
-            try
-            {
-                connection.Open();
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = $"CREATE TYPE {typeName} AS TABLE (x INT, y INT)";
-                    cmd.ExecuteNonQuery();
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
 
-                    cmd.CommandText = $"CREATE TABLE {tableName} (x INT, y INT)";
-                    cmd.ExecuteNonQuery();
+            using UserDefinedType udtCoordPair = new(connection, "Type", "TABLE (x INT, y INT)");
+            using Table tableCoordPair = new(connection, "Table", "(x INT, y INT)");
+            using StoredProcedure spInsertCoordPair = new(connection, "Proc", $"@TVP {udtCoordPair.Name} READONLY AS " +
+                $"SET NOCOUNT ON INSERT INTO {tableCoordPair.Name}(x, y) SELECT * FROM @TVP");
 
-                    cmd.CommandText = $"CREATE PROCEDURE {procName} @TVP {typeName} READONLY AS " +
-                        $"SET NOCOUNT ON INSERT INTO {tableName}(x, y) SELECT * FROM  @TVP";
-                    cmd.ExecuteNonQuery();
+            using SqlCommand cmd = connection.CreateCommand();
+            // Update Data Using TVPs
+            cmd.CommandText = spInsertCoordPair.Name;
+            cmd.CommandType = CommandType.StoredProcedure;
 
-                }
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    // Update Data Using TVPs
-                    cmd.CommandText = procName;
-                    cmd.CommandType = CommandType.StoredProcedure;
+            SqlParameter parameter = cmd.Parameters.AddWithValue("@TVP", table);
+            parameter.TypeName = udtCoordPair.Name;
 
-                    SqlParameter parameter = cmd.Parameters.AddWithValue("@TVP", table);
-                    parameter.TypeName = typeName;
+            cmd.ExecuteNonQuery();
 
-                    cmd.ExecuteNonQuery();
-
-                    // Verify if the data was updated
-                    cmd.CommandText = "select * from " + tableName;
-                    cmd.CommandType = CommandType.Text;
-                    using SqlDataReader reader = cmd.ExecuteReader();
-                    DataTable dbData = new();
-                    dbData.Load(reader);
-                    Assert.Equal(1, dbData.Rows.Count);
-                    Assert.Equal(x, dbData.Rows[0][0]);
-                    Assert.Equal(y, dbData.Rows[0][1]);
-                }
-            }
-            finally
-            {
-                using SqlCommand cmd = connection.CreateCommand();
-                cmd.CommandText = "DROP PROCEDURE " + procName;
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "DROP TABLE " + tableName;
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "DROP TYPE " + typeName;
-                cmd.ExecuteNonQuery();
-            }
+            // Verify if the data was updated
+            cmd.CommandText = $"select * from {tableCoordPair.Name}";
+            cmd.CommandType = CommandType.Text;
+            using SqlDataReader reader = cmd.ExecuteReader();
+            using DataTable dbData = new();
+            dbData.Load(reader);
+            Assert.Equal(1, dbData.Rows.Count);
+            Assert.Equal(x, dbData.Rows[0][0]);
+            Assert.Equal(y, dbData.Rows[0][1]);
         }
 
 #if !NETFRAMEWORK
@@ -333,8 +290,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
-
             SqlGeography geog = SqlGeography.Point(43, -81, 4326);
 
             SqlMetaData[] metadata = new SqlMetaData[]
@@ -355,62 +310,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record2,
             };
 
-            using SqlConnection connection = new(builder.ConnectionString);
-            string procName = DataTestUtility.GetLongName("Proc");
-            string typeName = DataTestUtility.GetShortName("Type");
-            try
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using UserDefinedType udtGeographyTable = new(connection, "Type", "TABLE ([Id] [uniqueidentifier] NULL, [geom] [geography] NULL)");
+            using StoredProcedure spSelectFromTvp = new(connection, "Proc", $"@newRoads as {udtGeographyTable.Name} READONLY AS SELECT * FROM @newRoads");
+
+            using SqlCommand cmd = connection.CreateCommand();
+
+            // Update Data Using TVPs
+            cmd.CommandText = spSelectFromTvp.Name;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter param = new SqlParameter("@newRoads", SqlDbType.Structured);
+            param.Value = featureInserts;
+            param.TypeName = udtGeographyTable.Name;
+
+            cmd.Parameters.Add(param);
+
+            using var reader = cmd.ExecuteReader();
+
+            Assert.True(reader.HasRows);
+
+            int count = 0;
+            while (reader.Read())
             {
-                connection.Open();
-
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = $"CREATE TYPE {typeName} AS TABLE([Id] [uniqueidentifier] NULL, [geom] [geography] NULL)";
-                    cmd.ExecuteNonQuery();
-
-                    cmd.CommandText = @$"CREATE PROCEDURE {procName}
-                        @newRoads as {typeName} READONLY
-                        AS
-                        BEGIN
-                         SELECT* FROM @newRoads
-                        END";
-                    cmd.ExecuteNonQuery();
-
-                }
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    // Update Data Using TVPs
-                    cmd.CommandText = procName;
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    SqlParameter param = new SqlParameter("@newRoads", SqlDbType.Structured);
-                    param.Value = featureInserts;
-                    param.TypeName = typeName;
-
-                    cmd.Parameters.Add(param);
-
-                    using var reader = cmd.ExecuteReader();
-
-                    Assert.True(reader.HasRows);
-
-                    int count = 0;
-                    while (reader.Read())
-                    {
-                        Assert.NotNull(reader[0]);
-                        Assert.NotNull(reader[1]);
-                        count++;
-                    }
-
-                    Assert.Equal(2, count);
-                }
+                Assert.NotNull(reader[0]);
+                Assert.NotNull(reader[1]);
+                count++;
             }
-            finally
-            {
-                using SqlCommand cmd = connection.CreateCommand();
-                cmd.CommandText = "DROP PROCEDURE " + procName;
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "DROP TYPE " + typeName;
-                cmd.ExecuteNonQuery();
-            }
+
+            Assert.Equal(2, count);
         }
 
         [Trait("Category", "flaky")]
@@ -679,7 +609,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.CommandText = $"SELECT [Value] FROM {tableName} ORDER BY Id ASC";
                     cmd.CommandType = CommandType.Text;
                     using SqlDataReader reader = cmd.ExecuteReader();
-                    DataTable dbData = new();
+                    using DataTable dbData = new();
                     dbData.Load(reader);
                     Assert.Equal(expectedValues.Length, dbData.Rows.Count);
                     for (int i = 0; i < expectedValues.Length; i++)
@@ -905,7 +835,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void RunParameterTest()
         {
-            var cancellationToken = new CancellationTokenSource(50);
+            using var cancellationToken = new CancellationTokenSource(50);
             var expectedGuid = Guid.NewGuid();
 
             using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
