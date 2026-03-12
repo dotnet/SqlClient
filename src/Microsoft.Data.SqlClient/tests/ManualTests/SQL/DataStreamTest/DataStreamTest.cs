@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings))]
-        public static void SQLTypeRead_ReadsSqlTypesCorrectly(string connectionString)
+        public static void SqlTypeRead_ReadsSqlTypesCorrectly(string connectionString)
         {
             SQLTypeRead(connectionString);
         }
@@ -724,8 +724,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     }
                     finally
                     {
-                        cmdDefault.CommandText = "DROP TABLE " + tempTable;
-                        cmdDefault.ExecuteNonQuery();
+                        DataTestUtility.DropTable(conn, tempTable);
                     }
                 }
             }
