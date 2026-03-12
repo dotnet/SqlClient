@@ -20,16 +20,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public sealed class SqlVariantParameterTests : IDisposable
     {
         private readonly string _connStr;
+        private readonly CultureInfo _previousCulture;
         private readonly List<string> _bulkCopyTablesToCleanup = new();
         private readonly List<string> _tvpTypesToCleanup = new();
 
         public SqlVariantParameterTests()
         {
             _connStr = DataTestUtility.TCPConnectionString;
+
+            // Work around a gap in ValueUtilsSmi.GetSqlValue where reading a SqlString
+            // back from a SqlDataRecord Variant column reconstructs it via new SqlString(string),
+            // which uses CultureInfo.CurrentCulture.LCID. On Linux, this LCID is 127
+            // (InvariantCulture), which is not a valid SQL Server collation and causes
+            // "invalid TDS collation" errors in the TVP code path.
+            // SqlClient doesn't support invariant mode: 
+            // https://github.com/dotnet/SqlClient/issues/3742
+            _previousCulture = Thread.CurrentThread.CurrentCulture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
         }
 
         public void Dispose()
         {
+            Thread.CurrentThread.CurrentCulture = _previousCulture;
+
             // Clean up any tables/types that may have been left behind
             using var conn = new SqlConnection(_connStr);
             conn.Open();
@@ -72,40 +85,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { new SqlMoney(123.123M), "System.Data.SqlTypes.SqlMoney", "money" };
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
-        public void SqlType_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
-        {
-            // Work around a product bug in ValueUtilsSmi.GetSqlValue where reading a SqlString
-            // back from a SqlDataRecord Variant column reconstructs it via new SqlString(string),
-            // which uses CultureInfo.CurrentCulture.LCID. On Linux, this LCID is 127
-            // (InvariantCulture), which is not a valid SQL Server collation and causes
-            // "invalid TDS collation" errors in the TVP code path.
-            CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            try
-            {
-                // SqlMoney has a known limitation with BulkCopy where it converts to SqlDecimal/numeric.
-                // For BulkCopy, we expect SqlDecimal/numeric for SqlMoney values.
-                // The TvpTests used to handle this by including an expected exception in the baseline file!
-                bool isSqlMoney = paramValue is SqlMoney;
-                string bulkCopyExpectedType = isSqlMoney ? "System.Data.SqlTypes.SqlDecimal" : expectedTypeName;
-                string bulkCopyExpectedBaseType = isSqlMoney ? "numeric" : expectedBaseTypeName;
-
-                VerifyVariantBulkCopy(paramValue, bulkCopyExpectedType, bulkCopyExpectedBaseType);
-                VerifyVariantParam(paramValue, expectedTypeName, expectedBaseTypeName);
-                VerifyVariantTvp(paramValue, expectedTypeName, expectedBaseTypeName);
-            }
-            finally
-            {
-                Thread.CurrentThread.CurrentCulture = previousCulture;
-            }
-        }
-
         /// <summary>
         /// Round trip sql_variant value as normal parameter.
         /// </summary>
-        private void VerifyVariantParam(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(SqlTypeTestData))]
+        public void SqlType_VariantParam_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             using var conn = new SqlConnection(_connStr);
             conn.Open();
@@ -124,67 +109,232 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// Round trip sql_variant value using SqlBulkCopy.
-        /// Tests all three BulkCopy sources: SqlDataReader, DataTable, and DataRow.
+        /// Round trip sql_variant value using SqlBulkCopy with a SqlDataReader source.
         /// </summary>
-        private void VerifyVariantBulkCopy(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(SqlTypeTestData))]
+        public void SqlType_BulkCopyFromReader_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            string bulkCopyTableName = DataTestUtility.GetLongName("bulkDest");
-            _bulkCopyTablesToCleanup.Add(bulkCopyTableName);
+            AdjustExpectedForBulkCopy(paramValue, ref expectedTypeName, ref expectedBaseTypeName);
 
-            using var connBulk = new SqlConnection(_connStr);
-            connBulk.Open();
+            string tableName = DataTestUtility.GetLongName("bulkDest");
+            _bulkCopyTablesToCleanup.Add(tableName);
 
-            // Create target table
-            using (var cmd = new SqlCommand($"CREATE TABLE dbo.{bulkCopyTableName} (f1 sql_variant)", connBulk))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            using var conn = new SqlConnection(_connStr);
+            conn.Open();
+            CreateVariantTable(conn, tableName);
 
             try
             {
-                // Test 1: BulkCopy from SqlDataReader
-                using (var dr = GetReaderForVariant(paramValue, false))
+                using (var dr = GetReaderForVariant(paramValue))
                 {
-                    using var bulkCopy = new SqlBulkCopy(connBulk) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = bulkCopyTableName };
+                    using var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = tableName };
                     bulkCopy.WriteToServer(dr);
                 }
-                VerifyBulkCopyResult(connBulk, bulkCopyTableName, expectedTypeName, expectedBaseTypeName, "SqlDataReader");
-                TruncateTable(connBulk, bulkCopyTableName);
+                VerifyVariantResult(conn, tableName, expectedTypeName, expectedBaseTypeName);
+            }
+            finally
+            {
+                DropTable(conn, tableName);
+                _bulkCopyTablesToCleanup.Remove(tableName);
+            }
+        }
 
-                // Test 2: BulkCopy from DataTable
+        /// <summary>
+        /// Round trip sql_variant value using SqlBulkCopy with a DataTable source.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(SqlTypeTestData))]
+        public void SqlType_BulkCopyFromDataTable_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        {
+            AdjustExpectedForBulkCopy(paramValue, ref expectedTypeName, ref expectedBaseTypeName);
+
+            string tableName = DataTestUtility.GetLongName("bulkDest");
+            _bulkCopyTablesToCleanup.Add(tableName);
+
+            using var conn = new SqlConnection(_connStr);
+            conn.Open();
+            CreateVariantTable(conn, tableName);
+
+            try
+            {
                 var table = new DataTable();
                 table.Columns.Add("f1", typeof(object));
                 table.Rows.Add(new object[] { paramValue });
 
-                using (var bulkCopy = new SqlBulkCopy(connBulk) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = bulkCopyTableName })
+                using (var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = tableName })
                 {
                     bulkCopy.WriteToServer(table, DataRowState.Added);
                 }
-                VerifyBulkCopyResult(connBulk, bulkCopyTableName, expectedTypeName, expectedBaseTypeName, "DataTable");
-                TruncateTable(connBulk, bulkCopyTableName);
-
-                // Test 3: BulkCopy from DataRow[]
-                DataRow[] rowToSend = table.Select();
-                using (var bulkCopy = new SqlBulkCopy(connBulk) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = bulkCopyTableName })
-                {
-                    bulkCopy.WriteToServer(rowToSend);
-                }
-                VerifyBulkCopyResult(connBulk, bulkCopyTableName, expectedTypeName, expectedBaseTypeName, "DataRow");
+                VerifyVariantResult(conn, tableName, expectedTypeName, expectedBaseTypeName);
             }
             finally
             {
-                using var dropCmd = new SqlCommand($"DROP TABLE {bulkCopyTableName}", connBulk);
-                dropCmd.ExecuteNonQuery();
-                _bulkCopyTablesToCleanup.Remove(bulkCopyTableName);
+                DropTable(conn, tableName);
+                _bulkCopyTablesToCleanup.Remove(tableName);
             }
         }
 
-        private void VerifyBulkCopyResult(SqlConnection conn, string tableName, string expectedTypeName, string expectedBaseTypeName, string sourceType)
+        /// <summary>
+        /// Round trip sql_variant value using SqlBulkCopy with a DataRow[] source.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(SqlTypeTestData))]
+        public void SqlType_BulkCopyFromDataRow_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        {
+            AdjustExpectedForBulkCopy(paramValue, ref expectedTypeName, ref expectedBaseTypeName);
+
+            string tableName = DataTestUtility.GetLongName("bulkDest");
+            _bulkCopyTablesToCleanup.Add(tableName);
+
+            using var conn = new SqlConnection(_connStr);
+            conn.Open();
+            CreateVariantTable(conn, tableName);
+
+            try
+            {
+                var table = new DataTable();
+                table.Columns.Add("f1", typeof(object));
+                table.Rows.Add(new object[] { paramValue });
+                DataRow[] rows = table.Select();
+
+                using (var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = tableName })
+                {
+                    bulkCopy.WriteToServer(rows);
+                }
+                VerifyVariantResult(conn, tableName, expectedTypeName, expectedBaseTypeName);
+            }
+            finally
+            {
+                DropTable(conn, tableName);
+                _bulkCopyTablesToCleanup.Remove(tableName);
+            }
+        }
+
+        /// <summary>
+        /// Round trip sql_variant value using TVP with a SqlMetaData/SqlDataRecord source.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(SqlTypeTestData))]
+        public void SqlType_TvpFromSqlMetaData_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        {
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
+            _tvpTypesToCleanup.Add(tvpTypeName);
+
+            using var conn = new SqlConnection(_connStr);
+            conn.Open();
+            CreateVariantTvpType(conn, tvpTypeName);
+
+            try
+            {
+                var metadata = new SqlMetaData[] { new SqlMetaData("f1", SqlDbType.Variant) };
+                var record = new SqlDataRecord(metadata);
+                record.SetValue(0, paramValue);
+
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM @tvpParam";
+                var p = cmd.Parameters.AddWithValue("@tvpParam", new[] { record });
+                p.SqlDbType = SqlDbType.Structured;
+                p.TypeName = $"dbo.{tvpTypeName}";
+
+                using var dr = cmd.ExecuteReader();
+                Assert.True(dr.Read(), "Expected a row from TVP[SqlMetaData] query");
+
+                string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
+                string actualBaseTypeName = dr.GetString(1);
+
+                Assert.Equal(expectedTypeName, actualTypeName);
+                Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
+            }
+            finally
+            {
+                DropTvpType(conn, tvpTypeName);
+                _tvpTypesToCleanup.Remove(tvpTypeName);
+            }
+        }
+
+        /// <summary>
+        /// Round trip sql_variant value using TVP with a SqlDataReader source.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(SqlTypeTestData))]
+        public void SqlType_TvpFromSqlDataReader_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
+        {
+            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
+            _tvpTypesToCleanup.Add(tvpTypeName);
+
+            using var conn = new SqlConnection(_connStr);
+            conn.Open();
+            CreateVariantTvpType(conn, tvpTypeName);
+
+            try
+            {
+                using var drSource = GetReaderForVariant(paramValue);
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM @tvpParam";
+                var p = cmd.Parameters.AddWithValue("@tvpParam", drSource);
+                p.SqlDbType = SqlDbType.Structured;
+                p.TypeName = $"dbo.{tvpTypeName}";
+
+                using var dr = cmd.ExecuteReader();
+                Assert.True(dr.Read(), "Expected a row from TVP[SqlDataReader] query");
+
+                string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
+                string actualBaseTypeName = dr.GetString(1);
+
+                Assert.Equal(expectedTypeName, actualTypeName);
+                Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
+            }
+            finally
+            {
+                DropTvpType(conn, tvpTypeName);
+                _tvpTypesToCleanup.Remove(tvpTypeName);
+            }
+        }
+
+        #region Helpers
+
+        /// <summary>
+        /// SqlMoney has a known limitation with BulkCopy where it converts to SqlDecimal/numeric.
+        /// </summary>
+        private static void AdjustExpectedForBulkCopy(object paramValue, ref string expectedTypeName, ref string expectedBaseTypeName)
+        {
+            if (paramValue is SqlMoney)
+            {
+                expectedTypeName = "System.Data.SqlTypes.SqlDecimal";
+                expectedBaseTypeName = "numeric";
+            }
+        }
+
+        private static void CreateVariantTable(SqlConnection conn, string tableName)
+        {
+            using var cmd = new SqlCommand($"CREATE TABLE dbo.{tableName} (f1 sql_variant)", conn);
+            cmd.ExecuteNonQuery();
+        }
+
+        private static void DropTable(SqlConnection conn, string tableName)
+        {
+            using var cmd = new SqlCommand($"DROP TABLE IF EXISTS {tableName}", conn);
+            cmd.ExecuteNonQuery();
+        }
+
+        private static void CreateVariantTvpType(SqlConnection conn, string tvpTypeName)
+        {
+            using var cmd = new SqlCommand($"CREATE TYPE dbo.{tvpTypeName} AS TABLE (f1 sql_variant)", conn);
+            cmd.ExecuteNonQuery();
+        }
+
+        private static void DropTvpType(SqlConnection conn, string tvpTypeName)
+        {
+            using var cmd = new SqlCommand($"DROP TYPE IF EXISTS {tvpTypeName}", conn);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void VerifyVariantResult(SqlConnection conn, string tableName, string expectedTypeName, string expectedBaseTypeName)
         {
             using var cmd = new SqlCommand($"SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM {tableName}", conn);
             using var dr = cmd.ExecuteReader();
-            Assert.True(dr.Read(), $"Expected a row from BulkCopy[{sourceType}] query");
+            Assert.True(dr.Read(), "Expected a row from query");
 
             string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
             string actualBaseTypeName = dr.GetString(1);
@@ -193,97 +343,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
         }
 
-        private static void TruncateTable(SqlConnection conn, string tableName)
-        {
-            using var cmd = new SqlCommand($"TRUNCATE TABLE {tableName}", conn);
-            cmd.ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// Round trip sql_variant value using TVP.
-        /// Tests both SqlMetaData and SqlDataReader as TVP sources.
-        /// </summary>
-        private void VerifyVariantTvp(object paramValue, string expectedTypeName, string expectedBaseTypeName)
-        {
-            string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
-            _tvpTypesToCleanup.Add(tvpTypeName);
-
-            using var connTvp = new SqlConnection(_connStr);
-            connTvp.Open();
-
-            // Create TVP type
-            using (var cmd = new SqlCommand($"CREATE TYPE dbo.{tvpTypeName} AS TABLE (f1 sql_variant)", connTvp))
-            {
-                cmd.ExecuteNonQuery();
-            }
-
-            try
-            {
-                // Test 1: TVP using SqlMetaData
-                var metadata = new SqlMetaData[] { new SqlMetaData("f1", SqlDbType.Variant) };
-                var record = new SqlDataRecord(metadata);
-                record.SetValue(0, paramValue);
-
-                using (var cmd = connTvp.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM @tvpParam";
-                    var p = cmd.Parameters.AddWithValue("@tvpParam", new[] { record });
-                    p.SqlDbType = SqlDbType.Structured;
-                    p.TypeName = $"dbo.{tvpTypeName}";
-
-                    using var dr = cmd.ExecuteReader();
-                    Assert.True(dr.Read(), "Expected a row from TVP[SqlMetaData] query");
-
-                    string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
-                    string actualBaseTypeName = dr.GetString(1);
-
-                    Assert.Equal(expectedTypeName, actualTypeName);
-                    Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
-                }
-
-                // Test 2: TVP using SqlDataReader
-                using (var drSource = GetReaderForVariant(paramValue, false))
-                {
-                    using var cmd = connTvp.CreateCommand();
-                    cmd.CommandText = "SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM @tvpParam";
-                    var p = cmd.Parameters.AddWithValue("@tvpParam", drSource);
-                    p.SqlDbType = SqlDbType.Structured;
-                    p.TypeName = $"dbo.{tvpTypeName}";
-
-                    using var dr = cmd.ExecuteReader();
-                    Assert.True(dr.Read(), "Expected a row from TVP[SqlDataReader] query");
-
-                    string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
-                    string actualBaseTypeName = dr.GetString(1);
-
-                    Assert.Equal(expectedTypeName, actualTypeName);
-                    Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
-                }
-            }
-            finally
-            {
-                using var dropCmd = new SqlCommand($"DROP TYPE dbo.{tvpTypeName}", connTvp);
-                dropCmd.ExecuteNonQuery();
-                _tvpTypesToCleanup.Remove(tvpTypeName);
-            }
-        }
-
-        /// <summary>
-        /// Returns a SqlDataReader with embedded sql_variant column.
-        /// </summary>
-        private SqlDataReader GetReaderForVariant(object paramValue, bool includeBaseType)
+        private SqlDataReader GetReaderForVariant(object paramValue)
         {
             var conn = new SqlConnection(_connStr);
             conn.Open();
             var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT @p1 AS f1";
-            if (includeBaseType)
-            {
-                cmd.CommandText += ", sql_variant_property(@p1,'BaseType') AS BaseType";
-            }
-
             cmd.Parameters.Add("@p1", SqlDbType.Variant).Value = paramValue;
             return cmd.ExecuteReader(CommandBehavior.CloseConnection);
         }
+
+        #endregion
     }
 }
