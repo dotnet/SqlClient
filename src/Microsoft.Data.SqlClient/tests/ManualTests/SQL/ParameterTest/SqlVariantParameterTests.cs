@@ -85,6 +85,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { new SqlMoney(123.123M), "System.Data.SqlTypes.SqlMoney", "money" };
         }
 
+        public static IEnumerable<object[]> BulkCopySqlTypeTestData()
+        {
+            yield return new object[] { new SqlSingle((float)123.45), "System.Data.SqlTypes.SqlSingle", "real" };
+            yield return new object[] { new SqlSingle((double)123.45), "System.Data.SqlTypes.SqlSingle", "real" };
+            yield return new object[] { new SqlString("hello"), "System.Data.SqlTypes.SqlString", "nvarchar" };
+            yield return new object[] { new SqlDouble(123.45), "System.Data.SqlTypes.SqlDouble", "float" };
+            yield return new object[] { new SqlBinary(new byte[] { 0x00, 0x11, 0x22 }), "System.Data.SqlTypes.SqlBinary", "varbinary" };
+            yield return new object[] { new SqlGuid(Guid.NewGuid()), "System.Data.SqlTypes.SqlGuid", "uniqueidentifier" };
+            yield return new object[] { new SqlBoolean(true), "System.Data.SqlTypes.SqlBoolean", "bit" };
+            yield return new object[] { new SqlBoolean(1), "System.Data.SqlTypes.SqlBoolean", "bit" };
+            yield return new object[] { new SqlByte(1), "System.Data.SqlTypes.SqlByte", "tinyint" };
+            yield return new object[] { new SqlInt16(1), "System.Data.SqlTypes.SqlInt16", "smallint" };
+            yield return new object[] { new SqlInt32(1), "System.Data.SqlTypes.SqlInt32", "int" };
+            yield return new object[] { new SqlInt64(1), "System.Data.SqlTypes.SqlInt64", "bigint" };
+            yield return new object[] { new SqlDecimal(1234.123M), "System.Data.SqlTypes.SqlDecimal", "numeric" };
+            yield return new object[] { new SqlDateTime(DateTime.Now), "System.Data.SqlTypes.SqlDateTime", "datetime" };
+            // SqlMoney is coerced to decimal (numeric) by SqlBulkCopy (see https://github.com/dotnet/SqlClient/issues/4040).
+            // ValidateBulkCopyVariant strips all INullable SqlTypes to their CLR equivalents via
+            // MetaType.GetComValueFromSqlVariant, which converts SqlMoney to decimal. For most types
+            // the CLR value maps back to the same TDS type (e.g. SqlInt32 -> int -> SQLINT4), but
+            // decimal maps to SQLNUMERICN instead of SQLMONEY. The normal parameter path works
+            // around this in WriteSqlVariantValue using a length==8 heuristic, but
+            // WriteSqlVariantDataRowValue (used by bulk copy) has no such recovery logic.
+            yield return new object[] { new SqlMoney(123.123M), "System.Data.SqlTypes.SqlDecimal", "numeric" };
+        }
+
         /// <summary>
         /// Round trip sql_variant value as normal parameter.
         /// </summary>
@@ -112,10 +138,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using SqlBulkCopy with a SqlDataReader source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
+        [MemberData(nameof(BulkCopySqlTypeTestData))]
         public void SqlType_BulkCopyFromReader_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            AdjustExpectedForBulkCopy(paramValue, ref expectedTypeName, ref expectedBaseTypeName);
 
             string tableName = DataTestUtility.GetLongName("bulkDest");
             _bulkCopyTablesToCleanup.Add(tableName);
@@ -144,10 +169,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using SqlBulkCopy with a DataTable source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
+        [MemberData(nameof(BulkCopySqlTypeTestData))]
         public void SqlType_BulkCopyFromDataTable_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            AdjustExpectedForBulkCopy(paramValue, ref expectedTypeName, ref expectedBaseTypeName);
 
             string tableName = DataTestUtility.GetLongName("bulkDest");
             _bulkCopyTablesToCleanup.Add(tableName);
@@ -179,10 +203,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using SqlBulkCopy with a DataRow[] source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
+        [MemberData(nameof(BulkCopySqlTypeTestData))]
         public void SqlType_BulkCopyFromDataRow_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
-            AdjustExpectedForBulkCopy(paramValue, ref expectedTypeName, ref expectedBaseTypeName);
 
             string tableName = DataTestUtility.GetLongName("bulkDest");
             _bulkCopyTablesToCleanup.Add(tableName);
@@ -293,18 +316,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region Helpers
-
-        /// <summary>
-        /// SqlMoney has a known limitation with BulkCopy where it converts to SqlDecimal/numeric.
-        /// </summary>
-        private static void AdjustExpectedForBulkCopy(object paramValue, ref string expectedTypeName, ref string expectedBaseTypeName)
-        {
-            if (paramValue is SqlMoney)
-            {
-                expectedTypeName = "System.Data.SqlTypes.SqlDecimal";
-                expectedBaseTypeName = "numeric";
-            }
-        }
 
         private static void CreateVariantTable(SqlConnection conn, string tableName)
         {
