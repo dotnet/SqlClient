@@ -13,6 +13,10 @@ parameters:
     type: string
     default: $(REPO_ROOT)
 
+  - name: dllPattern
+    type: string
+    default: 'Microsoft.Data.SqlClient*.dll'
+
   - name: artifactDirectory
     type: string
     default: $(PACK_OUTPUT)
@@ -53,7 +57,7 @@ steps:
       EsrpClientId: '${{parameters.EsrpClientId }}'
       UseMSIAuthentication: true
       FolderPath: '${{parameters.sourceRoot }}'
-      Pattern: 'Microsoft.Data.SqlClient*.dll'
+      Pattern: '${{ parameters.dllPattern }}'
       CleanupTempStorage: 1
       VerboseLogin: 1
 
@@ -69,7 +73,7 @@ steps:
       AuthAKVName: '${{parameters.AuthAKVName }}'
       AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.sourceRoot }}'
-      Pattern: 'Microsoft.Data.SqlClient*.dll'
+      Pattern: '${{ parameters.dllPattern }}'
       signConfigType: inlineSignParams
       inlineOperation: |
           [
