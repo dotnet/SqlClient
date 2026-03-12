@@ -170,14 +170,6 @@ variables:
   - name: akvAssemblyFileVersion
     value: 7.0.0.$(assemblyBuildNumber)
 
-  # The MDS package version that AKV Provider depends on.
-  - name: akvMdsPackageVersion
-    value: '7.0.0-preview4.$(Build.BuildNumber)'
-
-  # The path to the NuGet packaging specification file for the AKV Provider.
-  - name: akvNuspecPath
-    value: '$(REPO_ROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
-
   # ----------------------------------------------------------------------------
   # MDS Symbols Publishing
   #

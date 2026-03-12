@@ -4,8 +4,8 @@
 # file in the project root for more information.
 ################################################################################
 
-# This stage builds the SqlClient (MDS) package (and for legacy reasons, the AKV NuGet package as
-# well) and publishes them as pipeline artifacts.
+# This stage builds the SqlClient (MDS) and AKV Provider NuGet packages and publishes them as pipeline
+# artifacts.
 #
 # This template defines a stage named 'build_sqlclient_package_stage' that can be depended on by
 # downstream stages.
@@ -73,7 +73,7 @@ parameters:
 stages:
 
   - stage: build_sqlclient_package_stage
-    displayName: Build MDS & AKV Packages
+    displayName: Build MDS & AKV Provider Packages
 
     dependsOn:
       - secrets_stage

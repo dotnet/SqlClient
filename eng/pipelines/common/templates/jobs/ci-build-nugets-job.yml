@@ -150,7 +150,7 @@ jobs:
       properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
       referenceType: ${{ parameters.referenceType }}
 
-  # When building in Package mode, the AKV restore needs to find the MDS package
+  # When building in Package mode, the AKV Provider restore needs to find the MDS package
   # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: CopyFiles@2
@@ -165,22 +165,24 @@ jobs:
       platform: ${{ parameters.platform }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
-      operatingSystem: Windows
-      build: AKV
+      build: AkvProvider
       assemblyBuildNumber: $(assemblyBuildNumber)
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create AKV NuGet Package'
-      generateSymbolsPackage: true
-      installNuget: false
-      nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: $(akvPackageVersion)
-      properties: 'MdsPackageVersion=${{ parameters.mdsPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  - task: MSBuild@1
+    displayName: 'Create AKV Provider NuGet Package'
+    inputs:
+      solution: build.proj
+      msbuildArchitecture: x64
+      platform: '${{ parameters.platform }}'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:PackAkvProvider
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:AkvPackageVersion=$(akvPackageVersion)
+        -p:PackageOutputPath=$(packagePath)
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'
