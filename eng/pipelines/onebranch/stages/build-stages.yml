@@ -24,31 +24,83 @@
 #  - effectiveAkvProviderVersion
 
 parameters:
-  # ── General parameters ─────────────────────────────────────────────────
-
-  # True to enable debug information and steps.
-  - name: debug
-    type: boolean
+  # ── General parameters ──────────────────────────────────────────────────
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
 
   # True if this is a preview build, which uses the preview version numbers from
   # common-variables.yml.
   - name: isPreview
     type: boolean
 
-  # True to publish symbols to public and private servers.
-  - name: publishSymbols
-    type: boolean
+  # APIScan Parameters -----------------------------------------------------
+  - name: apiScanDllPath
+    type: string
 
-  # ── Build parameters ───────────────────────────────────────────────────
+  - name: apiScanPdbPath
+    type: string
 
-  - name: buildMss
+  # ── Build parameters ────────────────────────────────────────────────────
+  - name: buildAkvProvider
     type: boolean
 
   - name: buildSqlClient
     type: boolean
 
-  - name: buildAkvProvider
+  - name: buildMss
     type: boolean
+
+  # Package Version Parameters ---------------------------------------------
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: mdsPackageVersion
+    type: string
+
+  # Signing Parameters -----------------------------------------------------
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingErpConnectedServiceName
+    type: string
+
+  # Symbols Parameters -----------------------------------------------------
+  # True to publish symbols to public and private servers.
+  - name: publishSymbols
+    type: boolean
+
+  - name: symbolsAzureSubscription
+    type: string
+
+  - name: symbolsPublishProjectName
+    type: string
+
+  - name: symbolsPublishServer
+    type: string
+
+  - name: symbolsPublishTokenUri
+    type: string
+
+  - name: symbolsUploadAccount
+    type: string
 
 stages:
   # ====================================================================
@@ -134,16 +186,31 @@ stages:
   # ====================================================================
   - ${{ if eq(parameters.buildSqlClient, true) }}:
     - stage: build_dependent
-      displayName: "Build Core Packages"
+      displayName: "Build MDS/Extensions Packages"
       dependsOn: build_abstractions
 
       jobs:
-        - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
+        - template: /eng/pipelines/onebranch/jobs/build-mds-official-job.yml@self
           parameters:
-            publishSymbols: ${{ parameters.publishSymbols }}
-            isPreview: ${{ parameters.isPreview }}
-            # TODO: This job should use the effective versions for Abstractions, Logging,
-            # SqlServer, and SqlClient.
+            apiScanDllPath: '${{ parameters.apiScanDllPath }}'
+            apiScanPdbPath: '${{ parameters.apiScanPdbPath }}'
+            buildConfiguration: '${{ parameters.buildConfiguration }}'
+            publishSymbols: '${{ parameters.publishSymbols }}'
+            signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+            signingAuthSignCertName: '${{ parameters.signingAuthCertName }}'
+            signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+            signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+            symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+            symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+            symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+            symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+            abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
+            loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+            mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
