@@ -560,33 +560,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
 
-            string tableName = DataTestUtility.GetLongName("TestDecimalParameterCMD");
-            using SqlConnection connection = InitialDatabaseTable(connectionString, tableName);
-            try
-            {
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
 
-                    var p = new SqlParameter("@Value", null)
-                    {
-                        Precision = 18,
-                        Scale = 2
-                    };
-                    cmd.Parameters.Add(p);
-                    for (int i = 0; i < s_testValues.Length; i++)
-                    {
-                        p.Value = s_testValues[i];
-                        cmd.CommandText = $"INSERT INTO {tableName} (Id, [Value]) VALUES({i}, @Value)";
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
-            }
-            finally
+            using Table decimalTable = new(connection, "TestDecimalParameterCMD", "(Id INT, Value Decimal(38, 2))");
+
+            using (SqlCommand cmd = connection.CreateCommand())
             {
-                DataTestUtility.DropTable(connection, tableName);
+                appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
+
+                var p = new SqlParameter("@Value", null)
+                {
+                    Precision = 18,
+                    Scale = 2
+                };
+                cmd.Parameters.Add(p);
+                for (int i = 0; i < s_testValues.Length; i++)
+                {
+                    p.Value = s_testValues[i];
+                    cmd.CommandText = $"INSERT INTO {decimalTable.Name} (Id, [Value]) VALUES({i}, @Value)";
+                    cmd.ExecuteNonQuery();
+                }
             }
+            Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
         [Theory]
@@ -595,33 +591,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
 
-            string tableName = DataTestUtility.GetLongName("TestDecimalParameterBC");
-            using SqlConnection connection = InitialDatabaseTable(connectionString, tableName);
-            try
-            {
-                using (SqlBulkCopy bulkCopy = new(connection))
-                {
-                    DataTable table = new(tableName);
-                    table.Columns.Add("Id", typeof(int));
-                    table.Columns.Add("Value", typeof(decimal));
-                    for (int i = 0; i < s_testValues.Length; i++)
-                    {
-                        DataRow newRow = table.NewRow();
-                        newRow["Id"] = i;
-                        newRow["Value"] = s_testValues[i];
-                        table.Rows.Add(newRow);
-                    }
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
 
-                    bulkCopy.DestinationTableName = tableName;
-                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
-                    bulkCopy.WriteToServer(table);
-                }
-                Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
-            }
-            finally
+            using Table decimalTable = new(connection, "TestDecimalParameterCMD", "(Id INT, Value Decimal(38, 2))");
+
+            using (SqlBulkCopy bulkCopy = new(connection))
             {
-                DataTestUtility.DropTable(connection, tableName);
+                using DataTable table = new(decimalTable.Name);
+                table.Columns.Add("Id", typeof(int));
+                table.Columns.Add("Value", typeof(decimal));
+                for (int i = 0; i < s_testValues.Length; i++)
+                {
+                    DataRow newRow = table.NewRow();
+                    newRow["Id"] = i;
+                    newRow["Value"] = s_testValues[i];
+                    table.Rows.Add(newRow);
+                }
+
+                bulkCopy.DestinationTableName = decimalTable.Name;
+                appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
+                bulkCopy.WriteToServer(table);
             }
+            Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
@@ -674,19 +666,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly decimal[] s_expectedTruncatedValues = new[] { 4210862852.86m, 19.15m, 19.15m, 19.15m };
         private const string TruncateDecimalSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
 
-        private static SqlConnection InitialDatabaseTable(string cnnString, string tableName)
-        {
-            SqlConnection connection = new(cnnString);
-            connection.Open();
-            using (SqlCommand cmd = connection.CreateCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = $"CREATE TABLE {tableName} (Id INT, Value Decimal(38, 2))";
-                cmd.ExecuteNonQuery();
-            }
-            return connection;
-        }
-
         private static bool ValidateInsertedValues(SqlConnection connection, string tableName, bool truncateScaledDecimal)
         {
             bool exceptionHit;
@@ -737,15 +716,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             A = 1,
             B = 2
-        }
-
-        private static void ExecuteNonQueryCommand(string connectionString, string cmdText)
-        {
-            using SqlConnection conn = new(connectionString);
-            using SqlCommand cmd = conn.CreateCommand();
-            conn.Open();
-            cmd.CommandText = cmdText;
-            cmd.ExecuteNonQuery();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -898,36 +868,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int firstInput = 12;
 
-            string sprocName = DataTestUtility.GetShortName("P");
-            // input, output
-            string createSprocQuery =
-                "CREATE PROCEDURE " + sprocName + " @in int " +
-                "AS " +
-                "RETURN(@in)";
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
 
-            string dropSprocQuery = "DROP PROCEDURE " + sprocName;
+            using StoredProcedure sproc = new(connection, "P", "@in int AS RETURN(@in)");
 
-            try
-            {
-                ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, createSprocQuery);
+            using var command = new SqlCommand(sproc.Name, connection) { CommandType = CommandType.StoredProcedure };
+            command.EnableOptimizedParameterBinding = true;
+            command.Parameters.AddWithValue("@in", firstInput);
+            SqlParameter returnParameter = command.Parameters.AddWithValue("@retval", 0);
+            returnParameter.Direction = ParameterDirection.ReturnValue;
 
-                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-                connection.Open();
+            command.ExecuteNonQuery();
 
-                using var command = new SqlCommand(sprocName, connection) { CommandType = CommandType.StoredProcedure };
-                command.EnableOptimizedParameterBinding = true;
-                command.Parameters.AddWithValue("@in", firstInput);
-                SqlParameter returnParameter = command.Parameters.AddWithValue("@retval", 0);
-                returnParameter.Direction = ParameterDirection.ReturnValue;
-
-                command.ExecuteNonQuery();
-
-                Assert.Equal(firstInput, Convert.ToInt32(returnParameter.Value));
-            }
-            finally
-            {
-                ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, dropSprocQuery);
-            }
+            Assert.Equal(firstInput, Convert.ToInt32(returnParameter.Value));
         }
 
         [SkipOnPlatform(TestPlatforms.OSX, "Flaky on macOS: https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42351")]
