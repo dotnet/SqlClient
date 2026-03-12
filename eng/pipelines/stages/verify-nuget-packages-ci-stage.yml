@@ -59,9 +59,6 @@ stages:
             value: $(Build.StagingDirectory)/packages
 
         steps:
-          # We don't need the repo checked out for this work.
-          - checkout: none
-
           # Download all package artifacts into a common directory.
           - task: DownloadPipelineArtifact@2
             displayName: Download Abstractions Package Artifacts
@@ -81,11 +78,14 @@ stages:
               artifactName: ${{ parameters.loggingArtifactsName }}
               targetPath: $(packagesDir)
 
+          # This artifact contains SqlClient and AKV Provider packages.
           - task: DownloadPipelineArtifact@2
             displayName: Download MDS Package Artifacts
             inputs:
               artifactName: ${{ parameters.mdsArtifactsName }}
               targetPath: $(packagesDir)
+
+          # TODO: Add SqlServer here when we start building it as part of PR/CI pipelines.
 
           # Run the verification tool against all downloaded packages.
           - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml@self
