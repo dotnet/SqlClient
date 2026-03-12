@@ -40,10 +40,6 @@
       specific to MDS, and then used in the MDS project.  As-is, these names are
       used by the build tooling and may be unintentionally included in other
       (non-MDS) projects.
-
-      For example, the AKV Provider package uses the AssemblyVersion, FileVersion, and
-      Version as its own.  It currently isn't possible to build/package both
-      MDS and AKV Provider at the same time.
     -->
 
     <!--

@@ -188,7 +188,7 @@ jobs:
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
         -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:AkvPackageVersion=$(akvPackageVersion)
+        -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
         -p:PackageOutputPath=$(packagePath)
 
   - task: PublishPipelineArtifact@1

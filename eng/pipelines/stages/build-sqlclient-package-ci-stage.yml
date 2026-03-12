@@ -4,7 +4,7 @@
 # file in the project root for more information.
 ################################################################################
 
-# This stage builds the SqlClient (MDS) packages and publishes it as pipeline artifacts.
+# This stage builds the SqlClient (MDS) packages and publishes it as a pipeline artifact.
 #
 # NOTE: For legacy reasons this also builds, packs, and publishes the AKV Provider.
 #

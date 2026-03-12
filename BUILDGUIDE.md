@@ -76,7 +76,7 @@ The following build targets are defined in `build.proj`:
 |`BuildSqlClient`|Build the driver for all target frameworks.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
-|`PackAkvProvider`|Packs the Azure Key Vault Provider NuGet package (requires a prior build).|
+|`PackAkvProvider`|Pack the Azure Key Vault Provider NuGet package (requires a prior build).|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`Restore`|Restores NuGet packages.|
