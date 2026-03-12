@@ -81,7 +81,7 @@ steps:
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments:
+        msbuildArguments: >-
           -t:BuildMds
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
