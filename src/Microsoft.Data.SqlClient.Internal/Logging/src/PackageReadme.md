@@ -3,6 +3,14 @@
 [![NuGet](https://img.shields.io/nuget/v/Microsoft.Data.SqlClient.Internal.Logging.svg?style=flat-square)](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Internal.Logging)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient.Internal.Logging?style=flat-square)](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Internal.Logging)
 
+> **⚠️ Internal Package — Do Not Reference Directly**
+>
+> This package is intended for **internal use by other Microsoft.Data.SqlClient packages only**.
+> It is not designed for direct consumption by application code and may undergo breaking changes
+> without notice. Application developers should reference
+> [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) instead,
+> which includes this package as a transitive dependency.
+
 ## Description
 
 This package provides **ETW EventSource tracing and diagnostics** for [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient). It enables comprehensive logging and telemetry capabilities for SQL Server database operations.

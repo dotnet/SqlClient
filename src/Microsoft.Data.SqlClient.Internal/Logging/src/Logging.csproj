@@ -92,6 +92,9 @@
     <Description>
       Microsoft.Data.SqlClient Internal Logging - ETW EventSource for SqlClient tracing
       and diagnostics.
+
+      This package is for internal use by other Microsoft.Data.SqlClient
+      packages only and should not be referenced directly by application code.
     </Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageTags>sqlclient microsoft.data.sqlclient internal logging</PackageTags>
