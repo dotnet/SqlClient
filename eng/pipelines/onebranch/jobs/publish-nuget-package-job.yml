@@ -90,6 +90,22 @@ jobs:
 
       # Artifacts are downloaded via templateContext.inputs per OneBranch requirements.
 
+      # Emit details about what is being published.
+      - pwsh: |
+          Write-Host "artifactPath: $(artifactPath)"
+          Write-Host "packageToPush: $(packageToPush)"
+          Get-ChildItem -Path "$(artifactPath)" -Recurse | Format-Table -AutoSize
+          if (Test-Path "$(packageToPush)")
+          {
+            Write-Host "Package found: $(packageToPush)"
+          }
+          else
+          {
+            Write-Error "Package not found: $(packageToPush)"
+          }
+        displayName: Show Package(s) to Push
+
+      # Push the package(s) to NuGet.
       - task: NuGetCommand@2
         displayName: Push ${{ parameters.packageName }} to NuGet${{ parameters.displaySuffix }}
         inputs:
