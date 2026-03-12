@@ -111,7 +111,12 @@ parameters:
     default: false
 
 variables:
+  # @TODO: Need cleaning
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+
+  # @TODO: These are good
+  - template: /eng/pipelines/onebranch/variables/esrp-variables-v2.yml@self
+  - template: /eng/pipelines/onebranch/variables/symbols-variables-v2.yml@self
 
   # Define the effective versions for all of the packages we build and release.
   - ${{ if parameters.isPreview }}:

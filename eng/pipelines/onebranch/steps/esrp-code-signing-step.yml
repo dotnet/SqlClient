@@ -23,7 +23,7 @@ parameters:
 
   - name: ESRPConnectedServiceName
     type: string
-    default: $(ESRPConnectedServiceName)
+    default: $(SigningEsrpConnectedServiceName)
 
   - name: appRegistrationClientId
     type: string
@@ -35,11 +35,11 @@ parameters:
 
   - name: AuthAKVName
     type: string
-    default: $(AuthAKVName)
+    default: $(SigningAuthAkvName)
 
   - name: AuthSignCertName
     type: string
-    default: $(AuthSignCertName)
+    default: $(SigningAuthSignCertName)
 
   - name: EsrpClientId
     type: string

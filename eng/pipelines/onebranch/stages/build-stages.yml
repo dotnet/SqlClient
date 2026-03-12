@@ -70,12 +70,12 @@ stages:
               -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
             assemblyFileVersion: $(loggingAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(ESRPConnectedServiceName)
-            esrpClientId: $(ESRPClientId)
-            appRegistrationClientId: $(AppRegistrationClientId)
-            appRegistrationTenantId: $(AppRegistrationTenantId)
-            authAkvName: $(AuthAKVName)
-            authSignCertName: $(AuthSignCertName)
+            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+            esrpClientId: $(SigningEsrpClientId)
+            appRegistrationClientId: $(SigningAppRegistrationClientId)
+            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
+            authAkvName: $(SigningAuthAkvName)
+            authSignCertName: $(SigningAuthSignCertName)
 
       - ${{ if eq(parameters.buildMss, true) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
@@ -88,12 +88,12 @@ stages:
               -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
             assemblyFileVersion: $(sqlServerAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(ESRPConnectedServiceName)
-            esrpClientId: $(ESRPClientId)
-            appRegistrationClientId: $(AppRegistrationClientId)
-            appRegistrationTenantId: $(AppRegistrationTenantId)
-            authAkvName: $(AuthAKVName)
-            authSignCertName: $(AuthSignCertName)
+            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+            esrpClientId: $(SigningEsrpClientId)
+            appRegistrationClientId: $(SigningAppRegistrationClientId)
+            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
+            authAkvName: $(SigningAuthAkvName)
+            authSignCertName: $(SigningAuthSignCertName)
 
   # ====================================================================
   # Stage 2: Abstractions package (depends on Logging from Stage 1)
@@ -117,12 +117,12 @@ stages:
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
             assemblyFileVersion: $(abstractionsAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(ESRPConnectedServiceName)
-            esrpClientId: $(ESRPClientId)
-            appRegistrationClientId: $(AppRegistrationClientId)
-            appRegistrationTenantId: $(AppRegistrationTenantId)
-            authAkvName: $(AuthAKVName)
-            authSignCertName: $(AuthSignCertName)
+            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+            esrpClientId: $(SigningEsrpClientId)
+            appRegistrationClientId: $(SigningAppRegistrationClientId)
+            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
+            authAkvName: $(SigningAuthAkvName)
+            authSignCertName: $(SigningAuthSignCertName)
             downloadArtifacts:
               - artifactName: $(loggingArtifactsName)
                 displayName: Logging Package
@@ -157,12 +157,12 @@ stages:
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
             assemblyFileVersion: $(azureAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(ESRPConnectedServiceName)
-            esrpClientId: $(ESRPClientId)
-            appRegistrationClientId: $(AppRegistrationClientId)
-            appRegistrationTenantId: $(AppRegistrationTenantId)
-            authAkvName: $(AuthAKVName)
-            authSignCertName: $(AuthSignCertName)
+            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+            esrpClientId: $(SigningEsrpClientId)
+            appRegistrationClientId: $(SigningAppRegistrationClientId)
+            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
+            authAkvName: $(SigningAuthAkvName)
+            authSignCertName: $(SigningAuthSignCertName)
             downloadArtifacts:
               - artifactName: $(abstractionsArtifactsName)
                 displayName: Abstractions Package

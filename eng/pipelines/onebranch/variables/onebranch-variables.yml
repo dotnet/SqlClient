@@ -7,8 +7,6 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 variables:
-  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
-
   # onebranch template variables
   - name: ob_sdl_binskim_break
     value: true # https://aka.ms/obpipelines/sdl

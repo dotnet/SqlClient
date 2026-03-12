@@ -7,23 +7,8 @@
 # Common variables shared across all OneBranch Official pipelines.
 
 variables:
+  # @TODO: Remove
   - group: Release Variables
-
-  # Symbols publishing credentials
-  - group: Symbols publishing
-    # SymbolsAzureSubscription
-    # SymbolsPublishProjectName
-    # SymbolsPublishServer
-    # SymbolsPublishTokenUri
-    # SymbolsUploadAccount
-
-  - group: ESRP Federated Creds (AME)
-    # ESRPConnectedServiceName
-    # ESRPClientId
-    # AppRegistrationClientId
-    # AppRegistrationTenantId
-    # AuthAKVName
-    # AuthSignCertName
 
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
