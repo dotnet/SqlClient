@@ -136,7 +136,6 @@
       -p:ReferenceType=Package
     </ReferenceTypeArgument>
 
-
     <!--
       SigningKeyPath
       Applies to:     Build*
@@ -289,6 +288,7 @@
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
         $(SigningKeyPathArgument)
+        $(BuildNumberArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -310,6 +310,7 @@
         "$(DotnetPath)dotnet" build $(MdsRefProjectPath)
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
+        $(BuildNumberArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -402,6 +403,7 @@
     </Exec>
 
     <PropertyGroup>
+      <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
       <NuGetCommand>
         "$(NugetPath)" pack "$(MdsNuspecPath)"
         -Symbols

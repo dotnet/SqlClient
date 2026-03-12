@@ -270,6 +270,7 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
           -p:Configuration=${{ parameters.buildConfiguration }}
+          -p:TestResultsFolderPath=TestResults
         verbosityRestore: Detailed
         verbosityPack: Detailed
 

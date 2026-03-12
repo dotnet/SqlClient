@@ -67,6 +67,14 @@
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsAssemblyVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
+
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
     <!--

@@ -5,6 +5,14 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsAssemblyVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
+
   <!-- CLS Compliance ================================================== -->
   <ItemGroup>
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
