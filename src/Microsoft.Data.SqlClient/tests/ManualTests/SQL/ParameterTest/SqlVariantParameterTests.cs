@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 try
                 {
-                    using var cmd = new SqlCommand($"DROP TABLE IF EXISTS {table}", conn);
+                    using var cmd = new SqlCommand($"DROP TABLE IF EXISTS dbo.{table}", conn);
                     cmd.ExecuteNonQuery();
                 }
                 catch { }
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 try
                 {
-                    using var cmd = new SqlCommand($"DROP TYPE IF EXISTS {type}", conn);
+                    using var cmd = new SqlCommand($"DROP TYPE IF EXISTS dbo.{type}", conn);
                     cmd.ExecuteNonQuery();
                 }
                 catch { }
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using (var dr = GetReaderForVariant(paramValue))
                 {
-                    using var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = tableName };
+                    using var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = $"dbo.{tableName}" };
                     bulkCopy.WriteToServer(dr);
                 }
                 VerifyVariantResult(conn, tableName, expectedTypeName, expectedBaseTypeName);
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 table.Columns.Add("f1", typeof(object));
                 table.Rows.Add(new object[] { paramValue });
 
-                using (var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = tableName })
+                using (var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = $"dbo.{tableName}" })
                 {
                     bulkCopy.WriteToServer(table, DataRowState.Added);
                 }
@@ -198,7 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 table.Rows.Add(new object[] { paramValue });
                 DataRow[] rows = table.Select();
 
-                using (var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = tableName })
+                using (var bulkCopy = new SqlBulkCopy(conn) { BulkCopyTimeout = 60, BatchSize = 1, DestinationTableName = $"dbo.{tableName}" })
                 {
                     bulkCopy.WriteToServer(rows);
                 }
@@ -314,7 +314,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void DropTable(SqlConnection conn, string tableName)
         {
-            using var cmd = new SqlCommand($"DROP TABLE IF EXISTS {tableName}", conn);
+            using var cmd = new SqlCommand($"DROP TABLE IF EXISTS dbo.{tableName}", conn);
             cmd.ExecuteNonQuery();
         }
 
@@ -326,13 +326,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void DropTvpType(SqlConnection conn, string tvpTypeName)
         {
-            using var cmd = new SqlCommand($"DROP TYPE IF EXISTS {tvpTypeName}", conn);
+            using var cmd = new SqlCommand($"DROP TYPE IF EXISTS dbo.{tvpTypeName}", conn);
             cmd.ExecuteNonQuery();
         }
 
         private void VerifyVariantResult(SqlConnection conn, string tableName, string expectedTypeName, string expectedBaseTypeName)
         {
-            using var cmd = new SqlCommand($"SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM {tableName}", conn);
+            using var cmd = new SqlCommand($"SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM dbo.{tableName}", conn);
             using var dr = cmd.ExecuteReader();
             Assert.True(dr.Read(), "Expected a row from query");
 
