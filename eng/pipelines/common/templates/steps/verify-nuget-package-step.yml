@@ -26,6 +26,10 @@ parameters:
     type: string
 
 steps:
+  # Install the .NET SDK, required by the PowerShell script.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+  # Invoke the script with the path to the packages to verify.
   - task: PowerShell@2
     displayName: 'Verify NuGet Package Metadata'
     inputs:
