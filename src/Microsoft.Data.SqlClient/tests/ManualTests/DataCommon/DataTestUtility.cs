@@ -676,15 +676,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
-        {
-            ResurrectConnection(sqlConnection);
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
-
         public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
         {
             ResurrectConnection(sqlConnection);

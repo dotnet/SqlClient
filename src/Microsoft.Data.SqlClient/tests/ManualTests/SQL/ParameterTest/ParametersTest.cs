@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Globalization;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
+
 
 
 #if !NETFRAMEWORK
@@ -415,119 +417,90 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
-            string tableTypeName = "[dbo]." + DataTestUtility.GetLongName("UDTTTestDateOnlyTVP");
-            string spName = DataTestUtility.GetLongName("spTestDateOnlyTVP");
-            SqlConnection connection = new(s_connString);
-            try
+            using SqlConnection connection = new(s_connString);
+
+            connection.Open();
+
+            using UserDefinedType udtTableType = new(connection, "UDTTTestDateOnlyTVP", "TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)");
+            using StoredProcedure storedProcedure = new(connection, "spTestDateOnlyTVP", $"(@dates {udtTableType.Name} READONLY) AS SELECT COUNT(*) FROM @dates");
+            using SqlCommand cmd = connection.CreateCommand();
+
+            cmd.CommandText = storedProcedure.Name;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            DataTable dtTest = new();
+            dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
+            dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
+
+            DataRow dataRow = dtTest.NewRow();
+            dataRow["DateColumn"] = new DateOnly(2023, 11, 15);
+            dataRow["TimeColumn"] = new TimeOnly(12, 30, 45);
+            dtTest.Rows.Add(dataRow);
+
+            cmd.Parameters.Add(new SqlParameter
             {
-                connection.Open();
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
-                    cmd.ExecuteNonQuery();
-                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
-                    cmd.ExecuteNonQuery();
-                }
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = spName;
-                    cmd.CommandType = CommandType.StoredProcedure;
+                ParameterName = "@dates",
+                SqlDbType = SqlDbType.Structured,
+                TypeName = udtTableType.Name,
+                Value = dtTest,
+            });
 
-                    DataTable dtTest = new();
-                    dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
-                    dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
-                    var dataRow = dtTest.NewRow();
-                    dataRow["DateColumn"] = new DateOnly(2023, 11, 15);
-                    dataRow["TimeColumn"] = new TimeOnly(12, 30, 45);
-                    dtTest.Rows.Add(dataRow);
-
-                    cmd.Parameters.Add(new SqlParameter
-                    {
-                        ParameterName = "@dates",
-                        SqlDbType = SqlDbType.Structured,
-                        TypeName = tableTypeName,
-                        Value = dtTest,
-                    });
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            finally
-            {
-                DataTestUtility.DropStoredProcedure(connection, spName);
-                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
-            }
+            cmd.ExecuteNonQuery();
         }
 
         [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
         {
-            string tableTypeName = "[dbo]." + DataTestUtility.GetLongName("UDTTTestDateOnlySqlDataRecordTVP");
-            string spName = DataTestUtility.GetLongName("spTestDateOnlySqlDataRecordTVP");
-            SqlConnection connection = new(s_connString);
-            try
+            using SqlConnection connection = new(s_connString);
+
+            connection.Open();
+
+            using UserDefinedType udtTableType = new(connection, "UDTTTestDateOnlySqlDataRecordTVP", "TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)");
+            using StoredProcedure storedProcedure = new(connection, "spTestDateOnlySqlDataRecordTVP", $"(@dates {udtTableType.Name} READONLY) AS SELECT COUNT(*) FROM @dates");
+            using SqlCommand cmd = connection.CreateCommand();
+
+            cmd.CommandText = storedProcedure.Name;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlMetaData[] metadata = new SqlMetaData[]
             {
-                connection.Open();
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
-                    cmd.ExecuteNonQuery();
-                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
-                    cmd.ExecuteNonQuery();
-                }
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = spName;
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    new SqlMetaData("DateColumn", SqlDbType.Date),
+                    new SqlMetaData("TimeColumn", SqlDbType.Time)
+            };
 
-                    SqlMetaData[] metadata = new SqlMetaData[]
-                    {
-                        new SqlMetaData("DateColumn", SqlDbType.Date),
-                        new SqlMetaData("TimeColumn", SqlDbType.Time)
-                    };
+            SqlDataRecord record1 = new SqlDataRecord(metadata);
+            record1.SetValues(new DateOnly(2023, 11, 15), new TimeOnly(12, 30, 45));
 
-                    SqlDataRecord record1 = new SqlDataRecord(metadata);
-                    record1.SetValues(new DateOnly(2023, 11, 15), new TimeOnly(12, 30, 45));
+            SqlDataRecord record2 = new SqlDataRecord(metadata);
+            record2.SetValues(new DateOnly(2025, 11, 15), new TimeOnly(13, 31, 46));
 
-                    SqlDataRecord record2 = new SqlDataRecord(metadata);
-                    record2.SetValues(new DateOnly(2025, 11, 15), new TimeOnly(13, 31, 46));
-
-                    IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
+            IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
                     {
                         record1,
                         record2,
                     };
 
-                    cmd.Parameters.Add(new SqlParameter
-                    {
-                        ParameterName = "@dates",
-                        SqlDbType = SqlDbType.Structured,
-                        TypeName = tableTypeName,
-                        Value = featureInserts,
-                    });
-
-                    using var reader = cmd.ExecuteReader();
-
-                    Assert.True(reader.HasRows);
-
-                    int count = 0;
-                    while (reader.Read())
-                    {
-                        Assert.NotNull(reader[0]);
-                        count++;
-                    }
-
-                    Assert.Equal(1, count);
-                }
-            }
-            finally
+            cmd.Parameters.Add(new SqlParameter
             {
-                DataTestUtility.DropStoredProcedure(connection, spName);
-                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+                ParameterName = "@dates",
+                SqlDbType = SqlDbType.Structured,
+                TypeName = udtTableType.Name,
+                Value = featureInserts,
+            });
+
+            using var reader = cmd.ExecuteReader();
+
+            Assert.True(reader.HasRows);
+
+            int count = 0;
+            while (reader.Read())
+            {
+                Assert.NotNull(reader[0]);
+                count++;
             }
+
+            Assert.Equal(1, count);
         }
 #endif
 
@@ -659,45 +632,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
 
-            string tableName = DataTestUtility.GetLongName("TestDecimalParameterBC");
-            string tableTypeName = DataTestUtility.GetLongName("UDTTTestDecimalParameterBC");
-            string spName = DataTestUtility.GetLongName("spTestDecimalParameterBC");
-            using SqlConnection connection = InitialDatabaseUDTT(connectionString, tableName, tableTypeName, spName);
-            try
-            {
-                using (SqlCommand cmd = connection.CreateCommand())
-                {
-                    var p = new SqlParameter("@tvp", SqlDbType.Structured)
-                    {
-                        TypeName = $"dbo.{tableTypeName}"
-                    };
-                    cmd.CommandText = spName;
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.Add(p);
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
 
-                    DataTable table = new(tableName);
-                    table.Columns.Add("Id", typeof(int));
-                    table.Columns.Add("Value", typeof(decimal));
-                    for (int i = 0; i < s_testValues.Length; i++)
-                    {
-                        DataRow newRow = table.NewRow();
-                        newRow["Id"] = i;
-                        newRow["Value"] = s_testValues[i];
-                        table.Rows.Add(newRow);
-                    }
-                    p.Value = table;
-                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
-                    cmd.ExecuteNonQuery();
-                }
-                // TVP always rounds data without attention to the configuration.
-                Assert.True(ValidateInsertedValues(connection, tableName, false && truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
-            }
-            finally
+            using Table decimalTable = new(connection, "TestDecimalParameterBC", "(Id INT, Value Decimal(38, 2))");
+            using UserDefinedType udtDecimal = new(connection, "UDTTTestDecimalParameterBC", "TABLE (Id INT, Value Decimal(38, 2))");
+            using StoredProcedure insertDecimalSp = new(connection, "spTestDecimalParameterBC",
+                $"(@tvp {udtDecimal.Name} READONLY) AS \n INSERT INTO {decimalTable.Name} (Id, Value) SELECT * FROM @tvp ORDER BY Id");
+
+            using (SqlCommand cmd = connection.CreateCommand())
             {
-                DataTestUtility.DropTable(connection, tableName);
-                DataTestUtility.DropStoredProcedure(connection, spName);
-                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+                var p = new SqlParameter("@tvp", SqlDbType.Structured)
+                {
+                    TypeName = udtDecimal.Name
+                };
+                cmd.CommandText = insertDecimalSp.Name;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add(p);
+
+                DataTable table = new(decimalTable.Name);
+                table.Columns.Add("Id", typeof(int));
+                table.Columns.Add("Value", typeof(decimal));
+                for (int i = 0; i < s_testValues.Length; i++)
+                {
+                    DataRow newRow = table.NewRow();
+                    newRow["Id"] = i;
+                    newRow["Value"] = s_testValues[i];
+                    table.Rows.Add(newRow);
+                }
+                p.Value = table;
+                appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
+                cmd.ExecuteNonQuery();
             }
+            // TVP always rounds data without attention to the configuration.
+            Assert.True(ValidateInsertedValues(connection, decimalTable.Name, false && truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
         #region Decimal parameter test setup
@@ -705,22 +673,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly decimal[] s_expectedRoundedValues = new[] { 4210862852.86m, 19.16m, 19.16m, 19.15m };
         private static readonly decimal[] s_expectedTruncatedValues = new[] { 4210862852.86m, 19.15m, 19.15m, 19.15m };
         private const string TruncateDecimalSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal";
-
-        private static SqlConnection InitialDatabaseUDTT(string cnnString, string tableName, string tableTypeName, string spName)
-        {
-            SqlConnection connection = new(cnnString);
-            connection.Open();
-            using (SqlCommand cmd = connection.CreateCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = $"CREATE TABLE {tableName} (Id INT, Value Decimal(38, 2)) \n";
-                cmd.CommandText += $"CREATE TYPE {tableTypeName} AS TABLE (Id INT, Value Decimal(38, 2)) ";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = $"CREATE PROCEDURE {spName} (@tvp {tableTypeName} READONLY) AS \n INSERT INTO {tableName} (Id, Value) SELECT * FROM @tvp ORDER BY Id";
-                cmd.ExecuteNonQuery();
-            }
-            return connection;
-        }
 
         private static SqlConnection InitialDatabaseTable(string cnnString, string tableName)
         {
