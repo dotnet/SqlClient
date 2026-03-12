@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,24 +27,197 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testName = DataTestUtility.CurrentTestName(outputHelper);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void RunAllTestsForSingleServer_NP()
+        public static IEnumerable<object[]> ConnectionStrings
         {
-            // @TODO: Split into separate tests! Or why even bother running this test on non-windows, the error comes from something other than data stream!
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            get
             {
-                DataTestUtility.AssertThrowsWrapper<PlatformNotSupportedException>(() => RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true));
-            }
-            else
-            {
-                RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true);
+                foreach (string connectionString in DataTestUtility.GetConnectionStrings(withEnclave: false))
+                {
+                    yield return new object[] { connectionString };
+                }
             }
         }
-        
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void RunAllTestsForSingleServer_TCP()
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void RowBuffer_ReadsBufferCorrectly(string connectionString)
         {
-            RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
+            RowBuffer(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void InvalidRead_ThrowsInvalidOperationException(string connectionString)
+        {
+            InvalidRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void VariantRead_ReadsVariantDataCorrectly(string connectionString)
+        {
+            VariantRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void TypeRead_ReadsTypedDataCorrectly(string connectionString)
+        {
+            TypeRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void SQLTypeRead_ReadsSqlTypesCorrectly(string connectionString)
+        {
+            SQLTypeRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void GetValueOfTRead_ReadsGenericTypesCorrectly(string connectionString)
+        {
+            GetValueOfTRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void MultipleResults_ReadsMultipleBatchesCorrectly(string connectionString)
+        {
+            MultipleResults(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void NumericRead_ReadsLargeNumericValues(string connectionString)
+        {
+            NumericRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void TimestampRead_ReadsBinaryTimestamp(string connectionString)
+        {
+            TimestampRead(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void OrphanReader_HandlesConnectionCloseCorrectly(string connectionString)
+        {
+            OrphanReader(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void BufferSize_HandlesVariableBufferSizes(string connectionString)
+        {
+            BufferSize(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void ExecuteXmlReader_ReadsXmlDataCorrectly(string connectionString)
+        {
+            ExecuteXmlReaderTest(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void SequentialAccess_ReadsDataSequentially(string connectionString)
+        {
+            SequentialAccess(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void HasRows_ReportsCorrectly(string connectionString)
+        {
+            HasRowsTest(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void CloseConnection_ClosesReaderWithConnection(string connectionString)
+        {
+            CloseConnection(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void OpenConnection_OpensSuccessfully(string connectionString)
+        {
+            OpenConnection(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void SqlCharsBytes_QueriesWithSqlTypes(string connectionString)
+        {
+            SqlCharsBytesTest(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void GetStream_ReturnsStreamCorrectly(string connectionString)
+        {
+            GetStream(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void GetTextReader_ReturnsTextReaderCorrectly(string connectionString)
+        {
+            GetTextReader(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void GetXmlReader_ReturnsXmlReaderCorrectly(string connectionString)
+        {
+            GetXmlReader(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void ReadStream_ReadsStreamDataCorrectly(string connectionString)
+        {
+            ReadStream(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void ReadTextReader_ReadsTextCorrectly(string connectionString)
+        {
+            ReadTextReader(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void StreamingBlobDataTypes_ReadsAllBlobTypes(string connectionString)
+        {
+            StreamingBlobDataTypes(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void OutOfOrderGetChars_ReadsColumnsOutOfOrder(string connectionString)
+        {
+            OutOfOrderGetChars(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
+        [MemberData(nameof(ConnectionStrings))]
+        public void TestXEventsStreaming_StreamsXEventsCorrectly(string connectionString)
+        {
+            TestXEventsStreaming(connectionString);
+        }
+
+        // TimeoutDuringReadAsync only works with TCP (not named pipes) and native SNI
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance), nameof(DataTestUtility.IsUsingNativeSNI))]
+        public static void TimeoutDuringReadAsync_WithClosedReader_TimesOut()
+        {
+            TimeoutDuringReadAsyncWithClosedReaderTest(DataTestUtility.TCPConnectionString);
         }
 
         // Synapse: The statement failed. Column 'foo' has a data type that cannot participate in a columnstore index.
@@ -160,53 +332,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             }
 
             return data;
-        }
-
-        // @TODO: Split into separate tests!
-        private void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
-        {
-            RowBuffer(connectionString);
-            InvalidRead(connectionString);
-            VariantRead(connectionString);
-            TypeRead(connectionString);
-            SQLTypeRead(connectionString);
-            GetValueOfTRead(connectionString);
-            MultipleResults(connectionString);
-            NumericRead(connectionString);
-            TimestampRead(connectionString);
-            OrphanReader(connectionString);
-            BufferSize(connectionString);
-            ExecuteXmlReaderTest(connectionString);
-            SequentialAccess(connectionString);
-            HasRowsTest(connectionString);
-            CloseConnection(connectionString);
-            OpenConnection(connectionString);
-            SqlCharsBytesTest(connectionString);
-            GetStream(connectionString);
-            GetTextReader(connectionString);
-            GetXmlReader(connectionString);
-            ReadStream(connectionString);
-            ReadTextReader(connectionString);
-            StreamingBlobDataTypes(connectionString);
-            OutOfOrderGetChars(connectionString);
-
-            // These tests fail on Azure or Named Instances, so skip them for
-            // those contexts.
-            var dataSource = new SqlConnectionStringBuilder(connectionString).DataSource;
-            if (!Utils.IsAzureSqlServer(dataSource)
-                && !dataSource.Contains(@"\"))
-            {
-                TestXEventsStreaming(connectionString);
-
-                // These tests also fail with named pipes, since they try to do
-                // DNS lookups on named pipe paths.
-                //
-                // They also are only meant to run for native SNI.
-                if (!usingNamePipes && DataTestUtility.IsUsingNativeSNI())
-                {
-                    TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
-                }
-            }
         }
 
         private static void MultipleResults(string connectionString)
@@ -572,27 +697,35 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 conn.Open();
                 using (SqlCommand cmdDefault = new SqlCommand("", conn))
                 {
-                    cmdDefault.CommandText = "create table " + tempTable + "(c1 int, c2 timestamp)";
-                    cmdDefault.ExecuteNonQuery();
-
-                    cmdDefault.CommandText = "insert into " + tempTable + "(c1) values (1)";
-                    cmdDefault.ExecuteNonQuery();
-
-                    cmdDefault.CommandText = "select * from " + tempTable;
-                    using (SqlDataReader reader = cmdDefault.ExecuteReader())
+                    try
                     {
-                        DataTestUtility.AssertEqualsWithDescription("timestamp", reader.GetDataTypeName(1), "FAILED: Data value did not have correct type");
-                        reader.Read();
+                        cmdDefault.CommandText = "create table " + tempTable + "(c1 int, c2 timestamp)";
+                        cmdDefault.ExecuteNonQuery();
 
-                        object o = reader[1];
+                        cmdDefault.CommandText = "insert into " + tempTable + "(c1) values (1)";
+                        cmdDefault.ExecuteNonQuery();
 
-                        // timestamps are really 8-byte binary
-                        byte[] b = (byte[])o;
-                        DataTestUtility.AssertEqualsWithDescription(8, b.Length, "FAILED: Retrieved byte array had incorrect length");
+                        cmdDefault.CommandText = "select * from " + tempTable;
+                        using (SqlDataReader reader = cmdDefault.ExecuteReader())
+                        {
+                            DataTestUtility.AssertEqualsWithDescription("timestamp", reader.GetDataTypeName(1), "FAILED: Data value did not have correct type");
+                            reader.Read();
 
-                        SqlBinary sqlBin = reader.GetSqlBinary(1);
-                        b = sqlBin.Value;
-                        DataTestUtility.AssertEqualsWithDescription(8, b.Length, "FAILED: Retrieved SqlBinary value had incorrect length");
+                            object o = reader[1];
+
+                            // timestamps are really 8-byte binary
+                            byte[] b = (byte[])o;
+                            DataTestUtility.AssertEqualsWithDescription(8, b.Length, "FAILED: Retrieved byte array had incorrect length");
+
+                            SqlBinary sqlBin = reader.GetSqlBinary(1);
+                            b = sqlBin.Value;
+                            DataTestUtility.AssertEqualsWithDescription(8, b.Length, "FAILED: Retrieved SqlBinary value had incorrect length");
+                        }
+                    }
+                    finally
+                    {
+                        cmdDefault.CommandText = "DROP TABLE " + tempTable;
+                        cmdDefault.ExecuteNonQuery();
                     }
                 }
             }
