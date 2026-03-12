@@ -116,14 +116,12 @@ jobs:
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
       # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
-      - ${{ each targetFramework in parameters.targetFrameworks }}:
-          - template: /eng/pipelines/onebranch/steps/compound-extract-mds-apiscan-files-step.yml@self # @TODO:
-            parameters:
-              buildConfiguration: '${{ parameters.buildConfiguration }}'
-              dllPath: '${{ parameters.apiScanDllPath }}'
-              pdbPath: '${{ parameters.apiScanPdb }}'
-              referenceType: Package
-              targetFramework: '${{ targetFramework }}'
+      - template: /eng/pipelines/onebranch/steps/compound-extract-mds-apiscan-files-step.yml@self
+        parameters:
+          buildConfiguration: '${{ parameters.buildConfiguration }}'
+          dllPath: '${{ parameters.apiScanDllPath }}'
+          pdbPath: '${{ parameters.apiScanPdb }}'
+          referenceType: Package
 
       # Sign the DLLs
       - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self

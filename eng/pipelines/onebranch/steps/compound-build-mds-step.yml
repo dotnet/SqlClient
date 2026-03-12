@@ -35,7 +35,7 @@ steps:
   - task: MSBuild@1
     displayName: 'Build2.proj - BuildMds'
     inputs:
-      solution: '$(REPO_ROOT)/build.proj'
+      solution: '$(REPO_ROOT)/build2.proj'
       configuration: '${{ parameters.buildConfiguration }}'
       msbuildArguments: >-
         -t:BuildMds

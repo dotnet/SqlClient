@@ -406,6 +406,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{45B9E5C3
 		..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml
 		..\eng\pipelines\onebranch\steps\compound-build-mds-step.yml = ..\eng\pipelines\onebranch\steps\compound-build-mds-step.yml
 		..\eng\pipelines\onebranch\steps\roslyn-analyzers-mds-step.yml = ..\eng\pipelines\onebranch\steps\roslyn-analyzers-mds-step.yml
+		..\eng\pipelines\onebranch\steps\compound-extract-mds-apiscan-files-step.yml = ..\eng\pipelines\onebranch\steps\compound-extract-mds-apiscan-files-step.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{E849E6FB-1AB0-4922-A060-0062EA669FD0}"
