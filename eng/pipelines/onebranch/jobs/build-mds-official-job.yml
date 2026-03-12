@@ -135,7 +135,7 @@ jobs:
           pattern: 'Microsoft.Data.SqlClient*.dll'
 
       # Package the build output into a NuGet package
-      - template: /eng/pipelines/onebranch/steps/compound-pack-mds-step.yml # @TODO:
+      - template: /eng/pipelines/onebranch/steps/compound-pack-mds-step.yml
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           buildConfiguration: '${{ parameters.buildConfiguration }}'
