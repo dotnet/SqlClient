@@ -84,8 +84,9 @@ if (!(Test-Path $exe)) {
 }
 
 # Find .nupkg files to verify.
-$packages = Get-ChildItem -Path $PackagePath -Filter *.nupkg -Recurse |
-    Where-Object { $_.Extension -eq '.nupkg' }
+# Wrap in @() to ensure $packages is always an array, so .Count is accurate for 0, 1, or N results.
+$packages = @(Get-ChildItem -Path $PackagePath -Filter *.nupkg -Recurse |
+    Where-Object { $_.Extension -eq '.nupkg' })
 
 if ($packages.Count -eq 0) {
     Write-Host "No .nupkg files found matching '$PackagePath'. Skipping verification."
