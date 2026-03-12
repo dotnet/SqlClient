@@ -9,13 +9,13 @@ This document provides Copilot with the knowledge and process to perform automat
 
 ## Investigation Workflow
 
-When a new issue arrives, the full automated pipeline should be:
+When a new issue arrives, the fully automated pipeline runs end-to-end:
 
-1. **Environment Validation** → Check that all required details are provided (use `validate-environment-details` prompt)
-2. **Triage Classification** → Categorize, label, and set project fields (use `triage-issue` prompt)
-3. **Deep Investigation** → Regression check, code analysis, initial findings (use `investigate-issue` prompt)
+1. **Environment Validation** → Check that all required details are provided (GitHub Actions regex check + Copilot `validate-environment-details` prompt)
+2. **Triage Classification** → Auto-label by area, check for duplicates (GitHub Actions)
+3. **Deep Investigation** → Regression check, code analysis, initial findings (Copilot agent runs `investigate-issue` prompt automatically)
 
-Steps 1-2 can run in parallel. Step 3 should run after 1-2 have completed to incorporate their findings.
+All three stages trigger automatically when an issue is opened — no human intervention required. The workflow `issue-auto-triage.yml` orchestrates the full pipeline: Jobs 1-3 (env check, labeling, duplicate search) run in parallel, then Job 4 (Copilot investigation) runs after they complete.
 
 ## Environment Detail Requirements
 
@@ -138,9 +138,11 @@ This investigation process integrates with:
 
 ## Automated Workflow Trigger
 
-The GitHub Actions workflow `issue-auto-triage.yml` automatically:
-1. Validates environment details on every new issue
-2. Applies area labels based on content analysis
-3. Checks for potential duplicate issues
+The GitHub Actions workflow `issue-auto-triage.yml` automatically runs on every new issue with 4 jobs:
 
-The Copilot prompts (`investigate-issue`, `validate-environment-details`, `triage-issue`) can then be run manually or via Copilot agent to perform deeper analysis.
+1. **validate-environment-details** (parallel) — Regex-based check for required fields, posts comment if missing
+2. **initial-area-labeling** (parallel) — Keyword-based area label assignment
+3. **duplicate-check** (parallel) — Searches for similar existing issues
+4. **copilot-investigate** (after 1-3 complete) — Triggers the Copilot Coding Agent to run the `investigate-issue` prompt, which performs regression analysis, code investigation, and posts structured findings
+
+The prompts (`investigate-issue`, `validate-environment-details`, `triage-issue`) can also be invoked manually via `@copilot /prompt-name <issue number>` for re-investigation or follow-up analysis.
