@@ -8,6 +8,9 @@
 
     <PropertyGroup>
 
+      <!-- If an AssemblyFileVersion was provided, use that. Otherwise, use the AssemblyVersion -->
+      <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' != ''">$(AssemblyVersion)</AssemblyFileVersion>
+
       <!-- Put the ThisAssembly class in the System namespace by default. -->
       <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">System</ThisAssemblyNamespace>
 
@@ -19,7 +22,7 @@ namespace $(ThisAssemblyNamespace)
 {
     internal static class ThisAssembly
     {
-        internal const string InformationalVersion = "$(AssemblyVersion)"%3B
+        internal const string InformationalVersion = "$(AssemblyFileVersion)"%3B
         internal const string NuGetPackageVersion = "$(Version)"%3B
     }
 }

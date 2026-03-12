@@ -175,10 +175,10 @@
       Allowed value:  (true|false)
     -->
     <TestCodeCoverage Condition="'$(TestCodeCoverage)' == ''">true</TestCodeCoverage>
-    <TestCodeCoverage Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
+    <TestCodeCoverageArgument Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
       --collect "Code coverage"
       --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
-    </TestCodeCoverage>
+    </TestCodeCoverageArgument>
 
     <!--
       TestFilters
@@ -432,7 +432,7 @@
         "$(DotnetPath)dotnet" test "$(MdsFunctionalTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
-        $(TestCollectArgument)
+        $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
         --results-directory "$(TestResultsFolderPath)"
@@ -462,7 +462,7 @@
         "$(DotnetPath)dotnet" test "$(MdsManualTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
-        $(TestCollectArgument)
+        $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
         $(TestSetArgument)
@@ -496,7 +496,7 @@
         "$(DotnetPath)dotnet" test "$(MdsUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
-        $(TestCollectArgument)
+        $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
         --results-directory "$(TestResultsFolderPath)"
