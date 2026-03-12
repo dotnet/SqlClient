@@ -78,11 +78,6 @@ parameters:
     type: string
     default: $(ci_var_defaultPoolName)
 
-  # True to add a Stress Test stage to the pipeline.
-  - name: enableStressTests
-    type: boolean
-    default: false
-
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
     type: number
@@ -201,19 +196,6 @@ stages:
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
 
-  # Run the stress tests, if desired.
-  - ${{ if eq(parameters.enableStressTests, true) }}:
-      - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          additionalDependsOn:
-            - build_sqlclient_package_stage
-            - build_azure_package_stage
-          mdsArtifactsName: $(mdsArtifactsName)
-          mdsPackageVersion: $(mdsPackageVersion)
-          azurePackageVersion: $(azurePackageVersion)
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
@@ -248,6 +230,14 @@ stages:
         - ${{if eq(parameters.debug, true)}}:
             - pwsh: "Get-ChildItem env: | Sort-Object Name"
               displayName: "[Debug] List Environment Variables"
+
+  - template: common/templates/stages/ci-run-tests-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      testJobTimeout: ${{ parameters.testJobTimeout }}
+      ${{ if eq(parameters.buildType, 'Package') }}:
+        dependsOn: build_nugets
 
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:
