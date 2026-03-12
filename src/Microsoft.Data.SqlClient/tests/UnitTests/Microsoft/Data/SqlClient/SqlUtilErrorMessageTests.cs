@@ -29,13 +29,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("ActiveDirectoryMSI")]
         [InlineData("ActiveDirectoryDefault")]
         [InlineData("ActiveDirectoryWorkloadIdentity")]
-        public void CannotFindActiveDirectoryAuthProvider_ContainsInstallInstructions(string authMethod)
+        public void CannotFindActiveDirectoryAuthProvider_ContainsPackageGuidance(string authMethod)
         {
             Exception exception = global::Microsoft.Data.SqlClient.SQL.CannotFindActiveDirectoryAuthProvider(authMethod);
 
             Assert.IsType<ArgumentException>(exception);
             Assert.Contains(authMethod, exception.Message);
-            Assert.Contains("Install-Package Microsoft.Data.SqlClient.Extensions.Azure", exception.Message);
+            Assert.Contains("Microsoft.Data.SqlClient.Extensions.Azure", exception.Message);
         }
     }
 }

@@ -22,8 +22,10 @@
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
         <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing"
+  mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework
+  object]</value>
         <comment>This is a comment</comment>
     </data>
 
@@ -59,7 +61,8 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
@@ -112,10 +115,12 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ADP_Ascending" xml:space="preserve">
     <value>Ascending</value>
@@ -2584,7 +2589,7 @@
     <value>Cannot find an authentication provider for '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. The 'Microsoft.Data.SqlClient.Extensions.Azure' package provides default implementations for Active Directory authentication methods. Install it via NuGet: Install-Package Microsoft.Data.SqlClient.Extensions.Azure.</value>
+    <value>Cannot find an authentication provider for '{0}'. The 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package provides default implementations for Active Directory (Entra ID) authentication methods.</value>
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Failed to read the config section for authentication providers.</value>
@@ -4254,7 +4259,8 @@
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
     <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
   </data>
-  <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
+  <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage"
+    xml:space="preserve">
     <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
