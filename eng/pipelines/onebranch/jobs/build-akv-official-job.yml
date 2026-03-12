@@ -104,7 +104,7 @@ jobs:
           # Download SqlClient (MDS), Abstractions, and Logging packages from previous
           # stages into packages/ so that they're available via the local NuGet feed
           # when restoring.  AKV Provider depends on SqlClient, which transitively
-          # requires Extensions.Abstractions and Extensions.Logging.
+          # requires Extensions.Abstractions and Internal.Logging.
           - task: DownloadPipelineArtifact@2
             displayName: Download SqlClient Package
             inputs:

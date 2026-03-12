@@ -19,6 +19,7 @@ using Microsoft.Data.SqlClient.ConnectionPool;
 
 #if NET
 using System.Runtime.Loader;
+using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlClient

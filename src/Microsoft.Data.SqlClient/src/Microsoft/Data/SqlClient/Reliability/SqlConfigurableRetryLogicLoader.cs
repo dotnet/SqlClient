@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Loader;
+using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlClient

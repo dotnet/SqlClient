@@ -5,6 +5,7 @@
 using System;
 using Microsoft.Extensions.Caching.Memory;
 using static System.Math;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {

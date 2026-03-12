@@ -8,6 +8,7 @@ using System.Threading;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {

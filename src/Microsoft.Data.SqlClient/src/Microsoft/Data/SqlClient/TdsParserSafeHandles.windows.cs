@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient.LocalDb;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlClient

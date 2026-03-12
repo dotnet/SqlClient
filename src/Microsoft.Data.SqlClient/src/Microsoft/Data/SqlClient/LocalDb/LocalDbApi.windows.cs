@@ -16,6 +16,7 @@ using Interop.Windows.Sni;
 #if NETFRAMEWORK
 using System.Collections.Generic;
 using System.Configuration;
+using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlClient.LocalDb

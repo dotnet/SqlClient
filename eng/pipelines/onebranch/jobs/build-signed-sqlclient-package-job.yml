@@ -42,7 +42,7 @@ jobs:
 
   # Download the Abstractions and Logging packages from the previous stage into
   # packages/ so that they're available via the local NuGet feed when restoring MDS.
-  # MDS depends on both Extensions.Abstractions and Extensions.Logging.
+  # MDS depends on both Extensions.Abstractions and Internal.Logging.
   - task: DownloadPipelineArtifact@2
     displayName: Download Abstractions Package
     inputs:

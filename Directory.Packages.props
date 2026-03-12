@@ -23,7 +23,7 @@
   -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
-      Include="Microsoft.Data.SqlClient.Extensions.Logging"
+      Include="Microsoft.Data.SqlClient.Internal.Logging"
       Version="$(LoggingPackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"

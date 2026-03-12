@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 

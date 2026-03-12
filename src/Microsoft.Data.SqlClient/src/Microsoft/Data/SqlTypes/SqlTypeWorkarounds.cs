@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient;
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlTypes

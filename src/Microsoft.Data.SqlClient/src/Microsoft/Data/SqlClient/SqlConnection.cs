@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Internal;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
