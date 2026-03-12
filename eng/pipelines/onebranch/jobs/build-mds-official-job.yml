@@ -7,25 +7,10 @@
 # Job that performs a build of Microsoft.Data.SqlClient using the build2.proj file.
 
 parameters:
-  - name: abstractionsPackageVersion
-    type: string
-
   - name: apiScanDllPath
     type: string
 
   - name: apiScanPdbPath
-    type: string
-
-  - name: appRegistrationClientId
-    type: string
-
-  - name: appRegistrationTenantId
-    type: string
-
-  - name: authAkvName
-    type: string
-
-  - name: authSignCertName
     type: string
 
   - name: buildConfiguration
@@ -34,20 +19,26 @@ parameters:
       - Debug
       - Release
 
-  - name: esrpClientId
-    type: string
-
-  - name: esrpConnectedServiceName
-    type: string
-
-  - name: loggingPackageVersion
-    type: string
-
-  - name: mdsPackageVersion
-    type: string
-
   - name: publishSymbols
     type: boolean
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingErpConnectedServiceName
+    type: string
 
   - name: symbolsAzureSubscription
     type: string
@@ -64,8 +55,18 @@ parameters:
   - name: symbolsUploadAccount
     type: string
 
+  # Package Version Parameters
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: mdsPackageVersion
+    type: string
+
 jobs:
-  - job: builsSignedMdsPackage
+  - job: buildSignedMdsPackage
     displayName: 'Build Microsoft.Data.SqlClient'
     pool:
       type: windows
@@ -126,12 +127,12 @@ jobs:
       # Sign the DLLs
       - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
         parameters:
-          appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-          appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-          authAkvName: '${{ parameters.authAkvName }}'
-          authSignCertName: '${{ parameters.authSignCertName }}'
-          esrpClientId: '${{ parameters.esrpClientId }}'
-          esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+          appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+          authAkvName: '${{ parameters.signingAuthAkvName }}'
+          authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+          esrpClientId: '${{ parameters.signingEsrpClientId }}'
+          esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
           pattern: 'Microsoft.Data.SqlClient*.dll'
 
       # Package the build output into a NuGet package
@@ -146,12 +147,12 @@ jobs:
       # Sign the NuGet packages
       - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
         parameters:
-          appRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-          appRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-          authAkvName: '${{ parameters.authAkvName }}'
-          authSignCertName: '${{ parameters.authSignCertName }}'
-          esrpClientId: '${{ parameters.esrpClientId }}'
-          esrpConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+          appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+          appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+          authAkvName: '${{ parameters.signingAuthAkvName }}'
+          authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+          esrpClientId: '${{ parameters.signingEsrpClientId }}'
+          esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
       - ${{ if parameters.publishSymbols }}:
           - template: /eng/pipelines/onebranch/steps/compound-publish-symbols-step.yml@self
