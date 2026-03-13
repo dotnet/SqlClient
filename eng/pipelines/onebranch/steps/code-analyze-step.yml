@@ -4,7 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template defines a step to run Roslyn Analyzers on the MDS project build.
+# This template defines a step to run Roslyn Analyzers against builds driven by
+# build.proj. It is used for both the full Microsoft.Data.SqlClient (MDS) build
+# and for individual extension packages; callers control the analyzed targets
+# via the msBuildArguments parameter.
 # It uses the RoslynAnalyzers@3 task from the Secure Development Team's SDL
 # extension:
 #
