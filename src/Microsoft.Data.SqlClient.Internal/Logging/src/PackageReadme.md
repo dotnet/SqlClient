@@ -1,7 +1,13 @@
-# Microsoft.Data.SqlClient.Extensions.Logging
+# Microsoft.Data.SqlClient.Internal.Logging
 
-[![NuGet](https://img.shields.io/nuget/v/Microsoft.Data.SqlClient.Extensions.Logging.svg?style=flat-square)](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Logging)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient.Extensions.Logging?style=flat-square)](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Logging)
+[![NuGet](https://img.shields.io/nuget/v/Microsoft.Data.SqlClient.Internal.Logging.svg?style=flat-square)](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Internal.Logging)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient.Internal.Logging?style=flat-square)](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Internal.Logging)
+
+> **⚠️ Internal Package — Do Not Reference Directly**
+>
+> This package is intended for **internal use by the SqlClient suite of packages only**.
+> It is not designed for direct consumption by application code and may undergo breaking changes
+> without notice.
 
 ## Description
 
@@ -25,13 +31,13 @@ This package supports:
 Install the package via NuGet:
 
 ```bash
-dotnet add package Microsoft.Data.SqlClient.Extensions.Logging
+dotnet add package Microsoft.Data.SqlClient.Internal.Logging
 ```
 
 Or via the Package Manager Console:
 
 ```powershell
-Install-Package Microsoft.Data.SqlClient.Extensions.Logging
+Install-Package Microsoft.Data.SqlClient.Internal.Logging
 ```
 
 ## Getting Started

@@ -9,7 +9,7 @@ The following SqlClient packages are used, either directly or transitively:
 
 - `Microsoft.Data.SqlClient`
 - `Microsoft.SqlServer.Server`
-- `Microsoft.Data.SqlClient.Extensions.Logging`
+- `Microsoft.Data.SqlClient.Internal.Logging`
 - `Microsoft.Data.SqlClient.Extensions.Abstractions`
 - `Microsoft.Data.SqlClient.Extensions.Azure`
 - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`

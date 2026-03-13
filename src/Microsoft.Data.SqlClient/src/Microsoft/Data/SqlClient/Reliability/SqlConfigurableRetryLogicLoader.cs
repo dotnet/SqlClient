@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NET
 using System.Diagnostics.CodeAnalysis;

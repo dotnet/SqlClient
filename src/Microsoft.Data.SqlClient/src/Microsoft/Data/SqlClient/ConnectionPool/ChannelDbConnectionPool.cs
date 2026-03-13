@@ -15,6 +15,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 

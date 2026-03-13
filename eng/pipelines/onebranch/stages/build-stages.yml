@@ -63,7 +63,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
             packageName: Logging
-            packageFullName: Microsoft.Data.SqlClient.Extensions.Logging
+            packageFullName: Microsoft.Data.SqlClient.Internal.Logging
             packageVersion: $(effectiveLoggingVersion)
             versionProperties: >-
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
@@ -98,7 +98,7 @@ stages:
   # ====================================================================
   # Stage 2: Abstractions package (depends on Logging from Stage 1)
   # Abstractions must build after Logging since it has a package
-  # dependency on Extensions.Logging.
+  # dependency on Internal.Logging.
   # ====================================================================
   - ${{ if eq(parameters.buildSqlClient, true) }}:
     - stage: build_abstractions

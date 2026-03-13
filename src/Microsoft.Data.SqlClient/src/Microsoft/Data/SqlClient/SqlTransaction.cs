@@ -11,6 +11,7 @@ using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
+using Microsoft.Data.SqlClient.Internal;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
