@@ -1419,6 +1419,7 @@ namespace Microsoft.Data.SqlClient
                         if (cts != null)
                         {
                             cts.Cancel();
+                            cts.Dispose();
                         }
                         AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
                         if (State != ConnectionState.Open)
@@ -1660,6 +1661,7 @@ namespace Microsoft.Data.SqlClient
 
         private async Task ReconnectAsync(int timeout)
         {
+            CancellationTokenSource cts = new CancellationTokenSource();
             try
             {
                 long commandTimeoutExpiration = 0;
@@ -1667,7 +1669,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     commandTimeoutExpiration = ADP.TimerCurrent() + ADP.TimerFromSeconds(timeout);
                 }
-                CancellationTokenSource cts = new CancellationTokenSource();
                 _reconnectionCancellationSource = cts;
                 CancellationToken ctoken = cts.Token;
                 int retryCount = _connectRetryCount; // take a snapshot: could be changed by modifying the connection string
@@ -1728,6 +1729,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+                _reconnectionCancellationSource = null;
+                cts.Dispose();
                 _recoverySessionData = null;
                 _suppressStateChangeForReconnection = false;
             }

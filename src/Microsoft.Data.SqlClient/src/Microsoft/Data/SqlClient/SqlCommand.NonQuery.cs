@@ -879,11 +879,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (completion.Task.IsCompleted)
                     {
+                        timeoutCts.Dispose();
                         return;
                     }
-                    
+
                     Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
                     timeoutCts.Cancel();
+                    timeoutCts.Dispose();
 
                     Task subTask = RunExecuteNonQueryTds(
                         methodName,
@@ -903,7 +905,9 @@ namespace Microsoft.Data.SqlClient
                             state: completion,
                             onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
                     }
-                });
+                },
+                onFailure: _ => timeoutCts.Dispose(),
+                onCancellation: () => timeoutCts.Dispose());
         }
         
         #endregion
