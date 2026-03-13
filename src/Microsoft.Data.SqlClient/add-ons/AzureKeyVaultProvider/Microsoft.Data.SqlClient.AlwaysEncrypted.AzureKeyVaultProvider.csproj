@@ -32,8 +32,10 @@
 
   <!-- Build Output Config -->
   <PropertyGroup>
-    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+    <!-- Use a shorter directory name to avoid exceeding the Windows MAX_PATH (260 char) limit.
+         The full AssemblyName is 63 chars and appears in both the directory and generated filenames. -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/AzureKeyVaultProvider</IntermediateOutputPath>
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/AzureKeyVaultProvider</OutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
