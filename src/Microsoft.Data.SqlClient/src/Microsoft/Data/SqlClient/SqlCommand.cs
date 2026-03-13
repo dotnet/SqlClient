@@ -1349,7 +1349,7 @@ namespace Microsoft.Data.SqlClient
                 useManagedDataType = false;
             }
 
-            SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
+            using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
             {
                 CommandType = CommandType.StoredProcedure
             };
