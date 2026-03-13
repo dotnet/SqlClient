@@ -13,12 +13,6 @@ parameters:
   - name: apiScanPdbPath
     type: string
 
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
   - name: publishSymbols
     type: boolean
 
@@ -104,7 +98,6 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/rsolyn-analyzers-mds-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
-          buildConfiguration: '${{ parameters.buildConfiguration }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVerison }}'
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
@@ -112,14 +105,12 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/compound-build-mds-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
-          buildConfiguration: '${{ parameters.buildConfiguration }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVerison }}'
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
       # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
       - template: /eng/pipelines/onebranch/steps/compound-extract-mds-apiscan-files-step.yml@self
         parameters:
-          buildConfiguration: '${{ parameters.buildConfiguration }}'
           dllPath: '${{ parameters.apiScanDllPath }}'
           pdbPath: '${{ parameters.apiScanPdb }}'
           referenceType: Package
@@ -139,7 +130,6 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/compound-pack-mds-step.yml
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
-          buildConfiguration: '${{ parameters.buildConfiguration }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
           referenceType: 'Package'

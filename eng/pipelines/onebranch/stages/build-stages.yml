@@ -194,7 +194,6 @@ stages:
           parameters:
             apiScanDllPath: '${{ parameters.apiScanDllPath }}'
             apiScanPdbPath: '${{ parameters.apiScanPdbPath }}'
-            buildConfiguration: '${{ parameters.buildConfiguration }}'
             publishSymbols: '${{ parameters.publishSymbols }}'
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
             signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'

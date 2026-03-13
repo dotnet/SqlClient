@@ -38,7 +38,7 @@ steps:
         msbuild
         $(REPO_ROOT)/build2.proj
         -t:BuildMds
-        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:Configuration=Release
         -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
         -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
         -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
