@@ -183,7 +183,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              artifactName: drop_build_addons_buildSignedAkvPackage
+              artifactName: drop_build_addons_build_package_AkvProvider
               packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}

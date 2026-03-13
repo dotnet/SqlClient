@@ -34,9 +34,6 @@
   <!-- Azure Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
 
-  <!-- AKV Package Properties -->
-  <PropertyGroup>
-    <AkvVersionDefault>7.0.0</AkvVersionDefault>
-    <AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvVersionDefault).$(BuildNumber)-dev</AkvPackageVersion>
-  </PropertyGroup>
+  <!-- AKV Provider Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider\AkvProviderVersions.props" />
 </Project>

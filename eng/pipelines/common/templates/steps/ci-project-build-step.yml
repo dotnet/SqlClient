@@ -42,7 +42,7 @@ parameters:
     default: MDS
     values:
       - MDS
-      - AKV
+      - AkvProvider
       - all
       - allNoDocs
 
@@ -60,15 +60,21 @@ parameters:
     type: string
     default: $(loggingPackageVersion)
 
-  # Necessary to build AKV when referenceType is Package.  Ignored when referenceType is Project.
+  # Necessary to build AKV Provider when referenceType is Package.  Ignored when referenceType is Project.
   - name: mdsPackageVersion
     type: string
     default: $(mdsPackageVersion)
 
+  # Necessary to build AKV Provider when referenceType is Package.  Ignored when referenceType is Project.
+  - name: akvPackageVersion
+    type: string
+    default: $(akvPackageVersion)
+
 steps:
-  - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
+  # Build MDS
+  - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
-      displayName: 'Build Driver [Win]'
+      displayName: 'Build Driver'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
         solution: build2.proj
@@ -83,9 +89,10 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
 
-  - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
-    - task: MSBuild@1
-      displayName: 'Build AKV Provider NetFx [Win]'
+  # Build AKV Provider
+  - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
+      - task: MSBuild@1
+      displayName: 'Build AKV Provider'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
         solution: build.proj
@@ -93,25 +100,18 @@ steps:
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
-          -t:BuildAKVNetFx
+          -t:BuildAkvProvider
           -p:ReferenceType=${{ parameters.referenceType }}
+          -p:TestEnabled=true
           -p:GenerateNuget=false
+          -p:GenerateDocumentationFile=false
+          -p:Configuration=${{ parameters.buildConfiguration }}
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
+          -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
 
-    - task: MSBuild@1
-      displayName: 'Build AKV Provider NetCore All OS [Win]'
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-      inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments: >-
-          -t:BuildAKVNetCoreAllOS
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:GenerateNuget=false
-          -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}

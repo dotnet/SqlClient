@@ -1,7 +1,14 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <!--
+      Do NOT enable CentralPackageTransitivePinningEnabled. This repository
+      produces NuGet library packages (not applications). Transitive pinning
+      promotes every pinned transitive dependency into a direct NuGet
+      dependency in the generated .nuspec, polluting consumers' dependency
+      graphs with packages they never asked for.
+    -->
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <!-- ===================================================================== -->
@@ -45,14 +52,12 @@
   <ItemGroup>
     <PackageVersion Include="Azure.Core" Version="1.49.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageVersion Include="Microsoft.DotNet.PlatformAbstractions" Version="3.1.6" />
     <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="11.0.0-beta.25476.3" />
     <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="11.0.0-beta.25476.3" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.78.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
-    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="System.Data.Odbc" Version="9.0.9" />
     <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />

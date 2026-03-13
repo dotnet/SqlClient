@@ -19,6 +19,13 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
+  # The name of the Logging pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
   # The Abstractions package verion to depend on.
   #
   # This is used when the referenceType is 'Package'.
@@ -185,6 +192,13 @@ jobs:
           displayName: Download Abstractions Package Artifacts
           inputs:
             artifactName: ${{ parameters.abstractionsArtifactsName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+        # Download the Logging package artifacts into packages/.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Logging Package Artifacts
+          inputs:
+            artifactName: ${{ parameters.loggingArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
 
         # Download the MDS package artifacts into packages/.
