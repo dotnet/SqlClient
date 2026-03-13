@@ -36,8 +36,8 @@ steps:
     inputs:
       msBuildVersion: 17.0
       msBuildArchitecture: x64
-      setupCommandlinePicker: vs2022
-      msBuildCommandline: >-
+      setupCommandLinePicker: vs2022
+      msBuildCommandLine: >-
         msbuild
         ${{parameters.sourceRoot}}\build.proj
         ${{parameters.msBuildArguments}}
