@@ -251,11 +251,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 // For each decrement, subtract from count, and delete if we reach 0.
                 lock (_appDomainKeyHash)
                 {
-                    if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                    if (_appDomainKeyHash.TryGetValue(appDomainKey, out int value))
                     {
                         // Do nothing if AppDomain did not call Start!
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer.AppDomainUnload|DEP> _appDomainKeyHash contained AppDomainKey: '{0}'.", appDomainKey);
-                        int value = _appDomainKeyHash[appDomainKey];
                         SqlClientEventSource.Log.TryNotificationTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP> _appDomainKeyHash for AppDomainKey: '{0}' count: '{1}'.", appDomainKey, value);
                         Debug.Assert(value > 0, "Why is value 0 or less?");
 
@@ -271,9 +270,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         Debug.Assert(0 == value, "We did not reach 0 at end of loop in AppDomainUnload!");
                         Debug.Assert(!_appDomainKeyHash.ContainsKey(appDomainKey), "Key not removed after AppDomainUnload!");
 
-                        if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                        if (_appDomainKeyHash.TryGetValue(appDomainKey, out int remainingCount))
                         {
-                            SqlClientEventSource.Log.TryNotificationTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP|ERR> ERROR - after the Stop() loop, _appDomainKeyHash for AppDomainKey: '{0}' entry not removed from hash.  Count: {1}'", appDomainKey, _appDomainKeyHash[appDomainKey]);
+                            SqlClientEventSource.Log.TryNotificationTraceEvent("SqlConnectionContainer.AppDomainUnload|DEP|ERR> ERROR - after the Stop() loop, _appDomainKeyHash for AppDomainKey: '{0}' entry not removed from hash.  Count: {1}'", appDomainKey, remainingCount);
                         }
                     }
                     else
@@ -509,10 +508,11 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 // For each increment, add to count, and create entry if not present.
                 lock (_appDomainKeyHash)
                 {
-                    if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                    if (_appDomainKeyHash.TryGetValue(appDomainKey, out int count))
                     {
-                        _appDomainKeyHash[appDomainKey] = _appDomainKeyHash[appDomainKey] + 1;
-                        SqlClientEventSource.Log.TryNotificationTraceEvent("SqlConnectionContainer.IncrementStartCount|DEP> _appDomainKeyHash contained AppDomainKey: '{0}', incremented count: '{1}'.", appDomainKey, _appDomainKeyHash[appDomainKey]);
+                        count++;
+                        _appDomainKeyHash[appDomainKey] = count;
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("SqlConnectionContainer.IncrementStartCount|DEP> _appDomainKeyHash contained AppDomainKey: '{0}', incremented count: '{1}'.", appDomainKey, count);
                     }
                     else
                     {
@@ -1617,7 +1617,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             {
                 if (!_sqlDependencyPerAppDomainDispatchers.ContainsKey(appDomainKey))
                 {
-                    _sqlDependencyPerAppDomainDispatchers[appDomainKey] = dispatcher;
+                    _sqlDependencyPerAppDomainDispatchers.Add(appDomainKey, dispatcher);
                 }
             }
 
@@ -1636,7 +1636,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             SqlConnectionContainer container = null;
             lock (_connectionContainers)
             {
-                if (!_connectionContainers.ContainsKey(hashHelper))
+                if (!_connectionContainers.TryGetValue(hashHelper, out container))
                 {
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}, hashtable miss, creating new container.", ObjectID);
                     container = new SqlConnectionContainer(hashHelper, appDomainKey, useDefaults);
@@ -1646,7 +1646,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 }
                 else
                 {
-                    container = _connectionContainers[hashHelper];
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> {0}, hashtable hit, container: {1}", ObjectID, container.ObjectID);
                     if (container.InErrorState)
                     {
@@ -1712,9 +1711,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
             lock (_connectionContainers)
             {
-                if (_connectionContainers.ContainsKey(hashHelper))
+                if (_connectionContainers.TryGetValue(hashHelper, out SqlConnectionContainer container))
                 {
-                    SqlConnectionContainer container = _connectionContainers[hashHelper];
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> {0}, hashtable hit, container: {1}", ObjectID, container.ObjectID);
                     server = container.Server;   // Return server, database, and queue info for use by calling SqlDependency.
                     database = container.Database;
