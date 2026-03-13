@@ -19,6 +19,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -2732,7 +2733,7 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlAuthenticationProvider? authProvider = SqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
-                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
+                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication);
             }
 
             // We will perform retries if the provider indicates an error that

@@ -4,7 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template defines a step to run Roslyn Analyzers on the MDS project build.
+# This template defines a step to run Roslyn Analyzers against builds driven by
+# build.proj. It is used for both the full Microsoft.Data.SqlClient (MDS) build
+# and for individual extension packages; callers control the analyzed targets
+# via the msBuildArguments parameter.
 # It uses the RoslynAnalyzers@3 task from the Secure Development Team's SDL
 # extension:
 #
@@ -13,15 +16,22 @@
 # GOTCHA: This step will clobber any existing build output.  It should be run
 # _before_ any build steps that perform versioning or signing.
 
-# @TODO: This can probably be made generic and pass in the command lines for msbuild
-#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
-#        affect >1 project at a time.
-
 parameters:
   # Source Root.
   - name: sourceRoot
     type: string
     default: $(REPO_ROOT)
+
+  # MSBuild arguments appended after the project file path.  The default targets
+  # BuildAllConfigurations for the full MDS build; override this when analyzing
+  # individual extension packages.
+  - name: msBuildArguments
+    type: string
+    default: >-
+      -t:BuildAllConfigurations
+      -p:configuration=Release
+      -p:GenerateNuget=false
+      -p:BuildTools=false
 
 steps:
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
@@ -29,11 +39,8 @@ steps:
     inputs:
       msBuildVersion: 17.0
       msBuildArchitecture: x64
-      setupCommandlinePicker: vs2022
-      msBuildCommandline: >-
+      setupCommandLinePicker: vs2022
+      msBuildCommandLine: >-
         msbuild
         ${{parameters.sourceRoot}}\build.proj
-        -t:BuildAllConfigurations
-        -p:configuration=Release
-        -p:GenerateNuget=false
-        -p:BuildTools=false
+        ${{parameters.msBuildArguments}}

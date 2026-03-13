@@ -9,6 +9,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlTypes
     internal static class SqlTypeWorkarounds
     {
         #region Work around inability to access SqlXml.CreateSqlXmlReader
-        
+
         private static readonly XmlReaderSettings s_defaultXmlReaderSettings = new() { ConformanceLevel = ConformanceLevel.Fragment };
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsCloseInput = new() { ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsAsyncCloseInput = new() { Async = true, ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
@@ -44,14 +45,14 @@ namespace Microsoft.Data.SqlTypes
             Debug.Assert(closeInput || !async, "Currently we do not have pre-created settings for !closeInput+async");
 
             XmlReaderSettings settingsToUse = closeInput
-                ? async 
+                ? async
                     ? s_defaultXmlReaderSettingsAsyncCloseInput
                     : s_defaultXmlReaderSettingsCloseInput
                 : s_defaultXmlReaderSettings;
 
             return XmlReader.Create(stream, settingsToUse);
         }
-        
+
         #endregion
 
         #region Work around inability to access SqlDateTime.ToDateTime
@@ -69,7 +70,7 @@ namespace Microsoft.Data.SqlTypes
             const uint MaxTime = SQLTicksPerDay - 1; // = 25919999,  11:59:59:997PM
             const long BaseDateTicks = 599266080000000000L;//new DateTime(1900, 1, 1).Ticks;
 
-            // casting to uint wraps negative values to large positive ones above the valid 
+            // casting to uint wraps negative values to large positive ones above the valid
             // ranges so the lower bound doesn't need to be checked
             if ((uint)(daypart + MinDayOffset) > (MaxDay + MinDayOffset) || (uint)timepart > MaxTime)
             {
@@ -91,9 +92,9 @@ namespace Microsoft.Data.SqlTypes
         private static Exception ThrowOverflowException() => throw SQL.DateTimeOverflow();
 
         #endregion
-        
+
         #if NETFRAMEWORK
-        
+
         #region Work around inability to access `new SqlBinary(byte[], bool)`
 
         // Documentation of internal constructor:
@@ -103,9 +104,9 @@ namespace Microsoft.Data.SqlTypes
 
         internal static SqlBinary ByteArrayToSqlBinary(byte[] value) =>
             ByteArrayToSqlBinaryFactory(value);
-        
+
         #endregion
-        
+
         #region Work around SqlDecimal.WriteTdsValue not existing in netfx
 
         /// <summary>
@@ -124,16 +125,16 @@ namespace Microsoft.Data.SqlTypes
             //    SqlDecimal, we cannot use them because they are not documented. The Data property
             //    is less ideal, but is documented.
             Debug.Assert(outSpan.Length == 4, "Output span must be 4 elements long.");
-            
+
             int[] data = value.Data;
             outSpan[0] = (uint)data[0];
             outSpan[1] = (uint)data[1];
             outSpan[2] = (uint)data[2];
             outSpan[3] = (uint)data[3];
         }
-        
+
         #endregion
-        
+
         #region Work around inability to access `new SqlGuid(byte[], bool)`
 
         // Documentation for internal constructor:
@@ -143,9 +144,9 @@ namespace Microsoft.Data.SqlTypes
 
         internal static SqlGuid ByteArrayToSqlGuid(byte[] value) =>
             ByteArrayToSqlGuidFactory(value);
-        
+
         #endregion
-        
+
         #region Work around inability to access `new SqlMoney(long, int)` and `SqlMoney.ToInternalRepresentation()`
 
         // Documentation for internal ctor:
@@ -156,7 +157,7 @@ namespace Microsoft.Data.SqlTypes
         private delegate long SqlMoneyToLongDelegate(ref SqlMoney @this);
         private static readonly SqlMoneyToLongDelegate SqlMoneyToLongFactory =
             CreateSqlMoneyToLongFactory();
-        
+
         /// <summary>
         /// Constructs a SqlMoney from a long value without scaling.
         /// </summary>
@@ -180,7 +181,7 @@ namespace Microsoft.Data.SqlTypes
                 //    we are calling below *is* documented, despite it being internal.
                 // Documentation for internal method:
                 // https://learn.microsoft.com/en-us/dotnet/framework/additional-apis/system.data.sqltypes.sqlmoney.tosqlinternalrepresentation
-                
+
                 MethodInfo method = typeof(SqlMoney).GetMethod(
                     "ToSqlInternalRepresentation",
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.ExactBinding,
@@ -195,7 +196,7 @@ namespace Microsoft.Data.SqlTypes
                     // Note: We must use something other than default since this cannot be used on
                     //    Null SqlMoney structs.
                     _ = method.Invoke(SqlMoney.Zero, Array.Empty<object>());
-                    
+
                     // Create a delegate for the method. This will be an "open" delegate, meaning
                     // the instance to call the method on will be provided as arg0 on each call.
                     // Note the first parameter to the delegate is provided *by reference*.
@@ -208,12 +209,12 @@ namespace Microsoft.Data.SqlTypes
             {
                 // Reflection failed, fall through to using conversion via decimal
             }
-            
+
             // @TODO: SqlMoney.ToSqlInternalRepresentation will throw on SqlMoney.IsNull, the fallback will not.
             SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateSqlMoneyToLongFactory | Info | SqlMoney.ToInternalRepresentation(SqlMoney) not found. Less efficient fallback method will be used.");
             return (ref SqlMoney value) => value.IsNull ? 0 : (long)(value.ToDecimal() * 10000);
         }
-            
+
         #endregion
 
         private static unsafe Func<TValue, TInstance> CreateFactory<TInstance, TValue, TIgnored>(
@@ -228,7 +229,7 @@ namespace Microsoft.Data.SqlTypes
             // it will be much slower.
             // The TIgnored type is an extra argument to the ctor that differentiates this internal
             // ctor from the public ctor.
-            
+
             try
             {
                 // Look for TInstance constructor that takes TValue, TIgnored
@@ -269,14 +270,14 @@ namespace Microsoft.Data.SqlTypes
             {
                 // Reflection failed, fall through to use the slow conversion.
             }
-            
+
             // If reflection failed, or the ctor couldn't be found, fallback to construction using
             // the fallback factory. This will be much slower, but ensures conversion can still
             // happen.
             SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateFactory | Info | {0}..ctor({1}, {2}) not found. Less efficient fallback method will be used.", typeof(TInstance).Name, typeof(TValue).Name, typeof(TIgnored).Name);
             return fallbackFactory;
         }
-        
+
         #endif
     }
 }

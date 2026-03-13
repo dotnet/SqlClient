@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Common.ConnectionString
 {

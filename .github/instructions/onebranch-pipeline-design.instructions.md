@@ -23,11 +23,11 @@ Both pipelines use the **OneBranch (1ES) governed template** infrastructure and 
 | # | Package | Dependencies |
 |---|---------|-------------|
 | 1 | `Microsoft.SqlServer.Server` | — |
-| 2 | `Microsoft.Data.SqlClient.Extensions.Logging` | — |
-| 3 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `Extensions.Logging` |
-| 4 | `Microsoft.Data.SqlClient` | `Extensions.Logging`, `Extensions.Abstractions` |
-| 5 | `Microsoft.Data.SqlClient.Extensions.Azure` | `Extensions.Abstractions`, `Extensions.Logging` |
-| 6 | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Extensions.Logging` |
+| 2 | `Microsoft.Data.SqlClient.Internal.Logging` | — |
+| 3 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `Internal.Logging` |
+| 4 | `Microsoft.Data.SqlClient` | `Internal.Logging`, `Extensions.Abstractions` |
+| 5 | `Microsoft.Data.SqlClient.Extensions.Azure` | `Extensions.Abstractions`, `Internal.Logging` |
+| 6 | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Internal.Logging` |
 
 ---
 
@@ -37,7 +37,7 @@ Both pipelines use the **OneBranch (1ES) governed template** infrastructure and 
 sequenceDiagram
     participant T as Trigger / User
     participant P as Pipeline Orchestrator
-    participant B1a as Job: Build Extensions.Logging
+    participant B1a as Job: Build Internal.Logging
     participant B1c as Job: Build SqlServer.Server
     participant B1b as Job: Build Extensions.Abstractions
     participant B2a as Job: Build SqlClient
@@ -63,18 +63,18 @@ sequenceDiagram
     Note over P: Stage 2 — build_abstractions (dependsOn: build_independent)
 
     P->>B1b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Abstractions)
-    Note right of B1b: Downloads: Extensions.Logging artifact
+    Note right of B1b: Downloads: Internal.Logging artifact
     B1b-->>P: ✅ Signed .nupkg
 
     Note over P: Stage 3 — build_dependent (dependsOn: build_abstractions)
 
     par Stage 3 jobs (parallel)
         P->>B2a: Build + ESRP sign + pack SqlClient
-        Note right of B2a: Downloads: Extensions.Logging,<br/>Extensions.Abstractions artifacts
+        Note right of B2a: Downloads: Internal.Logging,<br/>Extensions.Abstractions artifacts
         B2a-->>P: ✅ Signed .nupkg + .snupkg
     and
         P->>B2b: Build DLLs → ESRP sign DLLs → Pack → ESRP sign NuGet (Azure)
-        Note right of B2b: Downloads: Extensions.Abstractions,<br/>Extensions.Logging artifacts
+        Note right of B2b: Downloads: Extensions.Abstractions,<br/>Internal.Logging artifacts
         B2b-->>P: ✅ Signed .nupkg
     end
 
@@ -85,7 +85,7 @@ sequenceDiagram
         V-->>P: ✅ Package validation passed
     and
         P->>B3: Build + ESRP sign + pack AKV Provider
-        Note right of B3: Downloads: SqlClient,<br/>Extensions.Logging artifacts
+        Note right of B3: Downloads: SqlClient,<br/>Internal.Logging artifacts
         B3-->>P: ✅ Signed .nupkg
     end
 
@@ -116,7 +116,7 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 
 | Job Template | Package | Build Target | Condition |
 |--------------|---------|--------------|-----------|
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Logging` | `BuildLogging` / `PackLogging` | `buildAKVProvider OR buildSqlClient` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Internal.Logging` | `BuildLogging` / `PackLogging` | `buildAKVProvider OR buildSqlClient` |
 | `build-signed-csproj-package-job.yml` | `Microsoft.SqlServer.Server` | `PackSqlServer` | `buildSqlServerServer` |
 
 - **`dependsOn`**: none
@@ -128,18 +128,18 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 
 | Job Template | Package | Build Target | Artifact Dependencies |
 |--------------|---------|--------------|----------------------|
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` | `Extensions.Logging` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `BuildAbstractions` / `PackAbstractions` | `Internal.Logging` |
 
 - **Stage condition**: `buildSqlClient = true` (entire stage is excluded when false)
 - **`dependsOn`**: `build_independent`
-- Downloads `Microsoft.Data.SqlClient.Extensions.Logging.nupkg` (from Stage 1) pipeline artifact
+- Downloads `Microsoft.Data.SqlClient.Internal.Logging.nupkg` (from Stage 1) pipeline artifact
 
 #### Stage 3 — `build_dependent`: Core Packages (depend on Stage 2)
 
 | Job Template | Package | Build Target | Artifact Dependencies |
 |--------------|---------|--------------|----------------------|
-| `build-signed-package-job.yml` | `Microsoft.Data.SqlClient` | *(nuspec-based)* | `Extensions.Logging`, `Extensions.Abstractions` |
-| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `BuildAzure` / `PackAzure` | `Extensions.Abstractions`, `Extensions.Logging` |
+| `build-signed-package-job.yml` | `Microsoft.Data.SqlClient` | *(nuspec-based)* | `Internal.Logging`, `Extensions.Abstractions` |
+| `build-signed-csproj-package-job.yml` | `Microsoft.Data.SqlClient.Extensions.Azure` | `BuildAzure` / `PackAzure` | `Extensions.Abstractions`, `Internal.Logging` |
 
 - **Stage condition**: `buildSqlClient = true` (entire stage is excluded when false)
 - **`dependsOn`**: `build_abstractions`
@@ -151,11 +151,11 @@ The build phase runs automatically on every CI trigger, scheduled run, or manual
 
 | Job Template | Package | Artifact Dependencies |
 |--------------|---------|----------------------|
-| `build-akv-official-job.yml` | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Extensions.Logging` |
+| `build-akv-official-job.yml` | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `SqlClient`, `Internal.Logging` |
 
 - **Stage condition**: `buildAKVProvider AND buildSqlClient` (both must be true)
 - **`dependsOn`**: `build_dependent`
-- Downloads `Microsoft.Data.SqlClient.nupkg` (from Stage 3) and `Microsoft.Data.SqlClient.Extensions.Logging.nupkg` (from Stage 1) pipeline artifacts
+- Downloads `Microsoft.Data.SqlClient.nupkg` (from Stage 3) and `Microsoft.Data.SqlClient.Internal.Logging.nupkg` (from Stage 1) pipeline artifacts
 - Uses separate ESRP signing credentials (`Signing`-prefixed variables from `esrp-variables-v2` group)
 
 ### 4.2 Validation Stage — `mds_package_validation`
@@ -200,7 +200,7 @@ The release stage is gated and only executes on demand when at least one release
 | Package | Artifact Name | Publish Job |
 |---------|---------------|-------------|
 | `Microsoft.SqlServer.Server` | `drop_build_independent_build_package_SqlServer` | `publish_SqlServer_Server` |
-| `Microsoft.Data.SqlClient.Extensions.Logging` | `drop_build_independent_build_package_Logging` | `publish_Logging` |
+| `Microsoft.Data.SqlClient.Internal.Logging` | `drop_build_independent_build_package_Logging` | `publish_Logging` |
 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `drop_build_abstractions_build_package_Abstractions` | `publish_Abstractions` |
 | `Microsoft.Data.SqlClient` | `drop_build_dependent_build_package_SqlClient` | `publish_SqlClient` |
 | `Microsoft.Data.SqlClient.Extensions.Azure` | `drop_build_dependent_build_package_Azure` | `publish_Extensions_Azure` |
@@ -294,7 +294,7 @@ parameters:
     default: false
 
   - name: releaseLogging
-    displayName: 'Release Microsoft.Data.SqlClient.Extensions.Logging'
+    displayName: 'Release Microsoft.Data.SqlClient.Internal.Logging'
     type: boolean
     default: false
 
@@ -443,7 +443,7 @@ APIScan is configured at **both pipeline level and job level**:
 | `ob_sdl_apiscan_enabled` | Enable/disable APIScan for this job (`true`) |
 | `ob_sdl_apiscan_softwareFolder` | Path to signed DLLs for scanning |
 | `ob_sdl_apiscan_symbolsFolder` | Path to PDBs for scanning |
-| `ob_sdl_apiscan_softwarename` | Package name (e.g., `Microsoft.Data.SqlClient.Extensions.Logging`) |
+| `ob_sdl_apiscan_softwarename` | Package name (e.g., `Microsoft.Data.SqlClient.Internal.Logging`) |
 | `ob_sdl_apiscan_versionNumber` | Assembly file version |
 
 Each job copies its signed DLLs and PDBs to a package-specific folder under `$(Build.SourcesDirectory)/apiScan/<PackageName>/` after ESRP DLL signing, ensuring APIScan analyzes the correct signed binaries for each package.

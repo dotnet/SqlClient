@@ -6,7 +6,7 @@ using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Internal
 {
     // Any changes to event writers might be considered as a breaking change.
     // Other libraries such as OpenTelemetry and ApplicationInsight have based part of their code on BeginExecute and EndExecute arguments number.
