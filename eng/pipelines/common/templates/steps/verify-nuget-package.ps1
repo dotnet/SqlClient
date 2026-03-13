@@ -24,26 +24,33 @@
     The path (including glob pattern) to the .nupkg files to verify.
     For example: 'C:\output\*.nupkg' or '$(Build.ArtifactStagingDirectory)\*.nupkg'.
 
-.EXAMPLE
-    .\verify-nuget-package.ps1 -PackagePath 'C:\output\*.nupkg'
-
-    Verifies all .nupkg files in C:\output against Microsoft metadata requirements.
+.PARAMETER NugetConfig
+    The full path to the NuGet.config file that dotnet restore must use to resolve package feeds.
 
 .EXAMPLE
-    .\verify-nuget-package.ps1 -PackagePath 'C:\packages\Microsoft.Data.SqlClient.7.0.0.nupkg'
+    .\verify-nuget-package.ps1 -PackagePath 'C:\output\*.nupkg' -NugetConfig 'C:\repo\NuGet.config'
+
+    Verifies all .nupkg files in C:\output against Microsoft metadata requirements,
+    using the specified NuGet.config.
+
+.EXAMPLE
+    .\verify-nuget-package.ps1 -PackagePath 'C:\packages\Microsoft.Data.SqlClient.7.0.0.nupkg' -NugetConfig 'C:\repo\NuGet.config'
 
     Verifies a single specific package.
 
 .NOTES
-    The NuGet.VerifyMicrosoftPackage package must be available from the NuGet feeds configured on
-    the machine (either via a NuGet.config or the global NuGet cache).  In CI pipelines, ensure
-    the governed feed includes this package.
+    The NuGet.VerifyMicrosoftPackage package must be available from the NuGet feeds configured in
+    the specified NuGet.config file.  In CI pipelines, ensure the governed feed includes this
+    package.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$PackagePath
+    [string]$PackagePath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$NugetConfig
 )
 
 Set-StrictMode -Version Latest
@@ -52,8 +59,8 @@ $ErrorActionPreference = 'Stop'
 $packageName = "NuGet.VerifyMicrosoftPackage"
 $packageVersion = "1.0.0"
 
-# Create a temporary project file with a PackageDownload element.
-# dotnet restore will download the package into the global NuGet cache.
+# Create a temporary project file with a PackageDownload element.  dotnet restore will download the
+# package into the global NuGet cache.
 $tempDir = Join-Path $env:TEMP $packageName
 New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 @"
@@ -67,8 +74,14 @@ New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 </Project>
 "@ | Set-Content (Join-Path $tempDir "_.csproj")
 
+if (!(Test-Path $NugetConfig)) {
+    Write-Error "NuGet.config not found at $NugetConfig"
+    exit 1
+}
+
 Write-Host "Downloading $packageName $packageVersion..."
-dotnet restore (Join-Path $tempDir "_.csproj")
+Write-Host "Using NuGet.config: $NugetConfig"
+dotnet restore (Join-Path $tempDir "_.csproj") --configfile $NugetConfig --verbosity detailed -tl:off
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to download $packageName package."
     exit 1
@@ -83,8 +96,15 @@ if (!(Test-Path $exe)) {
     exit 1
 }
 
-# Find .nupkg files to verify.
-# Wrap in @() to ensure $packages is always an array, so .Count is accurate for 0, 1, or N results.
+# Verify that the PackagePath parent directory exists before searching for .nupkg files.
+$packageDir = Split-Path -Path $PackagePath -Parent
+if (!(Test-Path $packageDir)) {
+    Write-Error "Package directory not found: $packageDir"
+    exit 1
+}
+
+# Find .nupkg files to verify.  Wrap in @() to ensure $packages is always an array, so .Count is
+# accurate for 0, 1, or N results.
 $packages = @(Get-ChildItem -Path $PackagePath -Filter *.nupkg -Recurse |
     Where-Object { $_.Extension -eq '.nupkg' })
 
