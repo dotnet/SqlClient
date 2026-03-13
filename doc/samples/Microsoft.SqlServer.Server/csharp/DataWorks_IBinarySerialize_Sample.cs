@@ -1,5 +1,3 @@
-// TODO: Remove #nullable disable and fix nullable warnings in this sample.
-#nullable disable
 using System;
 using System.IO;
 using Microsoft.SqlServer.Server;

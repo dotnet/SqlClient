@@ -1,5 +1,3 @@
-// TODO: Remove #nullable disable and fix nullable warnings in this sample.
-#nullable disable
 #if NETFRAMEWORK
 namespace SqlDataAdapter_RowUpdated;
 

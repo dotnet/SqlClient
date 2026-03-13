@@ -4,11 +4,12 @@
     <TargetFrameworks>net8.0;net462</TargetFrameworks>
     <OutputType>Library</OutputType>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <!-- TODO: Enable nullable and fix nullable warnings in samples. -->
+    <!-- <Nullable>enable</Nullable> -->
     <LangVersion>Latest</LangVersion>
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Azure.Core" />
@@ -27,5 +28,5 @@
     <Reference Include="System.Transactions" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
-  
+
 </Project>

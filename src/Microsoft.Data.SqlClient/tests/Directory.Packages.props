@@ -1,7 +1,16 @@
 <Project>
   <Import Project="..\..\..\Directory.Packages.props" />
 
-  <!-- Test Project Dependencies for all targets. -->
+  <!-- Dependencies shared with SqlClient tests and Extensions/Internal tests. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="11.0.0-beta.25476.3" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
+  </ItemGroup>
+
+  <!-- SqlClient test dependencies. -->
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="11.0.0-beta.25476.3" />
@@ -14,7 +23,7 @@
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="10.0.3" />
   </ItemGroup>
 
-  <!-- Test Project Dependencies for NetFx only. -->
+  <!-- SqlClient test dependencies for NetFx only. -->
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>

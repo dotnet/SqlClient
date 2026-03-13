@@ -121,14 +121,4 @@
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.9.0" />
   </ItemGroup>
 
-  <!-- ===================================================================== -->
-  <!-- Shared Test Dependencies -->
-
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="11.0.0-beta.25476.3" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
-    <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
-  </ItemGroup>
 </Project>

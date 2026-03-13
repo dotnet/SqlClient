@@ -1,5 +1,3 @@
-// TODO: Remove #nullable disable and fix nullable warnings in this sample.
-#nullable disable
 //<Snippet1>
 using System;
 using System.Collections.Generic;
