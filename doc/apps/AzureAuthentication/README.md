@@ -9,7 +9,7 @@ The following SqlClient packages are used, either directly or transitively:
 
 - `Microsoft.Data.SqlClient`
 - `Microsoft.SqlServer.Server`
-- `Microsoft.Data.SqlClient.Extensions.Logging`
+- `Microsoft.Data.SqlClient.Internal.Logging`
 - `Microsoft.Data.SqlClient.Extensions.Abstractions`
 - `Microsoft.Data.SqlClient.Extensions.Azure`
 - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
@@ -77,7 +77,7 @@ Usage:
 
 Options:
   -c, --connection-string <connection-string> (REQUIRED)  The ADO.NET connection string used to connect to SQL Server.
-                                                          Supports SQL, Azure AD, and integrated authentication modes.
+                                                          Supports SQL, Entra ID, and integrated authentication modes.
   -l, --log-events                                        Enable SqlClient event emission to the console.
   -t, --trace                                             Pauses execution to allow dotnet-trace to be attached.
   -v, --verbose                                           Enable verbose output with detailed error information.
@@ -91,7 +91,7 @@ The app expects a single argument: a full connection string.
 dotnet run -- -c "<connection string>"
 ```
 
-For Azure AD authentication, use an `Authentication` keyword in the connection string. For example:
+For Entra ID authentication, use an `Authentication` keyword in the connection string. For example:
 
 ```bash
 dotnet run -- -c "Server=myserver.database.windows.net;Database=mydb;Authentication=ActiveDirectoryDefault"
@@ -134,7 +134,7 @@ Run with the default (published) package versions, and no `Azure` package:
 dotnet run -- -c "<connection string>"
 ```
 
-If the connection string specifies one of the Azure Active Directory authentication methods,
+If the connection string specifies one of the Entra ID authentication methods,
 `SqlClient` will fail with an error indicating that no authentication provider has been registered.
 This is because the `Azure` package was not referenced, and the app did not provide its own custom
 authentication provider.
@@ -160,6 +160,6 @@ dotnet run -p:SqlClientVersion=7.0.0-preview1 -p:AkvProviderVersion=7.0.0-previe
 ## Prerequisites
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download) and .NET Framework 4.8.1 or later.
-- A SQL Server or Azure SQL instance accessible with Azure AD credentials.
+- A SQL Server or Azure SQL instance accessible with Entra ID credentials.
 - Azure credentials available to `DefaultAzureCredential` (e.g. Azure CLI login, environment
   variables, or managed identity).

@@ -23,6 +23,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Reflection;

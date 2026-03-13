@@ -75,7 +75,7 @@
     <SqlServer Include="**/Microsoft.SqlServer.Server.csproj" />
     <Abstractions Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
     <Azure Include="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
-    <Logging Include="src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+    <Logging Include="src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <!-- Used to build .NET Standard DLL for lib folder from this project. -->

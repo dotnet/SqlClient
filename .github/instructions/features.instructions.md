@@ -24,13 +24,13 @@ This is a comprehensive reference of supported connection string keywords.
 | `Integrated Security` | True/False, SSPI | Windows Authentication |
 | `User ID` | | SQL Server username |
 | `Password` | PWD | SQL Server password |
-| `Authentication` | See below | Azure AD authentication mode |
+| `Authentication` | See below | Entra ID authentication mode |
 | `Attestation Protocol` | None, HGS, AAS | Enclave attestation |
 
 #### Authentication Modes
 - `SqlPassword` - SQL Server authentication
-- `ActiveDirectoryPassword` - Azure AD with password
-- `ActiveDirectoryIntegrated` - Azure AD integrated
+- `ActiveDirectoryPassword` - Entra ID with password
+- `ActiveDirectoryIntegrated` - Entra ID integrated
 - `ActiveDirectoryInteractive` - Interactive browser auth
 - `ActiveDirectoryServicePrincipal` - Service principal
 - `ActiveDirectoryManagedIdentity` - Managed identity

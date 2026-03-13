@@ -1,5 +1,8 @@
 # Microsoft.Data.SqlClient.Extensions.Logging 1.0 Releases
 
+> **Note:** This package is for internal use by other Microsoft.Data.SqlClient packages only
+> and should not be referenced directly by application code.
+
 The following `Microsoft.Data.SqlClient.Extensions.Logging`
 1.0 releases have been shipped:
 

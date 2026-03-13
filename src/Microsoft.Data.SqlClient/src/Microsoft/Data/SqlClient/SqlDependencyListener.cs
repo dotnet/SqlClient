@@ -13,6 +13,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;

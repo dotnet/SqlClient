@@ -32,8 +32,10 @@
 
   <!-- Build Output Config -->
   <PropertyGroup>
-    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+    <!-- Use a shorter directory name to avoid exceeding the Windows MAX_PATH (260 char) limit.
+         The full AssemblyName is 63 chars and appears in both the directory and generated filenames. -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/AzureKeyVaultProvider</IntermediateOutputPath>
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/AzureKeyVaultProvider</OutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
@@ -91,11 +93,11 @@
   </ItemGroup>
 
   <!-- Logging Reference -->
-  <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <!-- Other dependencies -->

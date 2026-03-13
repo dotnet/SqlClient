@@ -78,7 +78,7 @@
       Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
                       PackMds
                       TestMds, TestMdsFunctional, TestMdsManual
-      Description:    Specifies what version of the Microsoft.Data.SqlClient.Logging to use
+      Description:    Specifies what version of the Microsoft.Data.SqlClient.Internal.Logging to use
                       when compiling MDS. If not specified, the version defined in
                       Directory.Packages.props is used. This argument only has effect if the
                       ReferenceType argument is set to "Package".
