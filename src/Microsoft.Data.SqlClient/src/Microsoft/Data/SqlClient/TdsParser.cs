@@ -10664,9 +10664,9 @@ namespace Microsoft.Data.SqlClient
 
                     if (isSqlVal)
                     {
-                        if (value is SqlString)
+                        if (value is SqlString sqlString)
                         {
-                            s = ((SqlString)value).Value;
+                            s = sqlString.Value;
                         }
                         else
                         {
@@ -11994,9 +11994,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case TdsEnums.SQLXMLTYPE:
                             // Value here could be string or XmlReader
-                            if (value is XmlReader)
+                            if (value is XmlReader xmlReader)
                             {
-                                value = MetaType.GetStringFromXml((XmlReader)value);
+                                value = MetaType.GetStringFromXml(xmlReader);
                             }
                             ccb = ((isSqlType) ? ((SqlString)value).Value.Length : ((string)value).Length) * 2;
                             break;
@@ -12468,9 +12468,9 @@ namespace Microsoft.Data.SqlClient
                             WriteInt(actualLength, stateObj);               // chunk length
                         }
 
-                        if (value is SqlBinary)
+                        if (value is SqlBinary sqlBinary)
                         {
-                            return stateObj.WriteByteArray(((SqlBinary)value).Value, actualLength, offset, canAccumulate: false);
+                            return stateObj.WriteByteArray(sqlBinary.Value, actualLength, offset, canAccumulate: false);
                         }
                         else
                         {
@@ -12537,9 +12537,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteInt(codePageByteSize, stateObj);               // chunk length
                     }
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlCharsA)
                     {
-                        string sch = new string(((SqlChars)value).Value);
+                        string sch = new string(sqlCharsA.Value);
 
                         return WriteEncodingChar(sch, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                     }
@@ -12583,9 +12583,9 @@ namespace Microsoft.Data.SqlClient
                         actualLength >>= 1;
                     }
 
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlCharsB)
                     {
-                        return WriteCharArray(((SqlChars)value).Value, actualLength, offset, stateObj, canAccumulate: false);
+                        return WriteCharArray(sqlCharsB.Value, actualLength, offset, stateObj, canAccumulate: false);
                     }
                     else
                     {
@@ -13633,9 +13633,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         byte[] b = new byte[actualLength];
 
-                        if (value is SqlBinary)
+                        if (value is SqlBinary sqlBinary2)
                         {
-                            Buffer.BlockCopy(((SqlBinary)value).Value, offset, b, 0, actualLength);
+                            Buffer.BlockCopy(sqlBinary2.Value, offset, b, 0, actualLength);
                         }
                         else
                         {
@@ -13686,9 +13686,9 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlCharsC)
                     {
-                        String sch = new String(((SqlChars)value).Value);
+                        String sch = new String(sqlCharsC.Value);
                         return SerializeEncodingChar(sch, actualLength, offset, _defaultEncoding);
                     }
                     else
@@ -13709,9 +13709,9 @@ namespace Microsoft.Data.SqlClient
                         actualLength >>= 1;
                     }
 
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlCharsD)
                     {
-                        return SerializeCharArray(((SqlChars)value).Value, actualLength, offset);
+                        return SerializeCharArray(sqlCharsD.Value, actualLength, offset);
                     }
                     else
                     {
