@@ -45,6 +45,31 @@ await connection.OpenAsync();
 Console.WriteLine("Connected successfully!");
 ```
 
+### Connecting to Azure
+
+Starting with v7.0, to use Entra ID authentication modes (such as `Active Directory Default`, `Active Directory Managed Identity`, `Active Directory Interactive`, etc.) via connection string keywords, install the [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) extension package via NuGet:
+
+```bash
+dotnet add package Microsoft.Data.SqlClient.Extensions.Azure
+```
+Or via the Package Manager Console:
+
+```powershell
+Install-Package Microsoft.Data.SqlClient.Extensions.Azure
+```
+
+This package provides the `ActiveDirectoryAuthenticationProvider`, which integrates with [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) to handle token acquisition, caching, and credential management.
+
+With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
+
+```csharp
+// Active Directory Default — uses DefaultAzureCredential (Managed Identity, Azure CLI, Visual Studio, etc.)
+var connectionString = "Server=myserver.database.windows.net;Database=mydb;Authentication=Active Directory Default;";
+
+using var connection = new SqlConnection(connectionString);
+await connection.OpenAsync();
+```
+
 ### Execute a Query
 
 ```csharp
@@ -112,7 +137,7 @@ catch
 | Feature | Description |
 |---------|-------------|
 | **Cross-Platform** | Runs on Windows, Linux, and macOS |
-| **Azure AD Authentication** | Multiple Azure Active Directory authentication modes |
+| **Entra ID Authentication** | Multiple Entra ID authentication modes |
 | **Always Encrypted** | Client-side encryption for sensitive data |
 | **Connection Pooling** | Efficient connection management |
 | **TLS 1.3 Support** | Enhanced security with strict encryption mode |
@@ -142,12 +167,15 @@ Microsoft.Data.SqlClient.SqlConnectionStringBuilder
 |--------|-------------------|
 | SQL Server Authentication | `User ID=user;Password=pass;` |
 | Windows Authentication | `Integrated Security=true;` |
-| Azure AD Password | `Authentication=Active Directory Password;User ID=user;Password=pass;` |
-| Azure AD Integrated | `Authentication=Active Directory Integrated;` |
-| Azure AD Interactive | `Authentication=Active Directory Interactive;` |
-| Azure AD Managed Identity | `Authentication=Active Directory Managed Identity;` |
-| Azure AD Service Principal | `Authentication=Active Directory Service Principal;User ID=clientId;Password=clientSecret;` |
-| Azure AD Default | `Authentication=Active Directory Default;` |
+| Entra ID Password (deprecated) | `Authentication=Active Directory Password;User ID=user;Password=pass;` |
+| Entra ID Integrated | `Authentication=Active Directory Integrated;` |
+| Entra ID Interactive | `Authentication=Active Directory Interactive;` |
+| Entra ID Managed Identity | `Authentication=Active Directory Managed Identity;` |
+| Entra ID Service Principal | `Authentication=Active Directory Service Principal;User ID=clientId;Password=clientSecret;` |
+| Entra ID Default | `Authentication=Active Directory Default;` |
+| Entra ID Workload Identity | `Authentication=Active Directory Workload Identity` |
+
+> **Note:** To use Entra ID authentication modes (such as `Active Directory Default`, `Active Directory Managed Identity`, `Active Directory Interactive`, etc.) via connection string keywords, install the [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) extension package.
 
 ## Encryption Modes
 
@@ -170,7 +198,7 @@ Two implementations are available:
 - [Connection String Syntax](https://learn.microsoft.com/sql/connect/ado-net/connection-string-syntax)
 - [Connection Pooling](https://learn.microsoft.com/sql/connect/ado-net/sql-server-connection-pooling)
 - [Always Encrypted](https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine)
-- [Azure AD Authentication](https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication)
+- [Entra ID Authentication](https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication)
 
 ## Release Notes
 
@@ -191,6 +219,7 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 
 ## Related Packages
 
+- [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) - Entra ID authentication provider with Azure.Identity integration
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider](https://www.nuget.org/packages/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider) - Azure Key Vault integration for Always Encrypted
 - [Microsoft.SqlServer.Server](https://www.nuget.org/packages/Microsoft.SqlServer.Server) - SQL CLR UDT support
 - [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI) - Native SNI for .NET Framework

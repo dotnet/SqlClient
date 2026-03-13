@@ -145,14 +145,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // We split audience from Authority URL here. Audience can be one of
             // the following:
             //
-            //   - The Azure AD authority audience enumeration
+            //   - The Entra ID authority audience enumeration
             //   - The tenant ID, which can be:
-            //     - A GUID (the ID of your Azure AD instance), for
+            //     - A GUID (the ID of your Entra ID instance), for
             //       single-tenant applications
-            //     - A domain name associated with your Azure AD instance (also
+            //     - A domain name associated with your Entra ID instance (also
             //       for single-tenant applications)
             //   - One of these placeholders as a tenant ID in place of the
-            //     Azure AD authority audience enumeration:
+            //     Entra ID authority audience enumeration:
             //     - `organizations` for a multitenant application
             //     - `consumers` to sign in users only with their personal
             //       accounts
@@ -160,9 +160,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             //       accounts or their personal Microsoft accounts
             //
             // MSAL will throw a meaningful exception if you specify both the
-            // Azure AD authority audience and the tenant ID.
+            // Entra ID authority audience and the tenant ID.
             //
-            // If you don't specify an audience, your app will target Azure AD
+            // If you don't specify an audience, your app will target Entra ID
             // and personal Microsoft accounts as an audience.  (That is, it
             // will behave as though `common` were specified.)
             //
@@ -708,7 +708,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 ClientVersion = Extensions.Azure.ThisAssembly.InformationalVersion,
                 RedirectUri = publicClientAppKey.RedirectUri,
             })
-            // The Authority contains the tenant-specific Azure AD endpoint, e.g.
+            // The Authority contains the tenant-specific Entra ID endpoint, e.g.
             // "https://login.microsoftonline.com/72f988bf-...".  The tenant ID is not determined by
             // the client; it originates from the SQL Server FEDAUTHINFO TDS token that the server
             // sends during the login handshake.  The flow is:
@@ -719,7 +719,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             //      constructing SqlAuthenticationParametersBuilder.
             //   3. AcquireTokenAsync stores the full authority (including tenant) in
             //      PublicClientAppKey.Authority.
-            //   4. Here, WithAuthority directs MSAL to authenticate against the correct Azure AD
+            //   4. Here, WithAuthority directs MSAL to authenticate against the correct Entra ID
             //      tenant.
             .WithAuthority(publicClientAppKey.Authority);
 
