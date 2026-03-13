@@ -413,6 +413,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{
 		..\eng\pipelines\onebranch\variables\sqlclient-validation-variables.yml = ..\eng\pipelines\onebranch\variables\sqlclient-validation-variables.yml
 		..\eng\pipelines\onebranch\variables\esrp-variables-v2.yml = ..\eng\pipelines\onebranch\variables\esrp-variables-v2.yml
 		..\eng\pipelines\onebranch\variables\symbols-variables-v2.yml = ..\eng\pipelines\onebranch\variables\symbols-variables-v2.yml
+		..\eng\pipelines\onebranch\variables\package-variables.yml = ..\eng\pipelines\onebranch\variables\package-variables.yml
 	EndProjectSection
 EndProject
 Global

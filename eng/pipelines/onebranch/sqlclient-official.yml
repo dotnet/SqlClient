@@ -115,39 +115,14 @@ parameters:
 variables:
   # @TODO: Need cleaning
   - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
-  - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
 
   # @TODO: These are good
   - template: /eng/pipelines/onebranch/variables/esrp-variables-v2.yml@self
+  - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/package-variables.yml@self
+    parameters:
+      isPreview: ${{ parameters.isPreview }}
   - template: /eng/pipelines/onebranch/variables/symbols-variables-v2.yml@self
-
-  # Define the effective versions for all of the packages we build and release.
-  - ${{ if parameters.isPreview }}:
-    - name: effectiveSqlServerVersion
-      value: '$(sqlServerPackagePreviewVersion)'
-    - name: effectiveLoggingVersion
-      value: '$(loggingPackagePreviewVersion)'
-    - name: effectiveAbstractionsVersion
-      value: '$(abstractionsPackagePreviewVersion)'
-    - name: effectiveSqlClientVersion
-      value: '$(mdsPackagePreviewVersion)'
-    - name: effectiveAzureVersion
-      value: '$(azurePackagePreviewVersion)'
-    - name: effectiveAkvProviderVersion
-      value: '$(akvPackagePreviewVersion)'
-  - ${{ else }}:
-    - name: effectiveSqlServerVersion
-      value: '$(sqlServerPackageVersion)'
-    - name: effectiveLoggingVersion
-      value: '$(loggingPackageVersion)'
-    - name: effectiveAbstractionsVersion
-      value: '$(abstractionsPackageVersion)'
-    - name: effectiveSqlClientVersion
-      value: '$(mdsPackageVersion)'
-    - name: effectiveAzureVersion
-      value: '$(azurePackageVersion)'
-    - name: effectiveAkvProviderVersion
-      value: '$(akvPackageVersion)'
 
 resources:
   repositories:
@@ -223,20 +198,20 @@ extends:
           buildMdsAndExtensions: '${{ parameters.buildMdsAndExtensions }}'
           buildMss: '${{ parameters.buildMss }}'
 
-          abstractionsArtifactsName: '${{ variables.abstractionsArtifactName }}'
-          abstractionsAssemblyFileVersion: '$(abstractionsAssemblyFileVersions)'
-          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
-          akvProviderAssemblyFileVersion: '$(akvProviderAssemblyFileVersion)'
-          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
-          azureAssemblyFileVersion: '$(azureAssemblyFileVersion)'
-          azurePackageVersion: '$(effectiveAzureVersion)'
-          loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingAssemblyFileVersion: '$(loggingAssemblyFileVersion)'
-          loggingPackageVersion: '$(effectiveLoggingVersion)'
-          mdsArtifactsName: '${{ variables.mdsArtifactsName }}'
-          mdsPackageVersion: '$(effectiveMdsPackageVersion)'
-          mssAssemblyFileVersion: '$(sqlServerAssemblyFileVersion)'
-          mssPackageVersion: '$(effectiveSqlServerVersion)'
+          abstractionsArtifactsName: '${{ variables.artifactsName.abstractions }}'
+          abstractionsAssemblyFileVersion: '${{ variables.assemblyFileVersion.abstractions }}'
+          abstractionsPackageVersion: '${{ variables.packageVersion.abstractions }}'
+          akvProviderAssemblyFileVersion: '${{ variables.assemblyFileVersion.akvProvider }}'
+          akvProviderPackageVersion: '${{ variables.packageVersion.akvProvider }}'
+          azureAssemblyFileVersion: '${{ variables.assemblyFileVersion.azure }}'
+          azurePackageVersion: '${{ variables.packageVersion.azure }}'
+          loggingArtifactsName: '${{ variables.artifactsName.logging }}'
+          loggingAssemblyFileVersion: '${{ variables.assemblyFileVersion.logging }}'
+          loggingPackageVersion: '${{ variables.packageVersion.logging }}'
+          mdsArtifactsName: '${{ variables.artifactsName.mds }}'
+          mdsPackageVersion: '${{ variables.packageVersion.mds }}'
+          mssAssemblyFileVersion: '${{ variables.assemblyFileVersion.mss }}'
+          mssPackageVersion: '${{ variables.packageVersion.mss }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
           signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'

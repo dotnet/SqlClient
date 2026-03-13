@@ -4,11 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in MDS OneBranch Official pipelines.
-
 variables:
   # OneBranch Variables ====================================================
-  # These variables are defined in the OneBranch template and we assign variables to them not.
+  # These variables are defined in the OneBranch template, and we assign values to them here.
 
   # Whether SBOMs should be signed
   - name: Packaging.EnableSBOMSigning
@@ -32,40 +30,3 @@ variables:
   # Path where we will place PDBs and tell APIScan to scan (as "symbols folder")
   - name: apiScanPdbPath
     value: '$(Build.SourcesDirectory)/apiScan/pdbs'
-
-  # Artifact Names =========================================================
-  # These are the paths where we will drop artifacts for the various stages of the pipeline.
-  #
-  # OneBranch automatically publishes pipeline artifacts from all jobs. Use of the
-  # PublishPipelineArtifacts task is prohibited. All content in the ob_outputDirectory is
-  # automatically published. The artifacts are named according to this pattern:
-  #
-  #   drop_<stageName>_<jobName>
-  #
-  # Downstream stages and jobs may download these artifacts via the DownloadPipelineArtifact task,
-  # but they must know the artifact name.
-
-  # The Microsoft.Data.SqlClient.Extensions.Abstractions package artifacts.
-  - name: abstractionsArtifactsName
-    value: drop_build_abstractions_build_package_Abstractions
-
-  # The Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package artifacts.
-  - name: akvProviderArtifactsName
-    value: drop_build_addons_build_package_AkvProvider
-
-  # The Microsoft.Data.SqlClient.Extensions.Azure package artifacts.
-  - name: azureArtifactsName
-    value: drop_build_dependent_build_package_Azure
-
-  # The Microsoft.Data.SqlClient.Internal.Logging package artifacts.
-  - name: loggingArtifactsName
-    value: drop_build_independent_build_package_Logging
-
-  # The Microsoft.SqlServer.Server package artifacts.
-  - name: mssArtifactsName
-    value: drop_build_independent_build_package_SqlServer
-
-  # The Microsoft.Data.SqlClient package artifacts.
-  - name: mdsArtifactsName
-    value: drop_build_dependent_build_package_SqlClient
-

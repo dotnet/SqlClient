@@ -1,0 +1,143 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This file contains variables that relate to the various packages that are produced via the
+# OneBranch official/non-official pipelines. They are grouped by the packages they represent.
+#
+# The variables are defined as the following main types:
+# - artifactsName.*
+#   What the artifacts drop for the various stages of the pipeline will be named.
+#
+#   OneBranch automatically publishes pipeline artifacts from all jobs. Use of the
+#   PublishPipelineArtifacts task is prohibited. All content in the ob_outputDirectory is
+#   automatically published. The artifacts are named according to this pattern:
+#
+#   drop_<stageName>_<jobName>
+#
+#   Downstream stages and jobs may download these artifacts via the DownloadPipelineArtifact task,
+#   but they must know the artifact name.
+#
+# - assemblyFileVersion.*
+#   Version to use for the ThisAssembly.InformationalVersion field @TODO: verify that this is piped through correctly
+#
+# - packageVersion.*
+#   NuGet package versions releases. This is switched based on the isPreview parameter.
+
+# @TODO: Although defining the versions in source is a major improvement over depending on versions
+#  coming from variable libraries, this is not the final form. Ideally, we want a single point for
+#  versions to be defined and are moving towards doing so via the [PackageName]Versions.props
+#  files. In the meantime, when doing a version bump (after a release), versions will need to be
+# updated here and in their corresponding *Versions.props file.
+
+parameters:
+  - name: isPreview
+    type: boolean
+
+variables:
+  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
+  # $(Build.BuildNumber) has the format XXX.YY. Additionally, each version part must be a positive
+  # 16-bit integer less than 65535. Simply concatenating both parts of $(Build.BuildNumber) could
+  # produce values larger than 65534, so we must omit the second part entirely. Unfortunately, this
+  # may result in multiple subsequent pipline builds using the same C# assembly versions. The
+  # package versions will not be affected and will show the complete $(Build.BuildNumber) values.
+  - name: _assemblyBuildNumber
+    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
+
+
+  # Abstractions Package
+  # Microsoft.Data.SqlClient.Extensions.Abstractions
+  - name: artifactsName.abstractions
+    value: 'drop_build_abstractions_build_package_Abstractions'
+
+  - name: assemblyFileVersion.abstractions
+    value: '1.0.0.$(assemblyBuildNumber)'
+
+  - ${{ if parameters.isPreview }}:
+      - name: packageVersion.abstractions
+        value: '1.0.0-preview1.$(Build.BuildNumber)'
+  - ${{ else }}:
+      - name: packageVersion.abstractions
+        value: '1.0.0'
+
+  # ------------------------------------------------------------------------
+  # AKV Provider Package
+  # Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVault
+  - name: artifactsName.akvProvider
+    value: 'drop_build_addons_build_package_AkvProvider'
+
+  - name: assemblyFileVersion.akvProvider
+    value: '7.0.0.$(assemblyBuildNumber)'
+
+  - ${{ if parameters.isPreview }}:
+      - name: packageVersion.akvProvider
+        value: '7.0.0-preview1.$(Build.BuildNumber)'
+  - ${{ else }}:
+      - name: packageVersion.akvProvider
+        value: '7.0.0'
+
+  # ------------------------------------------------------------------------
+  # Azure Package
+  # Microsoft.Data.SqlClient.Extensions.Azure
+  - name: artifactsName.azure
+    value: 'drop_build_dependent_build_package_Azure'
+
+  - name: assemblyFileVersion.azure
+    value: '1.0.0.$(assemblyBuildNumber)'
+
+  - ${{ if parameters.isPreview }}:
+      - name: packageVersion.azure
+        value: '1.0.0-preview1.$(Build.BuildNumber)'
+  - ${{ else }}:
+      - name: packageVersion.azure
+        value: '1.0.0'
+
+  # ------------------------------------------------------------------------
+  # Logging Package
+  # Microsoft.Data.SqlClient.Internal.Logging
+  - name: artifactsName.logging
+    value: 'drop_build_independent_build_package_Logging'
+
+  - name: assemblyFileVersion.logging
+    value: '1.0.0.$(assemblyBuildNumber)'
+
+  - ${{ if parameters.isPreview }}:
+      - name: packageVersion.logging
+        value: '1.0.0-preview1.$(Build.BuildNumber)'
+  - ${{ else }}:
+      - name: packageVersion.logging
+        value: '1.0.0'
+
+  # ------------------------------------------------------------------------
+  # MDS Package
+  # Microsoft.Data.SqlClient
+  - name: artifactsName.mds
+    value: 'drop_build_dependent_build_package_SqlClient'
+
+  - name: assemblyFileVersion.mds
+    value: '7.0.0.$(assemblyBuildNumber)'
+
+  - ${{ if parameters.isPreview }}:
+      - name: packageVersion.mds
+        value: '7.0.0-preview4.$(Build.BuildNumber)'
+  - ${{ else }}:
+      - name: packageVersion.mds
+        value: '7.0.0'
+
+  # ------------------------------------------------------------------------
+  # MSS Package
+  # Microsoft.SqlServer.Server
+  - name: artifactsName.mss
+    value: 'drop_build_independent_build_package_SqlServer'
+
+  - name: assemblyFileVersion.mss
+    value: '1.0.0.$(assemblyBuildNumber)'
+
+  - ${{ if parameters.isPreview }}:
+      - name: packageVersion.mss
+        value: '1.0.0-preview1.$(Build.BuildNumber)'
+  - ${{ else }}:
+      - name: packageVersion.mss
+        value: '1.0.0'
