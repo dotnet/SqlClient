@@ -328,7 +328,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClient.Stress.Runner", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClient.Stress.Tests", "Microsoft.Data.SqlClient\tests\StressTests\SqlClient.Stress.Tests\SqlClient.Stress.Tests.csproj", "{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\doc\Samples\Microsoft.Data.SqlClient.Samples.csproj", "{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\doc\samples\Microsoft.Data.SqlClient.Samples.csproj", "{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.TestCommon", "Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj", "{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}"
 EndProject
@@ -702,11 +702,17 @@ Global
 		{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}.Release|x86.ActiveCfg = Release|Any CPU
 		{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}.Release|x86.Build.0 = Release|Any CPU
 		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Debug|x64.ActiveCfg = Debug|x64
+		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Debug|x64.Build.0 = Debug|x64
 		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Debug|x86.ActiveCfg = Debug|x86
+		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Debug|x86.Build.0 = Debug|x86
 		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Release|x64.ActiveCfg = Release|x64
+		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Release|x64.Build.0 = Release|x64
 		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Release|x86.ActiveCfg = Release|x86
+		{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}.Release|x86.Build.0 = Release|x86
 		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}.Debug|x64.ActiveCfg = Debug|x64
