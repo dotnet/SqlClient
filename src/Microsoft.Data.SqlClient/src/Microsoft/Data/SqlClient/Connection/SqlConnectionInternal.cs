@@ -2733,7 +2733,7 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlAuthenticationProvider? authProvider = SqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
-                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
+                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication);
             }
 
             // We will perform retries if the provider indicates an error that
