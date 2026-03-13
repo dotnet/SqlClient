@@ -180,12 +180,3 @@ variables:
     value: $(SymbolsPublishServer)
   - name: SymbolTokenUri
     value: $(SymbolsPublishTokenUri)
-
-  # ----------------------------------------------------------------------------
-  # Release Variables
-  #
-  # NuGet service connection used by the release stage to push packages.
-  # This should match the name of an ADO service connection configured with
-  # NuGet.org credentials (API key or federated auth).
-  - name: NuGetServiceConnection
-    value: ADO Nuget Org Connection

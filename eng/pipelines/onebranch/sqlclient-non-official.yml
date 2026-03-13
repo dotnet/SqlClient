@@ -191,12 +191,11 @@ extends:
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          # Non-official pipelines must always be a dry run.
-          isDryRun: true
-          # This is _not_ official pipeline.
+          # Non-official pipelines always push to the NuGet Test feed.
+          releaseToProduction: false
+          # This is _not_ an official pipeline.
           isOfficial: false
           stageNameSuffix: test
-          stageDisplayName: Release Test (Dry Run)
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
