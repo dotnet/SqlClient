@@ -259,12 +259,12 @@ stages:
               -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
             assemblyFileVersion: $(akvAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(ESRPConnectedServiceName)
-            esrpClientId: $(ESRPClientId)
-            appRegistrationClientId: $(AppRegistrationClientId)
-            appRegistrationTenantId: $(AppRegistrationTenantId)
-            authAkvName: $(AuthAKVName)
-            authSignCertName: $(AuthSignCertName)
+            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
+            esrpClientId: $(SigningEsrpClientId)
+            appRegistrationClientId: $(SigningAppRegistrationClientId)
+            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
+            authAkvName: $(SigningAuthAkvName)
+            authSignCertName: $(SigningAuthSignCertName)
             downloadArtifacts:
               - artifactName: $(sqlClientArtifactsName)
                 displayName: SqlClient Package
