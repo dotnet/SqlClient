@@ -173,7 +173,7 @@ Microsoft.Data.SqlClient.SqlConnectionStringBuilder
 | Entra ID Managed Identity | `Authentication=Active Directory Managed Identity;` |
 | Entra ID Service Principal | `Authentication=Active Directory Service Principal;User ID=clientId;Password=clientSecret;` |
 | Entra ID Default | `Authentication=Active Directory Default;` |
-| Entra ID Workload Identity | `Authentication=Active Directory Workload Identity` |
+| Entra ID Workload Identity | `Authentication=Active Directory Workload Identity;User ID=clientId;` |
 
 > **Note:** To use Entra ID authentication modes (such as `Active Directory Default`, `Active Directory Managed Identity`, `Active Directory Interactive`, etc.) via connection string keywords, install the [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) extension package.
 
