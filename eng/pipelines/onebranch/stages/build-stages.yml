@@ -13,15 +13,6 @@
 #   - build_abstractions: builds the Abstractions package, which depends on Logging
 #   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
 #   - build_addons: builds add-on packages with dependencies on the core packages (AKV Provider)
-#
-# This template depends on the following runtime (i.e. macro expansion) variables being defined:
-#
-#  - effectiveSqlServerVersion
-#  - effectiveLoggingVersion
-#  - effectiveAbstractionsVersion
-#  - effectiveSqlClientVersion
-#  - effectiveAzureVersion
-#  - effectiveAkvProviderVersion
 
 parameters:
   # ── General parameters ──────────────────────────────────────────────────
@@ -47,20 +38,53 @@ parameters:
   - name: buildAkvProvider
     type: boolean
 
-  - name: buildSqlClient
+  - name: buildMdsAndExtensions
     type: boolean
 
   - name: buildMss
     type: boolean
 
   # Package Version Parameters ---------------------------------------------
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsAssemblyFileVersion
+    type: string
+
   - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderAssemblyFileVersion
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: azureAssemblyFileVersion
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: loggingArtifactsName
+    type: string
+
+  - name: loggingAssemblyFileVersion
     type: string
 
   - name: loggingPackageVersion
     type: string
 
+  - name: mdsArtifactsName
+    type: string
+
   - name: mdsPackageVersion
+    type: string
+
+  - name: mssAssemblyFileVersion
+    type: string
+
+  - name: mssPackageVersion
     type: string
 
   # Signing Parameters -----------------------------------------------------
@@ -79,7 +103,7 @@ parameters:
   - name: signingEsrpClientId
     type: string
 
-  - name: signingErpConnectedServiceName
+  - name: signingEsrpConnectedServiceName
     type: string
 
   # Symbols Parameters -----------------------------------------------------
@@ -111,48 +135,48 @@ stages:
     displayName: "Build Independent Packages"
 
     jobs:
-      - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
+      - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildMdsAndExtensions, true)) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            packageName: Logging
-            packageFullName: Microsoft.Data.SqlClient.Internal.Logging
-            packageVersion: $(effectiveLoggingVersion)
+            packageName: 'Logging'
+            packageFullName: 'Microsoft.Data.SqlClient.Internal.Logging'
+            packageVersion: '${{ parameters.loggingPackageVersion }}'
             versionProperties: >-
-              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-              -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
-            assemblyFileVersion: $(loggingAssemblyFileVersion)
-            publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
-            esrpClientId: $(SigningEsrpClientId)
-            appRegistrationClientId: $(SigningAppRegistrationClientId)
-            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
-            authAkvName: $(SigningAuthAkvName)
-            authSignCertName: $(SigningAuthSignCertName)
+              -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            assemblyFileVersion: '${{ parameters.loggingAssemblyFileVersion }}'
+            publishSymbols: '${{ parameters.publishSymbols }}'
+            esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            esrpClientId: '${{ parameters.signingEsrpClientId }}'
+            appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            authAkvName: '${{ parameters.signingAuthAkvName }}'
+            authSignCertName: '${{ parameters.signingAuthSignCertName }}'
 
       - ${{ if eq(parameters.buildMss, true) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            packageName: SqlServer
-            packageFullName: Microsoft.SqlServer.Server
-            packageVersion: $(effectiveSqlServerVersion)
+            packageName: 'SqlServer'
+            packageFullName: 'Microsoft.SqlServer.Server'
+            packageVersion: '${{ parameters.mssPackageVersion }}'
             versionProperties: >-
-              -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
-              -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
-            assemblyFileVersion: $(sqlServerAssemblyFileVersion)
-            publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
-            esrpClientId: $(SigningEsrpClientId)
-            appRegistrationClientId: $(SigningAppRegistrationClientId)
-            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
-            authAkvName: $(SigningAuthAkvName)
-            authSignCertName: $(SigningAuthSignCertName)
+              -p:SqlServerAssemblyFileVersion=${{ parameters.mssAssemblyFileVersion }}
+              -p:SqlServerPackageVersion=${{ parameters.mssPackageVersion }}
+            assemblyFileVersion: '${{ parameters.mssAssemblyFileVersion }}'
+            publishSymbols: '${{ parameters.publishSymbols }}'
+            esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            esrpClientId: '${{ parameters.signingEsrpClientId }}'
+            appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            authAkvName: '${{ parameters.signingAuthAkvName }}'
+            authSignCertName: '${{ parameters.signingAuthSignCertName }}'
 
   # ====================================================================
   # Stage 2: Abstractions package (depends on Logging from Stage 1)
   # Abstractions must build after Logging since it has a package
   # dependency on Internal.Logging.
   # ====================================================================
-  - ${{ if eq(parameters.buildSqlClient, true) }}:
+  - ${{ if eq(parameters.buildMdsAndExtensions, true) }}:
     - stage: build_abstractions
       displayName: "Build Abstractions Package"
       dependsOn: build_independent
@@ -162,29 +186,29 @@ stages:
           parameters:
             packageName: Abstractions
             packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
-            packageVersion: $(effectiveAbstractionsVersion)
+            packageVersion: '${{ abstractionsPackageVersion }}'
             versionProperties: >-
-              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-              -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-            assemblyFileVersion: $(abstractionsAssemblyFileVersion)
-            publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
-            esrpClientId: $(SigningEsrpClientId)
-            appRegistrationClientId: $(SigningAppRegistrationClientId)
-            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
-            authAkvName: $(SigningAuthAkvName)
-            authSignCertName: $(SigningAuthSignCertName)
+              -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion
+              -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            assemblyFileVersion: '${{ parameters.abstractionsAssemblyFileVersion }}'
+            publishSymbols: '${{ parameters.publishSymbols }}'
+            esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            esrpClientId: '${{ parameters.signingEsrpClientId }}'
+            appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            authAkvName: '${{ parameters.signingAuthAkvName }}'
+            authSignCertName: '${{ parameters.signingAuthSignCertName }}'
             downloadArtifacts:
-              - artifactName: $(loggingArtifactsName)
+              - artifactName: '${{ parameters.loggingArtifactsName }}'
                 displayName: Logging Package
 
   # ====================================================================
-  # Stage 3: Core packages (depend on Abstractions)
+  # Stage 3: MDS and Extensions packages (depend on Abstractions)
   # MDS and Extensions.Azure build in parallel after Abstractions.
   # Stage name kept as 'build_dependent' for validate job compatibility.
   # ====================================================================
-  - ${{ if eq(parameters.buildSqlClient, true) }}:
+  - ${{ if eq(parameters.buildMdsAndExtensions, true) }}:
     - stage: build_dependent
       displayName: "Build MDS/Extensions Packages"
       dependsOn: build_abstractions
@@ -213,26 +237,26 @@ stages:
 
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            packageName: Azure
-            packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
-            packageVersion: $(effectiveAzureVersion)
+            packageName: 'Azure'
+            packageFullName: 'Microsoft.Data.SqlClient.Extensions.Azure'
+            packageVersion: '${{ parameters.azurePackageVersion }}'
             versionProperties: >-
-              -p:AzurePackageVersion=$(effectiveAzureVersion)
-              -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
-              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-            assemblyFileVersion: $(azureAssemblyFileVersion)
-            publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
-            esrpClientId: $(SigningEsrpClientId)
-            appRegistrationClientId: $(SigningAppRegistrationClientId)
-            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
-            authAkvName: $(SigningAuthAkvName)
-            authSignCertName: $(SigningAuthSignCertName)
+              -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+              -p:AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }}
+              -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            assemblyFileVersion: '${{ parameters.azureAssemblyFileVersion }}'
+            publishSymbols: '${{ parameters.publishSymbols }}'
+            esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            esrpClientId: '${{ parameters.signingEsrpClientId }}'
+            appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            authAkvName: '${{ parameters.signingAuthAkvName }}'
+            authSignCertName: '${{ parameters.signingAuthSignCertName }}'
             downloadArtifacts:
-              - artifactName: $(abstractionsArtifactsName)
+              - artifactName: '${{ parameters.abstractionsArtifactsName)'
                 displayName: Abstractions Package
-              - artifactName: $(loggingArtifactsName)
+              - artifactName: '${{ parameters.loggingArtifactsName }}'
                 displayName: Logging Package
 
   # ====================================================================
@@ -247,29 +271,29 @@ stages:
       jobs:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            packageName: AkvProvider
-            packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-            packageVersion: $(effectiveAkvProviderVersion)
+            packageName: 'AkvProvider'
+            packageFullName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+            packageVersion: '${{ parameters.akvProviderPackageVersion }}'
             versionProperties: >-
-              -p:AkvPackageVersion=$(effectiveAkvProviderVersion)
-              -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
-              -p:MdsPackageVersion=$(effectiveSqlClientVersion)
-              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-            assemblyFileVersion: $(akvAssemblyFileVersion)
-            publishSymbols: ${{ parameters.publishSymbols }}
-            esrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
-            esrpClientId: $(SigningEsrpClientId)
-            appRegistrationClientId: $(SigningAppRegistrationClientId)
-            appRegistrationTenantId: $(SigningAppRegistrationTenantId)
-            authAkvName: $(SigningAuthAkvName)
-            authSignCertName: $(SigningAuthSignCertName)
+              -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+              -p:AkvAssemblyFileVersion=${{ parameters.akvProviderAssemblyFileVersion }}
+              -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+              -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+            assemblyFileVersion: '${{ parameters.akvProviderAssemblyFileVersion }}'
+            publishSymbols: '${{ parameters.publishSymbols }}'
+            esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            esrpClientId: '${{ parameters.signingEsrpClientId }}'
+            appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            authAkvName: '${{ parameters.signingAuthAkvName }}'
+            authSignCertName: '${{ parameters.signingAuthSignCertName }}'
             downloadArtifacts:
-              - artifactName: $(sqlClientArtifactsName)
-                displayName: SqlClient Package
-              - artifactName: $(abstractionsArtifactsName)
+              - artifactName: '${{ parameters.mdsArtifactsName }}'
+                displayName: MDS Package
+              - artifactName: '${{ parameters.abstractionsArtifactsName }}'
                 displayName: Abstractions Package
-              - artifactName: $(loggingArtifactsName)
+              - artifactName: '${{ parameters.loggingArtifactsName }}'
                 displayName: Logging Package
 
   # ====================================================================
@@ -282,5 +306,5 @@ stages:
       jobs:
         - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
           parameters:
-            artifactName: $(sqlClientArtifactsName)
-            isPreview: ${{ parameters.isPreview }}
+            artifactName: '${{ parameters.sqlClientArtifactsName }}'
+            isPreview: '${{ parameters.isPreview }}'

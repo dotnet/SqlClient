@@ -39,7 +39,7 @@ parameters:
     default: true
 
   # Build Microsoft.Data.SqlClient and Extensions packages.
-  - name: buildSqlClient
+  - name: buildMdsAndExtensions
     displayName: Build Microsoft.Data.SqlClient and Extensions
     type: boolean
     default: true
@@ -72,7 +72,7 @@ parameters:
     default: false
 
   # Release the Microsoft.Data.SqlClient package.
-  - name: releaseSqlClient
+  - name: releaseMds
     displayName: Release Microsoft.Data.SqlClient
     type: boolean
     default: false
@@ -91,6 +91,7 @@ parameters:
 
 variables:
   # @TODO: Need cleaning
+  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
 
   # @TODO: These are good
@@ -186,25 +187,56 @@ extends:
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
-          isPreview: ${{ parameters.isPreview }}
-          publishSymbols: ${{ parameters.publishSymbols }}
-          buildMss: ${{ parameters.buildMss }}
-          buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+          isPreview: '${{ parameters.isPreview }}'
+
+          apiScanDllPath: '${{ variables.apiScanDllPath }}'
+          apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
+
+          buildAkvProvider: '${{ parameters.buildAkvProvider }}'
+          buildMdsAndExtensions: '${{ parameters.buildMdsAndExtensions }}'
+          buildMss: '${{ parameters.buildMss }}'
+
+          abstractionsArtifactsName: '$(abstractionsArtifactName)'
+          abstractionsAssemblyFileVersion: '$(abstractionsAssemblyFileVersions)'
+          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
+          akvProviderAssemblyFileVersion: '$(akvProviderAssemblyFileVersion)'
+          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
+          azureAssemblyFileVersion: '$(azureAssemblyFileVersion)'
+          azurePackageVersion: '$(effectiveAzureVersion)'
+          loggingArtifactsName: '$(loggingArtifactsName)'
+          loggingAssemblyFileVersion: '$(loggingAssemblyFileVersion)'
+          loggingPackageVersion: '$(effectiveLoggingVersion)'
+          mdsArtifactsName: '$(sqlClientArtifactsName)'
+          mdsPackageVersion: '$(effectiveMdsPackageVersion)'
+          mssAssemblyFileVersion: '$(sqlServerAssemblyFileVersion)'
+          mssPackageVersion: '$(effectiveSqlServerVersion)'
+
+          signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
+          signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
+          signingAuthAkvName: '$(SigningAuthAkvName)'
+          signingAuthSignCertName: '$(SigningAuthSignCertName)'
+          signingEsrpClientId: '$(SigningEsrpClientId)'
+          signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
+
+          publishSymbols: '${{ parameters.publishSymbols }}'
+          symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
+          symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
+          symbolsPublishServer: '$(SymbolsPublishServer)'
+          symbolsPublishTokenUri: '$(SymbolsPublishTokenUri)'
+          symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
+          debug: '${{ parameters.debug }}'
           # Non-official pipelines must always be a dry run.
           isDryRun: true
           # This is _not_ official pipeline.
           isOfficial: false
           stageNameSuffix: test
           stageDisplayName: Release Test (Dry Run)
-          releaseMss: ${{ parameters.releaseMss }}
-          releaseLogging: ${{ parameters.releaseLogging }}
-          releaseAbstractions: ${{ parameters.releaseAbstractions }}
-          releaseSqlClient: ${{ parameters.releaseSqlClient }}
-          releaseAzure: ${{ parameters.releaseAzure }}
-          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}
+          releaseMss: '${{ parameters.releaseMss }}'
+          releaseLogging: '${{ parameters.releaseLogging }}'
+          releaseAbstractions: '${{ parameters.releaseAbstractions }}'
+          releaseSqlClient: '${{ parameters.releaseMds }}'
+          releaseAzure: '${{ parameters.releaseAzure }}'
+          releaseAkvProvider: '${{ parameters.releaseAkvProvider }}'

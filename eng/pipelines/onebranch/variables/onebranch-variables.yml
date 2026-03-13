@@ -7,14 +7,6 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 variables:
-  # onebranch template variables
-  - name: ob_sdl_binskim_break
-    value: true # https://aka.ms/obpipelines/sdl
-  - name: Packaging.EnableSBOMSigning
-    value: true
-  - name: WindowsContainerImage
-    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest" # Docker image which is used to build the project https://aka.ms/obpipelines/containers
-
   # OneBranch automatically publishes pipeline artifacts from all jobs.  Use of the
   # PublishPipelineArtifacts task is prohibited.  All content in the ob_outputDirectory is
   # published.  The artifacts are named according to this pattern:
@@ -51,3 +43,29 @@ variables:
   # The SqlClient package artifacts.
   - name: sqlClientArtifactsName
     value: drop_build_dependent_build_package_SqlClient
+
+  # OneBranch Variables ====================================================
+  # These variables are defined in the OneBranch template and we assign variables to them not.
+
+  # Whether SBOMs should be signed
+  - name: Packaging.EnableSBOMSigning
+    value: true
+
+  # Whether binskim should break the build. See https://aka.ms/obpipelines/sdl
+  - name: ob_sdl_binskim_break
+    value: true
+
+  # Docker image which is used to build the project. See https://aka.ms/obpipelines/containers
+  - name: WindowsContainerImage
+    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest"
+
+  # APIScan Variables ======================================================
+  # These variables are defined by us and passed to APIScan.
+
+  # Path where we will place DLLs and tell APIScan to scan (as "software folder")
+  - name: apiScanDllPath
+    value: '$(Build.SourcesDirectory)/apiScan/dlls'
+
+  # Path where we will place PDBs and tell APIScan to scan (as "symbols folder")
+  - name: apiScanPdbPath
+    value: '$(Build.SourcesDirectory)/apiScan/pdbs'

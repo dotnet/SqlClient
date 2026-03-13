@@ -51,7 +51,8 @@ parameters:
     type: boolean
     default: true
 
-  # Build parameters — select which packages to build.
+  # Build parameters =======================================================
+  # Select which packages to build.
 
   # Build the Microsoft.SqlServer.Server package.
   - name: buildMss
@@ -60,7 +61,7 @@ parameters:
     default: true
 
   # Build Microsoft.Data.SqlClient and Extensions packages.
-  - name: buildSqlClient
+  - name: buildMdsAndExtensions
     displayName: Build Microsoft.Data.SqlClient and Extensions
     type: boolean
     default: true
@@ -71,8 +72,9 @@ parameters:
     type: boolean
     default: true
 
-  # Release parameters — select which packages to publish to NuGet.
-  # All default to false; toggle at queue time for on-demand selective release.
+  # Release parameters =====================================================
+  # Select which packages to publish to NuGet. All default to false; toggle at queue time for on-
+  # demand selective release.
 
   # Release the Microsoft.SqlServer.Server package.
   - name: releaseMss
@@ -93,7 +95,7 @@ parameters:
     default: false
 
   # Release the Microsoft.Data.SqlClient package.
-  - name: releaseSqlClient
+  - name: releaseMds
     displayName: Release Microsoft.Data.SqlClient
     type: boolean
     default: false
@@ -112,6 +114,7 @@ parameters:
 
 variables:
   # @TODO: Need cleaning
+  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
 
   # @TODO: These are good
@@ -121,30 +124,30 @@ variables:
   # Define the effective versions for all of the packages we build and release.
   - ${{ if parameters.isPreview }}:
     - name: effectiveSqlServerVersion
-      value: $(sqlServerPackagePreviewVersion)
+      value: '$(sqlServerPackagePreviewVersion)'
     - name: effectiveLoggingVersion
-      value: $(loggingPackagePreviewVersion)
+      value: '$(loggingPackagePreviewVersion)'
     - name: effectiveAbstractionsVersion
-      value: $(abstractionsPackagePreviewVersion)
+      value: '$(abstractionsPackagePreviewVersion)'
     - name: effectiveSqlClientVersion
-      value: $(mdsPackagePreviewVersion)
+      value: '$(mdsPackagePreviewVersion)'
     - name: effectiveAzureVersion
-      value: $(azurePackagePreviewVersion)
+      value: '$(azurePackagePreviewVersion)'
     - name: effectiveAkvProviderVersion
-      value: $(akvPackagePreviewVersion)
+      value: '$(akvPackagePreviewVersion)'
   - ${{ else }}:
     - name: effectiveSqlServerVersion
-      value: $(sqlServerPackageVersion)
+      value: '$(sqlServerPackageVersion)'
     - name: effectiveLoggingVersion
-      value: $(loggingPackageVersion)
+      value: '$(loggingPackageVersion)'
     - name: effectiveAbstractionsVersion
-      value: $(abstractionsPackageVersion)
+      value: '$(abstractionsPackageVersion)'
     - name: effectiveSqlClientVersion
-      value: $(mdsPackageVersion)
+      value: '$(mdsPackageVersion)'
     - name: effectiveAzureVersion
-      value: $(azurePackageVersion)
+      value: '$(azurePackageVersion)'
     - name: effectiveAkvProviderVersion
-      value: $(akvPackageVersion)
+      value: '$(akvPackageVersion)'
 
 resources:
   repositories:
@@ -184,7 +187,7 @@ extends:
       sbom:
         enabled: true
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(mdsPackageVersion)
+        packageVersion: '$(mdsPackageVersion)'
       policheck:
         enabled: true
         break: true
@@ -211,17 +214,49 @@ extends:
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
-          isPreview: ${{ parameters.isPreview }}
-          publishSymbols: ${{ parameters.publishSymbols }}
-          buildMss: ${{ parameters.buildMss }}
-          buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+          isPreview: '${{ parameters.isPreview }}'
+
+          apiScanDllPath: '${{ variables.apiScanDllPath }}'
+          apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
+
+          buildAkvProvider: '${{ parameters.buildAkvProvider }}'
+          buildMdsAndExtensions: '${{ parameters.buildMdsAndExtensions }}'
+          buildMss: '${{ parameters.buildMss }}'
+
+          abstractionsArtifactsName: '$(abstractionsArtifactName)'
+          abstractionsAssemblyFileVersion: '$(abstractionsAssemblyFileVersions)'
+          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
+          akvProviderAssemblyFileVersion: '$(akvProviderAssemblyFileVersion)'
+          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
+          azureAssemblyFileVersion: '$(azureAssemblyFileVersion)'
+          azurePackageVersion: '$(effectiveAzureVersion)'
+          loggingArtifactsName: '$(loggingArtifactsName)'
+          loggingAssemblyFileVersion: '$(loggingAssemblyFileVersion)'
+          loggingPackageVersion: '$(effectiveLoggingVersion)'
+          mdsArtifactsName: '$(sqlClientArtifactsName)'
+          mdsPackageVersion: '$(effectiveMdsPackageVersion)'
+          mssAssemblyFileVersion: '$(sqlServerAssemblyFileVersion)'
+          mssPackageVersion: '$(effectiveSqlServerVersion)'
+
+          signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
+          signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
+          signingAuthAkvName: '$(SigningAuthAkvName)'
+          signingAuthSignCertName: '$(SigningAuthSignCertName)'
+          signingEsrpClientId: '$(SigningEsrpClientId)'
+          signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
+
+          publishSymbols: '${{ parameters.publishSymbols }}'
+          symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
+          symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
+          symbolsPublishServer: '$(SymbolsPublishServer)'
+          symbolsPublishTokenUri: '$(SymbolsPublishTokenUri)'
+          symbolsUploadAccount: '$(SymbolsUploadAccount)'
+
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
-          isDryRun: ${{ parameters.releaseDryRun }}
+          debug: '${{ parameters.debug }}'
+          isDryRun: '${{ parameters.releaseDryRun }}'
           # This is an official pipeline.
           isOfficial: true
           stageNameSuffix: production
@@ -229,9 +264,9 @@ extends:
             stageDisplayName: Release Production (Dry Run)
           ${{ else }}:
             stageDisplayName: Release Production
-          releaseMss: ${{ parameters.releaseMss }}
-          releaseLogging: ${{ parameters.releaseLogging }}
-          releaseAbstractions: ${{ parameters.releaseAbstractions }}
-          releaseSqlClient: ${{ parameters.releaseSqlClient }}
-          releaseAzure: ${{ parameters.releaseAzure }}
-          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}
+          releaseMss: '${{ parameters.releaseMss }}'
+          releaseLogging: '${{ parameters.releaseLogging }}'
+          releaseAbstractions: '${{ parameters.releaseAbstractions }}'
+          releaseSqlClient: '${{ parameters.releaseMds }}'
+          releaseAzure: '${{ parameters.releaseAzure }}'
+          releaseAkvProvider: '${{ parameters.releaseAkvProvider }}'
