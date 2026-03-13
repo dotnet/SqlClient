@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Не удается найти поставщик проверки подлинности для "{0}".</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Не удалось прочитать раздел конфигурации для поставщиков проверки подлинности.</value>
   </data>

@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}'에 대한 인증 공급자를 찾을 수 없습니다.</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>인증 공급자에 대한 구성 섹션을 읽지 못했습니다.</value>
   </data>

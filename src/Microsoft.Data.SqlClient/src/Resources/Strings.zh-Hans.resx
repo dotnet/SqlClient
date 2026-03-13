@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>找不到“{0}”的身份验证提供程序。</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>未能读取身份验证提供程序的配置节。</value>
   </data>

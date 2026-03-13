@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Non è possibile trovare un provider di autenticazione per '{0}'.</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Non è stato possibile leggere la sezione di configurazione per i provider di autenticazione.</value>
   </data>
