@@ -1,6 +1,7 @@
-// <Snippet1>
 #if NET
+// <Snippet1>
 #nullable enable
+
 using System;
 using System.Buffers;
 using System.Net.Security;
@@ -54,5 +55,5 @@ class Program
         Console.WriteLine("Connected successfully with custom SSPI provider.");
     }
 }
-#endif
 // </Snippet1>
+#endif
