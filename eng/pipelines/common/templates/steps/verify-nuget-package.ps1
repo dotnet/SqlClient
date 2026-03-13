@@ -81,7 +81,7 @@ if (!(Test-Path $NugetConfig)) {
 
 Write-Host "Downloading $packageName $packageVersion..."
 Write-Host "Using NuGet.config: $NugetConfig"
-dotnet restore (Join-Path $tempDir "_.csproj") --configfile $NugetConfig --verbosity detailed -tl:off
+dotnet restore (Join-Path $tempDir "_.csproj") --configfile $NugetConfig --verbosity normal -tl:off
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to download $packageName package."
     exit 1
