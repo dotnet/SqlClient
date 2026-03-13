@@ -5,11 +5,9 @@
 
 > **⚠️ Internal Package — Do Not Reference Directly**
 >
-> This package is intended for **internal use by other Microsoft.Data.SqlClient packages only**.
+> This package is intended for **internal use by the SqlClient suite of packages only**.
 > It is not designed for direct consumption by application code and may undergo breaking changes
-> without notice. Application developers should reference
-> [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) instead,
-> which includes this package as a transitive dependency.
+> without notice.
 
 ## Description
 
