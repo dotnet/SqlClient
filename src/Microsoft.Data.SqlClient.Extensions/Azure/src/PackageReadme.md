@@ -9,7 +9,7 @@ This package provides **Azure integration extensions** for [Microsoft.Data.SqlCl
 
 ## Key Features
 
-- **Azure AD Authentication**: Simplified Azure Active Directory token-based authentication
+- **Entra ID Authentication**: Simplified Entra ID token-based authentication
 - **Managed Identity Support**: Connect to Azure SQL using Azure Managed Identities
 - **Token Caching**: Automatic caching of authentication tokens for improved performance
 - **Azure.Identity Integration**: Leverage the full power of Azure.Identity credential providers
@@ -129,7 +129,7 @@ await connection.OpenAsync();
 
 ## Documentation
 
-- [Azure SQL Database Azure AD Authentication](https://learn.microsoft.com/azure/azure-sql/database/authentication-aad-overview)
+- [Entra ID Authentication](https://learn.microsoft.com/azure/azure-sql/database/authentication-aad-overview)
 - [Azure.Identity Documentation](https://learn.microsoft.com/dotnet/api/overview/azure/identity-readme)
 - [Microsoft.Data.SqlClient Documentation](https://learn.microsoft.com/sql/connect/ado-net/introduction-microsoft-data-sqlclient-namespace)
 - [Managed Identities Overview](https://learn.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview)
@@ -143,4 +143,5 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 - [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) - The main SqlClient driver
 - [Microsoft.Data.SqlClient.Extensions.Abstractions](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Abstractions) - Core abstractions
 - [Microsoft.Data.SqlClient.Internal.Logging](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Internal.Logging) - Logging internals
-- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) - Azure AD authentication library
+- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) - Entra ID authentication library
+- 

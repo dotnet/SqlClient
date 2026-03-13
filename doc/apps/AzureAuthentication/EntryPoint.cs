@@ -19,7 +19,7 @@ public static class EntryPoint
         {
             Description =
                 "The ADO.NET connection string used to connect to SQL Server. " +
-                "Supports SQL, Azure AD, and integrated authentication modes.",
+                "Supports SQL, Entra ID, and integrated authentication modes.",
             Required = true
         };
 

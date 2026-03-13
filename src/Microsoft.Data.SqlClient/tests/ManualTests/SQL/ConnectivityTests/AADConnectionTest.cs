@@ -497,7 +497,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Test passes locally everytime, but in pieplines fails randomly with uncertainity.
-        // e.g. Second AAD connection too slow (802ms)! (More than 30% of the first (576ms).)
+        // e.g. Second Entra ID connection too slow (802ms)! (More than 30% of the first (576ms).)
         [ActiveIssue("16058")]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
@@ -538,9 +538,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
+                // Subsequent Entra ID connections within a short timeframe should use an auth token cached from the connection pool
                 // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
-                Assert.True(((double)secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds) < 0.30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
+                Assert.True(((double)secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds) < 0.30, $"Second Entra ID connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
             }
             finally
             {

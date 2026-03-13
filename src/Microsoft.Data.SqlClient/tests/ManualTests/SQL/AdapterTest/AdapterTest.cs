@@ -1062,7 +1062,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool CanRunSchemaTests()
         {
             return DataTestUtility.AreConnStringsSetup() &&
-                // Tests switch to master database, which is not guaranteed when using AAD auth
+                // Tests switch to master database, which is not guaranteed when using Entra ID auth
                 DataTestUtility.TcpConnectionStringDoesNotUseAadAuth;
         }
 

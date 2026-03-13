@@ -133,7 +133,7 @@ Entry point for database connectivity. Manages:
 - Connection string parsing (via `SqlConnectionStringBuilder`)
 - Connection pooling integration
 - Transaction enlistment (local and distributed)
-- Authentication (SQL, Windows, Azure AD)
+- Authentication (SQL, Windows, Entra ID)
 
 ### SqlCommand
 Executes SQL statements and stored procedures:
@@ -159,7 +159,7 @@ Located in `ConnectionPool/`:
 Located in `SSPI/` and authentication-related files:
 - Windows Authentication (SSPI/Kerberos)
 - SQL Server Authentication
-- Azure Active Directory authentication modes
+- Entra ID authentication modes
 
 ### Always Encrypted
 Column-level encryption implementation:
