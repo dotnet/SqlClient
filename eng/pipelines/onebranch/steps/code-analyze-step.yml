@@ -13,15 +13,22 @@
 # GOTCHA: This step will clobber any existing build output.  It should be run
 # _before_ any build steps that perform versioning or signing.
 
-# @TODO: This can probably be made generic and pass in the command lines for msbuild
-#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
-#        affect >1 project at a time.
-
 parameters:
   # Source Root.
   - name: sourceRoot
     type: string
     default: $(REPO_ROOT)
+
+  # MSBuild arguments appended after the project file path.  The default targets
+  # BuildAllConfigurations for the full MDS build; override this when analyzing
+  # individual extension packages.
+  - name: msBuildArguments
+    type: string
+    default: >-
+      -t:BuildAllConfigurations
+      -p:configuration=Release
+      -p:GenerateNuget=false
+      -p:BuildTools=false
 
 steps:
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
@@ -33,7 +40,4 @@ steps:
       msBuildCommandline: >-
         msbuild
         ${{parameters.sourceRoot}}\build.proj
-        -t:BuildAllConfigurations
-        -p:configuration=Release
-        -p:GenerateNuget=false
-        -p:BuildTools=false
+        ${{parameters.msBuildArguments}}
