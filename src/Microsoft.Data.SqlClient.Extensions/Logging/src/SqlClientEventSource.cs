@@ -14,6 +14,35 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// ETW EventSource for Microsoft.Data.SqlClient tracing and diagnostics.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This <see cref="EventSource"/> uses the provider name <c>Microsoft.Data.SqlClient.EventSource</c>
+    /// and can be enabled via ETW tools such as PerfView, dotnet-trace, or programmatically through
+    /// <see cref="System.Diagnostics.Tracing.EventListener"/> instances.
+    /// </para>
+    /// <para>
+    /// Events are organized into keyword groups (see <see cref="Keywords"/>) that can be enabled
+    /// independently to control the verbosity and scope of tracing.  Use the singleton <see cref="Log"/>
+    /// instance to write events and query enablement status.
+    /// </para>
+    /// <para>
+    /// <strong>Note:</strong> This API surface is primarily intended for internal use by the
+    /// Microsoft.Data.SqlClient driver. While public, it may be modified or reduced in future
+    /// versions without following the standard breaking-change deprecation policy.
+    /// </para>
+    /// <example>
+    /// Enable ETW tracing with PerfView:
+    /// <code>
+    /// PerfView.exe collect /Providers=*Microsoft.Data.SqlClient.EventSource
+    /// </code>
+    /// </example>
+    /// <example>
+    /// Collect traces with dotnet-trace:
+    /// <code>
+    /// dotnet-trace collect -p &lt;PID&gt; --providers Microsoft.Data.SqlClient.EventSource:1FFF:5
+    /// </code>
+    /// </example>
+    /// </remarks>
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     public class SqlClientEventSource : EventSource
     {
@@ -23,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         public static readonly SqlClientEventSource Log = new();
 
         /// <summary>
-        /// A callback that is invoked when the EventSource receives an Enable command.
+        /// Gets or sets a callback that is invoked when the EventSource receives an Enable command.
         /// Can be used to hook metrics or other subsystems that need to respond to EventSource enablement.
         /// </summary>
         public static Action? OnEventSourceEnabled { get; set; }
@@ -70,97 +99,97 @@ namespace Microsoft.Data.SqlClient
         private const int EndExecuteEventId = 2;
 
         /// <summary>
-        /// Defines EventId for Trace() events
+        /// Defines EventId for Trace() events.
         /// </summary>
         private const int TraceEventId = 3;
 
         /// <summary>
-        /// Defines EventId for ScopeEnter() events
+        /// Defines EventId for ScopeEnter() events.
         /// </summary>
         private const int ScopeEnterId = 4;
 
         /// <summary>
-        /// Defines EventId for ScopeLeave() events
+        /// Defines EventId for ScopeLeave() events.
         /// </summary>
         private const int ScopeExitId = 5;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeEnter() events
+        /// Defines EventId for NotificationScopeEnter() events.
         /// </summary>
         private const int NotificationScopeEnterId = 6;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeLeave() events
+        /// Defines EventId for NotificationScopeLeave() events.
         /// </summary>
         private const int NotificationScopeExitId = 7;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeTrace() events
+        /// Defines EventId for NotificationScopeTrace() events.
         /// </summary>
         private const int NotificationTraceId = 8;
 
         /// <summary>
-        /// Defines EventId for PoolerScopeEnter() events
+        /// Defines EventId for PoolerScopeEnter() events.
         /// </summary>
         private const int PoolerScopeEnterId = 9;
 
         /// <summary>
-        /// Defines EventId for PoolerScopeLeave() events
+        /// Defines EventId for PoolerScopeLeave() events.
         /// </summary>
         private const int PoolerScopeExitId = 10;
 
         /// <summary>
-        /// Defines EventId for PoolerTrace() events
+        /// Defines EventId for PoolerTrace() events.
         /// </summary>
         private const int PoolerTraceId = 11;
 
         /// <summary>
-        /// Defines EventId for AdvancedTrace() events
+        /// Defines EventId for AdvancedTrace() events.
         /// </summary>
         private const int AdvancedTraceId = 12;
 
         /// <summary>
-        /// Defines EventId for AdvancedScopeEnter() events
+        /// Defines EventId for AdvancedScopeEnter() events.
         /// </summary>
         private const int AdvancedScopeEnterId = 13;
 
         /// <summary>
-        /// Defines EventId for AdvancedScopeLeave() events
+        /// Defines EventId for AdvancedScopeLeave() events.
         /// </summary>
         private const int AdvancedScopeExitId = 14;
 
         /// <summary>
-        /// Defines EventId for AdvancedTraceBin() events
+        /// Defines EventId for AdvancedTraceBin() events.
         /// </summary>
         private const int AdvancedTraceBinId = 15;
 
         /// <summary>
-        /// Defines EventId for AdvancedTraceError() events
+        /// Defines EventId for AdvancedTraceError() events.
         /// </summary>
         private const int AdvancedTraceErrorId = 16;
 
         /// <summary>
-        /// Defines EventId for CorrelationTrace() events
+        /// Defines EventId for CorrelationTrace() events.
         /// </summary>
         private const int CorrelationTraceId = 17;
 
         /// <summary>
-        /// Defines EventId for StateDump() events
+        /// Defines EventId for StateDump() events.
         /// </summary>
         private const int StateDumpEventId = 18;
 
         /// <summary>
-        /// Defines EventId for SNITrace() events
+        /// Defines EventId for SNITrace() events.
         /// </summary>
         private const int SNITraceEventId = 19;
 
         /// <summary>
-        /// Defines EventId for SNIEnterScope() events
+        /// Defines EventId for SNIEnterScope() events.
         /// </summary>
         private const int SNIScopeEnterId = 20;
 
         /// <summary>
-        /// Defines EventId for SNIExitScope() events
+        /// Defines EventId for SNIExitScope() events.
         /// </summary>
         private const int SNIScopeExitId = 21;
         #endregion
@@ -250,6 +279,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Tasks supported by SqlClient's EventSource implementation.
         /// </summary>
+        /// <remarks>
+        /// Tasks represent logical groups of related start/stop operations and are used by
+        /// ETW consumers to correlate scope-enter and scope-leave events.
+        /// </remarks>
         public static class Tasks
         {
             /// <summary>
@@ -283,78 +316,91 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Checks if execution trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if execution trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsExecutionTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.ExecutionTrace);
 
         /// <summary>
         /// Checks if trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Trace);
 
         /// <summary>
         /// Checks if scope events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if scope events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.Scope);
 
         /// <summary>
         /// Checks if notification trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if notification trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsNotificationTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.NotificationTrace);
 
         /// <summary>
         /// Checks if notification scope events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if notification scope events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsNotificationScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.NotificationScope);
 
         /// <summary>
         /// Checks if pooler trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if pooler trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsPoolerTraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerTrace);
 
         /// <summary>
         /// Checks if pooler scope events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if pooler scope events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsPoolerScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.PoolerScope);
 
         /// <summary>
         /// Checks if advanced trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if advanced trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsAdvancedTraceOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTrace);
 
         /// <summary>
         /// Checks if advanced trace binary events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if advanced trace binary events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsAdvancedTraceBinOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTraceBin);
 
         /// <summary>
         /// Checks if correlation trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if correlation trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.CorrelationTrace);
 
         /// <summary>
         /// Checks if state dump events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if state dump events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsStateDumpEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.StateDump);
 
         /// <summary>
         /// Checks if SNI trace events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if SNI trace events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsSNITraceEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNITrace);
 
         /// <summary>
         /// Checks if SNI scope events are enabled.
         /// </summary>
+        /// <returns><see langword="true"/> if SNI scope events are enabled; otherwise, <see langword="false"/>.</returns>
         [NonEvent]
         public bool IsSNIScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNIScope);
         #endregion
@@ -371,6 +417,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with two arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -380,6 +431,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with three arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -389,6 +447,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with four arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void TraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -400,6 +467,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a trace event if trace is enabled.
         /// </summary>
+        /// <param name="message">The trace message.</param>
         [NonEvent]
         public void TryTraceEvent(string message)
         {
@@ -412,6 +480,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with one argument if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0>(string message, T0 args0)
         {
@@ -424,6 +495,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with two arguments if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -436,6 +512,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with three arguments if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -448,6 +531,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with four arguments if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -460,6 +552,17 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with five arguments if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
         {
@@ -472,6 +575,19 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with six arguments if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
@@ -484,6 +600,21 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted trace event with seven arguments if trace is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <typeparam name="T6">The type of the seventh argument.</typeparam>
+        /// <param name="message">A composite format string for the trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
+        /// <param name="arg6">The seventh argument to format into the message.</param>
         [NonEvent]
         public void TryTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 arg6)
         {
@@ -500,6 +631,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a scope and writes a scope event if scope tracing is enabled.
         /// </summary>
+        /// <param name="className">The name of the class entering the scope.</param>
+        /// <param name="memberName">The name of the member entering the scope (auto-populated by the compiler).</param>
+        /// <returns>The scope identifier, or 0 if scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryScopeEnterEvent(string className, [CallerMemberName] string memberName = "")
         {
@@ -515,6 +649,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a scope with one formatted argument if scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryScopeEnterEvent<T0>(string message, T0 args0)
         {
@@ -528,6 +666,12 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a scope with two formatted arguments if scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -541,6 +685,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a scope with three formatted arguments if scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -554,6 +706,16 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a scope with four formatted arguments if scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -567,6 +729,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves a scope if scope tracing is enabled.
         /// </summary>
+        /// <param name="scopeId">The scope identifier returned by a previous scope enter call.</param>
         [NonEvent]
         public void TryScopeLeaveEvent(long scopeId)
         {
@@ -581,6 +744,12 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a BeginExecute trace event if execution tracing is enabled.
         /// </summary>
+        /// <param name="objectId">The object identifier of the command.</param>
+        /// <param name="dataSource">The data source (server) name.</param>
+        /// <param name="database">The database name.</param>
+        /// <param name="commandText">The SQL command text being executed.</param>
+        /// <param name="connectionId">The client connection identifier.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TryBeginExecuteEvent(int objectId, string dataSource, string database, string commandText, Guid? connectionId, [CallerMemberName] string memberName = "")
         {
@@ -593,6 +762,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an EndExecute trace event if execution tracing is enabled.
         /// </summary>
+        /// <param name="objectId">The object identifier of the command.</param>
+        /// <param name="compositeState">The composite state of the command at completion.</param>
+        /// <param name="sqlExceptionNumber">The SQL exception number, or 0 if no exception occurred.</param>
+        /// <param name="connectionId">The client connection identifier.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TryEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber, Guid? connectionId, [CallerMemberName] string memberName = "")
         {
@@ -609,6 +783,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted notification trace event with two arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the notification trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void NotificationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -620,6 +799,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a notification trace event if notification tracing is enabled.
         /// </summary>
+        /// <param name="message">The notification trace message.</param>
         [NonEvent]
         public void TryNotificationTraceEvent(string message)
         {
@@ -632,6 +812,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted notification trace event with one argument if notification tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the notification trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
         [NonEvent]
         public void TryNotificationTraceEvent<T0>(string message, T0 args0)
         {
@@ -644,6 +827,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted notification trace event with two arguments if notification tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the notification trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void TryNotificationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -656,6 +844,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted notification trace event with three arguments if notification tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the notification trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TryNotificationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -668,6 +863,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted notification trace event with four arguments if notification tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the notification trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void TryNotificationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -684,6 +888,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a notification scope with one formatted argument if notification scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the notification scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if notification scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryNotificationScopeEnterEvent<T0>(string message, T0 args0)
         {
@@ -697,6 +905,12 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a notification scope with two formatted arguments if notification scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the notification scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if notification scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryNotificationScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -710,6 +924,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a notification scope with three formatted arguments if notification scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the notification scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if notification scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryNotificationScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -723,6 +945,16 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a notification scope with four formatted arguments if notification scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the notification scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if notification scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryNotificationScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -736,6 +968,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves a notification scope if notification scope tracing is enabled.
         /// </summary>
+        /// <param name="scopeId">The scope identifier returned by a previous notification scope enter call.</param>
         [NonEvent]
         public void TryNotificationScopeLeaveEvent(long scopeId)
         {
@@ -750,6 +983,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a pooler trace event if pooler tracing is enabled.
         /// </summary>
+        /// <param name="message">The pooler trace message.</param>
         [NonEvent]
         public void TryPoolerTraceEvent(string message)
         {
@@ -762,6 +996,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted pooler trace event with one argument if pooler tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the pooler trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
         [NonEvent]
         public void TryPoolerTraceEvent<T0>(string message, T0 args0)
         {
@@ -774,6 +1011,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted pooler trace event with two arguments if pooler tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the pooler trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void TryPoolerTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -786,6 +1028,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted pooler trace event with three arguments if pooler tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the pooler trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TryPoolerTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -798,6 +1047,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted pooler trace event with four arguments if pooler tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the pooler trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void TryPoolerTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -812,6 +1070,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a pooler scope with one formatted argument if pooler scope tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the pooler scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if pooler scope tracing is not enabled.</returns>
         [NonEvent]
         public long TryPoolerScopeEnterEvent<T0>(string message, T0 args0)
         {
@@ -825,6 +1087,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves a pooler scope if pooler scope tracing is enabled.
         /// </summary>
+        /// <param name="scopeId">The scope identifier returned by a previous pooler scope enter call.</param>
         [NonEvent]
         public void TryPoolerScopeLeaveEvent(long scopeId)
         {
@@ -841,6 +1104,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with one argument.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
         [NonEvent]
         public void AdvancedTraceEvent<T0>(string message, T0 args0)
         {
@@ -850,6 +1116,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with two arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void AdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -859,6 +1130,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with three arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void AdvancedTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -868,6 +1146,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with four arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void AdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -879,6 +1166,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an advanced trace event if advanced tracing is enabled.
         /// </summary>
+        /// <param name="message">The advanced trace message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent(string message)
         {
@@ -891,6 +1179,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with one argument if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0>(string message, T0 args0)
         {
@@ -903,6 +1194,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with two arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -915,6 +1211,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with three arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -927,6 +1230,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with four arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -939,6 +1251,17 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with five arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
         {
@@ -951,6 +1274,19 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with six arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
@@ -963,6 +1299,23 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with eight arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <typeparam name="T6">The type of the seventh argument.</typeparam>
+        /// <typeparam name="T7">The type of the eighth argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
+        /// <param name="args6">The seventh argument to format into the message.</param>
+        /// <param name="args7">The eighth argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6, T7>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6, T7 args7)
         {
@@ -975,6 +1328,21 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace event with seven arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <typeparam name="T6">The type of the seventh argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
+        /// <param name="args6">The seventh argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6)
         {
@@ -987,6 +1355,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters an advanced scope with one formatted argument if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <returns>The scope identifier, or 0 if advanced tracing is not enabled.</returns>
         [NonEvent]
         public long TryAdvancedScopeEnterEvent<T0>(string message, T0 args0)
         {
@@ -1000,6 +1372,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves an advanced scope if advanced tracing is enabled.
         /// </summary>
+        /// <param name="scopeId">The scope identifier returned by a previous advanced scope enter call.</param>
         [NonEvent]
         public void TryAdvanceScopeLeave(long scopeId)
         {
@@ -1012,6 +1385,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace binary event with three arguments if advanced binary tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument (may be <c>byte[]</c> for hex formatting).</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace binary message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message. If this is a <c>byte[]</c>, it is formatted as a hex string.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceBinEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -1031,6 +1411,17 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted advanced trace error event with five arguments if advanced tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <param name="message">A composite format string for the advanced trace error message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
         [NonEvent]
         public void TryAdvancedTraceErrorEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
         {
@@ -1048,6 +1439,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a correlation trace event if correlation tracing is enabled.
         /// </summary>
+        /// <param name="message">The correlation trace message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent(string message)
         {
@@ -1060,6 +1452,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted correlation trace event with one argument if correlation tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the correlation trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent<T0>(string message, T0 args0)
         {
@@ -1072,6 +1467,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted correlation trace event with two arguments if correlation tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the correlation trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -1084,6 +1484,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted correlation trace event with three arguments if correlation tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the correlation trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -1096,6 +1503,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted correlation trace event with four arguments if correlation tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="message">A composite format string for the correlation trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
@@ -1108,6 +1524,17 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted correlation trace event with five arguments if correlation tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <param name="message">A composite format string for the correlation trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
         {
@@ -1120,6 +1547,19 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted correlation trace event with six arguments if correlation tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <param name="message">A composite format string for the correlation trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
         [NonEvent]
         public void TryCorrelationTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
@@ -1134,6 +1574,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted state dump event with two arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the state dump message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
         [NonEvent]
         public void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
@@ -1143,6 +1588,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted state dump event with three arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="message">A composite format string for the state dump message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
         [NonEvent]
         public void StateDumpEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
@@ -1154,6 +1606,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an SNI trace event if SNI tracing is enabled.
         /// </summary>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">The SNI trace message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent(string className, string eventType, string message, [CallerMemberName] string memberName = "")
         {
@@ -1166,6 +1622,12 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted SNI trace event with one argument if SNI tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">A composite format string for the SNI trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent<T0>(string className, string eventType, string message, T0 args0, [CallerMemberName] string memberName = "")
         {
@@ -1178,6 +1640,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted SNI trace event with two arguments if SNI tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">A composite format string for the SNI trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent<T0, T1>(string className, string eventType, string message, T0 args0, T1 args1, [CallerMemberName] string memberName = "")
         {
@@ -1190,6 +1660,16 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted SNI trace event with three arguments if SNI tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">A composite format string for the SNI trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent<T0, T1, T2>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, [CallerMemberName] string memberName = "")
         {
@@ -1202,6 +1682,18 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted SNI trace event with four arguments if SNI tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">A composite format string for the SNI trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent<T0, T1, T2, T3>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, T3 args3, [CallerMemberName] string memberName = "")
         {
@@ -1214,6 +1706,20 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted SNI trace event with five arguments if SNI tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">A composite format string for the SNI trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent<T0, T1, T2, T3, T4>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, [CallerMemberName] string memberName = "")
         {
@@ -1226,6 +1732,22 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a formatted SNI trace event with six arguments if SNI tracing is enabled.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <typeparam name="T2">The type of the third argument.</typeparam>
+        /// <typeparam name="T3">The type of the fourth argument.</typeparam>
+        /// <typeparam name="T4">The type of the fifth argument.</typeparam>
+        /// <typeparam name="T5">The type of the sixth argument.</typeparam>
+        /// <param name="className">The name of the class writing the SNI trace.</param>
+        /// <param name="eventType">The event type label (e.g., <see cref="EventType.INFO"/> or <see cref="EventType.ERR"/>).</param>
+        /// <param name="message">A composite format string for the SNI trace message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <param name="args2">The third argument to format into the message.</param>
+        /// <param name="args3">The fourth argument to format into the message.</param>
+        /// <param name="args4">The fifth argument to format into the message.</param>
+        /// <param name="args5">The sixth argument to format into the message.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
         [NonEvent]
         public void TrySNITraceEvent<T0, T1, T2, T3, T4, T5>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, [CallerMemberName] string memberName = "")
         {
@@ -1240,6 +1762,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters an SNI scope if SNI scope tracing is enabled.
         /// </summary>
+        /// <param name="className">The name of the class entering the SNI scope.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
+        /// <returns>The scope identifier, or 0 if SNI scope tracing is not enabled.</returns>
         [NonEvent]
         public long TrySNIScopeEnterEvent(string className, [CallerMemberName] string memberName = "")
         {
@@ -1255,6 +1780,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves an SNI scope if SNI scope tracing is enabled.
         /// </summary>
+        /// <param name="scopeId">The scope identifier returned by a previous SNI scope enter call.</param>
         [NonEvent]
         public void TrySNIScopeLeaveEvent(long scopeId)
         {
@@ -1268,24 +1794,33 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Write Events
-        // Do not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // Do not change the first 4 arguments in this Event writer as OpenTelemetry and Application Insights are related to the same format,
         // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
 
         /// <summary>
         /// Writes a BeginExecute event.
         /// </summary>
+        /// <param name="objectId">The object identifier of the command.</param>
+        /// <param name="dataSource">The data source (server) name.</param>
+        /// <param name="database">The database name.</param>
+        /// <param name="commandText">The SQL command text being executed.</param>
+        /// <param name="message">A formatted trace message with additional context.</param>
         [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
         public void BeginExecute(int objectId, string dataSource, string database, string commandText, string message)
         {
             WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
         }
 
-        // Do not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // Do not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format,
         // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
 
         /// <summary>
         /// Writes an EndExecute event.
         /// </summary>
+        /// <param name="objectId">The object identifier of the command.</param>
+        /// <param name="compositestate">The composite state of the command at completion.</param>
+        /// <param name="sqlExceptionNumber">The SQL exception number, or 0 if no exception occurred.</param>
+        /// <param name="message">A formatted trace message with additional context.</param>
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
         public void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
@@ -1295,6 +1830,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a Trace event.
         /// </summary>
+        /// <param name="message">The trace message.</param>
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         public void Trace(string message) =>
             WriteEvent(TraceEventId, message);
@@ -1302,6 +1838,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a scope.
         /// </summary>
+        /// <param name="message">A composite format string containing the scope identifier placeholder.</param>
+        /// <returns>The assigned scope identifier.</returns>
         [Event(ScopeEnterId, Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Start, Keywords = Keywords.Scope)]
         public long ScopeEnter(string message)
         {
@@ -1313,6 +1851,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves a scope.
         /// </summary>
+        /// <param name="message">The scope exit message.</param>
         [Event(ScopeExitId, Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Stop, Keywords = Keywords.Scope)]
         public void ScopeLeave(string message) =>
             WriteEvent(ScopeExitId, message);
@@ -1320,6 +1859,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a notification trace event.
         /// </summary>
+        /// <param name="message">The notification trace message.</param>
         [Event(NotificationTraceId, Level = EventLevel.Informational, Keywords = Keywords.NotificationTrace)]
         public void NotificationTrace(string message) =>
             WriteEvent(NotificationTraceId, message);
@@ -1327,6 +1867,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a notification scope.
         /// </summary>
+        /// <param name="message">A composite format string containing the scope identifier placeholder.</param>
+        /// <returns>The assigned scope identifier.</returns>
         [Event(NotificationScopeEnterId, Level = EventLevel.Informational, Task = Tasks.NotificationScope, Opcode = EventOpcode.Start, Keywords = Keywords.NotificationScope)]
         public long NotificationScopeEnter(string message)
         {
@@ -1338,6 +1880,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves a notification scope.
         /// </summary>
+        /// <param name="message">The notification scope exit message.</param>
         [Event(NotificationScopeExitId, Level = EventLevel.Informational, Task = Tasks.NotificationScope, Opcode = EventOpcode.Stop, Keywords = Keywords.NotificationScope)]
         public void NotificationScopeLeave(string message) =>
             WriteEvent(NotificationScopeExitId, message);
@@ -1345,6 +1888,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a pooler trace event.
         /// </summary>
+        /// <param name="message">The pooler trace message.</param>
         [Event(PoolerTraceId, Level = EventLevel.Informational, Keywords = Keywords.PoolerTrace)]
         public void PoolerTrace(string message) =>
             WriteEvent(PoolerTraceId, message);
@@ -1352,6 +1896,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters a pooler scope.
         /// </summary>
+        /// <param name="message">A composite format string containing the scope identifier placeholder.</param>
+        /// <returns>The assigned scope identifier.</returns>
         [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Task = Tasks.PoolerScope, Opcode = EventOpcode.Start, Keywords = Keywords.PoolerScope)]
         public long PoolerScopeEnter(string message)
         {
@@ -1363,6 +1909,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves a pooler scope.
         /// </summary>
+        /// <param name="message">The pooler scope exit message.</param>
         [Event(PoolerScopeExitId, Level = EventLevel.Informational, Task = Tasks.PoolerScope, Opcode = EventOpcode.Stop, Keywords = Keywords.PoolerScope)]
         public void PoolerScopeLeave(string message) =>
             WriteEvent(PoolerScopeExitId, message);
@@ -1370,6 +1917,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an advanced trace event.
         /// </summary>
+        /// <param name="message">The advanced trace message.</param>
         [Event(AdvancedTraceId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTrace)]
         public void AdvancedTrace(string message) =>
             WriteEvent(AdvancedTraceId, message);
@@ -1377,6 +1925,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters an advanced scope.
         /// </summary>
+        /// <param name="message">A composite format string containing the scope identifier placeholder.</param>
+        /// <returns>The assigned scope identifier.</returns>
         [Event(AdvancedScopeEnterId, Level = EventLevel.Verbose, Opcode = EventOpcode.Start, Keywords = Keywords.AdvancedTrace)]
         public long AdvancedScopeEnter(string message)
         {
@@ -1388,6 +1938,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves an advanced scope.
         /// </summary>
+        /// <param name="message">The advanced scope exit message.</param>
         [Event(AdvancedScopeExitId, Level = EventLevel.Verbose, Opcode = EventOpcode.Stop, Keywords = Keywords.AdvancedTrace)]
         public void AdvancedScopeLeave(string message) =>
             WriteEvent(AdvancedScopeExitId, message);
@@ -1395,6 +1946,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an advanced trace binary event.
         /// </summary>
+        /// <param name="message">The advanced trace binary message.</param>
         [Event(AdvancedTraceBinId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTraceBin)]
         public void AdvancedTraceBin(string message) =>
             WriteEvent(AdvancedTraceBinId, message);
@@ -1402,6 +1954,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an advanced trace error event.
         /// </summary>
+        /// <param name="message">The advanced trace error message.</param>
         [Event(AdvancedTraceErrorId, Level = EventLevel.Error, Keywords = Keywords.AdvancedTrace)]
         public void AdvancedTraceError(string message) =>
             WriteEvent(AdvancedTraceErrorId, message);
@@ -1409,6 +1962,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a correlation trace event.
         /// </summary>
+        /// <param name="message">The correlation trace message.</param>
         [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.CorrelationTrace)]
         public void CorrelationTrace(string message) =>
             WriteEvent(CorrelationTraceId, message);
@@ -1416,6 +1970,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes a state dump event.
         /// </summary>
+        /// <param name="message">The state dump message.</param>
         [Event(StateDumpEventId, Level = EventLevel.Verbose, Keywords = Keywords.StateDump)]
         public void StateDump(string message) =>
             WriteEvent(StateDumpEventId, message);
@@ -1423,6 +1978,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Writes an SNI trace event.
         /// </summary>
+        /// <param name="message">The SNI trace message.</param>
         [Event(SNITraceEventId, Level = EventLevel.Informational, Keywords = Keywords.SNITrace)]
         public void SNITrace(string message) =>
             WriteEvent(SNITraceEventId, message);
@@ -1430,6 +1986,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Enters an SNI scope.
         /// </summary>
+        /// <param name="message">A composite format string containing the scope identifier placeholder.</param>
+        /// <returns>The assigned scope identifier.</returns>
         [Event(SNIScopeEnterId, Level = EventLevel.Informational, Task = Tasks.SNIScope, Opcode = EventOpcode.Start, Keywords = Keywords.SNIScope)]
         public long SNIScopeEnter(string message)
         {
@@ -1441,6 +1999,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Leaves an SNI scope.
         /// </summary>
+        /// <param name="message">The SNI scope exit message.</param>
         [Event(SNIScopeExitId, Level = EventLevel.Informational, Task = Tasks.SNIScope, Opcode = EventOpcode.Stop, Keywords = Keywords.SNIScope)]
         public void SNIScopeLeave(string message) =>
             WriteEvent(SNIScopeExitId, message);
@@ -1450,6 +2009,11 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Constants for event type labels used in formatted event messages.
     /// </summary>
+    /// <remarks>
+    /// These constants are used as the <c>eventType</c> parameter in SNI trace methods
+    /// such as <see cref="SqlClientEventSource.TrySNITraceEvent(string, string, string, string)"/>
+    /// to categorize events as informational or error level.
+    /// </remarks>
     public static class EventType
     {
         /// <summary>
@@ -1523,21 +2087,36 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Creates a new event scope with one formatted argument.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <param name="message">A composite format string for the scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <returns>A new <see cref="SqlClientEventScope"/> instance.</returns>
         public static SqlClientEventScope Create<T0>(string message, T0 args0) => new SqlClientEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
 
         /// <summary>
         /// Creates a new event scope with two formatted arguments.
         /// </summary>
+        /// <typeparam name="T0">The type of the first argument.</typeparam>
+        /// <typeparam name="T1">The type of the second argument.</typeparam>
+        /// <param name="message">A composite format string for the scope message.</param>
+        /// <param name="args0">The first argument to format into the message.</param>
+        /// <param name="args1">The second argument to format into the message.</param>
+        /// <returns>A new <see cref="SqlClientEventScope"/> instance.</returns>
         public static SqlClientEventScope Create<T0, T1>(string message, T0 args0, T1 args1) => new SqlClientEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
 
         /// <summary>
         /// Creates a new event scope for a class with the calling member name.
         /// </summary>
+        /// <param name="className">The name of the class entering the scope.</param>
+        /// <param name="memberName">The name of the calling member (auto-populated by the compiler).</param>
+        /// <returns>A new <see cref="SqlClientEventScope"/> instance.</returns>
         public static SqlClientEventScope Create(string className, [CallerMemberName] string memberName = "") => new SqlClientEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
 
         /// <summary>
         /// Creates a new event scope with a pre-existing scope identifier.
         /// </summary>
+        /// <param name="scopeId">The scope identifier to wrap.</param>
+        /// <returns>A new <see cref="SqlClientEventScope"/> instance.</returns>
         public static SqlClientEventScope Create(long scopeId) => new SqlClientEventScope(scopeId);
     }
 }

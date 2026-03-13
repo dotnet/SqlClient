@@ -1,0 +1,25 @@
+{
+    "name": "Microsoft.Data.SqlClient",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspaces/SqlClient",
+    "features": {
+        "ghcr.io/devcontainers/features/powershell:2.0.1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-containers",
+                "ms-dotnettools.csdevkit",
+                "ms-dotnettools.csharp",
+                "GitHub.copilot",
+                "ms-mssql.mssql"
+            ],
+            "settings": {
+                "dotnet.defaultSolution": "src/Microsoft.Data.SqlClient.sln"
+            }
+        }
+    },
+    "postCreateCommand": "bash .devcontainer/setup-sqlserver.sh",
+    "remoteUser": "vscode"
+}
