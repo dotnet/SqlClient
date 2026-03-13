@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value as normal parameter.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
+        [MemberData(nameof(SqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_VariantParam_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             // Arrange
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using SqlBulkCopy with a SqlDataReader source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(BulkCopySqlTypeTestData))]
+        [MemberData(nameof(BulkCopySqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_BulkCopyFromReader_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             // Arrange
@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using SqlBulkCopy with a DataTable source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(BulkCopySqlTypeTestData))]
+        [MemberData(nameof(BulkCopySqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_BulkCopyFromDataTable_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             // Arrange
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using SqlBulkCopy with a DataRow[] source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(BulkCopySqlTypeTestData))]
+        [MemberData(nameof(BulkCopySqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_BulkCopyFromDataRow_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             // Arrange
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using TVP with a SqlMetaData/SqlDataRecord source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
+        [MemberData(nameof(SqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_TvpFromSqlMetaData_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             // Arrange
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Round trip sql_variant value using TVP with a SqlDataReader source.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(SqlTypeTestData))]
+        [MemberData(nameof(SqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_TvpFromSqlDataReader_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             // Arrange
