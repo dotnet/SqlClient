@@ -214,10 +214,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (processFinallyBlock)
                 {
-                    // Always ensure we're zombied; 2005 will send an EnvChange that
-                    // will cause the zombie, but only if we actually go to the wire;
-                    // 7.0 and 2000 won't send the env change, so we have to handle
-                    // them ourselves.
+                    // Always ensure we're zombied; the server will send an EnvChange
+                    // that will cause the zombie, but only if we actually go to the wire.
                     Zombie();
                 }
             }
