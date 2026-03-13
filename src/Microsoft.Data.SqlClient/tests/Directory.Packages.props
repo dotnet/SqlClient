@@ -9,6 +9,14 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
+  <!--
+    Only .NET targets need to specify a version for the .NET Framework ref assemblies.  See:
+
+    https://aka.ms/sdkimplicitrefs
+  -->
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+  </ItemGroup>
 
   <!-- SqlClient test dependencies. -->
   <ItemGroup>
@@ -21,10 +29,5 @@
     <PackageVersion Include="System.Data.Odbc" Version="10.0.3" />
     <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="10.0.3" />
-  </ItemGroup>
-
-  <!-- SqlClient test dependencies for NetFx only. -->
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>
 </Project>

@@ -328,7 +328,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClient.Stress.Runner", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlClient.Stress.Tests", "Microsoft.Data.SqlClient\tests\StressTests\SqlClient.Stress.Tests\SqlClient.Stress.Tests.csproj", "{FAA1E517-581A-D3DC-BAC9-FAD1D5A5142C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\doc\Samples\Microsoft.Data.SqlClient.Samples.csproj", "{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Samples", "..\doc\samples\Microsoft.Data.SqlClient.Samples.csproj", "{C09B9D2F-E463-BEBD-34E4-E8F2C201A277}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.TestCommon", "Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj", "{3FF03FA9-E3C3-49E3-9DCB-C703A5B0278B}"
 EndProject

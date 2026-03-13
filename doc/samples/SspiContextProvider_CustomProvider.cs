@@ -1,5 +1,6 @@
 // <Snippet1>
 #if NET
+#nullable enable
 using System;
 using System.Buffers;
 using System.Net.Security;
