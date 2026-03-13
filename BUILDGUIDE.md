@@ -40,12 +40,12 @@ Manual Tests require the below setup to run:
   |TCPConnectionStringAASSGX | (Optional) Connection String for a TCP enabled SQL Server with a SGX Enclave and using Microsoft Azure Attestation (AAS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = AAS; Enclave Attestation Url = {AttestationURL};`|
   |EnclaveEnabled | Enables tests requiring an enclave-configured server.|
   |TracingEnabled | Enables EventSource related tests |
-  |AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Azure Active Directory (Azure AD) tenant |
-  |AADPasswordConnectionString | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
+  |AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Entra ID (Azure AD) tenant |
+  |AADPasswordConnectionString | (Optional) Connection String for testing Entra ID Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
   |AADSecurePrincipalId | (Optional) The Application Id of a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Application ID} |
   |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
   |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
-  |AzureKeyVaultTenantId | (Optional) The Azure Active Directory tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
+  |AzureKeyVaultTenantId | (Optional) The Entra ID tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
   |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
   |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
@@ -66,6 +66,7 @@ The following build targets are defined in `build.proj`:
 |Target|Description|
 |-|-|
 |`BuildAbstractions`|Restore and build the Abstractions package.|
+|`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
 |`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
 |`BuildAzure`|Restore and build the Azure package.|
 |`BuildLogging`|Restore and build the Logging package.|
@@ -75,6 +76,7 @@ The following build targets are defined in `build.proj`:
 |`BuildSqlClient`|Build the driver for all target frameworks.|
 |`Clean`|Cleans all generated files.|
 |`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
+|`PackAkvProvider`|Pack the Azure Key Vault Provider NuGet package (requires a prior build).|
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`Restore`|Restores NuGet packages.|
@@ -82,7 +84,6 @@ The following build targets are defined in `build.proj`:
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
-|`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
 
 ### Parameters
 

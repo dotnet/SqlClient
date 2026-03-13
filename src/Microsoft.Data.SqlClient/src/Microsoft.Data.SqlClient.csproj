@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
@@ -154,10 +154,10 @@
     depending on our build parameters.
   -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

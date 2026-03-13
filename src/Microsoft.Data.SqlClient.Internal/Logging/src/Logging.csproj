@@ -27,7 +27,7 @@
 
   <!-- Build Config -->
   <PropertyGroup>
-    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Logging</AssemblyName>
+    <AssemblyName>Microsoft.Data.SqlClient.Internal.Logging</AssemblyName>
 
     <!--
       Clear the root namespace since our directory structure doesn't match our
@@ -65,8 +65,12 @@
     <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
     <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
 
-    <!-- We put our docs in the bin/ directory as well. -->
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+    <!--
+      Generate XML documentation from /// comments.  The compiler places the
+      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
+      this file automatically in the NuGet package under lib/<tfm>/.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
   </PropertyGroup>
 
@@ -82,12 +86,18 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <Title>Microsoft.Data.SqlClient.Extensions.Logging</Title>
+    <Title>Microsoft.Data.SqlClient.Internal.Logging</Title>
     <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
-    <Description>Microsoft.Data.SqlClient Extensions Logging - ETW EventSource for SqlClient tracing and diagnostics.</Description>
+    <Description>
+      Microsoft.Data.SqlClient Internal Logging - ETW EventSource for SqlClient tracing
+      and diagnostics.
+
+      This package is for internal use by other Microsoft.Data.SqlClient
+      packages only and should not be referenced directly by application code.
+    </Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
-    <PackageTags>sqlclient microsoft.data.sqlclient extensions logging</PackageTags>
+    <PackageTags>sqlclient microsoft.data.sqlclient internal logging</PackageTags>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
     <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>

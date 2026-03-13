@@ -1,29 +1,92 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+
+    AKV Provider versioning information found in our sibling file AkvProviderVersions.props
+    is imported via tools/props/Versions.props.
+  -->
+
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
     <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
+
+    <!--
+      We pin the AssemblyVersion of our package to the default major version
+      number, with all remaining parts set to 0.
+    -->
+    <AssemblyVersion>$(AkvDefaultMajorVersion).0.0.0</AssemblyVersion>
+
+    <AssemblyFileVersion>$(AkvAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(AkvAssemblyFileVersion)</FileVersion>
+    <Version>$(AkvPackageVersion)</Version>
+  </PropertyGroup>
+
+  <!-- Build Output Config -->
+  <PropertyGroup>
+    <!-- Use a shorter directory name to avoid exceeding the Windows MAX_PATH (260 char) limit.
+         The full AssemblyName is 63 chars and appears in both the directory and generated filenames. -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/AzureKeyVaultProvider</IntermediateOutputPath>
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/AzureKeyVaultProvider</OutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(AkvPackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Title>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</Title>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>
+      Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
+
+      This library enables .NET applications to use Microsoft Azure Key Vault with Always Encrypted
+      in Microsoft Azure SQL Database and Microsoft SQL Server. The library includes the column
+      master key store provider that allows client applications to access data when a column master
+      key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please
+      refer to: https://aka.ms/AlwaysEncrypted.
+
+      Use this library only with the Microsoft.Data.SqlClient
+      (https://www.nuget.org/packages/Microsoft.Data.SqlClient) client driver.
+    </Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</PackageTags>
+    <PackageReleaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
-  <!-- Build Output ==================================================== -->
-  <PropertyGroup>
-    <!-- @TODO: $(BinFolder) is OS dependent but we're only ever building AnyOS, so ... can we simplify this? -->
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\AzureKeyVaultProvider</OutputPath>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\AzureKeyVaultProvider</IntermediateOutputPath>
-    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName).xml</DocumentationFile>
-  </PropertyGroup>
-
-  <!-- Trim/AOT Support ================================================ -->
-  <PropertyGroup Condition="'$(TargetFramework)' != 'net462'">
-    <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible>true</IsAotCompatible>
-  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
 
   <!-- References ====================================================== -->
-  <!-- MDS Reference -->
+
+  <!-- SqlClient Reference -->
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
@@ -31,10 +94,10 @@
 
   <!-- Logging Reference -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <!-- Other dependencies -->
@@ -43,4 +106,5 @@
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
+
 </Project>

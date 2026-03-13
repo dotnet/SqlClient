@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {

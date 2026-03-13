@@ -19,7 +19,7 @@ Also released as part of this milestone:
 
 ### Changed
 
-- **Breaking:** Removed Azure dependencies from the core package. Azure AD / Entra authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Azure AD authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
+- **Breaking:** Removed Azure dependencies from the core package. Entra ID authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Entra ID authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
   ([#1108](https://github.com/dotnet/SqlClient/issues/1108),
    [#3680](https://github.com/dotnet/SqlClient/pull/3680),
    [#3902](https://github.com/dotnet/SqlClient/pull/3902),

@@ -1,4 +1,4 @@
-﻿namespace SqlClientEventSource;
+namespace SqlClientEventSource;
 
 // <Snippet1>
 using System;

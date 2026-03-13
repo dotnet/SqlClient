@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
