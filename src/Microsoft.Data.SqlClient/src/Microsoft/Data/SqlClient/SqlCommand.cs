@@ -2272,7 +2272,7 @@ namespace Microsoft.Data.SqlClient
                             s = val as string;
                             if (s is null)
                             {
-                                SqlString sval = val is SqlString ? (SqlString)val : SqlString.Null;
+                                SqlString sval = val is SqlString sqlVal ? sqlVal : SqlString.Null;
                                 if (!sval.IsNull)
                                 {
                                     s = sval.Value;
