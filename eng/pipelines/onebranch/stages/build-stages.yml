@@ -306,5 +306,5 @@ stages:
       jobs:
         - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
           parameters:
-            artifactName: '${{ parameters.sqlClientArtifactsName }}'
+            artifactName: '${{ parameters.mdsArtifactsName }}'
             isPreview: '${{ parameters.isPreview }}'
