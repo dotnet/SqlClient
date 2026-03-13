@@ -33,25 +33,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
             string outputPath = "TvpColumnBoundaries.out";
             string baselinePath;
-#if DEBUG
             if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
             {
-                baselinePath = "TvpColumnBoundaries_DebugMode.bsl";
+                baselinePath = "TvpColumnBoundaries.bsl";
             }
             else
             {
-                baselinePath = "TvpColumnBoundaries_DebugMode_Azure.bsl";
+                baselinePath = "TvpColumnBoundaries_Azure.bsl";
             }
-#else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "TvpColumnBoundaries_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "TvpColumnBoundaries_ReleaseMode_Azure.bsl";
-            }
-#endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
             var swriter = new StreamWriter(fstream, Encoding.UTF8);
