@@ -178,6 +178,9 @@ csharp_space_between_square_brackets = false
 
 # Analyzers
 
+# IDE0005: Remove unnecessary using directives
+dotnet_diagnostic.IDE0005.severity = suggestion
+
 dotnet_code_quality.ca1802.api_surface = private, internal
 
 # CA2000: Dispose objects before losing scope
