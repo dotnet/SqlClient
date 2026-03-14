@@ -4738,10 +4738,10 @@
     <value>Failed to create SqlRetryLogicBaseProvider object because of invalid retryMethod parameters.{0}Parameter '{1} {2}' doesn't have a default value.</value>
   </data>
   <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
-    <value>Sequence contains more than one matching element.</value>
+    <value>シーケンスに複数の一致する要素が含まれています。</value>
   </data>
   <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
-    <value>Sequence contains no matching element.</value>
+    <value>シーケンスに、一致する要素は含まれてません。</value>
   </data>
   <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
     <value>Can only rent from a pool if an onCreate delegate is available.</value>
