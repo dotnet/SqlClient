@@ -9,6 +9,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using static Azure.Security.KeyVault.Keys.Cryptography.SignatureAlgorithm;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {

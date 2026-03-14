@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -424,7 +425,7 @@ namespace Microsoft.Data.SqlClient
             string[] parts;
             try
             {
-                parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+                parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, Strings.SQL_BulkCopyDestinationTableName, true);
             }
             catch (Exception e)
             {
@@ -578,7 +579,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 throw SQL.BulkLoadNoCollation();
             }
 
-            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, Strings.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
 
             // Throw if there is a transaction but no flag is set

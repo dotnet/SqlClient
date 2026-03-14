@@ -142,9 +142,9 @@ stages:
         - ${{ if eq(parameters.releaseLogging, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
-              packageName: Microsoft.Data.SqlClient.Extensions.Logging
+              packageName: Microsoft.Data.SqlClient.Internal.Logging
               artifactName: drop_build_independent_build_package_Logging
-              packagePath: Microsoft.Data.SqlClient.Extensions.Logging.$(effectiveLoggingVersion).nupkg
+              packagePath: Microsoft.Data.SqlClient.Internal.Logging.$(effectiveLoggingVersion).nupkg
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}
               isDryRun: ${{ parameters.isDryRun }}
@@ -183,7 +183,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              artifactName: drop_build_addons_buildSignedAkvPackage
+              artifactName: drop_build_addons_build_package_AkvProvider
               packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
               nugetServiceConnection: $(NuGetServiceConnection)
               isProduction: ${{ parameters.isOfficial }}

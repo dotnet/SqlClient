@@ -42,7 +42,7 @@ jobs:
 
   # Download the Abstractions and Logging packages from the previous stage into
   # packages/ so that they're available via the local NuGet feed when restoring MDS.
-  # MDS depends on both Extensions.Abstractions and Extensions.Logging.
+  # MDS depends on both Extensions.Abstractions and Internal.Logging.
   - task: DownloadPipelineArtifact@2
     displayName: Download Abstractions Package
     inputs:
@@ -84,6 +84,14 @@ jobs:
   - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: dll
+      sourceRoot: $(BUILD_OUTPUT)
+      dllPattern: 'Microsoft.Data.SqlClient.dll'
+
+  - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: dll
+      sourceRoot: $(BUILD_OUTPUT)
+      dllPattern: 'Microsoft.Data.SqlClient.resources.dll'
 
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
@@ -106,7 +114,7 @@ jobs:
     displayName: Copy DLLs for APIScan
     inputs:
       SourceFolder: $(BUILD_OUTPUT)/Package/bin
-      Contents: '**/Microsoft.Data.SqlClient*.dll'
+      Contents: '**/Microsoft.Data.SqlClient.dll'
       TargetFolder: $(ob_sdl_apiscan_softwareFolder)
       # We must preserve the folder structure since our C# projects may produce multiple
       # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
@@ -117,7 +125,7 @@ jobs:
     displayName: Copy PDBs for APIScan
     inputs:
       SourceFolder: $(BUILD_OUTPUT)/Package/bin
-      Contents: '**/Microsoft.Data.SqlClient*.pdb'
+      Contents: '**/Microsoft.Data.SqlClient.pdb'
       TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
       flattenFolders: false
 

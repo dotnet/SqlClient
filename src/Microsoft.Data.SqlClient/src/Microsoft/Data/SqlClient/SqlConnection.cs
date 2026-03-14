@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Internal;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
@@ -2923,7 +2924,7 @@ namespace Microsoft.Data.SqlClient
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {
-                throw new InvalidOperationException(o.GetType() + ": invalid Size");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_InvalidUdtSize, o.GetType().FullName));
             }
 
             byte[] retval;

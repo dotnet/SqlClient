@@ -26,6 +26,7 @@ The latest stable release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0](add-ons/AzureKeyVaultProvider/7.0)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 6.1](add-ons/AzureKeyVaultProvider/6.1)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 6.0](add-ons/AzureKeyVaultProvider/6.0)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 5.1](add-ons/AzureKeyVaultProvider/5.1)
@@ -34,6 +35,33 @@ The latest stable release is
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.2](add-ons/AzureKeyVaultProvider/1.2)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.1](add-ons/AzureKeyVaultProvider/1.1)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.0](add-ons/AzureKeyVaultProvider/1.0)
+
+# Microsoft.Data.SqlClient.Extensions.Abstractions Release Notes
+
+The latest release is
+[Microsoft.Data.SqlClient.Extensions.Abstractions 1.0](Extensions/Abstractions/1.0).
+
+## Release Information
+
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 1.0](Extensions/Abstractions/1.0)
+
+# Microsoft.Data.SqlClient.Extensions.Azure Release Notes
+
+The latest release is
+[Microsoft.Data.SqlClient.Extensions.Azure 1.0](Extensions/Azure/1.0).
+
+## Release Information
+
+- [Microsoft.Data.SqlClient.Extensions.Azure 1.0](Extensions/Azure/1.0)
+
+# Microsoft.Data.SqlClient.Extensions.Logging Release Notes
+
+The latest release is
+[Microsoft.Data.SqlClient.Extensions.Logging 1.0](Extensions/Logging/1.0).
+
+## Release Information
+
+- [Microsoft.Data.SqlClient.Extensions.Logging 1.0](Extensions/Logging/1.0)
 
 # Microsoft.SqlServer.Server Release Notes
 

@@ -17,7 +17,7 @@ When working with Microsoft.Data.SqlClient, reference official documentation for
 | **Connection Pooling** | https://learn.microsoft.com/sql/connect/ado-net/sql-server-connection-pooling |
 | **Data Types** | https://learn.microsoft.com/sql/connect/ado-net/sql/sql-server-data-types |
 | **Always Encrypted** | https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine |
-| **Azure AD Auth** | https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication |
+| **Entra ID Auth** | https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication |
 
 ### MS-TDS Protocol
 

@@ -12,7 +12,7 @@ parameters:
 
   - name: outputDirectory
     type: string
-    default: '$(Build.SourcesDirectory)/packages'
+    default: '$(Build.SourcesDirectory)/output'
 
   # The C# build configuration (e.g. Debug or Release) to use when building the NuGet package.
   - name: buildConfiguration
