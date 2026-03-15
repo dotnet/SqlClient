@@ -2584,7 +2584,7 @@
     <value>Не удается найти поставщик проверки подлинности для "{0}".</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+    <value>Не удается найти поставщик проверки подлинности для "{0}". Установите пакет NuGet "Microsoft.Data.SqlClient.Extensions.Azure" (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) для использования методов проверки подлинности Active Directory (Entra ID).</value>
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Не удалось прочитать раздел конфигурации для поставщиков проверки подлинности.</value>
@@ -4690,52 +4690,52 @@
     <value>{0} Недопустимая строка JSON для вектора.</value>
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
-    <value>Could not find an empty slot in the connection pool.</value>
+    <value>Не удалось найти пустой слот в пуле подключений.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
-    <value>The connection pool has been shut down.</value>
+    <value>Пул подключений отключен.</value>
   </data>
   <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
-    <value>Cannot get RequiredLength when HasDataLength is false.</value>
+    <value>Не удается получить RequiredLength, если hasDataLength равно false.</value>
   </data>
   <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
-    <value>Partial packet cannot be non-null when setting to non-null.</value>
+    <value>Частичный пакет не может быть отличным от значения null при настройке значения, отличного от null.</value>
   </data>
   <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
-    <value>MultiplexPackets cannot return both consumePartialPacket and consumeInputDirectly.</value>
+    <value>MultiplexPackets не может возвращать одновременно consumePartialPacket и consumeInputDirectly.</value>
   </data>
   <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
-    <value>Attempted to pend a read when the fail async pends test hook was enabled.</value>
+    <value>Попытка отложить чтение при включенном тестовом обработчике асинхронных отложенных сбоев.</value>
   </data>
   <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
-    <value>Packet modification detected. Hash is null but packet contains non-null buffer.</value>
+    <value>Обнаружено изменение пакета. Хэш равен null, но пакет содержит буфер, отличный от значения null.</value>
   </data>
   <data name="SQL_PacketHashMismatch" xml:space="preserve">
-    <value>Packet modification detected. Hash from packet creation does not match hash from packet check.</value>
+    <value>Обнаружено изменение пакета. Хэш при создании пакета не совпадает с хэшем при проверке пакета.</value>
   </data>
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
-    <value>Cannot transition from state '{0}' to '{1}'.</value>
+    <value>Не удается перейти из состояния "{0}" в "{1}".</value>
   </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
-    <value>Unsupported state: '{0}'.</value>
+    <value>Неподдерживаемое состояние: "{0}".</value>
   </data>
   <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because the retryMethod value is null or empty.</value>
+    <value>Не удалось создать объект SqlRetryLogicBaseProvider, так как значение retryMethod равно null или пусто.</value>
   </data>
   <data name="SQLCR_RetryMethodException" xml:space="preserve">
-    <value>Exception occurred when running the '{0}.{1}()' method.</value>
+    <value>Возникло исключение при выполнении метода "{0}.{1}()".</value>
   </data>
   <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
-    <value>Failed to resolve the '{0}' method from '{1}' type.</value>
+    <value>Не удалось разрешить метод "{0}" из типа "{1}".</value>
   </data>
   <data name="SQLCR_InvalidReturnType" xml:space="preserve">
-    <value>Invalid return type; return type must be of '{0}' type.</value>
+    <value>Недопустимый тип возвращаемого значения; типом возвращаемого значения должен быть "{0}".</value>
   </data>
   <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid '{0}' parameters.{1}The function must have a parameter of type 'SqlRetryLogicOption'.</value>
+    <value>Не удалось создать объект SqlRetryLogicBaseProvider из-за недопустимых параметров "{0}".{1}Функция должна содержать параметр типа "SqlRetryLogicOption".</value>
   </data>
   <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid retryMethod parameters.{0}Parameter '{1} {2}' doesn't have a default value.</value>
+    <value>Не удалось создать объект SqlRetryLogicBaseProvider из-за недопустимых параметров retryMethod.{0}У параметра "{1} {2}" нет значения по умолчанию.</value>
   </data>
   <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
     <value>Последовательность содержит более одного соответствующего элемента.</value>
@@ -4744,9 +4744,9 @@
     <value>Последовательность не содержит соответствующий элемент.</value>
   </data>
   <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
-    <value>Can only rent from a pool if an onCreate delegate is available.</value>
+    <value>Выполнить аренду из пула можно только при наличии делегата onCreate.</value>
   </data>
   <data name="SQL_InvalidUdtSize" xml:space="preserve">
-    <value>The type '{0}' has an invalid size.</value>
+    <value>У типа "{0}" недопустимый размер.</value>
   </data>
 </root>
