@@ -90,14 +90,17 @@ stages:
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
               foreach ($p in $jdata) {
-                  $p.TCPConnectionString       = "$(REMOTE_TCP_CONN_STRING)"
-                  $p.NPConnectionString        = "$(REMOTE_NP_CONN_STRING)"
+                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
+                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
                   $p.SupportsIntegratedSecurity = "true"
                   $p.UseManagedSNIOnWindows    = "false"
               }
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
 
           # --- Prepare Windows services ---
           - powershell: |
@@ -246,14 +249,18 @@ stages:
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
               foreach ($p in $jdata) {
-                  $p.TCPConnectionString       = "$(REMOTE_TCP_CONN_STRING)"
-                  $p.NPConnectionString        = "$(REMOTE_NP_CONN_STRING)"
+                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
+                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
                   $p.SupportsIntegratedSecurity = "true"
-                  $p.UseManagedSNIOnWindows    = "$(managedSNI)"
+                  $p.UseManagedSNIOnWindows    = $env:MANAGED_SNI
               }
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+              MANAGED_SNI: $(managedSNI)
 
           # --- Prepare Windows services ---
           - powershell: |
@@ -383,15 +390,20 @@ stages:
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
               foreach ($p in $jdata) {
-                  $p.TCPConnectionString       = "$(REMOTE_TCP_CONN_STRING)"
-                  $p.NPConnectionString        = "$(REMOTE_NP_CONN_STRING)"
+                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
+                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
                   $p.SupportsIntegratedSecurity = "true"
               }
-              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue "$(KerberosDomainUser)"     -Force
-              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue "$(KerberosDomainPassword)" -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json (Kerberos)
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Kerberos domain join ---
           - template: /eng/pipelines/common/templates/steps/kerberos-init-step.yml@self
@@ -405,8 +417,10 @@ stages:
           - pwsh: |
               Install-Module -Name SqlServer -Force -Confirm:$false
               Import-Module SqlServer
-              Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString "$(REMOTE_TCP_CONN_STRING)"
+              Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
             displayName: Verify SQL connectivity
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
 
           # --- Install .NET SDK and runtimes ---
           - template: /eng/pipelines/steps/install-dotnet.yml@self
