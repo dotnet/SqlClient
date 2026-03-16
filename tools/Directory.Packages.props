@@ -6,7 +6,7 @@
     <ItemGroup>
         <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="2.3.0" />
         <PackageVersion Include="Microsoft.Cci" Version="4.0.0-rc3-24214-00" />
-        <PackageVersion Include="Microsoft.Composition" Version="1.0.31" />
+        <PackageVersion Include="System.Composition" Version="10.0.5" />
         <PackageVersion Include="System.Diagnostics.Contracts" Version="4.3.0" />
         <PackageVersion Include="System.Diagnostics.TextWriterTraceListener" Version="4.3.0" />
         <PackageVersion Include="System.Diagnostics.TraceSource" Version="4.3.0" />
