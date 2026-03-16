@@ -131,7 +131,10 @@ stages:
             inputs:
               solution: build.proj
               msbuildArchitecture: x64
-              msbuildArguments: /t:restore
+              msbuildArguments: >-
+                -t:restore
+                -p:ReferenceType=Project
+            retryCountOnTaskFailure: 1
 
           - task: MSBuild@1
             displayName: Build Driver
@@ -141,15 +144,11 @@ stages:
               msbuildArchitecture: x64
               platform: $(Platform)
               configuration: $(Configuration)
-              msbuildArguments: -t:BuildAll
-
-          - task: MSBuild@1
-            displayName: Build Tests (net462)
-            inputs:
-              solution: build.proj
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: -t:BuildTestsNetFx -p:TF=net462
+              msbuildArguments: >-
+                -t:BuildAllConfigurations
+                -p:ReferenceType=Project
+                -p:GenerateNuget=false
+                -p:GenerateDocumentationFile=false
 
           - pwsh: dotnet sdk check
             displayName: .NET SDK check
@@ -164,7 +163,10 @@ stages:
               msbuildArchitecture: x64
               platform: $(Platform)
               configuration: $(Configuration)
-              msbuildArguments: -t:RunTests -p:TF=net462
+              msbuildArguments: >-
+                -t:RunTests
+                -p:TF=net462
+                -p:ReferenceType=Project
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
@@ -291,7 +293,10 @@ stages:
             inputs:
               solution: build.proj
               msbuildArchitecture: x64
-              msbuildArguments: /t:restore
+              msbuildArguments: >-
+                -t:restore
+                -p:ReferenceType=Project
+            retryCountOnTaskFailure: 1
 
           - task: MSBuild@1
             displayName: Build Driver
@@ -301,15 +306,11 @@ stages:
               msbuildArchitecture: x64
               platform: $(Platform)
               configuration: $(Configuration)
-              msbuildArguments: -t:BuildAll
-
-          - task: MSBuild@1
-            displayName: Build Tests ($(targetFramework))
-            inputs:
-              solution: build.proj
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: -t:BuildTestsNetCore -p:TF=$(targetFramework)
+              msbuildArguments: >-
+                -t:BuildAllConfigurations
+                -p:ReferenceType=Project
+                -p:GenerateNuget=false
+                -p:GenerateDocumentationFile=false
 
           - pwsh: dotnet sdk check
             displayName: .NET SDK check
@@ -324,7 +325,10 @@ stages:
               msbuildArchitecture: x64
               platform: $(Platform)
               configuration: $(Configuration)
-              msbuildArguments: -t:RunTests -p:TF=$(targetFramework)
+              msbuildArguments: >-
+                -t:RunTests
+                -p:TF=$(targetFramework)
+                -p:ReferenceType=Project
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
@@ -435,23 +439,14 @@ stages:
               projects: build.proj
               custom: msbuild
               arguments: >-
-                -t:BuildAll
+                -t:BuildSqlClient
+                -p:ReferenceType=Project
                 -p:TestEnabled=true
+                -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
                 -p:Configuration=$(Configuration)
                 -p:Platform=$(Platform)
-
-          - task: DotNetCoreCLI@2
-            displayName: Build Tests ($(targetFramework))
-            inputs:
-              command: custom
-              projects: build.proj
-              custom: msbuild
-              arguments: >-
-                -t:BuildTestsNetCore
-                -p:Configuration=$(Configuration)
-                -p:OSGroup=Unix
-                -p:TargetNetCoreVersion=$(targetFramework)
+            retryCountOnTaskFailure: 1
 
           # --- Run tests ---
           - task: DotNetCoreCLI@2
@@ -463,7 +458,9 @@ stages:
               arguments: >-
                 -t:RunTests
                 -p:TF=$(targetFramework)
+                -p:ReferenceType=Project
                 -p:Configuration=$(Configuration)
+                -p:Platform=$(Platform)
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
