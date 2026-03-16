@@ -7,6 +7,7 @@
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.Server
 {

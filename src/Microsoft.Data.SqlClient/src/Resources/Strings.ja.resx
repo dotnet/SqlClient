@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' の認証プロバイダーが見つかりません。</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>'{0}' の認証プロバイダーが見つかりません。Active Directory (Entra ID) 認証方法を使用するには、'Microsoft.Data.SqlClient.Extensions.Azure' NuGet パッケージ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) をインストールしてください。</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>認証プロバイダーの構成セクションを読み取ることができませんでした。</value>
   </data>
@@ -4685,5 +4688,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0} ベクターの JSON 文字列が無効です。</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>接続プールに空きスロットが見つかりませんでした。</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>接続プールはシャットダウンされています。</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>HasDataLength が false の場合、RequiredLength を取得できません。</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>null 以外に設定する場合、部分パケットを null 以外にすることはできません。</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets は、consumePartialPacket と consumeInputDirectly の両方を返すことはできません。</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>失敗した非同期保留テスト フックが有効な状態で、読み取りを保留しようとしました。</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>パケットの変更が検出されました。ハッシュは null ですが、パケットには null 以外のバッファーが含まれています。</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>パケットの変更が検出されました。パケット作成時のハッシュとパケット チェック時のハッシュが一致しません。</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>状態 '{0}' から '{1}' へ移行できません。</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>サポートされていない状態: '{0}'。</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>retryMethod の値が null または空であるため、SqlRetryLogicBaseProvider オブジェクトを作成できませんでした。</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>'{0}.{1}()' メソッドの実行中に例外が発生しました。</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>'{1}' 型から '{0}' メソッドを解決できませんでした。</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>戻り値の型が無効です。戻り値の型は '{0}' 型である必要があります。</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>無効な '{0}' パラメーターのため、SqlRetryLogicBaseProvider オブジェクトを作成できませんでした。{1}関数には 'SqlRetryLogicOption' 型のパラメーターが必要です。</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>無効な retryMethod パラメーターのため、SqlRetryLogicBaseProvider オブジェクトを作成できませんでした。{0}パラメーター '{1} {2}' に既定値がありません。</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>シーケンスに複数の一致する要素が含まれています。</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>シーケンスに、一致する要素は含まれてません。</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>onCreate デリゲートが利用可能な場合にのみ、プールからレンタルできます。</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>型 '{0}' のサイズが無効です。</value>
   </data>
 </root>

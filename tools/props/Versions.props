@@ -27,7 +27,7 @@
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\AbstractionsVersions.props" />
 
   <!-- Logging Package Properties -->
-  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Logging\src\LoggingVersions.props" />
+  <Import Project="..\..\src\Microsoft.Data.SqlClient.Internal\Logging\src\LoggingVersions.props" />
 
   <!-- MDS Package Properties -->
   <PropertyGroup>
@@ -40,10 +40,6 @@
       specific to MDS, and then used in the MDS project.  As-is, these names are
       used by the build tooling and may be unintentionally included in other
       (non-MDS) projects.
-
-      For example, the AKV package uses the AssemblyVersion, FileVersion, and
-      Version as its own.  It currently isn't possible to build/package both
-      MDS and AKV at the same time.
     -->
 
     <!--
@@ -69,9 +65,6 @@
   <!-- Azure Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
 
-  <!-- AKV Package Properties -->
-  <PropertyGroup>
-    <AkvVersionDefault>7.0.0</AkvVersionDefault>
-    <AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvVersionDefault).$(BuildNumber)-dev</AkvPackageVersion>
-  </PropertyGroup>
+  <!-- AKV Provider Package Properties -->
+  <Import Project="..\..\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider\AkvProviderVersions.props" />
 </Project>

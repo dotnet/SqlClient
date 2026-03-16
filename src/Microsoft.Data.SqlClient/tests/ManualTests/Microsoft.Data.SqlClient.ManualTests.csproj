@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- @TODO: Use full assembly name here -->
     <AssemblyName>ManualTests</AssemblyName>
@@ -213,7 +213,6 @@
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
     <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
-    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
     <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
     <Compile Include="SQL\ParameterTest\SteParam.cs" />
     <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
@@ -264,70 +263,26 @@
     <Content Include="DDDataTypesTest_Data.xml"
              CopyToOutputDirectory="PreserveNewest" />
 
-    <!-- Split baseline files for individual test groups -->
+    <!-- Baseline files for individual test groups -->
+    <Content Include="SQL\ParameterTest\DateTimeVariant.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DateTimeVariant.bsl</Link>
+    </Content>
     <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>StreamInputParameter_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>StreamInputParameter_DebugMode_Azure.bsl</Link>
     </Content>
     <Content Include="SQL\ParameterTest\StreamInputParameter_ReleaseMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>StreamInputParameter_ReleaseMode.bsl</Link>
     </Content>
-    <Content Include="SQL\ParameterTest\StreamInputParameter_ReleaseMode_Azure.bsl">
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>StreamInputParameter_ReleaseMode_Azure.bsl</Link>
+      <Link>TvpColumnBoundaries.bsl</Link>
     </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_DebugMode.bsl">
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_Azure.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_ReleaseMode_Azure.bsl</Link>
+      <Link>TvpColumnBoundaries_Azure.bsl</Link>
     </Content>
   </ItemGroup>
 
@@ -401,14 +356,13 @@
 
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -426,6 +380,7 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
@@ -459,6 +414,7 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />

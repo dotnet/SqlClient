@@ -63,7 +63,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
             packageName: Logging
-            packageFullName: Microsoft.Data.SqlClient.Extensions.Logging
+            packageFullName: Microsoft.Data.SqlClient.Internal.Logging
             packageVersion: $(effectiveLoggingVersion)
             versionProperties: >-
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
@@ -98,7 +98,7 @@ stages:
   # ====================================================================
   # Stage 2: Abstractions package (depends on Logging from Stage 1)
   # Abstractions must build after Logging since it has a package
-  # dependency on Extensions.Logging.
+  # dependency on Internal.Logging.
   # ====================================================================
   - ${{ if eq(parameters.buildSqlClient, true) }}:
     - stage: build_abstractions
@@ -178,39 +178,33 @@ stages:
       displayName: "Build Add-on Packages"
       dependsOn: build_dependent
 
-      variables:
-        # Legacy AKV job variables; to be replaced with ob_sdl_apiscan_* variables within the job
-        # definition itself, like the other job templates to.
-        - name: PACKAGE_NAME
-          value: "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-        - name: apiScanDllPath
-          value: "$(Build.SourcesDirectory)/apiScan/dlls"
-        - name: apiScanPdbPath
-          value: "$(Build.SourcesDirectory)/apiScan/pdbs"
-
       jobs:
-        - template: /eng/pipelines/onebranch/jobs/build-akv-official-job.yml@self
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            akvAssemblyFileVersion: $(akvAssemblyFileVersion)
-            akvPackageVersion: $(effectiveAkvProviderVersion)
-            apiScanDllPath: $(apiScanDllPath)
-            apiScanPdbPath: $(apiScanPdbPath)
-            buildConfiguration: Release
-            mdsPackageVersion: $(effectiveSqlClientVersion)
-            loggingPackageVersion: $(effectiveLoggingVersion)
-            abstractionsPackageVersion: $(effectiveAbstractionsVersion)
+            packageName: AkvProvider
+            packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+            packageVersion: $(effectiveAkvProviderVersion)
+            versionProperties: >-
+              -p:AkvPackageVersion=$(effectiveAkvProviderVersion)
+              -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
+              -p:MdsPackageVersion=$(effectiveSqlClientVersion)
+              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+            assemblyFileVersion: $(akvAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
-            appRegistrationClientId: $(appRegistrationClientId)
-            appRegistrationTenantId: $(appRegistrationTenantId)
-            authAkvName: $(AuthAkvName)
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
             authSignCertName: $(AuthSignCertName)
-            esrpClientId: $(EsrpClientId)
-            esrpConnectedServiceName: $(EsrpConnectedServiceName)
-            symbolsAzureSubscription: $(SymbolsAzureSubscription)
-            symbolsPublishProjectName: $(SymbolsPublishProjectName)
-            symbolsPublishServer: $(SymbolsPublishServer)
-            symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
-            symbolsUploadAccount: $(SymbolsUploadAccount)
+            downloadArtifacts:
+              - artifactName: $(sqlClientArtifactsName)
+                displayName: SqlClient Package
+              - artifactName: $(abstractionsArtifactsName)
+                displayName: Abstractions Package
+              - artifactName: $(loggingArtifactsName)
+                displayName: Logging Package
 
   # ====================================================================
   # Validation

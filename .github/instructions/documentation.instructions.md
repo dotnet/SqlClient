@@ -91,7 +91,7 @@ Working with SQL data types:
 
 ### Security Samples
 Authentication and encryption:
-- Azure AD authentication
+- Entra ID authentication
 - Always Encrypted
 - Azure Key Vault integration
 - SSL/TLS configuration

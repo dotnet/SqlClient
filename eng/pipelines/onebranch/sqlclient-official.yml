@@ -80,9 +80,9 @@ parameters:
     type: boolean
     default: false
 
-  # Release the Microsoft.Data.SqlClient.Extensions.Logging package.
+  # Release the Microsoft.Data.SqlClient.Internal.Logging package.
   - name: releaseLogging
-    displayName: Release Microsoft.Data.SqlClient.Extensions.Logging
+    displayName: Release Microsoft.Data.SqlClient.Internal.Logging
     type: boolean
     default: false
 

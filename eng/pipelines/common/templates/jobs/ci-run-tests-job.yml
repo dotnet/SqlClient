@@ -214,11 +214,8 @@ jobs:
       parameters:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
+        referenceType: Project
         assemblyBuildNumber: $(assemblyBuildNumber)
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file

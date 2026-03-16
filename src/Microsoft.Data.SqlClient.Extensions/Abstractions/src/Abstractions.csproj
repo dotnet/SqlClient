@@ -65,8 +65,12 @@
     <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
     <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
 
-    <!-- We put our docs in the bin/ directory as well. -->
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+    <!--
+      Generate XML documentation from /// comments.  The compiler places the
+      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
+      this file automatically in the NuGet package under lib/<tfm>/.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
   </PropertyGroup>
 
@@ -106,10 +110,10 @@
     depending on our build parameters.
   -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj"/>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"/>
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <!--
