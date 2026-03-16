@@ -91,7 +91,7 @@ steps:
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
-      - task: MSBuild@1
+    - task: MSBuild@1
       displayName: 'Build AKV Provider'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
