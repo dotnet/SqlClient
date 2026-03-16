@@ -288,7 +288,10 @@
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
         $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
         $(BuildNumberArgument)
+        $(PacakgeVersionArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -310,7 +313,10 @@
         "$(DotnetPath)dotnet" build $(MdsRefProjectPath)
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
         $(BuildNumberArgument)
+        $(PacakgeVersionArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)

@@ -22,7 +22,7 @@
 
       NOTE: It is possible that the build number can be in the format xxxx.y which *may* overflow
       the 16-bit integer for the revision part of the assembly version. For that reason, we simply
-      discard everythign after the first part of the build number for the assembly version.
+      discard everything after the first part of the build number for the assembly version.
     -->
     <MdsAssemblyVersion Condition="'$(MdsAssemblyVersion)' == '' AND '$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber.Split('.')[0])</MdsAssemblyVersion>
     <MdsAssemblyVersion Condition="'$(MdsAssemblyVersion)' == '' AND '$(MdsPackageVersion)' != ''">$(MdsPackageVersion.Split('-')[0])</MdsAssemblyVersion>
