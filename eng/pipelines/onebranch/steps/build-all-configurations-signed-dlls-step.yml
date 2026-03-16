@@ -41,14 +41,18 @@ steps:
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
   - task: MSBuild@1
-    displayName: 'BuildMds using build2.proj'
+    displayName: 'BuildAllConfigurations using build.proj'
     inputs:
-      solution: '**/build2.proj'
+      solution: '**/build.proj'
       configuration: Release
       msbuildArguments: >-
-        -t:BuildMds
+        -t:BuildAllConfigurations
         -p:ReferenceType=Package
-        -p:SigningKeyPath="$(keyFile.secureFilePath)"
-        -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:GenerateNuget=false
+        -p:SigningKeyPath=$(keyFile.secureFilePath)
+        -p:AssemblyFileVersion=${{ parameters.mdsAssemblyFileVersion }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        -p:LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
