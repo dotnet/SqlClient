@@ -57,12 +57,13 @@ namespace Microsoft.Data.SqlClient.Tests
         /// runtime.
         ///
         /// See the app.config file in the same directory as this file.
-        /// 
+        ///
         /// .NET (Core) reads similar configuration from appsettings.json, but
         /// our SqlAuthenticationProviderManager does not currently support
         /// that configuration source.
         /// </summary>
-        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
+        [Fact]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);

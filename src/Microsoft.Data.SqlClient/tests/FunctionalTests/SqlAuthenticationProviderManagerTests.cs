@@ -15,7 +15,8 @@ namespace Microsoft.Data.SqlClient.Tests
         // that configures a dummy authentication provider for
         // ActiveDirectoryInteractive authentication.  Verify that this is
         // respected.
-        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
+        [Fact]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public void DefaultAuthenticationProviders_AppConfig()
         {
             // The provider for ActiveDirectoryInteractive should be our dummy
@@ -35,7 +36,8 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         // Verify that the dummy provider installed via app.config cannot be replaced.
-        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
+        [Fact]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public void DefaultAuthenticationProviders_NoReplace()
         {
             // The provider for ActiveDirectoryInteractive should be our dummy
