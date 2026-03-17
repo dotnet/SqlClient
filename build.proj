@@ -46,7 +46,7 @@
   <!-- Test configuration properties -->
   <PropertyGroup>
     <!-- Set up default filters for tests to exclude failing/flaky/interactive tests -->
-    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=&amp;category!=interactive</Filter>
+    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</Filter>
     <FilterArgument>--filter "$(Filter)"</FilterArgument>
     
     <!-- Collect code coverage unless explicitly disabled -->
