@@ -287,7 +287,19 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
-          # --- Build (using dotnet msbuild for .NET 10 SDK compat) ---
+          # --- Restore & Build (using dotnet msbuild for .NET 10 SDK compat) ---
+          - task: DotNetCoreCLI@2
+            displayName: Restore NuGets
+            retryCountOnTaskFailure: 1
+            inputs:
+              command: custom
+              projects: build.proj
+              custom: msbuild
+              arguments: >-
+                -t:restore
+                -p:ReferenceType=Project
+                -p:Configuration=$(Configuration)
+
           - task: DotNetCoreCLI@2
             displayName: Build Driver
             retryCountOnTaskFailure: 1
