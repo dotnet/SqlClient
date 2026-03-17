@@ -137,7 +137,7 @@ stages:
             retryCountOnTaskFailure: 1
 
           - task: MSBuild@1
-            displayName: Build Driver
+            displayName: Build Driver (netfx)
             retryCountOnTaskFailure: 1
             inputs:
               solution: build.proj
@@ -145,7 +145,7 @@ stages:
               platform: $(Platform)
               configuration: $(Configuration)
               msbuildArguments: >-
-                -t:BuildSqlClient
+                -t:BuildNetFx
                 -p:ReferenceType=Project
                 -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
@@ -287,48 +287,41 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
-          # --- Build ---
-          - task: MSBuild@1
-            displayName: Restore NuGets
-            inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              msbuildArguments: >-
-                -t:restore
-                -p:ReferenceType=Project
-            retryCountOnTaskFailure: 1
-
-          - task: MSBuild@1
+          # --- Build (using dotnet msbuild for .NET 10 SDK compat) ---
+          - task: DotNetCoreCLI@2
             displayName: Build Driver
             retryCountOnTaskFailure: 1
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
+              command: custom
+              projects: build.proj
+              custom: msbuild
+              arguments: >-
                 -t:BuildSqlClient
                 -p:ReferenceType=Project
+                -p:TestEnabled=true
                 -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
+                -p:Configuration=$(Configuration)
+                -p:Platform=$(Platform)
 
           - pwsh: dotnet sdk check
             displayName: .NET SDK check
             condition: succeededOrFailed()
 
           # --- Run tests ---
-          - task: MSBuild@1
+          - task: DotNetCoreCLI@2
             displayName: Run Tests ($(targetFramework))
-            retryCountOnTaskFailure: 2
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
+              command: custom
+              projects: build.proj
+              custom: msbuild
+              arguments: >-
                 -t:RunTests
                 -p:TF=$(targetFramework)
                 -p:ReferenceType=Project
+                -p:Configuration=$(Configuration)
+                -p:Platform=$(Platform)
+            retryCountOnTaskFailure: 2
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
