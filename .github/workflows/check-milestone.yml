@@ -1,0 +1,31 @@
+name: Check Milestone
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, milestoned, demilestoned]
+
+jobs:
+  check-milestone:
+    name: Validate milestone
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check milestone is set and open
+        env:
+          MILESTONE: ${{ toJson(github.event.pull_request.milestone) }}
+        run: |
+          if [ "$MILESTONE" = "null" ] || [ -z "$MILESTONE" ]; then
+            echo "::error::This PR does not have a milestone set. Please assign a milestone before merging."
+            exit 1
+          fi
+
+          STATE=$(echo "$MILESTONE" | jq -r '.state')
+          TITLE=$(echo "$MILESTONE" | jq -r '.title')
+
+          if [ "$STATE" != "open" ]; then
+            echo "::error::Milestone '$TITLE' is $STATE. Please assign an open milestone."
+            exit 1
+          fi
+
+          echo "Milestone '$TITLE' is set and open."
