@@ -17,6 +17,10 @@ parameters:
     type: string
     default: 'Microsoft.Data.SqlClient*.dll'
 
+  - name: nupkgPattern
+    type: string
+    default: '*.*nupkg'
+
   - name: artifactDirectory
     type: string
     default: $(PACK_OUTPUT)
@@ -125,7 +129,7 @@ steps:
       EsrpClientId: '${{parameters.EsrpClientId }}'
       UseMSIAuthentication: true
       FolderPath: '${{parameters.artifactDirectory }}'
-      Pattern: '*.*nupkg'
+      Pattern: '${{ parameters.nupkgPattern }}'
       CleanupTempStorage: 1
       VerboseLogin: 1
 
@@ -142,7 +146,7 @@ steps:
       AuthAKVName: '${{parameters.AuthAKVName }}'
       AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.artifactDirectory }}'
-      Pattern: '*.*nupkg'
+      Pattern: '${{ parameters.nupkgPattern }}'
       signConfigType: inlineSignParams
       inlineOperation: |
         [
