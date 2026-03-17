@@ -137,7 +137,6 @@ steps:
   - task: EsrpCodeSigning@6
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
-      inputs:
       ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'

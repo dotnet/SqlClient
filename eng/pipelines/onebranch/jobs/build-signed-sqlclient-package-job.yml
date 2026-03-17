@@ -108,7 +108,7 @@ jobs:
   - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
     parameters:
       artifactType: pkg
-      nupkgPattern: 'Microsoft.Data.SqlClient.[0-9]*nupkg'
+      nupkgPattern: 'Microsoft.Data.SqlClient.$(mdsPackageVersion).*nupkg'
 
   # Copy signed DLLs and PDBs to APIScan folders.
   - task: CopyFiles@2
