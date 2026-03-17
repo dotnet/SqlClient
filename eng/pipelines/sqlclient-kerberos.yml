@@ -287,6 +287,23 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
+          # --- Clean stale obj folders to avoid NETSDK1005 from cached assets ---
+          - pwsh: |
+              $paths = @(
+                "src/Microsoft.SqlServer.Server/obj",
+                "src/Microsoft.Data.SqlClient/netcore/src/obj",
+                "src/Microsoft.Data.SqlClient/netfx/src/obj",
+                "src/Microsoft.Data.SqlClient/src/obj",
+                "artifacts"
+              )
+              foreach ($p in $paths) {
+                if (Test-Path $p) {
+                  Write-Host "Removing $p"
+                  Remove-Item -Recurse -Force $p
+                }
+              }
+            displayName: Clean stale obj/artifacts folders
+
           # --- Restore & Build (using dotnet msbuild for .NET 10 SDK compat) ---
           - task: DotNetCoreCLI@2
             displayName: Restore NuGets
