@@ -1,5 +1,8 @@
 # Microsoft.Data.SqlClient.Extensions.Logging 1.0 Releases
 
+> **Note:** This package has been renamed to `Microsoft.Data.SqlClient.Internal.Logging` starting
+> with the 1.0.0 stable release. See [Internal/Logging release notes](../../Internal/Logging/1.0/).
+
 > **Note:** This package is for internal use by other Microsoft.Data.SqlClient packages only
 > and should not be referenced directly by application code.
 
