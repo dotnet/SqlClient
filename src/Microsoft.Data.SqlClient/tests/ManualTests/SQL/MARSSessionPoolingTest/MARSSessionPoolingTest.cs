@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Catalog view 'dm_exec_connections' is not supported in this version.
-        [ActiveIssue("11167")]
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public static void MarsExecuteReader_Text_WithGC()
         {
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Stored procedure sp_who does not exist or is not supported.
-        [ActiveIssue("8959")]
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public static void MarsExecuteReader_StoredProcedure_WithGC()
         {

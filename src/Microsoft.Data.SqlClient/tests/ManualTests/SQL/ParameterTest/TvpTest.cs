@@ -43,6 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private readonly string _connStr;
 
         // Synapse: The statement failed. Column 'blob' has a data type that cannot participate in a columnstore index.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestMain()
         {

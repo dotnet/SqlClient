@@ -43,6 +43,29 @@
     <NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
   </PropertyGroup>
 
+  <!-- Test configuration properties -->
+  <PropertyGroup>
+    <!-- Set up default filters for tests to exclude failing/flaky/interactive tests -->
+    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</Filter>
+    <FilterArgument>--filter "$(Filter)"</FilterArgument>
+    
+    <!-- Collect code coverage unless explicitly disabled -->
+    <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
+    <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
+    <CollectArgument Condition="'$(CollectCodeCoverate)' == 'true'">
+      --collect "Code coverage"
+      --settings "$(CodeCoverageRunSettings)"
+    </CollectArgument>
+    
+    <!-- Set up tests to fail after hangs and report via blame -->
+    <BlameArgument>$(Blame)</BlameArgument>
+    <BlameArgument Condition="'$(BlameArgument)' == ''">
+      --blame-hang
+      --blame-hang-dump-tup full
+      --blame-hang-timeout 10m
+    </BlameArgument>
+  </PropertyGroup>
+  
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
   <PropertyGroup>
     <BuildForRelease Condition="$(BuildForRelease) == ''">true</BuildForRelease>
@@ -178,18 +201,101 @@
 
   <!-- Tests -->
   <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests"/>
-  <Target Name="RunFunctionalTests">
-    <!-- Windows -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -v n --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
-    <!-- Unix -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -v n -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --collect &quot;Code coverage&quot; --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+  
+  <!-- Functional Tests -->
+  <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindows;RunFunctionalTestsUnix" />
+  <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:Target$(TFGroup)Version=$(TF)
+        -p:TestTargetOS=Windows$(TargetGroup)
+        -p:ReferenceType=$(ReferenceType)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
+        --results-directory "$(ResultsDirectory)"
+        --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+  </Target>
+  <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TargetNetCoreVersion=$(TF)
+        -p:TestTargetOS=Unixnetcoreapp
+        -p:ReferenceType=$(ReferenceType)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
+        --results-directory "$(ResultsDirectory)"
+        --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
-  <Target Name="RunManualTests">
-    <!-- Windows -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
-    <!-- Unix -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+  <!-- Manual Tests -->
+  <Target Name="RunManualTests" DependsOnTargets="RunManualTestsWindows;RunManualTestsUnix" />
+  <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -l "console;verbosity=normal"
+        -p:Configuration=$(Configuration)
+        -p:Target$(TFGroup)Version=$(TF)
+        -p:TestTargetOS=Windows$(TargetGroup)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
+        --results-directory "$(ResultsDirectory)"
+        --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+  </Target>
+  <Target Name="RunManualTestsUnix"  Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -l "console;verbosity=normal"
+        -p:Configuration=$(Configuration)
+        -p:TargetNetCoreVersion=$(TF)
+        -p:TestTargetOS=Unixnetcoreapp
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        $(FilterArgument)
+        $(BlameArgument)
+        $(CollectArgument)
+        --results-directory "$(ResultsDirectory)"
+        --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
   </Target>
 
   <Target Name="Clean">
