@@ -93,8 +93,11 @@ Also released as part of this milestone:
 - Added app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` to let the client ignore server-provided failover partner info in Basic Availability Groups.
   ([#3625](https://github.com/dotnet/SqlClient/pull/3625))
 
-- Enabled `SqlClientDiagnosticListener` for `SqlCommand` on .NET Framework, closing a long-standing observability gap.
+- Enabled `SqlClientDiagnosticListener` for `SqlCommand` on .NET Framework, closing a long-standing observability gap where diagnostic events were previously only available on .NET Core.
   ([#3658](https://github.com/dotnet/SqlClient/pull/3658))
+
+- Brought the 15 strongly-typed diagnostic event classes in the `Microsoft.Data.SqlClient.Diagnostics` namespace (e.g., `SqlClientCommandBefore`, `SqlClientConnectionOpenAfter`, `SqlClientTransactionCommitError`) to .NET Framework as part of the codebase merge. These types were originally introduced for .NET Core in 6.0.
+  ([#3493](https://github.com/dotnet/SqlClient/pull/3493))
 
 - Enabled User Agent Feature Extension (opt-in via `Switch.Microsoft.Data.SqlClient.EnableUserAgent`).
   ([#3606](https://github.com/dotnet/SqlClient/pull/3606))
