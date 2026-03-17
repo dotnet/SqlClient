@@ -60,7 +60,7 @@ variables:
 
   # MDS library NuGet package version
   - name: mdsPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.1.0.$(Build.BuildNumber)-ci
 
   # Local NuGet feed directory where downloaded pipeline artifacts are placed.
   # NuGet.config references this as a local package source for restore.
