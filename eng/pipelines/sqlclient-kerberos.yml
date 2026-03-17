@@ -145,7 +145,7 @@ stages:
               platform: $(Platform)
               configuration: $(Configuration)
               msbuildArguments: >-
-                -t:BuildAllConfigurations
+                -t:BuildSqlClient
                 -p:ReferenceType=Project
                 -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
@@ -307,7 +307,7 @@ stages:
               platform: $(Platform)
               configuration: $(Configuration)
               msbuildArguments: >-
-                -t:BuildAllConfigurations
+                -t:BuildSqlClient
                 -p:ReferenceType=Project
                 -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
