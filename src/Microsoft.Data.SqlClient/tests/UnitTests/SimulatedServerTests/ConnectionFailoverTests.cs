@@ -11,8 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Collection("SimulatedServerTests")]
     [Trait("Category", "flaky")]
+    [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
@@ -381,6 +381,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(2, server.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]

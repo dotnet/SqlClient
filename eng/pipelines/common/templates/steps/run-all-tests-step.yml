@@ -138,6 +138,18 @@ steps:
       retryCountOnTaskFailure: 1
       condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
 
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Unit Tests'
+      inputs:
+        command: custom
+        projects: build.proj
+        custom: msbuild
+        arguments: '-t:RunUnitTests -p:TF=${{ parameters.targetFramework }} -p:TestSet=${{ parameters.testSet }} -p:=TestMicrosoftDataSqlClientVersion=${{ parameters.nugetPackageVersion }} -p:platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:Filter="category=flaky"'
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
+      condition: succeededOrFailed()
+      continueOnError: true
+
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests'
     inputs:
