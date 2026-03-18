@@ -5,13 +5,6 @@
 #################################################################################
 
 parameters:
-  # The C# build configuration to use (eg, Debug or Release).
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
   # Package version parameters ----
   - name: abstractionsPackageVersion
     type: string
@@ -27,10 +20,9 @@ steps:
     displayName: 'Build2.proj - PackMds'
     inputs:
       solution: '$(REPO_ROOT)/build2.proj'
-      configuration: '${{ parameters.buildConfiguration }}'
+      configuration: 'Release'
       msbuildArguments: >-
         -t:PackMds
-        -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackBuild=false
         -p:PackageVersionAbstraction="${{ parameters.abstractionsPackageVersion }}"
         -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
