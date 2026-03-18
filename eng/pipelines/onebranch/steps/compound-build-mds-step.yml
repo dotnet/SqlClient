@@ -6,8 +6,6 @@
 
 # This collection of steps builds Microsoft.Data.SqlClient via build2.proj
 
-# @TODO: This can probably be made generic and pass in the command lines for msbuild
-
 parameters:
   - name: abstractionsPackageVersion
     type: string
@@ -29,10 +27,9 @@ steps:
     displayName: 'Build2.proj - BuildMds'
     inputs:
       solution: '$(REPO_ROOT)/build2.proj'
-      configuration: '${{ parameters.buildConfiguration }}'
+      configuration: 'Release'
       msbuildArguments: >-
         -t:BuildMds
-        -p:Configuration=Release
         -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
         -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
         -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
