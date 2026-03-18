@@ -388,19 +388,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{365490
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{45B9E5C3-DED5-4DB6-B1E6-4EAC4E68BA83}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\onebranch\steps\code-analyze-step.yml = ..\eng\pipelines\onebranch\steps\code-analyze-step.yml
-		..\eng\pipelines\onebranch\steps\compound-build-csproj-step.yml = ..\eng\pipelines\onebranch\steps\compound-build-csproj-step.yml
-		..\eng\pipelines\onebranch\steps\compound-esrp-dll-signing-step.yml = ..\eng\pipelines\onebranch\steps\compound-esrp-dll-signing-step.yml
-		..\eng\pipelines\onebranch\steps\compound-esrp-nuget-signing-step.yml = ..\eng\pipelines\onebranch\steps\compound-esrp-nuget-signing-step.yml
-		..\eng\pipelines\onebranch\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\onebranch\steps\compound-nuget-pack-step.yml
-		..\eng\pipelines\onebranch\steps\compound-pack-csproj-step.yml = ..\eng\pipelines\onebranch\steps\compound-pack-csproj-step.yml
-		..\eng\pipelines\onebranch\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\compound-publish-symbols-step.yml
-		..\eng\pipelines\onebranch\steps\publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\publish-symbols-step.yml
 		..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml
-		..\eng\pipelines\onebranch\steps\compound-build-mds-step.yml = ..\eng\pipelines\onebranch\steps\compound-build-mds-step.yml
 		..\eng\pipelines\onebranch\steps\roslyn-analyzers-mds-step.yml = ..\eng\pipelines\onebranch\steps\roslyn-analyzers-mds-step.yml
-		..\eng\pipelines\onebranch\steps\compound-extract-mds-apiscan-files-step.yml = ..\eng\pipelines\onebranch\steps\compound-extract-mds-apiscan-files-step.yml
-		..\eng\pipelines\onebranch\steps\compound-pack-mds-step.yml = ..\eng\pipelines\onebranch\steps\compound-pack-mds-step.yml
+		..\eng\pipelines\onebranch\steps\build-csproj-step.yml = ..\eng\pipelines\onebranch\steps\build-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\build-mds-step.yml = ..\eng\pipelines\onebranch\steps\build-mds-step.yml
+		..\eng\pipelines\onebranch\steps\esrp-sign-dll-step.yml = ..\eng\pipelines\onebranch\steps\esrp-sign-dll-step.yml
+		..\eng\pipelines\onebranch\steps\esrp-sign-nuget-step.yml = ..\eng\pipelines\onebranch\steps\esrp-sign-nuget-step.yml
+		..\eng\pipelines\onebranch\steps\extract-apiscan-files-mds-step.yml = ..\eng\pipelines\onebranch\steps\extract-apiscan-files-mds-step.yml
+		..\eng\pipelines\onebranch\steps\pack-csproj-step.yml = ..\eng\pipelines\onebranch\steps\pack-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\pack-mds-step.yml = ..\eng\pipelines\onebranch\steps\pack-mds-step.yml
+		..\eng\pipelines\onebranch\steps\roslyn-analyzers-csproj-step.yml = ..\eng\pipelines\onebranch\steps\roslyn-analyzers-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\publish-symbols-step.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{E849E6FB-1AB0-4922-A060-0062EA669FD0}"
