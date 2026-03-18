@@ -288,28 +288,23 @@ stages:
             displayName: Enable Network DTC Access
 
           # --- Restore & Build ---
-          - task: MSBuild@1
-            displayName: Restore NuGets
-            inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              msbuildArguments: >-
-                -t:restore
-                -p:ReferenceType=Project
-            retryCountOnTaskFailure: 1
-
-          - task: MSBuild@1
+          # Build the driver directly with 'dotnet build' instead of going
+          # through build.proj targets.  build.proj's BuildSqlServer target
+          # causes SqlServer.Server.csproj to be re-evaluated with the
+          # driver's TargetFramework (net8.0) as a global property, which
+          # triggers NETSDK1005 because its assets file only has targets
+          # for net46 and netstandard2.0.  Building the driver csproj
+          # directly avoids this: SqlServer.Server is resolved as a NuGet
+          # PackageReference at version 1.0.0, not a ProjectReference.
+          - task: DotNetCoreCLI@2
             displayName: Build Driver
             retryCountOnTaskFailure: 1
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
-                -t:BuildNetCore
+              command: build
+              projects: src/Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj
+              arguments: >-
+                -c $(Configuration)
                 -p:ReferenceType=Project
-                -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
 
           - pwsh: dotnet sdk check
