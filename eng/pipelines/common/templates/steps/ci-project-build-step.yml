@@ -104,7 +104,6 @@ steps:
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:TestEnabled=true
           -p:GenerateNuget=false
-          -p:GenerateDocumentationFile=false
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
