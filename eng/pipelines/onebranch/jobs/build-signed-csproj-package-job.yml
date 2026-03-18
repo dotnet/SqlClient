@@ -134,7 +134,7 @@ jobs:
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
       # Perform Roslyn analysis before building, since this step will clobber build output.
-      - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
         parameters:
           msBuildArguments: >-
             -t:$(buildTarget)
