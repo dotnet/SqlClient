@@ -5,6 +5,7 @@
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
