@@ -289,37 +289,28 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
-          # --- Clean & Restore & Build ---
-          # Remove stale obj/ directories from prior builds on self-hosted
-          # agents.  Cached project.assets.json files that were restored for
-          # a different set of global properties (e.g. from a build.proj run
-          # that set TargetFramework=net8.0 on netstandard2.0 projects) cause
-          # NETSDK1005.  A fresh restore fixes this.
+          # --- Build ---
+          # Workaround: .NET 10 SDK on ADO agents fails to negotiate TFMs
+          # for P2P references to netstandard2.0 projects.  Instead of
+          # negotiating net8.0 → netstandard2.0, MSBuild passes net8.0
+          # directly, causing NETSDK1005.  We create a temporary
+          # Directory.Build.targets that explicitly sets the TFM for
+          # Extensions P2P references, bypassing the broken negotiation.
           - pwsh: |
-              Write-Host "Cleaning stale obj/ and artifacts/ directories..."
-              @(
-                "src/Microsoft.SqlServer.Server/obj",
-                "src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/obj",
-                "src/Microsoft.Data.SqlClient.Extensions/Logging/src/obj",
-                "src/Microsoft.Data.SqlClient/netcore/src/obj",
-                "src/Microsoft.Data.SqlClient/netcore/ref/obj",
-                "artifacts"
-              ) | ForEach-Object {
-                if (Test-Path $_) {
-                  Remove-Item -Recurse -Force $_
-                  Write-Host "  Removed $_"
-                }
-              }
-            displayName: Clean stale obj directories
-
-          - task: DotNetCoreCLI@2
-            displayName: Restore NuGets
-            inputs:
-              command: restore
-              projects: src/Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj
-              arguments: >-
-                -p:ReferenceType=Project
-            retryCountOnTaskFailure: 1
+              @'
+              <Project>
+                <Target Name="_FixExtensionsTFM" BeforeTargets="ResolveProjectReferences">
+                  <ItemGroup>
+                    <ProjectReference Condition="'%(Filename)' == 'Abstractions' OR '%(Filename)' == 'Logging'">
+                      <SetTargetFramework>TargetFramework=netstandard2.0</SetTargetFramework>
+                    </ProjectReference>
+                  </ItemGroup>
+                </Target>
+              </Project>
+              '@ | Set-Content -Path "Directory.Build.targets" -Encoding UTF8
+              Write-Host "Created Directory.Build.targets with P2P TFM fix"
+              Get-Content "Directory.Build.targets"
+            displayName: Fix P2P TFM negotiation for Extensions
 
           - task: DotNetCoreCLI@2
             displayName: Build Driver
@@ -328,7 +319,6 @@ stages:
               command: build
               projects: src/Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj
               arguments: >-
-                --no-restore
                 -c $(Configuration)
                 -p:ReferenceType=Project
                 -p:GenerateDocumentationFile=false
@@ -336,6 +326,14 @@ stages:
           - pwsh: dotnet sdk check
             displayName: .NET SDK check
             condition: succeededOrFailed()
+
+          # Remove temporary targets file before test step
+          - pwsh: |
+              if (Test-Path "Directory.Build.targets") {
+                Remove-Item "Directory.Build.targets"
+                Write-Host "Removed temporary Directory.Build.targets"
+              }
+            displayName: Remove temporary Directory.Build.targets
 
           # --- Run tests ---
           - task: MSBuild@1
