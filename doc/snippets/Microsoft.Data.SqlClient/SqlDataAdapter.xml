@@ -825,7 +825,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
     </OnRowUpdating>
     <RowUpdated>
       <summary>
-        Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> after a command is executed against the data source. The attempt to update is made, so the event fires.
+        Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> after a command is executed against the data source for each updated row. Use this event to inspect the result, check for errors, or control how <see cref="M:System.Data.DataRow.AcceptChanges" /> is applied.
       </summary>
       <remarks>
         <para>
@@ -833,11 +833,11 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
         </para>
         <list type="number">
           <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised.</description></item>
           <item><description>The command executes.</description></item>
-          <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If the command's <see cref="P:System.Data.IDbCommand.UpdatedRowSource" /> property is set to <see cref="F:System.Data.UpdateRowSource.FirstReturnedRecord" />, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
           <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event is raised.</description></item>
           <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
         </list>
       </remarks>
@@ -874,7 +874,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
               public static int Main()
               {
                   const string connectionString = "Integrated Security=SSPI;database=Northwind;server=MSSQL1";
-                  const string queryString = "SELECT * FROMProducts";
+                  const string queryString = "SELECT * FROM Products";
           
                   // create DataAdapter
                   SqlDataAdapter adapter = new SqlDataAdapter(queryString, connectionString);
@@ -938,7 +938,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
     </RowUpdated>
     <RowUpdating>
       <summary>
-        Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> before a command is executed against the data source. The attempt to update is made, so the event fires.
+        Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> before a command is executed against the data source for each updated row. Use this event to inspect or modify the command, skip the row, or cancel the update.
       </summary>
       <remarks>
         <para>
@@ -946,11 +946,11 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
         </para>
         <list type="number">
           <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised.</description></item>
           <item><description>The command executes.</description></item>
-          <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If the command's <see cref="P:System.Data.IDbCommand.UpdatedRowSource" /> property is set to <see cref="F:System.Data.UpdateRowSource.FirstReturnedRecord" />, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
           <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event is raised.</description></item>
           <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
         </list>
       </remarks>
@@ -987,7 +987,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
               public static int Main()
               {
                   const string connectionString = "Integrated Security=SSPI;database=Northwind;server=MSSQL1";
-                  const string queryString = "SELECT * FROMProducts";
+                  const string queryString = "SELECT * FROM Products";
           
                   // create DataAdapter
                   SqlDataAdapter adapter = new SqlDataAdapter(queryString, connectionString);

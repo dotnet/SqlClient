@@ -3474,9 +3474,9 @@ The blocking connection simulates a situation like a command still running in th
 
 ### How to use with legacy asynchronous commands
 Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute%60%601(System.Object,System.Func{%60%600})>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute``1(System.Object,System.Func{``0})>
 - <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync(System.Object,System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)>
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync%60%601(System.Object,System.Func{System.Threading.Tasks.Task{%60%600}},System.Threading.CancellationToken)>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync``1(System.Object,System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)>
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#4)]
 
@@ -3606,7 +3606,7 @@ If you call an `Execute` method after calling <xref:Microsoft.Data.SqlClient.Sql
 
 Output parameters (whether prepared or not) must have a user-specified data type. If you specify a variable length data type except vector, you must also specify the maximum <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A>.
 
-For vector data types, the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property is ignored. The size of the vector is inferred from the <xref:Microsoft.Data.SqlClient.SqlParameter.Value%2A> of type <xref:Microsoft.Data.SqlTypes.SqlVector%2A>.
+For vector data types, the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property is ignored. The size of the vector is inferred from the <xref:Microsoft.Data.SqlClient.SqlParameter.Value%2A> of type <xref:Microsoft.Data.SqlTypes.SqlVector%601>.
 
 Prior to Visual Studio 2010, <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> threw an exception.  Beginning in Visual Studio 2010, this method does not throw an exception.
 
