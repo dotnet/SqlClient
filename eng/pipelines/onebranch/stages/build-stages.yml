@@ -146,13 +146,28 @@ stages:
         dependsOn: build_abstractions
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-signed-mds-package-job.yml@self
             parameters:
-              publishSymbols: ${{ parameters.publishSymbols }}
-              isPreview: ${{ parameters.isPreview }}
-              isOfficial: ${{ parameters.isOfficial }}
-              # TODO: This job should use the effective versions for Abstractions, Logging,
-              # SqlServer, and SqlClient.
+              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
+              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
+              publishSymbols: '${{ parameters.publishSymbols }}'
+              signingAppRegistrationClientId: '$(AppRegistrationClientId)'
+              signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
+              signingAuthAkvName: '$(AuthAKVName)'
+              signingAuthSignCertName: '$(AuthSignCertName)'
+              signingEsrpClientId: '$(ESRPClientId)'
+              signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
+              symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+              symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
+              symbolsPublishServer: '$(SymbolServer)'
+              symbolsPublishTokenUri: '$(SymbolTokenUri)'
+              symbolsUploadAccount: 'SqlClientDrivers'
+
+              abstractionsArtifactName: '$(abstractionsArtifactsName)'
+              abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
+              loggingArtifactName: '$(loggingArtifactsName)'
+              loggingPackageVersion: '$(effectiveLoggingVersion)'
+              mdsPackageVersion: '$(effectiveSqlClientVersion)'
 
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
             parameters:
