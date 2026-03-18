@@ -2584,7 +2584,7 @@
     <value>'{0}' için kimlik doğrulama sağlayıcısı bulunamıyor.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+    <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. Active Directory (Entra ID) kimlik doğrulaması yöntemlerini kullanmak için ‘Microsoft.Data.SqlClient.Extensions.Azure’ NuGet paketini (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) yükleyin.</value>
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Kimlik doğrulama sağlayıcıları için yapılandırma bölümü okunamadı.</value>
@@ -4690,63 +4690,63 @@
     <value>Vektör JSON dizesi {0} geçersiz.</value>
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
-    <value>Could not find an empty slot in the connection pool.</value>
+    <value>Bağlantı havuzunda boş bir yuva bulunamadı.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
-    <value>The connection pool has been shut down.</value>
+    <value>Bağlantı havuzu kapatıldı.</value>
   </data>
   <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
-    <value>Cannot get RequiredLength when HasDataLength is false.</value>
+    <value>HasDataLength değeri false olduğunda RequiredLength elde edilemiyor.</value>
   </data>
   <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
-    <value>Partial packet cannot be non-null when setting to non-null.</value>
+    <value>Kısmi paket, null olmayan bir değere ayarlandığında null olamaz.</value>
   </data>
   <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
-    <value>MultiplexPackets cannot return both consumePartialPacket and consumeInputDirectly.</value>
+    <value>MultiplexPackets, hem consumePartialPacket hem de consumeInputDirectly yöntemini döndüremez.</value>
   </data>
   <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
-    <value>Attempted to pend a read when the fail async pends test hook was enabled.</value>
+    <value>“Asenkron işlem başarısız olduğunda askıya alma” test kancası etkin durumdayken okuma işlemi askıya alınmaya çalışıldı.</value>
   </data>
   <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
-    <value>Packet modification detected. Hash is null but packet contains non-null buffer.</value>
+    <value>Paket değişikliği algılandı. Karma değeri boş, ancak paket boş olmayan bir arabellek içeriyor.</value>
   </data>
   <data name="SQL_PacketHashMismatch" xml:space="preserve">
-    <value>Packet modification detected. Hash from packet creation does not match hash from packet check.</value>
+    <value>Paket değişikliği algılandı. Paket oluşturulurken hesaplanan karma değeri, paket kontrolü sırasında hesaplanan karma değeriyle eşleşmiyor.</value>
   </data>
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
-    <value>Cannot transition from state '{0}' to '{1}'.</value>
+    <value>‘{0}’ durumundan ‘{1}’ durumuna geçilemiyor.</value>
   </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
-    <value>Unsupported state: '{0}'.</value>
+    <value>Desteklenmeyen durum: ‘{0}’.</value>
   </data>
   <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because the retryMethod value is null or empty.</value>
+    <value>retryMethod değeri null veya boş olduğu için SqlRetryLogicBaseProvider nesnesi oluşturulamadı.</value>
   </data>
   <data name="SQLCR_RetryMethodException" xml:space="preserve">
-    <value>Exception occurred when running the '{0}.{1}()' method.</value>
+    <value>'{0}.{1}()' yöntemi çalıştırılırken bir hata oluştu.</value>
   </data>
   <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
-    <value>Failed to resolve the '{0}' method from '{1}' type.</value>
+    <value>‘{1}’ türündeki ‘{0}’ yöntemi çözümlenemedi.</value>
   </data>
   <data name="SQLCR_InvalidReturnType" xml:space="preserve">
-    <value>Invalid return type; return type must be of '{0}' type.</value>
+    <value>Geçersiz dönüş türü; dönüş türü ‘{0}’ türünde olmalıdır.</value>
   </data>
   <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid '{0}' parameters.{1}The function must have a parameter of type 'SqlRetryLogicOption'.</value>
+    <value>Geçersiz ‘{0}’ parametreleri nedeniyle SqlRetryLogicBaseProvider nesnesi oluşturulamadı.{1}İşlevin ‘SqlRetryLogicOption’ türünde bir parametresi olmalıdır.</value>
   </data>
   <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid retryMethod parameters.{0}Parameter '{1} {2}' doesn't have a default value.</value>
+    <value>Geçersiz retryMethod parametreleri nedeniyle SqlRetryLogicBaseProvider nesnesi oluşturulamadı.{0}'{1} {2}' parametresinin varsayılan değeri yok.</value>
   </data>
   <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
-    <value>Sequence contains more than one matching element.</value>
+    <value>Sıra birden çok eşleşen öğe içeriyor.</value>
   </data>
   <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
-    <value>Sequence contains no matching element.</value>
+    <value>Sıra eşleşen öğe içermiyor.</value>
   </data>
   <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
-    <value>Can only rent from a pool if an onCreate delegate is available.</value>
+    <value>Yalnızca onCreate delegesi mevcutsa havuzdan kiralama yapılabilir.</value>
   </data>
   <data name="SQL_InvalidUdtSize" xml:space="preserve">
-    <value>The type '{0}' has an invalid size.</value>
+    <value>‘{0}’ türü geçersiz bir boyuta sahiptir.</value>
   </data>
 </root>

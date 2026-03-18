@@ -2584,7 +2584,7 @@
     <value>找不到“{0}”的身份验证提供程序。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+    <value>找不到 ‘{0}’ 的身份验证提供程序。安装 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 包(https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)以使用 Active Directory (Entra ID)身份验证方法。</value>
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>未能读取身份验证提供程序的配置节。</value>
@@ -4690,63 +4690,63 @@
     <value>{0} 矢量的 JSON 字符串无效。</value>
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
-    <value>Could not find an empty slot in the connection pool.</value>
+    <value>在连接池中找不到空槽。</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
-    <value>The connection pool has been shut down.</value>
+    <value>连接池已关闭。</value>
   </data>
   <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
-    <value>Cannot get RequiredLength when HasDataLength is false.</value>
+    <value>当 HasDataLength 为 false 时，无法获取 RequiredLength。</value>
   </data>
   <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
-    <value>Partial packet cannot be non-null when setting to non-null.</value>
+    <value>当设置为非 null 时，部分数据包不能为非 null。</value>
   </data>
   <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
-    <value>MultiplexPackets cannot return both consumePartialPacket and consumeInputDirectly.</value>
+    <value>MultiplexPackets 无法同时返回 consumePartialPacket 和 consumeInputDirectly。</value>
   </data>
   <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
-    <value>Attempted to pend a read when the fail async pends test hook was enabled.</value>
+    <value>已在启用失败的异步挂起测试挂钩时尝试挂起读取。</value>
   </data>
   <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
-    <value>Packet modification detected. Hash is null but packet contains non-null buffer.</value>
+    <value>检测到数据包修改。哈希为 null，但数据包中包含非 null 缓冲区。</value>
   </data>
   <data name="SQL_PacketHashMismatch" xml:space="preserve">
-    <value>Packet modification detected. Hash from packet creation does not match hash from packet check.</value>
+    <value>检测到数据包修改。数据包创建中的哈希与数据包检查中的哈希不匹配。</value>
   </data>
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
-    <value>Cannot transition from state '{0}' to '{1}'.</value>
+    <value>无法从状态 ‘{0}’ 转换为 ‘{1}’。</value>
   </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
-    <value>Unsupported state: '{0}'.</value>
+    <value>不支持的状态: ‘{0}’。</value>
   </data>
   <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because the retryMethod value is null or empty.</value>
+    <value>未能创建 SqlRetryLogicBaseProvider 对象，因为 retryMethod 值为 null 或为空。</value>
   </data>
   <data name="SQLCR_RetryMethodException" xml:space="preserve">
-    <value>Exception occurred when running the '{0}.{1}()' method.</value>
+    <value>运行 ‘{0}.{1}()’ 方法时发生异常。</value>
   </data>
   <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
-    <value>Failed to resolve the '{0}' method from '{1}' type.</value>
+    <value>无法从 ‘{1}’ 类型解析 ‘{0}’ 方法。</value>
   </data>
   <data name="SQLCR_InvalidReturnType" xml:space="preserve">
-    <value>Invalid return type; return type must be of '{0}' type.</value>
+    <value>返回类型无效;返回类型必须为 ‘{0}’ 类型。</value>
   </data>
   <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid '{0}' parameters.{1}The function must have a parameter of type 'SqlRetryLogicOption'.</value>
+    <value>由于参数 ‘{0}’ 无效，未能创建 SqlRetryLogicBaseProvider 对象。{1}该函数必须具有 ‘SqlRetryLogicOption’ 类型的参数。</value>
   </data>
   <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid retryMethod parameters.{0}Parameter '{1} {2}' doesn't have a default value.</value>
+    <value>由于 retryMethod 参数无效，未能创建 SqlRetryLogicBaseProvider 对象。{0}参数 ‘{1} {2}’ 没有默认值。</value>
   </data>
   <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
-    <value>Sequence contains more than one matching element.</value>
+    <value>序列包含多个匹配元素。</value>
   </data>
   <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
-    <value>Sequence contains no matching element.</value>
+    <value>序列不包含任何匹配元素。</value>
   </data>
   <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
-    <value>Can only rent from a pool if an onCreate delegate is available.</value>
+    <value>仅当 onCreate 委托可用时，才能从池中租用。</value>
   </data>
   <data name="SQL_InvalidUdtSize" xml:space="preserve">
-    <value>The type '{0}' has an invalid size.</value>
+    <value>类型 ‘{0}’ 的大小无效。</value>
   </data>
 </root>

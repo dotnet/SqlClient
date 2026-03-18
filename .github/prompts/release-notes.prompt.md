@@ -86,6 +86,10 @@ For each package that has relevant PRs in the milestone:
    - Look up dependencies using the Dependency Sources from the lookup table above. Resolve concrete versions from [Directory.Packages.props](Directory.Packages.props).
    - List dependencies per target framework. Use the project file's `<TargetFrameworks>` to determine which frameworks to list.
    - Omit the Contributors section for packages with no public contributors.
+   - **GA releases (all packages):** When the release is a stable (non-preview) version, structure the notes with two sections:
+     1. **"Changes Since [last preview]"** — only the delta since the most recent preview of this package.
+     2. **"Cumulative Changes Since [last stable]"** — all changes since the last stable release of this package, synthesized from all preview release notes plus the GA milestone. This applies to every package (MDS, AKV, Extensions.Azure, Abstractions, Internal.Logging, etc.), not just the core driver. Apply the cross-referencing from Step 3 to eliminate items already shipped in prior stable patch releases.
+   - **Preview releases:** Only include the delta since the previous release (preview or stable). No cumulative section is needed.
 
 3. **Create or update the version README** at `<Directory>/README.md`. Follow the existing format — see [release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md](release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md) for reference:
 

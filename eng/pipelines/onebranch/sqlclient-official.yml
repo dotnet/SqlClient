@@ -33,6 +33,12 @@ parameters:
     type: boolean
     default: false
 
+  # Push packages to NuGet Production (otherwise pushes to NuGet Test).
+  - name: releaseToProduction
+    displayName: Release to NuGet Production
+    type: boolean
+    default: false
+
   # True if this is a preview build.
   - name: isPreview
     displayName: Is this a preview build?
@@ -44,12 +50,6 @@ parameters:
     displayName: Publish symbols
     type: boolean
     default: false
-
-  # Release Dry Run (do not push to NuGet)
-  - name: releaseDryRun
-    displayName: Release Dry Run (do not push to NuGet)
-    type: boolean
-    default: true
 
   # Build parameters — select which packages to build.
 
@@ -216,14 +216,10 @@ extends:
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          isDryRun: ${{ parameters.releaseDryRun }}
+          releaseToProduction: ${{ parameters.releaseToProduction }}
           # This is an official pipeline.
           isOfficial: true
           stageNameSuffix: production
-          ${{ if eq(parameters.releaseDryRun, true) }}:
-            stageDisplayName: Release Production (Dry Run)
-          ${{ else }}:
-            stageDisplayName: Release Production
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
