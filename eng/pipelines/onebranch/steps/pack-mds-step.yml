@@ -29,5 +29,5 @@ steps:
         -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
         -p:ReferenceType=Package
 
-  - script: tree /a /f $(ARTIFACT_PATH)
-    displayName: Output Artifact Tree
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree

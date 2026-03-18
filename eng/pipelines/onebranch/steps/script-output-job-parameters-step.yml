@@ -1,0 +1,17 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Emits the parameters parameter passed in from the calling job.
+
+parameters:
+  - name: providedParameters
+    type: object
+
+steps:
+  - powershell: |
+      $jsonParams = '${{ convertToJson(providedParameters) }}' -replace '\\', '\\'
+      $jsonParams = | ConvertFrom-Json | Format-List
+    displayName: 'Output Job Parameters'

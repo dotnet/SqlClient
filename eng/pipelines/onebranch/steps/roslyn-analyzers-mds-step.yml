@@ -12,16 +12,9 @@
 # GOTCHA: This step will clobber any existing build output. It should be run _before_ any build
 # steps that perform versioning or signing.
 
-# @TODO: This can be made generic and pass in the command lines for msbuild
 parameters:
   - name: abstractionsPackageVersion
     type: string
-
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
 
   - name: loggingPackageVersion
     type: string

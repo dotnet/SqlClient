@@ -7,13 +7,6 @@
 # @TODO: This can be made more generic
 
 parameters:
-  # The C# build configuration to use (eg, Debug or Release).
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
   # Path where dll files should be copied to for APIScan
   - name: dllpath
     type: string
@@ -34,7 +27,7 @@ steps:
     inputs:
       contents: '**/Microsoft.Data.SqlClient.dll'
       flattenFolders: false  # Disabled to keep different frameworks and OS builds separate in the target
-      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-${{ parameters.buildConfiguration }}/'
+      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-Release/'
       targetFolder: '${{ parameters.dllPath }}/'
 
   - task: CopyFiles@2
@@ -42,5 +35,5 @@ steps:
     inputs:
       contents: 'Microsoft.Data.SqlClient.pdb'
       flattenFolders: false  # Disabled to keep different frameworks and OS builds separate in the target
-      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-${{ parameters.buildConfiguration }}/'
+      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-Release/'
       targetFolder: '${{ parameters.pdbPath }}/'

@@ -49,8 +49,14 @@ parameters:
   - name: symbolsUploadAccount
     type: string
 
-  # Package Version Parameters
+  # Package Dependencies Parameters
+  - name: abstractionsArtifactName
+    type: string
+
   - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingArtifactName
     type: string
 
   - name: loggingPackageVersion
@@ -66,15 +72,14 @@ jobs:
       type: windows
 
     variables:
-      ob_outputDirectory: '$(ARTIFACT_PATH)'
+      ob_outputDirectory: '$(BUILD_OUTPUT)'
 
     steps:
+      # Dump environment and parameters
       - template: /eng/pipelines/steps/script-output-environment-variables-step.yml@self
-
-      - powershell: |
-          $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
-          $jsonParams = | ConvertFrom-Json | Format-List
-        displayName: 'Output Job Parameters'
+      - template: /eng/pipelines/steps/script-output-job-parameters-step.yml@self
+        inputs:
+          providedParameters: ${{ parameters }}
 
       # Download Abstractions and Logging packages from previous stages into /packages/ so they
       # are available via the local NuGet feed when restoring.
@@ -82,14 +87,14 @@ jobs:
       - task: DownloadPipelineArtifact@2
         displayName: Download Microsoft.Data.SqlClient.Extensions.Abstractions Artifact
         inputs:
-          artifactName: # @TODO:
-          targetPath: $(REPO_ROOT)/packages
+          artifactName: '${{ parameters.abstractionsArtifactName }}'
+          targetPath: '$(REPO_ROOT)/packages'
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Microsoft.Data.SqlClient.Extensions.Logging Artifact
         inputs:
-          artifactName: # @TODO:
-          targetPath: $(REPO_ROOT)/packages
+          artifactName: '${{ parameters.loggingArtifactName }}'
+          targetPath: '$(REPO_ROOT)/packages'
 
       # Install the .NET SDK
       - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -102,21 +107,21 @@ jobs:
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
       # Perform the actual build
-      - template: /eng/pipelines/onebranch/steps/compound-build-mds-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/build-mds-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVerison }}'
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
       # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
-      - template: /eng/pipelines/onebranch/steps/compound-extract-mds-apiscan-files-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/extract-apiscan-files-mds-step.yml@self
         parameters:
           dllPath: '${{ parameters.apiScanDllPath }}'
           pdbPath: '${{ parameters.apiScanPdb }}'
-          referenceType: Package
+          referenceType: 'Package'
 
       # Sign the DLLs
-      - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/esrp-sign-dll-step.yml@self
         parameters:
           appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -127,7 +132,7 @@ jobs:
           pattern: 'Microsoft.Data.SqlClient*.dll'
 
       # Package the build output into a NuGet package
-      - template: /eng/pipelines/onebranch/steps/compound-pack-mds-step.yml
+      - template: /eng/pipelines/onebranch/steps/pack-mds-step.yml
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
@@ -135,7 +140,7 @@ jobs:
           referenceType: 'Package'
 
       # Sign the NuGet packages
-      - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/esrp-sign-nuget-step.yml@self
         parameters:
           appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -145,7 +150,7 @@ jobs:
           esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
       - ${{ if parameters.publishSymbols }}:
-          - template: /eng/pipelines/onebranch/steps/compound-publish-symbols-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
               artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.mdsPackageVersion }}_$(System.TimelineId)'
               azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
@@ -156,6 +161,6 @@ jobs:
               publishToPublic: true
               publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
               referenceType: Package
-              searchPattern: '**/*.pdb' # @TODO: This seems very heavy
+              searchPattern: '**/Microsoft.Data.SqlClient*.pdb' # @TODO: This seems very heavy
               uploadAccount: '${{ parameters.symbolsUploadAccount }}'
               version: '${{ parameters.mdsPackageVersion }}'

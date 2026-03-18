@@ -22,12 +22,12 @@ parameters:
   - name: authSignCertName
     type: string
 
-  # Esrp Connected Service Name.
-  - name: esrpConnectedServiceName
-    type: string
-
   # Esrp Client Id.
   - name: esrpClientId
+    type: string
+
+  # Esrp Connected Service Name.
+  - name: esrpConnectedServiceName
     type: string
 
   # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT) that match this pattern

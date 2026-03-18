@@ -22,12 +22,12 @@ parameters:
   - name: authSignCertName
     type: string
 
-  # Esrp Connected Service Name.
-  - name: esrpConnectedServiceName
-    type: string
-
   # Esrp Client Id.
   - name: esrpClientId
+    type: string
+
+  # Esrp Connected Service Name.
+  - name: esrpConnectedServiceName
     type: string
 
 steps:
@@ -40,7 +40,7 @@ steps:
       CleanupTempStorage: 1
       ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
       EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(PACK_OUTPUT)'
+      FolderPath: '$(BUILD_OUTPUT)'
       Pattern: '*.*nupkg'
       UseMSIAuthentication: true
       VerboseLogin: 1
@@ -55,7 +55,7 @@ steps:
       EsrpClientId: '${{ parameters.esrpClientId }}'
       AuthAKVName: '${{ parameters.authAkvName }}'
       AuthSignCertName: '${{ parameters.authSignCertName }}'
-      FolderPath: '$(PACK_OUTPUT)'
+      FolderPath: '$(BUILD_OUTPUT)'
       Pattern: '*.*nupkg'
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true

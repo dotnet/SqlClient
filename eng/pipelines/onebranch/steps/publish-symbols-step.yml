@@ -61,11 +61,8 @@ parameters:
       type: string
 
 steps:
-    # Set variable for downstream tasks (allegedly).
-    #
-    # Note: Because variables cannot be set in top-level of template, this has to be done during
-    # runtime.
-    #
+    # NOTE: Because variables cannot be set in top-level of the template, this has to be done
+    # during runtime.
     - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
       displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
@@ -78,7 +75,7 @@ steps:
           SymbolExpirationInDays: 1825 # 5 years
           SymbolServerType: 'TeamServices'
           SymbolsArtifactName: '${{ parameters.artifactName }}'
-          SymbolsFolder: '$(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin'
+          SymbolsFolder: '$(BUILD_OUTPUT)'
           SymbolsMaximumWaitTime: 60
           SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
