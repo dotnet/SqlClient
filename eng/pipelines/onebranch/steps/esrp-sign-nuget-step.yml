@@ -22,7 +22,7 @@ parameters:
   - name: authSignCertName
     type: string
 
-  # Esrp Client Id.
+  # Esrp Client ID.
   - name: esrpClientId
     type: string
 
