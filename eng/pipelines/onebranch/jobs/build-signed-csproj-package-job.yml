@@ -193,8 +193,18 @@ jobs:
           esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
 
       # Publish symbols to servers
+      # @TODO: Get these parameters from variables/libraries
       - ${{ if eq(parameters.publishSymbols, true) }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
-              packageFullName: ${{ parameters.packageFullName }}
-              packageVersion: ${{ parameters.packageVersion }}
+              artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)'
+              azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+              packageName: '${{ parameters.packageFullName }}'
+              publishProjectName: 'Microsoft.Data.SqlClient.SNI'
+              publishServer: '$(SymbolServer)'
+              publishToInternal: 'true'
+              publishToPublic: 'true'
+              publishTokenUri: '$(SymbolTokenUri)'
+              searchPattern: '**/${{ parameters.packageFullName }}*.pdb'
+              uploadAccount: 'SqlClientDrivers'
+              version: '${{ parameters.packageVersion }}'

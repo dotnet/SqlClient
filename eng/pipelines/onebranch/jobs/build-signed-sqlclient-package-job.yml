@@ -131,7 +131,16 @@ jobs:
 
   # Publish symbols to servers
   - ${{ if eq(parameters.publishSymbols, true) }}:
-    - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
+    - template: /eng/pipelines/onebranch/steps/compound-publish-symbols-step.yml@self
       parameters:
-        packageFullName: Microsoft.Data.SqlClient
-        packageVersion: $(mdsPackageVersion)
+        artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(mdsPackageVersion)_$(System.TimelineId)'
+        azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+        packageName: 'Microsoft.Data.SqlClient'
+        publishProjectName: 'Microsoft.Data.SqlClient.SNI'
+        publishServer: '$(SymbolServer)'
+        publishToInternal: 'true'
+        publishToPublic: 'true'
+        publishTokenUri: '$(SymbolTokenUri)'
+        searchPattern: '**/Microsoft.Data.SqlClient*.pdb'
+        uploadAccount: 'SqlClientDrivers'
+        version: '$(mdsPackageVersion)'

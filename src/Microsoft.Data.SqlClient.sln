@@ -390,15 +390,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{45B9E5C3
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\onebranch\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\onebranch\steps\build-all-configurations-signed-dlls-step.yml
 		..\eng\pipelines\onebranch\steps\code-analyze-step.yml = ..\eng\pipelines\onebranch\steps\code-analyze-step.yml
-		..\eng\pipelines\onebranch\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\compound-publish-symbols-step.yml
 		..\eng\pipelines\onebranch\steps\esrp-code-signing-step.yml = ..\eng\pipelines\onebranch\steps\esrp-code-signing-step.yml
-		..\eng\pipelines\onebranch\steps\publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\publish-symbols-step.yml
 		..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\onebranch\steps\script-output-environment-variables-step.yml
 		..\eng\pipelines\onebranch\steps\build-csproj-step.yml = ..\eng\pipelines\onebranch\steps\build-csproj-step.yml
 		..\eng\pipelines\onebranch\steps\esrp-dll-signing-step.yml = ..\eng\pipelines\onebranch\steps\esrp-dll-signing-step.yml
 		..\eng\pipelines\onebranch\steps\esrp-nuget-signing-step.yml = ..\eng\pipelines\onebranch\steps\esrp-nuget-signing-step.yml
 		..\eng\pipelines\onebranch\steps\nuget-pack-step.yml = ..\eng\pipelines\onebranch\steps\nuget-pack-step.yml
 		..\eng\pipelines\onebranch\steps\pack-csproj-step.yml = ..\eng\pipelines\onebranch\steps\pack-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\publish-symbols-step.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{E849E6FB-1AB0-4922-A060-0062EA669FD0}"
