@@ -68,7 +68,7 @@ jobs:
       msbuildArguments: -t:BuildTools
 
   # Perform analysis before building, since this step will clobber build output.
-  - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
+  - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
 
   # Build MDS, producing signed DLLs.
   - template: /eng/pipelines/onebranch/steps/build-all-configurations-signed-dlls-step.yml@self
