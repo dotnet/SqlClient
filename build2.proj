@@ -291,7 +291,7 @@
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
-        $(PacakgeVersionArgument)
+        $(PacakgeVersionMdsArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -316,7 +316,7 @@
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
-        $(PacakgeVersionArgument)
+        $(PacakgeVersionMdsArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
