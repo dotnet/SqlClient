@@ -206,6 +206,8 @@ stages:
       - job: Windows_netcore
         displayName: Windows netcore
         timeoutInMinutes: 360
+        workspace:
+          clean: all    # Purge obj/artifacts from prior runs on self-hosted agents
         strategy:
           matrix:
             net8_NativeSNI:
@@ -287,15 +289,38 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
-          # --- Restore & Build ---
-          # Build the driver directly with 'dotnet build' instead of going
-          # through build.proj targets.  build.proj's BuildSqlServer target
-          # causes SqlServer.Server.csproj to be re-evaluated with the
-          # driver's TargetFramework (net8.0) as a global property, which
-          # triggers NETSDK1005 because its assets file only has targets
-          # for net46 and netstandard2.0.  Building the driver csproj
-          # directly avoids this: SqlServer.Server is resolved as a NuGet
-          # PackageReference at version 1.0.0, not a ProjectReference.
+          # --- Clean & Restore & Build ---
+          # Remove stale obj/ directories from prior builds on self-hosted
+          # agents.  Cached project.assets.json files that were restored for
+          # a different set of global properties (e.g. from a build.proj run
+          # that set TargetFramework=net8.0 on netstandard2.0 projects) cause
+          # NETSDK1005.  A fresh restore fixes this.
+          - pwsh: |
+              Write-Host "Cleaning stale obj/ and artifacts/ directories..."
+              @(
+                "src/Microsoft.SqlServer.Server/obj",
+                "src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/obj",
+                "src/Microsoft.Data.SqlClient.Extensions/Logging/src/obj",
+                "src/Microsoft.Data.SqlClient/netcore/src/obj",
+                "src/Microsoft.Data.SqlClient/netcore/ref/obj",
+                "artifacts"
+              ) | ForEach-Object {
+                if (Test-Path $_) {
+                  Remove-Item -Recurse -Force $_
+                  Write-Host "  Removed $_"
+                }
+              }
+            displayName: Clean stale obj directories
+
+          - task: DotNetCoreCLI@2
+            displayName: Restore NuGets
+            inputs:
+              command: restore
+              projects: src/Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj
+              arguments: >-
+                -p:ReferenceType=Project
+            retryCountOnTaskFailure: 1
+
           - task: DotNetCoreCLI@2
             displayName: Build Driver
             retryCountOnTaskFailure: 1
@@ -303,6 +328,7 @@ stages:
               command: build
               projects: src/Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj
               arguments: >-
+                --no-restore
                 -c $(Configuration)
                 -p:ReferenceType=Project
                 -p:GenerateDocumentationFile=false
