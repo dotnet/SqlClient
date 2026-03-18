@@ -12,9 +12,9 @@ The user has identified a Work Item that currently lacks adequate detail. Your j
 
 1.  **Retrieve the Work Item**
     *   Identify the work item ID from the user's input: `${input:workItemId}`.
-    *   **Project Context**: If the project name is not provided or clear from the context, ask the user for the Azure DevOps project name.
+    *   **Project Context**: Always use the `ADO.Net` project when querying Azure DevOps.
     *   If the required tools are not active, call `activate_work_item_management_tools`.
-    *   Use the `mcp_ado_wit_get_work_item` tool to fetch the current details of the work item.
+    *   Use the `mcp_ado_wit_get_work_item` tool with `project` set to `ADO.Net` to fetch the current details of the work item.
     *   Examine the current **Title**, **Description**, and **Acceptance Criteria**.
 
 2.  **Analyze and Gap Analysis**
