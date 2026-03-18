@@ -1,0 +1,33 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # Package version parameters ----
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: mdsPackageVersion
+    type: string
+
+steps:
+  - task: MSBuild@1
+    displayName: 'Build2.proj - PackMds'
+    inputs:
+      solution: '$(REPO_ROOT)/build2.proj'
+      configuration: 'Release'
+      msbuildArguments: >-
+        -t:PackMds
+        -p:PackBuild=false
+        -p:PackageVersionAbstraction="${{ parameters.abstractionsPackageVersion }}"
+        -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
+        -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
+        -p:ReferenceType=Package
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree

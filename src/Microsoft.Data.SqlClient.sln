@@ -378,6 +378,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{B3061B34-2
 		..\eng\pipelines\onebranch\jobs\build-signed-sqlclient-package-job.yml = ..\eng\pipelines\onebranch\jobs\build-signed-sqlclient-package-job.yml
 		..\eng\pipelines\onebranch\jobs\publish-nuget-package-job.yml = ..\eng\pipelines\onebranch\jobs\publish-nuget-package-job.yml
 		..\eng\pipelines\onebranch\jobs\validate-signed-package-job.yml = ..\eng\pipelines\onebranch\jobs\validate-signed-package-job.yml
+		..\eng\pipelines\onebranch\jobs\build-signed-mds-package-job.yml = ..\eng\pipelines\onebranch\jobs\build-signed-mds-package-job.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{3654906C-6852-48AF-BC7E-B3A62F3E9DB9}"
@@ -398,6 +399,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{45B9E5C3
 		..\eng\pipelines\onebranch\steps\pack-csproj-step.yml = ..\eng\pipelines\onebranch\steps\pack-csproj-step.yml
 		..\eng\pipelines\onebranch\steps\publish-symbols-step.yml = ..\eng\pipelines\onebranch\steps\publish-symbols-step.yml
 		..\eng\pipelines\onebranch\steps\roslyn-analyzers-csproj-step.yml = ..\eng\pipelines\onebranch\steps\roslyn-analyzers-csproj-step.yml
+		..\eng\pipelines\onebranch\steps\build-mds-step.yml = ..\eng\pipelines\onebranch\steps\build-mds-step.yml
+		..\eng\pipelines\onebranch\steps\extract-apiscan-files-mds-step.yml = ..\eng\pipelines\onebranch\steps\extract-apiscan-files-mds-step.yml
+		..\eng\pipelines\onebranch\steps\pack-mds-step.yml = ..\eng\pipelines\onebranch\steps\pack-mds-step.yml
+		..\eng\pipelines\onebranch\steps\roslyn-analyzers-mds-step.yml = ..\eng\pipelines\onebranch\steps\roslyn-analyzers-mds-step.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{E849E6FB-1AB0-4922-A060-0062EA669FD0}"
