@@ -287,7 +287,7 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
-          # --- Restore & Build (matching CI pattern with MSBuild@1) ---
+          # --- Restore & Build ---
           - task: MSBuild@1
             displayName: Restore NuGets
             inputs:
@@ -307,9 +307,8 @@ stages:
               platform: $(Platform)
               configuration: $(Configuration)
               msbuildArguments: >-
-                -t:BuildAllConfigurations
+                -t:BuildNetCore
                 -p:ReferenceType=Project
-                -p:BuildTools=false
                 -p:GenerateNuget=false
                 -p:GenerateDocumentationFile=false
 
