@@ -92,7 +92,7 @@ stages:
       debug: ${{ parameters.debug }}
 
   # Run the stress tests.
-  - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
+  - template: /eng/pipelines/stress/stress-tests-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}

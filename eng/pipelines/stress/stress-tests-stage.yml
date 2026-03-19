@@ -69,7 +69,7 @@ stages:
     # ----------------------------------------------------------------------------------------------
     # Build and test on Linux.
 
-    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
+    - template: /eng/pipelines/stress/stress-tests-job.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         displayNamePrefix: Linux
@@ -87,7 +87,7 @@ stages:
     # ----------------------------------------------------------------------------------------------
     # Build and test on Windows
 
-    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
+    - template: /eng/pipelines/stress/stress-tests-job.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         displayNamePrefix: Win
@@ -109,7 +109,7 @@ stages:
     # ----------------------------------------------------------------------------------------------
     # Build and test on macOS.
 
-    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
+    - template: /eng/pipelines/stress/stress-tests-job.yml@self
       parameters:
         debug: ${{ parameters.debug }}
         displayNamePrefix: macOS
