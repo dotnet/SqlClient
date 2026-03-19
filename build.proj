@@ -2,7 +2,6 @@
 <Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="src/Directory.Build.props" />
-  <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
   <Import Project="$(ToolsDir)targets\CompareMdsRefAssemblies.targets" />
 
   <PropertyGroup>
