@@ -55,6 +55,54 @@ parameters:
   - name: buildAKVProvider
     type: boolean
 
+  # Signing Parameters -----------------------------------------------------
+
+  - name: signingAppRegistrationClientId
+    type: string
+    default: '$(AppRegistrationClientId)'
+
+  - name: signingAppRegistrationTenantId
+    type: string
+    default: '$(AppRegistrationTenantId)'
+
+  - name: signingAuthAkvName
+    type: string
+    default: '$(AuthAKVName)'
+
+  - name: signingAuthSignCertName
+    type: string
+    default: '$(AuthSignCertName)'
+
+  - name: signingEsrpClientId
+    type: string
+    default: '$(ESRPClientId)'
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+    default: '$(ESRPConnectedServiceName)'
+
+  # Symbols Publishing Parameters ------------------------------------------
+
+  - name: symbolsAzureSubscription
+    type: string
+    default: 'Symbols publishing Workload Identity federation service-ADO.Net'
+
+  - name: symbolsPublishProjectName
+    type: string
+    default: 'Microsoft.Data.SqlClient.SNI'
+
+  - name: symbolsPublishServer
+    type: string
+    default: '$(SymbolServer)'
+
+  - name: symbolsPublishTokenUri
+    type: string
+    default: '$(SymbolTokenUri)'
+
+  - name: symbolsUploadAccount
+    type: string
+    default: 'SqlClientDrivers'
+
 stages:
   # ====================================================================
   # Stage 1: Independent packages (no cross-package dependencies)
@@ -67,17 +115,17 @@ stages:
       - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-            signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-            signingAuthAkvName: '$(AuthAKVName)'
-            signingAuthSignCertName: '$(AuthSignCertName)'
-            signingEsrpClientId: '$(ESRPClientId)'
-            signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-            symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-            symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-            symbolsPublishServer: '$(SymbolServer)'
-            symbolsPublishTokenUri: '$(SymbolTokenUri)'
-            symbolsUploadAccount: 'SqlClientDrivers'
+            signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+            signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+            signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+            signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+            symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+            symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+            symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+            symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
             isOfficial: ${{ parameters.isOfficial }}
             packageName: Logging
@@ -93,17 +141,17 @@ stages:
       - ${{ if eq(parameters.buildSqlServerServer, true) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
-            signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-            signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-            signingAuthAkvName: '$(AuthAKVName)'
-            signingAuthSignCertName: '$(AuthSignCertName)'
-            signingEsrpClientId: '$(ESRPClientId)'
-            signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-            symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-            symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-            symbolsPublishServer: '$(SymbolServer)'
-            symbolsPublishTokenUri: '$(SymbolTokenUri)'
-            symbolsUploadAccount: 'SqlClientDrivers'
+            signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+            signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+            signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+            signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+            symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+            symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+            symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+            symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
             isOfficial: ${{ parameters.isOfficial }}
             packageName: SqlServer
@@ -128,17 +176,17 @@ stages:
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
             parameters:
-              signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-              signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-              signingAuthAkvName: '$(AuthAKVName)'
-              signingAuthSignCertName: '$(AuthSignCertName)'
-              signingEsrpClientId: '$(ESRPClientId)'
-              signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-              symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-              symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-              symbolsPublishServer: '$(SymbolServer)'
-              symbolsPublishTokenUri: '$(SymbolTokenUri)'
-              symbolsUploadAccount: 'SqlClientDrivers'
+              signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+              signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+              signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               isOfficial: ${{ parameters.isOfficial }}
               packageName: Abstractions
@@ -171,17 +219,17 @@ stages:
               apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
               isOfficial: ${{ parameters.isOfficial }}
               publishSymbols: ${{ parameters.publishSymbols }}
-              signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-              signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-              signingAuthAkvName: '$(AuthAKVName)'
-              signingAuthSignCertName: '$(AuthSignCertName)'
-              signingEsrpClientId: '$(ESRPClientId)'
-              signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-              symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-              symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-              symbolsPublishServer: '$(SymbolServer)'
-              symbolsPublishTokenUri: '$(SymbolTokenUri)'
-              symbolsUploadAccount: 'SqlClientDrivers'
+              signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+              signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+              signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               abstractionsArtifactName: '$(abstractionsArtifactsName)'
               abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
@@ -192,17 +240,17 @@ stages:
 
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
             parameters:
-              signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-              signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-              signingAuthAkvName: '$(AuthAKVName)'
-              signingAuthSignCertName: '$(AuthSignCertName)'
-              signingEsrpClientId: '$(ESRPClientId)'
-              signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-              symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-              symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-              symbolsPublishServer: '$(SymbolServer)'
-              symbolsPublishTokenUri: '$(SymbolTokenUri)'
-              symbolsUploadAccount: 'SqlClientDrivers'
+              signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+              signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+              signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               isOfficial: ${{ parameters.isOfficial }}
               packageName: Azure
@@ -233,17 +281,17 @@ stages:
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
             parameters:
-              signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-              signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-              signingAuthAkvName: '$(AuthAKVName)'
-              signingAuthSignCertName: '$(AuthSignCertName)'
-              signingEsrpClientId: '$(ESRPClientId)'
-              signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-              symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-              symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-              symbolsPublishServer: '$(SymbolServer)'
-              symbolsPublishTokenUri: '$(SymbolTokenUri)'
-              symbolsUploadAccount: 'SqlClientDrivers'
+              signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+              signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+              signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               isOfficial: ${{ parameters.isOfficial }}
               packageName: AkvProvider
