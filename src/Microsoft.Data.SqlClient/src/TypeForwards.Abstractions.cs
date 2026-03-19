@@ -5,4 +5,5 @@
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationMethod))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationParameters))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationProvider))]
+[assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationProviderException))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationToken))]
