@@ -50,6 +50,7 @@ pr:
       - NuGet.config
     exclude:
       - eng/pipelines/onebranch/*
+      - eng/pipelines/stress/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none

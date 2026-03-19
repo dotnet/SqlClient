@@ -3,8 +3,7 @@
 # file to you under the MIT license.  See the LICENSE file in the project root for more information.
 ####################################################################################################
 
-# This job builds and runs stress tests against an MDS NuGet package available as a pipeline
-# artifact.
+# This job builds and runs stress tests by compiling the SqlClient projects transitively.
 #
 # The stress tests are located here:
 #
@@ -166,19 +165,19 @@ jobs:
       # Run the stress tests for each .NET runtime.
       - ${{ each runtime in parameters.netTestRuntimes }}:
         - task: DotNetCoreCLI@2
-          displayName: Test [${{runtime}}]
+          displayName: Test [${{ runtime }}]
           inputs:
             command: custom
             custom: run
             projects: $(project)
-            arguments: $(dotnetArguments) --no-build -f $(runtime) -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
         - task: DotNetCoreCLI@2
-          displayName: Test [${{runtime}}]
+          displayName: Test [${{ runtime }}]
           inputs:
             command: custom
             custom: run
             projects: $(project)
-            arguments: $(dotnetArguments) --no-build -p:MdsPackageVersion=$(mdsVersion) -f $(runtime) -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)

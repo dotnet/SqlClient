@@ -242,14 +242,6 @@ stages:
             - pwsh: "Get-ChildItem env: | Sort-Object Name"
               displayName: "[Debug] List Environment Variables"
 
-  - template: common/templates/stages/ci-run-tests-stage.yml@self
-    parameters:
-      debug: ${{ parameters.debug }}
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      testJobTimeout: ${{ parameters.testJobTimeout }}
-      ${{ if eq(parameters.buildType, 'Package') }}:
-        dependsOn: build_nugets
-
       # Include the code coverage job if the build type is Project.
       ${{ if eq(parameters.referenceType, 'Project') }}:
         # Jobs to run as part of the tests stage, after the tests are done.
