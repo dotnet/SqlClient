@@ -136,8 +136,8 @@ jobs:
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
         parameters:
+          buildTarget: '$(buildTarget)'
           msBuildArguments: >-
-            -t:$(buildTarget)
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:ReferenceType=Package
             ${{ parameters.versionProperties }}
@@ -146,7 +146,6 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/build-csproj-step.yml@self
         parameters:
           buildTarget: $(buildTarget)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
           versionProperties: ${{ parameters.versionProperties }}
 
       - ${{ if eq(parameters.isOfficial, true) }}:
@@ -185,7 +184,6 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/pack-csproj-step.yml@self
         parameters:
           packTarget: $(packTarget)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
           versionProperties: ${{ parameters.versionProperties }}
 
       - ${{ if eq(parameters.isOfficial, true) }}:
