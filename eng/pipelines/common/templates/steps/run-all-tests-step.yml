@@ -68,6 +68,22 @@ steps:
         condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
         retryCountOnTaskFailure: 1
 
+    - task: MSBuild@1
+      displayName: 'Run Flaky Unit Tests ${{ parameters.msbuildArchitecture }}'
+      inputs:
+        solution: build.proj
+        msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+        platform: '${{parameters.platform }}'
+        configuration: '${{parameters.configuration }}'
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+        ${{ else }}: #x86
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
+      condition: succeededOrFailed()
+      continueOnError: true
+
   - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
     inputs:
