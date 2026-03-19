@@ -10,6 +10,9 @@
       <Platform Solution="*|x86" Project="x86" />
     </Project>
   </Folder>
+  <Folder Name="/doc/apps/">
+    <Project Path="../doc/apps/AzureAuthentication/AzureAuthentication.csproj" />
+  </Folder>
   <Folder Name="/doc/snippets/" />
   <Folder Name="/doc/snippets/Microsoft.Data.Sql/">
     <File Path="../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml" />
@@ -216,30 +219,27 @@
     <File Path="../eng/pipelines/steps/install-dotnet-arm64.ps1" />
     <File Path="../eng/pipelines/steps/install-dotnet.yml" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/" />
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/Abstractions/" />
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/Abstractions/src/">
-    <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+  <Folder Name="/src/">
+    <File Path="Directory.Build.props" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/Abstractions/test/">
+  <Folder Name="/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/">
+    <Project Path="Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient.Extensions.Abstractions/">
+    <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
     <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/Azure/" />
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/Azure/src/">
+  <Folder Name="/src/Microsoft.Data.SqlClient.Extensions.Azure/">
     <Project Path="Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
-  </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient.Extensions/Azure/test/">
     <Project Path="Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient.Internal/" />
-  <Folder Name="/Microsoft.Data.SqlClient.Internal/Logging/" />
-  <Folder Name="/Microsoft.Data.SqlClient.Internal/Logging/src/">
+  <Folder Name="/src/Microsoft.Data.SqlClient.Internal.Logging/">
     <Project Path="Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient/">
+  <Folder Name="/src/Microsoft.Data.SqlClient/">
     <File Path="Microsoft.Data.SqlClient/MdsVersions.props" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient/notsupported/">
+  <Folder Name="/src/Microsoft.Data.SqlClient/notsupported/">
     <Project Path="../tools/GenAPI/Microsoft.Cci.Extensions/Microsoft.Cci.Extensions.csproj">
       <Build Project="false" />
     </Project>
@@ -250,33 +250,15 @@
       <Build Project="false" />
     </Project>
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient/ref/">
+  <Folder Name="/src/Microsoft.Data.SqlClient/ref/">
     <Project Path="Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient/src/">
+  <Folder Name="/src/Microsoft.Data.SqlClient/src/">
     <Project Path="Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
   </Folder>
-  <Folder Name="/Microsoft.Data.SqlClient/tests/" />
-  <Folder Name="/src/">
-    <File Path="Directory.Build.props" />
-    <Project Path="Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/ref/Microsoft.Data.SqlClient.csproj" />
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-      <BuildDependency Project="Microsoft.Data.SqlClient/netfx/ref/Microsoft.Data.SqlClient.csproj" />
-    </Project>
+  <Folder Name="/src/Microsoft.Data.SqlClient/tests/" />
+  <Folder Name="/src/Microsoft.SqlServer.Server/">
     <Project Path="Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
-  </Folder>
-  <Folder Name="/src/netcore/">
-    <Project Path="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-  </Folder>
-  <Folder Name="/src/netcore/ref/">
-    <Project Path="Microsoft.Data.SqlClient/netcore/ref/Microsoft.Data.SqlClient.csproj" />
-  </Folder>
-  <Folder Name="/src/netfx/">
-    <Project Path="Microsoft.Data.SqlClient/netfx/src/Microsoft.Data.SqlClient.csproj" />
-  </Folder>
-  <Folder Name="/src/netfx/ref/">
-    <Project Path="Microsoft.Data.SqlClient/netfx/ref/Microsoft.Data.SqlClient.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj">
@@ -284,7 +266,6 @@
       <Platform Solution="*|x86" Project="x86" />
     </Project>
     <Project Path="Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />
     </Project>
@@ -292,9 +273,7 @@
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />
     </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj">
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />
@@ -317,19 +296,9 @@
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Tests/SqlClient.Stress.Tests.csproj" />
   </Folder>
   <Folder Name="/test/TestClr/">
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-      <BuildDependency Project="Microsoft.Data.SqlClient/netfx/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
   </Folder>
-  <Project Path="../doc/apps/AzureAuthentication/AzureAuthentication.csproj" />
 </Solution>
