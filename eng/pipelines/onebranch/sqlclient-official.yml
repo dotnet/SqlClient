@@ -215,17 +215,17 @@ extends:
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
 
-          signingAppRegistrationClientId: '$(AppRegistrationClientId)'
-          signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
-          signingAuthAkvName: '$(AuthAKVName)'
-          signingAuthSignCertName: '$(AuthSignCertName)'
-          signingEsrpClientId: '$(ESRPClientId)'
-          signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
-          symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-          symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
-          symbolsPublishServer: '$(SymbolServer)'
-          symbolsPublishTokenUri: '$(SymbolTokenUri)'
-          symbolsUploadAccount: 'SqlClientDrivers'
+          signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
+          signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
+          signingAuthAkvName: '$(SigningAuthAkvName)'
+          signingAuthSignCertName: '$(SigningAuthSignCertName)'
+          signingEsrpClientId: '$(SigningEsrpClientId)'
+          signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
+          symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
+          symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
+          symbolsPublishServer: '$(SymbolsPublishServer)'
+          symbolsPublishTokenUri: '$(SymbolsPublishTokenUri)'
+          symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
