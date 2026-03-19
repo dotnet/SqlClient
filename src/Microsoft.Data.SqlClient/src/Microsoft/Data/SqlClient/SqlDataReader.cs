@@ -845,7 +845,7 @@ namespace Microsoft.Data.SqlClient
         private void CleanPartialReadReliable()
         {
             AssertReaderState(requireData: true, permitAsync: false);
-            
+
             TdsOperationStatus result = TryCleanPartialRead();
             Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
             Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
@@ -1054,7 +1054,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                     }
-                    
+
                     // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
                     if (!wasClosed && stateObj != null)
                     {
@@ -1073,7 +1073,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                     // @TODO: CER Exception Handling was removed here (see GH#3581)
-                    
+
                     // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
 
                     // do not retry here
@@ -1658,7 +1658,7 @@ namespace Microsoft.Data.SqlClient
         {
             remaining = 0;
             TdsOperationStatus result;
-            
+
             int cbytes = 0;
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
 
@@ -2598,7 +2598,7 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlJson/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlJson/*' />
         virtual public SqlJson GetSqlJson(int i)
         {
             ReadColumn(i);
@@ -2606,7 +2606,7 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
         virtual public SqlVector<T> GetSqlVector<T>(int i) where T : unmanaged
         {
             if (typeof(T) != typeof(float))
@@ -3139,7 +3139,7 @@ namespace Microsoft.Data.SqlClient
                         return (T)(object)data.String;
                     }
                     // the requested type is likely to be one that isn't supported so try the cast and
-                    // unless there is a null value conversion then feedback the cast exception with 
+                    // unless there is a null value conversion then feedback the cast exception with
                     // type named to the user so they know what went wrong. Supported types are listed
                     // in the documentation
                     try
@@ -3909,7 +3909,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.InvalidRead();
             }
-            
+
             return TryReadColumnInternal(i, readHeaderOnly: true);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
