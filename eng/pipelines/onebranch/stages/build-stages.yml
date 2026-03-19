@@ -26,10 +26,6 @@
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
 
-  # True to enable debug information and steps.
-  - name: debug
-    type: boolean
-
   # True if this is a preview build, which uses the preview version numbers from
   # common-variables.yml.
   - name: isPreview
@@ -59,49 +55,38 @@ parameters:
 
   - name: signingAppRegistrationClientId
     type: string
-    default: '$(AppRegistrationClientId)'
 
   - name: signingAppRegistrationTenantId
     type: string
-    default: '$(AppRegistrationTenantId)'
 
   - name: signingAuthAkvName
     type: string
-    default: '$(AuthAKVName)'
 
   - name: signingAuthSignCertName
     type: string
-    default: '$(AuthSignCertName)'
 
   - name: signingEsrpClientId
     type: string
-    default: '$(ESRPClientId)'
 
   - name: signingEsrpConnectedServiceName
     type: string
-    default: '$(ESRPConnectedServiceName)'
 
   # Symbols Publishing Parameters ------------------------------------------
 
   - name: symbolsAzureSubscription
     type: string
-    default: 'Symbols publishing Workload Identity federation service-ADO.Net'
 
   - name: symbolsPublishProjectName
     type: string
-    default: 'Microsoft.Data.SqlClient.SNI'
 
   - name: symbolsPublishServer
     type: string
-    default: '$(SymbolServer)'
 
   - name: symbolsPublishTokenUri
     type: string
-    default: '$(SymbolTokenUri)'
 
   - name: symbolsUploadAccount
     type: string
-    default: 'SqlClientDrivers'
 
 stages:
   # ====================================================================

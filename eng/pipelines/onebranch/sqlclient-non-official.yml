@@ -181,13 +181,24 @@ extends:
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
           isPreview: ${{ parameters.isPreview }}
           isOfficial: false # This is a non-official pipeline.
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
+
+          signingAppRegistrationClientId: '$(AppRegistrationClientId)'
+          signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
+          signingAuthAkvName: '$(AuthAKVName)'
+          signingAuthSignCertName: '$(AuthSignCertName)'
+          signingEsrpClientId: '$(ESRPClientId)'
+          signingEsrpConnectedServiceName: '$(ESRPConnectedServiceName)'
+          symbolsAzureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+          symbolsPublishProjectName: 'Microsoft.Data.SqlClient.SNI'
+          symbolsPublishServer: '$(SymbolServer)'
+          symbolsPublishTokenUri: '$(SymbolTokenUri)'
+          symbolsUploadAccount: 'SqlClientDrivers'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
