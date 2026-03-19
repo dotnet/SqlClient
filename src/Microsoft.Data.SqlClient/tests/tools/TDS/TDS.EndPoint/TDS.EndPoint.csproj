@@ -51,11 +51,7 @@
 
   <!-- References ====================================================== -->
   <ItemGroup>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
-      <Name>TDS</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="System.Security.Principal.Windows" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
   </ItemGroup>
 </Project>
