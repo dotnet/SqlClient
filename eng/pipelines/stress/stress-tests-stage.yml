@@ -71,6 +71,7 @@ stages:
 
     - template: /eng/pipelines/stress/stress-tests-job.yml@self
       parameters:
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
         displayNamePrefix: Linux
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -89,6 +90,7 @@ stages:
 
     - template: /eng/pipelines/stress/stress-tests-job.yml@self
       parameters:
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
         displayNamePrefix: Win
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -111,6 +113,7 @@ stages:
 
     - template: /eng/pipelines/stress/stress-tests-job.yml@self
       parameters:
+        buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
         displayNamePrefix: macOS
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

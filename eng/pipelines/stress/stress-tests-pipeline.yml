@@ -87,7 +87,7 @@ parameters:
 stages:
 
   # Generate secrets.  We use these for the local SQL Server 'sa' logins.
-  - template: /eng/pipelines/stages/generate-secrets-stage.yml@self
+  - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
 

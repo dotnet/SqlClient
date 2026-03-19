@@ -15,6 +15,13 @@
 
 parameters:
 
+  # The type of build to produce (Debug or Release)
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
   # True to enable debugging steps.
   - name: debug
     type: boolean
