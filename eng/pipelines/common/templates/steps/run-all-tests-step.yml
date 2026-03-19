@@ -68,6 +68,22 @@ steps:
         condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
         retryCountOnTaskFailure: 1
 
+    - task: MSBuild@1
+      displayName: 'Run Flaky Unit Tests ${{ parameters.msbuildArchitecture }}'
+      inputs:
+        solution: build.proj
+        msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+        platform: '${{parameters.platform }}'
+        configuration: '${{parameters.configuration }}'
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+        ${{ else }}: #x86
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
+      condition: succeededOrFailed()
+      continueOnError: true
+
   - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
     inputs:
@@ -79,8 +95,22 @@ steps:
         msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
       ${{ else }}: # x86
         msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
-    condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+    condition: succeededOrFailed()
     retryCountOnTaskFailure: 1
+
+  - task: MSBuild@1
+    displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
+    inputs:
+      solution: build.proj
+      msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+      platform: '${{parameters.platform }}'
+      configuration: '${{parameters.configuration }}'
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+      ${{ else }}: # x86
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+    condition: succeededOrFailed()
+    continueOnError: true
 
   - task: MSBuild@1
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
@@ -93,8 +123,22 @@ steps:
         msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
       ${{ else }}: # x86
         msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
-    condition: eq(variables['Agent.OS'], 'Windows_NT')
+    condition: succeededOrFailed()
     retryCountOnTaskFailure: 2
+
+  - task: MSBuild@1
+    displayName: 'Run Flaky Manual Tests ${{parameters.msbuildArchitecture }}'
+    inputs:
+      solution: build.proj
+      msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+      platform: '${{parameters.platform }}'
+      configuration: '${{parameters.configuration }}'
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:Filter="category=flaky"'
+      ${{ else }}: # x86
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }} -p:Filter="category=flaky"'
+    condition: succeededOrFailed()
+    continueOnError: true
 
 - ${{ else }}: # Linux or macOS
   - ${{if eq(parameters.referenceType, 'Project')}}:
@@ -110,6 +154,18 @@ steps:
       retryCountOnTaskFailure: 1
       condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
 
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Unit Tests'
+      inputs:
+        command: custom
+        projects: build.proj
+        custom: msbuild
+        arguments: '-t:RunUnitTests -p:TF=${{ parameters.targetFramework }} -p:TestSet=${{ parameters.testSet }} -p:=TestMicrosoftDataSqlClientVersion=${{ parameters.nugetPackageVersion }} -p:platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:Filter="category=flaky"'
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
+      condition: succeededOrFailed()
+      continueOnError: true
+
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests'
     inputs:
@@ -120,7 +176,19 @@ steps:
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 1
-    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+    condition: succeededOrFailed()
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Flaky Functional Tests'
+    inputs:
+      command: custom
+      projects: build.proj
+      custom: msbuild
+      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:Filter="category=flaky"'
+      verbosityRestore: Detailed
+      verbosityPack: Detailed
+    condition: succeededOrFailed()
+    continueOnError: true
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Manual Tests'
@@ -132,4 +200,16 @@ steps:
       verbosityRestore: Detailed
       verbosityPack: Detailed
     retryCountOnTaskFailure: 2
-    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+    condition: succeededOrFailed()
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Flaky Manual Tests'
+    inputs:
+      command: custom
+      projects: build.proj
+      custom: msbuild
+      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }} -p:Filter="category=flaky"'
+      verbosityRestore: Detailed
+      verbosityPack: Detailed
+    condition: succeededOrFailed()
+    continueOnError: true
