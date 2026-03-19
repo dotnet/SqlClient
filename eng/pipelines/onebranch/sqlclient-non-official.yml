@@ -90,6 +90,7 @@ parameters:
     default: false
 
 variables:
+  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
 
   # Define the effective versions for all of the packages we build and release.
