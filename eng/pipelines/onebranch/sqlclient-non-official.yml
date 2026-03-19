@@ -92,6 +92,7 @@ parameters:
 variables:
   - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml@self
 
   # Define the effective versions for all of the packages we build and release.
   - ${{ if parameters.isPreview }}:

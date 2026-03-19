@@ -28,10 +28,8 @@ jobs:
       vmImage: "ADO-MMS22-SQL19"
 
     variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-      - template: /eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml@self
-
-      - name: pathToDownloadedNuget # path to the downloaded nuget files
-        value: $(Pipeline.Workspace)\${{parameters.artifactName }}
+    - name: pathToDownloadedNuget # path to the downloaded nuget files
+      value: $(Pipeline.Workspace)\${{parameters.artifactName }}
 
       - ${{ if parameters.isPreview }}:
           - name: extractedNugetPath
