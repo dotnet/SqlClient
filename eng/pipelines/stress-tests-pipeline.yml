@@ -85,6 +85,13 @@ parameters:
 
 # The stages to run.
 stages:
+
+  # Generate secrets.  We use these for the local SQL Server 'sa' logins.
+  - template: /eng/pipelines/stages/generate-secrets-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+
+  # Run the stress tests.
   - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
