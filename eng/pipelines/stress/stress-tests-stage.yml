@@ -3,8 +3,8 @@
 # file to you under the MIT license.  See the LICENSE file in the project root for more information.
 ####################################################################################################
 
-# This stage builds and runs stress tests against SqlClient  NuGet package available as a pipeline
-# artifact.
+# This stage builds and runs stress tests against the SqlClient projects, building them transitively
+# as necessary.
 #
 # The stress tests are located here:
 #

@@ -3,17 +3,18 @@
 # file to you under the MIT license.  See the LICENSE file in the project root for more information.
 ####################################################################################################
 
-# This pipeline runs the stress test suite using artifacts from the triggering pipeline.
+# This pipeline runs the stress test suite against the SqlClient projects, building them
+# transitively as necessary, triggered by successful runs of the following pipelines:
 #
 # Public project:
 #   Triggering pipelines: PR-SqlClient-Project, CI-SqlClient (branch main only)
 #   Pipeline name:        Stress-SqlClient
-#   Pipeline URL:         https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2212
+#   Pipeline URL:         TODO: Create the Azure DevOps pipeline.
 #
 # ADO.Net project:
-#   Triggering pipeline: MDS Main CI (branch internal/main only)
-#   Pipeline name:       Stress-SqlClient
-#   Pipeline URL:        TODO
+#   Triggering pipeline:  MDS Main CI (branch internal/main only)
+#   Pipeline name:        Stress-SqlClient
+#   Pipeline URL:         TODO: Create the Azure DevOps pipeline.
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)

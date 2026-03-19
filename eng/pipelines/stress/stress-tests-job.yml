@@ -104,9 +104,8 @@ jobs:
           --artifacts-path $(dotnetArtifactsDir)
           --configuration ${{ parameters.buildConfiguration }}
 
-      # The contents of the config file to use for all tests.  We will write
-      # this to a JSON file for each test job, and then point to it via the
-      # STRESS_CONFIG_FILE environment variable.
+      # The contents of the config file to use for all tests.  We will write this to a JSON file and
+      # then point to it via the STRESS_CONFIG_FILE environment variable.
       - name: configContent
         value: |
           [
@@ -167,8 +166,7 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           inputs:
-            command: custom
-            custom: run
+            command: run
             projects: $(project)
             arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
 
@@ -177,7 +175,6 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           inputs:
-            command: custom
-            custom: run
+            command: run
             projects: $(project)
             arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
