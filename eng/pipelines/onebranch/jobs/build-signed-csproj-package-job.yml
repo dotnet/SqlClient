@@ -15,6 +15,52 @@
 # signed DLLs, and finally ESRP signs the NuGet packages.
 
 parameters:
+
+
+  # Signing Parameters -----------------------------------------------------
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+
+  # Symbols Publishing Parameters ------------------------------------------
+
+  - name: symbolsAzureSubscription
+    type: string
+    default: 'Symbols publishing Workload Identity federation service-ADO.Net'
+
+  - name: symbolsPublishProjectName
+    type: string
+    default: 'Microsoft.Data.SqlClient.SNI'
+
+  - name: symbolsPublishServer
+    type: string
+    default: '$(SymbolServer)'
+
+  - name: symbolsPublishTokenUri
+    type: string
+    default: '$(SymbolTokenUri)'
+
+  - name: symbolsUploadAccount
+    type: string
+    default: 'SqlClientDrivers'
+
+  # OTHERS +=====================================
+
   # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
   # the default Build and Pack targets if those aren't specified.
   - name: packageName
@@ -42,19 +88,16 @@ parameters:
     type: string
     default: ""
 
+  # True to enable ESRP malware scanning and code signing steps, which should not be
+  # run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   # The MSBuild pack target in build.proj (e.g. PackLogging).  If not specified, defaults to
   # Pack<packageName>.
   - name: packTarget
     type: string
     default: ""
-
-  # The C# build configuration to build (e.g. Debug or Release).
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-    default: Release
 
   # Additional MSBuild -p: arguments for version properties.  These may include versions of
   # packages this package depends on, or versions for this package itself.
@@ -69,30 +112,6 @@ parameters:
   # True to publish symbols to private and public servers.
   - name: publishSymbols
     type: boolean
-
-  # True to enable ESRP malware scanning and code signing steps, which should not be
-  # run on non-official pipelines as they access production resources.
-  - name: isOfficial
-    type: boolean
-
-  # Values required by ESRP tasks.
-  - name: esrpConnectedServiceName
-    type: string
-
-  - name: esrpClientId
-    type: string
-
-  - name: appRegistrationClientId
-    type: string
-
-  - name: appRegistrationTenantId
-    type: string
-
-  - name: authAkvName
-    type: string
-
-  - name: authSignCertName
-    type: string
 
   # Optional list of pipeline artifacts to download before building.  Each entry is an object
   # with 'artifactName' (the pipeline artifact name) and 'displayName' (used in the task label).
@@ -138,7 +157,7 @@ jobs:
         parameters:
           buildTarget: '$(buildTarget)'
           msBuildArguments: >-
-            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:Configuration=Release
             -p:ReferenceType=Package
             ${{ parameters.versionProperties }}
 
@@ -152,13 +171,13 @@ jobs:
           # ESRP sign the DLLs.
           - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
             parameters:
-              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-              authAkvName: ${{ parameters.authAkvName }}
-              authSignCertName: ${{ parameters.authSignCertName }}
-              esrpClientId: ${{ parameters.esrpClientId }}
-              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-              pattern: ${{ parameters.packageFullName }}.dll
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              pattern: '${{ parameters.packageFullName }}.dll'
 
       # Copy signed/unsigned DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
@@ -190,14 +209,14 @@ jobs:
           # ESRP sign the NuGet package.
           - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
             parameters:
-              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-              authAkvName: ${{ parameters.authAkvName }}
-              authSignCertName: ${{ parameters.authSignCertName }}
-              esrpClientId: ${{ parameters.esrpClientId }}
-              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
               searchPath: $(PACK_OUTPUT)
-              searchPattern: '${{ parameters.packageFullName }}.*nupkg'
+              searchPattern: '${{ parameters.packageFullName}}.*nupkg'
 
       # Publish symbols to servers
       # @TODO: Get these parameters from variables/libraries
@@ -205,13 +224,13 @@ jobs:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
               artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)'
-              azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+              azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               packageName: '${{ parameters.packageFullName }}'
-              publishProjectName: 'Microsoft.Data.SqlClient.SNI' # This is used for all SqlClient packages. Don't know why, but it is.
-              publishServer: '$(SymbolServer)'
+              publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              publishServer: '${{ parameters.symbolsPublishServer }}'
               publishToInternal: 'true'
               publishToPublic: 'true'
-              publishTokenUri: '$(SymbolTokenUri)'
+              publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
               searchPattern: '**/${{ parameters.packageFullName }}*.pdb'
-              uploadAccount: 'SqlClientDrivers'
+              uploadAccount: '${{ parameters.symbolsUploadAccount }}'
               version: '${{ parameters.packageVersion }}'
