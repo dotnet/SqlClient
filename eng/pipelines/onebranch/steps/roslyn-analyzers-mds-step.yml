@@ -24,7 +24,7 @@ parameters:
 
 steps:
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
-    displayName: 'Roslyn Analyzers: Build2.proj BuildMds'
+    displayName: 'Roslyn Analyzers: build2.proj BuildMds'
     inputs:
       msBuildArchitecture: x64
       msBuildCommandLine: >-
