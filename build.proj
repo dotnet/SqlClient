@@ -10,26 +10,7 @@
     <DisableSourceLink>false</DisableSourceLink>
 
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
-    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
-    <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
-    <!-- Flag to control if Windows drivers should be built or not -->
-    <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
-    <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
-    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
-    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
-    <TF Condition="$(TF) == ''">net9.0</TF> <!-- Default Target Framework -->
-    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETFramework'">netfx</TFGroup>
-    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETCoreApp'">netcore</TFGroup>
-    <TargetGroup Condition="'$(TFGroup)' == 'netfx'">netfx</TargetGroup>
-    <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
-    <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
-    <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
-    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
 
-    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
-    <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
-    <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
     <!--
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
@@ -37,30 +18,6 @@
       The provided path should be ended to a `\` character without white spaces: Ex. C:\x86\
     -->
     <DotnetPath></DotnetPath>
-    <!-- Using these properties to compile and pack netfx dll fixes nuget package explorer error "Compiler flags: missing" -->
-    <NugetPackProperties>DebugType=portable;DebugSymbols=true;IncludeSymbols=true;SymbolPackageFormat=snupkg;PublishRepositoryUrl=true;RepositoryUrl=https://github.com/dotnet/sqlclient;RepositoryType=git;EmbedUnTrackedSources=true;Deterministic=true;</NugetPackProperties>
-    <!-- TF_BUILD is enabled only within AzureDevOps pipeline to support continuous integation build. -->
-    <NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
-  </PropertyGroup>
-
-  <!-- Test configuration properties -->
-  <PropertyGroup>
-    <!-- Set up default filters for tests to exclude failing and flaky tests -->
-    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</Filter>
-    <FilterArgument>--filter "$(Filter)"</FilterArgument>
-
-    <!-- Collect code coverage unless explicitly disabled -->
-    <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
-    <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
-    <CollectArgument Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectArgument>
-
-    <!-- Set up tests to fail after hangs and report via blame -->
-    <BlameArgument>$(Blame)</BlameArgument>
-    <BlameArgument Condition="'$(BlameArgument)' == ''">
-      --blame-hang
-      --blame-hang-dump-type full
-      --blame-hang-timeout 10m
-    </BlameArgument>
   </PropertyGroup>
 
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
