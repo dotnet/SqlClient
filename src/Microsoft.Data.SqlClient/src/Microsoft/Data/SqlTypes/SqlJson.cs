@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
-        public SqlJson(JsonDocument? jsonDoc) 
+        public SqlJson(JsonDocument? jsonDoc)
         {
             if (jsonDoc == null)
             {
@@ -64,8 +64,8 @@ namespace Microsoft.Data.SqlTypes
         public static SqlJson Null => new();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Value/*' />
-        public string Value 
-        { 
+        public string Value
+        {
             get
             {
                 if (IsNull)

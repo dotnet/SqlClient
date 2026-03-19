@@ -109,7 +109,6 @@ where T : unmanaged
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
     public int Length { get; }
-    
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
     public ReadOnlyMemory<T> Memory { get; }
 
@@ -206,7 +205,7 @@ where T : unmanaged
 
         // The vector length is an unsigned 16-bit integer, little-endian.
         int length = BinaryPrimitives.ReadUInt16LittleEndian(rawBytes.AsSpan(2));
-        
+
         // The vector size is the number of bytes required to represent the vector in TDS.
         int size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * length);
 
@@ -237,6 +236,6 @@ where T : unmanaged
         return MemoryMarshal.Cast<byte, T>(dataSpan).ToArray();
 #endif
     }
-    
+
     #endregion
 }

@@ -2,6 +2,15 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsAssemblyVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
@@ -24,7 +33,7 @@
       is possible but also requires specifying the IntermediateOutputPath. So while it would be
       nice to have a flatter directory structure, it's more hassle than its worth.
     -->
-    <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(Configuration)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
   <!-- Trim Docs for IntelliSense ====================================== -->
@@ -35,7 +44,9 @@
     have the full documentation.
   -->
   <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
-  <Target Name="TrimDocsForIntelliSense" AfterTargets="Build">
+  <Target Name="TrimDocsForIntelliSense"
+          AfterTargets="Build"
+          Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
     <PropertyGroup>
       <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
       <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
@@ -43,7 +54,7 @@
         $(PowerShellCommand)
           -NonInteractive
           -ExecutionPolicy Unrestricted
-          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(OutputPath)\Microsoft.Data.SqlClient.xml' -outputFile '$(OutputPath)\Microsoft.Data.SqlClient.xml'"
+          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
       </PowerShellCommand>
 
       <!-- Convert more than one whitespace character into one space -->
