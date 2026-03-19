@@ -7,7 +7,7 @@
 # Generic build step for csproj-based packages.  Each project uses a build.proj target that runs
 # Build only and produces assemblies within $(BUILD_OUTPUT).  Downstream ESRP DLL signing must
 # locate the assemblies within $(BUILD_OUTPUT) for all target frameworks that the csproj targets.
-# NuGet packaging is done separately via compound-pack-csproj-step.yml after DLL signing.
+# NuGet packaging is done separately via pack-csproj-step.yml after DLL signing.
 
 parameters:
   # The MSBuild build target in build.proj (e.g. BuildLogging, BuildAbstractions,
