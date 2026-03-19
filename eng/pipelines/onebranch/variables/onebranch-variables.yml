@@ -7,6 +7,29 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 variables:
+  # Libraries ==============================================================
+
+  # These variables are used for running ESRP signing tasks. All names start with "Signing" to make
+  # it clear that these variables are used for signing (as opposed to other msc tasks).
+  #
+  # SigningAppRegistrationClientId
+  # SigningAppRegistrationTenantId
+  # SigningAuthAkvName
+  # SigningAuthSignCertName
+  # SigningEsrpClientId
+  # SigningEsrpConnectedServiceName
+  - group: 'esrp-variables-v2'
+
+  # These variables are used for running symbol publishing tasks. All names start with "Symbols" to
+  # make it clear that these variables are used for symbols (as opposed to other msc tasks).
+  #
+  # SymbolsAzureSubscription
+  # SymbolsPublishProjectName
+  # SymbolsPublishServer
+  # SymbolsPublishTokenUri
+  # SymbolsUploadAccount
+  - group: 'symbols-variables-v2'
+
   # onebranch template variables
   - name: ob_sdl_binskim_break
     value: true # https://aka.ms/obpipelines/sdl
