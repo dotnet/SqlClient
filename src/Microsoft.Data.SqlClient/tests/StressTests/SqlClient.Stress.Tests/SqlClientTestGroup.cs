@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Data;
+using System.Transactions;
 using Microsoft.Data.SqlClient;
 using System.Xml;
 
@@ -614,6 +615,128 @@ namespace Stress.Data.SqlClient
                 param.Direction = ParameterDirection.Input;
                 param.Value = new StringReader(data);
                 CommandExecute(rnd, cmd, true);
+            }
+        }
+
+        /// <summary>
+        /// Opens and closes a connection inside a TransactionScope, exercising the pool's
+        /// transacted connection routing. When the harness runs this from many threads
+        /// simultaneously, it creates natural contention on the TransactedConnectionPool's
+        /// ConcurrentDictionary and transaction completion callbacks. The existing
+        /// ClearAllPoolsThread provides additional race coverage by draining pools mid-transaction.
+        /// </summary>
+        [StressTest("TestTransactedConnectionOpen", Weight = 10)]
+        public void TestTransactedConnectionOpen()
+        {
+            Random rnd = RandomInstance;
+
+            using (DataStressConnection conn = Factory.CreateConnection(rnd))
+            {
+                using (var scope = new TransactionScope())
+                {
+                    if (!OpenConnection(conn)) return;
+                    DataStressFactory.TableMetadata table = Factory.GetRandomTable(rnd);
+                    SqlCommand com = (SqlCommand)Factory.GetCommand(rnd, table, conn, query: true, isXml: false);
+                    CommandExecute(rnd, com, true);
+                    scope.Complete();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Opens multiple connections within a single TransactionScope in one iteration,
+        /// exercising the pool's transaction affinity logic that reuses the same physical
+        /// connection for the same transaction. The harness runs this from many threads,
+        /// so different transactions contend on the pool simultaneously.
+        /// </summary>
+        [StressTest("TestTransactedConnectionReuse", Weight = 5)]
+        public void TestTransactedConnectionReuse()
+        {
+            Random rnd = RandomInstance;
+
+            using (var scope = new TransactionScope())
+            {
+                // Open and close multiple connections in the same transaction scope.
+                // The pool should return the same transacted connection each time.
+                int connectionCount = rnd.Next(2, 5);
+                for (int i = 0; i < connectionCount; i++)
+                {
+                    using (DataStressConnection conn = Factory.CreateConnection(rnd))
+                    {
+                        if (!OpenConnection(conn)) return;
+                        DataStressFactory.TableMetadata table = Factory.GetRandomTable(rnd);
+                        SqlCommand com = (SqlCommand)Factory.GetCommand(rnd, table, conn, query: true, isXml: false);
+                        CommandExecute(rnd, com, true);
+                    }
+                }
+                scope.Complete();
+            }
+        }
+
+        /// <summary>
+        /// Randomly commits or rolls back a transaction, stressing the pool's handling of
+        /// both transaction completion paths. Rolled-back transactions trigger different
+        /// cleanup logic in the TransactedConnectionPool than committed ones.
+        /// </summary>
+        [StressTest("TestTransactionRollback", Weight = 5)]
+        public void TestTransactionRollback()
+        {
+            Random rnd = RandomInstance;
+
+            using (DataStressConnection conn = Factory.CreateConnection(rnd))
+            {
+                using (var scope = new TransactionScope())
+                {
+                    if (!OpenConnection(conn)) return;
+                    DataStressFactory.TableMetadata table = Factory.GetRandomTable(rnd);
+                    SqlCommand com = (SqlCommand)Factory.GetCommand(rnd, table, conn, query: true, isXml: false);
+                    CommandExecute(rnd, com, true);
+
+                    // Randomly commit or rollback (50/50)
+                    if (rnd.NextBool())
+                    {
+                        scope.Complete();
+                    }
+                    // else: don't call Complete — scope disposes as rollback
+                }
+            }
+        }
+
+        /// <summary>
+        /// Uses nested TransactionScopes with RequiresNew, which creates independent
+        /// transactions. The outer and inner transactions each route through different
+        /// entries in the TransactedConnectionPool. Combined with multi-thread execution,
+        /// this stresses concurrent access to multiple transaction keys.
+        /// </summary>
+        [StressTest("TestNestedTransactionRequiresNew", Weight = 3)]
+        public void TestNestedTransactionRequiresNew()
+        {
+            Random rnd = RandomInstance;
+
+            using (var outerScope = new TransactionScope())
+            {
+                using (DataStressConnection outerConn = Factory.CreateConnection(rnd))
+                {
+                    if (!OpenConnection(outerConn)) return;
+                    DataStressFactory.TableMetadata table = Factory.GetRandomTable(rnd);
+                    SqlCommand com = (SqlCommand)Factory.GetCommand(rnd, table, outerConn, query: true, isXml: false);
+                    CommandExecute(rnd, com, true);
+                }
+
+                // Nested scope with RequiresNew creates a separate transaction
+                using (var innerScope = new TransactionScope(TransactionScopeOption.RequiresNew))
+                {
+                    using (DataStressConnection innerConn = Factory.CreateConnection(rnd))
+                    {
+                        if (!OpenConnection(innerConn)) return;
+                        DataStressFactory.TableMetadata table = Factory.GetRandomTable(rnd);
+                        SqlCommand com = (SqlCommand)Factory.GetCommand(rnd, table, innerConn, query: true, isXml: false);
+                        CommandExecute(rnd, com, true);
+                    }
+                    innerScope.Complete();
+                }
+
+                outerScope.Complete();
             }
         }
     }
