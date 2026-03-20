@@ -31,6 +31,9 @@
     <Compile Include="../../ref/Microsoft.Data.SqlClient.Diagnostics.cs" />
     <Compile Include="../../ref/Microsoft.Data.SqlClient.Server.cs" />
     <Compile Include="../../ref/Microsoft.Data.SqlTypes.cs" />
+    <Compile Include="$(CommonSourceRoot)TypeForwards.Abstractions.cs">
+      <Link>TypeForwards.Abstractions.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!-- References -->
