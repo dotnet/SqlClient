@@ -46,7 +46,7 @@ parameters:
 
   # The prefix to prepend to the job's display name:
   #
-  #   [<prefix>] Run Stress Tests
+  #   [<prefix>] Test Azure Package
   #
   - name: displayNamePrefix
     type: string
@@ -158,9 +158,7 @@ jobs:
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
       # project.  This is defined with a non-standard Platform of 'AnyCPU', and
-      # will fail the builds if left defined.  The stress tests solution does
-      # not require any specific Platform, and so its solution file doesn't
-      # support any non-standard platforms.
+      # will fail the builds if left defined.
       #
       # Note that Azure Pipelines will inject this variable as PLATFORM into the
       # environment of all tasks in this job.
