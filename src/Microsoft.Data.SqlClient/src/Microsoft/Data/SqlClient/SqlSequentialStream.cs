@@ -252,6 +252,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Set the stream as closed
                 SetClosed();
+                _disposalTokenSource.Dispose();
             }
 
             base.Dispose(disposing);
