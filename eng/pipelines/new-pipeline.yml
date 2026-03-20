@@ -1,0 +1,16 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This file exists to allow creation of pipelines in the Azure DevOps Public project.  Currently, it
+# isn't possible to create a pipeline against this repo unless the top-level YAML file is present in
+# the main branch, which it won't be for pipelines that are still in development.
+#
+# When developing a new pipeline on a branch, you may clobber this file with your new pipeline, or
+# change it to a symlink that points to your new pipeline.  This will allow you to create the Azure
+# DevOps pipeline and test your changes before merging to main.  Before merging, revert this file to
+# its original state.
+#
+# Once your new pipeline work is merged to main, you may edit the Azure DevOps pipeline to point to
+# the correct YAML file.
