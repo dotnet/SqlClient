@@ -28,8 +28,7 @@ variables:
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
 
-  # Aliases required by OneBranch step templates (esrp-dll-signing-step,
-  # esrp-nuget-signing-step, nuget-pack-step, etc.).
+  # "Well-Known" Variables that are ok to use directly, anywhere in the pipeline.
 
   # The root of our repo.
   - name: REPO_ROOT

@@ -66,7 +66,7 @@ parameters:
     type: string
 
 jobs:
-  - job: buildSignedMdsPackage
+  - job: build_package_Mds
     displayName: 'Build Microsoft.Data.SqlClient'
     pool:
       type: windows
@@ -116,7 +116,7 @@ jobs:
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
       # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
-      - template: /eng/pipelines/onebranch/steps/extract-apiscan-files-mds-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/copy-apiscan-files-mds-step.yml@self
         parameters:
           dllPath: '${{ parameters.apiScanDllPath }}'
           pdbPath: '${{ parameters.apiScanPdbPath }}'
@@ -155,13 +155,12 @@ jobs:
             parameters:
               artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.mdsPackageVersion }}_$(System.TimelineId)'
               azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-              projectName: '$(PACKAGE_NAME)'
+              packageName: '$(PACKAGE_NAME)'
               publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               publishServer: '${{ parameters.symbolsPublishServer }}'
               publishToInternal: true
               publishToPublic: true
               publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-              referenceType: Package
               searchPattern: '**/Microsoft.Data.SqlClient*.pdb' # @TODO: This seems very heavy
               uploadAccount: '${{ parameters.symbolsUploadAccount }}'
               version: '${{ parameters.mdsPackageVersion }}'

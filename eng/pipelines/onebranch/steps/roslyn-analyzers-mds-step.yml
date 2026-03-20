@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template defines a step to run Roslyn Analyzers on the AKV project build. It uses the
+# This template defines a step to run Roslyn Analyzers on the MDS build. It uses the
 # RoslynAnalyzers@3 task from the Secure Development Team's SDL extension:
 #
 # https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
