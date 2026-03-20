@@ -24,7 +24,7 @@ steps:
       msbuildArguments: >-
         -t:PackMds
         -p:PackBuild=false
-        -p:PackageVersionAbstraction="${{ parameters.abstractionsPackageVersion }}"
+        -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
         -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
         -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
         -p:ReferenceType=Package

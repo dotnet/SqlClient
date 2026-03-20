@@ -52,4 +52,4 @@ variables:
 
   # The SqlClient package artifacts.
   - name: sqlClientArtifactsName
-    value: drop_build_dependent_build_package_SqlClient
+    value: drop_build_dependent_build_package_Mds

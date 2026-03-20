@@ -8,7 +8,7 @@
 
 parameters:
   # Path where dll files should be copied to for APIScan
-  - name: dllpath
+  - name: dllPath
     type: string
 
   # Path where pdb files should be copied to for APIScan

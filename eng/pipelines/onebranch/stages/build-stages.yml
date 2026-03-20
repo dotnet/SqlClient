@@ -142,7 +142,7 @@ stages:
           parameters:
             apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
             apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
-            publishSymbols: '${{ parameters.publishSymbols }}'
+            publishSymbols: ${{ parameters.publishSymbols }}
             signingAppRegistrationClientId: '$(AppRegistrationClientId)'
             signingAppRegistrationTenantId: '$(AppRegistrationTenantId)'
             signingAuthAkvName: '$(AuthAKVName)'
