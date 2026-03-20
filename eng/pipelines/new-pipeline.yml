@@ -14,3 +14,19 @@
 #
 # Once your new pipeline work is merged to main, you may edit the Azure DevOps pipeline to point to
 # the correct YAML file.
+
+# Disable all automatic triggers
+pr: none
+trigger: none
+
+stages:
+  - stage: PlaceholderStage
+    displayName: Placeholder Stage
+    jobs:
+      - job: PlaceholderJob
+        displayName: Placeholder Job
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - script: echo "Hello from the new pipeline!"
+            displayName: Print message
