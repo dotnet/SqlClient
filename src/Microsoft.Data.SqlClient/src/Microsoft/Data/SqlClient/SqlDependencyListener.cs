@@ -13,10 +13,10 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
 using System.Security.Principal;
 using Microsoft.Data.SqlClient.LocalDb;
 #endif
@@ -648,12 +648,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
         }
 
-#if NETFRAMEWORK
-        // SxS: this method uses WindowsIdentity.Impersonate to impersonate the current thread with the
-        // credentials used to create this SqlConnectionContainer.
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-#endif
         private void Restart(object unused)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlConnectionContainer.Restart|DEP> {0}", ObjectID);

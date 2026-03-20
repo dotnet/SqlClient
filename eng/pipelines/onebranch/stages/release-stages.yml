@@ -1,0 +1,210 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Unified release stages template for dotnet-sqlclient OneBranch pipelines.
+# Consumed by both the official and non-official pipeline definitions via:
+#
+#   stages:
+#     - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+#       parameters:
+#         isOfficial:          true   # or false
+#         releaseToProduction: false  # or true
+#         ...
+#
+# The isOfficial flag controls release-stage behaviour:
+#   - Official  → Production environment, approval gate.
+#   - Non-Official → Test environment.
+#
+# The releaseToProduction flag controls where packages are pushed:
+#   - true  → NuGet Production feed (via NuGetServiceConnectionProd).
+#   - false → NuGet Test feed (via NuGetServiceConnectionTest).
+#
+# This template depends on stages defined by the build-stages.yml template.
+#
+# This template depends on the following runtime (i.e. macro expansion) variables being defined:
+#
+#  - effectiveSqlServerVersion
+#  - effectiveLoggingVersion
+#  - effectiveAbstractionsVersion
+#  - effectiveSqlClientVersion
+#  - effectiveAzureVersion
+#  - effectiveAkvProviderVersion
+
+parameters:
+  # ── General parameters ─────────────────────────────────────────────────
+
+  # True to enable debug information and steps.
+  - name: debug
+    type: boolean
+
+  # Controls where packages are pushed during the release stage.
+  #
+  # When true, packages are pushed to the NuGet Production feed.
+  # When false (default), packages are pushed to the NuGet Test feed.
+  #
+  - name: releaseToProduction
+    type: boolean
+    default: false
+
+  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
+  - name: isOfficial
+    type: boolean
+
+  # The stage name suffix, used in the stage ID (e.g. release_production) and display name.
+  - name: stageNameSuffix
+    type: string
+    values:
+      - production
+      - test
+
+  # ── Release parameters ─────────────────────────────────────────────────
+
+  - name: releaseSqlServerServer
+    type: boolean
+
+  - name: releaseLogging
+    type: boolean
+
+  - name: releaseAbstractions
+    type: boolean
+
+  - name: releaseSqlClient
+    type: boolean
+
+  - name: releaseAzure
+    type: boolean
+
+  - name: releaseAKVProvider
+    type: boolean
+
+stages:
+  # ====================================================================
+  # Release Stage — on-demand selective publish to NuGet
+  #
+  # Compile-time conditional: stage is removed entirely when no release
+  # parameters are selected, avoiding OneBranch validation errors.
+  #
+  # Official pipeline  → Production environment, approval gate.
+  # Non-official pipeline → Test environment.
+  #
+  # releaseToProduction controls NuGet target:
+  #   true  → NuGet Production feed.
+  #   false → NuGet Test feed.
+  # ====================================================================
+  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAKVProvider) }}:
+    - stage: release_${{ parameters.stageNameSuffix }}
+      ${{ if eq(parameters.releaseToProduction, true) }}:
+        displayName: Release to NuGet Production
+      ${{ else }}:
+        displayName: Release to NuGet Test
+      dependsOn:
+        - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
+          - build_independent
+        - ${{ if parameters.releaseAbstractions }}:
+          - build_abstractions
+        - ${{ if or(parameters.releaseSqlClient, parameters.releaseAzure) }}:
+          - build_dependent
+          - mds_package_validation
+        - ${{ if parameters.releaseAKVProvider }}:
+          - build_addons
+
+      variables:
+        - name: onebranchReleaseEnvironment
+          ${{ if eq(parameters.isOfficial, true) }}:
+            value: Production
+          ${{ else }}:
+            value: Test
+
+        - name: onebranchDeploymentEnvironment
+          ${{ if eq(parameters.isOfficial, true) }}:
+            value: NuGet-Production
+          ${{ else }}:
+            value: NuGet-DryRun
+
+        - name: ob_release_environment
+          value: ${{ variables.onebranchReleaseEnvironment }}
+        - name: ob_release_usedeploymentjob
+          value: true
+        - name: ob_deploymentjob_environment
+          value: ${{ variables.onebranchDeploymentEnvironment }}
+
+        # NuGet service connection names used by the release stage to push packages.
+        # These must match the ADO service connections configured with NuGet.org
+        # credentials (API key or federated auth).
+        - name: nugetServiceConnection
+          ${{ if eq(parameters.releaseToProduction, true) }}:
+            # https://sqlclientdrivers.visualstudio.com/ADO.Net/_settings/adminservices?resourceId=ee834e3a-87ad-4e9d-aa19-23711cfe4500
+            value: ADO Nuget Org Connection
+          ${{ else }}:
+            # https://sqlclientdrivers.visualstudio.com/ADO.Net/_settings/adminservices?resourceId=4dd2f6b9-2696-4324-bee5-0b4f9c273098
+            value: ADO Nuget Org Test Connection
+
+        - name: nugetTargetSuffix
+          ${{ if eq(parameters.releaseToProduction, true) }}:
+            value: ' (NuGet Production)'
+          ${{ else }}:
+            value: ' (NuGet Test)'
+
+      jobs:
+        - ${{ if eq(parameters.releaseSqlServerServer, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.SqlServer.Server
+              artifactName: drop_build_independent_build_package_SqlServer
+              packagePath: Microsoft.SqlServer.Server.$(effectiveSqlServerVersion).nupkg
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
+              isProduction: ${{ parameters.isOfficial }}
+              displaySuffix: ${{ variables.nugetTargetSuffix }}
+
+        - ${{ if eq(parameters.releaseLogging, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.Internal.Logging
+              artifactName: drop_build_independent_build_package_Logging
+              packagePath: Microsoft.Data.SqlClient.Internal.Logging.$(effectiveLoggingVersion).nupkg
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
+              isProduction: ${{ parameters.isOfficial }}
+              displaySuffix: ${{ variables.nugetTargetSuffix }}
+
+        - ${{ if eq(parameters.releaseAbstractions, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
+              artifactName: drop_build_abstractions_build_package_Abstractions
+              packagePath: Microsoft.Data.SqlClient.Extensions.Abstractions.$(effectiveAbstractionsVersion).nupkg
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
+              isProduction: ${{ parameters.isOfficial }}
+              displaySuffix: ${{ variables.nugetTargetSuffix }}
+
+        - ${{ if eq(parameters.releaseSqlClient, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient
+              artifactName: drop_build_dependent_build_package_SqlClient
+              packagePath: Microsoft.Data.SqlClient.$(effectiveSqlClientVersion).nupkg
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
+              isProduction: ${{ parameters.isOfficial }}
+              displaySuffix: ${{ variables.nugetTargetSuffix }}
+
+        - ${{ if eq(parameters.releaseAzure, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.Extensions.Azure
+              artifactName: drop_build_dependent_build_package_Azure
+              packagePath: Microsoft.Data.SqlClient.Extensions.Azure.$(effectiveAzureVersion).nupkg
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
+              isProduction: ${{ parameters.isOfficial }}
+              displaySuffix: ${{ variables.nugetTargetSuffix }}
+
+        - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
+            parameters:
+              packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              artifactName: drop_build_addons_build_package_AkvProvider
+              packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
+              nugetServiceConnection: ${{ variables.nugetServiceConnection }}
+              isProduction: ${{ parameters.isOfficial }}
+              displaySuffix: ${{ variables.nugetTargetSuffix }}

@@ -2,9 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Win32.SafeHandles;
@@ -65,7 +66,6 @@ namespace Interop.Windows.Kernel32
 
         #if NETFRAMEWORK
         [DllImport(DllName, SetLastError = true, CharSet = CharSet.Unicode)]
-        [ResourceExposure(ResourceScope.Machine)]
         internal static extern int GetFullPathName(
             string path,
             int numBufferChars,
@@ -92,3 +92,5 @@ namespace Interop.Windows.Kernel32
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
     }
 }
+
+#endif

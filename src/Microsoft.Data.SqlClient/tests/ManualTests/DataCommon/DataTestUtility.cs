@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -18,6 +17,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -25,6 +25,7 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -73,7 +74,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string UdtTestDbName = "UdtTestDb";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
-        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
@@ -87,10 +87,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // SQL server Version
         private static string s_sQLServerVersion = string.Empty;
-        private static bool s_isTDS8Supported;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
+
+        // SQL Server capabilities
+        private static bool? s_isDataClassificationSupported;
+        private static bool? s_isVectorSupported;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -100,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.EngineEdition);
                 }
                 _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
                 return engineEditon == 6;
@@ -122,24 +125,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
                 return s_sQLServerVersion;
             }
         }
 
         // Is TDS8 supported
-        public static bool IsTDS8Supported
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
-                {
-                    s_isTDS8Supported = GetSQLServerStatusOnTDS8(TCPConnectionString);
-                }
-                return s_isTDS8Supported;
-            }
-        }
+        public static bool IsTDS8Supported =>
+            IsTCPConnStringSetup() &&
+                GetSQLServerStatusOnTDS8(TCPConnectionString);
+
+        /// <summary>
+        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+        /// </summary>
+        /// <returns>True, if target SQL Server supports Data Classification</returns>
+        public static bool IsDataClassificationSupported =>
+            s_isDataClassificationSupported ??= IsTCPConnStringSetup() &&
+                IsObjectPresent("SYS.SENSITIVITY_CLASSIFICATIONS");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'vector' data type.
+        /// </summary>
+        /// <remarks>This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'vector' data type. If a connection cannot be established or an error occurs during the query, the method
+        /// returns <see langword="false"/>.</remarks>
+        /// <returns><see langword="true"/> if the 'vector' data type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorSupported =>
+            s_isVectorSupported ??= IsTCPConnStringSetup() &&
+                IsTypePresent("vector");
 
         static DataTestUtility()
         {
@@ -224,6 +238,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+
+            // Many of our tests require a Managed Identity provider to be
+            // registered.
+            //
+            // TODO: Figure out which ones and install on-demand rather than
+            // globally.
+            SqlAuthenticationProvider.SetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+                new ManagedIdentityProvider());
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -235,7 +258,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 yield return TCPConnectionString;
             }
             // Named Pipes are not supported on Unix platform and for Azure DB
-            if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+            if (Environment.OSVersion.Platform != PlatformID.Unix &&
+                IsNotAzureServer() &&
+                !string.IsNullOrEmpty(NPConnectionString))
             {
                 yield return NPConnectionString;
             }
@@ -286,30 +311,87 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerProperty(string connectionString, string propertyName)
+        #nullable enable
+
+        /// <summary>
+        /// Returns the current test name as: ClassName.MethodName
+        /// xUnit v2 doesn't provide access to a test context, so we use reflection into the
+        /// ITestOutputHelper to get the test name.
+        /// </summary>
+        /// <exception cref="Exception">
+        /// Thrown if any intermediate step of getting to the test name fails or is inaccessible.
+        /// </exception>
+        /// <param name="outputHelper">Output helper instance for the currently running test</param>
+        /// <returns>Current test name</returns>
+        public static string CurrentTestName(ITestOutputHelper outputHelper)
         {
-            string propertyValue = string.Empty;
-            using SqlConnection conn = new(connectionString);
-            conn.Open();
-            SqlCommand command = conn.CreateCommand();
-            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
-            SqlDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                switch (propertyName)
-                {
-                    case "EngineEdition":
-                        propertyValue = reader.GetInt32(0).ToString();
-                        break;
-                    case "ProductMajorVersion":
-                        propertyValue = reader.GetString(0);
-                        break;
-                }
-            }
-            return propertyValue;
+            // Reflect our way to the ITestMethod.
+            Type type = outputHelper.GetType();
+
+            FieldInfo testField = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new Exception("Could not find field 'test' on ITestOutputHelper");
+
+            ITest test = testField.GetValue(outputHelper) as ITest
+                ?? throw new Exception("Field 'test' on outputHelper is null or not an ITest object.");
+
+            ITestMethod testMethod = test.TestCase.TestMethod;
+
+            // Class name will be fully-qualified. We only want the class name, so take the last part.
+            string[] testClassNameParts = testMethod.TestClass.Class.Name.Split('.');
+            string testClassName = testClassNameParts[testClassNameParts.Length - 1];
+
+            string testMethodName = testMethod.Method.Name;
+
+            // Reconstitute the test name as classname.methodname
+            return $"{testClassName}.{testMethodName}";
         }
 
-        public static bool GetSQLServerStatusOnTDS8(string connectionString)
+        /// <summary>
+        /// SQL Server properties we can query.
+        ///
+        /// GOTCHA: The enum member names must match the property names
+        /// queryable via T-SQL SERVERPROPERTY().  See:
+        ///
+        /// https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
+        /// </summary>
+        public enum ServerProperty
+        {
+            ProductMajorVersion,
+            EngineEdition
+        }
+
+        public static string GetSqlServerProperty(string connectionString, ServerProperty property)
+        {
+            using SqlConnection conn = new(connectionString);
+            conn.Open();
+            return GetSqlServerProperty(conn, property);
+        }
+
+        public static string GetSqlServerProperty(SqlConnection connection, ServerProperty property)
+        {
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = $"SELECT SERVERProperty('{property}')";
+            using SqlDataReader reader = command.ExecuteReader();
+
+            Assert.True(reader.Read());
+
+            switch (property)
+            {
+                case ServerProperty.EngineEdition:
+                    // EngineEdition is returned as an int.
+                    return reader.GetInt32(0).ToString();
+                case ServerProperty.ProductMajorVersion:
+                default:
+                    // ProductMajorVersion is returned as a string.
+                    //
+                    // Assume any unknown property is also a string.
+                    return reader.GetString(0);
+            }
+        }
+
+        #nullable disable
+
+        private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
             bool isTDS8Supported = false;
             SqlConnectionStringBuilder builder = new(connectionString)
@@ -351,6 +433,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
+        public static bool IsObjectPresent(string objectName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT OBJECT_ID(@name)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", objectName);
+
+            return command.ExecuteScalar() is not DBNull;
+        }
+
+        public static bool IsTypePresent(string typeName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = @name", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", typeName);
+
+            return (int)command.ExecuteScalar() > 0;
+        }
+
         public static bool IsAdmin
         {
             get
@@ -360,32 +464,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
                 return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             }
-        }
-
-        /// <summary>
-        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
-        /// </summary>
-        /// <returns>True, if target SQL Server supports Data Classification</returns>
-        public static bool IsSupportedDataClassification()
-        {
-            try
-            {
-                using (var connection = new SqlConnection(TCPConnectionString))
-                using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
-                {
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (SqlException e)
-            {
-                // Check for Error 208: Invalid Object Name
-                if (e.Errors != null && e.Errors[0].Number == 208)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
@@ -511,7 +589,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsUsingNativeSNI() =>
 #if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
-#else 
+#else
             true;
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
@@ -597,7 +675,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// succession.  The 12 characters are concatenated together without any
         /// separators.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 18 characters when withBracket is false, and 16 characters when
@@ -605,17 +683,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 30 characters long.
         /// </returns>
@@ -649,7 +727,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Generate a long unique database object name, whose maximum length is
         /// 96 characters, with the format:
-        /// 
+        ///
         ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
         ///
         /// The Prefix will be truncated to satisfy the overall maximum length.
@@ -668,24 +746,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// The UserName and MachineName are obtained from the Environment,
         /// and will be truncated to satisfy the maximum overall length.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 32 characters.
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 96 characters long.
         /// </returns>
@@ -1149,11 +1227,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
         }
 
-        public class AKVEventListener : BaseEventListener
-        {
-            public override string Name => AKVEventSourceName;
-        }
-
         public class MDSEventListener : BaseEventListener
         {
             private static Type s_activityCorrelatorType = Type.GetType("Microsoft.Data.Common.ActivityCorrelator, Microsoft.Data.SqlClient");
@@ -1220,101 +1293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public readonly ref struct XEventScope : IDisposable
-        {
-            private const int MaxXEventsLatencyS = 5;
-
-            private readonly SqlConnection _connection;
-            private readonly bool _useDatabaseSession;
-
-            public string SessionName { get; }
-
-            public XEventScope(SqlConnection connection, string eventSpecification, string targetSpecification)
-            {
-                SessionName = GenerateRandomCharacters("Session");
-                _connection = connection;
-                // SQL Azure only supports database-scoped XEvent sessions
-                _useDatabaseSession = GetSqlServerProperty(connection.ConnectionString, "EngineEdition") == "5";
-
-                SetupXEvent(eventSpecification, targetSpecification);
-            }
-
-            public void Dispose()
-                => DropXEvent();
-
-            public System.Xml.XmlDocument GetEvents()
-            {
-                string xEventQuery = _useDatabaseSession
-                    ? $@"SELECT xet.target_data
-                        FROM sys.dm_xe_database_session_targets AS xet
-                        INNER JOIN sys.dm_xe_database_sessions AS xe
-                           ON (xe.address = xet.event_session_address)
-                        WHERE xe.name = '{SessionName}'"
-                    : $@"SELECT xet.target_data
-                        FROM sys.dm_xe_session_targets AS xet
-                        INNER JOIN sys.dm_xe_sessions AS xe
-                           ON (xe.address = xet.event_session_address)
-                        WHERE xe.name = '{SessionName}'";
-
-                using (SqlCommand command = new SqlCommand(xEventQuery, _connection))
-                {
-                    Thread.Sleep(MaxXEventsLatencyS * 1000);
-
-                    if (_connection.State == ConnectionState.Closed)
-                    {
-                        _connection.Open();
-                    }
-
-                    string targetData = command.ExecuteScalar() as string;
-                    System.Xml.XmlDocument xmlDocument = new System.Xml.XmlDocument();
-
-                    xmlDocument.LoadXml(targetData);
-                    return xmlDocument;
-                }
-            }
-
-            private void SetupXEvent(string eventSpecification, string targetSpecification)
-            {
-                string sessionLocation = _useDatabaseSession ? "DATABASE" : "SERVER";
-                string xEventCreateAndStartCommandText = $@"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}
-                        {eventSpecification}
-                        {targetSpecification}
-                        WITH (
-                            MAX_MEMORY=16 MB,
-                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
-                            MAX_DISPATCH_LATENCY={MaxXEventsLatencyS} SECONDS,
-                            MAX_EVENT_SIZE=0 KB,
-                            MEMORY_PARTITION_MODE=NONE,
-                            TRACK_CAUSALITY=ON,
-                            STARTUP_STATE=OFF)
-                            
-                        ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
-
-                using (SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection))
-                {
-                    if (_connection.State == ConnectionState.Closed)
-                    {
-                        _connection.Open();
-                    }
-
-                    createXEventSession.ExecuteNonQuery();
-                }
-            }
-
-            private void DropXEvent()
-            {
-                string dropXEventSessionCommand = _useDatabaseSession
-                    ? $"IF EXISTS (select * from sys.dm_xe_database_sessions where name ='{SessionName}')" +
-                        $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
-                    : $"IF EXISTS (select * from sys.dm_xe_sessions where name ='{SessionName}')" +
-                        $" DROP EVENT SESSION [{SessionName}] ON SERVER";
-
-                using (SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection))
-                {
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
+        #nullable enable
 
         /// <summary>
         /// Resolves the machine's fully qualified domain name if it is applicable.
@@ -1342,4 +1321,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
     }
+
+    #nullable disable
 }

@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace DataAdapterTest
+namespace SqlDataAdapter_Paging
 {
     class Program
     {

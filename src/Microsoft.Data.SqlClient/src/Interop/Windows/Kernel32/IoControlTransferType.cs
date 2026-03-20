@@ -2,13 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 namespace Interop.Windows.Kernel32
 {
     /// <summary>
     /// <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/buffer-descriptions-for-i-o-control-codes">TransferType</a>.
     /// Indicates how the system will pass data between the caller of DeviceIoControl (or IoBuildDeviceIoControlRequest) and the driver that handles the IRP.
     /// </summary>
-    public enum IoControlTransferType
+    internal enum IoControlTransferType
     {
         /// <summary>
         /// Specifies the buffered I/O method, which is typically used for transferring small amounts of data per request.
@@ -35,3 +37,5 @@ namespace Interop.Windows.Kernel32
         METHOD_NEITHER
     }
 }
+
+#endif

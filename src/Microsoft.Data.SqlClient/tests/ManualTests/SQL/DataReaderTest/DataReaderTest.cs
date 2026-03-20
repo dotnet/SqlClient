@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             lock (s_rowVersionLock)
             {
                 using SwitchesHelper helper = new();
-                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.False;
+                helper.LegacyRowVersionNullBehavior = false;
 
                 using SqlConnection con = new(DataTestUtility.TCPConnectionString);
                 con.Open();
@@ -869,7 +869,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             lock (s_rowVersionLock)
             {
                 using SwitchesHelper helper = new();
-                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.True;
+                helper.LegacyRowVersionNullBehavior = true;
 
                 using SqlConnection con = new(DataTestUtility.TCPConnectionString);
                 con.Open();

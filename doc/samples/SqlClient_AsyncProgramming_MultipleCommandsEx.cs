@@ -1,5 +1,8 @@
+namespace SqlClient_AsyncProgramming_MultipleCommandsEx;
+
 using System;
 // <Snippet1>
+using System.Data;
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;

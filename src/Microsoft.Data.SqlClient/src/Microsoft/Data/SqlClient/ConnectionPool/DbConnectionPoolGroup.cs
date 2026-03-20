@@ -10,6 +10,7 @@ using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -40,7 +41,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int _state;          // see PoolGroupState* below
 
         private DbConnectionPoolGroupProviderInfo _providerInfo;
-        private DbMetaDataFactory _metaDataFactory;
 
         private static int s_objectTypeCount; // EventSource counter
 
@@ -95,18 +95,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal DbConnectionPoolGroupOptions PoolGroupOptions => _poolGroupOptions;
 
-        internal DbMetaDataFactory MetaDataFactory
-        {
-            get
-            {
-                return _metaDataFactory;
-            }
-
-            set
-            {
-                _metaDataFactory = value;
-            }
-        }
+        internal SqlMetaDataFactory MetaDataFactory { get; set; }
 
         internal int Clear()
         {
@@ -206,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                     newPool.Startup(); // must start pool before usage
                                     bool addResult = _poolCollection.TryAdd(currentIdentity, newPool);
                                     Debug.Assert(addResult, "No other pool with current identity should exist at this point");
-                                    SqlClientEventSource.Metrics.EnterActiveConnectionPool();
+                                    SqlClientDiagnostics.Metrics.EnterActiveConnectionPool();
 
                                     pool = newPool;
                                 }

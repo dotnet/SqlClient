@@ -43,11 +43,6 @@ namespace Microsoft.Data.SqlClient
             base.AddItem(value, tag);
         }
 
-        internal void Deactivate()
-        {
-            base.Notify(0);
-        }
-
         internal SqlDataReader FindLiveReader(SqlCommand command)
         {
             if (command is null)
@@ -67,9 +62,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected override void NotifyItem(int message, int tag, object value)
+        protected override void NotifyItem(int tag, object value)
         {
-            Debug.Assert(0 == message, "unexpected message?");
             Debug.Assert(DataReaderTag == tag || CommandTag == tag || BulkCopyTag == tag, "unexpected tag?");
 
             if (tag == DataReaderTag)

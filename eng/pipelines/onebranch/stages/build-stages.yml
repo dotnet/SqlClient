@@ -1,0 +1,220 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Unified build stages template for sqlclient OneBranch pipelines.
+# Consumed by both the official and non-official pipeline definitions via:
+#
+# Depending on the build* parameters, this template will define the following stages:
+#
+#   - build_independent: builds packages with no cross-package dependencies (Logging, SqlServer)
+#   - build_abstractions: builds the Abstractions package, which depends on Logging
+#   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
+#   - build_addons: builds add-on packages with dependencies on the core packages (AKV Provider)
+#
+# This template depends on the following runtime (i.e. macro expansion) variables being defined:
+#
+#  - effectiveSqlServerVersion
+#  - effectiveLoggingVersion
+#  - effectiveAbstractionsVersion
+#  - effectiveSqlClientVersion
+#  - effectiveAzureVersion
+#  - effectiveAkvProviderVersion
+
+parameters:
+  # ── General parameters ─────────────────────────────────────────────────
+
+  # True to enable debug information and steps.
+  - name: debug
+    type: boolean
+
+  # True if this is a preview build, which uses the preview version numbers from
+  # common-variables.yml.
+  - name: isPreview
+    type: boolean
+
+  # True to publish symbols to public and private servers.
+  - name: publishSymbols
+    type: boolean
+
+  # ── Build parameters ───────────────────────────────────────────────────
+
+  - name: buildSqlServerServer
+    type: boolean
+
+  - name: buildSqlClient
+    type: boolean
+
+  - name: buildAKVProvider
+    type: boolean
+
+stages:
+  # ====================================================================
+  # Stage 1: Independent packages (no cross-package dependencies)
+  # Logging and SqlServer.Server build in parallel.
+  # ====================================================================
+  - stage: build_independent
+    displayName: "Build Independent Packages"
+
+    jobs:
+      - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            packageName: Logging
+            packageFullName: Microsoft.Data.SqlClient.Internal.Logging
+            packageVersion: $(effectiveLoggingVersion)
+            versionProperties: >-
+              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+              -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
+            assemblyFileVersion: $(loggingAssemblyFileVersion)
+            publishSymbols: ${{ parameters.publishSymbols }}
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
+
+      - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            packageName: SqlServer
+            packageFullName: Microsoft.SqlServer.Server
+            packageVersion: $(effectiveSqlServerVersion)
+            versionProperties: >-
+              -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
+              -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
+            assemblyFileVersion: $(sqlServerAssemblyFileVersion)
+            publishSymbols: ${{ parameters.publishSymbols }}
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
+
+  # ====================================================================
+  # Stage 2: Abstractions package (depends on Logging from Stage 1)
+  # Abstractions must build after Logging since it has a package
+  # dependency on Internal.Logging.
+  # ====================================================================
+  - ${{ if eq(parameters.buildSqlClient, true) }}:
+    - stage: build_abstractions
+      displayName: "Build Abstractions Package"
+      dependsOn: build_independent
+
+      jobs:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            packageName: Abstractions
+            packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
+            packageVersion: $(effectiveAbstractionsVersion)
+            versionProperties: >-
+              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+              -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
+              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+            assemblyFileVersion: $(abstractionsAssemblyFileVersion)
+            publishSymbols: ${{ parameters.publishSymbols }}
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
+            downloadArtifacts:
+              - artifactName: $(loggingArtifactsName)
+                displayName: Logging Package
+
+  # ====================================================================
+  # Stage 3: Core packages (depend on Abstractions)
+  # MDS and Extensions.Azure build in parallel after Abstractions.
+  # Stage name kept as 'build_dependent' for validate job compatibility.
+  # ====================================================================
+  - ${{ if eq(parameters.buildSqlClient, true) }}:
+    - stage: build_dependent
+      displayName: "Build Core Packages"
+      dependsOn: build_abstractions
+
+      jobs:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
+          parameters:
+            publishSymbols: ${{ parameters.publishSymbols }}
+            isPreview: ${{ parameters.isPreview }}
+            # TODO: This job should use the effective versions for Abstractions, Logging,
+            # SqlServer, and SqlClient.
+
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            packageName: Azure
+            packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
+            packageVersion: $(effectiveAzureVersion)
+            versionProperties: >-
+              -p:AzurePackageVersion=$(effectiveAzureVersion)
+              -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
+              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+            assemblyFileVersion: $(azureAssemblyFileVersion)
+            publishSymbols: ${{ parameters.publishSymbols }}
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
+            downloadArtifacts:
+              - artifactName: $(abstractionsArtifactsName)
+                displayName: Abstractions Package
+              - artifactName: $(loggingArtifactsName)
+                displayName: Logging Package
+
+  # ====================================================================
+  # Stage 4: Add-on packages (depend on core packages)
+  # AKV Provider builds after MDS completes.
+  # ====================================================================
+  - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
+    - stage: build_addons
+      displayName: "Build Add-on Packages"
+      dependsOn: build_dependent
+
+      jobs:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            packageName: AkvProvider
+            packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+            packageVersion: $(effectiveAkvProviderVersion)
+            versionProperties: >-
+              -p:AkvPackageVersion=$(effectiveAkvProviderVersion)
+              -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
+              -p:MdsPackageVersion=$(effectiveSqlClientVersion)
+              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+            assemblyFileVersion: $(akvAssemblyFileVersion)
+            publishSymbols: ${{ parameters.publishSymbols }}
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
+            downloadArtifacts:
+              - artifactName: $(sqlClientArtifactsName)
+                displayName: SqlClient Package
+              - artifactName: $(abstractionsArtifactsName)
+                displayName: Abstractions Package
+              - artifactName: $(loggingArtifactsName)
+                displayName: Logging Package
+
+  # ====================================================================
+  # Validation
+  # ====================================================================
+  - ${{ if eq(parameters.buildSqlClient, true) }}:
+    - stage: mds_package_validation
+      displayName: "MDS Package Validation"
+      dependsOn: build_dependent
+      jobs:
+        - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
+          parameters:
+            artifactName: $(sqlClientArtifactsName)
+            isPreview: ${{ parameters.isPreview }}

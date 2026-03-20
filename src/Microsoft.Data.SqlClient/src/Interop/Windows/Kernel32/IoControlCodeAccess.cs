@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 using System;
 
 namespace Interop.Windows.Kernel32
@@ -11,7 +13,7 @@ namespace Interop.Windows.Kernel32
     /// Indicates the type of access that a caller must request when opening the file object that represents the device (see IRP_MJ_CREATE).
     /// </summary>
     [Flags]
-    public enum IoControlCodeAccess
+    internal enum IoControlCodeAccess
     {
         /// <summary>
         /// The I/O manager sends the IRP for any caller that has a handle to the file object that represents the target device object.
@@ -31,3 +33,5 @@ namespace Interop.Windows.Kernel32
         FILE_WRITE_DATA = 0x02
     }
 }
+
+#endif

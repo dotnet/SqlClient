@@ -1,3 +1,5 @@
+namespace SqlConnection_DataSource;
+
 using System;
 using System.Data;
 // <Snippet1>

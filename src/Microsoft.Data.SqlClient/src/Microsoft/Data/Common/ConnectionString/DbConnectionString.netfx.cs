@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Common
 {
@@ -51,12 +52,10 @@ namespace Microsoft.Data.Common
             string value,
             string restrictions,
             KeyRestrictionBehavior behavior,
-            IReadOnlyDictionary<string, string> synonyms,
-            bool useOdbcRules)
+            IReadOnlyDictionary<string, string> synonyms)
             : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
         {
-            // useOdbcRules is only used to parse the connection string, not to parse restrictions because values don't apply there
-            // the hashtable doesn't need clone since it isn't shared with anything else
+            // The IReadOnlyDictionary doesn't need to be cloned since it isn't shared with anything else
         }
 
         internal DbConnectionString(DbConnectionOptions connectionOptions)
