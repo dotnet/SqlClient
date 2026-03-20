@@ -1708,9 +1708,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     case TdsEnums.SQLJSON:
                         // Could be either string, SqlCachedBuffer, XmlReader or XmlDataFeed
                         Debug.Assert((value is XmlReader) || (value is SqlCachedBuffer) || (value is string) || (value is SqlString) || (value is XmlDataFeed), "Invalid value type of Xml datatype");
-                        if (value is XmlReader)
+                        if (value is XmlReader xmlReader)
                         {
-                            value = new XmlDataFeed((XmlReader)value);
+                            value = new XmlDataFeed(xmlReader);
                             typeChanged = true;
                             coercedToDataFeed = true;
                         }
