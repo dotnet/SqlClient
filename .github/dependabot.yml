@@ -1,0 +1,33 @@
+version: 2
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+
+  # Keep NuGet packages up to date
+  # Central package management is in Directory.Packages.props at the root
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      azure-packages:
+        patterns:
+          - "Azure.*"
+      microsoft-identity-packages:
+        patterns:
+          - "Microsoft.Identity.*"
+          - "Microsoft.IdentityModel.*"
+      system-packages:
+        patterns:
+          - "System.*"
+      microsoft-extensions-packages:
+        patterns:
+          - "Microsoft.Extensions.*"
+      microsoft-bcl-packages:
+        patterns:
+          - "Microsoft.Bcl.*"
