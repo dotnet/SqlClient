@@ -18,7 +18,6 @@ permissions:
 jobs:
   validate-environment-details:
     runs-on: ubuntu-latest
-    if: github.event.repository.fork == false
     name: Validate Issue Environment Details
 
     steps:
@@ -150,6 +149,28 @@ jobs:
 
             if (missingFields.length === 0 && hasStackTrace) {
               console.log('All required environment details are present.');
+
+              // Post a comment confirming validation passed
+              const passComment = [
+                '### ✅ Environment Validation — Passed',
+                '',
+                'All required environment details are present:',
+                '',
+                '| Field | Status |',
+                '|-------|--------|',
+                ...requiredFields.map(f => `| ${f.name} | ✅ Provided |`),
+                `| Stack trace / error message | ✅ Provided |`,
+                '',
+                '> This issue has sufficient environment details for investigation.',
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: passComment,
+              });
+
               // Add a label indicating the issue is ready for investigation
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
@@ -160,18 +181,56 @@ jobs:
               return;
             }
 
-            // --- Build comment requesting missing info ---
-            let comment = '👋 Thank you for reporting this issue!\n\n';
+            if (missingFields.length === 0 && !hasStackTrace) {
+              // All fields present but no stack trace
+              const partialComment = [
+                '### ⚠️ Environment Validation — Mostly Complete',
+                '',
+                'All required environment details are present:',
+                '',
+                '| Field | Status |',
+                '|-------|--------|',
+                ...requiredFields.map(f => `| ${f.name} | ✅ Provided |`),
+                `| Stack trace / error message | ⚠️ Not found |`,
+                '',
+                '> 💡 **Tip**: If you are seeing an exception, including the **full exception message and stack trace** greatly speeds up investigation.',
+              ].join('\n');
 
-            if (missingFields.length > 0) {
-              comment += 'To help us investigate efficiently, could you please provide the following missing details:\n\n';
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: partialComment,
+              });
 
-              for (const field of missingFields) {
-                comment += `- **${field.name}**: ${field.question}\n`;
-              }
-
-              comment += '\n';
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['Triage Needed :new:'],
+              });
+              return;
             }
+
+            // --- Build comment requesting missing info ---
+            const presentFields = requiredFields.filter(f => !missingFields.includes(f));
+
+            let comment = '### ❌ Environment Validation — Incomplete\n\n';
+            comment += '👋 Thank you for reporting this issue! Some required details are missing.\n\n';
+
+            comment += '| Field | Status |\n';
+            comment += '|-------|--------|\n';
+            for (const field of requiredFields) {
+              const isMissing = missingFields.includes(field);
+              comment += `| ${field.name} | ${isMissing ? '❌ Missing' : '✅ Provided'} |\n`;
+            }
+            comment += `| Stack trace / error message | ${hasStackTrace ? '✅ Provided' : '⚠️ Not found'} |\n`;
+
+            comment += '\nPlease provide the missing details:\n\n';
+            for (const field of missingFields) {
+              comment += `- **${field.name}**: ${field.question}\n`;
+            }
+            comment += '\n';
 
             if (!hasStackTrace) {
               comment += '> 💡 **Tip**: If you are seeing an exception, including the **full exception message and stack trace** greatly speeds up investigation.\n\n';
@@ -209,7 +268,6 @@ jobs:
 
   initial-area-labeling:
     runs-on: ubuntu-latest
-    if: github.event.repository.fork == false
     name: Apply Initial Area Labels
 
     steps:
@@ -261,6 +319,7 @@ jobs:
               });
               const existingLabelNames = repoLabels.map(l => l.name);
               const validLabels = labelsToAdd.filter(l => existingLabelNames.includes(l));
+              const skippedLabels = labelsToAdd.filter(l => !existingLabelNames.includes(l));
 
               if (validLabels.length > 0) {
                 await github.rest.issues.addLabels({
@@ -269,13 +328,45 @@ jobs:
                   issue_number: issueNumber,
                   labels: validLabels,
                 });
-                console.log(`Added area labels: ${validLabels.join(', ')}`);
               }
+
+              // Post a comment showing what areas were detected
+              const areaComment = [
+                '### 🏷️ Area Classification',
+                '',
+                `Detected area(s) based on issue content:`,
+                '',
+                ...validLabels.map(l => `- ✅ **${l}** — applied`),
+                ...skippedLabels.map(l => `- ⚠️ **${l}** — detected but label doesn\'t exist in repo`),
+                '',
+                '> Area labels help route the issue to the right team members.',
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: areaComment,
+              });
+
+              console.log(`Added area labels: ${validLabels.join(', ')}`);
+            } else {
+              // No areas detected
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: [
+                  '### 🏷️ Area Classification',
+                  '',
+                  'No specific area could be automatically detected from the issue content.',
+                  'A maintainer will manually assign the appropriate area label during triage.',
+                ].join('\n'),
+              });
             }
 
   duplicate-check:
     runs-on: ubuntu-latest
-    if: github.event.repository.fork == false
     name: Check for Potential Duplicates
 
     steps:
@@ -325,15 +416,30 @@ jobs:
             ).slice(0, 5);
 
             if (similar.length === 0) {
-              console.log('No similar issues found.');
+              // Post comment even when no duplicates found
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: [
+                  '### 🔍 Duplicate Check — No Matches',
+                  '',
+                  `Searched for similar issues using keywords: \`${keywords.join('\`, \`')}\``,
+                  '',
+                  'No potentially duplicate issues were found. This appears to be a new report.',
+                ].join('\n'),
+              });
               return;
             }
 
             // Post a comment with potentially related issues
-            let comment = '🔍 **Potentially related issues** found:\n\n';
+            let comment = '### 🔍 Duplicate Check — Potentially Related Issues\n\n';
+            comment += `Searched using keywords: \`${keywords.join('\`, \`')}\`\n\n`;
+            comment += '| # | Status | Title |\n';
+            comment += '|---|--------|-------|\n';
             for (const item of similar) {
               const state = item.state === 'open' ? '🟢 Open' : '🔴 Closed';
-              comment += `- ${state} #${item.number}: ${item.title}\n`;
+              comment += `| #${item.number} | ${state} | ${item.title} |\n`;
             }
             comment += '\nIf any of these address the same problem, please let us know so we can link or deduplicate.\n';
 
@@ -354,7 +460,6 @@ jobs:
   # ──────────────────────────────────────────────────────────────────────────────
   copilot-investigate:
     runs-on: ubuntu-latest
-    if: github.event.repository.fork == false
     needs: [validate-environment-details, initial-area-labeling, duplicate-check]
     name: Copilot Deep Investigation
 
@@ -400,7 +505,7 @@ jobs:
             core.setOutput('issue_number', issueNumber.toString());
             console.log(`Investigation gate: isBugReport=${isBugReport}, hasMinimalContent=${hasMinimalContent}, proceed=${shouldInvestigate}`);
 
-      - name: Run Copilot investigation
+      - name: Request Copilot investigation
         if: steps.gate.outputs.should_investigate == 'true'
         uses: actions/github-script@v7
         with:
@@ -408,32 +513,52 @@ jobs:
           script: |
             const issueNumber = ${{ steps.gate.outputs.issue_number }};
 
-            // Post a comment that triggers Copilot to run the investigate-issue prompt.
-            // The Copilot Coding Agent watches for @copilot mentions and executes
-            // the referenced prompt file, with all .github/instructions/*.md
-            // files loaded as context automatically.
-            const investigationRequest = [
-              `@copilot Use the \`investigate-issue\` prompt to investigate issue #${issueNumber}.`,
+            // Post a comment prompting a maintainer to assign Copilot.
+            // The Copilot Coding Agent can only be triggered by manual human
+            // action (UI assignment or manual @copilot mention) — API-based
+            // triggers are ignored by design.
+            const comment = [
+              '### 🤖 Automated Triage Summary',
               '',
-              'Perform the full investigation workflow:',
-              '1. Parse the issue for environment details, error messages, and stack traces',
-              '2. Check for regression by reviewing release notes and recent PRs/commits to affected code areas',
-              '3. Identify the affected source files in `src/Microsoft.Data.SqlClient/src/`',
-              '4. Analyze the relevant code for potential root causes',
-              '5. Search for related/duplicate issues',
-              '6. Post a structured investigation comment with your findings, regression analysis, hypothesis, and recommended next steps',
+              'This issue has been automatically triaged. Here\'s what was done:',
               '',
-              'Reference these instruction files for context:',
-              '- `.github/instructions/regression-analysis.instructions.md` — regression detection patterns',
-              '- `.github/instructions/issue-investigation.instructions.md` — source code map and investigation guide',
-              '- `.github/instructions/external-resources.instructions.md` — version compatibility and documentation links',
+              '| Step | Status |',
+              '|------|--------|',
+              '| Environment validation | ✅ Completed (see comment above) |',
+              '| Area classification | ✅ Completed (see comment above) |',
+              '| Duplicate check | ✅ Completed (see comment above) |',
+              '| Copilot investigation | ⏳ Awaiting maintainer action |',
+              '',
+              '---',
+              '',
+              '**Next step — To start Copilot investigation**, a maintainer can:',
+              '- Click **"Assign Copilot"** in the Assignees section (sidebar), or',
+              '- Comment: `@copilot investigate this issue`',
+              '',
+              'Copilot will:',
+              '1. Analyze the source code in `src/Microsoft.Data.SqlClient/`',
+              '2. Perform regression analysis across recent changes',
+              '3. Identify potential root causes',
+              '4. Open a **draft PR** with fixes and investigation findings',
             ].join('\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
-              body: investigationRequest,
+              body: comment,
             });
 
-            console.log(`Posted Copilot investigation request for issue #${issueNumber}`);
+            // Add a label so maintainers can filter issues ready for Copilot
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['Ready for Copilot :robot:'],
+              });
+            } catch (e) {
+              console.log(`Note: Could not add 'Ready for Copilot' label (may not exist): ${e.message}`);
+            }
+
+            console.log(`Posted Copilot investigation prompt for issue #${issueNumber}`);
