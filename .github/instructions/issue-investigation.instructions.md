@@ -136,13 +136,27 @@ This investigation process integrates with:
 - **`fix-bug` prompt**: Investigation findings feed directly into bug fixing. The hypothesis and affected files become the starting point.
 - **`code-review` prompt**: If a fix PR is submitted, the investigation context helps reviewers understand the change.
 
+## PR and Commit Conventions
+
+When creating a PR from an investigation:
+
+- **PR title**: Use the format `Fix <short description> (Fixes #<issue_number>)` where `<issue_number>` is the actual GitHub issue number being investigated (e.g., `Fix MARS deadlock under concurrent load (Fixes #3)`)
+- **Do NOT** use placeholder issue numbers like `ISSUE-123` — always reference the real issue number from the trigger
+- **Branch name**: Use `copilot/fix-<short-kebab-description>`
+- **PR body**: Include a summary of investigation findings, root cause analysis, and what the fix changes
+
 ## Automated Workflow Trigger
 
-The GitHub Actions workflow `issue-auto-triage.yml` automatically runs on every new issue with 4 jobs:
+The GitHub Actions workflow `issue-auto-triage.yml` runs on every new issue with 4 jobs:
 
-1. **validate-environment-details** (parallel) — Regex-based check for required fields, posts comment if missing
-2. **initial-area-labeling** (parallel) — Keyword-based area label assignment
-3. **duplicate-check** (parallel) — Searches for similar existing issues
-4. **copilot-investigate** (after 1-3 complete) — Triggers the Copilot Coding Agent to run the `investigate-issue` prompt, which performs regression analysis, code investigation, and posts structured findings
+1. **validate-environment-details** (parallel) — Regex-based check for required fields, posts summary comment with table
+2. **initial-area-labeling** (parallel) — Keyword-based area label assignment, posts area classification comment
+3. **duplicate-check** (parallel) — Searches for similar existing issues, posts results table
+4. **copilot-investigate** (after 1-3 complete) — Posts triage summary and prompts maintainer to assign Copilot for deep investigation
+
+After a maintainer assigns Copilot, the Coding Agent:
+- Runs the `investigate-issue` prompt
+- Performs regression analysis and code investigation
+- Opens a draft PR with fixes and findings linked to the original issue
 
 The prompts (`investigate-issue`, `validate-environment-details`, `triage-issue`) can also be invoked manually via `@copilot /prompt-name <issue number>` for re-investigation or follow-up analysis.
