@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for ExecuteScalar to verify proper exception handling.
     /// Regression tests for GitHub issue #3736: https://github.com/dotnet/SqlClient/issues/3736
     /// </summary>
+    [Trait("Set", "3")]
     public static class SqlCommandExecuteScalarTest
     {
         /// <summary>
