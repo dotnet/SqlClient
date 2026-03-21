@@ -9,12 +9,13 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class DataReaderCancellationTest
     {
         /// <summary>
         /// Test ensures cancellation token is registered before ReadAsync starts processing results from TDS Stream,
         /// such that when Cancel is triggered, the token is capable of canceling reading further results.
-        /// Synapse: Incompatible query. 
+        /// Synapse: Incompatible query.
         /// </summary>
         /// <returns>Async Task</returns>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]

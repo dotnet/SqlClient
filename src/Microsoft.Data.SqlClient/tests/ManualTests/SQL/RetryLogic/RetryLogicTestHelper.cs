@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class RetryLogicTestHelper
     {
         private static readonly HashSet<int> s_defaultTransientErrors =

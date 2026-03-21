@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -21,6 +21,7 @@ using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class TvpTest
     {
         private const string TvpName = "@tvp";
@@ -863,7 +864,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlCommand cmd = new(tsql.ToString(), conn);
             cmd.ExecuteNonQuery();
 
-            // and create the proc that uses the type            
+            // and create the proc that uses the type
             cmd.CommandText = string.Format("CREATE PROC {0}(@tvp {1} READONLY) AS SELECT * FROM @tvp order by {2}",
                     GetProcName(tvpPerm), GetTypeName(tvpPerm), colOrdinal - 1);
             cmd.ExecuteNonQuery();

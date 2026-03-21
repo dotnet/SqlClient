@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public sealed class ColumnDecryptErrorTests : IClassFixture<SQLSetupStrategyAzureKeyVault>, IDisposable
     {
         private SQLSetupStrategyAzureKeyVault fixture;
@@ -28,13 +29,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
          * properly reset before being returned to the pool. If this doesn't happen, then random bytes
          * may be left in the connection's state. These can interfere with the next operation that utilizes
          * the connection.
-         * 
+         *
          * We test that state is properly reset by triggering the same error condition twice. Routing column key discovery
-         * away from AKV toward a dummy key store achieves this. Each connection pulls from a pool of max 
-         * size one to ensure we are using the same internal connection/socket both times. We expect to 
+         * away from AKV toward a dummy key store achieves this. Each connection pulls from a pool of max
+         * size one to ensure we are using the same internal connection/socket both times. We expect to
          * receive the "Failed to decrypt column" exception twice. If the state were not cleaned properly,
          * the second error would be different because the TDS stream would be unintelligible.
-         * 
+         *
          * Finally, we assert that restoring the connection to AKV allows a successful query.
          */
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -75,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 using SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
                                                             sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled);
-                
+
                 using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
 
                 Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");

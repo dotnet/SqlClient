@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "1")]
     public class AsyncCancelledConnectionsTest
     {
         /// <summary>
@@ -193,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 delayMs = _random.Next(100, 3000);
             }
             await Task.Delay(delayMs);
-            
+
             // Cancel the command
             command.Cancel();
         }

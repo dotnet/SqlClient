@@ -11,6 +11,7 @@ using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class DateTimeOffsetList : SqlDataRecord
     {
         public DateTimeOffsetList(DateTimeOffset dateTimeOffset)
