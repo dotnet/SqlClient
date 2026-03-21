@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public class AKVTest : IClassFixture<SQLSetupStrategyAzureKeyVault>
     {
         private readonly SQLSetupStrategyAzureKeyVault _fixture;
@@ -59,12 +60,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /*
-         This unit test is going to assess an issue where a failed decryption leaves a connection in a bad state  
+         This unit test is going to assess an issue where a failed decryption leaves a connection in a bad state
          when it is returned to the connection pool. If a subsequent connection is retried it will result in an "Internal connection fatal error",
-         which causes that connection to be doomed, preventing it from being returned to the pool. 
+         which causes that connection to be doomed, preventing it from being returned to the pool.
          Consequently, retrying a third connection will encounter the same decryption error, leading to a repetitive failure cycle.
 
-         The purpose of this unit test is to simulate a decryption error and verify that the connection remains usable when returned to the pool. 
+         The purpose of this unit test is to simulate a decryption error and verify that the connection remains usable when returned to the pool.
          It aims to confirm that three consecutive connections will consistently fail with the "Failed to decrypt column" error.
         */
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -100,10 +101,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // does not leave the connection in a bad state.
             // In each try, when a "Failed to decrypt error" is thrown, the connection's TDS Parser state object buffer is drained of any
             // pending data so it does not interfere with future operations. In addition, the TDS parser state object's reader.DataReady flag
-            // is set to false so that the calling function that catches the exception will not continue to use the reader. Otherwise, it will 
+            // is set to false so that the calling function that catches the exception will not continue to use the reader. Otherwise, it will
             // timeout waiting to read data that doesn't exist. Also, the TDS Parser state object HasPendingData flag is also set to false
             // to indicate that the buffer has been cleared and to avoid it getting cleared again in SqlDataReader.TryCloseInternal function.
-            // Finally, after successfully handling the decryption error, the connection is then returned back to the connection pool without 
+            // Finally, after successfully handling the decryption error, the connection is then returned back to the connection pool without
             // an error. A proof that the connection's state object is clean is in the second connection being able to throw the same error.
             // The third connection is for making sure we test 3 times as the minimum number of connections to reproduce the issue previously.
             for (int i = 0; i < 3; i++)
@@ -182,7 +183,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlDataReader2.Close();
 
             // global cek cache and local cek cache are populated above
-            // when using a new per-command provider, it will only use its local cek cache 
+            // when using a new per-command provider, it will only use its local cek cache
             // the following query should fail due to an empty cek cache and invalid credentials
             customProvider[SqlColumnEncryptionAzureKeyVaultProvider.ProviderName] =
                 new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));

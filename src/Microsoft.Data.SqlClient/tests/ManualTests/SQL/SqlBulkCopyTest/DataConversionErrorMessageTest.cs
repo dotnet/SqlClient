@@ -85,6 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 
+    [Trait("Set", "2")]
     public class DataConversionErrorMessageTest : IClassFixture<InitialDatabase>
     {
         private readonly InitialDatabase _fixture;
@@ -101,8 +102,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _fixture = fixture;
         }
 
-        // Synapse: Column count in target table does not match column count specified in input. 
-        //          If BCP command, ensure format file column count matches destination table. 
+        // Synapse: Column count in target table does not match column count specified in input.
+        //          If BCP command, ensure format file column count matches destination table.
         //          If SSIS data import, check column mappings are consistent with target.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void StringToIntErrorMessageTest()
