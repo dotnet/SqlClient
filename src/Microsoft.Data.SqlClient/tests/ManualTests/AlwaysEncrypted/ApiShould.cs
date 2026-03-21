@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
+    [Trait("Set", "AE")]
     public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;
@@ -1930,7 +1931,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             IList<object> values = GetValues(dataHint: 60);
             int numberOfRows = 10;
 
-            // Insert a bunch of rows in to the table.	
+            // Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1938,12 +1939,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                // select the set of rows that were inserted just now.	
+                // select the set of rows that were inserted just now.
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     if (DataTestUtility.EnclaveEnabled)
                     {
-                        //Increase Time out for enclave-enabled server.	
+                        //Increase Time out for enclave-enabled server.
                         sqlCommand.CommandTimeout = 90;
                     }
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
@@ -2047,7 +2048,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                      * Use long-running tasks to create the thread. This enables any failed assertions to propagate, rather than
                      * allowing the exception to kill the thread and the process.
                      * These threads should progress in the sequence below:
-                     * 
+                     *
                      * Workload Thread                      | Cancel Thread
                      * ------------------------------------ | -------------
                      * Start thread                         | Start thread
@@ -2323,7 +2324,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
                 AssertExceptionCausedByFailureToDecrypt(ex);
 
-                // not required provider will replace the previous entry so required provider will not be found 
+                // not required provider will replace the previous entry so required provider will not be found
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_notRequiredProvider);
                 ex = Assert.Throws<ArgumentException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
@@ -2464,7 +2465,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name);
             cmd.ExecuteNonQuery();
 
-            // execute the select query again. it will attempt to use the stale cache entry, receive 
+            // execute the select query again. it will attempt to use the stale cache entry, receive
             // a retryable error from the server, remove the stale cache entry, retry and succeed
             cmd.CommandText = enclaveSelectQuery;
             cmd.Parameters.AddWithValue("@CustomerId", 0);
@@ -2578,7 +2579,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             readAsyncTask2.GetAwaiter().GetResult();
 #endif
             */
-            
+
             // revert the CEK change to the CustomerId column
             cmd.Parameters.Clear();
             cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
@@ -2715,8 +2716,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             };
             table.Columns.Add(column);
 
-            // Create three new DataRow objects and add  
-            // them to the DataTable 
+            // Create three new DataRow objects and add
+            // them to the DataTable
             for (int i = 0; i < numberofRows; i++)
             {
                 row = table.NewRow();
@@ -2826,7 +2827,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="cancellationToken"></param>
@@ -2837,7 +2838,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <returns></returns>

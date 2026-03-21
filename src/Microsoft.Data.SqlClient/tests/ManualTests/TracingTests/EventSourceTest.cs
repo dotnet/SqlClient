@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class EventSourceTest
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -24,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            // Need to investigate better way of validating traces in sequential runs, 
+            // Need to investigate better way of validating traces in sequential runs,
             // For now we're collecting all traces to improve code coverage.
 
             Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });

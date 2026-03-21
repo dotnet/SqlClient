@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "1")]
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CertificateTest : IDisposable
     {
@@ -32,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // InstanceName will get replaced with an instance name in the connection string
         private static string InstanceName = "MSSQLSERVER";
-        
+
         // s_instanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
         private static string InstanceNamePrefix = "";
 

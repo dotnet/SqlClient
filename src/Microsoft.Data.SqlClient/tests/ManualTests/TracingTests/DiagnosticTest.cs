@@ -22,6 +22,7 @@ using Microsoft.DotNet.RemoteExecutor;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     // TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
+    [Trait("Set", "3")]
     [Trait("Category", "flaky")]
     public class DiagnosticTest
     {
@@ -461,7 +462,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // @TODO: Since this test uses a real database connection, the exception is
                         //     thrown during reader.Read. (ie, TestTdsServer does not obey proper
                         //     exception behavior)
-                        // NB: As a result of the exception being thrown during reader.Read, 
+                        // NB: As a result of the exception being thrown during reader.Read,
                         // cmd.ExecuteXmlReaderAsync returns successfully. This means that we receive
                         // a WriteCommandAfter event rather than WriteCommandError.
                         await conn.OpenAsync();
@@ -603,7 +604,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.NotEqual(connectionId, Guid.Empty);
                         }
 
-                        // if we get to this point, then statistics exist and this must be the "end" 
+                        // if we get to this point, then statistics exist and this must be the "end"
                         // event, so we need to make sure the operation IDs match
                         Assert.Equal(retrievedOperationId, beginOperationId);
                         beginOperationId = Guid.Empty;
@@ -811,7 +812,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     string operation = GetPropertyValueFromType<string>(kvp.Value, "Operation");
                     Assert.False(string.IsNullOrWhiteSpace(operation));
 
-                    // if we get to this point, then statistics exist and this must be the "end" 
+                    // if we get to this point, then statistics exist and this must be the "end"
                     // event, so we need to make sure the operation IDs match
                     Assert.Equal(retrievedOperationId, beginOperationId);
                     beginOperationId = Guid.Empty;
@@ -987,7 +988,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string lowerBatchText = batchRequest.Text.ToLowerInvariant();
 
-            if (lowerBatchText.Contains("1 / 0")) // SELECT 1/0 
+            if (lowerBatchText.Contains("1 / 0")) // SELECT 1/0
             {
                 TDSErrorToken errorToken = new TDSErrorToken(8134, 1, 16, "Divide by zero error encountered.");
                 TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1);

@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class SqlCommandSetTest
     {
         private static Assembly mds = Assembly.GetAssembly(typeof(SqlConnection));

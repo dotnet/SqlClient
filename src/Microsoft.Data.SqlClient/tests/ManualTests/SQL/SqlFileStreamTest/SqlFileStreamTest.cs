@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class SqlFileStreamTest
     {
         private static bool IsFileStreamEnvironmentSet() => DataTestUtility.IsFileStreamSetup();
@@ -50,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             string path = reader.GetString(0);
                             byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
 
-                            // Create the SqlFileStream  
+                            // Create the SqlFileStream
                             using (Stream fileStream = new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, allocationSize: 0))
                             {
                                 // Read the contents as bytes.
@@ -118,11 +119,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         while (reader.Read())
                         {
-                            // Get the pointer for file   
+                            // Get the pointer for file
                             string path = reader.GetString(0);
                             byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
 
-                            // Create the SqlFileStream  
+                            // Create the SqlFileStream
                             using Stream fileStream = new SqlFileStream(path, transactionContext, FileAccess.Write, FileOptions.SequentialScan, allocationSize: 0);
                             // Overwrite the first row in the table
                             fileStream.Write((insertedValue), 0, 4);
@@ -183,15 +184,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         while (reader.Read())
                         {
-                            // Get the pointer for file  
+                            // Get the pointer for file
                             string path = reader.GetString(0);
                             byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
 
                             using Stream fileStream = new SqlFileStream(path, transactionContext, FileAccess.ReadWrite, FileOptions.SequentialScan, allocationSize: 0);
-                            // Seek to the end of the file  
+                            // Seek to the end of the file
                             fileStream.Seek(0, SeekOrigin.End);
 
-                            // Append a single byte   
+                            // Append a single byte
                             fileStream.WriteByte(appendedByte);
                         }
                     }

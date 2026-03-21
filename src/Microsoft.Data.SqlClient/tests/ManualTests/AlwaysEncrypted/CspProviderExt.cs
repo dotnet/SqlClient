@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// Always Encrypted public CspProvider Manual tests.
     /// </summary>
     // TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
+    [Trait("Set", "AE")]
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
@@ -59,7 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                  @$"FROM [{sqlSetupStrategyCsp.ApiTestTable.Name}] " +
                                  @$"WHERE FirstName = @firstName";
             using SqlCommand sqlCommand = new(commandText, sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
-            
+
             SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
             customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     // No test cases can be generated if the registry key doesn't exist.
                     yield break;
                 }
-                
+
                 foreach (string subKeyName in defaultProviderRegistryKey.GetSubKeyNames())
                 {
                     // Skip inappropriate providers
@@ -93,17 +94,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         continue;
                     }
-                    
+
                     // Read provider name
                     string providerName = Path.GetFileName(providerKey.Name);
-                    
+
                     // Read provider type
                     object providerTypeValue = providerKey.GetValue(@"Type");
                     if (providerTypeValue is not int providerType)
                     {
                         continue;
                     }
-                    
+
                     // Combine with AE connection strings
                     foreach (string aeConnectionString in DataTestUtility.AEConnStrings)
                     {
