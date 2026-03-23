@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
 
         // Test that CacheMetadata option works for multiple WriteToServer calls to the same table.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
 
         // Test that ClearCachedMetadata forces a fresh metadata query.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
 
         // Test that changing DestinationTableName invalidates the cache and works correctly with a new table.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
 
         // Test that without the CacheMetadata flag, multiple writes still work (no regression).
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50), col3 nvarchar(50))";
 
         // Test that CacheMetadata works with DataTable source as well as IDataReader.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string dstConstr = SqlBulkCopyTest.ConnectionString;
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Test that changing ColumnMappings between WriteToServer calls works correctly with CacheMetadata.
         // The cached metadata describes the destination table schema, not the column mappings,
         // so modifying mappings between calls should work without cache invalidation.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string dstConstr = SqlBulkCopyTest.ConnectionString;
@@ -371,7 +371,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // second call, works correctly with CacheMetadata. This verifies that null-pruning of
         // unmatched columns in AnalyzeTargetAndCreateUpdateBulkCommand does not mutate the
         // cached metadata, which would cause a NullReferenceException on the second call.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string dstConstr = SqlBulkCopyTest.ConnectionString;
@@ -433,7 +433,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
 
         // Test that CacheMetadata works correctly with WriteToServerAsync.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
@@ -502,7 +502,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50) default 'DefaultVal', col3 nvarchar(50))";
 
         // Test that CacheMetadata works correctly when combined with other SqlBulkCopyOptions.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string dstConstr = SqlBulkCopyTest.ConnectionString;

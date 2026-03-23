@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
         // Synapse: Cannot create more than one clustered index on table '<table_name>'.
         // Drop the existing clustered index 'ClusteredIndex_fe3d8c967ac142468ec4f81ff1faaa50' before creating another.
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;

@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_sqlBulkCopyCmd = "SELECT * FROM(VALUES ('Fuller', 33), ('Davon', 49)) AS q (FirstName, Age)";
         private static readonly int s_commandTimeout = 30;
         // Synapse: Promote Transaction not supported by Azure Synapse
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureSynapse), nameof(SqlBulkCopyTest.IsAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAzureServer))]
         public void Test()
         {
             try

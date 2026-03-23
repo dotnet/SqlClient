@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(currentRowCopyResult < ExpectedRowCopiedResults.Length, "More row copies than expected!");
             DataTestUtility.AssertEqualsWithDescription(ExpectedRowCopiedResults[currentRowCopyResult++], e.RowsCopied, "Unexpected Rows Copied count.");
         }
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
