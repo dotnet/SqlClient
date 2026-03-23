@@ -1,0 +1,125 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Validation stage template.  Runs after build stages complete and verifies the signed SqlClient
+# package as well as (optionally) symbol availability on public and internal symbol servers.
+#
+# This template defines the validation stage.
+#
+# The validate-symbols-job checks the following packages depending on parameters:
+#   - SqlServer - when buildSqlServerServer is true.
+#   - Logging, Abstractions, SqlClient, Azure - when buildSqlClient is true.
+#   - AKV Provider - when buildSqlClient and buildAKVProvider are true.
+
+parameters:
+  # ── General parameters ─────────────────────────────────────────────────
+
+  # True to enable debug information and steps.
+  - name: debug
+    type: boolean
+
+  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
+  - name: isOfficial
+    type: boolean
+
+  # True if this is a preview build.
+  - name: isPreview
+    type: boolean
+
+  # True to verify that symbols are available on symbol servers.
+  - name: publishSymbols
+    type: boolean
+
+  # ── Build parameters (control which packages appear in symbol checks) ──
+
+  - name: buildSqlServerServer
+    type: boolean
+
+  - name: buildSqlClient
+    type: boolean
+
+  - name: buildAKVProvider
+    type: boolean
+
+stages:
+  - stage: validation
+    displayName: Validation
+    dependsOn:
+      - build_independent
+      - ${{ if eq(parameters.buildSqlClient, true) }}:
+        - build_abstractions
+        - build_dependent
+        - ${{ if eq(parameters.buildAKVProvider, true) }}:
+          - build_addons
+
+    jobs:
+      # ── Signed-package validation ──────────────────────────────────
+
+      # We currently only validate the SqlClient package.
+      - ${{ if eq(parameters.buildSqlClient, true) }}:
+        - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
+          parameters:
+            artifactName: $(sqlClientArtifactsName)
+            isOfficial: ${{ parameters.isOfficial }}
+            isPreview: ${{ parameters.isPreview }}
+
+      # ── Symbol-server validation ───────────────────────────────────
+      - ${{ if eq(parameters.publishSymbols, true) }}:
+        - template: /eng/pipelines/onebranch/jobs/validate-symbols-job.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            packages:
+              # SqlServer — only when buildSqlServerServer is true.
+              - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+                - artifactName: $(sqlServerArtifactsName)
+                  packageName: Microsoft.SqlServer.Server
+                  dllPath: lib\netstandard2.0\Microsoft.SqlServer.Server.dll
+
+              # Packages built when buildSqlClient is true — Logging, Abstractions, SqlClient,
+              # Azure.
+              - ${{ if eq(parameters.buildSqlClient, true) }}:
+
+                # Logging
+                - artifactName: $(loggingArtifactsName)
+                  packageName: Microsoft.Data.SqlClient.Internal.Logging
+                  dllPath: lib\netstandard2.0\Microsoft.Data.SqlClient.Internal.Logging.dll
+
+                # Abstractions
+                - artifactName: $(abstractionsArtifactsName)
+                  packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
+                  dllPath: lib\netstandard2.0\Microsoft.Data.SqlClient.Extensions.Abstractions.dll
+
+                # SqlClient — verify all runtime DLLs (not lib/ or ref/).
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\win\lib\net462\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\win\lib\net8.0\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\win\lib\net9.0\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\unix\lib\net8.0\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\unix\lib\net9.0\Microsoft.Data.SqlClient.dll
+
+                # Azure
+                - artifactName: $(azureArtifactsName)
+                  packageName: Microsoft.Data.SqlClient.Extensions.Azure
+                  dllPath: lib\netstandard2.0\Microsoft.Data.SqlClient.Extensions.Azure.dll
+
+                # AKV Provider — only when buildAKVProvider is true.
+                - ${{ if eq(parameters.buildAKVProvider, true) }}:
+                  - artifactName: $(akvArtifactsName)
+                    packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+                    dllPath: lib\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll
