@@ -97,23 +97,49 @@ steps:
 
       echo ">  3.Request to publish symbols succeeded."
 
-      # The following REST calls are used to check publishing status.
-      echo ">  4.Checking the status of the request ..."
+      # Poll until symbol publishing completes on all requested servers.
+      #
+      # PublishingStatus:  0=NotRequested, 1=Submitted, 2=Processing, 3=Completed
+      # PublishingResult:  0=Pending, 1=Succeeded, 2=Failed, 3=Cancelled
+      #
+      echo ">  4.Waiting for symbol publishing to complete..."
 
-      Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
+      $baseUri = "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName"
+      $headers = @{ Authorization = "Bearer $symbolPublishingToken" }
+      $timeoutMinutes = 30
+      $pollIntervalSeconds = 30
+      $deadline = (Get-Date).AddMinutes($timeoutMinutes)
 
-      echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
+      while ((Get-Date) -lt $deadline) {
+          $status = Invoke-RestMethod -Method GET -Uri $baseUri -Headers $headers -ContentType "application/json"
 
-      echo "PublishingStatus"
-      echo "-----------------"
-      echo "0	NotRequested; The request has not been requested to publish."
-      echo "1	Submitted; The request is submitted to be published"
-      echo "2	Processing; The request is still being processed"
-      echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
+          $serversToCheck = @()
+          if ($publishToInternalServer -eq 'true') { $serversToCheck += @{ Name = 'Internal'; Status = $status.internalServerStatus; Result = $status.internalServerResult } }
+          if ($publishToPublicServer -eq 'true')   { $serversToCheck += @{ Name = 'Public';   Status = $status.publicServerStatus;   Result = $status.publicServerResult } }
 
-      echo "PublishingResult"
-      echo "-----------------"
-      echo "0	Pending; The request has not completed or has not been requested."
-      echo "1	Succeeded; The request has published successfully"
-      echo "2	Failed; The request has failed to publish"
-      echo "3	Cancelled; The request was cancelled"
+          $allCompleted = $true
+          foreach ($server in $serversToCheck) {
+              echo "  $($server.Name): Status=$($server.Status) Result=$($server.Result)"
+              if ($server.Status -ne 3) { $allCompleted = $false }
+          }
+
+          if ($allCompleted) {
+              $anyFailed = $false
+              foreach ($server in $serversToCheck) {
+                  if ($server.Result -ne 1) {
+                      echo "##vso[task.logissue type=error]Symbol publishing to $($server.Name) server did not succeed (Result=$($server.Result))."
+                      $anyFailed = $true
+                  }
+              }
+              if ($anyFailed) { exit 1 }
+              echo ">  4.Symbol publishing completed successfully on all requested servers."
+              break
+          }
+
+          echo "  Publishing still in progress, waiting $pollIntervalSeconds seconds..."
+          Start-Sleep -Seconds $pollIntervalSeconds
+      }
+
+      if ((Get-Date) -ge $deadline) {
+          echo "##vso[task.logissue type=warning]Symbol publishing did not complete within $timeoutMinutes minutes. Verification may fail."
+      }

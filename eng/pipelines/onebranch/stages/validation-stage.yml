@@ -74,10 +74,26 @@ stages:
                   packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
                   dllPath: lib\netstandard2.0\Microsoft.Data.SqlClient.Extensions.Abstractions.dll
 
-                # SqlClient
+                # SqlClient — verify all runtime DLLs (not lib/ or ref/).
                 - artifactName: $(sqlClientArtifactsName)
                   packageName: Microsoft.Data.SqlClient
-                  dllPath: lib\net8.0\Microsoft.Data.SqlClient.dll
+                  dllPath: runtimes\win\lib\net462\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\win\lib\net8.0\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\win\lib\net9.0\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\unix\lib\net8.0\Microsoft.Data.SqlClient.dll
+
+                - artifactName: $(sqlClientArtifactsName)
+                  packageName: Microsoft.Data.SqlClient
+                  dllPath: runtimes\unix\lib\net9.0\Microsoft.Data.SqlClient.dll
 
                 # Azure
                 - artifactName: $(azureArtifactsName)
