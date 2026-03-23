@@ -17,7 +17,7 @@ on:
   pull_request:
     branches: [ "release/7.0" ]
   schedule:
-    - cron: '33 23 * * 6'
+    - cron: '15 23 * * 6'
 
 jobs:
   analyze:
@@ -85,9 +85,7 @@ jobs:
     - name: Run manual build steps
       if: matrix.build-mode == 'manual'
       shell: bash
-      run: |
-        mkdir packages
-        dotnet build src/
+      run: dotnet build src/Microsoft.Data.SqlClient.sln
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
