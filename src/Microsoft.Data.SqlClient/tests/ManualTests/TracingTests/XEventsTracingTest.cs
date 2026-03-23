@@ -10,7 +10,6 @@ using System.Xml.XPath;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
-using Xunit.Abstractions;
 
 #nullable enable
 
@@ -19,7 +18,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     // XEvent sessions may become orphaned on the Azure SQL Server, which leads to poor performance
     // (query timeouts, deadlocks, etc) over time.  This class is instantiated once per test run and
     // drops these orphaned sessions as part of every run to help mitigate this issue.
-    [Trait("Set", "3")]
     public class XEventCleaner
     {
         public XEventCleaner()
@@ -98,6 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// even in error scenarios. This is important to ensure that customers can rely on activity IDs being present in
     /// XEvent sessions for troubleshooting and correlation purposes.
     /// </summary>
+    [Trait("Set", "3")]
     [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {
