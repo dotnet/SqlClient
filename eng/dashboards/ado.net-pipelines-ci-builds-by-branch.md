@@ -13,10 +13,10 @@ The branches listed below indicate the repo branch used for the triggered runs.
 |-|-|-|-|-|-|-|
 |MDS Main CI|[internal/main](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
 |MDS Main CI-Package|[internal/main](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
-|MDS Main CI|[internal/release/6.1](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F6.1&_a=contents)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
-|MDS Main CI-Package|[internal/release/6.1](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F6.1&_a=contents)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
 |MDS Main CI|[internal/release/7.0](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F7.0&_a=contents)|Release|No|Yes|Sunday 06:00 UTC|YAML|
 |MDS Main CI-Package|[internal/release/7.0](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F7.0&_a=contents)|Release|No|Yes|Sunday 06:30 UTC|YAML|
+|MDS Main CI|[internal/release/6.1](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F6.1&_a=contents)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
+|MDS Main CI-Package|[internal/release/6.1](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F6.1&_a=contents)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
 |MDS Main CI|[internal/release/6.0](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F6.0&_a=contents)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
 |MDS Main CI-Package|[internal/release/6.0](https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient?path=%2F&version=GBinternal%2Frelease%2F6.0&_a=contents)|Release|No|Yes|Weekdays 01:00 UTC|YAML|
 |Test-SqlClient-Kerberos-Azure|[main](https://github.com/dotnet/SqlClient)|Release|No|No|Mon-Fri 07:00 UTC|Classic UI|
