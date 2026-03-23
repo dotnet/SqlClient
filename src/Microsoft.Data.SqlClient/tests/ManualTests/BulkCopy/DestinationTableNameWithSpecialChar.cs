@@ -13,8 +13,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
-            string constr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar");
+            string constr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_DestinationTableNameWithSpecialChar", false);
             string srctable = "[" + dstTable + "src]";
             string dsttable = "@" + dstTable;       // a tablename that cannot be created without brackets (e.g., @sometablename)
             string[] dsttablecombo =

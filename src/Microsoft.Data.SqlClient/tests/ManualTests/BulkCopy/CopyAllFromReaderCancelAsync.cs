@@ -17,9 +17,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest5");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_AsyncTest5", false);
             cts = new CancellationTokenSource();
             cts.Cancel();
             Task t = TestAsync(srcConstr, dstConstr, dstTable, cts.Token);

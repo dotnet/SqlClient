@@ -13,9 +13,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string targettable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Bug84548");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string targettable = DataTestUtility.GetShortName("SqlBulkCopyTest_Bug84548", false);
             string targetCustomerTable = targettable + "_customer";
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))

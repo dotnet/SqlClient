@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ActiveIssue("12219")]
         public void Test()
         {
-            string connStr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn");
+            string connStr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_OrderHintIdentityColumn", false);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);

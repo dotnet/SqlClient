@@ -13,10 +13,10 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcconstr = SqlBulkCopyTest.ConnectionString;
-            string dstconstr = SqlBulkCopyTest.ConnectionString;
-            string srctable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_TableLock0");
-            string dsttable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_TableLock1");
+            string srcconstr = DataTestUtility.TCPConnectionString;
+            string dstconstr = DataTestUtility.TCPConnectionString;
+            string srctable = DataTestUtility.GetShortName("SqlBulkCopyTest_TableLock0", false);
+            string dsttable = DataTestUtility.GetShortName("SqlBulkCopyTest_TableLock1", false);
             using SqlConnection destConn = new(dstconstr);
             destConn.Open();
 

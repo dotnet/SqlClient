@@ -24,9 +24,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHintAsync");
-            string dstTable2 = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHintAsync2");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_OrderHintAsync", false);
+            string dstTable2 = DataTestUtility.GetShortName("SqlBulkCopyTest_OrderHintAsync2", false);
             Task t = TestAsync(srcConstr, dstTable, dstTable2);
             t.Wait();
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
