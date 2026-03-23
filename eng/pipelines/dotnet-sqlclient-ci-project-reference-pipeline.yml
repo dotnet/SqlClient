@@ -58,7 +58,7 @@ schedules:
 
   # GitHub release/7.0 on Sundays (1 hour after release/6.1's 04:00 UTC run).
   - cron: '0 5 * * Sun'
-    displayName: Sunday Run (Release Config)
+    displayName: Sunday Run GitHub (Release Config)
     branches:
       include:
       - release/7.0
@@ -66,7 +66,7 @@ schedules:
 
   # ADO internal/release/7.0 on Sundays (1 hour after release/6.1's 05:00 UTC run).
   - cron: '0 6 * * Sun'
-    displayName: Sunday Run (Release Config)
+    displayName: Sunday Run ADO Internal (Release Config)
     branches:
       include:
       - internal/release/7.0
