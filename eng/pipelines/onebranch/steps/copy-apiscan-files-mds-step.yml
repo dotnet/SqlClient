@@ -33,7 +33,7 @@ steps:
   - task: CopyFiles@2
     displayName: 'Copy PDBs for APIScan'
     inputs:
-      contents: 'Microsoft.Data.SqlClient.pdb'
+      contents: '**/Microsoft.Data.SqlClient.pdb'
       flattenFolders: false  # Disabled to keep different frameworks and OS builds separate in the target
       sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-Release/'
       targetFolder: '${{ parameters.pdbPath }}/'

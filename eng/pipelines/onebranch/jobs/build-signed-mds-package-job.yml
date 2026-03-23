@@ -101,7 +101,7 @@ jobs:
       # Install the .NET SDK
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
-      # Perform analysis before building, since this tep will clobber build output
+      # Perform analysis before building, since this step will clobber build output
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-mds-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
