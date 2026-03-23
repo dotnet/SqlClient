@@ -472,10 +472,10 @@
       <TestSetFilter Condition="$(NormalizedTestSet.Contains('2'))">$(TestSetFilter)|Set=2</TestSetFilter>
       <TestSetFilter Condition="$(NormalizedTestSet.Contains('3'))">$(TestSetFilter)|Set=3</TestSetFilter>
       <TestSetFilter Condition="$(TestSet.ToUpper().Contains('AE'))">$(TestSetFilter)|Set=AE</TestSetFilter>
-      <TestSetFilter>$(TestSetFilter.Trim('|')</TestSetFilter>
+      <TestSetFilter Condition="$(TestSetFilter) != ''">($(TestSetFilter.Trim('|')))</TestSetFilter>
 
       <!-- Combine existing filters with test set filters -->
-      <ManualTestFilters>$(TestFilters)&amp;($(TestSetFilter))</ManualTestFilters>
+      <ManualTestFilters>$(TestFilters)&amp;$(TestSetFilter)</ManualTestFilters>
       <ManualTestFilters>$(ManualTestFilters.Trim('&amp;'))</ManualTestFilters>
 
       <DotnetCommand>
@@ -483,8 +483,7 @@
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
-        --filter "$(ManualTestFiltersArgument)"
-        $(TestFrameworkArgument)
+        --filter "$(ManualTestFilters)"
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
