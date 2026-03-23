@@ -133,6 +133,7 @@ When a new issue is created, follow these steps:
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
 - Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.
 - Check for platform-specific differences using file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) and conditional compilation (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`).
+- Lines of code, comments, and other text should be a maximum of 100 characters (see `policy/coding-style.md`).
 - Respect API compatibility rules across .NET versions
 - Do not introduce breaking changes without proper justification and documentation
 - Use the `doc/` directory for any new documentation or updates to existing documentation

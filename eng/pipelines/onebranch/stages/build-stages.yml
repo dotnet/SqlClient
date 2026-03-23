@@ -4,15 +4,18 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Unified build stages template for sqlclient OneBranch pipelines.
-# Consumed by both the official and non-official pipeline definitions via:
+# Unified build stages template for sqlclient OneBranch pipelines.  Consumed by both the official
+# and non-official pipeline definitions.
 #
-# Depending on the build* parameters, this template will define the following stages:
+# Stages defined by this template and their controlling parameters:
 #
-#   - build_independent: builds packages with no cross-package dependencies (Logging, SqlServer)
-#   - build_abstractions: builds the Abstractions package, which depends on Logging
-#   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
-#   - build_addons: builds add-on packages with dependencies on the core packages (AKV Provider)
+#   Stage                  | Condition                                | Packages
+#   -----------------------|------------------------------------------|-----------------------------------
+#   build_independent      | Always (at least one job when any        | Logging  (buildSqlClient || buildAKVProvider)
+#                          |   build* param is true)                  | SqlServer (buildSqlServerServer)
+#   build_abstractions     | buildSqlClient                           | Abstractions
+#   build_dependent        | buildSqlClient                           | SqlClient, Azure
+#   build_addons           | buildAKVProvider && buildSqlClient       | AKV Provider
 #
 # This template depends on the following runtime (i.e. macro expansion) variables being defined:
 #
@@ -201,49 +204,35 @@ stages:
   # AKV Provider builds after MDS completes.
   # ====================================================================
   - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
-      - stage: build_addons
-        displayName: "Build Add-on Packages"
-        dependsOn: build_dependent
+    - stage: build_addons
+      displayName: "Build Add-on Packages"
+      dependsOn: build_dependent
 
-        jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
-            parameters:
-              packageName: AkvProvider
-              packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              packageVersion: $(effectiveAkvProviderVersion)
-              versionProperties: >-
-                -p:AkvPackageVersion=$(effectiveAkvProviderVersion)
-                -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
-                -p:MdsPackageVersion=$(effectiveSqlClientVersion)
-                -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-                -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-              assemblyFileVersion: $(akvAssemblyFileVersion)
-              publishSymbols: ${{ parameters.publishSymbols }}
-              isOfficial: ${{ parameters.isOfficial }}
-              esrpConnectedServiceName: $(ESRPConnectedServiceName)
-              esrpClientId: $(ESRPClientId)
-              appRegistrationClientId: $(AppRegistrationClientId)
-              appRegistrationTenantId: $(AppRegistrationTenantId)
-              authAkvName: $(AuthAKVName)
-              authSignCertName: $(AuthSignCertName)
-              downloadArtifacts:
-                - artifactName: $(sqlClientArtifactsName)
-                  displayName: SqlClient Package
-                - artifactName: $(abstractionsArtifactsName)
-                  displayName: Abstractions Package
-                - artifactName: $(loggingArtifactsName)
-                  displayName: Logging Package
-
-  # ====================================================================
-  # Validation
-  # ====================================================================
-  - ${{ if eq(parameters.buildSqlClient, true) }}:
-      - stage: mds_package_validation
-        displayName: "MDS Package Validation"
-        dependsOn: build_dependent
-        jobs:
-          - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
-            parameters:
-              artifactName: $(sqlClientArtifactsName)
-              isPreview: ${{ parameters.isPreview }}
-              isOfficial: ${{ parameters.isOfficial }}
+      jobs:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            packageName: AkvProvider
+            packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+            packageVersion: $(effectiveAkvProviderVersion)
+            versionProperties: >-
+              -p:AkvPackageVersion=$(effectiveAkvProviderVersion)
+              -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
+              -p:MdsPackageVersion=$(effectiveSqlClientVersion)
+              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+              -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+            assemblyFileVersion: $(akvAssemblyFileVersion)
+            publishSymbols: ${{ parameters.publishSymbols }}
+            isOfficial: ${{ parameters.isOfficial }}
+            esrpConnectedServiceName: $(ESRPConnectedServiceName)
+            esrpClientId: $(ESRPClientId)
+            appRegistrationClientId: $(AppRegistrationClientId)
+            appRegistrationTenantId: $(AppRegistrationTenantId)
+            authAkvName: $(AuthAKVName)
+            authSignCertName: $(AuthSignCertName)
+            downloadArtifacts:
+              - artifactName: $(sqlClientArtifactsName)
+                displayName: SqlClient Package
+              - artifactName: $(abstractionsArtifactsName)
+                displayName: Abstractions Package
+              - artifactName: $(loggingArtifactsName)
+                displayName: Logging Package

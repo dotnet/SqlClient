@@ -4,15 +4,17 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 #
-# Unified release stages template for dotnet-sqlclient OneBranch pipelines.
-# Consumed by both the official and non-official pipeline definitions via:
+# Unified release stage template for dotnet-sqlclient OneBranch pipelines.  Consumed by both the
+# official and non-official pipeline definitions.
 #
-#   stages:
-#     - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
-#       parameters:
-#         isOfficial:          true   # or false
-#         releaseToProduction: false  # or true
-#         ...
+# Stages defined by this template and their controlling parameters:
+#
+#   Stage                  | Condition                                        | Packages
+#   -----------------------|--------------------------------------------------|-----------------------------
+#   release_<suffix>       | Any release* parameter is true                   | One job per enabled release*
+#                          |   (releaseSqlServerServer, releaseLogging,       |   parameter
+#                          |    releaseAbstractions, releaseSqlClient,        |
+#                          |    releaseAzure, releaseAKVProvider)             |
 #
 # The isOfficial flag controls release-stage behaviour:
 #   - Official  → Production environment, approval gate.

@@ -1,0 +1,66 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Validates that symbols (PDBs) for every published package DLL are available on each configured
+# symbol server using the symchk tool.
+#
+# All packages specified in the 'packages' parameter will be checked against all symbol servers
+# specified in the 'symbolServers' parameter.
+
+parameters:
+  # The list of symbol servers to verify against.  Each entry has a 'name' (friendly display name)
+  # and 'url' (the symbol server URL that symchk can query).
+  - name: symbolServers
+    type: object
+    default:
+      - name: MSDL (Public)
+        url: https://msdl.microsoft.com/download/symbols
+      - name: SymWeb (Internal)
+        url: https://symweb.azurefd.net
+
+  # The packages whose symbols should be verified.  Each entry has:
+  #   artifactName  — pipeline artifact name (from onebranch-variables.yml)
+  #   packageName   — NuGet package name prefix used to locate the .nupkg file
+  #   dllPath       — relative path to the DLL inside the extracted package
+  - name: packages
+    type: object
+    default: []
+
+jobs:
+  - job: validate_symbols
+    displayName: Verify symbols on symbol servers
+
+    pool:
+      type: windows
+      isCustom: true
+      name: ADO-1ES-Pool
+      vmImage: ADO-Win25
+
+    variables:
+      extractRoot: $(Build.SourcesDirectory)\symchk_packages
+
+    steps:
+    - script: SET
+      displayName: Print Environment Variables
+
+    # ── Download, extract, and verify symbols for each package ──────────────
+
+    - ${{ each pkg in parameters.packages }}:
+      - download: current
+        artifact: ${{ pkg.artifactName }}
+        patterns: '**/*.nupkg'
+        displayName: Download ${{ pkg.packageName }}
+
+      - ${{ each server in parameters.symbolServers }}:
+        - powershell: >
+            $(Build.SourcesDirectory)\eng\pipelines\onebranch\jobs\validate-symbols.ps1
+            -ArtifactPath  "$(Pipeline.Workspace)\${{ pkg.artifactName }}"
+            -ExtractPath   "$(extractRoot)\${{ pkg.packageName }}"
+            -PackageName   "${{ pkg.packageName }}"
+            -DllPath       "${{ pkg.dllPath }}"
+            -SymbolServerUrl  "${{ server.url }}"
+            -SymbolServerName "${{ server.name }}"
+          displayName: Verify ${{ pkg.packageName }} on ${{ server.name }}
