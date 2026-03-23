@@ -39,6 +39,14 @@ parameters:
 stages:
   - stage: validation
     displayName: Validation
+    dependsOn:
+      - build_independent
+      - ${{ if eq(parameters.buildSqlClient, true) }}:
+        - build_abstractions
+        - build_dependent
+        - ${{ if eq(parameters.buildAKVProvider, true) }}:
+          - build_addons
+
     jobs:
       # ── Signed-package validation ──────────────────────────────────
 
