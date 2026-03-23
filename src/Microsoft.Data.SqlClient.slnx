@@ -181,10 +181,13 @@
     <File Path="../eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml" />
     <File Path="../eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml" />
     <File Path="../eng/pipelines/onebranch/jobs/validate-signed-package-job.yml" />
+    <File Path="../eng/pipelines/onebranch/jobs/validate-symbols-job.yml" />
+    <File Path="../eng/pipelines/onebranch/jobs/validate-symbols.ps1" />
   </Folder>
   <Folder Name="/eng/pipelines/onebranch/stages/">
     <File Path="../eng/pipelines/onebranch/stages/build-stages.yml" />
-    <File Path="../eng/pipelines/onebranch/stages/release-stages.yml" />
+    <File Path="../eng/pipelines/onebranch/stages/release-stage.yml" />
+    <File Path="../eng/pipelines/onebranch/stages/validation-stage.yml" />
   </Folder>
   <Folder Name="/eng/pipelines/onebranch/steps/">
     <File Path="../eng/pipelines/onebranch/steps/build-all-configurations-signed-dlls-step.yml" />

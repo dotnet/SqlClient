@@ -15,13 +15,13 @@ parameters:
 
 jobs:
 - job: validate_signed_package
-  displayName: 'Verify signed package'
+  displayName: Verify signed package
 
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     isCustom: true
     name: ADO-1ES-Pool
-    vmImage: 'ADO-MMS22-SQL19'
+    vmImage: ADO-Win25
 
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
   - template: /eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml@self

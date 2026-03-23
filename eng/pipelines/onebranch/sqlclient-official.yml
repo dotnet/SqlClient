@@ -213,7 +213,15 @@ extends:
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
 
-      - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+      - template: /eng/pipelines/onebranch/stages/validation-stage.yml@self
+        parameters:
+          isPreview: ${{ parameters.isPreview }}
+          publishSymbols: ${{ parameters.publishSymbols }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+
+      - template: /eng/pipelines/onebranch/stages/release-stage.yml@self
         parameters:
           debug: ${{ parameters.debug }}
           releaseToProduction: ${{ parameters.releaseToProduction }}
