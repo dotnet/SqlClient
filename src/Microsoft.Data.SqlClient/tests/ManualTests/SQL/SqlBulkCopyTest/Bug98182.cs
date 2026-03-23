@@ -3,13 +3,17 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Bug98182
     {
-        public static void Test(string constr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string constr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("@SqlBulkCopyTest_Bug98182 ");
             string srctable = "[" + dstTable + " src]";
             dstTable = "[" + dstTable + "]";
 
@@ -47,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 ColumnMappings.Add("col 2", "[col 2]");
 
                                 bulkcopy.WriteToServer(reader);
-                                
+
                                 DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
                             }
                             Helpers.VerifyResults(dstConn, dstTable, 2, 1);

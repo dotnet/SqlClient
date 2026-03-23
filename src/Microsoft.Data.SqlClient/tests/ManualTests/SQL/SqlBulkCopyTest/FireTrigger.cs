@@ -9,8 +9,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class FireTrigger
     {
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_FireTrigger");
             string dstTable1 = dstTable + "_1"; // this table will receive a value if the trigger fires!
             string trigger = dstTable + "_2";
             string[] prologue =

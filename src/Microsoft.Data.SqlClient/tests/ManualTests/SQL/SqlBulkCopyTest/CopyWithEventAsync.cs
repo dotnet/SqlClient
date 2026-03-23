@@ -19,9 +19,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(currentRowCopyResult < ExpectedRowCopiedResults.Length, "More row copies than expected!");
             DataTestUtility.AssertEqualsWithDescription(ExpectedRowCopiedResults[currentRowCopyResult++], e.RowsCopied, "Unexpected Rows Copied count.");
         }
-
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest4");
             // Use this semaphore to ensure that results are written to the log in the correct order
             SemaphoreSlim outputSemaphore = new SemaphoreSlim(0, 1);
 

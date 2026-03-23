@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Xunit;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SpecialCharacterNames
@@ -10,9 +12,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return "[" + name.Replace("]", "]]") + "]";
         }
-
-        public static void Test(string srcConstr, string dstConstr, string dstPrefix)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstPrefix = SqlBulkCopyTest.AddGuid("@SqlBulkCopyTest_SpecialCharacterNames");
             // create schema and table names with special characters, with ] character escaped.
             string dstschema = dstPrefix + "_Schema'-]['']";
             dstschema = EscapeIdentifier(dstschema);

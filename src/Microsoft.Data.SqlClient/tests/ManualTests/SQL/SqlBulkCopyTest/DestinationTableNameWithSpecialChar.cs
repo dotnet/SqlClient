@@ -3,13 +3,17 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class DestinationTableNameWithSpecialChar
     {
-        public static void Test(string constr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup))]
+        public void Test()
         {
+            string constr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar");
             string srctable = "[" + dstTable + "src]";
             string dsttable = "@" + dstTable;       // a tablename that cannot be created without brackets (e.g., @sometablename)
             string[] dsttablecombo =

@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -18,9 +18,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "SELECT CustomerID, CompanyName, ContactName FROM {0}";
         private static readonly string sourceQueryTemplate2 = "SELECT LastName, FirstName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
-
-        public static void Test(string connStr, string dstTable, string dstTable2)
+        // TODO Synapse: Remove dependency on Northwind database
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureSynapse))]
+        public void Test()
         {
+            string connStr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHint");
+            string dstTable2 = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHint2");
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string sourceQuery2 = string.Format(sourceQueryTemplate2, sourceTable2);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
