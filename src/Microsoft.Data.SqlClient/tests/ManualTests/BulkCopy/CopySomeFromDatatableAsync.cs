@@ -15,9 +15,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest3");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_AsyncTest3", false);
             // Use this semaphore to ensure that results are written to the log in the correct order
             SemaphoreSlim outputSemaphore = new SemaphoreSlim(0, 1);
 

@@ -20,9 +20,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadata");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadata", false);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
@@ -84,9 +84,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataInvalidate");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataInvalidate", false);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
@@ -140,10 +140,10 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable1 = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataDstChange0");
-            string dstTable2 = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataDstChange1");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable1 = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataDstChange0", false);
+            string dstTable2 = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataDstChange1", false);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery1 = string.Format(initialQueryTemplate, dstTable1);
             string initialQuery2 = string.Format(initialQueryTemplate, dstTable2);
@@ -199,9 +199,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataNoFlag");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataNoFlag", false);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
@@ -251,8 +251,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataDT");
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataDT", false);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
             using DataTable sourceData = new();
@@ -299,8 +299,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataColMap");
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataColMap", false);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
             using DataTable sourceData = new DataTable();
@@ -375,8 +375,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataSubset");
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataSubset", false);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
             using DataTable sourceData = new DataTable();
@@ -437,9 +437,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataAsync");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataAsync", false);
             Task t = TestAsync(srcConstr, dstConstr, dstTable);
             t.Wait();
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
@@ -506,8 +506,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CacheMetadataKeepNulls");
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CacheMetadataKeepNulls", false);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
             using DataTable sourceData = new();

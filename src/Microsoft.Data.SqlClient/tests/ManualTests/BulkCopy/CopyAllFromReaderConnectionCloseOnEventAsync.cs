@@ -14,9 +14,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest7");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_AsyncTest7", false);
 #if DEBUG
             string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(20), col3 nvarchar(10), col4 varchar(8000))";
             string sourceQuery = "select EmployeeID, LastName, FirstName, REPLICATE('a', 8000) from employees";

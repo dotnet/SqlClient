@@ -30,8 +30,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string targettable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted");
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string targettable = DataTestUtility.GetShortName("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted", false);
             using (SqlConnection destConn = new SqlConnection(dstConstr))
             {
                 destConn.Open();

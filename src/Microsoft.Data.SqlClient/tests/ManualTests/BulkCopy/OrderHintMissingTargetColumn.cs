@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void Test()
         {
-            string connStr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHintMissingTargetColumn");
+            string connStr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_OrderHintMissingTargetColumn", false);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
 

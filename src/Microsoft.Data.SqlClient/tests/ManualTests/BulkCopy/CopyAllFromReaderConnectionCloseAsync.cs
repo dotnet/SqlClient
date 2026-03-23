@@ -15,9 +15,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest6");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_AsyncTest6", false);
             Task t = TestAsync(srcConstr, dstConstr, dstTable);
             DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => t.Wait());
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);

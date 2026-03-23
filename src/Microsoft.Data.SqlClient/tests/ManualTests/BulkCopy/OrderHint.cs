@@ -23,9 +23,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void Test()
         {
-            string connStr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHint");
-            string dstTable2 = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHint2");
+            string connStr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_OrderHint", false);
+            string dstTable2 = DataTestUtility.GetShortName("SqlBulkCopyTest_OrderHint2", false);
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string sourceQuery2 = string.Format(sourceQueryTemplate2, sourceTable2);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);

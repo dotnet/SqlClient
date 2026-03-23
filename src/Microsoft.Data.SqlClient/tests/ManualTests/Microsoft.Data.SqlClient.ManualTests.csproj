@@ -169,7 +169,6 @@
     <Compile Include="BulkCopy\OrderHintMissingTargetColumn.cs" />
     <Compile Include="BulkCopy\OrderHintTransaction.cs" />
     <Compile Include="BulkCopy\SpecialCharacterNames.cs" />
-    <Compile Include="BulkCopy\SqlBulkCopyTest.cs" />
     <Compile Include="BulkCopy\SqlGraphTables.cs" />
     <Compile Include="BulkCopy\TableLock.cs" />
     <Compile Include="BulkCopy\TestBulkCopyWithUTF8.cs" />

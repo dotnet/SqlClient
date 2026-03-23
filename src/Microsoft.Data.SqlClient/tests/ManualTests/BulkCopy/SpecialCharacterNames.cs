@@ -16,9 +16,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string srcConstr = SqlBulkCopyTest.ConnectionString;
-            string dstConstr = SqlBulkCopyTest.ConnectionString;
-            string dstPrefix = SqlBulkCopyTest.AddGuid("@SqlBulkCopyTest_SpecialCharacterNames");
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstPrefix = DataTestUtility.GetShortName("@SqlBulkCopyTest_SpecialCharacterNames", false);
             // create schema and table names with special characters, with ] character escaped.
             string dstschema = dstPrefix + "_Schema'-]['']";
             dstschema = EscapeIdentifier(dstschema);

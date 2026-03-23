@@ -13,9 +13,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string constr = SqlBulkCopyTest.ConnectionString;
-            string srctable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Extensionsrc");
-            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Extensiondst");
+            string constr = DataTestUtility.TCPConnectionString;
+            string srctable = DataTestUtility.GetShortName("SqlBulkCopyTest_Extensionsrc", false);
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_Extensiondst", false);
             using (SqlConnection dstConn = new SqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

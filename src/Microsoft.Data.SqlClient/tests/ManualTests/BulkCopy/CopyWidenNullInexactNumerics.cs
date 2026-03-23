@@ -14,8 +14,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string sourceDatabaseConnectionString = SqlBulkCopyTest.ConnectionString;
-            string destinationDatabaseConnectionString = SqlBulkCopyTest.ConnectionString;
+            string sourceDatabaseConnectionString = DataTestUtility.TCPConnectionString;
+            string destinationDatabaseConnectionString = DataTestUtility.TCPConnectionString;
             string sourceTableName = DataTestUtility.GetLongName("BCP_SRC");
             string destTableName = DataTestUtility.GetLongName("BCP_DST");
 

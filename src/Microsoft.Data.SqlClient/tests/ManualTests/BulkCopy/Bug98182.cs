@@ -13,8 +13,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
-            string constr = SqlBulkCopyTest.ConnectionString;
-            string dstTable = SqlBulkCopyTest.AddGuid("@SqlBulkCopyTest_Bug98182 ");
+            string constr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("@SqlBulkCopyTest_Bug98182 ", false);
             string srctable = "[" + dstTable + " src]";
             dstTable = "[" + dstTable + "]";
 
