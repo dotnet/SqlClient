@@ -149,13 +149,15 @@ jobs:
           authSignCertName: '${{ parameters.signingAuthSignCertName }}'
           esrpClientId: '${{ parameters.signingEsrpClientId }}'
           esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+          searchPath: '$(BUILD_OUTPUT)'
+          searchPattern: '**/*.*nupkg'
 
       - ${{ if parameters.publishSymbols }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
               artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.mdsPackageVersion }}_$(System.TimelineId)'
               azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-              packageName: '$(PACKAGE_NAME)'
+              packageName: 'Microsoft.Data.SqlClient'
               publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               publishServer: '${{ parameters.symbolsPublishServer }}'
               publishToInternal: true

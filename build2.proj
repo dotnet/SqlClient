@@ -57,6 +57,27 @@
     <NugetPath Condition="'$(NugetPath)' == ''">nuget</NugetPath>
 
     <!--
+      PackBuild
+      Applies to:     PackMds
+      Description:    Whether the PackMds target should run BuildMds before packing. If true,
+                      BuildMds will be called as a dependency of PackMds. If false, it will not.
+                      For most developers, building immediately before packing is the norm, and
+                      this functionality is added for convenience. However, for official builds,
+                      binaries are signed between building and packing, so building immediately
+                      before packing would clobber the signed binaries.
+      Default value:  true
+      Allowed values: (true|false)
+    -->
+    <!--
+      @TODO: This is kinda hacky, ideally we can pack via dotnet pack, which will handle building,
+        and can thus be switched off by passing -no-build. However, we're not there because we need
+        to build multiple projects before packaging, and thus need to use nuget. So, until then we
+        will switch off dependency building dynamically building the target dependencies
+    -->
+    <PackBuild Condition="'$(PackBuild)' == ''">true</PackBuild>
+    <PackMdsDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildMds</PackMdsDependsOn>
+
+    <!--
       PackageVersionAbstractions
       Applies to:     BuildMds, BuildMdsRef, BuildMdsUnix, BuildMdsWindows
                       PackMds
@@ -388,7 +409,7 @@
     automatically build before packaging. Instead, we rely on target dependency to handle building
     the same binaries that will be packaged.
   -->
-  <Target Name="PackMds" DependsOnTargets="BuildMds">
+  <Target Name="PackMds" DependsOnTargets="$(PackMdsDependsOn)">
     <Error Text="PackageVersionAbstractions must be set!"
            Condition="'$(PackageVersionAbstractions)' == ''" />
     <Error Text="PackageVersionLogging must be set!"
