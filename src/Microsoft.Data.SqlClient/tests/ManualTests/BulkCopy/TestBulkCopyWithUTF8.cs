@@ -5,9 +5,10 @@
 using System;
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     /// <summary>
     /// Validates SqlBulkCopy functionality when working with UTF-8 encoded data.
@@ -56,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Creates source and destination tables with a varchar(max) column with a collation setting
-        /// that stores the data in UTF8 encoding and inserts the data in the source table. 
+        /// that stores the data in UTF8 encoding and inserts the data in the source table.
         /// </summary>
         private void SetupTables(SqlConnection connection, string sourceTable, string destinationTable, string insertQuery)
         {

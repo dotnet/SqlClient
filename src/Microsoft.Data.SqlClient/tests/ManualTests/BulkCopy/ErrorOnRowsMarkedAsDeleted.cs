@@ -5,9 +5,10 @@
 using System;
 using System.Data;
 using System.Text;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     /// <summary>
     /// Test case for SqlBulkEdit raising exception on rows marked as deleted

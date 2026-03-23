@@ -4,8 +4,9 @@
 
 using System;
 using System.Data.Common;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class Helpers
     {
