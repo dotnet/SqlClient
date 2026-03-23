@@ -44,6 +44,11 @@
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
         <dependency id="System.Buffers" version="4.6.1" />
+        <!-- System.Data.Common ships as an inbox assembly on .NET Framework, but
+             the inbox version predates APIs such as IDbColumnSchemaGenerator.
+             This explicit dependency ensures consumers receive the updated NuGet
+             package version and avoid CS0012 errors when using types like
+             IDbColumnSchemaGenerator exposed through our public API. -->
         <dependency id="System.Data.Common" version="4.3.0" />
         <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.3" />
         <dependency id="System.Memory" version="4.6.3" />

@@ -117,6 +117,12 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
+    <!-- System.Data.Common ships as an inbox assembly on .NET Framework, but the
+         inbox version predates APIs such as IDbColumnSchemaGenerator.  Declaring
+         an explicit dependency on the NuGet package (which type-forwards to the
+         inbox assembly when the runtime already provides a newer version) ensures
+         that consumers also receive the updated assembly and avoid CS0012 errors
+         when referencing types like IDbColumnSchemaGenerator via our public API. -->
     <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
