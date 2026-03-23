@@ -4,13 +4,18 @@
 
 using System;
 using System.Data.Common;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopyAllFromReaderConnectionClosedOnEventAsync
     {
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest7");
 #if DEBUG
             string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(20), col3 nvarchar(10), col4 varchar(8000))";
             string sourceQuery = "select EmployeeID, LastName, FirstName, REPLICATE('a', 8000) from employees";

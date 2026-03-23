@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Text;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -25,9 +26,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataTable,
             RowsList
         }
-
-        public static void Test(string dstConstr, string targettable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string targettable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted");
             using (SqlConnection destConn = new SqlConnection(dstConstr))
             {
                 destConn.Open();

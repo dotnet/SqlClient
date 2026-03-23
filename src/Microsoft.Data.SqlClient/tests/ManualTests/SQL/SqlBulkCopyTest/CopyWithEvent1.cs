@@ -10,7 +10,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class CopyWithEvent1
     {
         private static SqlBulkCopy bulkcopy;
-
         private static readonly long[] ExpectedRowCopiedResults = { 50, 100 };
         private static int currentRowCopyResult = 0;
 
@@ -32,9 +31,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 bulkcopy.NotifyAfter = 10; // decrease notification frequency
             }
         }
-
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_CopyWithEvent1");
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

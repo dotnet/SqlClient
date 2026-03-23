@@ -3,13 +3,17 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ColumnCollation
     {
-        public static void Test(string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_ColumnCollation");
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

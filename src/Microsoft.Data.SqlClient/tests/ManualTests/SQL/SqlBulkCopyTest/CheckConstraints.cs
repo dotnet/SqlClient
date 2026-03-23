@@ -3,13 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CheckConstraints
     {
-        public static void Test(string constr, string srctable, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string constr = SqlBulkCopyTest.ConnectionString;
+            string srctable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Extensionsrc");
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Extensiondst");
             using (SqlConnection dstConn = new SqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

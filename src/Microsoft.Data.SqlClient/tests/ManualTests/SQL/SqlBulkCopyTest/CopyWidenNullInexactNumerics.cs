@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,8 +10,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopyWidenNullInexactNumerics
     {
-        public static void Test(string sourceDatabaseConnectionString, string destinationDatabaseConnectionString)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string sourceDatabaseConnectionString = SqlBulkCopyTest.ConnectionString;
+            string destinationDatabaseConnectionString = SqlBulkCopyTest.ConnectionString;
             string sourceTableName = DataTestUtility.GetLongName("BCP_SRC");
             string destTableName = DataTestUtility.GetLongName("BCP_DST");
 

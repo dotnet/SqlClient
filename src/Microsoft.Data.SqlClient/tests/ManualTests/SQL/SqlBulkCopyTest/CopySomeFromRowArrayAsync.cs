@@ -11,8 +11,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopySomeFromRowArrayAsync
     {
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest2");
             // Use this semaphore to ensure that results are written to the log in the correct order
             SemaphoreSlim outputSemaphore = new SemaphoreSlim(0, 1);
 

@@ -9,8 +9,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Transaction2
     {
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Transaction2");
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

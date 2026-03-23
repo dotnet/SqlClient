@@ -10,8 +10,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Bug903514
     {
-        public static void Test(string constr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string constr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Bug903514");
             using (SqlConnection dstConn = new SqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

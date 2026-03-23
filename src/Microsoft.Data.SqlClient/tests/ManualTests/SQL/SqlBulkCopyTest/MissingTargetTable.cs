@@ -10,8 +10,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class MissingTargetTable
     {
-        public static void Test(string srcConstr, string dstConstr, string targetTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string targetTable = SqlBulkCopyTest.AddGuid("@SqlBulkCopyTest_MissingTargetTable");
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {

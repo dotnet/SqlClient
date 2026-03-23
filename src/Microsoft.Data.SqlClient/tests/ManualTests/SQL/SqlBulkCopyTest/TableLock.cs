@@ -1,15 +1,21 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System.Data;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    class TableLock
+    public class TableLock
     {
-        public static void Test(string srcconstr, string dstconstr, string srctable, string dsttable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcconstr = SqlBulkCopyTest.ConnectionString;
+            string dstconstr = SqlBulkCopyTest.ConnectionString;
+            string srctable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_TableLock0");
+            string dsttable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_TableLock1");
             using SqlConnection destConn = new(dstconstr);
             destConn.Open();
 

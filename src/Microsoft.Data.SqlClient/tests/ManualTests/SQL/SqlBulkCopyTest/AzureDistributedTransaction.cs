@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -15,8 +15,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_createTableCmd = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
         private static readonly string s_sqlBulkCopyCmd = "SELECT * FROM(VALUES ('Fuller', 33), ('Davon', 49)) AS q (FirstName, Age)";
         private static readonly int s_commandTimeout = 30;
-
-        public static void Test()
+        // Synapse: Promote Transaction not supported by Azure Synapse
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureSynapse), nameof(SqlBulkCopyTest.IsAzureServer))]
+        public void Test()
         {
             try
             {

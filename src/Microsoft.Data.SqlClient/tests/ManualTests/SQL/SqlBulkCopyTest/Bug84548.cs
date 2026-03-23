@@ -3,13 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Bug84548
     {
-        public static void Test(string srcConstr, string dstConstr, string targettable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string targettable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Bug84548");
             string targetCustomerTable = targettable + "_customer";
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))

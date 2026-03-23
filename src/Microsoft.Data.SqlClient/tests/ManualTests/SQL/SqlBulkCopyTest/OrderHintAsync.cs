@@ -1,9 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 using Xunit;
@@ -19,9 +18,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate = "SELECT CustomerID, CompanyName, ContactName FROM {0}";
         private static readonly string sourceQueryTemplate2 = "SELECT LastName, FirstName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
-
-        public static void Test(string srcConstr, string dstTable, string dstTable2)
+        // Synapse: Cannot create more than one clustered index on table '<table_name>'.
+        // Drop the existing clustered index 'ClusteredIndex_fe3d8c967ac142468ec4f81ff1faaa50' before creating another.
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureSynapse))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHintAsync");
+            string dstTable2 = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_OrderHintAsync2");
             Task t = TestAsync(srcConstr, dstTable, dstTable2);
             t.Wait();
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);

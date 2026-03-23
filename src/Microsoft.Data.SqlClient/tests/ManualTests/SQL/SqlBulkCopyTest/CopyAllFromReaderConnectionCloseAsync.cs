@@ -11,8 +11,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopyAllFromReaderConnectionClosedAsync
     {
-        public static void Test(string srcConstr, string dstConstr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup))]
+        public void Test()
         {
+            string srcConstr = SqlBulkCopyTest.ConnectionString;
+            string dstConstr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_AsyncTest6");
             Task t = TestAsync(srcConstr, dstConstr, dstTable);
             DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => t.Wait());
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);

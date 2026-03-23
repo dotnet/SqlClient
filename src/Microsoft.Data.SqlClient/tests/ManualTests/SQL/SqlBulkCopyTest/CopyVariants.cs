@@ -3,13 +3,17 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopyVariants
     {
-        public static void Test(string constr, string dstTable)
+        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        public void Test()
         {
+            string constr = SqlBulkCopyTest.ConnectionString;
+            string dstTable = SqlBulkCopyTest.AddGuid("SqlBulkCopyTest_Variants");
             string[] prologue =
             {
                 "create table " + dstTable + "_src (col_1 int primary key, col_2 sql_variant)",
