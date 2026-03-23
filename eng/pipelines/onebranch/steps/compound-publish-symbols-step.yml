@@ -137,49 +137,7 @@ steps:
             -Body $publishSymbolsBody
           echo ">  3.Request to publish symbols submitted successfully."
 
-          # Poll until symbol publishing completes on all requested servers.
-          #
-          # PublishingStatus:  0=NotRequested, 1=Submitted, 2=Processing, 3=Completed
-          # PublishingResult:  0=Pending, 1=Succeeded, 2=Failed, 3=Cancelled
-          #
-          echo ">  4.Waiting for symbol publishing to complete..."
-
-          $baseUri = "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests/$artifactName"
-          $headers = @{ Authorization = "Bearer $symbolPublishingToken" }
-          $timeoutMinutes = 30
-          $pollIntervalSeconds = 30
-          $deadline = (Get-Date).AddMinutes($timeoutMinutes)
-
-          while ((Get-Date) -lt $deadline) {
-              $status = Invoke-RestMethod -Method GET -Uri $baseUri -Headers $headers -ContentType "application/json"
-
-              $serversToCheck = @()
-              if ($publishToInternal -eq 'true') { $serversToCheck += @{ Name = 'Internal'; Status = $status.internalServerStatus; Result = $status.internalServerResult } }
-              if ($publishToPublic -eq 'true')   { $serversToCheck += @{ Name = 'Public';   Status = $status.publicServerStatus;   Result = $status.publicServerResult } }
-
-              $allCompleted = $true
-              foreach ($server in $serversToCheck) {
-                  echo "  $($server.Name): Status=$($server.Status) Result=$($server.Result)"
-                  if ($server.Status -ne 3) { $allCompleted = $false }
-              }
-
-              if ($allCompleted) {
-                  $anyFailed = $false
-                  foreach ($server in $serversToCheck) {
-                      if ($server.Result -ne 1) {
-                          echo "##vso[task.logissue type=error]Symbol publishing to $($server.Name) server did not succeed (Result=$($server.Result))."
-                          $anyFailed = $true
-                      }
-                  }
-                  if ($anyFailed) { exit 1 }
-                  echo ">  4.Symbol publishing completed successfully on all requested servers."
-                  break
-              }
-
-              echo "  Publishing still in progress, waiting $pollIntervalSeconds seconds..."
-              Start-Sleep -Seconds $pollIntervalSeconds
-          }
-
-          if ((Get-Date) -ge $deadline) {
-              echo "##vso[task.logissue type=warning]Symbol publishing did not complete within $timeoutMinutes minutes. Verification may fail."
-          }
+          # Publishing status will be verified by the validate-symbols job in the
+          # validation stage (via symchk).  Polling here would block subsequent
+          # build stages unnecessarily — enough time typically elapses during the
+          # remaining build stages for publishing to complete before validation.

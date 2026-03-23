@@ -61,7 +61,15 @@ param(
     [string]$SymbolServerUrl,
 
     [Parameter(Mandatory)]
-    [string]$SymbolServerName
+    [string]$SymbolServerName,
+
+    # Maximum number of attempts when symbols are not yet available.  The first
+    # attempt runs immediately; subsequent attempts wait RetryIntervalSeconds
+    # between them.  Defaults to 10 (~5 minutes total with default interval).
+    [int]$MaxRetries = 10,
+
+    # Seconds to wait between retry attempts (default 30).
+    [int]$RetryIntervalSeconds = 30
 )
 
 Set-StrictMode -Version Latest
@@ -118,12 +126,13 @@ if (-not $symchkPath) {
     exit 1
 }
 
-# ── Verify symbols ────────────────────────────────────────────────────────────
+# ── Verify symbols (with retries for publishing latency) ──────────────────────
 
 $dllLeaf = Split-Path $dllFullPath -Leaf
 
 Write-Host "Verifying symbols for $dllLeaf on $SymbolServerName ($SymbolServerUrl)"
 Write-Host "Using symchk: $symchkPath"
+Write-Host "Max attempts: $MaxRetries, interval: ${RetryIntervalSeconds}s"
 
 $symchkArgs = @(
     $dllFullPath,
@@ -131,20 +140,27 @@ $symchkArgs = @(
     "/os"
 )
 
-Write-Host "Running: symchk $($symchkArgs -join ' ')"
-$output = & $symchkPath @symchkArgs 2>&1 | Out-String
-$symchkExit = $LASTEXITCODE
+for ($attempt = 1; $attempt -le $MaxRetries; $attempt++) {
+    Write-Host "Attempt $attempt of $MaxRetries — running: symchk $($symchkArgs -join ' ')"
+    $output = & $symchkPath @symchkArgs 2>&1 | Out-String
+    $symchkExit = $LASTEXITCODE
 
-Write-Host $output
+    Write-Host $output
 
-if ($symchkExit -ne 0) {
-    Write-Host "##vso[task.logissue type=error]symchk failed for $dllLeaf on $SymbolServerName (exit code: $symchkExit)"
-    exit 1
+    $passed = ($symchkExit -eq 0) -and
+             ($output -match "FAILED files = 0") -and
+             ($output -match "PASSED \+ IGNORED files = [1-9]")
+
+    if ($passed) {
+        Write-Host "Symbols verified successfully for $dllLeaf on $SymbolServerName"
+        exit 0
+    }
+
+    if ($attempt -lt $MaxRetries) {
+        Write-Host "Symbols not yet available. Retrying in $RetryIntervalSeconds seconds..."
+        Start-Sleep -Seconds $RetryIntervalSeconds
+    }
 }
 
-if ($output -match "FAILED files = 0" -and $output -match "PASSED \+ IGNORED files = [1-9]") {
-    Write-Host "Symbols verified successfully for $dllLeaf on $SymbolServerName"
-} else {
-    Write-Host "##vso[task.logissue type=error]symchk did not confirm symbols for $dllLeaf on $SymbolServerName"
-    exit 1
-}
+Write-Host "##vso[task.logissue type=error]symchk could not verify symbols for $dllLeaf on $SymbolServerName after $MaxRetries attempts."
+exit 1
