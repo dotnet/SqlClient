@@ -33,6 +33,7 @@ pr:
       - dev/*
       - feat/*
       - main
+      - release/7.0
 
   paths:
     include:

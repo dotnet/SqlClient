@@ -61,6 +61,12 @@ trigger:
     # ADO internal/main branch.
     - internal/main
 
+    # GitHub release/7.0 branch.
+    - release/7.0
+
+    # ADO internal/release/7.0 branch.
+    - internal/release/7.0
+
 # Trigger this pipline on a schedule.
 schedules:
 
@@ -78,6 +84,22 @@ schedules:
     branches:
       include:
       - internal/main
+    always: true
+
+  # GitHub release/7.0 on Sundays (1 hour after release/6.1's 04:30 UTC run).
+  - cron: '30 5 * * Sun'
+    displayName: Sunday Run (Release Config)
+    branches:
+      include:
+      - release/7.0
+    always: true
+
+  # ADO internal/release/7.0 on Sundays (1 hour after release/6.1's 05:30 UTC run).
+  - cron: '30 6 * * Sun'
+    displayName: Sunday Run (Release Config)
+    branches:
+      include:
+      - internal/release/7.0
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.
