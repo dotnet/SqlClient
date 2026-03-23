@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopyAllFromReaderConnectionClosedOnEventAsync
     {
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;

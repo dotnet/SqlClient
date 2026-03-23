@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class DestinationTableNameWithSpecialChar
     {
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
             string constr = SqlBulkCopyTest.ConnectionString;

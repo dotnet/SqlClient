@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class CopyAllFromReaderCancelAsync
     {
         static CancellationTokenSource cts = null;
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;

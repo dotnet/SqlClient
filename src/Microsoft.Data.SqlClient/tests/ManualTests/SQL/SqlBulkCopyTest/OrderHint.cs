@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate2 = "SELECT LastName, FirstName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
         // TODO Synapse: Remove dependency on Northwind database
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void Test()
         {
             string connStr = SqlBulkCopyTest.ConnectionString;

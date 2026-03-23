@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class CopyAllFromReaderAsync
     {
-        [ConditionalFact(typeof(SqlBulkCopyTest), nameof(SqlBulkCopyTest.AreConnectionStringsSetup), nameof(SqlBulkCopyTest.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = SqlBulkCopyTest.ConnectionString;
