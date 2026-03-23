@@ -198,7 +198,8 @@ jobs:
               authSignCertName: ${{ parameters.authSignCertName }}
               esrpClientId: ${{ parameters.esrpClientId }}
               esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-              pattern: ${{ parameters.packageFullName }}.*nupkg
+              searchPath: $(PACK_OUTPUT)
+              searchPattern: '${{ parameters.packageFullName }}.*nupkg'
 
       # Publish symbols to servers
       # @TODO: Get these parameters from variables/libraries
