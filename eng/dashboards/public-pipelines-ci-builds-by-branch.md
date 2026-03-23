@@ -18,5 +18,7 @@ PR pipelines run on the topic branch associated to the PR.
 |CI-SqlClient-Package|[main](https://github.com/dotnet/SqlClient)|Release|No|Yes|Weekdays 03:00 UTC|YAML|
 |CI-SqlClient|[release/6.1](https://github.com/dotnet/SqlClient/tree/release/6.1)|Release|No|Yes|Sunday 04:00 UTC|YAML|
 |CI-SqlClient-Package|[release/6.1](https://github.com/dotnet/SqlClient/tree/release/6.1)|Release|No|Yes|Sunday 04:30 UTC|YAML|
+|CI-SqlClient|[release/7.0](https://github.com/dotnet/SqlClient/tree/release/7.0)|Release|No|Yes|Sunday 05:00 UTC|YAML|
+|CI-SqlClient-Package|[release/7.0](https://github.com/dotnet/SqlClient/tree/release/7.0)|Release|No|Yes|Sunday 05:30 UTC|YAML|
 |CI-SqlClient|[release/6.0](https://github.com/dotnet/SqlClient/tree/release/6.0)|Release|No|Yes|Sunday 06:00 UTC|YAML|
 |CI-SqlClient-Package|[release/6.0](https://github.com/dotnet/SqlClient/tree/release/6.0)|Release|No|Yes|Sunday 06:30 UTC|YAML|

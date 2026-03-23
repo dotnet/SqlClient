@@ -19,6 +19,14 @@
 #   - Sundays at 05:30 UTC on GitHub release/7.0
 #   - Sundays at 06:30 UTC on ADO internal/release/7.0
 #
+# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
+# able to define different triggers and schedules using branch filters:
+#
+#   - Only the GitHub repo has a 'release/7.0' branch, so its presence indicates
+#     that the pipeline run was triggered via GitHub.
+#
+#   - Only the ADO repo has an 'internal/release/7.0' branch.
+#
 # Changes are batched together to ensure that the pipline never runs
 # concurrently.
 #
