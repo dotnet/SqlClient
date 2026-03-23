@@ -3,10 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class SqlGraphTables
     {

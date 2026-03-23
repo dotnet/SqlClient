@@ -5,9 +5,10 @@
 using System;
 using System.Data;
 using System.Text;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     internal enum ColumnsEnum
     {
@@ -101,8 +102,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _fixture = fixture;
         }
 
-        // Synapse: Column count in target table does not match column count specified in input. 
-        //          If BCP command, ensure format file column count matches destination table. 
+        // Synapse: Column count in target table does not match column count specified in input.
+        //          If BCP command, ensure format file column count matches destination table.
         //          If SSIS data import, check column mappings are consistent with target.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void StringToIntErrorMessageTest()

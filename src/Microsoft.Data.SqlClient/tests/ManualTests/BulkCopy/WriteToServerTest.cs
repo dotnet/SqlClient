@@ -4,9 +4,10 @@
 
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class WriteToServerTest
     {

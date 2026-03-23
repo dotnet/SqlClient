@@ -5,9 +5,10 @@
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class CopyAllFromReaderAsync
     {
@@ -54,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                 await bulkcopy.WriteToServerAsync(reader);
                                 await outputSemaphore.WaitAsync();
-                                
+
                                 DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 5, "Unexpected number of rows.");
                                 DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied64, (long)5, "Unexpected number of rows.");
                             }
