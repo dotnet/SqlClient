@@ -97,23 +97,7 @@ steps:
 
       echo ">  3.Request to publish symbols succeeded."
 
-      # The following REST calls are used to check publishing status.
-      echo ">  4.Checking the status of the request ..."
-
-      Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
-
-      echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-
-      echo "PublishingStatus"
-      echo "-----------------"
-      echo "0	NotRequested; The request has not been requested to publish."
-      echo "1	Submitted; The request is submitted to be published"
-      echo "2	Processing; The request is still being processed"
-      echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-
-      echo "PublishingResult"
-      echo "-----------------"
-      echo "0	Pending; The request has not completed or has not been requested."
-      echo "1	Succeeded; The request has published successfully"
-      echo "2	Failed; The request has failed to publish"
-      echo "3	Cancelled; The request was cancelled"
+      # Publishing status will be verified by the validate-symbols job in the
+      # validation stage (via symchk).  Polling here would block subsequent
+      # build stages unnecessarily — enough time typically elapses during the
+      # remaining build stages for publishing to complete before validation.
