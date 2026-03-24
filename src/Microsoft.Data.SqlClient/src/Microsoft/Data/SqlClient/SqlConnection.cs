@@ -1939,6 +1939,7 @@ namespace Microsoft.Data.SqlClient
                         result.Task.ContinueWith(
                             continuationAction: s_openAsyncComplete,
                             state: operationId, // connection is passed in TaskCompletionSource async state
+                            continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
                             scheduler: TaskScheduler.Default
                         );
                     }
