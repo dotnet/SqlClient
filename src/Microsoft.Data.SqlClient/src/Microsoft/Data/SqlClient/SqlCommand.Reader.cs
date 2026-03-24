@@ -463,13 +463,13 @@ namespace Microsoft.Data.SqlClient
             SqlParameter sqlParam;
 
             // @batch_text
-            commandText ??= GetCommandText(behavior);
+            string text = GetCommandText(behavior) + GetOptionsResetString(behavior);
             sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = (commandText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+            sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = commandText.Length;
-            sqlParam.Value = commandText;
+            sqlParam.Size = text.Length;
+            sqlParam.Value = text;
             sqlParam.Direction = ParameterDirection.Input;
 
             // @batch_params

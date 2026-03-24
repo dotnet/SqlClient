@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -15,6 +15,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class BatchTests
     {
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void SqlCommandGetColumnSchemaKeyInfo()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT * FROM Categories";
+
+                    using var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo);
+
+                    Assert.False(reader.Read());
+
+                    var schema = reader.GetColumnSchema();
+
+                    Assert.Equal(4, schema.Count);
+                    Assert.True(schema[0].IsKey);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void SqlBatchCommandGetColumnSchemaKeyInfo()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var batch = connection.CreateBatch())
+                {
+                    var cmd = new SqlBatchCommand();
+                    cmd.CommandText = "SELECT * FROM Categories";
+                    cmd.CommandBehavior = CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo;
+
+                    batch.BatchCommands.Add(cmd);
+
+                    using var reader = batch.ExecuteReader();
+
+                    Assert.False(reader.Read());
+
+                    var schema = reader.GetColumnSchema();
+
+                    Assert.Equal(4, schema.Count);
+                    Assert.True(schema[0].IsKey);
+                }
+            }
+        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingCommandTextThrows()
@@ -123,14 +172,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (var batch = new SqlBatch
-                   {
-                       Connection = connection,
-                       BatchCommands =
+            {
+                Connection = connection,
+                BatchCommands =
                        {
                            new SqlBatchCommand("select @@SPID", CommandType.Text),
                            new SqlBatchCommand("sp_help", CommandType.StoredProcedure, new List<SqlParameter> { new("@objname", "sys.indexes") })
                        }
-                   })
+            })
             {
                 connection.RetryLogicProvider = prov;
                 connection.Open();
