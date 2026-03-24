@@ -316,20 +316,11 @@
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Tests/SqlClient.Stress.Tests.csproj" />
   </Folder>
-  <Folder Name="/test/TestClr/">
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-      <BuildDependency Project="Microsoft.Data.SqlClient/netfx/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj">
-      <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
-    </Project>
+  <Folder Name="/test/TestUdts/">
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Circle/Circle.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Shapes/Shapes.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Utf8String/Utf8String.csproj" />
   </Folder>
   <Project Path="../doc/apps/AzureAuthentication/AzureAuthentication.csproj" />
 </Solution>

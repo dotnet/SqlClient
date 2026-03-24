@@ -6,6 +6,10 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="SQL/UdtTest/UDTs/**/*.cs" />
+  </ItemGroup>
+
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
@@ -108,13 +112,13 @@
                       IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
                       PrivateAssets="all" />
 
-    <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
-    <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
-    <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
-    <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Address/Address.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Circle/Circle.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Shapes/Shapes.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Utf8String/Utf8String.csproj" />
     <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
@@ -142,12 +146,12 @@
                       IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
                       PrivateAssets="all" />
 
-    <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
-    <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
-    <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
-    <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Address/Address.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Circle/Circle.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Shapes/Shapes.csproj" />
+    <ProjectReference Include="$(TestsPath)TestUdts/Utf8String/Utf8String.csproj" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
