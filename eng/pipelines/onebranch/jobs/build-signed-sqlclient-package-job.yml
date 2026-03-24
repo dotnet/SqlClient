@@ -86,19 +86,18 @@ jobs:
           mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
           mdsPackageVersion: $(mdsPackageVersion)
 
-      - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
-        parameters:
-          artifactType: dll
-          sourceRoot: $(BUILD_OUTPUT)
-          dllPattern: "Microsoft.Data.SqlClient.dll"
-          isOfficial: ${{ parameters.isOfficial }}
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+            parameters:
+              artifactType: dll
+              sourceRoot: $(BUILD_OUTPUT)
+              dllPattern: "Microsoft.Data.SqlClient.dll"
 
-      - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
-        parameters:
-          artifactType: dll
-          sourceRoot: $(BUILD_OUTPUT)
-          dllPattern: "Microsoft.Data.SqlClient.resources.dll"
-          isOfficial: ${{ parameters.isOfficial }}
+          - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+            parameters:
+              artifactType: dll
+              sourceRoot: $(BUILD_OUTPUT)
+              dllPattern: "Microsoft.Data.SqlClient.resources.dll"
 
       - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
         parameters:
@@ -112,11 +111,12 @@ jobs:
           properties: "AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)"
           referenceType: Package
 
-      - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
-        parameters:
-          artifactType: pkg
-          nupkgPattern: "Microsoft.Data.SqlClient.$(mdsPackageVersion).*nupkg"
-          isOfficial: ${{ parameters.isOfficial }}
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+            parameters:
+              artifactType: pkg
+              nupkgPattern: "Microsoft.Data.SqlClient.$(mdsPackageVersion).*nupkg"
+
       # Copy signed DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
