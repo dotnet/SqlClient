@@ -218,6 +218,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "master", // Required for failover partner to work
                 ConnectTimeout = 5,
                 Encrypt = false,
+                Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = false,
@@ -267,6 +268,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryCount = 0, // Disable retry
                 FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
+                Pooling = false, // Disable pooling to ensure a fresh connection attempt is made on failover
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
@@ -312,6 +314,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false,
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
             // Act
@@ -323,7 +328,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, server.PreLoginCount);
-            Assert.Equal(1, failoverServer.PreLoginCount);
+            Assert.Equal(0, server.Login7Count);
+            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
         }
 
         [Theory]
@@ -356,7 +362,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "master",
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
-                Encrypt = false
+                Encrypt = false,
+                Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
@@ -453,7 +460,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
             using SqlConnection connection = new(builder.ConnectionString);
-                
+
             // Act
             connection.Open();
 
@@ -575,9 +582,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, failoverConnection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
             // 1 for the initial connection
-            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             // 1 for the failover connection
-            Assert.Equal(1, failoverServer.PreLoginCount);
+            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
         }
     }
 }

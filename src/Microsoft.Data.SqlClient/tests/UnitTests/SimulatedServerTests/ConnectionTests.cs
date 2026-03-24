@@ -29,7 +29,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             using TdsServer server = new(new TdsServerArguments() { });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
@@ -43,7 +44,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             using TdsServer server = new(new TdsServerArguments() { });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
@@ -61,9 +63,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Fact]
         public async Task RequestEncryption_ServerDoesNotSupportEncryption_ShouldFail()
         {
-            using TdsServer server = new(new TdsServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
+            using TdsServer server = new(new TdsServerArguments() { Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}"
             }.ConnectionString;
 
@@ -79,16 +82,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
-                new TransientTdsErrorTdsServerArguments() 
+                new TransientTdsErrorTdsServerArguments()
                 {
-                  IsEnabledTransientError = true,
-                  Number = errorCode,
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                Encrypt = SqlConnectionEncryptOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false
+#endif
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
@@ -195,6 +201,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 5,
+                Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
@@ -460,7 +467,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             //TODO: do we even need a server for this test?
             using TdsServer server = new();
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 ConnectTimeout = timeout,
                 Encrypt = SqlConnectionEncryptOption.Optional
