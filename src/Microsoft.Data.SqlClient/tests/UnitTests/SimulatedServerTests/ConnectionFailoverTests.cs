@@ -558,10 +558,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Close the connection to return it to the pool
             connection.Close();
 
-
             // Act
             // Dispose of the server to trigger a failover
             server.Dispose();
+
+            // Clear the pool to ensure the next connection attempt doesn't reuse
+            // the pooled connection to the now-disposed primary server.
+            SqlConnection.ClearAllPools();
 
             // Opening a new connection will use the failover partner stored in the pool group.
             // This will fail if the server provided failover partner was stored to the pool group.
