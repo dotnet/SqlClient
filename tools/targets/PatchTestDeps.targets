@@ -1,0 +1,95 @@
+<!--
+  PatchTestDeps.targets
+
+  Workaround for test projects that reference Microsoft.Data.SqlClient via ProjectReference.
+  The SqlClient project uses a custom OutputPath (artifacts/...) which prevents the SDK's
+  GenerateBuildDependencyFile target from emitting a runtime entry in the consumer's
+  deps.json. Without a runtime entry, 'dotnet exec - -depsfile' cannot resolve the assembly
+  in child processes (e.g. RemoteExecutor).
+
+  Usage:
+    <Import Project="$(RepoRoot)tools/targets/PatchTestDeps.targets" />
+-->
+<Project>
+
+  <Import Project="$(RepoRoot)src/Microsoft.Data.SqlClient/MdsVersions.props"
+          Condition="'$(MdsPackageVersion)' == ''" />
+
+  <Target Name="_PatchDepsJsonForSqlClient"
+          AfterTargets="GenerateBuildDependencyFile"
+          Condition="'$(ReferenceType)' != 'Package' AND Exists('$(ProjectDepsFilePath)')">
+    <PatchDepsJson DepsFilePath="$(ProjectDepsFilePath)"
+                   PackageId="Microsoft.Data.SqlClient"
+                   PackageVersion="$(MdsPackageVersion)"
+                   AssemblyVersion="$(MdsAssemblyVersion)" />
+  </Target>
+
+  <UsingTask TaskName="PatchDepsJson"
+             TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <DepsFilePath ParameterType="System.String" Required="true" />
+      <PackageId ParameterType="System.String" Required="true" />
+      <PackageVersion ParameterType="System.String" Required="true" />
+      <AssemblyVersion ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+string libraryKey = PackageId + "/" + PackageVersion;
+string keyLiteral = "\"" + libraryKey + "\"";
+string dllName = PackageId + ".dll";
+string json = System.IO.File.ReadAllText(DepsFilePath);
+
+// Skip if a runtime entry already exists for this key.
+int ki = json.IndexOf(keyLiteral);
+if (ki >= 0)
+{
+    string peek = json.Substring(ki, System.Math.Min(200, json.Length - ki));
+    if (peek.Contains("\"runtime\""))
+        return true;
+}
+
+// Inject a runtime target entry after the TFM opening brace.
+string runtimeBlock = keyLiteral + @": {
+        ""dependencies"": {},
+        ""runtime"": {
+          """ + dllName + @""": {
+            ""assemblyVersion"": """ + AssemblyVersion + @""",
+            ""fileVersion"": """ + AssemblyVersion + @"""
+          }
+        }
+      },
+      ";
+
+var tfmMatch = Regex.Match(json, @"""\.NETCoreApp[^""]*""\s*:\s*\{");
+if (tfmMatch.Success)
+    json = json.Insert(tfmMatch.Index + tfmMatch.Length, "\n      " + runtimeBlock);
+
+// Ensure a library entry exists.
+int libIdx = json.IndexOf("\"libraries\"");
+if (libIdx >= 0)
+{
+    int libStart = json.IndexOf("{", libIdx + 11);
+    if (libStart >= 0 && json.IndexOf(keyLiteral, libStart) < 0)
+    {
+        string libEntry = "\n    " + keyLiteral + @": {
+      ""type"": ""project"",
+      ""serviceable"": false,
+      ""sha512"": """"
+    },";
+        json = json.Insert(libStart + 1, libEntry);
+    }
+}
+
+System.IO.File.WriteAllText(DepsFilePath, json);
+Log.LogMessage(MessageImportance.High,
+    "Patched " + System.IO.Path.GetFileName(DepsFilePath)
+    + ": added runtime entry for " + libraryKey);
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+</Project>

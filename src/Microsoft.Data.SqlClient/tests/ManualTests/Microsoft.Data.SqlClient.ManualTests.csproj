@@ -422,4 +422,8 @@
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
+
+  <!-- Patch deps.json so RemoteExecutor child processes can resolve Microsoft.Data.SqlClient -->
+  <Import Project="$(RepoRoot)tools/targets/PatchTestDeps.targets" />
+
 </Project>

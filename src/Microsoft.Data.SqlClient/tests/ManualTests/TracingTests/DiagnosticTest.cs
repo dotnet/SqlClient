@@ -3,30 +3,24 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections;
+using System.Data;
 using System.Diagnostics;
 using System.Reflection;
-using System.Threading.Tasks;
-using System.Xml;
-using Microsoft.SqlServer.TDS;
-using Microsoft.SqlServer.TDS.Done;
-using Microsoft.SqlServer.TDS.EndPoint;
-using Microsoft.SqlServer.TDS.Error;
-using Microsoft.SqlServer.TDS.Servers;
-using Microsoft.SqlServer.TDS.SQLBatch;
-using Xunit;
 using System.Runtime.CompilerServices;
-using System;
-using System.Data;
-using Microsoft.DotNet.RemoteExecutor;
+using System.Xml;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    // TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
-    [Trait("Category", "flaky")]
     public class DiagnosticTest
     {
-        private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
+        private readonly ITestOutputHelper _output;
 
+        public DiagnosticTest(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
+        private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
         private const string WriteCommandBefore = "Microsoft.Data.SqlClient.WriteCommandBefore";
         private const string WriteCommandAfter = "Microsoft.Data.SqlClient.WriteCommandAfter";
         private const string WriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
@@ -37,10 +31,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string WriteConnectionCloseAfter = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
         private const string WriteConnectionCloseError = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
 
-        [Fact]
+        /// <summary>
+        /// Invokes a delegate via RemoteExecutor while capturing stdout/stderr
+        /// from the child process and forwarding them to xUnit's ITestOutputHelper.
+        /// </summary>
+        private void InvokeRemote(Func<int> func, [CallerMemberName] string testName = "")
+        {
+            var options = new RemoteInvokeOptions();
+            options.StartInfo.RedirectStandardOutput = true;
+            options.StartInfo.RedirectStandardError = true;
+
+            using RemoteInvokeHandle handle = RemoteExecutor.Invoke(func, options);
+            Process process = handle.Process;
+
+            // Read stdout/stderr asynchronously so we don't deadlock.
+            Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+
+            process.WaitForExit();
+
+            string stdout = stdoutTask.GetAwaiter().GetResult();
+            string stderr = stderrTask.GetAwaiter().GetResult();
+
+            if (!string.IsNullOrWhiteSpace(stdout))
+            {
+                _output.WriteLine($"[{testName} stdout]{Environment.NewLine}{stdout}");
+            }
+            if (!string.IsNullOrWhiteSpace(stderr))
+            {
+                _output.WriteLine($"[{testName} stderr]{Environment.NewLine}{stderr}");
+            }
+        }
+
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteScalarTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -55,13 +81,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteScalarErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -76,13 +102,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteNonQueryTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -97,13 +123,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteNonQueryErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -121,13 +147,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteReaderTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -146,13 +172,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteReaderErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -168,13 +194,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteReaderWithCommandBehaviorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -193,14 +219,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
         // Synapse: Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteXmlReaderTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(_ =>
                 {
@@ -220,13 +246,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteXmlReaderErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -242,13 +268,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteScalarAsyncTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -268,13 +294,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteScalarAsyncErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -294,13 +320,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteNonQueryAsyncTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -320,13 +346,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteNonQueryAsyncErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -346,13 +372,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteReaderAsyncTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -376,13 +402,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteReaderAsyncErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -403,15 +429,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandError, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
         // Synapse:  Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteXmlReaderAsyncTest()
         {
             // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
@@ -435,14 +461,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ExecuteXmlReaderAsyncErrorTest()
         {
             // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
 
                 CollectStatisticsDiagnosticsAsync(async _ =>
@@ -470,13 +496,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteCommandBefore, WriteCommandAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ConnectionOpenTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
@@ -486,13 +512,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ConnectionOpenErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnostics(_ =>
                 {
@@ -502,13 +528,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenError]);
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ConnectionOpenAsyncTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
@@ -522,13 +548,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenAfter, WriteConnectionCloseBefore, WriteConnectionCloseAfter]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
-        [Fact]
+        [ConditionalFact(typeof(RemoteExecutor), nameof(RemoteExecutor.IsSupported))]
         public void ConnectionOpenAsyncErrorTest()
         {
-            RemoteExecutor.Invoke(() =>
+            InvokeRemote(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
@@ -542,7 +568,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }, [WriteConnectionOpenBefore, WriteConnectionOpenError]).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }).Dispose();
+            });
         }
 
         private static void CollectStatisticsDiagnostics(Action<string> sqlOperation, string[] expectedDiagnostics, [CallerMemberName] string methodName = "")
