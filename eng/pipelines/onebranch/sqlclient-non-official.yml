@@ -166,16 +166,22 @@ extends:
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
 
           abstractionsArtifactsName: '${{ variables.abstractions.artifactsName }}'
+          abstractionsAssemblyVersion: '${{ variables.abstractions.assemblyVersion }}'
           abstractionsPackageVersion: '${{ variables.abstractions.packageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProvider.artifactsName }}'
+          akvProviderAssemblyVersion: '${{ variables.akvProvider.assemblyVersion }}'
           akvProviderPackageVersion: '${{ variables.akvProvider.packageVersion }}'
           azueArtifactsName: '${{ variables.azure.artifactsName }}'
+          azureAssemblyVersion: '${{ variables.azure.assemblyVersion }}'
           azurePackageVersion: '${{ variables.azure.packageVersion }}'
           loggingArtifactsName: '${{ variables.logging.artifactsName }}'
+          loggingAssemblyVersion: '${{ variables.logging.assemblyVersion }}'
           loggingPackageVersion: '${{ variables.logging.packageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClient.artifactsName }}'
+          sqlClientAssemblyVersion: '${{ variables.sqlClient.assemblyVersion }}'
           sqlClientPackageVersion: '${{ variables.sqlClient.packageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServer.artifactsName }}'
+          sqlServerAssemblyVersion: '${{ variables.sqlServer.assemblyVersion }}'
           sqlServerPackageVersion: '${{ variables.sqlServer.packageVersion }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
