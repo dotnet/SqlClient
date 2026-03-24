@@ -167,6 +167,7 @@ stages:
               abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
               loggingArtifactName: '$(loggingArtifactsName)'
               loggingPackageVersion: '$(effectiveLoggingVersion)'
+              mdsAssemblyFileVersion: '$(mdsAssemblyFileVersion)'
               mdsPackageVersion: '$(effectiveSqlClientVersion)'
 
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self

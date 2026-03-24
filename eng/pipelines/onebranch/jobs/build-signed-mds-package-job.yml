@@ -49,7 +49,7 @@ parameters:
   - name: symbolsUploadAccount
     type: string
 
-  # Package Dependencies Parameters
+  # Package Parameters
   - name: abstractionsArtifactName
     type: string
 
@@ -60,6 +60,9 @@ parameters:
     type: string
 
   - name: loggingPackageVersion
+    type: string
+
+  - name: mdsAssemblyFileVersion
     type: string
 
   - name: mdsPackageVersion
@@ -73,6 +76,10 @@ jobs:
 
     variables:
       ob_outputDirectory: '$(PACK_OUTPUT)'
+      ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
+      ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwarename: 'Microsoft.Data.SqlClient'
+      ob_sdl_apiscan_versionNumber: ${{ parameters.mdsAssemblyFileVersion }}
 
     steps:
       # Dump environment and parameters
