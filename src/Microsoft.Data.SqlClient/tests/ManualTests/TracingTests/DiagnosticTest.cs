@@ -2,12 +2,23 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections;
 using System.Data;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.DotNet.RemoteExecutor;
+using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.Done;
+using Microsoft.SqlServer.TDS.EndPoint;
+using Microsoft.SqlServer.TDS.Error;
+using Microsoft.SqlServer.TDS.SQLBatch;
+using Microsoft.SqlServer.TDS.Servers;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
