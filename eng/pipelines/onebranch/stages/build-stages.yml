@@ -43,19 +43,38 @@ parameters:
     type: boolean
 
   # Package Parameters -----------------------------------------------------
+
+  - name: abstractionsArtifactsName
+    type: string
+
   - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderArtifactsName
     type: string
 
   - name: akvProviderPackageVersion
     type: string
 
+  - name: azureArtifactsName
+    type: string
+
   - name: azurePackageVersion
+    type: string
+
+  - name: loggingArtifactsName
     type: string
 
   - name: loggingPackageVersion
     type: string
 
+  - name: sqlClientArtifactsName
+    type: string
+
   - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerArtifactsName
     type: string
 
   - name: sqlServerPackageVersion
@@ -194,8 +213,8 @@ stages:
               assemblyFileVersion: $(abstractionsAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
-                - artifactName: $(loggingArtifactsName)
-                  displayName: Logging Package
+                - artifactName: '${{ parameters.loggingArtifactsName }}'
+                  displayName: 'Logging Package'
 
   # ====================================================================
   # Stage 3: Core packages (depend on Abstractions)
@@ -226,9 +245,9 @@ stages:
               symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
               symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
-              abstractionsArtifactName: '$(abstractionsArtifactsName)'
+              abstractionsArtifactName: '${{ parameters.abstractionsArtifactsName }}'
               abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
-              loggingArtifactName: '$(loggingArtifactsName)'
+              loggingArtifactName: '${{ parameters.loggingArtifactsName }}'
               loggingPackageVersion: '$ {{ parameters.loggingPackageVersion }}'
               mdsAssemblyFileVersion: '$(mdsAssemblyFileVersion)'
               mdsPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
@@ -259,9 +278,9 @@ stages:
               assemblyFileVersion: $(azureAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
-                - artifactName: $(abstractionsArtifactsName)
+                - artifactName: '${{ parameters.abstractionsArtifactsName }}'
                   displayName: Abstractions Package
-                - artifactName: $(loggingArtifactsName)
+                - artifactName: '${{ parameters.loggingArtifactsName }}'
                   displayName: Logging Package
 
   # ====================================================================
@@ -301,11 +320,11 @@ stages:
               assemblyFileVersion: $(akvAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
-                - artifactName: $(sqlClientArtifactsName)
+                - artifactName: '${{ parameters.sqlClientArtifactsName }}'
                   displayName: SqlClient Package
-                - artifactName: $(abstractionsArtifactsName)
+                - artifactName: '${{ parameters.abstractionsArtifactsName }}'
                   displayName: Abstractions Package
-                - artifactName: $(loggingArtifactsName)
+                - artifactName: '${{ parameters.loggingArtifactsName }}'
                   displayName: Logging Package
 
   # ====================================================================
@@ -318,6 +337,6 @@ stages:
         jobs:
           - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
             parameters:
-              artifactName: $(sqlClientArtifactsName)
+              artifactName: '${{ parameters.sqlClientArtifactsName }}'
               isPreview: ${{ parameters.isPreview }}
               isOfficial: ${{ parameters.isOfficial }}

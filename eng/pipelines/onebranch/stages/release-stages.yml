@@ -52,19 +52,38 @@ parameters:
       - test
 
   # Package Parameters -----------------------------------------------------
+
+  - name: abstractionsArtifactsName
+    type: string
+
   - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderArtifactsName
     type: string
 
   - name: akvProviderPackageVersion
     type: string
 
+  - name: azureArtifactsName
+    type: string
+
   - name: azurePackageVersion
+    type: string
+
+  - name: loggingArtifactsName
     type: string
 
   - name: loggingPackageVersion
     type: string
 
+  - name: sqlClientArtifactsName
+    type: string
+
   - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerArtifactsName
     type: string
 
   - name: sqlServerPackageVersion
@@ -163,7 +182,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.SqlServer.Server
-              artifactName: $(sqlServerArtifactsName)
+              artifactName: '${{ parameters.sqlServerArtifactsName }}'
               packagePath: 'Microsoft.SqlServer.Server.${{ parameters.sqlServerPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -173,7 +192,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Internal.Logging
-              artifactName: $(loggingArtifactsName)
+              artifactName: '${{ parameters.loggingArtifactsName }}'
               packagePath: 'Microsoft.Data.SqlClient.Internal.Logging.${{ parameters.loggingPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -183,7 +202,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              artifactName: $(abstractionsArtifactsName)
+              artifactName: '${{ parameters.abstractionsArtifactsName }}'
               packagePath: 'Microsoft.Data.SqlClient.Extensions.Abstractions.${{ parameters.abstractionsPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -193,7 +212,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient
-              artifactName: $(sqlClientArtifactsName)
+              artifactName: '${{ parameters.sqlClientArtifactsName }}'
               packagePath: 'Microsoft.Data.SqlClient.${{ parameters.sqlClientPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -203,7 +222,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Azure
-              artifactName: $(azureArtifactsName)
+              artifactName: '${{ parameters.azureArtifactsName }}'
               packagePath: 'Microsoft.Data.SqlClient.Extensions.Azure.${{ parameters.azurePackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -213,7 +232,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              artifactName: $(akvArtifactsName)
+              artifactName: '${{ parameters.akvArtifactsName }}'
               packagePath: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.${{ parameters.akvProviderPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
