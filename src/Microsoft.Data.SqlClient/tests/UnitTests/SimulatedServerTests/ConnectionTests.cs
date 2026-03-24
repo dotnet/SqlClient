@@ -72,7 +72,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -96,10 +95,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -123,10 +121,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -151,10 +148,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
-            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -179,10 +175,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
             Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
-            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -216,11 +211,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else
             {
-                Assert.Equal(1, server.PreLoginCount);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             }
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -261,11 +255,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else
             {
-                Assert.Equal(1, server.PreLoginCount);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             }
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -306,7 +299,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else
             {
-                Assert.Equal(1, server.PreLoginCount);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             }
         }
 

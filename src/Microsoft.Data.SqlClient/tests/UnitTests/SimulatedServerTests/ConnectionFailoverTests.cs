@@ -11,7 +11,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Trait("Category", "flaky")]
     [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
@@ -70,7 +69,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{initialServer.EndPoint.Port}", secondConnection.DataSource);
 
             // 1 for the initial connection, 2 for the second connection
-            Assert.Equal(3, initialServer.PreLoginCount);
+            Assert.Equal(3, initialServer.PreLoginCount - initialServer.AbandonedPreLoginCount);
             // A failover should not be triggered, so prelogin count to the failover server should be 0
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
@@ -369,7 +368,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
         [Theory]
@@ -463,7 +462,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
         [Theory]
