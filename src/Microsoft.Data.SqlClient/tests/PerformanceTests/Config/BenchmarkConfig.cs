@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public static ManualConfig s_instance(RunnerJob runnerJob) => 
             DefaultConfig.Instance
             .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
+            .WithOption(ConfigOptions.DontOverwriteResults, true)
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddDiagnoser(ThreadingDiagnoser.Default)
             .AddExporter(MarkdownExporter.GitHub)
@@ -26,6 +27,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 .WithWarmupCount(runnerJob.WarmupCount)
                 .WithUnrollFactor(1)
                 .WithStrategy(BenchmarkDotNet.Engines.RunStrategy.Throughput)
-            );
+                .WithEnvironmentVariable("COMPlus_gcServer", "1")
+            )
+            .WithOptions(ConfigOptions.JoinSummary);
     }
 }

@@ -11,6 +11,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     {
         public string ConnectionString;
         public bool UseManagedSniOnWindows;
+        public bool UseOptimizedAsyncBehaviour;
+        public bool WaitForProfiler;
         public Benchmarks Benchmarks;
 
         /// <summary>
@@ -43,6 +45,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob SqlBulkCopyRunnerConfig;
         public RunnerJob DataTypeReaderRunnerConfig;
         public RunnerJob DataTypeReaderAsyncRunnerConfig;
+        public RunnerJob AsyncLargeDataReadRunnerConfig;
+        public RunnerJob MarsOverheadRunnerConfig;
+        public RunnerJob ParallelAsyncConnectionRunnerConfig;
+        public RunnerJob CancellationTokenReadAsyncRunnerConfig;
+        public RunnerJob SequentialXmlReadRunnerConfig;
+        public RunnerJob JsonVsVarcharReadRunnerConfig;
+        public RunnerJob BeginTransactionRunnerConfig;
+        public RunnerJob ConnectionPoolStressRunnerConfig;
     }
 
     public class RunnerJob

@@ -11,28 +11,70 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     {
         private readonly Config _config;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Program"/> class, 
+        /// which loads the benchmark configuration and runs the benchmarks.
+        /// </summary>
         public Program()
         {
-            // Load config file
             _config = Config.Load();
-            if (_config.UseManagedSniOnWindows)
-            {
-                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            }
+            SetupConfigurations();
+            
             Run_SqlConnectionBenchmark();
             Run_SqlCommandBenchmark();
             Run_SqlBulkCopyBenchmark();
             Run_DataTypeReaderBenchmark();
             Run_DataTypeReaderAsyncBenchmark();
+            Run_AsyncLargeDataReadBenchmark();
+            Run_MarsOverheadBenchmark();
+            Run_ParallelAsyncConnectionBenchmark();
+            Run_CancellationTokenReadAsyncBenchmark();
+            Run_SequentialXmlReadBenchmark();
+            Run_JsonVsVarcharReadBenchmark();
+            Run_BeginTransactionBenchmark();
+            Run_ConnectionPoolStressBenchmark();
 
             // TODOs:
-            // Transactions
-            // Insert/Update queries (+CRUD)
             // Prepared/Regular Parameterized queries
-            // DataType Reader Max (large size / max columns / million row tables)
-            // DataType conversions (Implicit)
-            // MARS enabled
             // Always Encrypted
+        }
+
+        private void SetupConfigurations()
+        {
+            // If the config file specifies to use managed SNI on Windows, 
+            // enable the appropriate AppContext switch to use the managed SNI implementation.
+            if (_config.UseManagedSniOnWindows)
+            {
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+            }
+
+            // If the config file specifies to use optimized async behavior, 
+            // enable packet multiplexing feature and other optimizations in SqlClient 
+            // by setting the appropriate AppContext switches.
+            if(_config.UseOptimizedAsyncBehaviour)
+            {
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour", false);
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", false);
+            }
+
+            // If the config file specifies to wait for a profiler, 
+            // display the process ID and wait for user input before starting the benchmarks.
+            if (_config.WaitForProfiler)
+            {
+                int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+                Console.WriteLine();
+                Console.WriteLine("===========================================");
+                Console.WriteLine($"  Process ID: {pid}");
+                Console.WriteLine("===========================================");
+                Console.WriteLine();
+                Console.WriteLine("Attach your profiler now. Examples:");
+                Console.WriteLine($"  dotnet-counters monitor -p {pid}");
+                Console.WriteLine($"  dotnet-trace collect -p {pid}");
+                Console.WriteLine();
+                Console.WriteLine("Press any key to start benchmarks...");
+                Console.ReadKey(intercept: true);
+                Console.WriteLine();
+            }
         }
 
         private void Run_SqlConnectionBenchmark()
@@ -75,10 +117,73 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             }
         }
 
-        public static void Main()
+        private void Run_AsyncLargeDataReadBenchmark()
         {
-            // Run the benchmarks.
-            new Program();
+            if (_config.Benchmarks.AsyncLargeDataReadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<AsyncLargeDataReadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.AsyncLargeDataReadRunnerConfig));
+            }
         }
+
+        private void Run_MarsOverheadBenchmark()
+        {
+            if (_config.Benchmarks.MarsOverheadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<MarsOverheadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.MarsOverheadRunnerConfig));
+            }
+        }
+
+        private void Run_ParallelAsyncConnectionBenchmark()
+        {
+            if (_config.Benchmarks.ParallelAsyncConnectionRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<ParallelAsyncConnectionRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ParallelAsyncConnectionRunnerConfig));
+            }
+        }
+
+        private void Run_CancellationTokenReadAsyncBenchmark()
+        {
+            if (_config.Benchmarks.CancellationTokenReadAsyncRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<CancellationTokenReadAsyncRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.CancellationTokenReadAsyncRunnerConfig));
+            }
+        }
+
+        private void Run_SequentialXmlReadBenchmark()
+        {
+            if (_config.Benchmarks.SequentialXmlReadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<SequentialXmlReadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.SequentialXmlReadRunnerConfig));
+            }
+        }
+
+        private void Run_JsonVsVarcharReadBenchmark()
+        {
+            if (_config.Benchmarks.JsonVsVarcharReadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<JsonVsVarcharReadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.JsonVsVarcharReadRunnerConfig));
+            }
+        }
+
+        private void Run_BeginTransactionBenchmark()
+        {
+            if (_config.Benchmarks.BeginTransactionRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<BeginTransactionRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.BeginTransactionRunnerConfig));
+            }
+        }
+
+        private void Run_ConnectionPoolStressBenchmark()
+        {
+            if (_config.Benchmarks.ConnectionPoolStressRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<ConnectionPoolStressRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ConnectionPoolStressRunnerConfig));
+            }
+        }
+
+        /// <summary>
+        /// The main entry point for the performance tests program.
+        /// </summary>
+        public static void Main() => _ = new Program();
     }
 }
