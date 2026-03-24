@@ -3922,7 +3922,7 @@ namespace Microsoft.Data.SqlClient
             if (i < _sharedState._nextColumnHeaderToRead)
             {
                 // Read the header, but we need to read the data
-                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly))
+                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly) && (!forStreaming))
                 {
                     return TryReadColumnData();
                 }
