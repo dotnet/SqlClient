@@ -342,7 +342,8 @@
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'"  />
+                      Condition="'$(ReferenceType)' != 'Package'"
+                      Private="true" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
 
@@ -423,7 +424,13 @@
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
 
-  <!-- Patch deps.json so RemoteExecutor child processes can resolve Microsoft.Data.SqlClient -->
-  <Import Project="$(RepoRoot)tools/targets/PatchTestDeps.targets" />
+  <!--
+    The SqlClient project uses a custom OutputPath (artifacts/...) which prevents the SDK's
+    GenerateBuildDependencyFile target from emitting a runtime entry in deps.json. Without a
+    runtime entry, 'dotnet exec - -depsfile' cannot resolve the assembly in child processes
+    (e.g. RemoteExecutor). Patch deps.json after generation to inject the missing entry.
+  -->
+  <Import Project="$(RepoRoot)tools/targets/PatchTestDeps.targets"
+          Condition="'$(ReferenceType)' != 'Package'" />
 
 </Project>
