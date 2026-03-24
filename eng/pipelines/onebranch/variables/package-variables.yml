@@ -46,7 +46,7 @@ variables:
   - name: _assemblyBuildNumber
     value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
 
-
+  # ------------------------------------------------------------------------
   # Abstractions Package
   # Microsoft.Data.SqlClient.Extensions.Abstractions
   - name: abstractionsArtifactsName

@@ -47,10 +47,16 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
+  - name: abstractionsFileVersion
+    type: string
+
   - name: abstractionsPackageVersion
     type: string
 
   - name: akvProviderArtifactsName
+    type: string
+
+  - name: akvProviderFileVersion
     type: string
 
   - name: akvProviderPackageVersion
@@ -59,10 +65,16 @@ parameters:
   - name: azureArtifactsName
     type: string
 
+  - name: azureFileVersion
+    type: string
+
   - name: azurePackageVersion
     type: string
 
   - name: loggingArtifactsName
+    type: string
+
+  - name: loggingFileVersion
     type: string
 
   - name: loggingPackageVersion
@@ -71,10 +83,16 @@ parameters:
   - name: sqlClientArtifactsName
     type: string
 
+  - name: sqlClientFileVersion
+    type: string
+
   - name: sqlClientPackageVersion
     type: string
 
   - name: sqlServerArtifactsName
+    type: string
+
+  - name: sqlServerFileVersion
     type: string
 
   - name: sqlServerPackageVersion
@@ -147,8 +165,8 @@ stages:
             packageVersion: '${{ parameters.loggingPackageVersion }}'
             versionProperties: >-
               -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-              -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
-            assemblyFileVersion: $(loggingAssemblyFileVersion)
+              -p:LoggingAssemblyFileVersion=${{ parameters.loggingFileVersion }}
+            assemblyFileVersion: '${{ parameters.loggingFileVersion }}'
             publishSymbols: ${{ parameters.publishSymbols }}
 
 
@@ -172,9 +190,9 @@ stages:
             packageFullName: Microsoft.SqlServer.Server
             packageVersion: '${{ parameters.sqlServerPackageVersion }}'
             versionProperties: >-
-              -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
+              -p:SqlServerAssemblyFileVersion=${{ parameters.sqlServerFileVersion }}
               -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
-            assemblyFileVersion: $(sqlServerAssemblyFileVersion)
+            assemblyFileVersion: '${{ parameters.sqlServerFileVersion }}'
             publishSymbols: ${{ parameters.publishSymbols }}
 
   # ====================================================================
@@ -208,9 +226,9 @@ stages:
               packageVersion: '${{ parameters.abstractionsPackageVersion }}'
               versionProperties: >-
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-                -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
+                -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsFileVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-              assemblyFileVersion: $(abstractionsAssemblyFileVersion)
+              assemblyFileVersion: '${{ parameters.abstractionsFileVersion }}'
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.loggingArtifactsName }}'
@@ -272,10 +290,10 @@ stages:
               packageVersion: '${{ parameters.azurePackageVersion }}'
               versionProperties: >-
                 -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
-                -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
+                -p:AzureAssemblyFileVersion=${{ parameters.azureFileVersion }}
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-              assemblyFileVersion: $(azureAssemblyFileVersion)
+              assemblyFileVersion: '${{ parameters.azureFileVersion }}'
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.abstractionsArtifactsName }}'
@@ -313,11 +331,11 @@ stages:
               packageVersion: '${{ parameters.akvProviderPackageVersion }}'
               versionProperties: >-
                 -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
-                -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
+                -p:AkvAssemblyFileVersion=${{ parameters.akvFileVersion }}
                 -p:MdsPackageVersion=${{ parameters.sqlClientPackageVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-              assemblyFileVersion: $(akvAssemblyFileVersion)
+              assemblyFileVersion: '${{ parameters.akvFileVersion }}'
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.sqlClientArtifactsName }}'
