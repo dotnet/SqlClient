@@ -31,7 +31,6 @@ pr:
     include:
       # GitHub repo branch targets that will trigger PR validation builds.
       - dev/*
-      - copilot/*
       - release/7.0
 
   paths:
