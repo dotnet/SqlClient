@@ -2,9 +2,10 @@
     "ConnectionString": "Server=localhost,1434; Integrated Security=true; TrustServerCertificate=true;",
     "UseManagedSniOnWindows": false,
     "UseOptimizedAsyncBehaviour": true,
+    "WaitForProfiler": false,
     "Benchmarks": {
         "SqlConnectionRunnerConfig": {
-            "Enabled": true,
+            "Enabled": false,
             "LaunchCount": 1,
             "IterationCount": 10,
             "InvocationCount": 1,
@@ -12,7 +13,7 @@
             "RowCount": 0
         },
         "SqlCommandRunnerConfig": {
-            "Enabled": true,
+            "Enabled": false,
             "LaunchCount": 1,
             "IterationCount": 10,
             "InvocationCount": 1,
@@ -20,7 +21,7 @@
             "RowCount": 10000
         },
         "SqlBulkCopyRunnerConfig": {
-            "Enabled": true,
+            "Enabled": false,
             "LaunchCount": 1,
             "IterationCount": 10,
             "InvocationCount": 1,
@@ -28,7 +29,7 @@
             "RowCount": 10000
         },
         "DataTypeReaderRunnerConfig": {
-            "Enabled": true,
+            "Enabled": false,
             "LaunchCount": 1,
             "IterationCount": 20,
             "InvocationCount": 2,
@@ -36,7 +37,7 @@
             "RowCount": 1000
         },
         "DataTypeReaderAsyncRunnerConfig": {
-            "Enabled": true,
+            "Enabled": false,
             "LaunchCount": 1,
             "IterationCount": 20,
             "InvocationCount": 2,
@@ -112,6 +113,70 @@
             "LaunchCount": 1,
             "IterationCount": 10,
             "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "AsyncLargeDataReadRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "MarsOverheadRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 1000
+        },
+        "ParallelAsyncConnectionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "CancellationTokenReadAsyncRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 10000
+        },
+        "SequentialXmlReadRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "JsonVsVarcharReadRunnerConfig": {
+            "Enabled": false,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 10000
+        },
+        "BeginTransactionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "ConnectionPoolStressRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 5,
+            "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
         }

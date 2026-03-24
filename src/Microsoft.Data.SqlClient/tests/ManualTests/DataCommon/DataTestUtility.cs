@@ -657,6 +657,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AADPasswordConnectionString);
         }
 
+        // TODO: Add tests that use service principal authentication with this guard.
         public static bool IsAADServicePrincipalSetup()
         {
             return !string.IsNullOrEmpty(AADServicePrincipalId) && !string.IsNullOrEmpty(AADServicePrincipalSecret);

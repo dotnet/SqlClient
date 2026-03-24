@@ -46,6 +46,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             Run_TransactionBenchmark();
             Run_BatchApiBenchmark();
             Run_AlwaysEncryptedBenchmark();
+            Run_AsyncLargeDataReadBenchmark();
+            Run_MarsOverheadBenchmark();
+            Run_ParallelAsyncConnectionBenchmark();
+            Run_CancellationTokenReadAsyncBenchmark();
+            Run_SequentialXmlReadBenchmark();
+            Run_JsonVsVarcharReadBenchmark();
+            Run_BeginTransactionBenchmark();
+            Run_ConnectionPoolStressBenchmark();
 
             // TODOs:
             // Transactions
@@ -187,8 +195,90 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             }
         }
 
+        private void Run_AsyncLargeDataReadBenchmark()
+        {
+            if (_config.Benchmarks.AsyncLargeDataReadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<AsyncLargeDataReadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.AsyncLargeDataReadRunnerConfig));
+            }
+        }
+
+        private void Run_MarsOverheadBenchmark()
+        {
+            if (_config.Benchmarks.MarsOverheadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<MarsOverheadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.MarsOverheadRunnerConfig));
+            }
+        }
+
+        private void Run_ParallelAsyncConnectionBenchmark()
+        {
+            if (_config.Benchmarks.ParallelAsyncConnectionRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<ParallelAsyncConnectionRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ParallelAsyncConnectionRunnerConfig));
+            }
+        }
+
+        private void Run_CancellationTokenReadAsyncBenchmark()
+        {
+            if (_config.Benchmarks.CancellationTokenReadAsyncRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<CancellationTokenReadAsyncRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.CancellationTokenReadAsyncRunnerConfig));
+            }
+        }
+
+        private void Run_SequentialXmlReadBenchmark()
+        {
+            if (_config.Benchmarks.SequentialXmlReadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<SequentialXmlReadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.SequentialXmlReadRunnerConfig));
+            }
+        }
+
+        private void Run_JsonVsVarcharReadBenchmark()
+        {
+            if (_config.Benchmarks.JsonVsVarcharReadRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<JsonVsVarcharReadRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.JsonVsVarcharReadRunnerConfig));
+            }
+        }
+
+        private void Run_BeginTransactionBenchmark()
+        {
+            if (_config.Benchmarks.BeginTransactionRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<BeginTransactionRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.BeginTransactionRunnerConfig));
+            }
+        }
+
+        private void Run_ConnectionPoolStressBenchmark()
+        {
+            if (_config.Benchmarks.ConnectionPoolStressRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<ConnectionPoolStressRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ConnectionPoolStressRunnerConfig));
+            }
+        }
+
         public static void Main()
         {
+            var config = Config.Load();
+            if (config.WaitForProfiler)
+            {
+                int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+                Console.WriteLine();
+                Console.WriteLine("===========================================");
+                Console.WriteLine($"  Process ID: {pid}");
+                Console.WriteLine("===========================================");
+                Console.WriteLine();
+                Console.WriteLine("Attach your profiler now. Examples:");
+                Console.WriteLine($"  dotnet-counters monitor -p {pid}");
+                Console.WriteLine($"  dotnet-trace collect -p {pid}");
+                Console.WriteLine();
+                Console.WriteLine("Press any key to start benchmarks...");
+                Console.ReadKey(intercept: true);
+                Console.WriteLine();
+            }
+
             // Run the benchmarks.
             new Program();
         }
