@@ -361,7 +361,6 @@
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -396,7 +395,6 @@
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -423,14 +421,5 @@
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
-
-  <!--
-    The SqlClient project uses a custom OutputPath (artifacts/...) which prevents the SDK's
-    GenerateBuildDependencyFile target from emitting a runtime entry in deps.json. Without a
-    runtime entry, 'dotnet exec - -depsfile' cannot resolve the assembly in child processes
-    (e.g. RemoteExecutor). Patch deps.json after generation to inject the missing entry.
-  -->
-  <Import Project="$(RepoRoot)tools/targets/PatchTestDeps.targets"
-          Condition="'$(ReferenceType)' != 'Package'" />
-
+  
 </Project>
