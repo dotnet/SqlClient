@@ -12,6 +12,11 @@ parameters:
   - name: isPreview
     type: boolean
 
+  # True if this build is an official build. This will be used to gate some checks 
+  # that only apply to official builds, such as signature verification.
+  - name: isOfficial
+    type: boolean
+
 jobs:
   - job: validate_signed_package
     displayName: "Verify signed package"
@@ -64,14 +69,15 @@ jobs:
           Write-Host "--------------------------------------------------"
         displayName: "Extract Nuget in temp folder"
 
-      - powershell: |
-          Write-Host "--------------------------------------------------"
-          Write-Host "This will verify the artifact signature" -ForegroundColor Green
-          Write-Host "--------------------------------------------------"
+      - {{ if eq(parameters.isOfficial, true) }}:
+          - powershell: |
+              Write-Host "--------------------------------------------------"
+              Write-Host "This will verify the artifact signature" -ForegroundColor Green
+              Write-Host "--------------------------------------------------"
 
-          nuget verify -All $(pathToDownloadedNuget)\*.nupkg
-          nuget verify -All $(pathToDownloadedNuget)\*.snupkg
-        displayName: "Verify nuget signature"
+              nuget verify -All $(pathToDownloadedNuget)\*.nupkg
+              nuget verify -All $(pathToDownloadedNuget)\*.snupkg
+            displayName: "Verify nuget signature"
 
       - powershell: |
           # Recursively find all .dll files in TempFolder (installed nuget folder)
@@ -204,24 +210,26 @@ jobs:
             }
           }
         displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
-      - powershell: |
-          # Verify all dlls status are Valid
+      
+      - {{ if eq(parameters.isOfficial, true) }}:
+          - powershell: |
+              # Verify all dlls status are Valid
 
-          $dlls = Get-ChildItem -Path $(extractedNugetPath) -Recurse -Include *.dll
-          foreach ($status in $dlls | Get-AuthenticodeSignature)
-          {
-              if ($status.Status -eq "Valid")
+              $dlls = Get-ChildItem -Path $(extractedNugetPath) -Recurse -Include *.dll
+              foreach ($status in $dlls | Get-AuthenticodeSignature)
               {
-                  Write-Host $status.Status $status.Path
+                  if ($status.Status -eq "Valid")
+                  {
+                      Write-Host $status.Status $status.Path
+                  }
+                  else
+                  {
+                      Write-Host "dll status of '$status.Path' is not valid!" -ForegroundColor Red
+                      $status
+                      Exit -1
+                  }
               }
-              else
-              {
-                  Write-Host "dll status of '$status.Path' is not valid!" -ForegroundColor Red
-                  $status
-                  Exit -1
-              }
-          }
-        displayName: "Verify all dlls status are Valid"
+            displayName: "Verify all dlls status are Valid"
 
       - powershell: |
           # This will check each DLL's ProductVersion and FileVersion against

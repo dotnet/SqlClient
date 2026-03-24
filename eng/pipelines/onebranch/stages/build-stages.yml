@@ -229,3 +229,4 @@ stages:
             parameters:
               artifactName: $(sqlClientArtifactsName)
               isPreview: ${{ parameters.isPreview }}
+              isOfficial: ${{ parameters.isOfficial }}
