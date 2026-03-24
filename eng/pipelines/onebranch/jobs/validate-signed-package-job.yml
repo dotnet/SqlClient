@@ -69,7 +69,7 @@ jobs:
           Write-Host "--------------------------------------------------"
         displayName: "Extract Nuget in temp folder"
 
-      - {{ if eq(parameters.isOfficial, true) }}:
+      - ${{ if eq(parameters.isOfficial, true) }}:
           - powershell: |
               Write-Host "--------------------------------------------------"
               Write-Host "This will verify the artifact signature" -ForegroundColor Green
@@ -211,7 +211,7 @@ jobs:
           }
         displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
       
-      - {{ if eq(parameters.isOfficial, true) }}:
+      - ${{ if eq(parameters.isOfficial, true) }}:
           - powershell: |
               # Verify all dlls status are Valid
 

@@ -161,17 +161,6 @@ jobs:
               esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
               pattern: ${{ parameters.packageFullName }}.dll
 
-          # ESRP sign the DLLs.
-          - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
-            parameters:
-              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-              authAkvName: ${{ parameters.authAkvName }}
-              authSignCertName: ${{ parameters.authSignCertName }}
-              esrpClientId: ${{ parameters.esrpClientId }}
-              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-              pattern: ${{ parameters.packageFullName }}.dll
-
       # Copy signed/unsigned DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
