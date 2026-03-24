@@ -18,8 +18,8 @@ parameters:
     type: boolean
 
 jobs:
-  - job: validate_signed_package
-    displayName: "Verify signed package"
+  - job: validate_nuget_package
+    displayName: "Validate NuGet package"
 
     pool:
       type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
