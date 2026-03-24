@@ -23,15 +23,6 @@
 #   - false → NuGet Test feed (via NuGetServiceConnectionTest).
 #
 # This template depends on stages defined by the build-stages.yml template.
-#
-# This template depends on the following runtime (i.e. macro expansion) variables being defined:
-#
-#  - effectiveSqlServerVersion
-#  - effectiveLoggingVersion
-#  - effectiveAbstractionsVersion
-#  - effectiveSqlClientVersion
-#  - effectiveAzureVersion
-#  - effectiveAkvProviderVersion
 
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
@@ -59,6 +50,25 @@ parameters:
     values:
       - production
       - test
+
+  # Package Parameters -----------------------------------------------------
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerPackageVersion
+    type: string
 
   # ── Release parameters ─────────────────────────────────────────────────
 
@@ -154,7 +164,7 @@ stages:
             parameters:
               packageName: Microsoft.SqlServer.Server
               artifactName: $(sqlServerArtifactsName)
-              packagePath: Microsoft.SqlServer.Server.$(effectiveSqlServerVersion).nupkg
+              packagePath: 'Microsoft.SqlServer.Server.${{ parameters.sqlServerPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -164,7 +174,7 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.Internal.Logging
               artifactName: $(loggingArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.Internal.Logging.$(effectiveLoggingVersion).nupkg
+              packagePath: 'Microsoft.Data.SqlClient.Internal.Logging.${{ parameters.loggingPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -174,7 +184,7 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: $(abstractionsArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.Extensions.Abstractions.$(effectiveAbstractionsVersion).nupkg
+              packagePath: 'Microsoft.Data.SqlClient.Extensions.Abstractions.${{ parameters.abstractionsPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -184,7 +194,7 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient
               artifactName: $(sqlClientArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.$(effectiveSqlClientVersion).nupkg
+              packagePath: 'Microsoft.Data.SqlClient.${{ parameters.sqlClientPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -194,7 +204,7 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: $(azureArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.Extensions.Azure.$(effectiveAzureVersion).nupkg
+              packagePath: 'Microsoft.Data.SqlClient.Extensions.Azure.${{ parameters.azurePackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -204,7 +214,7 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: $(akvArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
+              packagePath: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.${{ parameters.akvProviderPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}

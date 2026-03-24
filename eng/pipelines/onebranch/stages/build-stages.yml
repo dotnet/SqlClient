@@ -13,27 +13,18 @@
 #   - build_abstractions: builds the Abstractions package, which depends on Logging
 #   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
 #   - build_addons: builds add-on packages with dependencies on the core packages (AKV Provider)
-#
-# This template depends on the following runtime (i.e. macro expansion) variables being defined:
-#
-#  - effectiveSqlServerVersion
-#  - effectiveLoggingVersion
-#  - effectiveAbstractionsVersion
-#  - effectiveSqlClientVersion
-#  - effectiveAzureVersion
-#  - effectiveAkvProviderVersion
 
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
 
-  # True if this is a preview build, which uses the preview version numbers from
-  # common-variables.yml.
-  - name: isPreview
-    type: boolean
-
   # True if this is an official build, which runs additional ESRP malware scanning
   # and codesigning steps.
   - name: isOfficial
+    type: boolean
+
+  # True if this is a preview build, which uses the preview version numbers from
+  # common-variables.yml.
+  - name: isPreview
     type: boolean
 
   # True to publish symbols to public and private servers.
@@ -50,6 +41,25 @@ parameters:
 
   - name: buildAKVProvider
     type: boolean
+
+  # Package Parameters -----------------------------------------------------
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerPackageVersion
+    type: string
 
   # Signing Parameters -----------------------------------------------------
 
@@ -115,9 +125,9 @@ stages:
             isOfficial: ${{ parameters.isOfficial }}
             packageName: Logging
             packageFullName: Microsoft.Data.SqlClient.Internal.Logging
-            packageVersion: $(effectiveLoggingVersion)
+            packageVersion: '${{ parameters.loggingPackageVersion }}'
             versionProperties: >-
-              -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
             assemblyFileVersion: $(loggingAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
@@ -141,10 +151,10 @@ stages:
             isOfficial: ${{ parameters.isOfficial }}
             packageName: SqlServer
             packageFullName: Microsoft.SqlServer.Server
-            packageVersion: $(effectiveSqlServerVersion)
+            packageVersion: '${{ parameters.sqlServerPackageVersion }}'
             versionProperties: >-
               -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
-              -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
+              -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
             assemblyFileVersion: $(sqlServerAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
 
@@ -176,11 +186,11 @@ stages:
               isOfficial: ${{ parameters.isOfficial }}
               packageName: Abstractions
               packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              packageVersion: $(effectiveAbstractionsVersion)
+              packageVersion: '${{ parameters.abstractionsPackageVersion }}'
               versionProperties: >-
-                -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+                -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
                 -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
-                -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               assemblyFileVersion: $(abstractionsAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
@@ -217,11 +227,11 @@ stages:
               symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               abstractionsArtifactName: '$(abstractionsArtifactsName)'
-              abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
+              abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
               loggingArtifactName: '$(loggingArtifactsName)'
-              loggingPackageVersion: '$(effectiveLoggingVersion)'
+              loggingPackageVersion: '$ {{ parameters.loggingPackageVersion }}'
               mdsAssemblyFileVersion: '$(mdsAssemblyFileVersion)'
-              mdsPackageVersion: '$(effectiveSqlClientVersion)'
+              mdsPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
             parameters:
@@ -240,12 +250,12 @@ stages:
               isOfficial: ${{ parameters.isOfficial }}
               packageName: Azure
               packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
-              packageVersion: $(effectiveAzureVersion)
+              packageVersion: '${{ parameters.azurePackageVersion }}'
               versionProperties: >-
-                -p:AzurePackageVersion=$(effectiveAzureVersion)
+                -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
                 -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
-                -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-                -p:LoggingPackageVersion=$(effectiveLoggingVersion)
+                -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               assemblyFileVersion: $(azureAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
@@ -281,13 +291,13 @@ stages:
               isOfficial: ${{ parameters.isOfficial }}
               packageName: AkvProvider
               packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              packageVersion: $(effectiveAkvProviderVersion)
+              packageVersion: '${{ parameters.akvProviderPackageVersion }}'
               versionProperties: >-
-                -p:AkvPackageVersion=$(effectiveAkvProviderVersion)
+                -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
                 -p:AkvAssemblyFileVersion=$(akvAssemblyFileVersion)
-                -p:MdsPackageVersion=$(effectiveSqlClientVersion)
-                -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-                -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
+                -p:MdsPackageVersion=${{ parameters.sqlClientPackageVersion }}
+                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+                -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
               assemblyFileVersion: $(akvAssemblyFileVersion)
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
