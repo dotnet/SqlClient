@@ -31,3 +31,11 @@ steps:
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree
+
+  - task: CopyFiles@2
+    displayName: 'Copy NuGet Packages to PACK_OUTPUT'
+    inputs:
+      contents: '**/Microsoft.Data.SqlClient*.*nupkg'
+      flattenFolders: true
+      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/'
+      targetFolder: '$(PACK_OUTPUT)'

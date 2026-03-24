@@ -72,7 +72,7 @@ jobs:
       type: windows
 
     variables:
-      ob_outputDirectory: '$(BUILD_OUTPUT)'
+      ob_outputDirectory: '$(PACK_OUTPUT)'
 
     steps:
       # Dump environment and parameters
@@ -149,7 +149,7 @@ jobs:
           authSignCertName: '${{ parameters.signingAuthSignCertName }}'
           esrpClientId: '${{ parameters.signingEsrpClientId }}'
           esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-          searchPath: '$(BUILD_OUTPUT)'
+          searchPath: '$(PACK_OUTPUT)'
           searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
 
       - ${{ if parameters.publishSymbols }}:
