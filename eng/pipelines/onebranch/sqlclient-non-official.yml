@@ -92,35 +92,10 @@ parameters:
 variables:
   - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/package-variables.yml@self
+    parameters:
+      isPreview: ${{ parameters.isPreview }}
   - template: /eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml@self
-
-  # Define the effective versions for all of the packages we build and release.
-  - ${{ if parameters.isPreview }}:
-      - name: effectiveSqlServerVersion
-        value: $(sqlServerPackagePreviewVersion)
-      - name: effectiveLoggingVersion
-        value: $(loggingPackagePreviewVersion)
-      - name: effectiveAbstractionsVersion
-        value: $(abstractionsPackagePreviewVersion)
-      - name: effectiveSqlClientVersion
-        value: $(mdsPackagePreviewVersion)
-      - name: effectiveAzureVersion
-        value: $(azurePackagePreviewVersion)
-      - name: effectiveAkvProviderVersion
-        value: $(akvPackagePreviewVersion)
-  - ${{ else }}:
-      - name: effectiveSqlServerVersion
-        value: $(sqlServerPackageVersion)
-      - name: effectiveLoggingVersion
-        value: $(loggingPackageVersion)
-      - name: effectiveAbstractionsVersion
-        value: $(abstractionsPackageVersion)
-      - name: effectiveSqlClientVersion
-        value: $(mdsPackageVersion)
-      - name: effectiveAzureVersion
-        value: $(azurePackageVersion)
-      - name: effectiveAkvProviderVersion
-        value: $(akvPackageVersion)
 
 resources:
   repositories:
@@ -190,12 +165,12 @@ extends:
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
 
-          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
-          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
-          azurePackageVersion: '$(effectiveAzureVersion)'
-          loggingPackageVersion: '$(effectiveLoggingVersion)'
-          sqlClientPackageVersion: '$(effectiveSqlClientPackage)'
-          sqlServerPackageVersion: '$(effectiveSqlServerVersion)'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
           signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
@@ -218,12 +193,12 @@ extends:
           isOfficial: false
           stageNameSuffix: test
 
-          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
-          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
-          azurePackageVersion: '$(effectiveAzureVersion)'
-          loggingPackageVersion: '$(effectiveLoggingVersion)'
-          sqlClientPackageVersion: '$(effectiveSqlClientPackage)'
-          sqlServerPackageVersion: '$(effectiveSqlServerVersion)'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
