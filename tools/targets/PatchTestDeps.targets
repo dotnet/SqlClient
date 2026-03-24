@@ -13,7 +13,7 @@
 <Project>
 
   <Import Project="$(RepoRoot)src/Microsoft.Data.SqlClient/MdsVersions.props"
-          Condition="'$(MdsPackageVersion)' == ''" />
+          Condition="'$(MdsPackageVersion)' == '' OR '$(MdsAssemblyVersion)' == ''" />
 
   <Target Name="_PatchDepsJsonForSqlClient"
           AfterTargets="GenerateBuildDependencyFile"
