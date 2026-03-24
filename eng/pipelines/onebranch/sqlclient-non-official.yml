@@ -190,6 +190,13 @@ extends:
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
 
+          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
+          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
+          azurePackageVersion: '$(effectiveAzureVersion)'
+          loggingPackageVersion: '$(effectiveLoggingVersion)'
+          sqlClientPackageVersion: '$(effectiveSqlClientPackage)'
+          sqlServerPackageVersion: '$(effectiveSqlServerVersion)'
+
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
           signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
           signingAuthAkvName: '$(SigningAuthAkvName)'
@@ -210,6 +217,14 @@ extends:
           # This is _not_ an official pipeline.
           isOfficial: false
           stageNameSuffix: test
+
+          abstractionsPackageVersion: '$(effectiveAbstractionsVersion)'
+          akvProviderPackageVersion: '$(effectiveAkvProviderVersion)'
+          azurePackageVersion: '$(effectiveAzureVersion)'
+          loggingPackageVersion: '$(effectiveLoggingVersion)'
+          sqlClientPackageVersion: '$(effectiveSqlClientPackage)'
+          sqlServerPackageVersion: '$(effectiveSqlServerVersion)'
+
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
