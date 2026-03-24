@@ -14,18 +14,18 @@
 # It runs via CI push triggers and schedules and uses the Release build
 # configuration:
 #
-#   - Commits to GitHub main
-#   - Commits to ADO internal/main
-#   - Weekdays at 01:00 UTC on GitHub main
-#   - Thursdays at 05:00 UTC on ADO internal/main
+#   - Commits to GitHub release/7.0
+#   - Commits to ADO internal/release/7.0
+#   - Sundays at 05:00 UTC on GitHub release/7.0
+#   - Sundays at 06:00 UTC on ADO internal/release/7.0
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
 # able to define different triggers and schedules using branch filters:
 #
-#   - Only the GitHub repo has a 'main' branch, so its presence indicates that
-#     the pipeline run was triggered via GitHub.
+#   - Only the GitHub repo has a 'release/7.0' branch, so its presence indicates
+#     that the pipeline run was triggered via GitHub.
 #
-#   - Only the ADO repo has an 'internal/main' branch.
+#   - Only the ADO repo has an 'internal/release/7.0' branch.
 #
 # Changes are batched together to ensure that the pipline never runs
 # concurrently.
@@ -55,29 +55,29 @@ trigger:
 
   branches:
     include:
-    # GitHub main branch.
-    - main
+    # GitHub release/7.0 branch.
+    - release/7.0
 
-    # ADO internal/main branch.
-    - internal/main
+    # ADO internal/release/7.0 branch.
+    - internal/release/7.0
 
 # Trigger this pipline on a schedule.
 schedules:
 
-  # GitHub main on weekdays
-  - cron: '0 1 * * Mon-Fri'
-    displayName: Weekday Run (Release Config)
+  # GitHub release/7.0 on Sundays (1 hour after release/6.1's 04:00 UTC run).
+  - cron: '0 5 * * Sun'
+    displayName: Sunday Run GitHub (Release Config)
     branches:
       include:
-      - main
+      - release/7.0
     always: true
 
-  # ADO internal/main on Thursdays.
-  - cron: '0 5 * * Thu'
-    displayName: Thursday Run (Release Config)
+  # ADO internal/release/7.0 on Sundays (1 hour after release/6.1's 05:00 UTC run).
+  - cron: '0 6 * * Sun'
+    displayName: Sunday Run ADO Internal (Release Config)
     branches:
       include:
-      - internal/main
+      - internal/release/7.0
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.
