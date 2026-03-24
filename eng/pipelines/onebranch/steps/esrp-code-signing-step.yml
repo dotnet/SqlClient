@@ -4,10 +4,15 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # True to enable ESRP malware scanning and code signing steps, which should not
+  # be run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   - name: artifactType
     values:
-    - dll
-    - pkg
+      - dll
+      - pkg
 
   - name: sourceRoot
     type: string
@@ -15,11 +20,11 @@ parameters:
 
   - name: dllPattern
     type: string
-    default: 'Microsoft.Data.SqlClient*.dll'
+    default: "Microsoft.Data.SqlClient*.dll"
 
   - name: nupkgPattern
     type: string
-    default: '*.*nupkg'
+    default: "*.*nupkg"
 
   - name: artifactDirectory
     type: string
@@ -50,117 +55,119 @@ parameters:
     default: $(EsrpClientId)
 
 steps:
-- ${{ if eq(parameters.artifactType, 'dll') }}:
-  # See: https://aka.ms/esrp.scantask
-  - task: EsrpMalwareScanning@6
-    displayName: 'ESRP MalwareScanning'
-    inputs:
-      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
-      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      EsrpClientId: '${{parameters.EsrpClientId }}'
-      UseMSIAuthentication: true
-      FolderPath: '${{parameters.sourceRoot }}'
-      Pattern: '${{ parameters.dllPattern }}'
-      CleanupTempStorage: 1
-      VerboseLogin: 1
+  - ${{ if eq(parameters.isOfficial, true) }}:
+      # ESRP scan and sign the DLLs or NuGet packages, depending on the artifact type.
+      - ${{ if eq(parameters.artifactType, 'dll') }}:
+          # See: https://aka.ms/esrp.scantask
+          - task: EsrpMalwareScanning@6
+            displayName: "ESRP MalwareScanning"
+            inputs:
+              ConnectedServiceName: "${{parameters.ESRPConnectedServiceName }}"
+              AppRegistrationClientId: "${{parameters.appRegistrationClientId }}"
+              AppRegistrationTenantId: "${{parameters.appRegistrationTenantId }}"
+              EsrpClientId: "${{parameters.EsrpClientId }}"
+              UseMSIAuthentication: true
+              FolderPath: "${{parameters.sourceRoot }}"
+              Pattern: "${{ parameters.dllPattern }}"
+              CleanupTempStorage: 1
+              VerboseLogin: 1
 
-  # See: https://aka.ms/esrp.signtask
-  - task: EsrpCodeSigning@6
-    displayName: 'ESRP CodeSigning'
-    inputs:
-      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
-      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      EsrpClientId: '${{parameters.EsrpClientId }}'
-      UseMSIAuthentication: true
-      AuthAKVName: '${{parameters.AuthAKVName }}'
-      AuthSignCertName: '${{parameters.AuthSignCertName }}'
-      FolderPath: '${{parameters.sourceRoot }}'
-      Pattern: '${{ parameters.dllPattern }}'
-      signConfigType: inlineSignParams
-      inlineOperation: |
-          [
-              {
-                  "keyCode": "CP-230012",
-                  "operationSetCode": "SigntoolSign",
-                  "parameters": [
-                  {
-                      "parameterName": "OpusName",
-                      "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
-                  },
-                  {
-                      "parameterName": "OpusInfo",
-                      "parameterValue": "http://www.microsoft.com"
-                  },
-                  {
-                      "parameterName": "FileDigest",
-                      "parameterValue": "/fd \"SHA256\""
-                  },
-                  {
-                      "parameterName": "PageHash",
-                      "parameterValue": "/NPH"
-                  },
-                  {
-                      "parameterName": "TimeStamp",
-                      "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
-                  }
-                  ],
-                  "toolName": "sign",
-                  "toolVersion": "1.0"
-              },
-              {
-                  "keyCode": "CP-230012",
-                  "operationSetCode": "SigntoolVerify",
-                  "parameters": [ ],
-                  "toolName": "sign",
-                  "toolVersion": "1.0"
-              }
-          ]
+          # See: https://aka.ms/esrp.signtask
+          - task: EsrpCodeSigning@6
+            displayName: "ESRP CodeSigning"
+            inputs:
+              ConnectedServiceName: "${{parameters.ESRPConnectedServiceName }}"
+              AppRegistrationClientId: "${{parameters.appRegistrationClientId }}"
+              AppRegistrationTenantId: "${{parameters.appRegistrationTenantId }}"
+              EsrpClientId: "${{parameters.EsrpClientId }}"
+              UseMSIAuthentication: true
+              AuthAKVName: "${{parameters.AuthAKVName }}"
+              AuthSignCertName: "${{parameters.AuthSignCertName }}"
+              FolderPath: "${{parameters.sourceRoot }}"
+              Pattern: "${{ parameters.dllPattern }}"
+              signConfigType: inlineSignParams
+              inlineOperation: |
+                [
+                    {
+                        "keyCode": "CP-230012",
+                        "operationSetCode": "SigntoolSign",
+                        "parameters": [
+                        {
+                            "parameterName": "OpusName",
+                            "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                        },
+                        {
+                            "parameterName": "OpusInfo",
+                            "parameterValue": "http://www.microsoft.com"
+                        },
+                        {
+                            "parameterName": "FileDigest",
+                            "parameterValue": "/fd \"SHA256\""
+                        },
+                        {
+                            "parameterName": "PageHash",
+                            "parameterValue": "/NPH"
+                        },
+                        {
+                            "parameterName": "TimeStamp",
+                            "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                        }
+                        ],
+                        "toolName": "sign",
+                        "toolVersion": "1.0"
+                    },
+                    {
+                        "keyCode": "CP-230012",
+                        "operationSetCode": "SigntoolVerify",
+                        "parameters": [ ],
+                        "toolName": "sign",
+                        "toolVersion": "1.0"
+                    }
+                ]
 
-- ${{ if eq(parameters.artifactType, 'pkg') }}:
-  # See: https://aka.ms/esrp.scantask
-  - task: EsrpMalwareScanning@6
-    displayName: 'ESRP MalwareScanning Nuget Package'
-    inputs:
-      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
-      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      EsrpClientId: '${{parameters.EsrpClientId }}'
-      UseMSIAuthentication: true
-      FolderPath: '${{parameters.artifactDirectory }}'
-      Pattern: '${{ parameters.nupkgPattern }}'
-      CleanupTempStorage: 1
-      VerboseLogin: 1
+      - ${{ if eq(parameters.artifactType, 'pkg') }}:
+          # See: https://aka.ms/esrp.scantask
+          - task: EsrpMalwareScanning@6
+            displayName: "ESRP MalwareScanning Nuget Package"
+            inputs:
+              ConnectedServiceName: "${{parameters.ESRPConnectedServiceName }}"
+              AppRegistrationClientId: "${{parameters.appRegistrationClientId }}"
+              AppRegistrationTenantId: "${{parameters.appRegistrationTenantId }}"
+              EsrpClientId: "${{parameters.EsrpClientId }}"
+              UseMSIAuthentication: true
+              FolderPath: "${{parameters.artifactDirectory }}"
+              Pattern: "${{ parameters.nupkgPattern }}"
+              CleanupTempStorage: 1
+              VerboseLogin: 1
 
-  # See: https://aka.ms/esrp.signtask
-  - task: EsrpCodeSigning@6
-    displayName: 'ESRP CodeSigning Nuget Package'
-    inputs:
-      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
-      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      EsrpClientId: '${{parameters.EsrpClientId }}'
-      UseMSIAuthentication: true
-      AuthAKVName: '${{parameters.AuthAKVName }}'
-      AuthSignCertName: '${{parameters.AuthSignCertName }}'
-      FolderPath: '${{parameters.artifactDirectory }}'
-      Pattern: '${{ parameters.nupkgPattern }}'
-      signConfigType: inlineSignParams
-      inlineOperation: |
-        [
-            {
-                "keyCode": "CP-401405",
-                "operationSetCode": "NuGetSign",
-                "parameters": [ ],
-                "toolName": "sign",
-                "toolVersion": "1.0"
-            },
-            {
-                "keyCode": "CP-401405",
-                "operationSetCode": "NuGetVerify",
-                "parameters": [ ],
-                "toolName": "sign",
-                "toolVersion": "1.0"
-            }
-        ]
+          # See: https://aka.ms/esrp.signtask
+          - task: EsrpCodeSigning@6
+            displayName: "ESRP CodeSigning Nuget Package"
+            inputs:
+              ConnectedServiceName: "${{parameters.ESRPConnectedServiceName }}"
+              AppRegistrationClientId: "${{parameters.appRegistrationClientId }}"
+              AppRegistrationTenantId: "${{parameters.appRegistrationTenantId }}"
+              EsrpClientId: "${{parameters.EsrpClientId }}"
+              UseMSIAuthentication: true
+              AuthAKVName: "${{parameters.AuthAKVName }}"
+              AuthSignCertName: "${{parameters.AuthSignCertName }}"
+              FolderPath: "${{parameters.artifactDirectory }}"
+              Pattern: "${{ parameters.nupkgPattern }}"
+              signConfigType: inlineSignParams
+              inlineOperation: |
+                [
+                    {
+                        "keyCode": "CP-401405",
+                        "operationSetCode": "NuGetSign",
+                        "parameters": [ ],
+                        "toolName": "sign",
+                        "toolVersion": "1.0"
+                    },
+                    {
+                        "keyCode": "CP-401405",
+                        "operationSetCode": "NuGetVerify",
+                        "parameters": [ ],
+                        "toolName": "sign",
+                        "toolVersion": "1.0"
+                    }
+                ]

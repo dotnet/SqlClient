@@ -70,6 +70,11 @@ parameters:
   - name: publishSymbols
     type: boolean
 
+  # True to enable ESRP malware scanning and code signing steps, which should not be
+  # run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   # Values required by ESRP tasks.
   - name: esrpConnectedServiceName
     type: string
@@ -147,6 +152,7 @@ jobs:
       # ESRP sign the DLLs.
       - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
         parameters:
+          isOfficial: ${{ parameters.isOfficial }}
           appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
           appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
           authAkvName: ${{ parameters.authAkvName }}
@@ -185,13 +191,14 @@ jobs:
       # ESRP sign the NuGet package.
       - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
         parameters:
+          isOfficial: ${{ parameters.isOfficial }}
           appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
           appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
           authAkvName: ${{ parameters.authAkvName }}
           authSignCertName: ${{ parameters.authSignCertName }}
           esrpClientId: ${{ parameters.esrpClientId }}
           esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-          pattern: '${{ parameters.packageFullName }}.*nupkg'
+          pattern: "${{ parameters.packageFullName }}.*nupkg"
 
       # Publish symbols to servers
       - ${{ if eq(parameters.publishSymbols, true) }}:

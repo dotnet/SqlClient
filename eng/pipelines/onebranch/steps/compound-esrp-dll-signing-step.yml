@@ -5,6 +5,11 @@
 #################################################################################
 
 parameters:
+  # True to enable ESRP malware scanning and code signing steps, which should not be
+  # run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
@@ -37,69 +42,70 @@ parameters:
 
 steps:
   # See: https://aka.ms/esrp.scantask
-  - task: EsrpMalwareScanning@6
-    displayName: ESRP DLL Malware Scanning
-    inputs:
-      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-      CleanupTempStorage: 1
-      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-      EsrpClientId: ${{ parameters.esrpClientId }}
-      FolderPath: $(BUILD_OUTPUT)/Package/bin
-      Pattern: ${{ parameters.pattern }}
-      UseMSIAuthentication: true
-      VerboseLogin: 1
+  - ${{ if eq(parameters.isOfficial, true) }}:
+      - task: EsrpMalwareScanning@6
+        displayName: ESRP DLL Malware Scanning
+        inputs:
+          AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+          AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+          CleanupTempStorage: 1
+          ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+          EsrpClientId: ${{ parameters.esrpClientId }}
+          FolderPath: $(BUILD_OUTPUT)/Package/bin
+          Pattern: ${{ parameters.pattern }}
+          UseMSIAuthentication: true
+          VerboseLogin: 1
 
-  # See: https://aka.ms/esrp.signtask
-  - task: EsrpCodeSigning@6
-    displayName: ESRP DLL Signing
-    inputs:
-      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-      AuthAKVName: ${{ parameters.authAkvName }}
-      AuthSignCertName: ${{ parameters.authSignCertName }}
-      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-      EsrpClientId: ${{ parameters.esrpClientId }}
-      FolderPath: $(BUILD_OUTPUT)/Package/bin
-      Pattern: ${{ parameters.pattern }}
-      signConfigType: inlineSignParams
-      UseMSIAuthentication: true
-      inlineOperation: |
-        [
-            {
-                "keyCode": "CP-230012",
-                "operationSetCode": "SigntoolSign",
-                "parameters":
-                    [
-                        {
-                            "parameterName": "OpusName",
-                            "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
-                        },
-                        {
-                            "parameterName": "OpusInfo",
-                            "parameterValue": "http://www.microsoft.com"
-                        },
-                        {
-                            "parameterName": "FileDigest",
-                            "parameterValue": "/fd \"SHA256\""
-                        },
-                        {
-                            "parameterName": "PageHash",
-                            "parameterValue": "/NPH"
-                        },
-                        {
-                            "parameterName": "TimeStamp",
-                            "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
-                        }
-                    ],
-                "toolName": "sign",
-                "toolVersion": "1.0"
-            },
-            {
-                "keyCode": "CP-230012",
-                "operationSetCode": "SigntoolVerify",
-                "parameters": [ ],
-                "toolName": "sign",
-                "toolVersion": "1.0"
-            }
-        ]
+      # See: https://aka.ms/esrp.signtask
+      - task: EsrpCodeSigning@6
+        displayName: ESRP DLL Signing
+        inputs:
+          AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+          AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+          AuthAKVName: ${{ parameters.authAkvName }}
+          AuthSignCertName: ${{ parameters.authSignCertName }}
+          ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+          EsrpClientId: ${{ parameters.esrpClientId }}
+          FolderPath: $(BUILD_OUTPUT)/Package/bin
+          Pattern: ${{ parameters.pattern }}
+          signConfigType: inlineSignParams
+          UseMSIAuthentication: true
+          inlineOperation: |
+            [
+                {
+                    "keyCode": "CP-230012",
+                    "operationSetCode": "SigntoolSign",
+                    "parameters":
+                        [
+                            {
+                                "parameterName": "OpusName",
+                                "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                            },
+                            {
+                                "parameterName": "OpusInfo",
+                                "parameterValue": "http://www.microsoft.com"
+                            },
+                            {
+                                "parameterName": "FileDigest",
+                                "parameterValue": "/fd \"SHA256\""
+                            },
+                            {
+                                "parameterName": "PageHash",
+                                "parameterValue": "/NPH"
+                            },
+                            {
+                                "parameterName": "TimeStamp",
+                                "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                            }
+                        ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                },
+                {
+                    "keyCode": "CP-230012",
+                    "operationSetCode": "SigntoolVerify",
+                    "parameters": [ ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                }
+            ]

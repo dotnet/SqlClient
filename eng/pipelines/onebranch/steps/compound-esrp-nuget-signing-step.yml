@@ -5,6 +5,11 @@
 #################################################################################
 
 parameters:
+  # True to enable ESRP malware scanning and code signing steps, which should not be
+  # run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   # App Registration Client Id.
   - name: appRegistrationClientId
     type: string
@@ -33,51 +38,52 @@ parameters:
   # Glob pattern to match NuGet packages for scanning and signing.
   - name: pattern
     type: string
-    default: '*.*nupkg'
+    default: "*.*nupkg"
 
 steps:
   # See: https://aka.ms/esrp.scantask
-  - task: EsrpMalwareScanning@6
-    displayName: 'ESRP Nuget Malware Scanning'
-    inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-      CleanupTempStorage: 1
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
-      UseMSIAuthentication: true
-      VerboseLogin: 1
+  - ${{ if eq(parameters.isOfficial, true) }}:
+      - task: EsrpMalwareScanning@6
+        displayName: "ESRP Nuget Malware Scanning"
+        inputs:
+          AppRegistrationClientId: "${{ parameters.appRegistrationClientId }}"
+          AppRegistrationTenantId: "${{ parameters.appRegistrationTenantId }}"
+          CleanupTempStorage: 1
+          ConnectedServiceName: "${{ parameters.esrpConnectedServiceName }}"
+          EsrpClientId: "${{ parameters.esrpClientId }}"
+          FolderPath: "$(PACK_OUTPUT)"
+          Pattern: "${{ parameters.pattern }}"
+          UseMSIAuthentication: true
+          VerboseLogin: 1
 
-  # See: https://aka.ms/esrp.signtask
-  - task: EsrpCodeSigning@6
-    displayName: 'ESRP Signing NuGet Package'
-    inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      AuthAKVName: '${{ parameters.authAkvName }}'
-      AuthSignCertName: '${{ parameters.authSignCertName }}'
-      FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
-      signConfigType: 'inlineSignParams'
-      UseMSIAuthentication: true
-      inlineOperation: |
-        [
-            {
-                "keyCode": "CP-401405",
-                "operationSetCode": "NuGetSign",
-                "parameters": [ ],
-                "toolName": "sign",
-                "toolVersion": "1.0"
-            },
-            {
-                "keyCode": "CP-401405",
-                "operationSetCode": "NuGetVerify",
-                "parameters": [ ],
-                "toolName": "sign",
-                "toolVersion": "1.0"
-            }
-        ]
+      # See: https://aka.ms/esrp.signtask
+      - task: EsrpCodeSigning@6
+        displayName: "ESRP Signing NuGet Package"
+        inputs:
+          AppRegistrationClientId: "${{ parameters.appRegistrationClientId }}"
+          AppRegistrationTenantId: "${{ parameters.appRegistrationTenantId }}"
+          ConnectedServiceName: "${{ parameters.esrpConnectedServiceName }}"
+          EsrpClientId: "${{ parameters.esrpClientId }}"
+          AuthAKVName: "${{ parameters.authAkvName }}"
+          AuthSignCertName: "${{ parameters.authSignCertName }}"
+          FolderPath: "$(PACK_OUTPUT)"
+          Pattern: "${{ parameters.pattern }}"
+          signConfigType: "inlineSignParams"
+          UseMSIAuthentication: true
+          inlineOperation: |
+            [
+                {
+                    "keyCode": "CP-401405",
+                    "operationSetCode": "NuGetSign",
+                    "parameters": [ ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                },
+                {
+                    "keyCode": "CP-401405",
+                    "operationSetCode": "NuGetVerify",
+                    "parameters": [ ],
+                    "toolName": "sign",
+                    "toolVersion": "1.0"
+                }
+            ]
