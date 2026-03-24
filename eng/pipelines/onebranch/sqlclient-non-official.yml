@@ -165,11 +165,17 @@ extends:
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAKVProvider: ${{ parameters.buildAKVProvider }}
 
+          abstractionsArtifactsName: '${{ variables.abstractions.artifactsName }}'
           abstractionsPackageVersion: '${{ variables.abstractions.packageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProvider.artifactsName }}'
           akvProviderPackageVersion: '${{ variables.akvProvider.packageVersion }}'
+          azueArtifactsName: '${{ variables.azure.artifactsName }}'
           azurePackageVersion: '${{ variables.azure.packageVersion }}'
+          loggingArtifactsName: '${{ variables.logging.artifactsName }}'
           loggingPackageVersion: '${{ variables.logging.packageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClient.artifactsName }}'
           sqlClientPackageVersion: '${{ variables.sqlClient.packageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServer.artifactsName }}'
           sqlServerPackageVersion: '${{ variables.sqlServer.packageVersion }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
@@ -193,11 +199,17 @@ extends:
           isOfficial: false
           stageNameSuffix: test
 
+          abstractionsArtifactsName: '${{ variables.abstractions.artifactsName }}'
           abstractionsPackageVersion: '${{ variables.abstractions.packageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProvider.artifactsName }}'
           akvProviderPackageVersion: '${{ variables.akvProvider.packageVersion }}'
+          azueArtifactsName: '${{ variables.azure.artifactsName }}'
           azurePackageVersion: '${{ variables.azure.packageVersion }}'
+          loggingArtifactsName: '${{ variables.logging.artifactsName }}'
           loggingPackageVersion: '${{ variables.logging.packageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClient.artifactsName }}'
           sqlClientPackageVersion: '${{ variables.sqlClient.packageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServer.artifactsName }}'
           sqlServerPackageVersion: '${{ variables.sqlServer.packageVersion }}'
 
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
