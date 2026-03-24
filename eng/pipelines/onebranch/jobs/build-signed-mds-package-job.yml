@@ -150,7 +150,7 @@ jobs:
           esrpClientId: '${{ parameters.signingEsrpClientId }}'
           esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
           searchPath: '$(BUILD_OUTPUT)'
-          searchPattern: '**/*.*nupkg'
+          searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
 
       - ${{ if parameters.publishSymbols }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
