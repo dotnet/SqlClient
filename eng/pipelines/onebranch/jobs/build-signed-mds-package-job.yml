@@ -13,6 +13,11 @@ parameters:
   - name: apiScanPdbPath
     type: string
 
+  # Whether this build is for an "official" OneBranch pipeline. This is used to enable ESRP signing
+  # on the artifacts of this job.
+  - name: isOfficial
+    type: boolean
+
   - name: publishSymbols
     type: boolean
 
@@ -130,15 +135,16 @@ jobs:
           referenceType: 'Package'
 
       # Sign the DLLs
-      - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
-        parameters:
-          appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-          appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-          authAkvName: '${{ parameters.signingAuthAkvName }}'
-          authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-          esrpClientId: '${{ parameters.signingEsrpClientId }}'
-          esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-          pattern: 'Microsoft.Data.SqlClient*.dll'
+      - ${{ if parameters.isOfficial }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              pattern: 'Microsoft.Data.SqlClient*.dll'
 
       # Package the build output into a NuGet package
       - template: /eng/pipelines/onebranch/steps/pack-mds-step.yml
@@ -148,16 +154,17 @@ jobs:
           mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
       # Sign the NuGet packages
-      - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
-        parameters:
-          appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-          appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-          authAkvName: '${{ parameters.signingAuthAkvName }}'
-          authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-          esrpClientId: '${{ parameters.signingEsrpClientId }}'
-          esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-          searchPath: '$(PACK_OUTPUT)'
-          searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
+      - ${{ if parameters.isOfficial }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              searchPath: '$(PACK_OUTPUT)'
+              searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
 
       - ${{ if parameters.publishSymbols }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
