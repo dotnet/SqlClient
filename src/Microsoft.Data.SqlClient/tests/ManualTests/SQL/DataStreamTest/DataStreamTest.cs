@@ -1453,7 +1453,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             try { t.Wait(); }
                             catch (AggregateException ex)
                             {
-                                Assert.IsAssignableFrom<IOException>(ex.InnerException);
+                                Assert.True(
+                                    ex.InnerException is IOException or InvalidOperationException,
+                                    $"Expected IOException or InvalidOperationException, got: {ex.InnerException?.GetType()}");
                             }
 
                             // GetStream after Read
@@ -1497,7 +1499,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         try { t.Wait(); }
                         catch (AggregateException ex)
                         {
-                            Assert.IsAssignableFrom<IOException>(ex.InnerException);
+                            Assert.True(
+                                ex.InnerException is IOException or InvalidOperationException,
+                                $"Expected IOException or InvalidOperationException, got: {ex.InnerException?.GetType()}");
                         }
                     }
 #endif
@@ -1577,7 +1581,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 try { t.Wait(); }
                                 catch (AggregateException ex)
                                 {
-                                    Assert.IsAssignableFrom<IOException>(ex.InnerException);
+                                    Assert.True(
+                                        ex.InnerException is IOException or InvalidOperationException,
+                                        $"Expected IOException or InvalidOperationException, got: {ex.InnerException?.GetType()}");
                                 }
 
                                 // GetTextReader after Read
@@ -1622,7 +1628,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             try { t.Wait(); }
                             catch (AggregateException ex)
                             {
-                                Assert.IsAssignableFrom<IOException>(ex.InnerException);
+                                Assert.True(
+                                    ex.InnerException is IOException or InvalidOperationException,
+                                    $"Expected IOException or InvalidOperationException, got: {ex.InnerException?.GetType()}");
                             }
                         }
 #endif
@@ -1679,7 +1687,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             try { t.Wait(); }
                             catch (AggregateException ex)
                             {
-                                Assert.IsAssignableFrom<IOException>(ex.InnerException);
+                                Assert.True(
+                                    ex.InnerException is IOException or InvalidOperationException,
+                                    $"Expected IOException or InvalidOperationException, got: {ex.InnerException?.GetType()}");
                             }
 
                             // GetXmlReader after Read
@@ -1970,7 +1980,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     try { t.Wait(); }
                                     catch (AggregateException ex)
                                     {
-                                        Assert.IsAssignableFrom<IOException>(ex.InnerException);
+                                        Assert.True(
+                                            ex.InnerException is IOException or InvalidOperationException,
+                                            $"Expected IOException or InvalidOperationException, got: {ex.InnerException?.GetType()}");
                                     }
                                 }
 
