@@ -12,12 +12,15 @@ namespace System.Text;
 
 internal static class EncodingExtensions
 {
-    public static int GetByteCount(this Encoding encoding, string s, int offset, int count)
+    public static int GetByteCount(this Encoding encoding, string? s, int offset, int count)
     {
+        if (s is null)
+        {
+            throw new ArgumentNullException(nameof(s));
+        }
+
         ReadOnlySpan<char> slicedString = s.AsSpan(offset, count);
 
-        // This also implicitly checks for a null string. If the input string is null, slicedString
-        // will be default(ReadOnlySpan<char>), which also has a length of zero.
         if (slicedString.Length == 0)
         {
             return 0;
@@ -32,12 +35,15 @@ internal static class EncodingExtensions
         }
     }
 
-    public static byte[] GetBytes(this Encoding encoding, string s, int index, int count)
+    public static byte[] GetBytes(this Encoding encoding, string? s, int index, int count)
     {
+        if (s is null)
+        {
+            throw new ArgumentNullException(nameof(s));
+        }
+
         ReadOnlySpan<char> slicedString = s.AsSpan(index, count);
 
-        // This also implicitly checks for a null string. If the input string is null, slicedString
-        // will be default(ReadOnlySpan<char>), which also has a length of zero.
         if (slicedString.Length == 0)
         {
             return Array.Empty<byte>();
