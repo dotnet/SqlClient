@@ -2682,7 +2682,7 @@ If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:
 ## Examples
 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and then executes it by passing a string that is a Transact-SQL SELECT statement, and a string to use to connect to the data source.
 
-[!code-csharp[SqlCommand_ExecuteReader](~/../sqlclient/doc/samples/SqlCommand_ExecuteReader.cs)]
+[!code-csharp[SqlCommand_ExecuteReader](~/../sqlclient/doc/samples/SqlCommand_ExecuteReader.cs#1)]
 ]]></format>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -2750,45 +2750,9 @@ If you use <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> or <xref:
 ## Examples
 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and then executes it by passing a string that is a Transact-SQL SELECT statement, and a string to use to connect to the data source. <xref:System.Data.CommandBehavior> is set to <xref:System.Data.CommandBehavior.CloseConnection>.
 
-[!code-csharp[SqlCommand_ExecuteReader2](~/../sqlclient/doc/samples/SqlCommand_ExecuteReader2.cs#1)]
+[!code-csharp[SqlCommand_ExecuteReader2#1](~/../sqlclient/doc/samples/SqlCommand_ExecuteReader2.cs#1)]
 ]]></format>
       </remarks>
-      <example>
-        <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, and then executes it by passing a string that is a Transact-SQL SELECT statement, and a string to use to connect to the data source. <see cref="T:System.Data.CommandBehavior" /> is set to <see cref="F:System.Data.CommandBehavior.CloseConnection" />.
-        </para>
-        <!-- SqlCommand_ExecuteReader2 -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string str = "Data Source=(local);Initial Catalog=Northwind;"
-                             + "Integrated Security=SSPI";
-                  string qs = "SELECT OrderID, CustomerID FROM dbo.Orders;";
-                  CreateCommand(qs, str);
-              }
-          
-              private static void CreateCommand(string queryString, string connectionString)
-              {
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      SqlCommand command = new SqlCommand(queryString, connection);
-                      connection.Open();
-                      SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection);
-                      while (reader.Read())
-                      {
-                          Console.WriteLine(String.Format("{0}", reader[0]));
-                      }
-                  }
-              }
-          }
-        </code>
-      </example>
       <exception cref="T:System.InvalidCastException">
         <list type-="bullet">
           <item><description>
@@ -3526,67 +3490,6 @@ The following example demonstrates how to create a <xref:Microsoft.Data.SqlClien
 [!code-csharp[SqlParameterCollection.AddWithValue#1](~/../sqlclient/doc/samples/SqlParameterCollection_AddWithValue.cs#1)]
 ]]></format>
       </remarks>
-      <example>
-        <para>
-          The following example demonstrates how to create a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and add parameters to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
-        </para>
-        <!-- SqlParameterCollection_AddWithValue -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          class Program
-          {
-              static void Main()
-              {
-                  string connectionString = GetConnectionString();
-                  string demo = @"&lt;StoreSurvey xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/StoreSurvey""&gt;&lt;AnnualSales&gt;1500000&lt;/AnnualSales&gt;&lt;AnnualRevenue&gt;150000&lt;/AnnualRevenue&gt;&lt;BankName&gt;Primary International&lt;/BankName&gt;&lt;BusinessType&gt;OS&lt;/BusinessType&gt;&lt;YearOpened&gt;1974&lt;/YearOpened&gt;&lt;Specialty&gt;Road&lt;/Specialty&gt;&lt;SquareFeet&lt;38000&lt;/SquareFeet&gt;&lt;Brands&gt;3&lt;/Brands&gt;&lt;Internet&gt;DSL&lt;/Internet&gt;&lt;NumberEmployees&gt;40&lt;/NumberEmployees&gt;&lt;/StoreSurvey&gt;";
-                  Int32 id = 3;
-                  UpdateDemographics(id, demo, connectionString);
-                  Console.ReadLine();
-              }
-              private static void UpdateDemographics(Int32 customerID,
-                  string demoXml, string connectionString)
-              {
-                  // Update the demographics for a store, which is stored 
-                  // in an xml column. 
-                  string commandText = "UPDATE Sales.Store SET Demographics = @demographics "
-                      + "WHERE CustomerID = @ID;";
-          
-                  using (SqlConnection connection = new SqlConnection(connectionString))
-                  {
-                      SqlCommand command = new SqlCommand(commandText, connection);
-                      command.Parameters.Add("@ID", SqlDbType.Int);
-                      command.Parameters["@ID"].Value = customerID;
-          
-                      // Use AddWithValue to assign Demographics.
-                      // SQL Server will implicitly convert strings into XML.
-                      command.Parameters.AddWithValue("@demographics", demoXml);
-          
-                      try
-                      {
-                          connection.Open();
-                          Int32 rowsAffected = command.ExecuteNonQuery();
-                          Console.WriteLine("RowsAffected: {0}", rowsAffected);
-                      }
-                      catch (Exception ex)
-                      {
-                          Console.WriteLine(ex.Message);
-                      }
-                  }
-              }
-
-              static private string GetConnectionString()
-              {
-                  // To avoid storing the connection string in your code, 
-                  // you can retrieve it from a configuration file.
-                  return "Data Source=(local);Initial Catalog=AdventureWorks;"
-                       + "Integrated Security=SSPI";
-              }
-          }
-        </code>
-      </example>
     </Parameters>
     <Prepare>
       <summary>
