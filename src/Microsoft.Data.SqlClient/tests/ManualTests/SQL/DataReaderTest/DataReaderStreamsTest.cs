@@ -480,7 +480,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // get a clean reader over the same field and check that the value is empty
                     using (XmlReader xmlReader = GetValue<XmlReader>(reader, 0, accessorType))
                     {
-                    Assert.Equal(GetXmlDocumentContents(xmlReader), string.Empty);
+                        Assert.Equal(GetXmlDocumentContents(xmlReader), string.Empty);
                     }
 
                     using (TextReader textReader = GetValue<TextReader>(reader, 1, accessorType))
@@ -935,6 +935,126 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         expectNull ? "" : value,
                         Encoding.UTF8.GetString(buffer.ToArray()));
                 }
+            }
+        }
+
+        // Test that calling IsDBNull doesn't prevent
+        // GetFieldValue<Stream> from reading the column in non-sequential mode.
+        // Regression test for Copilot review comment on PR #4082: the forStreaming
+        // guard must not suppress TryReadColumnData in non-sequential access.
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("FOO", false)]
+        [InlineData(null, true)]
+        public static void IsDBNull_GetFieldValueStream_NonSequential(
+            string? value,
+            bool expectNull)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand command = new(
+                "select 'foo', 7, convert(varbinary, " +
+                (value is null ? "null" : $"'{value}'") + ")",
+                connection);
+
+            using SqlDataReader reader =
+                command.ExecuteReader(CommandBehavior.Default);
+
+            Assert.True(reader.Read());
+            Assert.Equal("foo", reader.GetString(0));
+            Assert.Equal(7, reader.GetInt32(1));
+
+            // Pre-read the column header via IsDBNull
+            Assert.Equal(expectNull, reader.IsDBNull(2));
+
+            // Now read via streaming type — should still work
+            using MemoryStream buffer = new();
+            using (Stream stream = reader.GetFieldValue<Stream>(2))
+            {
+                stream.CopyTo(buffer);
+                Assert.Equal(
+                    expectNull ? "" : value,
+                    Encoding.UTF8.GetString(buffer.ToArray()));
+            }
+        }
+
+        // Test that calling IsDBNull doesn't prevent
+        // GetFieldValue<TextReader> from reading the column in non-sequential mode.
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("FOO", false)]
+        [InlineData(null, true)]
+        public static void IsDBNull_GetFieldValueTextReader_NonSequential(
+            string? value,
+            bool expectNull)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand command = new(
+                "select 'foo', 7, convert(nvarchar(100), " +
+                (value is null ? "null" : $"'{value}'") + ")",
+                connection);
+
+            using SqlDataReader reader =
+                command.ExecuteReader(CommandBehavior.Default);
+
+            Assert.True(reader.Read());
+            Assert.Equal("foo", reader.GetString(0));
+            Assert.Equal(7, reader.GetInt32(1));
+
+            Assert.Equal(expectNull, reader.IsDBNull(2));
+
+            using TextReader textReader = reader.GetFieldValue<TextReader>(2);
+            string result = textReader.ReadToEnd();
+            Assert.Equal(expectNull ? "" : value, result);
+        }
+
+        // Test that calling IsDBNull doesn't prevent
+        // GetFieldValue<XmlReader> from reading the column in non-sequential mode.
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("<root />", false)]
+        [InlineData(null, true)]
+        public static void IsDBNull_GetFieldValueXmlReader_NonSequential(
+            string? value,
+            bool expectNull)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand command = new(
+                "select 'foo', 7, convert(xml, " +
+                (value is null ? "null" : $"'{value}'") + ")",
+                connection);
+
+            using SqlDataReader reader =
+                command.ExecuteReader(CommandBehavior.Default);
+
+            Assert.True(reader.Read());
+            Assert.Equal("foo", reader.GetString(0));
+            Assert.Equal(7, reader.GetInt32(1));
+
+            Assert.Equal(expectNull, reader.IsDBNull(2));
+
+            if (expectNull)
+            {
+                using XmlReader xmlReader = reader.GetFieldValue<XmlReader>(2);
+                Assert.False(xmlReader.Read());
+            }
+            else
+            {
+                using XmlReader xmlReader = reader.GetFieldValue<XmlReader>(2);
+                xmlReader.Read();
+                string result = xmlReader.ReadOuterXml();
+                Assert.Equal(value, result);
             }
         }
 #nullable disable

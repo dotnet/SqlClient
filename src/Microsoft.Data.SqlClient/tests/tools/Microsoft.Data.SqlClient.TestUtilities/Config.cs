@@ -53,7 +53,8 @@ namespace Microsoft.Data.SqlClient.TestUtilities
             {
                 using (StreamReader r = new StreamReader(configPath))
                 {
-                    config = JsonConvert.DeserializeObject<Config>(r.ReadToEnd());
+                    config = JsonConvert.DeserializeObject<Config>(r.ReadToEnd())
+                        ?? throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'.");
                 }
             }
             catch
