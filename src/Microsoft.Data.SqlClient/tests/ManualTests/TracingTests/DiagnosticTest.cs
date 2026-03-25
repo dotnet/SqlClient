@@ -2,12 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
-//
-// Note that xUnit v2 has no built-in way to skip an entire test class, so we
-// use the preprocessor instead.
-#if false
-
 using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
@@ -27,6 +21,8 @@ using Microsoft.DotNet.RemoteExecutor;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
+    [Trait("Category", "flaky")]
     public class DiagnosticTest
     {
         private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
@@ -1005,5 +1001,3 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
-
-#endif

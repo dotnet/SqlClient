@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder_Remove;
+
 using System;
 using System.Data;
 // <Snippet1>

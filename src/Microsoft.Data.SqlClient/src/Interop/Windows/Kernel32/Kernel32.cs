@@ -4,7 +4,6 @@
 
 using System;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Win32.SafeHandles;
@@ -65,7 +64,6 @@ namespace Interop.Windows.Kernel32
 
         #if NETFRAMEWORK
         [DllImport(DllName, SetLastError = true, CharSet = CharSet.Unicode)]
-        [ResourceExposure(ResourceScope.Machine)]
         internal static extern int GetFullPathName(
             string path,
             int numBufferChars,

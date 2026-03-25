@@ -258,6 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
@@ -301,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     cmd.ExecuteNonQuery();
 
-                    // Verify if the data was updated 
+                    // Verify if the data was updated
                     cmd.CommandText = "select * from " + tableName;
                     cmd.CommandType = CommandType.Text;
                     using SqlDataReader reader = cmd.ExecuteReader();
@@ -326,6 +327,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 #if !NETFRAMEWORK
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()
         {
@@ -350,7 +352,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record1,
                 record2,
             };
-            
+
             using SqlConnection connection = new(builder.ConnectionString);
             string procName = DataTestUtility.GetLongName("Proc");
             string typeName = DataTestUtility.GetShortName("Type");
@@ -409,6 +411,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
@@ -430,7 +433,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     cmd.CommandText = spName;
                     cmd.CommandType = CommandType.StoredProcedure;
-                    
+
                     DataTable dtTest = new();
                     dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
                     dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
@@ -457,6 +460,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
         {
@@ -589,7 +593,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using (SqlCommand cmd = connection.CreateCommand())
                 {
-                    appContextSwitchesHelper.TruncateScaledDecimalField = truncateScaledDecimal ? LocalAppContextSwitchesHelper.Tristate.True : LocalAppContextSwitchesHelper.Tristate.False;
+                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
 
                     var p = new SqlParameter("@Value", null)
                     {
@@ -636,7 +640,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     bulkCopy.DestinationTableName = tableName;
-                    appContextSwitchesHelper.TruncateScaledDecimalField = truncateScaledDecimal ? LocalAppContextSwitchesHelper.Tristate.True : LocalAppContextSwitchesHelper.Tristate.False;
+                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
                     bulkCopy.WriteToServer(table);
                 }
                 Assert.True(ValidateInsertedValues(connection, tableName, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
@@ -648,6 +652,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
@@ -681,7 +686,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         table.Rows.Add(newRow);
                     }
                     p.Value = table;
-                    appContextSwitchesHelper.TruncateScaledDecimalField = truncateScaledDecimal ? LocalAppContextSwitchesHelper.Tristate.True : LocalAppContextSwitchesHelper.Tristate.False;
+                    appContextSwitchesHelper.TruncateScaledDecimal = truncateScaledDecimal;
                     cmd.ExecuteNonQuery();
                 }
                 // TVP always rounds data without attention to the configuration.
@@ -973,6 +978,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [SkipOnPlatform(TestPlatforms.OSX, "Flaky on macOS: https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42351")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {

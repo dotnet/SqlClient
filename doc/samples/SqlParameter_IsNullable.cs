@@ -1,3 +1,5 @@
+namespace SqlParameter_IsNullable;
+
 using System;
 using System.Data;
 // <Snippet1>

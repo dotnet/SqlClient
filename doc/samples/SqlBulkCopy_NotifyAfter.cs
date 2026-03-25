@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_NotifyAfter;
+
 using System;
 using System.Data;
 // <Snippet1>

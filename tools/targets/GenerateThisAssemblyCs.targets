@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-    <Compile Include="$(IntermediateOutputPath)\ThisAssembly.cs"/>
-  </ItemGroup>
 
   <Target Name="GenerateThisAssemblyCs"
+          Inputs="$(MSBuildThisFileFullPath)"
+          Outputs="$(IntermediateOutputPath)ThisAssembly.cs"
           BeforeTargets="CoreCompile">
+
     <PropertyGroup>
+
+      <!-- If an AssemblyFileVersion was provided, use that. Otherwise, use the AssemblyVersion -->
+      <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(AssemblyVersion)</AssemblyFileVersion>
+
+      <!-- Put the ThisAssembly class in the System namespace by default. -->
+      <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">System</ThisAssemblyNamespace>
+
       <ThisAssemblyCsContents>
-[assembly: System.CLSCompliant(true)]
-namespace System
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+namespace $(ThisAssemblyNamespace)
 {
-internal static class ThisAssembly
-{
-internal const string InformationalVersion = "$(AssemblyFileVersion)"%3B
-internal const string NuGetPackageVersion = "$(Version)"%3B
-}
+    internal static class ThisAssembly
+    {
+        internal const string InformationalVersion = "$(AssemblyFileVersion)"%3B
+        internal const string NuGetPackageVersion = "$(Version)"%3B
+    }
 }
       </ThisAssemblyCsContents>
     </PropertyGroup>
 
-    <!-- Get the last version number we built with (if any) -->
-    <ReadLinesFromFile
-      Condition="Exists('$(IntermediateOutputPath)\LastVersionNumber')"
-      File="$(IntermediateOutputPath)\LastVersionNumber">
-      <Output TaskParameter="Lines" PropertyName="LastVersionNumber"/>
-    </ReadLinesFromFile>
-
-    <!-- Write ThisAssembly.cs if this is a new version number, or it is missing -->
+    <!-- Write ThisAssembly.cs if this is a new version number, or if it is missing. -->
     <WriteLinesToFile
-      Condition="('$(LastVersionNumber)'!='$(AssemblyFileVersion)') or !Exists('$(IntermediateOutputPath)\ThisAssembly.cs')"
-      File="$(IntermediateOutputPath)\ThisAssembly.cs"
+      File="$(IntermediateOutputPath)ThisAssembly.cs"
       Lines="$(ThisAssemblyCsContents)"
       Overwrite="true"
       Encoding="Unicode"/>
 
-    <!-- Write the new version number (if it has changed) -->
-    <WriteLinesToFile
-      Condition="'$(LastVersionNumber)'!='$(AssemblyFileVersion)'"
-      File="$(IntermediateOutputPath)\LastVersionNumber"
-      Lines="$(AssemblyFileVersion)"
-      Overwrite="true"
-      Encoding="Unicode"/>
   </Target>
+
+  <!-- Ensure the generated ThisAssembly.cs is included in the compilation. -->
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)ThisAssembly.cs"/>
+    <FileWrites Include="$(IntermediateOutputPath)ThisAssembly.cs"/>
+  </ItemGroup>
 </Project>
