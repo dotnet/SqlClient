@@ -93,6 +93,12 @@ parameters:
     type: boolean
     default: true
 
+  # If true, run manual tests against legacy SQL Server versions (2016, 2017).
+  # Enabled for CI pipelines; disabled for PR pipelines to keep validation fast.
+  - name: runLegacySqlTests
+    type: boolean
+    default: true
+
   - name: dotnetVerbosity
     type: string
     default: normal
@@ -289,6 +295,62 @@ stages:
       # Configuration of test jobs.  Each entry in this object will become a test job, and the
       # properties of each entry will be supplied as parameters to the test job template.
       testConfigurations:
+        # SQL Server 2016 and 2017 on Windows Server 2022 (x64 only).
+        # x86 testing is intentionally skipped for these legacy SQL versions
+        # because x86 support is already validated via SQL 2019 and 2022 images.
+        ${{ if eq(parameters.runLegacySqlTests, true) }}:
+          # Windows Server 22 with local SQL Server 2016, x64 build platform.
+          windows_sql_16_x64:
+            pool: ${{parameters.defaultPoolName }}
+            images:
+              Win22_Sql16: ADO-MMS22-SQL16
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            configSqlFor: local
+            operatingSystem: Windows
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: true
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              FileStreamDirectory: $(FileStreamDirectory)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+              AliasName: $(SQLAliasName)
+              SQLRootPath: $(SQL16RootPath)
+              enableLocalDB: true
+
+          # Windows Server 22 with local SQL Server 2017, x64 build platform.
+          windows_sql_17_x64:
+            pool: ${{parameters.defaultPoolName }}
+            images:
+              Win22_Sql17: ADO-MMS22-SQL17
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            configSqlFor: local
+            operatingSystem: Windows
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: true
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              FileStreamDirectory: $(FileStreamDirectory)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+              AliasName: $(SQLAliasName)
+              SQLRootPath: $(SQL17RootPath)
+              enableLocalDB: true
+
         # Windows Server 22 with local SQL Server 2019, x64 build platform.
         windows_sql_19_x64:
           pool: ${{parameters.defaultPoolName }}

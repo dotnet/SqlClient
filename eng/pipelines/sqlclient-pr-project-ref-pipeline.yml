@@ -139,6 +139,8 @@ extends:
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    # Legacy SQL Server tests (2016/2017) run in CI only, not on PRs.
+    runLegacySqlTests: false
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
       runAlwaysEncryptedTests: false
