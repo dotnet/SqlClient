@@ -951,35 +951,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TException AssertThrowsWrapper<TException>(Action actionThatFails, string exceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        public static TException AssertThrowsWrapper<TException>(
+            Action actionThatFails,
+            string exceptionMessage = null)
+        where TException : Exception
         {
             TException ex = Assert.Throws<TException>(actionThatFails);
+
             if (exceptionMessage != null)
             {
                 Assert.True(ex.Message.Contains(exceptionMessage),
                     string.Format("FAILED: Exception did not contain expected message.\nExpected: {0}\nActual: {1}", exceptionMessage, ex.Message));
             }
 
-            if (innerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException == null, "FAILED: Expected InnerException to be null.");
-            }
-
-            if (customExceptionVerifier != null)
-            {
-                Assert.True(customExceptionVerifier(ex), "FAILED: Custom exception verifier returned false for this exception.");
-            }
-
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        public static TException AssertThrowsWrapper<TException, TInnerException>(
+            Action actionThatFails,
+            string exceptionMessage = null,
+            string innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException>(actionThatFails, exceptionMessage, innerExceptionMustBeNull, customExceptionVerifier);
+            TException ex = AssertThrowsWrapper<TException>(actionThatFails, exceptionMessage);
+
+            Assert.NotNull(ex.InnerException);
+            Assert.IsAssignableFrom<TInnerException>(ex.InnerException);
 
             if (innerExceptionMessage != null)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerExceptionMessage because InnerException is null.");
                 Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
                     string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
@@ -987,21 +988,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException, TInnerInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, string innerInnerExceptionMessage = null, bool innerInnerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception where TInnerInnerException : Exception
+        public static TException AssertThrowsWrapper<TException, TInnerException, TInnerInnerException>(
+            Action actionThatFails,
+            string exceptionMessage = null,
+            string innerExceptionMessage = null,
+            string innerInnerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
+        where TInnerInnerException : Exception
         {
             TException ex = AssertThrowsWrapper<TException, TInnerException>(actionThatFails, exceptionMessage, innerExceptionMessage);
-            if (innerInnerInnerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerInnerExceptionMustBeNull since InnerException is null");
-                Assert.True(ex.InnerException.InnerException == null, "FAILED: Expected InnerInnerException to be null.");
-            }
+
+            Assert.NotNull(ex.InnerException.InnerException);
+            Assert.IsAssignableFrom<TInnerInnerException>(ex.InnerException.InnerException);
 
             if (innerInnerExceptionMessage != null)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerException is null");
-                Assert.True(ex.InnerException.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerInnerException is null");
                 Assert.True(ex.InnerException.InnerException.Message.Contains(innerInnerExceptionMessage),
-                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerInnerExceptionMessage, ex.InnerException.InnerException.Message));
+                    string.Format("FAILED: InnerInner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerInnerExceptionMessage, ex.InnerException.InnerException.Message));
             }
 
             return ex;

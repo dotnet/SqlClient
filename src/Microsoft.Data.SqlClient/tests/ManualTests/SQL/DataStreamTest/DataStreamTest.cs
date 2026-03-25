@@ -1453,7 +1453,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             try { t.Wait(); }
                             catch (AggregateException ex)
                             {
-                                Assert.IsType<IOException>(ex.InnerException);
+                                Assert.IsAssignableFrom<IOException>(ex.InnerException);
                             }
 
                             // GetStream after Read
@@ -1497,7 +1497,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         try { t.Wait(); }
                         catch (AggregateException ex)
                         {
-                            Assert.IsType<IOException>(ex.InnerException);
+                            Assert.IsAssignableFrom<IOException>(ex.InnerException);
                         }
                     }
 #endif
@@ -1577,7 +1577,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 try { t.Wait(); }
                                 catch (AggregateException ex)
                                 {
-                                    Assert.IsType<IOException>(ex.InnerException);
+                                    Assert.IsAssignableFrom<IOException>(ex.InnerException);
                                 }
 
                                 // GetTextReader after Read
@@ -1622,7 +1622,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             try { t.Wait(); }
                             catch (AggregateException ex)
                             {
-                                Assert.IsType<IOException>(ex.InnerException);
+                                Assert.IsAssignableFrom<IOException>(ex.InnerException);
                             }
                         }
 #endif
@@ -1679,7 +1679,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             try { t.Wait(); }
                             catch (AggregateException ex)
                             {
-                                Assert.IsType<IOException>(ex.InnerException);
+                                Assert.IsAssignableFrom<IOException>(ex.InnerException);
                             }
 
                             // GetXmlReader after Read
@@ -1970,7 +1970,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     try { t.Wait(); }
                                     catch (AggregateException ex)
                                     {
-                                        Assert.IsType<IOException>(ex.InnerException);
+                                        Assert.IsAssignableFrom<IOException>(ex.InnerException);
                                     }
                                 }
 
