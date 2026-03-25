@@ -7,17 +7,27 @@ parameters:
   - name: platform
     type: string
     default: $(Platform)
-  
+
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
+
   - name: buildNumber
     type: string
-    default: $(BuildNumber)
-  
+    default: $(Build.BuildNumber)
+
   - name: operatingSystem
     type: string
     default: deferedToRuntime
@@ -26,97 +36,81 @@ parameters:
       - Linux
       - MacOS
       - deferedToRuntime
-    
+
   - name: build
     type: string
     default: MDS
     values:
       - MDS
-      - AKV
+      - AkvProvider
       - all
       - allNoDocs
 
+  # The build number suffix to apply to all assembly file versions built by this step.
+  - name: assemblyBuildNumber
+    type: string
+
+  # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
+  - name: abstractionsPackageVersion
+    type: string
+    default: $(abstractionsPackageVersion)
+
+  # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
+  - name: loggingPackageVersion
+    type: string
+    default: $(loggingPackageVersion)
+
+  # Necessary to build AKV Provider when referenceType is Package.  Ignored when referenceType is Project.
+  - name: mdsPackageVersion
+    type: string
+    default: $(mdsPackageVersion)
+
+  # Necessary to build AKV Provider when referenceType is Package.  Ignored when referenceType is Project.
+  - name: akvPackageVersion
+    type: string
+    default: $(akvPackageVersion)
+
 steps:
-- template: ./ensure-dotnet-version.yml@self
-  parameters:
-      packageType: 'sdk'
-      version: '10.0'
-
-- template: ./ensure-dotnet-version.yml@self
-  parameters:
-      packageType: 'runtime'
-      version: '9.0'
-
-- template: ./ensure-dotnet-version.yml@self
-  parameters:
-      packageType: 'runtime'
-      version: '8.0'
-
-- ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
+  # Build MDS
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
-      displayName: 'Restore nugets [Win]'
+      displayName: 'Build Driver'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
-        solution: build.proj
+        solution: build2.proj
         msbuildArchitecture: x64
-        msbuildArguments: '-t:restore'
-      retryCountOnTaskFailure: 1
+        platform: '${{ parameters.platform }}'
+        configuration: '${{ parameters.buildConfiguration }}'
+        msbuildArguments:
+          -t:BuildMds
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:BuildNumber=${{ parameters.buildNumber }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
 
-    - ${{ if eq(parameters.build, 'allNoDocs') }}:
-      - task: MSBuild@1
-        displayName: 'Build Driver [Win]'
-        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-        inputs:
-          solution: build.proj
-          msbuildArchitecture: x64
-          platform: '${{ parameters.platform }}'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
-          clean: true
-
-    - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
-      - task: MSBuild@1
-        displayName: 'Build Driver [Win]'
-        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-        inputs:
-          solution: build.proj
-          msbuildArchitecture: x64
-          platform: '${{ parameters.platform }}'
-          configuration: '${{ parameters.buildConfiguration }}'
-          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
-          clean: true
-
-  - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
+  # Build AKV Provider
+  - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
-      displayName: 'Build AKV Provider NetFx [Win]'
+      displayName: 'Build AKV Provider'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
         solution: build.proj
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments: '-t:BuildAKVNetFx -p:BuildNumber=${{ parameters.buildNumber }}'
+        msbuildArguments: >-
+          -t:BuildAkvProvider
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:TestEnabled=true
+          -p:GenerateNuget=false
+          -p:Configuration=${{ parameters.buildConfiguration }}
+          -p:BuildNumber=${{ parameters.buildNumber }}
+          -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
+          -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
+          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
 
-    - task: MSBuild@1
-      displayName: 'Build AKV Provider NetCore All OS [Win]'
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-      inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
-
-- ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - task: DotNetCoreCLI@2
-    displayName: 'Build Driver [non-Win]'
-    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
-    inputs:
-      command: custom
-      projects: build.proj
-      custom: msbuild
-      arguments: '-t:BuildAll -p:TestEnabled=true -p:GenerateDocumentationFile=false -p:configuration=${{ parameters.buildConfiguration }}'
-      verbosityRestore: Detailed
-      verbosityPack: Detailed
-    retryCountOnTaskFailure: 1

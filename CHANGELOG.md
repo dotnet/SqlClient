@@ -7,6 +7,427 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.0.0] - 2026-03-17
+
+This section summarizes all changes across the 7.0 preview cycle for users upgrading from the latest 6.1 stable release.
+See the [full release notes](release-notes/7.0/7.0.0.md) for detailed descriptions.
+
+Also released as part of this milestone:
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0.md).
+- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0.md).
+- Released Microsoft.Data.SqlClient.Internal.Logging 1.0.0. See [release notes](release-notes/Internal/Logging/1.0/1.0.0.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0.md).
+
+### Changed
+
+- **Breaking:** Removed Azure dependencies from the core package. Entra ID authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Entra ID authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
+  ([#1108](https://github.com/dotnet/SqlClient/issues/1108),
+   [#3680](https://github.com/dotnet/SqlClient/pull/3680),
+   [#3902](https://github.com/dotnet/SqlClient/pull/3902),
+   [#3904](https://github.com/dotnet/SqlClient/pull/3904),
+   [#3908](https://github.com/dotnet/SqlClient/pull/3908),
+   [#3917](https://github.com/dotnet/SqlClient/pull/3917),
+   [#3982](https://github.com/dotnet/SqlClient/pull/3982),
+   [#3978](https://github.com/dotnet/SqlClient/pull/3978),
+   [#3986](https://github.com/dotnet/SqlClient/pull/3986))
+
+- Two additional packages were introduced to support this separation: `Microsoft.Data.SqlClient.Extensions.Abstractions` (shared types between the core driver and extensions) and `Microsoft.Data.SqlClient.Internal.Logging` (shared ETW tracing infrastructure).
+  ([#3626](https://github.com/dotnet/SqlClient/pull/3626),
+   [#3628](https://github.com/dotnet/SqlClient/pull/3628),
+   [#3967](https://github.com/dotnet/SqlClient/pull/3967),
+   [#4038](https://github.com/dotnet/SqlClient/pull/4038))
+
+- Deprecated `SqlAuthenticationMethod.ActiveDirectoryPassword` (ROPC flow). The method is now marked `[Obsolete]` and will generate compiler warnings. Migrate to `ActiveDirectoryInteractive`, `ActiveDirectoryServicePrincipal`, `ActiveDirectoryManagedIdentity`, or `ActiveDirectoryDefault`.
+  ([#3671](https://github.com/dotnet/SqlClient/pull/3671))
+
+- Reverted public visibility of internal interop enums (`IoControlCodeAccess` and `IoControlTransferType`) that were accidentally made public during the project merge.
+  ([#3900](https://github.com/dotnet/SqlClient/pull/3900))
+
+- Removed `Constrained Execution Region` error handling blocks and associated `SqlConnection` cleanup.
+  ([#3535](https://github.com/dotnet/SqlClient/pull/3535))
+
+- Performance improvements across SqlStatistics timing, Always Encrypted scenarios, and connection opening:
+  ([#3609](https://github.com/dotnet/SqlClient/pull/3609),
+   [#3612](https://github.com/dotnet/SqlClient/pull/3612),
+   [#3732](https://github.com/dotnet/SqlClient/pull/3732),
+   [#3660](https://github.com/dotnet/SqlClient/pull/3660),
+   [#3791](https://github.com/dotnet/SqlClient/pull/3791),
+   [#3772](https://github.com/dotnet/SqlClient/pull/3772),
+   [#3554](https://github.com/dotnet/SqlClient/pull/3554))
+
+- Allow `SqlBulkCopy` to operate on hidden columns.
+  ([#3590](https://github.com/dotnet/SqlClient/pull/3590))
+
+- Updated UserAgent feature to use a pipe-delimited format, replacing the previous JSON format.
+  ([#3826](https://github.com/dotnet/SqlClient/pull/3826))
+
+- Minor improvements to Managed SNI tracing to capture continuation events and errors.
+  ([#3859](https://github.com/dotnet/SqlClient/pull/3859))
+
+### Added
+
+- Added `SspiContextProvider` abstract class and `SqlConnection.SspiContextProvider` property, enabling custom SSPI authentication for scenarios like cross-domain Kerberos negotiation and NTLM username/password authentication.
+  ([#2253](https://github.com/dotnet/SqlClient/issues/2253),
+   [#2494](https://github.com/dotnet/SqlClient/pull/2494))
+
+- Continued refinement of packet multiplexing with bug fixes and stability improvements, plus new app context switches for opt-in control.
+  ([#3534](https://github.com/dotnet/SqlClient/pull/3534),
+   [#3537](https://github.com/dotnet/SqlClient/pull/3537),
+   [#3605](https://github.com/dotnet/SqlClient/pull/3605))
+
+- Added support for enhanced routing, a TDS feature that allows the server to redirect connections to a specific server and database during login, enabling Azure SQL Hyperscale read replica load balancing.
+  ([#3641](https://github.com/dotnet/SqlClient/issues/3641),
+   [#3969](https://github.com/dotnet/SqlClient/pull/3969),
+   [#3970](https://github.com/dotnet/SqlClient/pull/3970),
+   [#3973](https://github.com/dotnet/SqlClient/pull/3973))
+
+- Updated pipelines and test suites to compile the driver using the .NET 10 SDK.
+  ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
+
+- Added `SqlConfigurableRetryFactory.BaselineTransientErrors` static property exposing the default transient error codes list as a `ReadOnlyCollection<int>`.
+  ([#3903](https://github.com/dotnet/SqlClient/pull/3903))
+
+- Added app context switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` globally without modifying connection strings.
+  ([#3841](https://github.com/dotnet/SqlClient/pull/3841))
+
+- Added app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` to let the client ignore server-provided failover partner info in Basic Availability Groups.
+  ([#3625](https://github.com/dotnet/SqlClient/pull/3625))
+
+- Enabled `SqlClientDiagnosticListener` for `SqlCommand` on .NET Framework, closing a long-standing observability gap where diagnostic events were previously only available on .NET Core.
+  ([#3658](https://github.com/dotnet/SqlClient/pull/3658))
+
+- Brought the 15 strongly-typed diagnostic event classes in the `Microsoft.Data.SqlClient.Diagnostics` namespace (e.g., `SqlClientCommandBefore`, `SqlClientConnectionOpenAfter`, `SqlClientTransactionCommitError`) to .NET Framework as part of the codebase merge. These types were originally introduced for .NET Core in 6.0.
+  ([#3493](https://github.com/dotnet/SqlClient/pull/3493))
+
+- Enabled User Agent Feature Extension (opt-in via `Switch.Microsoft.Data.SqlClient.EnableUserAgent`).
+  ([#3606](https://github.com/dotnet/SqlClient/pull/3606))
+
+- Added actionable error message when Entra ID authentication methods are used without the `Microsoft.Data.SqlClient.Extensions.Azure` package installed.
+  ([#3962](https://github.com/dotnet/SqlClient/issues/3962),
+   [#4046](https://github.com/dotnet/SqlClient/pull/4046))
+
+### Fixed
+
+- Fixed a connection performance regression where SPN generation was triggered for non-integrated authentication modes (e.g., SQL authentication) on the native SNI path.
+  ([#3929](https://github.com/dotnet/SqlClient/pull/3929))
+
+- Fixed `ExecuteScalar` to propagate errors when the server sends data followed by an error token.
+  ([#3912](https://github.com/dotnet/SqlClient/pull/3912))
+
+- Fixed `NullReferenceException` in `SqlDataAdapter` when processing batch scenarios.
+  ([#3857](https://github.com/dotnet/SqlClient/pull/3857))
+
+- Fixed reading of multiple app context switches from a single `AppContextSwitchOverrides` configuration field.
+  ([#3960](https://github.com/dotnet/SqlClient/pull/3960))
+
+- Fixed an edge case in `TdsParserStateObject.TryReadPlpBytes` where zero-length reads returned `null` instead of an empty array.
+  ([#3872](https://github.com/dotnet/SqlClient/pull/3872))
+
+- Fixed issue where extra connection deactivation was occurring.
+  ([#3758](https://github.com/dotnet/SqlClient/pull/3758))
+
+- Fixed debug assertion in connection pool (no impact to production code).
+  ([#3587](https://github.com/dotnet/SqlClient/pull/3587))
+
+- Prevented uninitialized performance counters escaping `CreatePerformanceCounters`.
+  ([#3623](https://github.com/dotnet/SqlClient/pull/3623))
+
+- Fixed `SetProvider` to return immediately if user-defined authentication provider found.
+  ([#3620](https://github.com/dotnet/SqlClient/pull/3620))
+
+- Fixed connection pool concurrency issue.
+  ([#3632](https://github.com/dotnet/SqlClient/pull/3632))
+
+## [Preview Release 7.0.0-preview4.26064.3] - 2026-03-05
+
+This update brings the below changes over the previous preview release:
+
+Also released as part of this milestone:
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0-preview1.26064.3. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0-preview1.26064.3. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Logging 1.0.0-preview1.26064.3. See [release notes](release-notes/Extensions/Logging/1.0/1.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0-preview1.26064.3. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0-preview1.md).
+
+### Changed
+
+- **Breaking:** Removed Azure dependencies from the core package. Entra ID authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Entra ID authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
+  ([#1108](https://github.com/dotnet/SqlClient/issues/1108),
+   [#3680](https://github.com/dotnet/SqlClient/pull/3680),
+   [#3902](https://github.com/dotnet/SqlClient/pull/3902),
+   [#3904](https://github.com/dotnet/SqlClient/pull/3904),
+   [#3908](https://github.com/dotnet/SqlClient/pull/3908),
+   [#3917](https://github.com/dotnet/SqlClient/pull/3917),
+   [#3982](https://github.com/dotnet/SqlClient/pull/3982),
+   [#3978](https://github.com/dotnet/SqlClient/pull/3978),
+   [#3986](https://github.com/dotnet/SqlClient/pull/3986))
+
+- Introduced `Microsoft.Data.SqlClient.Extensions.Abstractions` and `Microsoft.Data.SqlClient.Extensions.Logging` packages to support the extensions model.
+  ([#3626](https://github.com/dotnet/SqlClient/pull/3626),
+   [#3628](https://github.com/dotnet/SqlClient/pull/3628),
+   [#3967](https://github.com/dotnet/SqlClient/pull/3967))
+
+- Updated UserAgent feature to use a pipe-delimited format.
+  ([#3826](https://github.com/dotnet/SqlClient/pull/3826))
+
+- Minor improvements to Managed SNI tracing.
+  ([#3859](https://github.com/dotnet/SqlClient/pull/3859))
+
+- Reverted public visibility of internal interop enums that were accidentally made public during the project merge.
+  ([#3900](https://github.com/dotnet/SqlClient/pull/3900))
+
+- Performance improvements:
+  ([#3791](https://github.com/dotnet/SqlClient/pull/3791),
+   [#3772](https://github.com/dotnet/SqlClient/pull/3772))
+
+- Codebase merge and cleanup:
+  ([#3773](https://github.com/dotnet/SqlClient/pull/3773),
+   [#3818](https://github.com/dotnet/SqlClient/pull/3818),
+   [#3836](https://github.com/dotnet/SqlClient/pull/3836),
+   [#3810](https://github.com/dotnet/SqlClient/pull/3810),
+   [#3837](https://github.com/dotnet/SqlClient/pull/3837),
+   [#3963](https://github.com/dotnet/SqlClient/pull/3963))
+
+### Added
+
+- Added `SspiContextProvider` abstract class and `SqlConnection.SspiContextProvider` property, enabling custom SSPI authentication for scenarios like cross-domain Kerberos negotiation and NTLM username/password authentication.
+  ([#2253](https://github.com/dotnet/SqlClient/issues/2253),
+   [#2494](https://github.com/dotnet/SqlClient/pull/2494))
+
+- Added `SqlConfigurableRetryFactory.BaselineTransientErrors` static property exposing the default transient error codes list as a `ReadOnlyCollection<int>`.
+  ([#3903](https://github.com/dotnet/SqlClient/pull/3903))
+
+- Added new app context switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection strings.
+  ([#3841](https://github.com/dotnet/SqlClient/pull/3841))
+
+- Added support for enhanced routing, a TDS feature extension that allows the server to redirect connections to a specific server and database, enabling Azure SQL Hyperscale read replica load balancing.
+  ([#3641](https://github.com/dotnet/SqlClient/issues/3641),
+   [#3969](https://github.com/dotnet/SqlClient/pull/3969),
+   [#3970](https://github.com/dotnet/SqlClient/pull/3970),
+   [#3973](https://github.com/dotnet/SqlClient/pull/3973))
+
+### Fixed
+
+- Fixed `ExecuteScalar` to propagate errors when the server sends data followed by an error token.
+  ([#3912](https://github.com/dotnet/SqlClient/pull/3912))
+
+- Fixed `NullReferenceException` in `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3857](https://github.com/dotnet/SqlClient/pull/3857))
+
+- Fixed reading of multiple app context switches from a single `AppContextSwitchOverrides` configuration field.
+  ([#3960](https://github.com/dotnet/SqlClient/pull/3960))
+
+- Fixed a connection performance regression where SPN generation was triggered for non-integrated authentication modes (e.g., SQL authentication) on the native SNI path.
+  ([#3929](https://github.com/dotnet/SqlClient/pull/3929))
+
+- Fixed an edge case in `TdsParserStateObject.TryReadPlpBytes` where zero-length reads returned `null` instead of an empty array.
+  ([#3872](https://github.com/dotnet/SqlClient/pull/3872))
+
+## [Stable release 6.0.5] - 2026-01-15
+
+This update brings the below changes over the previous stable release:
+
+### Fixed
+
+- Fixed NullReferenceException issue with `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3878](https://github.com/dotnet/SqlClient/pull/3878))
+
+### Added
+
+*What Changed:*
+
+- Added new AppContext switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection string.
+  ([#3852](https://github.com/dotnet/SqlClient/pull/3852))
+
+*Who Benefits:*
+
+- Applications that need MultiSubnetFailover enabled globally without modifying connection strings.
+
+*Impact:*
+
+- Applications can now enable MultiSubnetFailover globally using one of the following methods:
+
+```c#
+// In application code
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault", true);
+```
+
+```json
+// In runtimeconfig.json
+{
+  "configProperties": {
+    "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault": true
+  }
+}
+```
+
+```xml
+<!-- In App.Config -->
+<runtime>
+  <AppContextSwitchOverrides value="Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=true" />
+</runtime>
+```
+
+### Changed
+
+- Updated dependencies ([#3840](https://github.com/dotnet/SqlClient/pull/3840)):
+  - .NET Framework 4.6.2:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.Text.Json 8.0.5 -> 8.0.6
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Encodings.Web - Removed
+
+  - .NET 8.0:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+
+  - .NET 9.0:
+
+    - Azure.Core 1.50.0 - Added
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 9.0.11
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - Microsoft.IdentityModel.JsonWebTokens 7.5.0 -> 7.7.1
+    - Microsoft.IdentityModel.Protocols.OpenIdConnect 7.5.0 -> 7.7.1
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+
+## [Stable Release 6.1.4] - 2026-01-15
+
+This update brings the following changes since the [6.1.3](release-notes/6.1/6.1.3.md) release:
+
+### Fixed
+
+- Fixed NullReferenceException issue with `SqlDataAdapter` when processing batch scenarios where certain SQL RPC calls may not include system parameters.
+  ([#3877](https://github.com/dotnet/SqlClient/pull/3877))
+- Fixed connection pooling issue where extra connection deactivation was causing active connection counts to go negative.
+  ([#3776](https://github.com/dotnet/SqlClient/pull/3776))
+
+### Added
+
+#### AppContext Switch for enabling MultiSubnetFailover
+
+*What Changed:*
+
+- Added new AppContext switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` by default in connection string.
+  ([#3851](https://github.com/dotnet/SqlClient/pull/3851))
+
+*Who Benefits:*
+
+- Applications that need MultiSubnetFailover enabled globally without modifying connection strings.
+
+*Impact:*
+
+- Applications can now enable MultiSubnetFailover globally using one of the following methods:
+
+```c#
+// In application code
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault", true);
+```
+
+```json
+// In runtimeconfig.json
+{
+  "configProperties": {
+    "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault": true
+  }
+}
+```
+
+```xml
+<!-- In App.Config -->
+<runtime>
+  <AppContextSwitchOverrides value="Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=true" />
+</runtime>
+```
+
+### Changed
+
+- Optimized `SqlStatistics` execution timing by using `Environment.TickCount` instead of more expensive timing mechanisms.
+  ([#3830](https://github.com/dotnet/SqlClient/pull/3830))
+- Updated dependencies ([#3843](https://github.com/dotnet/SqlClient/pull/3843)):
+  - .NET Framework 4.6.2:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.Diagnostics.DiagnosticSource 8.0.1 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - System.Memory 4.6.3 - Added
+    - System.Text.Json 8.0.5 -> 8.0.6
+    - System.Text.RegularExpressions 4.3.1 - Added
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Encodings.Web - Removed
+  - .NET 8.0:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Diagnostics.DiagnosticSource 8.0.1 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+  - .NET 9.0:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 9.0.11
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Configuration.ConfigurationManager 9.0.4 -> 9.0.11
+    - System.Diagnostics.DiagnosticSource 9.0.11 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - System.Security.Cryptography.Pkcs 9.0.4 -> 9.0.11
+    - Microsoft.Bcl.Cryptography - Removed
+    - System.Text.Json - Removed
+  - .NET Standard 2.0:
+    - Azure.Core 1.47.1 -> 1.50.0
+    - Azure.Identity 1.14.2 -> 1.17.1
+    - Microsoft.Extensions.Caching.Memory 9.0.4 -> 8.0.1
+    - Microsoft.Identity.Client 4.80.0 - Added
+    - System.Configuration.ConfigurationManager 9.0.4 -> 8.0.1
+    - System.Diagnostics.DiagnosticSource 8.0.1 - Added
+    - System.IdentityModel.Tokens.Jwt 7.7.1 - Added
+    - System.Security.Cryptography.Pkcs 9.0.4 -> 8.0.1
+    - System.Text.Json 9.0.5 -> 8.0.6
+    - Microsoft.Bcl.Cryptography - Removed
+
+## [Stable release 5.1.9] - 2026-01-13
+
+This update brings the following changes since the [5.1.8](release-notes/5.1/5.1.8.md) release:
+
+### Changed
+
+- Use Environment.TickCount for SqlStatistics execution timing.
+  ([#3831](https://github.com/dotnet/SqlClient/pull/3831))
+- Updated dependencies ([#3838](https://github.com/dotnet/SqlClient/pull/3838)):
+  - .NET Standard 2.0:
+    - Microsoft.Win32.Registry - Removed
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+  - .NET Standard 2.1:
+    - Microsoft.Win32.Registry - Removed
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+  - .NET Framework 4.6.2:
+    - System.Buffers 4.5.1 -> 4.6.1
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+    - System.Text.Json - Removed
+  - .NET 6.0:
+    - System.Diagnostics.DiagnosticSource - Removed
+    - System.IdentityModel.Tokens.Jwt 6.35.0 - Added
+    - System.Text.Encodings.Web - Removed
+
 ## [Preview Release 7.0.0-preview3.25342.7] - 2025-12-08
 
 This update brings the following changes over the previous preview release:

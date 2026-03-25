@@ -1,10 +1,12 @@
+namespace SqlClient_AsyncProgramming_ProviderModel;
+
 using System;
 // <Snippet1>
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
-class program
+class Program
 {
    static async Task PerformDBOperationsUsingProviderModel(string connectionString)
    {

@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 #if NETFRAMEWORK
-using System.Runtime.Versioning;
 using System.Security;
 #endif
 
@@ -591,10 +590,6 @@ namespace Microsoft.Data.Common.ConnectionString
         // * this method queries "DataDirectory" value from the current AppDomain.
         //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
         // * This method uses GetFullPath to validate that root path is valid, the result is not exposed out.
-        #if NETFRAMEWORK
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        #endif
         internal static string ExpandDataDirectory(string keyword, string value)
         {
             string fullPath = null;

@@ -60,6 +60,8 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Check if we're still going to raise transient error
             if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
+                // Increment Login7 count since we won't call base.OnLogin7Request
+                Interlocked.Increment(ref _login7Count);
                 return GenerateErrorMessage(request);
             }
 

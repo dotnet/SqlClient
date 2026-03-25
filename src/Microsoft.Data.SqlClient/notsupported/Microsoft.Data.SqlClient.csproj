@@ -1,0 +1,219 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Everybody hold onto your pants because this is going to get a bit ugly.
+
+    The purpose of this project is to generate a "Not Supported" version of the MDS assembly. At a
+    high level, this is done by:
+      * Building the ref project (as a dependency to this project)
+      * Feeding the ref assembly to GenAPI (built separately)
+      * GenAPI generates a single cs file with the entire API surface implemented to throw
+        PlatformNotSupportedExceptions
+      * This cs file is included as a compilation item in this project.
+
+    The big question might be: Why do we need a "Not Supported" version of MDS?
+    In some situations, most importantly PowerShell, including a NuGet package will automatically
+    reference the appropriate assembly in the /lib folder of the package, which is inherently OS-
+    agnostic. MDS implementation assemblies are placed in the /runtimes folder to provide the OS-
+    specific versions of MDS. The "Not Supported" binary is thus placed in the lib folder so that
+    in OS-agnostic situations, the user is reminded to reference an OS-specific version of MDS.
+
+    The next big question might be: Why is this a separate project?
+    In previous iterations, generating the "Not Supported" binaries was part of the netcore ref
+    project and netcore src project. This made it necessary to conditionally switch the project
+    and all associated variables from "implementation" mode into "not supported" mode. It was
+    very difficult to understand what was going on. Creating a separate project just for
+    "not supported" mode simplifies this considerably. It also makes it much cleaner to excise
+    when this project is no longer required.
+
+    The last big question might be: Why does this need to be a project at all?
+    Since it looks like we're just running a static GenAPI program against the ref binaries, surely
+    we could just do that as an arbitrary command execution in the build.proj file, right? Well,
+    not really. GenAPI needs a list of folders to find built-in reference libraries. To get that
+    list correctly, we need access to @(ReferencePath), which is most easily done by passing it in
+    as an input to a target in a csproj. What's more, we need to compile the source that GenAPI
+    generates. Unless we want to manually call csc (and who wants to do that) we need a project.
+
+    NOTE: If you are trying to build this from your IDE - YOU ARE DOING IT WRONG.
+    This project can only be built after the GenAPI project has been built. Normally this would mean
+    adding a reference from this project to the GenAPI project. Although this is possible, it is
+    not a clean solution (due to reasons related to target frameworks). Thus, building this project
+    assumes the GenAPI project has already been built in a previous step. Instead, use the
+    following command in build2.proj to build the "not supported" binaries:
+
+    > msbuild build2.proj /t:BuildMdsNotSupported
+
+    @TODO: Remove this project
+    The primary prerequisite for removing this project is making the "common" MDS project OS-
+    agnostic. Once that happens, the lib binary will be able to switch OS implementation at runtime
+    and a "not supported" error is no longer necessary.
+
+    alternatively:
+    @TODO: Replace the GenAPI project with a C# Source Generator
+  -->
+
+  <!-- General Properties ============================================== -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+
+    <!--
+      Files to compile will be generated per-framework by the GenerateNotSupportedSource target and
+      included via Compile tags. Leaving this enabled will cause warnings about files being
+      included more than once.
+    -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+
+    <!-- Disable obsolete member usage warning -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsAssemblyVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!--
+      MSBuild will add the target framework to the end of this path by default. Telling it not to
+      is possible but also requires specifying the IntermediateOutputPath. So while it would be
+      nice to have a flatter directory structure, it's more hassle than its worth.
+    -->
+    <OutputPath>$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
+  </PropertyGroup>
+
+  <!-- References ====================================================== -->
+  <!--
+    Reference the ref project to cause it to be built, so we can use it as the contract to build
+    not supported assemblies against. Note, this must be set to output item type of none otherwise
+    the assemblies for the ref project will be copied to the output for this project, causing
+    conflicts that fail the build.
+  -->
+  <PropertyGroup>
+    <RefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</RefProjectPath>
+    <RefArtifactPath>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(RefProjectPath)"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      OutputItemType="None" />
+  </ItemGroup>
+
+  <!--
+    Reference to Abstractions package. Even though the ref project has a reference to the
+    abstractions package, the binaries will not be copied into this project's output, so we need to
+    make our own reference to the package to ensure it is brought in for compilation.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- References to external packages that the API refers to -->
+  <!-- References for netframework -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
+                      PrivateAssets="all"
+                      IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
+
+  <!-- References for netstandard -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
+
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <!-- Generate "Not Supported" Source ================================= -->
+  <PropertyGroup>
+    <NotSupportedSourceFile>$(AssemblyName).$(TargetFramework).notsupported.cs</NotSupportedSourceFile>
+  </PropertyGroup>
+
+  <Target Name="GenerateNotSupportedSource"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="ResolveReferences">
+
+    <!-- Verify that GenAPI and ref projects were built successfully -->
+    <Error Text="Ref project output was not found at: '$(RefArtifactPath)'"
+           Condition="!Exists('$(RefArtifactPath)')" />
+    <Error Text="GenAPI project output was not found at: '$(GenApiPath)'"
+           Condition="!Exists('$(GenApiPath)')" />
+
+    <!--
+      Cleanup the list of reference path directories by trimming trailing \ and removing
+      duplicates.
+    -->
+    <ItemGroup>
+      <_referencePathDirectoriesWithDuplicates
+        Include="@(ReferencePath->'%(RootDir)%(Directory)'->TrimEnd('\'))" />
+      <_referencePathDirectories
+        Include="%(_referencePathDirectoriesWithDuplicates.Identity)" />
+    </ItemGroup>
+
+    <!-- Execute GenAPI against the ref assembly to generate the source file -->
+    <PropertyGroup>
+      <GenApiCommand>
+        $(DotnetPath)dotnet "$(GenApiPath)"
+          $(RefArtifactPath)
+          -l:"@(_referencePathDirectories)"
+          -o:"$(NotSupportedSourceFile)"
+          -t:"Microsoft.Data.SqlClient is not supported on this platform."
+      </GenApiCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s+", " "))</GenApiCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building MDS 'Not Supported' binaries via command: $(GenApiCommand)"/>
+    <Exec Command="$(GenApiCommand)" ConsoleToMsBuild="true" />
+
+    <!-- Include the "Not Supported" source file into this project -->
+    <ItemGroup>
+      <Compile Include="$(NotSupportedSourceFile)" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -171,7 +173,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private static Stream CreateSslOverTdsStream(Stream stream)
         {
-            Type type = typeof(SqlClientFactory).Assembly.GetType("Microsoft.Data.SqlClient.SNI.SslOverTdsStream");
+            Type type = typeof(SqlClientFactory).Assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SslOverTdsStream");
             ConstructorInfo ctor = type.GetConstructor(new Type[] { typeof(Stream) });
             Stream instance = (Stream)ctor.Invoke(new object[] { stream });
             return instance;
@@ -359,3 +361,5 @@ namespace Microsoft.Data.SqlClient.Tests
         }
     }
 }
+
+#endif

@@ -20,8 +20,9 @@ namespace Microsoft.Data.SqlClient.FunctionalTests.DataCommon
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         => Task.FromResult(new SqlAuthenticationToken(DUMMY_TOKEN_STR, new DateTimeOffset(DateTime.Now.AddHours(2))));
 
-        // Supported authentication modes don't matter for dummy test, but added to demonstrate config file usage.
         public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
-        => authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive;
+        {
+            return authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive;
+        }
     }
 }

@@ -41,7 +41,8 @@ Generated\ Files/
 **/.AssemblyAttributes
 
 # Visual Studio Code settings
-.vscode/
+.vscode/*
+!.vscode/mcp.json
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
@@ -51,6 +52,9 @@ Generated\ Files/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# TRX format test results
+**/*.trx
 
 # Build Results of an ATL Project
 [Dd]ebugPS/
@@ -193,12 +197,14 @@ PublishScripts/
 *.nupkg
 # NuGet Symbol Packages
 *.snupkg
-# The packages folder can be ignored because of Package Restore
+# Most of the packages folder can be ignored.
 **/[Pp]ackages/*
-# except build/, which is used as an MSBuild target.
-!**/[Pp]ackages/build/
-# Uncomment if necessary however generally it will be regenerated when needed
-#!**/[Pp]ackages/repositories.config
+!**/[Pp]ackages/.gitkeep
+
+# Most of the output folder can be ignored.
+**/[Oo]utput/*
+!**/[Oo]utput/.gitkeep
+
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets
@@ -364,3 +370,9 @@ MigrationBackup/
 
 # Config Json file
 **/config.json
+
+# Generated Milestone PR metadata files
+.milestone-prs/
+
+# MDS "Not Supported" GenAPI code
+**/notsupported/*.cs

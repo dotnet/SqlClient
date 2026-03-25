@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Le fournisseur d'authentification est introuvable pour '{0}'.</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Impossible de trouver un fournisseur d'authentification pour « {0} ». Installez le package NuGet « Microsoft.Data.SqlClient.Extensions.Azure » (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) pour utiliser les méthodes d'authentification Active Directory Domain Services (Entra ID).</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Échec de lecture de la section de configuration des fournisseurs d'authentification.</value>
   </data>
@@ -4335,6 +4338,9 @@
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Informations de routage non valides reçues.</value>
   </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Informations de routage améliorées non valides reçues.</value>
+  </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Serveur fourni des informations de routage, mais déjà expiration du délai.</value>
   </data>
@@ -4682,5 +4688,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>Chaîne JSON {0} non valide pour le vecteur.</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>Impossible de trouver un emplacement libre dans le pool de connexions.</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>Le pool de connexions a été arrêté.</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>Impossible d'obtenir RequiredLength lorsque HasDataLength est faux.</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>Un paquet partiel ne peut pas être non nul lors d'une affectation à une valeur non nulle.</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets ne peut pas renvoyer à la fois consumePartialPacket et consumeInputDirectly.</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>Tentative de mise en attente d'une lecture alors que le crochet de test « fail async pends » était activé.</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>Modification de paquet détectée. Le hachage est nul, mais le paquet contient un tampon non nul.</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>Modification de paquet détectée. Le hachage généré lors de la création du paquet ne correspond pas au hachage obtenu lors de la vérification du paquet.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>Impossible de passer de l'état « {0} » à l'état « {1} ».</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>État non pris en charge : '{0}'.</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>Échec de la création de l'objet SqlRetryLogicBaseProvider car la valeur de retryMethod est nulle ou vide.</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>Une exception s'est produite lors de l'exécution de la méthode « {0}.{1}() ».</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>Échec de la résolution de la méthode « {0} » du type « {1} ».</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>Type de retour invalide ; le type de retour doit être de type « {0} ».</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>Échec de la création de l'objet SqlRetryLogicBaseProvider en raison de paramètres « {0} » non valides.{1}La fonction doit comporter un paramètre de type « SqlRetryLogicOption ».</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>Échec de la création de l'objet SqlRetryLogicBaseProvider en raison de paramètres retryMethod non valides. Le {0}paramètre « {1} {2} » ne possède pas de valeur par défaut.</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>La séquence contient plusieurs éléments correspondants.</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>La séquence ne contient aucun élément correspondant.</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>Il est possible de louer depuis un pool uniquement si un délégué onCreate est disponible.</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>Le type « {0} » a une taille invalide.</value>
   </data>
 </root>

@@ -18,19 +18,22 @@ using System.Threading.Tasks;
 using System.Xml;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
-using Microsoft.Data.SqlClient.UserAgent;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
+#if _WINDOWS
 using Interop.Windows.Sni;
+#endif
 using Microsoft.Data.SqlTypes;
 #endif
 
@@ -41,6 +44,10 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource counter
+        // @TODO: Replace both fields with the `field` keyword when LangVersion >= 14.
+        private static XmlWriterSettings s_asyncXmlWriterSettings;
+        private static XmlWriterSettings s_syncXmlWriterSettings;
+
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         private SspiContextProvider _authenticationProvider;
@@ -153,6 +160,12 @@ namespace Microsoft.Data.SqlClient
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
+
+        private static XmlWriterSettings AsyncXmlWriterSettings =>
+            s_asyncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment, Async = true };
+
+        private static XmlWriterSettings SyncXmlWriterSettings =>
+            s_syncXmlWriterSettings ??= new() { CloseOutput = false, ConformanceLevel = ConformanceLevel.Fragment };
 
         /// <summary>
         /// Get or set if column encryption is supported by the server.
@@ -1307,11 +1320,11 @@ namespace Microsoft.Data.SqlClient
             // length in bytes
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
-            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
+            // Obtain the client interface name.
+            string clientInterfaceName = DbConnectionStringDefaults.ApplicationName;
+            Debug.Assert(clientInterfaceName.Length <= TdsEnums.MAXLEN_CLIENTINTERFACE);
 
             // add up variable-len portions (multiply by 2 for byte len of char strings)
-            //
             checked
             {
                 length += (rec.hostName.Length + rec.applicationName.Length +
@@ -1366,7 +1379,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures, 
                     recoverySessionData, 
                     fedAuthFeatureExtensionData,
-                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    UserAgent.Ucs2Bytes,
                     useFeatureExt, 
                     length
                     );
@@ -1738,7 +1751,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            using TryEventScope _ = TryEventScope.Create(nameof(TdsParser));
+            using SqlClientEventScope _ = SqlClientEventScope.Create(nameof(TdsParser));
 #if DEBUG
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
@@ -3373,6 +3386,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_ROUTING:
+                    {
                         ushort newLength;
                         result = stateObj.TryReadUInt16(out newLength);
                         if (result != TdsOperationStatus.Done)
@@ -3416,8 +3430,22 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+                        // Set the total length of the token
+                        // total = headers + size of new value + size of old value
+                        // headers = token id+newLengthHeader+oldLengthHeader = sizeof(byte) + 2*sizeof(UInt16) = 5
+                        env._length = env._newLength + oldLength + 5;
                         break;
+                    }
+
+                    case TdsEnums.ENV_ENHANCEDROUTING:
+                    {
+                        result = TryProcessEnhancedRoutingToken(env, stateObj);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        break;
+                    }
 
                     default:
                         Debug.Fail("Unknown environment change token: " + env._type);
@@ -3427,6 +3455,95 @@ namespace Microsoft.Data.SqlClient
             }
 
             sqlEnvChange = head;
+            return TdsOperationStatus.Done;
+        }
+
+        /// <summary>
+        /// Processes an enhanced routing ENVCHANGE token from the TDS stream.
+        /// This token contains the routing information for the connection, including the protocol,
+        /// port, server name, and database name. The enhanced routing token has the following structure:
+        /// <list type="bullet">
+        ///     <item>NewValueLength (USHORT) - length of the new value</item>
+        ///     <item>Protocol (BYTE) - routing protocol (must be 0 = TCP)</item>
+        ///     <item>Port (USHORT) - routing port number</item>
+        ///     <item>AlternateServerNameLength (USHORT) - length of the alternate server name in characters</item>
+        ///     <item>AlternateServerName (UNICODE_STRING) - the server name to route to</item>
+        ///     <item>AlternateDatabaseNameLength (USHORT) - length of the alternate database name in characters</item>
+        ///     <item>AlternateDatabaseName (UNICODE_STRING) - the database name to route to</item>
+        ///     <item>OldValueLength (USHORT) - length of the old value</item>
+        ///     <item>OldValue (BYTE[]) - old value (skipped)</item>
+        /// </list>
+        /// </summary>
+        private TdsOperationStatus TryProcessEnhancedRoutingToken(SqlEnvChange env, TdsParserStateObject stateObj)
+        {
+            ushort newLength;
+            TdsOperationStatus result = stateObj.TryReadUInt16(out newLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            env._newLength = newLength;
+
+            byte protocol;
+            result = stateObj.TryReadByte(out protocol);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort port;
+            result = stateObj.TryReadUInt16(out port);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort serverLen;
+            result = stateObj.TryReadUInt16(out serverLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string serverName;
+            result = stateObj.TryReadString(serverLen, out serverName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort databaseLen;
+            result = stateObj.TryReadUInt16(out databaseLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string databaseName;
+            result = stateObj.TryReadString(databaseLen, out databaseName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            env._newRoutingInfo = new RoutingInfo(protocol, port, serverName, databaseName);
+
+            ushort oldLength;
+            result = stateObj.TryReadUInt16(out oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            result = stateObj.TrySkipBytes(oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            // 5 = 2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+            env._length = env._newLength + oldLength + 5;
+
             return TdsOperationStatus.Done;
         }
 
@@ -4307,7 +4424,8 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryProcessFedAuthInfo(TdsParserStateObject stateObj, int tokenLen, out SqlFedAuthInfo sqlFedAuthInfo)
         {
             sqlFedAuthInfo = null;
-            SqlFedAuthInfo tempFedAuthInfo = new SqlFedAuthInfo();
+            string spn = null;
+            string stsUrl = null;
 
             // Skip reading token length, since it has already been read in caller
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FEDAUTHINFO token stream length = {0}", tokenLen);
@@ -4400,15 +4518,15 @@ namespace Microsoft.Data.SqlClient
                     }
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ADV> FedAuthInfoData: {0}", data);
 
-                    // store data in tempFedAuthInfo
+                    // Store data in temporaries.
                     switch ((TdsEnums.FedAuthInfoId)id)
                     {
                         case TdsEnums.FedAuthInfoId.Spn:
-                            tempFedAuthInfo.spn = data;
+                            spn = data;
                             break;
 
                         case TdsEnums.FedAuthInfoId.Stsurl:
-                            tempFedAuthInfo.stsurl = data;
+                            stsUrl = data;
                             break;
 
                         default:
@@ -4423,15 +4541,16 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForData, tokenLen);
             }
 
-            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tempFedAuthInfo);
-            if (string.IsNullOrWhiteSpace(tempFedAuthInfo.stsurl) || string.IsNullOrWhiteSpace(tempFedAuthInfo.spn))
+            if (string.IsNullOrWhiteSpace(spn) || string.IsNullOrWhiteSpace(stsUrl))
             {
                 // We should be receiving both stsurl and spn
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream does not contain both STSURL and SPN.");
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDoesNotContainStsurlAndSpn);
             }
 
-            sqlFedAuthInfo = tempFedAuthInfo;
+            sqlFedAuthInfo = new(spn, stsUrl);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", sqlFedAuthInfo);
+
             return TdsOperationStatus.Done;
         }
 
@@ -9176,29 +9295,51 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Writes the User Agent feature request to the physical state object.
-        /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
+        /// Writes the Enhanced Routing Support feature request to the physical state object.
+        /// The request does not contain a payload.
         /// </summary>
-        /// <param name="userAgentJsonPayload"> Byte array of UTF-8 encoded JSON payload for User Agent</param>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        internal int WriteEnhancedRoutingSupportFeatureRequest(bool write)
+        {
+            const int len = 5;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT);
+                // We don't send any data
+                WriteInt(0, _physicalStateObj);
+            }
+
+            return len;
+        }
+
+        /// <summary>
+        ///   Writes the User Agent feature request to the physical state
+        ///   object.  The request includes the feature ID, feature data length,
+        ///   and UCS-2 little-endian encoded payload.
+        /// </summary>
+        /// <remarks>
+        ///   The feature request consists of:
+        ///     - 1 byte for the feature ID.
+        ///     - 4 bytes for the feature data length.
+        ///     - N bytes for the UCS-2 payload
+        /// </remarks>
+        /// <param name="userAgent">
+        ///   UCS-2 little-endian encoded UserAgent payload.
+        /// </param>
         /// <param name="write">
-        /// If true, writes the feature request to the physical state object.
-        /// If false, just calculates the length.
+        ///   If true, writes the feature request to the physical state object.
+        ///   If false, just calculates the length.
         /// </param>
         /// <returns>The length of the feature request in bytes.</returns>
-        /// <remarks>
-        /// The feature request consists of:
-        /// - 1 byte for the feature ID.
-        /// - 4 bytes for the feature data length.
-        /// - 1 byte for the version number.
-        /// - N bytes for the JSON payload
-        /// </remarks>
-        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+        internal int WriteUserAgentFeatureRequest(ReadOnlyMemory<byte> userAgent,
                                                   bool write)
         {
-            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
-            int dataLen = 1 + userAgentJsonPayload.Length;
-            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
-            int totalLen = 1 + 4 + dataLen;
+            // 1 byte (Feature ID) + 4 bytes (Feature Data Length) + N bytes
+            // (UCS-2 payload size)
+            int totalLen = 1 + 4 + userAgent.Length;
 
             if (write)
             {
@@ -9206,13 +9347,10 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
 
                 // Feature Data Length
-                WriteInt(dataLen, _physicalStateObj);
+                WriteInt(userAgent.Length, _physicalStateObj);
 
-                // Write Feature Version
-                _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
-
-                // Write encoded JSON payload
-                _physicalStateObj.WriteByteArray(userAgentJsonPayload, userAgentJsonPayload.Length, 0);
+                // Write encoded UCS-2 payload
+                _physicalStateObj.WriteByteSpan(userAgent.Span);
             }
 
             return totalLen;
@@ -9492,7 +9630,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgentInfo.UserAgentCachedJsonPayload.ToArray(),
+                    UserAgent.Ucs2Bytes,
                     useFeatureExt,
                     length,
                     true
@@ -9515,7 +9653,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                        SessionData recoverySessionData,
                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                                       byte[] userAgentJsonPayload,
+                                       ReadOnlyMemory<byte> userAgent,
                                        bool useFeatureExt,
                                        int length,
                                        bool write = false)
@@ -9527,7 +9665,7 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
                     if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
                     {
-                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
+                        length += WriteUserAgentFeatureRequest(userAgent, write);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
                     {
@@ -9575,6 +9713,11 @@ namespace Microsoft.Data.SqlClient
                         length += WriteVectorSupportFeatureRequest(write);
                     }
 
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.EnhancedRoutingSupport) != 0)
+                    {
+                        length += WriteEnhancedRoutingSupportFeatureRequest(write);
+                    }
+
                     length++; // for terminator
                     if (write)
                     {
@@ -9593,11 +9736,11 @@ namespace Microsoft.Data.SqlClient
         internal void SendFedAuthToken(SqlFedAuthToken fedAuthToken)
         {
             Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
-            Debug.Assert(fedAuthToken.accessToken != null, "fedAuthToken.accessToken cannot be null");
+            Debug.Assert(fedAuthToken.AccessToken != null, "fedAuthToken.AccessToken cannot be null");
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendFedAuthToken|SEC> Sending federated authentication token");
             _physicalStateObj._outputMessageType = TdsEnums.MT_FEDAUTH;
 
-            byte[] accessToken = fedAuthToken.accessToken;
+            byte[] accessToken = fedAuthToken.AccessToken;
 
             // Send total length (length of token plus 4 bytes for the token length field)
             // If we were sending a nonce, this would include that length as well
@@ -12772,13 +12915,7 @@ namespace Microsoft.Data.SqlClient
                 preambleToSkip = encoding.GetPreamble();
             }
 
-            XmlWriterSettings writerSettings = new XmlWriterSettings();
-            writerSettings.CloseOutput = false; // don't close the memory stream
-            writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
-            if (_asyncWrite)
-            {
-                writerSettings.Async = true;
-            }
+            XmlWriterSettings writerSettings = _asyncWrite ? AsyncXmlWriterSettings : SyncXmlWriterSettings;
 
             using ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, preambleToSkip), encoding), size);
             using XmlWriter ww = XmlWriter.Create(writer, writerSettings);
