@@ -6,6 +6,8 @@
 
 using System.Diagnostics;
 
+#nullable enable
+
 namespace System.Text;
 
 internal static class EncodingExtensions
@@ -15,7 +17,7 @@ internal static class EncodingExtensions
         ReadOnlySpan<char> slicedString = s.AsSpan(offset, count);
 
         // This also implicitly checks for a null string. If the input string is null, slicedString
-        // will be default(ReadOnlySpan<char>), which also has a length of null.
+        // will be default(ReadOnlySpan<char>), which also has a length of zero.
         if (slicedString.Length == 0)
         {
             return 0;
@@ -33,11 +35,9 @@ internal static class EncodingExtensions
     public static byte[] GetBytes(this Encoding encoding, string s, int index, int count)
     {
         ReadOnlySpan<char> slicedString = s.AsSpan(index, count);
-        byte[] bytes;
-        int bytesWritten;
 
         // This also implicitly checks for a null string. If the input string is null, slicedString
-        // will be default(ReadOnlySpan<char>), which also has a length of null.
+        // will be default(ReadOnlySpan<char>), which also has a length of zero.
         if (slicedString.Length == 0)
         {
             return Array.Empty<byte>();
@@ -48,19 +48,17 @@ internal static class EncodingExtensions
             fixed (char* str = slicedString)
             {
                 int byteCount = encoding.GetByteCount(str, slicedString.Length);
-
-                bytes = new byte[byteCount];
+                byte[] bytes = new byte[byteCount];
 
                 fixed (byte* destArray = &bytes[0])
                 {
-                    bytesWritten = encoding.GetBytes(str, slicedString.Length, destArray, bytes.Length);
+                    int bytesWritten = encoding.GetBytes(str, slicedString.Length, destArray, bytes.Length);
 
                     Debug.Assert(bytesWritten == byteCount);
+                    return bytes;
                 }
             }
         }
-
-        return bytes;
     }
 }
 
