@@ -70,6 +70,11 @@ parameters:
   - name: publishSymbols
     type: boolean
 
+  # True to enable ESRP malware scanning and code signing steps, which should not be
+  # run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   # Values required by ESRP tasks.
   - name: esrpConnectedServiceName
     type: string
@@ -144,18 +149,19 @@ jobs:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           versionProperties: ${{ parameters.versionProperties }}
 
-      # ESRP sign the DLLs.
-      - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
-        parameters:
-          appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-          appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-          authAkvName: ${{ parameters.authAkvName }}
-          authSignCertName: ${{ parameters.authSignCertName }}
-          esrpClientId: ${{ parameters.esrpClientId }}
-          esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-          pattern: ${{ parameters.packageFullName }}.dll
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          # ESRP sign the DLLs.
+          - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+              authAkvName: ${{ parameters.authAkvName }}
+              authSignCertName: ${{ parameters.authSignCertName }}
+              esrpClientId: ${{ parameters.esrpClientId }}
+              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+              pattern: ${{ parameters.packageFullName }}.dll
 
-      # Copy signed DLLs and PDBs to APIScan folders.
+      # Copy signed/unsigned DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
         inputs:
@@ -182,16 +188,17 @@ jobs:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           versionProperties: ${{ parameters.versionProperties }}
 
-      # ESRP sign the NuGet package.
-      - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
-        parameters:
-          appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-          appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-          authAkvName: ${{ parameters.authAkvName }}
-          authSignCertName: ${{ parameters.authSignCertName }}
-          esrpClientId: ${{ parameters.esrpClientId }}
-          esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-          pattern: '${{ parameters.packageFullName }}.*nupkg'
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          # ESRP sign the NuGet package.
+          - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
+              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
+              authAkvName: ${{ parameters.authAkvName }}
+              authSignCertName: ${{ parameters.authSignCertName }}
+              esrpClientId: ${{ parameters.esrpClientId }}
+              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+              pattern: ${{ parameters.packageFullName }}.*nupkg
 
       # Publish symbols to servers
       - ${{ if eq(parameters.publishSymbols, true) }}:
