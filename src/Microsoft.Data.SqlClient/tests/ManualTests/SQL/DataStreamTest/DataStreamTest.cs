@@ -276,7 +276,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         await destination.WriteAsync(new ReadOnlyMemory<byte>(buffer, 0, bytesRead), cancellationToken).ConfigureAwait(false);
                     }
-#endif 
+#endif
                 }
                 finally
                 {
@@ -320,7 +320,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.CommandText = $@"
 IF OBJECT_ID('dbo.{tableName}', 'U') IS NOT NULL
-DROP TABLE {tableName}; 
+DROP TABLE {tableName};
 CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 ";
                 cmd.ExecuteNonQuery();
@@ -377,7 +377,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         {
                             Assert.True(numBatches < expectedResults.Length, "ERROR: Received more batches than were expected.");
                             object[] values = new object[r1.FieldCount];
-                            // Current "column" in expected row is (valuesChecked MOD FieldCount), since 
+                            // Current "column" in expected row is (valuesChecked MOD FieldCount), since
                             // expected rows for current batch are appended together for easy formatting
                             int valuesChecked = 0;
                             while (r1.Read())
@@ -1448,9 +1448,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.False(t.Wait(1), "FAILED: Read completed immediately");
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(8));
                             }
-                            DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                            // TODO(GH-3604): t.Wait() may or may not throw depending on
+                            // a race between the ReadAsync continuation and reader disposal.
+                            try { t.Wait(); }
+                            catch (AggregateException ex)
+                            {
+                                Assert.IsType<IOException>(ex.InnerException);
+                            }
 
-                            // GetStream after Read 
+                            // GetStream after Read
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(0));
 #endif
                         }
@@ -1486,8 +1492,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             Assert.True(t.IsCompleted, "FAILED: Failed to get stream within 1 second");
                             t = reader.ReadAsync();
                         }
-                        // TODO(GH-3604): Fix this failing assertion.
-                        // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                        // TODO(GH-3604): t.Wait() may or may not throw depending on
+                        // a race between the ReadAsync continuation and reader disposal.
+                        try { t.Wait(); }
+                        catch (AggregateException ex)
+                        {
+                            Assert.IsType<IOException>(ex.InnerException);
+                        }
                     }
 #endif
                 }
@@ -1561,10 +1572,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     Assert.False(t.IsCompleted, "FAILED: Read completed immediately");
                                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(8));
                                 }
-                                // TODO(GH-3604): Fix this failing assertion.
-                                // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                                // TODO(GH-3604): t.Wait() may or may not throw depending on
+                                // a race between the ReadAsync continuation and reader disposal.
+                                try { t.Wait(); }
+                                catch (AggregateException ex)
+                                {
+                                    Assert.IsType<IOException>(ex.InnerException);
+                                }
 
-                                // GetTextReader after Read 
+                                // GetTextReader after Read
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(0));
 #endif
                             }
@@ -1601,8 +1617,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.True(t.IsCompleted, "FAILED: Failed to get TextReader within 1 second");
                                 t = reader.ReadAsync();
                             }
-                            // TODO(GH-3604): Fix this failing assertion.
-                            // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                            // TODO(GH-3604): t.Wait() may or may not throw depending on
+                            // a race between the ReadAsync continuation and reader disposal.
+                            try { t.Wait(); }
+                            catch (AggregateException ex)
+                            {
+                                Assert.IsType<IOException>(ex.InnerException);
+                            }
                         }
 #endif
                     }
@@ -1653,10 +1674,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.False(t.IsCompleted, "FAILED: Read completed immediately");
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(6));
                             }
-                            // TODO(GH-3604): Fix this failing assertion.
-                            // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                            // TODO(GH-3604): t.Wait() may or may not throw depending on
+                            // a race between the ReadAsync continuation and reader disposal.
+                            try { t.Wait(); }
+                            catch (AggregateException ex)
+                            {
+                                Assert.IsType<IOException>(ex.InnerException);
+                            }
 
-                            // GetXmlReader after Read 
+                            // GetXmlReader after Read
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(0));
 #endif
                         }
@@ -1939,8 +1965,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                         DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => textReader.Read(largeBuffer, 0, largeBuffer.Length));
                                         DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
                                     }
-                                    // TODO(GH-3604): Fix this failing assertion.
-                                    // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                                    // TODO(GH-3604): t.Wait() may or may not throw depending on
+                                    // a race between the ReadAsync continuation and reader disposal.
+                                    try { t.Wait(); }
+                                    catch (AggregateException ex)
+                                    {
+                                        Assert.IsType<IOException>(ex.InnerException);
+                                    }
                                 }
 
                                 using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -2118,7 +2149,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     byte[] bytes = new byte[cb];
                     long read = reader.GetBytes(1, 0, bytes, 0, cb);
 
-                    // Don't send data on the first read because there is already data in the buffer. 
+                    // Don't send data on the first read because there is already data in the buffer.
                     // Don't send data on the last iteration. We will not be reading that data.
                     if (i == 0 || i == streamXeventCount - 1)
                     {
