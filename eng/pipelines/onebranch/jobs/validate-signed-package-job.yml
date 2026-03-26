@@ -235,6 +235,7 @@ jobs:
           # This will check each DLL's ProductVersion and FileVersion against
           # expected values.
           $failed = 0
+          $expectedFileVersion = "$(mdsPackageVersion)".Split('-')[0] + ".$(assemblyBuildNumber)"
 
           foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo )
           {
@@ -248,13 +249,13 @@ jobs:
                     $failed = 1
               }
 
-              if ($pVersion.FileVersion -eq '$(mdsAssemblyFileVersion)')
+              if ($pVersion.FileVersion -eq $expectedFileVersion)
               {
                   Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
               }
               else
               {
-                  Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $(mdsAssemblyFileVersion); found: $($pVersion.FileVersion)"
+                  Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $expectedFileVersion; found: $($pVersion.FileVersion)"
                   $failed = 1
               }
           }

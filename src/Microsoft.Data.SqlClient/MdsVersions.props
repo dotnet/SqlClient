@@ -16,7 +16,7 @@
         information in the pipeline yaml.
       -->
       <PropertyGroup>
-        <MdsAssemblyVersion>$(MdsPackageVersion.Split('-')[0]).$(BuildNumber)</MdsAssemblyVersion>
+        <MdsAssemblyVersion>$(MdsPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</MdsAssemblyVersion>
       </PropertyGroup>
     </When>
 
@@ -38,7 +38,7 @@
         <MdsPackageVersion Condition="'$(BuildSuffix)' != ''">$(MdsVersionDefault)-$(BuildSuffix)$(BuildNumber)</MdsPackageVersion>
         <MdsPackageVersion Condition="'$(BuildSuffix)' == ''">$(MdsVersionDefault)</MdsPackageVersion>
 
-        <MdsAssemblyVersion>$(MdsVersionDefault.Split('-')[0]).$(BuildNumber)</MdsAssemblyVersion>
+        <MdsAssemblyVersion>$(MdsVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</MdsAssemblyVersion>
       </PropertyGroup>
     </When>
 
@@ -54,7 +54,7 @@
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
         <MdsPackageVersion>$(MdsVersionDefault)-$(BuildSuffix)</MdsPackageVersion>
-        <MdsAssemblyVersion>$(MdsVersionDefault.Split('-')[0]).$(BuildNumber)</MdsAssemblyVersion>
+        <MdsAssemblyVersion>$(MdsVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</MdsAssemblyVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
