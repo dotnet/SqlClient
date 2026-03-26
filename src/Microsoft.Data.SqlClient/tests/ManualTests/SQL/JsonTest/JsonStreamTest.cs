@@ -17,6 +17,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class JsonRecord
     {
         public int Id { get; set; }

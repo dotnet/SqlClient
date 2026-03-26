@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -14,6 +14,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
+    [Trait("Set", "3")]
     public static class VectorFloat32TestData
     {
         public const int VectorHeaderSize = 8;
@@ -29,19 +30,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             yield return new object[] { 3, new SqlVector<float>(testData), testData, vectorColumnLength };
             yield return new object[] { 4, new SqlVector<float>(testData), testData, vectorColumnLength };
 
-            // Pattern 1-4 with SqlVector<float>(n)  
+            // Pattern 1-4 with SqlVector<float>(n)
             yield return new object[] { 1, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 2, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 3, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 4, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
 
-            // Pattern 1-4 with DBNull  
+            // Pattern 1-4 with DBNull
             yield return new object[] { 1, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 2, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 3, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 4, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
 
-            // Pattern 1-4 with SqlVector<float>.Null  
+            // Pattern 1-4 with SqlVector<float>.Null
             yield return new object[] { 1, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
 
             // Following scenario is not supported in SqlClient.

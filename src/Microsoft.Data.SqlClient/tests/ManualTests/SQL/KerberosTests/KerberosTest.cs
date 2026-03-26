@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class KerberosTests
     {
         [PlatformSpecific(TestPlatforms.AnyUnix)]

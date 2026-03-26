@@ -6,6 +6,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
 {
+    [Trait("Set", "3")]
     public class DataSourceParserTest
     {
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]

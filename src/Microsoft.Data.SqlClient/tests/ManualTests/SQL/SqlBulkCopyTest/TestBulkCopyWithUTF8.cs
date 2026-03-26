@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Validates SqlBulkCopy functionality when working with UTF-8 encoded data.
     /// Ensures that data copied from a UTF-8 source table to a destination table retains its encoding and content integrity.
     /// </summary>
+    [Trait("Set", "2")]
     public sealed class TestBulkCopyWithUtf8 : IDisposable
     {
         private static string s_sourceTable = DataTestUtility.GetShortName("SourceTableForUTF8Data");
@@ -56,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Creates source and destination tables with a varchar(max) column with a collation setting
-        /// that stores the data in UTF8 encoding and inserts the data in the source table. 
+        /// that stores the data in UTF8 encoding and inserts the data in the source table.
         /// </summary>
         private void SetupTables(SqlConnection connection, string sourceTable, string destinationTable, string insertQuery)
         {

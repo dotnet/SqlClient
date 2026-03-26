@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public class SqlBulkCopyTruncation : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private SQLSetupStrategy _fixture;
@@ -416,7 +417,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             try
             {
                 DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryTarget"], connectionString);
-                // Verify its 8000            
+                // Verify its 8000
                 using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     conn.Open();
@@ -548,7 +549,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="commandText"></param>

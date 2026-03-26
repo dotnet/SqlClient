@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public sealed class End2EndSmokeTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy fixture;
@@ -160,13 +161,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
-                yield return new object[] { 
-                    connStrAE, 
+                yield return new object[] {
+                    connStrAE,
                     true, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     2, /*no:of input parameters*/
                     new object[] { @"CustomerId", /*input parameter name*/
@@ -177,13 +178,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                    @"Microsoft" /*input parameter value*/}
                 };
 
-                yield return new object[] { 
+                yield return new object[] {
                     connStrAE,
                     true, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     1, /*no:of input parameters*/
                     new object[] { @"CustomerId", /*input parameter name*/
@@ -191,13 +192,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                    45, /*input parameter value*/}
                 };
 
-                yield return new object[] { 
+                yield return new object[] {
                     connStrAE,
                     true, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where FirstName = @FirstName",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     1, /*no:of input parameters*/
                     new object[] { @"FirstName", /*input parameter name*/
@@ -210,8 +211,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     true, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where LastName = @LastName",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     1, /*no:of input parameters*/
                     new object[] { @"LastName", /*input parameter name*/
@@ -224,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     true, /*sync*/
                     @"select CustomerId, FirstName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
                     2, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
                                    @"string", /*unencrypted datatype of second column in select statement*/},
                     2, /*no:of input parameters*/
                     new object[] { @"CustomerId", /*input parameter name*/
@@ -240,8 +241,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     false, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     2, /*no:of input parameters*/
                     new object[] { @"CustomerId", /*input parameter name*/
@@ -257,8 +258,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     false, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where CustomerId = @CustomerId",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     1, /*no:of input parameters*/
                     new object[] { @"CustomerId", /*input parameter name*/
@@ -271,8 +272,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     false, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where FirstName = @FirstName",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     1, /*no:of input parameters*/
                     new object[] { @"FirstName", /*input parameter name*/
@@ -285,8 +286,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     false, /*sync*/
                     @"select CustomerId, FirstName, LastName from [{0}] where LastName = @LastName",
                     3, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
-                                   @"string", /*unencrypted datatype of second column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
+                                   @"string", /*unencrypted datatype of second column in select statement*/
                                    @"string" /*datatype of third column in select statement*/},
                     1, /*no:of input parameters*/
                     new object[] { @"LastName", /*input parameter name*/
@@ -299,7 +300,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     false, /*sync*/
                     @"select CustomerId, FirstName from [{0}] where CustomerId = @CustomerId and FirstName = @FirstName",
                     2, /*total number of columns in select statement*/
-                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/ 
+                    new string[] { @"int", /*unencrypted datatype of first column in select statement*/
                                    @"string", /*unencrypted datatype of second column in select statement*/},
                     2, /*no:of input parameters*/
                     new object[] { @"CustomerId", /*input parameter name*/

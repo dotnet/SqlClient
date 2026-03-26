@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// <summary>
     /// Connection pool stress test to validate pool behavior under various concurrent load scenarios.
     /// </summary>
+    [Trait("Set", "3")]
     public class ConnectionPoolStressTest
     {
         #region Properties
@@ -111,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Configuration
 
         /// <summary>
-        /// Sets up connection string 
+        /// Sets up connection string
         /// </summary>
         /// <param name="connectionString">Connection string to be set.</param>
         internal void SetConnectionString(string connectionString)

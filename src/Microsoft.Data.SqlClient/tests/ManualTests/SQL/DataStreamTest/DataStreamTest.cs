@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -18,6 +18,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class DataStreamTest
     {
         private readonly string _testName;
@@ -276,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         await destination.WriteAsync(new ReadOnlyMemory<byte>(buffer, 0, bytesRead), cancellationToken).ConfigureAwait(false);
                     }
-#endif 
+#endif
                 }
                 finally
                 {
@@ -320,7 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.CommandText = $@"
 IF OBJECT_ID('dbo.{tableName}', 'U') IS NOT NULL
-DROP TABLE {tableName}; 
+DROP TABLE {tableName};
 CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 ";
                 cmd.ExecuteNonQuery();
@@ -377,7 +378,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         {
                             Assert.True(numBatches < expectedResults.Length, "ERROR: Received more batches than were expected.");
                             object[] values = new object[r1.FieldCount];
-                            // Current "column" in expected row is (valuesChecked MOD FieldCount), since 
+                            // Current "column" in expected row is (valuesChecked MOD FieldCount), since
                             // expected rows for current batch are appended together for easy formatting
                             int valuesChecked = 0;
                             while (r1.Read())
@@ -1450,7 +1451,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                             DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
 
-                            // GetStream after Read 
+                            // GetStream after Read
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(0));
 #endif
                         }
@@ -1564,7 +1565,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 // TODO(GH-3604): Fix this failing assertion.
                                 // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
 
-                                // GetTextReader after Read 
+                                // GetTextReader after Read
                                 DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(0));
 #endif
                             }
@@ -1656,7 +1657,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             // TODO(GH-3604): Fix this failing assertion.
                             // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
 
-                            // GetXmlReader after Read 
+                            // GetXmlReader after Read
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(0));
 #endif
                         }
@@ -2118,7 +2119,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     byte[] bytes = new byte[cb];
                     long read = reader.GetBytes(1, 0, bytes, 0, cb);
 
-                    // Don't send data on the first read because there is already data in the buffer. 
+                    // Don't send data on the first read because there is already data in the buffer.
                     // Don't send data on the last iteration. We will not be reading that data.
                     if (i == 0 || i == streamXeventCount - 1)
                     {

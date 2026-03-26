@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.using System;
 
@@ -18,6 +18,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
     {
 
@@ -621,7 +622,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             if (TypeHasSize(largeColumnMeta.ColumnType))
             {
-                // 20% of the time use (max) as the length.                
+                // 20% of the time use (max) as the length.
                 largeColumnMeta.UseMax = (largeColumnMeta.ColumnType is SqlDbType.VarChar ||
                     largeColumnMeta.ColumnType is SqlDbType.NVarChar ||
                     largeColumnMeta.ColumnType is SqlDbType.VarBinary) &&
@@ -683,7 +684,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     smallColumnMeta.Precision = 0;
 
-                    // For Time / DateTime2 / DateTimeOffset types, actual scale is set to 7 when parameter.scale is zero. 
+                    // For Time / DateTime2 / DateTimeOffset types, actual scale is set to 7 when parameter.scale is zero.
                     // Active Issue in SQLParameter.cs when user wants to specify zero as the actual scale.
                     smallColumnMeta.Scale = random.Next(minScale, largeColumnMeta.Scale);
                 }

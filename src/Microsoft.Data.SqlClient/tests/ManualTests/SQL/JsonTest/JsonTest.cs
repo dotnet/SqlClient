@@ -14,6 +14,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class JsonTest
     {
         private readonly ITestOutputHelper _output;
@@ -22,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             _output = output;
         }
-            
+
         private static readonly string JsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
 
         private void ValidateRowsAffected(int rowsAffected)
@@ -106,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     int rowsAffected = command.ExecuteNonQuery();
                     ValidateRowsAffected(rowsAffected);
 
-                    //Test 2 
+                    //Test 2
                     //Write a SqlString type as json
                     parameter.Value = new SqlString(JsonDataString);
                     int rowsAffected2 = command.ExecuteNonQuery();
@@ -170,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     int rowsAffected = await command.ExecuteNonQueryAsync();
                     ValidateRowsAffected(rowsAffected);
 
-                    //Test 2 
+                    //Test 2
                     //Write a SqlString type as json
                     parameter.Value = new SqlString(JsonDataString);
                     int rowsAffected2 = await command.ExecuteNonQueryAsync();

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class SqlConfigurationManagerReliabilityTest
     {
         private static readonly SqlConnectionReliabilityTest s_connectionCRLTest = new SqlConnectionReliabilityTest();
