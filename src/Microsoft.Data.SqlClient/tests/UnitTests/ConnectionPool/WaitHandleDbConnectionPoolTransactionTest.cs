@@ -589,7 +589,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
                 allAcquired.Set(); // Signal that this connection is held
 
-                // First thread releases early; others wait longer
                 Assert.True(releaseFirst.Wait(TimeSpan.FromSeconds(15)),
                     "Timed out waiting for releaseFirst signal.");
 
@@ -601,7 +600,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             "Timed out waiting for connection to be acquired.");
         Assert.Equal(1, _pool.Count);
 
-        // A fourth thread attempts to acquire while pool is full — it should block
         using var acquired = new ManualResetEventSlim(false);
         var waitingTask = Task.Run(() =>
         {
@@ -633,50 +631,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
     #endregion
 
     #region Controlled Concurrency Tests
-
-    [Fact]
-    public void TwoThreads_SeparateTransactions_IsolatedTransactedEntries()
-    {
-        // Arrange - sequence task1 before task2 so the connection is available
-        // in the pool when task2 requests. This verifies that separate transactions
-        // get can get the same physical connection after the first transaction is completed.
-        DbConnectionInternal? conn1 = null;
-        DbConnectionInternal? conn2 = null;
-        Transaction? txn1 = null;
-        Transaction? txn2 = null;
-
-        // Act - two threads each with their own transaction, sequenced
-        var task1 = Task.Run(() =>
-        {
-            using var scope = new TransactionScope();
-            txn1 = Transaction.Current;
-            var owner = new SqlConnection();
-            conn1 = GetConnection(owner);
-            Assert.NotNull(conn1);
-            ReturnConnection(conn1, owner);
-            scope.Complete();
-        });
-
-        task1.Wait();
-
-        var task2 = Task.Run(() =>
-        {
-
-            using var scope = new TransactionScope();
-            txn2 = Transaction.Current;
-            var owner = new SqlConnection();
-            conn2 = GetConnection(owner);
-            Assert.NotNull(conn2);
-            ReturnConnection(conn2, owner);
-            scope.Complete();
-        });
-
-        task2.Wait();
-
-        // Assert - separate transactions yielded isolated transacted pool entries
-        Assert.NotSame(txn1, txn2);
-        AssertPoolMetrics();
-    }
 
     [Fact]
     public void TwoThreads_SharedTransaction_AccessSameTransactedEntry()
@@ -814,9 +768,11 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         ReturnConnection(conn, owner);
 
         // Assert
-        Assert.Equal(ConnectionState.Closed, conn.ConnectionState);
-        Assert.True(_pool.Count == 0 || !_pool.IsRunning,
-            "Connection should be cleaned up after returning to a shut-down pool.");
+        // The connection should have been deactivated and disposed (not returned to the pool).
+        // After Dispose(), IsConnectionDoomed is set to true and Pool is set to null.
+        Assert.True(conn.IsConnectionDoomed,
+            "Connection should be doomed after returning to a shut-down pool.");
+        Assert.Null(conn.Pool);
     }
 
     #endregion
@@ -866,6 +822,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             ReturnConnection(conn, owner);
 
             // Only the current transaction should be tracked
+            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
             Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
 
             scope.Complete();
@@ -890,12 +847,49 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             Assert.NotNull(conn);
             ReturnConnection(conn, owner);
 
+            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
             Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
 
             scope.Complete();
         }
 
         // Assert
+        AssertPoolMetrics();
+    }
+
+    [Fact]
+    public void SequentialTransactions_CanReuseConnections()
+    {
+        // Act
+        DbConnectionInternal conn1;
+        DbConnectionInternal conn2;
+        Transaction? txn1;
+        Transaction? txn2;
+
+        using (var scope1 = new TransactionScope())
+        {
+            txn1 = Transaction.Current;
+            var owner1 = new SqlConnection();
+            conn1 = GetConnection(owner1);
+            Assert.NotNull(conn1);
+            ReturnConnection(conn1, owner1);
+            scope1.Complete();
+        }
+
+        using (var scope2 = new TransactionScope())
+        {
+            txn2 = Transaction.Current;
+            var owner2 = new SqlConnection();
+            conn2 = GetConnection(owner2);
+            Assert.NotNull(conn2);
+            ReturnConnection(conn2, owner2);
+            scope2.Complete();
+        }
+
+        // Assert
+        // The connection was returned to the general pool and picked up by the second transaction
+        Assert.NotSame(txn1, txn2);
+        Assert.Same(conn1, conn2);
         AssertPoolMetrics();
     }
 
