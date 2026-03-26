@@ -8651,10 +8651,6 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
-#if NETFRAMEWORK
-            char[] charData;
-            byte[] byteData = null;
-
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
             if (encoding == null)
@@ -8662,6 +8658,9 @@ namespace Microsoft.Data.SqlClient
                 encoding = _defaultEncoding;
             }
 
+#if NETFRAMEWORK
+            char[] charData;
+            byte[] byteData = null;
             charData = s.ToCharArray(offset, numChars);
 
             byteData = new byte[encoding.GetByteCount(charData, 0, charData.Length)];
