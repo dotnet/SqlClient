@@ -93,9 +93,9 @@ internal class TransactedConnectionPool
     /// Gets the main connection pool that this transacted pool is associated with.
     /// </summary>
     /// <value>The IDbConnectionPool instance that owns this transacted pool.</value>
-    internal IDbConnectionPool Pool { get; init; }
+    internal IDbConnectionPool Pool { get; }
 
-    internal Dictionary<Transaction, TransactedConnectionList> TransactedConnections { get; init; }
+    internal Dictionary<Transaction, TransactedConnectionList> TransactedConnections { get; }
 
     #endregion
 
