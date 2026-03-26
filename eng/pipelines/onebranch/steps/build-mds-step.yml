@@ -30,6 +30,7 @@ steps:
       configuration: 'Release'
       msbuildArguments: >-
         -t:BuildMds
+        -p:BuildNumber="$(Build.BuildNumber)"
         -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
         -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
         -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
