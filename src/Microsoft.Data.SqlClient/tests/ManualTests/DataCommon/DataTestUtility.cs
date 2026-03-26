@@ -302,9 +302,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SecureString securePassword = new SecureString();
 
             securePassword.MakeReadOnly();
-#pragma warning disable CS0618 // Type or member is obsolete
+            #pragma warning disable CS0618 // Type or member is obsolete
             result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
-#pragma warning restore CS0618 // Type or member is obsolete
+            #pragma warning restore CS0618 // Type or member is obsolete
 
             return result.AccessToken;
         });
@@ -389,7 +389,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        #nullable disable
+        #nullable restore
 
         private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
@@ -951,7 +951,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#nullable enable
+        #nullable enable
+
         /// <summary>
         /// Asserts that <paramref name="actionThatFails"/> throws an exception of type
         /// <typeparamref name="TException"/> and optionally verifies that its message contains
@@ -1030,7 +1031,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             return ex;
         }
-#nullable restore
+
+        #nullable restore
 
         public static TException ExpectFailure<TException>(Action actionThatFails, string[] exceptionMessages, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
         {
@@ -1345,7 +1347,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return fqdn.ToString();
         }
-    }
 
-    #nullable disable
+        #nullable restore
+    }
 }

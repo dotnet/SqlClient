@@ -1825,7 +1825,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length, tokenSource.Token);
                                     tokenSource.Cancel();
                                 }
-                                DataTestUtility.AssertThrowsInner<AggregateException, TaskCanceledException>(() => t.Wait());
+                                // Normally the cancellation wins (TaskCanceledException), but if the
+                                // PendAsyncReadsScope disposal completes the read first, the inner
+                                // exception may be InvalidOperationException instead (GH-4088).
+                                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, TaskCanceledException, InvalidOperationException>(() => t.Wait());
                             }
 
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
