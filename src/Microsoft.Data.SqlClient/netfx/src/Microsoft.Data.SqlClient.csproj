@@ -1006,6 +1006,9 @@
     <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)TypeForwards.Abstractions.cs">
+      <Link>TypeForwards.Abstractions.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!-- Resource Files ================================================== -->
