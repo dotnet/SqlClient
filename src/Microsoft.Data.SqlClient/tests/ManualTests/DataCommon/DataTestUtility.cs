@@ -1030,34 +1030,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             return ex;
         }
-
-        /// <summary>
-        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
-        /// wrapping a <typeparamref name="TInnerException"/> that itself wraps a
-        /// <typeparamref name="TInnerInnerException"/>. Optionally verifies message text at each level.
-        /// </summary>
-        public static TException AssertThrowsInnerInner<TException, TInnerException, TInnerInnerException>(
-            Action actionThatFails,
-            string? exceptionMessage = null,
-            string? innerExceptionMessage = null,
-            string? innerInnerExceptionMessage = null)
-        where TException : Exception
-        where TInnerException : Exception
-        where TInnerInnerException : Exception
-        {
-            TException ex = AssertThrowsInner<TException, TInnerException>(actionThatFails, exceptionMessage, innerExceptionMessage);
-
-            Assert.NotNull(ex.InnerException!.InnerException);
-            Assert.IsAssignableFrom<TInnerInnerException>(ex.InnerException.InnerException);
-
-            if (innerInnerExceptionMessage != null)
-            {
-                Assert.True(ex.InnerException.InnerException.Message.Contains(innerInnerExceptionMessage),
-                    string.Format("FAILED: InnerInner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerInnerExceptionMessage, ex.InnerException.InnerException.Message));
-            }
-
-            return ex;
-        }
 #nullable restore
 
         public static TException ExpectFailure<TException>(Action actionThatFails, string[] exceptionMessages, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception

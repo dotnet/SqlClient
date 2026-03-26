@@ -1794,7 +1794,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     DataTestUtility.AssertThrows<InvalidOperationException>(() => { _ = stream.Read(largeBuffer, 0, largeBuffer.Length); });
                                     DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.Read());
                                 }
-                                DataTestUtility.AssertThrowsInner<AggregateException, IOException>(() => t.Wait());
+                                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, IOException, InvalidOperationException>(() => t.Wait());
                             }
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
                             {
@@ -1810,7 +1810,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     // Guarantee that timeout occurs:
                                     Thread.Sleep(stream.ReadTimeout * 4);
                                 }
-                                DataTestUtility.AssertThrowsInner<AggregateException, IOException>(() => t.Wait());
+                                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, IOException, InvalidOperationException>(() => t.Wait());
                             }
 
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1838,7 +1838,18 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     // Error during read
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length);
                                 }
-                                DataTestUtility.AssertThrowsInnerInner<AggregateException, IOException, SqlException>(() => t.Wait());
+                                // PendAsyncReadsScope(errorCode: 11) injects a network error, normally producing
+                                // AggregateException -> IOException -> SqlException. In rare race conditions
+                                // the inner exception may be ObjectDisposedException instead (GH-4088).
+                                AggregateException aex = Assert.Throws<AggregateException>(() => t.Wait());
+                                if (aex.InnerException is IOException ioEx)
+                                {
+                                    Assert.IsAssignableFrom<SqlException>(ioEx.InnerException);
+                                }
+                                else
+                                {
+                                    Assert.IsAssignableFrom<ObjectDisposedException>(aex.InnerException);
+                                }
                             }
 #endif
                         }
@@ -1966,7 +1977,18 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                         // Error during read
                                         t = textReader.ReadAsync(largeBuffer, 0, largeBuffer.Length);
                                     }
-                                    DataTestUtility.AssertThrowsInnerInner<AggregateException, IOException, SqlException>(() => t.Wait());
+                                    // PendAsyncReadsScope(errorCode: 11) injects a network error, normally producing
+                                    // AggregateException -> IOException -> SqlException. In rare race conditions
+                                    // the inner exception may be ObjectDisposedException instead (GH-4088).
+                                    AggregateException aex = Assert.Throws<AggregateException>(() => t.Wait());
+                                    if (aex.InnerException is IOException ioEx)
+                                    {
+                                        Assert.IsAssignableFrom<SqlException>(ioEx.InnerException);
+                                    }
+                                    else
+                                    {
+                                        Assert.IsAssignableFrom<ObjectDisposedException>(aex.InnerException);
+                                    }
                                 }
 #endif
                             }
