@@ -176,8 +176,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Flag indicating whether enhanced routing is supported by the server.
         /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal bool IsEnhancedRoutingSupportEnabled = false;
+        internal bool IsEnhancedRoutingSupportEnabled => Parser.Capabilities.EnhancedRouting;
 
         // @TODO: This should be private
         internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
@@ -1431,28 +1430,6 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         IsDNSCachingBeforeRedirectSupported = true;
                     }
-                    break;
-                }
-                case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
-                {
-                    if (data.Length != 1)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
-                            $"Object ID {ObjectID}, " +
-                            $"Unknown token for ENHANCEDROUTINGSUPPORT");
-
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                    }
-
-                    // A value of 1 indicates that the server supports the feature.
-                    IsEnhancedRoutingSupportEnabled = data[0] == 1;
-
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                        $"Object ID {ObjectID}, " +
-                        $"Received feature extension acknowledgement for " +
-                        $"ENHANCEDROUTINGSUPPORT = {IsEnhancedRoutingSupportEnabled}");
                     break;
                 }
                 case TdsEnums.FEATUREEXT_USERAGENT:

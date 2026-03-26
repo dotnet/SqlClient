@@ -524,6 +524,29 @@ internal sealed class ConnectionCapabilities
                 }
 
                 break;
+
+            case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
+                if (featureData.Length != 1)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ERR | " +
+                        $"Object ID {_objectId}, " +
+                        $"Unknown token for ENHANCEDROUTINGSUPPORT");
+
+                    throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                }
+
+                // Feature data is comprised of a single byte which indicates whether
+                // enhanced routing is available.
+                EnhancedRouting = featureData[0] == 0x01;
+
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"{nameof(ConnectionCapabilities)}.{nameof(ProcessFeatureExtAck)} | ADV | " +
+                        $"Object ID {_objectId}, " +
+                        $"Received feature extension acknowledgement for " +
+                        $"ENHANCEDROUTINGSUPPORT = {EnhancedRouting}");
+
+                break;
         }
     }
 }

@@ -3923,7 +3923,8 @@ namespace Microsoft.Data.SqlClient
                     or TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS or TdsEnums.FEATUREEXT_AZURESQLSUPPORT
                     or TdsEnums.FEATUREEXT_DATACLASSIFICATION or TdsEnums.FEATUREEXT_UTF8SUPPORT
                     or TdsEnums.FEATUREEXT_SQLDNSCACHING or TdsEnums.FEATUREEXT_JSONSUPPORT
-                    or TdsEnums.FEATUREEXT_VECTORSUPPORT or TdsEnums.FEATUREEXT_USERAGENT;
+                    or TdsEnums.FEATUREEXT_VECTORSUPPORT or TdsEnums.FEATUREEXT_USERAGENT
+                    or TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT;
         }
 
         private bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
