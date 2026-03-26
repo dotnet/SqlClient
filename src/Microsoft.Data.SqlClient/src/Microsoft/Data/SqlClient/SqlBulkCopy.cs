@@ -477,11 +477,23 @@ namespace Microsoft.Data.SqlClient
 
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
-            // Specify the column names explicitly. This is to ensure that we can map to hidden columns (e.g. columns in temporal tables.)
-            // If the target table doesn't exist, OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent SELECT *
-            // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
-            // is NULL.
-            // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to exclude them explicitly.
+            // Specify the column names explicitly. This is to ensure that we can map to hidden
+            // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
+            // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
+            // SELECT * query will then continue to fail with "Invalid object name" rather than with
+            // an unusual error because the query being executed is NULL.
+            //
+            // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to
+            // exclude them explicitly.  The graph_type values excluded below are internal graph
+            // columns that cannot be selected directly:
+            //
+            //   1 = GRAPH_ID
+            //   3 = GRAPH_FROM_ID
+            //   4 = GRAPH_FROM_OBJ_ID
+            //   6 = GRAPH_TO_ID
+            //   7 = GRAPH_TO_OBJ_ID
+            //
+            // See: https://learn.microsoft.com/sql/relational-databases/graphs/sql-graph-architecture#syscolumns
             return $"""
 SELECT @@TRANCOUNT;
 
@@ -627,7 +639,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 bool matched = false;
                 bool rejected = false;
-                
+
                 // Look for a local match for the remote column.
                 for (int j = 0; j < _localColumnMappings.Count; ++j)
                 {
@@ -647,7 +659,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     // Remove it from our unmatched set.
                     unmatchedColumns.Remove(localColumn.DestinationColumn);
-                    
+
                     // Check for column types that we refuse to bulk load, even
                     // though we found a match.
                     //
@@ -1440,7 +1452,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
-                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
+                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
             }
             finally
             {
@@ -1763,7 +1775,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _dbDataReaderRowSource = reader;
@@ -1799,13 +1811,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
-                
+
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
             finally
@@ -1921,7 +1933,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 if (rows.Length == 0)
                 {
@@ -1938,9 +1950,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowSourceType = ValueSourceType.RowArray;
                 _rowEnumerator = rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
-                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); 
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
             finally
             {
@@ -1967,19 +1979,19 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 throw SQL.BulkLoadPendingOperation();
             }
-            
+
             SqlStatistics statistics = Statistics;
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
                 _dbDataReaderRowSource = reader;
                 _rowSourceType = ValueSourceType.DbDataReader;
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
                 return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
@@ -2019,7 +2031,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
                 return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
@@ -2059,7 +2071,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
                 _rowSource = table;
@@ -2067,7 +2079,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowSourceType = ValueSourceType.DataTable;
                 _rowEnumerator = table.Rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
                 return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
@@ -2117,7 +2129,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             bool finishedSynchronously = true;
             _isBulkCopyingInProgress = true;
-            
+
             CreateOrValidateConnection(nameof(WriteToServer));
 
             SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
@@ -3068,11 +3080,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
                         AsyncHelper.SetTimeoutExceptionWithState(
-                            completion: cancellableReconnectTS, 
+                            completion: cancellableReconnectTS,
                             timeout: BulkCopyTimeout,
                             state: _destinationTableName,
-                            onFailure: static state => 
-                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()), 
+                            onFailure: static state =>
+                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()),
                             cancellationToken: CancellationToken.None
                         );
 
@@ -3245,7 +3257,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             return resultTask;
         }
-        
+
         private void ResetWriteToServerGlobalVariables()
         {
             _dataTableSource = null;
