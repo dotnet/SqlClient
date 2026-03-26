@@ -4744,7 +4744,7 @@ namespace Microsoft.Data.SqlClient
             rec.type = rec.metaType.SqlDbType;
 
             // always use the nullable type for parameters if 2005 or later
-            // 7.0 sometimes sends fixed length return values
+            // older servers sometimes send fixed length return values
             rec.tdsType = rec.metaType.NullableType;
             rec.IsNullable = true;
             if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN)
