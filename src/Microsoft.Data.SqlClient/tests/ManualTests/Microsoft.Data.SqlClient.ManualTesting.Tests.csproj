@@ -363,7 +363,6 @@
     </ContentWithTargetPath>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
   </ItemGroup>
   <ItemGroup>
