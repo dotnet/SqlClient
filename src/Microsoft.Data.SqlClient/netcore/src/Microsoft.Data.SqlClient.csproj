@@ -1023,6 +1023,9 @@
     <Compile Include="$(CommonSourceRoot)TypeForwards.netcore.cs">
       <Link>TypeForwards.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)TypeForwards.Abstractions.cs">
+      <Link>TypeForwards.Abstractions.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!-- Resource Files ================================================== -->
