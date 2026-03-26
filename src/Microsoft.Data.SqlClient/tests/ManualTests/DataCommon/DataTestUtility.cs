@@ -491,7 +491,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
 
-        public static bool IsSQL2016() => string.Equals("14", s_sQLServerVersion.Trim());
+        public static bool IsSQL2017() => string.Equals("14", SQLServerVersion.Trim());
+
+        public static bool IsSQL2016() => string.Equals("13", SQLServerVersion.Trim());
+
+        // "At least" version checks for use as ConditionalFact/ConditionalTheory conditions.
+        public static bool IsAtLeastSQL2017() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 14;
+
+        public static bool IsAtLeastSQL2019() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 15;
 
         public static bool IsSQLAliasSetup()
         {
