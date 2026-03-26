@@ -74,7 +74,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string UdtTestDbName = "UdtTestDb";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
-        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
@@ -360,7 +359,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ProductMajorVersion,
             EngineEdition
         }
-        
+
         public static string GetSqlServerProperty(string connectionString, ServerProperty property)
         {
             using SqlConnection conn = new(connectionString);
@@ -590,7 +589,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsUsingNativeSNI() =>
 #if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
-#else 
+#else
             true;
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
@@ -676,7 +675,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// succession.  The 12 characters are concatenated together without any
         /// separators.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 18 characters when withBracket is false, and 16 characters when
@@ -684,17 +683,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 30 characters long.
         /// </returns>
@@ -728,7 +727,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Generate a long unique database object name, whose maximum length is
         /// 96 characters, with the format:
-        /// 
+        ///
         ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
         ///
         /// The Prefix will be truncated to satisfy the overall maximum length.
@@ -747,24 +746,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// The UserName and MachineName are obtained from the Environment,
         /// and will be truncated to satisfy the maximum overall length.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 32 characters.
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 96 characters long.
         /// </returns>
@@ -1226,11 +1225,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             hostname = dataSource;
 
             return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
-        }
-
-        public class AKVEventListener : BaseEventListener
-        {
-            public override string Name => AKVEventSourceName;
         }
 
         public class MDSEventListener : BaseEventListener

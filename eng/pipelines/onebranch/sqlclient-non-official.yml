@@ -1,0 +1,205 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+
+# No automated triggers; this pipeline must be run manually.
+pr: none
+trigger: none
+
+# These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
+parameters:
+  # True to enable debug information and steps.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # True if this is a preview build.
+  - name: isPreview
+    displayName: Is this a preview build?
+    type: boolean
+    default: false
+
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    displayName: Publish symbols
+    type: boolean
+    default: false
+
+  # Build parameters — select which packages to build.
+
+  # Build the Microsoft.SqlServer.Server package.
+  - name: buildSqlServerServer
+    displayName: Build Microsoft.SqlServer.Server
+    type: boolean
+    default: true
+
+  # Build Microsoft.Data.SqlClient and Extensions packages.
+  - name: buildSqlClient
+    displayName: Build Microsoft.Data.SqlClient and Extensions
+    type: boolean
+    default: true
+
+  # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
+  - name: buildAKVProvider
+    displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    type: boolean
+    default: true
+
+  # Release parameters — select which packages to publish to NuGet.
+  # All default to false; toggle at queue time for on-demand selective release.
+
+  # Release the Microsoft.SqlServer.Server package.
+  - name: releaseSqlServerServer
+    displayName: Release Microsoft.SqlServer.Server
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Internal.Logging package.
+  - name: releaseLogging
+    displayName: Release Microsoft.Data.SqlClient.Internal.Logging
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Abstractions package.
+  - name: releaseAbstractions
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Abstractions
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient package.
+  - name: releaseSqlClient
+    displayName: Release Microsoft.Data.SqlClient
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
+  - name: releaseAzure
+    displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
+    type: boolean
+    default: false
+
+  # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
+  - name: releaseAKVProvider
+    displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    type: boolean
+    default: false
+
+variables:
+  - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
+
+  # Define the effective versions for all of the packages we build and release.
+  - ${{ if parameters.isPreview }}:
+      - name: effectiveSqlServerVersion
+        value: $(sqlServerPackagePreviewVersion)
+      - name: effectiveLoggingVersion
+        value: $(loggingPackagePreviewVersion)
+      - name: effectiveAbstractionsVersion
+        value: $(abstractionsPackagePreviewVersion)
+      - name: effectiveSqlClientVersion
+        value: $(mdsPackagePreviewVersion)
+      - name: effectiveAzureVersion
+        value: $(azurePackagePreviewVersion)
+      - name: effectiveAkvProviderVersion
+        value: $(akvPackagePreviewVersion)
+  - ${{ else }}:
+      - name: effectiveSqlServerVersion
+        value: $(sqlServerPackageVersion)
+      - name: effectiveLoggingVersion
+        value: $(loggingPackageVersion)
+      - name: effectiveAbstractionsVersion
+        value: $(abstractionsPackageVersion)
+      - name: effectiveSqlClientVersion
+        value: $(mdsPackageVersion)
+      - name: effectiveAzureVersion
+        value: $(azurePackageVersion)
+      - name: effectiveAkvProviderVersion
+        value: $(akvPackageVersion)
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  # See: https://aka.ms/obpipelines/templates
+  template: /v2/OneBranch.NonOfficial.CrossPlat.yml@templates
+  parameters:
+    release:
+      # This indicates the pipeline category to deploy Box products.  See:
+      # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+      category: NonAzure
+    featureFlags:
+      EnableCDPxPAT: false
+      WindowsHostVersion: 1ESWindows2022
+    # See: https://aka.ms/obpipelines/sdl
+    globalSdl:
+      tsa:
+        # We disable TSA for non-official pipelines.  This inhibits spurious TSA alerts and ADO
+        # task creation, since non-official builds are often done against development branches.
+        enabled: false
+      apiscan:
+        enabled: true
+        break: false
+        # Other ApiScan options are set by the jobs via ob_sdl_apiscan_* variables.
+      codeql:
+        compiled:
+        enabled: true
+      sbom:
+        enabled: true
+        packageName: Microsoft.Data.SqlClient
+        packageVersion: $(mdsPackageVersion)
+      policheck:
+        enabled: true
+        break: true
+        exclusionsFile: $(REPO_ROOT)\.config\PolicheckExclusions.xml
+      asyncSdl:
+        enabled: false
+        credscan:
+          enabled: true
+          suppressionsFile: $(REPO_ROOT)/.config/CredScanSuppressions.json
+        binskim:
+          enabled: true
+        armory:
+          enabled: true
+          break: true
+        eslint:
+          enabled: false
+        roslyn:
+          enabled: true
+          break: true
+        publishLogs:
+          enabled: true
+        tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
+        disableLegacyManifest: true
+    stages:
+      - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          isPreview: ${{ parameters.isPreview }}
+          isOfficial: false # This is a non-official pipeline.
+          publishSymbols: ${{ parameters.publishSymbols }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+
+      - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          # Non-official pipelines always push to the NuGet Test feed.
+          releaseToProduction: false
+          # This is _not_ an official pipeline.
+          isOfficial: false
+          stageNameSuffix: test
+          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
+          releaseLogging: ${{ parameters.releaseLogging }}
+          releaseAbstractions: ${{ parameters.releaseAbstractions }}
+          releaseSqlClient: ${{ parameters.releaseSqlClient }}
+          releaseAzure: ${{ parameters.releaseAzure }}
+          releaseAKVProvider: ${{ parameters.releaseAKVProvider }}

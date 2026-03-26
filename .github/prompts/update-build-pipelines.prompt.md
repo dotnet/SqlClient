@@ -40,7 +40,7 @@ Follow this workflow step-by-step:
 - Modify YAML files following the existing patterns and indentation style.
 - When adding new stages, follow the existing stage ordering:
   1. `build_abstractions_package_stage`
-  2. `build_mds_akv_packages_stage`
+  2. `build_sqlclient_package_stage`
   3. `build_azure_package_stage`
   4. `stress_tests_stage` (optional)
   5. `run_tests_stage`

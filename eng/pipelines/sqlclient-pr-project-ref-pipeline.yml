@@ -29,22 +29,28 @@ name: $(DayOfYear)$(Rev:rr)
 pr:
   branches:
     include:
-    # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/*
-    - feat/*
-    - main
+      # GitHub repo branch targets that will trigger PR validation builds.
+      - dev/*
+      - feat/*
+      - main
 
   paths:
     include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng/pipelines
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
+      - .azuredevops/*
+      - .config/*
+      - doc/*
+      - eng/pipelines/*
+      - src/*
+      - tools/*
+      - azurepipelines-coverage.yml
+      - build.proj
+      - build2.proj
+      - Directory.Packages.props
+      - dotnet-tools.json
+      - global.json
+      - NuGet.config
+    exclude:
+      - eng/pipelines/onebranch/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none
@@ -52,7 +58,7 @@ trigger: none
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use; defaults to Debug.
+  # The C# build configuration to use; defaults to Debug.
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
@@ -66,11 +72,13 @@ parameters:
     type: object
     default: [AnyCPU]
 
+  # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
     type: boolean
     default: false
 
+  # True to run the stress tests stage.
   - name: enableStressTests
     displayName: Enable Stress Tests
     type: boolean

@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
                 CheckDisposed();
                 if (!HasDataLength)
                 {
-                    throw new InvalidOperationException($"cannot get {nameof(RequiredLength)} when {nameof(HasDataLength)} is false");
+                    throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_Packet_RequiredLengthUnavailable));
                 }
                 return TdsEnums.HEADER_LEN + _dataLength;
             }

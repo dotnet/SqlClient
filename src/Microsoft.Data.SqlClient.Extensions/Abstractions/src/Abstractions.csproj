@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
@@ -13,6 +13,11 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
+
+  <!-- When we're not signing, we are permitted to expose our internals to tests. -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
 
   <!-- Compiler Config -->
   <PropertyGroup>
@@ -40,8 +45,6 @@
     <AssemblyFileVersion>$(AbstractionsAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AbstractionsAssemblyFileVersion)</FileVersion>
     <Version>$(AbstractionsPackageVersion)</Version>
-
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
@@ -49,16 +52,27 @@
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-  <!--
-    Our unit tests have access to our internal types, but only for non-official
-    builds.  This prevents downstream consumers from creating an assembly with
-    our test assembly name and gaining non-reflective access to our internals.
 
-    CDP_BUILD_TYPE is a OneBranch governed pipeline variable.
-  -->
-  <ItemGroup Condition="'$(CDP_BUILD_TYPE)' != 'Official'">
-    <InternalsVisibleTo Include="$(AssemblyName).Test" />
-  </ItemGroup>
+  <!-- Build Output Config-->
+  <PropertyGroup>
+
+    <!--
+      The obj/ folder for each target framework.  This contains intermediate files used during the
+      build process.
+    -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
+
+    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
+
+    <!--
+      Generate XML documentation from /// comments.  The compiler places the
+      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
+      this file automatically in the NuGet package under lib/<tfm>/.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+  </PropertyGroup>
 
   <!--
     NuGet Package Config
@@ -72,15 +86,34 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <Authors>Microsoft Corporation</Authors>
+    <Title>Microsoft.Data.SqlClient.Extensions.Abstractions</Title>
+    <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>Microsoft.Data.SqlClient Extensions Abstractions</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient extensions abstractions</PackageTags>
+    <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+  <!--
+    Refer to the Logging package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <!--

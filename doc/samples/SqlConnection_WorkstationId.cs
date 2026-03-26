@@ -1,3 +1,5 @@
+namespace SqlConnection_WorkstationId;
+
 using System;
 using System.Data;
 // <Snippet1>

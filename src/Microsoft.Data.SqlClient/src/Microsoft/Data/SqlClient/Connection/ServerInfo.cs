@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.Connection
             PreRoutingServerName = preRoutingServerName;
             UserProtocol = TdsEnums.TCP;
             SetDerivedNames(UserProtocol, UserServerName);
-            ResolvedDatabaseName = userOptions.InitialCatalog;
+            ResolvedDatabaseName = routing?.DatabaseName ?? userOptions.InitialCatalog;
             ServerSPN = serverSpn;
         }
 

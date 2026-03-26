@@ -1,195 +1,121 @@
 ---
 applyTo: "eng/pipelines/**/*.yml"
 ---
-# Azure DevOps Pipelines Guide
+# Azure DevOps CI/CD Pipeline Guidelines
 
-## Overview
+## Purpose
 
-This repository uses Azure DevOps Pipelines for CI/CD. The pipeline configurations are located in `eng/pipelines/`.
+Rules and conventions for editing the Azure DevOps CI/CD pipelines that build, test, and validate Microsoft.Data.SqlClient. These pipelines live under `eng/pipelines/` (excluding `onebranch/`, which is covered by separate instructions).
 
-**ADO Organization**: sqlclientdrivers
-**ADO Project**: ADO.NET
+**ADO Organization**: sqlclientdrivers | **ADO Project**: ADO.NET
 
-## Pipeline Structure
+## Pipeline Layout
 
-```
-eng/pipelines/
-├── abstractions/               # Abstractions package pipelines
-├── azure/                      # Azure package pipelines
-├── common/                     # Shared templates
-│   └── templates/
-│       ├── jobs/               # Reusable job templates
-│       ├── stages/             # Reusable stage templates
-│       └── steps/              # Reusable step templates
-├── jobs/                       # Top-level job definitions
-├── libraries/                  # Shared variable definitions
-├── stages/                     # Stage definitions
-├── steps/                      # Step definitions
-├── variables/                  # Variable templates
-├── akv-official-pipeline.yml                   # AKV provider official/signing build
-├── dotnet-sqlclient-ci-core.yml                # Core CI pipeline (reusable)
-├── dotnet-sqlclient-ci-package-reference-pipeline.yml  # CI with package references
-├── dotnet-sqlclient-ci-project-reference-pipeline.yml  # CI with project references
-├── dotnet-sqlclient-signing-pipeline.yml       # Package signing pipeline
-├── sqlclient-pr-package-ref-pipeline.yml       # PR validation (package ref)
-├── sqlclient-pr-project-ref-pipeline.yml       # PR validation (project ref)
-└── stress-tests-pipeline.yml                   # Stress testing
-```
+Two categories of pipelines exist in this repository:
 
-## Main Pipelines
+- **CI/PR pipelines** (`eng/pipelines/`) — Build, test, and validate on every push/PR
+- **OneBranch pipelines** (`eng/pipelines/onebranch/`) — Official signing/release builds (separate instructions file)
 
-### CI Core Pipeline (`dotnet-sqlclient-ci-core.yml`)
-Reusable core CI pipeline consumed by both project-reference and package-reference CI pipelines. Configurable parameters:
+Top-level CI/PR pipeline files:
+- `dotnet-sqlclient-ci-core.yml` — Reusable core template; all CI and PR pipelines extend this
+- `dotnet-sqlclient-ci-package-reference-pipeline.yml` — CI with Package references (Release)
+- `dotnet-sqlclient-ci-project-reference-pipeline.yml` — CI with Project references (Release)
+- `sqlclient-pr-package-ref-pipeline.yml` — PR validation with Package references
+- `sqlclient-pr-project-ref-pipeline.yml` — PR validation with Project references
+- `stress-tests-pipeline.yml` — Stress tests triggered after successful CI-Package runs
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `targetFrameworks` | Windows test frameworks | `[net462, net8.0, net9.0, net10.0]` |
-| `targetFrameworksUnix` | Unix test frameworks | `[net8.0, net9.0, net10.0]` |
-| `referenceType` | Project or Package reference | Required |
-| `buildConfiguration` | Debug or Release | Required |
-| `useManagedSNI` | Test with managed SNI | `[false, true]` |
-| `testJobTimeout` | Test job timeout (minutes) | Required |
-| `runAlwaysEncryptedTests` | Include AE tests | `true` |
-| `enableStressTests` | Include stress test stage | `false` |
+Reusable templates are organized under:
+- `common/templates/jobs/` — Job templates (`ci-build-nugets-job`, `ci-code-coverage-job`, `ci-run-tests-job`)
+- `common/templates/stages/` — Stage templates (`ci-run-tests-stage`)
+- `common/templates/steps/` — Step templates (build, test, config, publish)
+- `jobs/` — Package-specific CI jobs (pack/test Abstractions, Azure, Logging, stress)
+- `stages/` — Package-specific CI stages (build Logging → Abstractions → SqlClient → Azure → verify → stress)
+- `libraries/` — Shared variables (`ci-build-variables.yml`)
+- `steps/` — SDK install steps
 
-### CI Reference Pipelines
-- `dotnet-sqlclient-ci-project-reference-pipeline.yml` — Full CI using project references (builds from source)
-- `dotnet-sqlclient-ci-package-reference-pipeline.yml` — Full CI using package references (tests against published NuGet packages)
+## CI Core Template
 
-### PR Validation Pipelines
-- `sqlclient-pr-project-ref-pipeline.yml` — PR validation with project references
-- `sqlclient-pr-package-ref-pipeline.yml` — PR validation with package references
+`dotnet-sqlclient-ci-core.yml` is the central orchestrator. All CI and PR pipelines extend it with different parameters.
 
-These pipelines trigger on pull requests and run a subset of the full CI matrix to provide fast feedback.
+Key parameters:
+- `referenceType` (required) — `Package` or `Project`; controls how sibling packages are referenced
+- `buildConfiguration` (required) — `Debug` or `Release`
+- `testJobTimeout` (required) — test job timeout in minutes
+- `targetFrameworks` — Windows test TFMs; default `[net462, net8.0, net9.0, net10.0]`
+- `targetFrameworksUnix` — Unix test TFMs; default `[net8.0, net9.0, net10.0]`
+- `testSets` — test partitions; default `[1, 2, 3]`
+- `useManagedSNI` — SNI variants to test; default `[false, true]`
+- `runAlwaysEncryptedTests` — include AE test set; default `true`
+- `enableStressTests` — enable stress test stage; default `false`
+- `debug` — enable debug output; default `false`
+- `dotnetVerbosity` — MSBuild verbosity; default `normal`
 
-### Official/Signing Pipeline (`dotnet-sqlclient-signing-pipeline.yml`)
-Signs and publishes NuGet packages. Used for official releases. Requires secure service connections and key vault access for code signing.
+## Build Stage Order
 
-### AKV Official Pipeline (`akv-official-pipeline.yml`)
-Builds and signs the `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` add-on package separately from the main driver. Uses 1ES pipeline templates for compliance.
+Stages execute in dependency order (Package reference mode requires artifacts from prior stages):
+1. `generate_secrets` — Generate test secrets
+2. `build_logging_package_stage` — Build Logging package
+3. `build_abstractions_package_stage` — Build Abstractions (depends on Logging)
+4. `build_sqlclient_package_stage` — Build SqlClient + AKV Provider (depends on Abstractions + Logging)
+5. `build_azure_package_stage` — Build Azure extensions (depends on Abstractions + Logging + SqlClient)
+6. `verify_nuget_packages_stage` — Verify NuGet package metadata
+7. `stress_tests_stage` — Optional stress tests
+8. `ci_run_tests_stage` — Run MDS and AKV test suites
 
-### Stress Tests Pipeline (`stress-tests-pipeline.yml`)
-Optional pipeline for long-running stress and endurance testing. Enabled via `enableStressTests` parameter in CI core.
+When adding a new build stage, respect the dependency graph and pass artifact names/versions to downstream stages.
 
-## Build Stages
+## PR vs CI Pipeline Differences
 
-1. **build_abstractions_package_stage**: Build and pack abstractions
-2. **build_mds_akv_packages_stage**: Build main driver and AKV packages
-3. **build_azure_package_stage**: Build Azure extensions package
-4. **stress_tests_stage**: Optional stress testing
-5. **run_tests_stage**: Execute all test suites
+PR pipelines:
+- Trigger on PRs to `dev/*`, `feat/*`, `main`; exclude `eng/pipelines/onebranch/*` paths
+- Use reduced TFM matrix: `[net462, net8.0, net9.0]` (excludes net10.0)
+- Timeout: 90 minutes
+- Package-ref PR disables Always Encrypted tests in Debug config
+
+CI pipelines:
+- Trigger on push to `main` (GitHub) and `internal/main` (ADO) with `batch: true`
+- Scheduled weekday builds (see individual pipeline files for cron times)
+- Full TFM matrix including net10.0
 
 ## Test Configuration
 
-### Test Sets
-Tests are divided into sets for parallelization:
-- `TestSet=1` — First partition of tests
-- `TestSet=2` — Second partition
-- `TestSet=3` — Third partition
-- `TestSet=AE` — Always Encrypted tests
+Test partitioning:
+- Tests split into `TestSet=1`, `TestSet=2`, `TestSet=3` for parallelization
+- `TestSet=AE` — Always Encrypted tests (controlled by `runAlwaysEncryptedTests`)
 
-### Test Filters
-Tests use category-based filtering. The default filter excludes both `failing` and `flaky` tests:
-```
-category!=failing&category!=flaky
-```
+Test filters — default excludes `failing` and `flaky` categories:
+- `failing` — known permanent failures, always excluded
+- `flaky` — intermittent failures, quarantined in separate pipeline steps
+- `nonnetfxtests` / `nonnetcoreapptests` — platform-specific exclusions
+- `nonwindowstests` / `nonlinuxtests` — OS-specific exclusions
 
-Category values:
-- `nonnetfxtests` — Excluded on .NET Framework
-- `nonnetcoreapptests` — Excluded on .NET Core
-- `nonwindowstests` — Excluded on Windows
-- `nonlinuxtests` — Excluded on Linux
-- `failing` — Known permanent failures (excluded from all runs)
-- `flaky` — Intermittently failing tests (quarantined, run separately)
+Flaky test quarantine:
+- Quarantined tests (`[Trait("Category", "flaky")]`) run in separate steps after main tests
+- Main test runs are not blocked by flaky failures
+- No code coverage collected for flaky runs
+- Configured in `common/templates/steps/build-and-run-tests-netcore-step.yml`, `build-and-run-tests-netfx-step.yml`, and `run-all-tests-step.yml`
 
-### Flaky Test Quarantine in Pipelines
-Quarantined tests (`[Trait("Category", "flaky")]`) run in **separate pipeline steps** after the main test steps. This ensures:
-- Main test runs are **not blocked** by intermittent failures
-- Flaky tests are still **monitored** for regression or resolution
-- Code coverage is **not collected** for flaky test runs
-- Results appear in pipeline output for visibility
+SNI testing — `useManagedSNI` controls testing with native SNI (`false`) or managed SNI (`true`)
 
-The quarantine steps are configured in:
-- `eng/pipelines/common/templates/steps/build-and-run-tests-netcore-step.yml`
-- `eng/pipelines/common/templates/steps/build-and-run-tests-netfx-step.yml`
-- `eng/pipelines/common/templates/steps/run-all-tests-step.yml`
-
-### Test Timeout
-All test runs use `--blame-hang-timeout 10m` (configured in `build.proj`). Tests exceeding 10 minutes are killed and reported as failures.
-
-### SNI Testing
-The `useManagedSNI` parameter controls testing with:
-- Native SNI (`false`) - Windows native library
-- Managed SNI (`true`) - Cross-platform managed implementation
+Test timeout — `--blame-hang-timeout 10m` (configured in `build.proj`); tests exceeding 10 minutes are killed
 
 ## Variables
 
-### Build Variables (`ci-build-variables.yml`)
-Common build configuration:
-- Package versions
-- Build paths
-- Signing configuration
+- All CI build variables centralized in `libraries/ci-build-variables.yml`
+- Package versions use `-ci` suffix (e.g., `7.0.0.$(Build.BuildNumber)-ci`)
+- `assemblyBuildNumber` derived from first segment of `Build.BuildNumber` (16-bit safe)
+- `localFeedPath` = `$(Build.SourcesDirectory)/packages` — local NuGet feed for inter-package deps
+- `packagePath` = `$(Build.SourcesDirectory)/output` — NuGet pack output
 
-### Runtime Variables
-Set via pipeline parameters or UI:
-- `Configuration` - Debug/Release
-- `Platform` - AnyCPU/x86/x64
-- `TF` - Target framework
+## Conventions When Editing Pipelines
 
-## Creating Pipeline Changes
-
-### Adding New Test Categories
-1. Add category attribute to tests: `[Category("newcategory")]`
-2. Update filter expressions in test job templates
-3. Document category purpose in test documentation
-
-### Adding New Pipeline Parameters
-1. Define parameter in appropriate `.yml` file
-2. Add to parameter passing in calling templates
-3. Document in this file
-
-### Modifying Build Steps
-1. Changes should be made in template files for reusability
-2. Test changes locally when possible
-3. Submit as PR - validation will run
-
-## Best Practices
-
-### Template Design
-- Use templates for reusable definitions
-- Pass parameters explicitly (avoid global variables)
-- Use descriptive stage/job/step names
-
-### Variable Management
-- Use template variables for shared values
-- Use pipeline parameters for per-run configuration
-- Avoid hardcoding versions (use Directory.Packages.props)
-
-### Test Infrastructure
-- Ensure tests are properly categorized
-- Handle test configuration files properly
-- Use test matrix for cross-platform coverage
-
-## Troubleshooting
-
-### Common Issues
-1. **Test failures due to missing config**: Ensure `config.json` exists
-2. **Platform-specific failures**: Check platform exclusion categories
-3. **Timeout issues**: Increase `testJobTimeout` parameter
-
-### Debugging Pipelines
-- Enable debug mode via `debug: true` parameter
-- Use `dotnetVerbosity: diagnostic` for detailed output
-- Check build logs in Azure DevOps
-
-## Security Considerations
-
-- Pipelines use service connections for artifact publishing
-- Signing uses secure key vault integration
-- Sensitive configuration should use pipeline secrets
-- Never commit credentials in pipeline files
-
-## Related Documentation
-
-- [BUILDGUIDE.md](../../BUILDGUIDE.md) - Local build instructions
-- [Azure DevOps Documentation](https://learn.microsoft.com/azure/devops/pipelines/)
+- Always use templates for reusable logic — do not inline complex steps
+- Pass parameters explicitly; avoid relying on global variables
+- Use descriptive stage/job/step display names
+- When adding parameters, define them in the core template and thread through calling pipelines
+- When adding test categories, update filter expressions in test step templates
+- PR pipelines should run a minimal matrix for fast feedback
+- Test changes via PR pipeline first — validation runs automatically
+- Enable `debug: true` and `dotnetVerbosity: diagnostic` for troubleshooting
+- Never commit credentials or secrets in pipeline files
+- Signing and release are handled by OneBranch pipelines — not these CI/PR pipelines

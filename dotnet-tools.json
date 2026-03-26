@@ -8,6 +8,13 @@
         "dotnet-coverage"
       ],
       "rollForward": false
+    },
+    "microsoft.dotnet.apicompat.tool": {
+      "version": "10.0.103",
+      "commands": [
+        "apicompat"
+      ],
+      "rollForward": false
     }
   }
 }

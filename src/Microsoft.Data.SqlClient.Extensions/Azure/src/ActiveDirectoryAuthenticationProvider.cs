@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -11,6 +11,7 @@ using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -31,7 +32,6 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
     private const string s_defaultScopeSuffix = "/.default";
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
-    private readonly SqlClientLogger _logger = new();
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
     private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
@@ -102,20 +102,20 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
     public override void BeforeLoad(SqlAuthenticationMethod authentication)
     {
-        _logger.LogInfo(_type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
+        SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|INFO>{2}", _type, "BeforeLoad", $"being loaded into SqlAuthProviders for {authentication}.");
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
     public override void BeforeUnload(SqlAuthenticationMethod authentication)
     {
-        _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
+        SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|INFO>{2}", _type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
     }
 
     #if NETFRAMEWORK
-    private Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc = null;
+    private Func<System.Windows.Forms.IWin32Window>? _iWin32WindowFunc = null;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
-    public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this._iWin32WindowFunc = iWin32WindowFunc;
+    public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => _iWin32WindowFunc = iWin32WindowFunc;
     #endif
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
@@ -146,14 +146,14 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             // We split audience from Authority URL here. Audience can be one of
             // the following:
             //
-            //   - The Azure AD authority audience enumeration
+            //   - The Entra ID authority audience enumeration
             //   - The tenant ID, which can be:
-            //     - A GUID (the ID of your Azure AD instance), for
+            //     - A GUID (the ID of your Entra ID instance), for
             //       single-tenant applications
-            //     - A domain name associated with your Azure AD instance (also
+            //     - A domain name associated with your Entra ID instance (also
             //       for single-tenant applications)
             //   - One of these placeholders as a tenant ID in place of the
-            //     Azure AD authority audience enumeration:
+            //     Entra ID authority audience enumeration:
             //     - `organizations` for a multitenant application
             //     - `consumers` to sign in users only with their personal
             //       accounts
@@ -161,9 +161,9 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             //       accounts or their personal Microsoft accounts
             //
             // MSAL will throw a meaningful exception if you specify both the
-            // Azure AD authority audience and the tenant ID.
+            // Entra ID authority audience and the tenant ID.
             //
-            // If you don't specify an audience, your app will target Azure AD
+            // If you don't specify an audience, your app will target Entra ID
             // and personal Microsoft accounts as an audience.  (That is, it
             // will behave as though `common` were specified.)
             //
@@ -224,7 +224,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
                 */
             string redirectUri = s_nativeClientRedirectUri;
 
-            #if NET
+            #if NETSTANDARD
             if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 redirectUri = "http://localhost";
@@ -500,7 +500,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             {
                 using CancellationTokenSource ctsInteractive = new();
 
-                #if NET
+                #if NETSTANDARD
                 // On .NET Core, MSAL will start the system browser as a
                 // separate process. MSAL does not have control over this
                 // browser, but once the user finishes authentication, the web
@@ -607,7 +607,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
     private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey, CancellationToken cancellationToken)
     {
-        if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication clientApplicationInstance))
+        if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication? clientApplicationInstance))
         {
             await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken);
             try
@@ -631,7 +631,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     private static async Task<AccessToken> GetTokenAsync(TokenCredentialKey tokenCredentialKey, string secret,
         TokenRequestContext tokenRequestContext, CancellationToken cancellationToken)
     {
-        if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData tokenCredentialInstance))
+        if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData? tokenCredentialInstance))
         {
             await s_tokenCredentialMapModifierSemaphore.WaitAsync(cancellationToken);
             try
@@ -704,17 +704,30 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
             .CreateWithApplicationOptions(new PublicClientApplicationOptions
             {
-                ClientId = publicClientAppKey._applicationClientId,
+                ClientId = publicClientAppKey.ApplicationClientId,
                 ClientName = typeof(ActiveDirectoryAuthenticationProvider).FullName,
                 ClientVersion = Extensions.Azure.ThisAssembly.InformationalVersion,
-                RedirectUri = publicClientAppKey._redirectUri,
+                RedirectUri = publicClientAppKey.RedirectUri,
             })
-            .WithAuthority(publicClientAppKey._authority);
+            // The Authority contains the tenant-specific Entra ID endpoint, e.g.
+            // "https://login.microsoftonline.com/72f988bf-...".  The tenant ID is not determined by
+            // the client; it originates from the SQL Server FEDAUTHINFO TDS token that the server
+            // sends during the login handshake.  The flow is:
+            //
+            //   1. TdsParser.TryProcessFedAuthInfo parses the FEDAUTHINFO token and extracts the
+            //      STSURL (authority with tenant) and SPN (resource).
+            //   2. SqlConnectionInternal passes the STSURL as the 'authority' parameter when
+            //      constructing SqlAuthenticationParametersBuilder.
+            //   3. AcquireTokenAsync stores the full authority (including tenant) in
+            //      PublicClientAppKey.Authority.
+            //   4. Here, WithAuthority directs MSAL to authenticate against the correct Entra ID
+            //      tenant.
+            .WithAuthority(publicClientAppKey.Authority);
 
         #if NETFRAMEWORK
-        if (_iWin32WindowFunc is not null)
+        if (publicClientAppKey.IWin32WindowFunc is not null)
         {
-            builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+            builder.WithParentActivityOrWindow(publicClientAppKey.IWin32WindowFunc);
         }
         #endif
 
@@ -795,45 +808,51 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
     internal class PublicClientAppKey
     {
-        public readonly string _authority;
-        public readonly string _redirectUri;
-        public readonly string _applicationClientId;
+        public string Authority { get; }
+        public string RedirectUri { get; }
+        public string ApplicationClientId { get; }
         #if NETFRAMEWORK
-        public readonly Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc;
+        public Func<System.Windows.Forms.IWin32Window>? IWin32WindowFunc { get; }
         #endif
 
-        public PublicClientAppKey(string authority, string redirectUri, string applicationClientId
-        #if NETFRAMEWORK
-        , Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc
-        #endif
-            )
-        {
-            _authority = authority;
-            _redirectUri = redirectUri;
-            _applicationClientId = applicationClientId;
+        public PublicClientAppKey(
+            string authority,
+            string redirectUri,
+            string applicationClientId
             #if NETFRAMEWORK
-            _iWin32WindowFunc = iWin32WindowFunc;
+            , Func<System.Windows.Forms.IWin32Window>? iWin32WindowFunc
+            #endif
+        )
+        {
+            Authority = authority;
+            RedirectUri = redirectUri;
+            ApplicationClientId = applicationClientId;
+            #if NETFRAMEWORK
+            IWin32WindowFunc = iWin32WindowFunc;
             #endif
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj != null && obj is PublicClientAppKey pcaKey)
             {
-                return (string.CompareOrdinal(_authority, pcaKey._authority) == 0
-                    && string.CompareOrdinal(_redirectUri, pcaKey._redirectUri) == 0
-                    && string.CompareOrdinal(_applicationClientId, pcaKey._applicationClientId) == 0
+                return (string.CompareOrdinal(Authority, pcaKey.Authority) == 0
+                    && string.CompareOrdinal(RedirectUri, pcaKey.RedirectUri) == 0
+                    && string.CompareOrdinal(ApplicationClientId, pcaKey.ApplicationClientId) == 0
                     #if NETFRAMEWORK
-                    && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
+                    && IWin32WindowFunc == pcaKey.IWin32WindowFunc
                     #endif
                 );
             }
             return false;
         }
 
-        public override int GetHashCode() => Tuple.Create(_authority, _redirectUri, _applicationClientId
-        #if NETFRAMEWORK
-            , _iWin32WindowFunc
+        public override int GetHashCode() => Tuple.Create(
+            Authority,
+            RedirectUri,
+            ApplicationClientId
+            #if NETFRAMEWORK
+            , IWin32WindowFunc
             #endif
             ).GetHashCode();
     }
@@ -867,7 +886,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             _clientId = clientId;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj != null && obj is TokenCredentialKey tcKey)
             {
@@ -883,41 +902,4 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
         public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
     }
-
-    #region Stubs for logging
-
-    /// <summary>
-    /// This is a stub class for logging.
-    ///
-    /// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
-    /// Implement proper logging mechanism.
-    /// </summary>
-    private class SqlClientLogger
-    {
-        internal void LogInfo(string type, string method, string message)
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "<sc|{0}|{1}|{2}>{3}", type, method, LogLevel.Info, message);
-        }
-    }
-
-    /// <summary>
-    /// This is a stub class for logging.
-    ///
-    /// TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
-    /// Implement proper logging mechanism.
-    /// </summary>
-    private class SqlClientEventSource
-    {
-        internal class Logger
-        {
-            internal void TryTraceEvent(string message, params object?[] args)
-            {
-            }
-        }
-
-        internal static readonly Logger Log = new();
-    }
-
-    #endregion
 }

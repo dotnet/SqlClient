@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ColumnMappingNameOrdinal;
+
 using System;
 using System.Data;
 // <Snippet1>

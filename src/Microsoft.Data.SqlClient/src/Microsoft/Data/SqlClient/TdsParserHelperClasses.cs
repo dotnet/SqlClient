@@ -89,11 +89,18 @@ namespace Microsoft.Data.SqlClient
         internal ushort Port { get; private set; }
         internal string ServerName { get; private set; }
 
-        internal RoutingInfo(byte protocol, ushort port, string servername)
+        /// <summary>
+        /// The DatabaseName property is only used when routing via an EnhancedRouting ENVCHANGE token.
+        /// It is not used when routing via the normal Routing ENVCHANGE token.
+        /// </summary>
+        internal string DatabaseName { get; private set; }
+
+        internal RoutingInfo(byte protocol, ushort port, string serverName, string databaseName = null)
         {
             Protocol = protocol;
             Port = port;
-            ServerName = servername;
+            ServerName = serverName;
+            DatabaseName = databaseName;
         }
     }
 
@@ -360,6 +367,7 @@ namespace Microsoft.Data.SqlClient
             _visibleColumnMap = original._visibleColumnMap;
             dbColumnSchema = original.dbColumnSchema;
             schemaTable = original.schemaTable;
+            cekTable = original.cekTable;
 
             if (original._metaDataArray == null)
             {
@@ -585,6 +593,10 @@ namespace Microsoft.Data.SqlClient
                 xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
                 xmlSchemaCollection.CopyFrom(original.xmlSchemaCollection);
             }
+
+            this.isEncrypted = original.isEncrypted;
+            this.baseTI = original.baseTI;
+            this.cipherMD = original.cipherMD;
         }
     }
 
@@ -773,7 +785,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_multipartName != null)
             {
-                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
+                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];
                 _catalogName = parts[1];
                 _schemaName = parts[2];

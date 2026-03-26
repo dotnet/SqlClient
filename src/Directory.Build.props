@@ -61,6 +61,12 @@
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
+
+  <!-- Add user-supplied define constants. -->
+  <PropertyGroup Condition="'$(UserDefinedConstants)' != ''">
+    <DefineConstants>$(DefineConstants);$(UserDefinedConstants)</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
@@ -107,6 +113,17 @@
       https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu1901-nu1904
     -->
     <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+
+    <!-- We also define a constant used for conditional compilation. -->
+    <DefineConstants>$(DefineConstants);STRONG_NAME_SIGNING</DefineConstants>
   </PropertyGroup>
 
   <!-- Packaging  for source link-->

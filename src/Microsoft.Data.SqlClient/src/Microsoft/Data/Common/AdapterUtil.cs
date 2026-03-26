@@ -23,6 +23,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -30,7 +31,6 @@ using System.Security.Permissions;
 #endif
 
 #if _WINDOWS
-using System.Runtime.Versioning;
 using Microsoft.Win32;
 #endif
 
@@ -441,8 +441,6 @@ namespace Microsoft.Data.Common
         }
         #endif
         #if _WINDOWS
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
             #if NETFRAMEWORK
