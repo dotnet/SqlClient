@@ -342,7 +342,8 @@
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'"  />
+                      Condition="'$(ReferenceType)' != 'Package'"
+                      Private="true" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
 
@@ -360,7 +361,6 @@
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -395,7 +395,6 @@
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -422,4 +421,5 @@
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
+  
 </Project>
