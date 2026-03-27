@@ -60,7 +60,9 @@ parameters:
     type: string
     default: $(loggingPackageVersion)
 
-  # Necessary to build AKV Provider when referenceType is Package.  Ignored when referenceType is Project.
+  # Package version to use for MDS package. Because we explicitly provide this version, the
+  # assembly version will be generated based on this package version and the build number.
+  # See MdsVersions.props for details on how this works.
   - name: mdsPackageVersion
     type: string
     default: $(mdsPackageVersion)
@@ -84,10 +86,10 @@ steps:
         msbuildArguments:
           -t:BuildMds
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:BuildSuffix=ci
+          -p:BuildNumber=${{ parameters.assemblyBuildNumber }}
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
