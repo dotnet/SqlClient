@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ADP_Ascending" xml:space="preserve">
-    <value>Ascending</value>
-  </data>
   <data name="ADP_CollectionIndexInt32" xml:space="preserve">
     <value>Invalid index {0} for this {1} with Count={2}.</value>
   </data>
@@ -132,17 +129,11 @@
   <data name="ADP_CollectionIsNotParent" xml:space="preserve">
     <value>The {0} is already contained by another {1}.</value>
   </data>
-  <data name="ADP_CollectionIsParent" xml:space="preserve">
-    <value>The {0} with is already contained by this {1}.</value>
-  </data>
   <data name="ADP_CollectionNullValue" xml:space="preserve">
     <value>The {0} only accepts non-null {1} type objects.</value>
   </data>
   <data name="ADP_CollectionRemoveInvalidObject" xml:space="preserve">
     <value>Attempted to remove an {0} that is not contained by this {1}.</value>
-  </data>
-  <data name="ADP_CollectionUniqueValue" xml:space="preserve">
-    <value>The {0}.{1} is required to be unique, '{2}' already exists in the collection.</value>
   </data>
   <data name="ADP_ConnectionAlreadyOpen" xml:space="preserve">
     <value>The connection was not closed. {0}</value>
@@ -171,12 +162,6 @@
   <data name="ADP_DataReaderClosed" xml:space="preserve">
     <value>Invalid attempt to call {0} when reader is closed.</value>
   </data>
-  <data name="ADP_DelegatedTransactionPresent" xml:space="preserve">
-    <value>Cannot enlist in the transaction because the connection is the primary connection for a delegated or promoted transaction.</value>
-  </data>
-  <data name="ADP_Descending" xml:space="preserve">
-    <value>Descending</value>
-  </data>
   <data name="ADP_EmptyString" xml:space="preserve">
     <value>Expecting non-empty string for '{0}' parameter.</value>
   </data>
@@ -203,9 +188,6 @@
   </data>
   <data name="ADP_NoConnectionString" xml:space="preserve">
     <value>The ConnectionString property has not been initialized.</value>
-  </data>
-  <data name="ADP_NonCLSException" xml:space="preserve">
-    <value>A Non CLS Exception was caught.</value>
   </data>
   <data name="ADP_NotAPermissionElement" xml:space="preserve">
     <value>Given security element is not a permission element.</value>
@@ -1752,9 +1734,6 @@
   <data name="ConfigRequiredAttributeEmpty" xml:space="preserve">
     <value>Required attribute '{0}' cannot be empty.</value>
   </data>
-  <data name="ADP_EmptyArray" xml:space="preserve">
-    <value>Expecting non-empty array for '{0}' parameter.</value>
-  </data>
   <data name="ADP_SingleValuedProperty" xml:space="preserve">
     <value>The only acceptable value for the property '{0}' is '{1}'.</value>
   </data>
@@ -1785,20 +1764,8 @@
   <data name="ADP_UdlFileError" xml:space="preserve">
     <value>Unable to load the UDL file.</value>
   </data>
-  <data name="ADP_InvalidUDL" xml:space="preserve">
-    <value>Invalid UDL file.</value>
-  </data>
   <data name="ADP_InternalProviderError" xml:space="preserve">
     <value>Internal .NET Framework Data Provider error {0}.</value>
-  </data>
-  <data name="ADP_NoQuoteChange" xml:space="preserve">
-    <value>The QuotePrefix and QuoteSuffix properties cannot be changed once an Insert, Update, or Delete command has been generated.</value>
-  </data>
-  <data name="ADP_MissingSourceCommand" xml:space="preserve">
-    <value>The DataAdapter.SelectCommand property needs to be initialized.</value>
-  </data>
-  <data name="ADP_MissingSourceCommandConnection" xml:space="preserve">
-    <value>The DataAdapter.SelectCommand.Connection property needs to be initialized;</value>
   </data>
   <data name="ADP_InvalidMultipartName" xml:space="preserve">
     <value>{0} "{1}".</value>
@@ -1833,21 +1800,6 @@
   <data name="SQLMSF_FailoverPartnerNotSupported" xml:space="preserve">
     <value>Connecting to a mirrored SQL Server instance using the MultiSubnetFailover connection option is not supported.</value>
   </data>
-  <data name="ADP_ColumnSchemaExpression" xml:space="preserve">
-    <value>The column mapping from SourceColumn '{0}' failed because the DataColumn '{1}' is a computed column.</value>
-  </data>
-  <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
-    <value>Inconvertible type mismatch between SourceColumn '{0}' of {1} and the DataColumn '{2}' of {3}.</value>
-  </data>
-  <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
-    <value>Missing the DataColumn '{0}' in the DataTable '{1}' for the SourceColumn '{2}'.</value>
-  </data>
-  <data name="ADP_InvalidSourceColumn" xml:space="preserve">
-    <value>SourceColumn is required to be a non-empty string.</value>
-  </data>
-  <data name="ADP_MissingColumnMapping" xml:space="preserve">
-    <value>Missing SourceColumn mapping for '{0}'.</value>
-  </data>
   <data name="ADP_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the {2} method.</value>
   </data>
@@ -1863,15 +1815,6 @@
   <data name="ADP_ComputerNameEx" xml:space="preserve">
     <value>Unable to retrieve the ComputerNameDnsFullyQualified, {0}.</value>
   </data>
-  <data name="ADP_MissingTableSchema" xml:space="preserve">
-    <value>Missing the '{0}' DataTable for the '{1}' SourceTable.</value>
-  </data>
-  <data name="ADP_InvalidSourceTable" xml:space="preserve">
-    <value>SourceTable is required to be a non-empty string</value>
-  </data>
-  <data name="ADP_MissingTableMapping" xml:space="preserve">
-    <value>Missing SourceTable mapping: '{0}'</value>
-  </data>
   <data name="ADP_CommandTextRequired" xml:space="preserve">
     <value>{0}: CommandText property has not been initialized</value>
   </data>
@@ -1880,45 +1823,6 @@
   </data>
   <data name="ADP_OpenConnectionRequired" xml:space="preserve">
     <value>{0} requires an open and available Connection. {1}</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Fill" xml:space="preserve">
-    <value>Fill: SelectCommand.Connection property has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_FillPage" xml:space="preserve">
-    <value>FillPage: SelectCommand.Connection property has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_FillSchema" xml:space="preserve">
-    <value>FillSchema: SelectCommand.Connection property has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Insert" xml:space="preserve">
-    <value>Update requires the InsertCommand to have a connection object. The Connection property of the InsertCommand has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Update" xml:space="preserve">
-    <value>Update requires the UpdateCommand to have a connection object. The Connection property of the UpdateCommand has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Delete" xml:space="preserve">
-    <value>Update requires the DeleteCommand to have a connection object. The Connection property of the DeleteCommand has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Batch" xml:space="preserve">
-    <value>Update requires a connection object.  The Connection property has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
-    <value>Update requires the command clone to have a connection object. The Connection property of the command clone has not been initialized.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
-    <value>Update requires a connection.</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
-    <value>Update requires the {0}Command to have an open connection object. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Update" xml:space="preserve">
-    <value>Update requires the {0}Command to have an open connection object. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Delete" xml:space="preserve">
-    <value>Update requires the {0}Command to have an open connection object. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Clone" xml:space="preserve">
-    <value>Update requires the updating command to have an open connection object. {1}</value>
   </data>
   <data name="ADP_NoStoredProcedureExists" xml:space="preserve">
     <value>The stored procedure '{0}' doesn't exist.</value>
@@ -1947,44 +1851,14 @@
   <data name="ADP_CalledTwice" xml:space="preserve">
     <value>The method '{0}' cannot be called more than once for the same execution.</value>
   </data>
-  <data name="ADP_IncorrectAsyncResult" xml:space="preserve">
-    <value>Incorrect async result.</value>
-  </data>
-  <data name="ADP_MissingSelectCommand" xml:space="preserve">
-    <value>The SelectCommand property has not been initialized before calling '{0}'.</value>
-  </data>
   <data name="ADP_UnwantedStatementType" xml:space="preserve">
     <value>The StatementType {0} is not expected here.</value>
-  </data>
-  <data name="ADP_FillSchemaRequiresSourceTableName" xml:space="preserve">
-    <value>FillSchema: expected a non-empty string for the SourceTable name.</value>
-  </data>
-  <data name="ADP_InvalidMaxRecords" xml:space="preserve">
-    <value>The MaxRecords value of {0} is invalid; the value must be &gt;= 0.</value>
-  </data>
-  <data name="ADP_InvalidStartRecord" xml:space="preserve">
-    <value>The StartRecord value of {0} is invalid; the value must be &gt;= 0.</value>
-  </data>
-  <data name="ADP_FillRequiresSourceTableName" xml:space="preserve">
-    <value>Fill: expected a non-empty string for the SourceTable name.</value>
-  </data>
-  <data name="ADP_FillChapterAutoIncrement" xml:space="preserve">
-    <value>Hierarchical chapter columns must map to an AutoIncrement DataColumn.</value>
-  </data>
-  <data name="ADP_MissingDataReaderFieldType" xml:space="preserve">
-    <value>DataReader.GetFieldType({0}) returned null.</value>
-  </data>
-  <data name="ADP_OnlyOneTableForStartRecordOrMaxRecords" xml:space="preserve">
-    <value>Only specify one item in the dataTables array when using non-zero values for startRecords or maxRecords.</value>
   </data>
   <data name="ADP_UpdateRequiresSourceTable" xml:space="preserve">
     <value>Update unable to find TableMapping['{0}'] or DataTable '{0}'.</value>
   </data>
   <data name="ADP_UpdateRequiresSourceTableName" xml:space="preserve">
     <value>Update: expected a non-empty SourceTable name.</value>
-  </data>
-  <data name="ADP_MissingTableMappingDestination" xml:space="preserve">
-    <value>Missing TableMapping when TableMapping.DataSetTable='{0}'.</value>
   </data>
   <data name="ADP_UpdateRequiresCommandClone" xml:space="preserve">
     <value>Update requires the command clone to be valid.</value>
@@ -2043,9 +1917,6 @@
   <data name="ADP_ClosedConnectionError" xml:space="preserve">
     <value>Invalid operation. The connection is closed.</value>
   </data>
-  <data name="ADP_ConnectionIsDisabled" xml:space="preserve">
-    <value>The connection has been disabled.</value>
-  </data>
   <data name="ADP_LocalTransactionPresent" xml:space="preserve">
     <value>Cannot enlist in the transaction because a local transaction is in progress on the connection.  Finish local transaction and retry.</value>
   </data>
@@ -2055,20 +1926,11 @@
   <data name="ADP_EmptyDatabaseName" xml:space="preserve">
     <value>Database cannot be null, the empty string, or string of only whitespace.</value>
   </data>
-  <data name="ADP_DatabaseNameTooLong" xml:space="preserve">
-    <value>The argument is too long.</value>
-  </data>
-  <data name="ADP_InvalidConnectTimeoutValue" xml:space="preserve">
-    <value>Invalid 'Connect Timeout' value which must be an integer &gt;= 0.</value>
-  </data>
   <data name="ADP_InvalidSourceBufferIndex" xml:space="preserve">
     <value>Invalid source buffer (size of {0}) offset: {1}</value>
   </data>
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Invalid destination buffer (size of {0}) offset: {1}</value>
-  </data>
-  <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
-    <value>The numerical value is too large to fit into a 96 bit decimal.</value>
   </data>
   <data name="ADP_StreamClosed" xml:space="preserve">
     <value>Invalid attempt to {0} when stream is closed.</value>
@@ -2076,47 +1938,8 @@
   <data name="ADP_InvalidSeekOrigin" xml:space="preserve">
     <value>Specified SeekOrigin value is invalid.</value>
   </data>
-  <data name="ADP_DynamicSQLJoinUnsupported" xml:space="preserve">
-    <value>Dynamic SQL generation is not supported against multiple base tables.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoTableInfo" xml:space="preserve">
-    <value>Dynamic SQL generation is not supported against a SelectCommand that does not return any base table information.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoDelete" xml:space="preserve">
-    <value>Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not return any key column information.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoUpdate" xml:space="preserve">
-    <value>Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not return any key column information.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoRowVersionDelete" xml:space="preserve">
-    <value>Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not contain a row version column.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoRowVersionUpdate" xml:space="preserve">
-    <value>Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not contain a row version column.</value>
-  </data>
-  <data name="ADP_DynamicSQLNestedQuote" xml:space="preserve">
-    <value>Dynamic SQL generation not supported against table names '{0}' that contain the QuotePrefix or QuoteSuffix character '{1}'.</value>
-  </data>
   <data name="ADP_NonSequentialColumnAccess" xml:space="preserve">
     <value>Invalid attempt to read from column ordinal '{0}'.  With CommandBehavior.SequentialAccess, you may only read from column ordinal '{1}' or greater.</value>
-  </data>
-  <data name="ADP_InvalidDateTimeDigits" xml:space="preserve">
-    <value>Data type '{0}' can not be formatted as a literal because it has an invalid date time digits.</value>
-  </data>
-  <data name="ADP_InvalidFormatValue" xml:space="preserve">
-    <value>The value can not be formatted as a literal of the requested type.</value>
-  </data>
-  <data name="ADP_InvalidMaximumScale" xml:space="preserve">
-    <value>Data type '{0}' can not be formatted as a literal because it has an invalid maximum scale.</value>
-  </data>
-  <data name="ADP_LiteralValueIsInvalid" xml:space="preserve">
-    <value>The literal value provided is not a valid literal for the data type '{0}'.</value>
-  </data>
-  <data name="ADP_EvenLengthLiteralValue" xml:space="preserve">
-    <value>'{0}':The length of the literal value must be even.</value>
-  </data>
-  <data name="ADP_HexDigitLiteralValue" xml:space="preserve">
-    <value>'{0}':The literal value must be a string with hexadecimal digits</value>
   </data>
   <data name="ADP_QuotePrefixNotSet" xml:space="preserve">
     <value>{0} requires open connection when the quote prefix has not been set.</value>
@@ -2148,9 +1971,6 @@
   <data name="ADP_BadParameterName" xml:space="preserve">
     <value>Specified parameter name '{0}' is not valid.</value>
   </data>
-  <data name="ADP_MultipleReturnValue" xml:space="preserve">
-    <value>Multiple return value parameters are not supported.</value>
-  </data>
   <data name="ADP_InvalidSizeValue" xml:space="preserve">
     <value>Invalid parameter Size value '{0}'. The value must be greater than or equal to 0.</value>
   </data>
@@ -2159,9 +1979,6 @@
   </data>
   <data name="ADP_InvalidMetaDataValue" xml:space="preserve">
     <value>Invalid value for this metadata.</value>
-  </data>
-  <data name="ADP_NotRowType" xml:space="preserve">
-    <value>Metadata must be SqlDbType.Row</value>
   </data>
   <data name="ADP_ParameterConversionFailed" xml:space="preserve">
     <value>Failed to convert parameter value from a {0} to a {1}.</value>
@@ -2172,44 +1989,14 @@
   <data name="ADP_TransactionZombied" xml:space="preserve">
     <value>This {0} has completed; it is no longer usable.</value>
   </data>
-  <data name="ADP_DbRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the record is read only.</value>
-  </data>
-  <data name="ADP_DbDataUpdatableRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the DbDataRecord is read only.</value>
-  </data>
-  <data name="ADP_InvalidImplicitConversion" xml:space="preserve">
-    <value>Implicit conversion of object type '{0}' to data type '{1}' is not supported.</value>
-  </data>
-  <data name="ADP_InvalidBufferSizeOrIndex" xml:space="preserve">
-    <value>Buffer offset '{1}' plus the bytes available '{0}' is greater than the length of the passed in buffer.</value>
-  </data>
-  <data name="ADP_InvalidDataLength" xml:space="preserve">
-    <value>Data length '{0}' is less than 0.</value>
-  </data>
   <data name="ADP_InvalidDataLength2" xml:space="preserve">
     <value>Specified length '{0}' is out of range.</value>
   </data>
   <data name="ADP_NonSeqByteAccess" xml:space="preserve">
     <value>Invalid {2} attempt at dataIndex '{0}'.  With CommandBehavior.SequentialAccess, you may only read from dataIndex '{1}' or greater.</value>
   </data>
-  <data name="ADP_OffsetOutOfRangeException" xml:space="preserve">
-    <value>Offset must refer to a location within the value.</value>
-  </data>
   <data name="ODBC_GetSchemaRestrictionRequired" xml:space="preserve">
     <value>"The ODBC managed provider requires that the TABLE_NAME restriction be specified and non-null for the GetSchema indexes collection.</value>
-  </data>
-  <data name="ADP_InvalidArgumentValue" xml:space="preserve">
-    <value>Invalid argument value for method '{0}'.</value>
-  </data>
-  <data name="ADP_OdbcNoTypesFromProvider" xml:space="preserve">
-    <value>The ODBC provider did not return results from SQLGETTYPEINFO.</value>
-  </data>
-  <data name="ADP_NullDataTable" xml:space="preserve">
-    <value>Unexpected null DataTable argument</value>
-  </data>
-  <data name="ADP_NullDataSet" xml:space="preserve">
-    <value>Unexpected null DataSet argument.</value>
   </data>
   <data name="OdbcConnection_ConnectionStringTooLong" xml:space="preserve">
     <value>Connection string exceeds maximum allowed length of {0}.</value>
@@ -2456,9 +2243,6 @@
   </data>
   <data name="ADP_InvalidMinMaxPoolSizeValues" xml:space="preserve">
     <value>Invalid min or max pool size values, min pool size cannot be greater than the max pool size.</value>
-  </data>
-  <data name="ADP_ObsoleteKeyword" xml:space="preserve">
-    <value>The '{0}' keyword is obsolete. Use '{1}' instead.</value>
   </data>
   <data name="SQL_CannotGetDTCAddress" xml:space="preserve">
     <value>Unable to get the address of the distributed transaction coordinator for the server, from the server.  Is DTC enabled on the server?</value>
@@ -3002,15 +2786,6 @@
   </data>
   <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
     <value>MetaData parameter array must have length equivalent to ParameterDirection array argument.</value>
-  </data>
-  <data name="ADP_AdapterMappingExceptionMessage" xml:space="preserve">
-    <value>Data adapter mapping error.</value>
-  </data>
-  <data name="ADP_DataAdapterExceptionMessage" xml:space="preserve">
-    <value>Data adapter error.</value>
-  </data>
-  <data name="ADP_DBConcurrencyExceptionMessage" xml:space="preserve">
-    <value>DB concurrency violation.</value>
   </data>
   <data name="ADP_OperationAborted" xml:space="preserve">
     <value>Operation aborted.</value>
@@ -4667,9 +4442,6 @@
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
     <value>Buffer maximum size exceeded: {0}</value>
-  </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Missing the DataColumn '{0}' for the SourceColumn '{2}'.</value>
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>SqlBatchCommand list has not been initialized.</value>

@@ -70,24 +70,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Data adapter mapping error..
-        /// </summary>
-        internal static string ADP_AdapterMappingExceptionMessage {
-            get {
-                return ResourceManager.GetString("ADP_AdapterMappingExceptionMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Ascending.
-        /// </summary>
-        internal static string ADP_Ascending {
-            get {
-                return ResourceManager.GetString("ADP_Ascending", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Specified parameter name &apos;{0}&apos; is not valid..
         /// </summary>
         internal static string ADP_BadParameterName {
@@ -151,15 +133,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The {0} with is already contained by this {1}..
-        /// </summary>
-        internal static string ADP_CollectionIsParent {
-            get {
-                return ResourceManager.GetString("ADP_CollectionIsParent", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The {0} only accepts non-null {1} type objects..
         /// </summary>
         internal static string ADP_CollectionNullValue {
@@ -174,51 +147,6 @@ namespace System {
         internal static string ADP_CollectionRemoveInvalidObject {
             get {
                 return ResourceManager.GetString("ADP_CollectionRemoveInvalidObject", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The {0}.{1} is required to be unique, &apos;{2}&apos; already exists in the collection..
-        /// </summary>
-        internal static string ADP_CollectionUniqueValue {
-            get {
-                return ResourceManager.GetString("ADP_CollectionUniqueValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The column mapping from SourceColumn &apos;{0}&apos; failed because the DataColumn &apos;{1}&apos; is a computed column..
-        /// </summary>
-        internal static string ADP_ColumnSchemaExpression {
-            get {
-                return ResourceManager.GetString("ADP_ColumnSchemaExpression", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Inconvertible type mismatch between SourceColumn &apos;{0}&apos; of {1} and the DataColumn &apos;{2}&apos; of {3}..
-        /// </summary>
-        internal static string ADP_ColumnSchemaMismatch {
-            get {
-                return ResourceManager.GetString("ADP_ColumnSchemaMismatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing the DataColumn &apos;{0}&apos; for the SourceColumn &apos;{2}&apos;..
-        /// </summary>
-        internal static string ADP_ColumnSchemaMissing1 {
-            get {
-                return ResourceManager.GetString("ADP_ColumnSchemaMissing1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing the DataColumn &apos;{0}&apos; in the DataTable &apos;{1}&apos; for the SourceColumn &apos;{2}&apos;..
-        /// </summary>
-        internal static string ADP_ColumnSchemaMissing2 {
-            get {
-                return ResourceManager.GetString("ADP_ColumnSchemaMissing2", resourceCulture);
             }
         }
         
@@ -250,101 +178,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The connection has been disabled..
-        /// </summary>
-        internal static string ADP_ConnectionIsDisabled {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionIsDisabled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {0}: Connection property has not been initialized..
         /// </summary>
         internal static string ADP_ConnectionRequired {
             get {
                 return ResourceManager.GetString("ADP_ConnectionRequired", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires a connection object.  The Connection property has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_Batch {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Batch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the command clone to have a connection object. The Connection property of the command clone has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_Clone {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Clone", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the DeleteCommand to have a connection object. The Connection property of the DeleteCommand has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_Delete {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Delete", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fill: SelectCommand.Connection property has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_Fill {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Fill", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to FillPage: SelectCommand.Connection property has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_FillPage {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_FillPage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to FillSchema: SelectCommand.Connection property has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_FillSchema {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_FillSchema", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the InsertCommand to have a connection object. The Connection property of the InsertCommand has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_Insert {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Insert", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the UpdateCommand to have a connection object. The Connection property of the UpdateCommand has not been initialized..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_Update {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_Update", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires a connection..
-        /// </summary>
-        internal static string ADP_ConnectionRequired_UpdateRows {
-            get {
-                return ResourceManager.GetString("ADP_ConnectionRequired_UpdateRows", resourceCulture);
             }
         }
         
@@ -412,56 +250,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Data adapter error..
-        /// </summary>
-        internal static string ADP_DataAdapterExceptionMessage {
-            get {
-                return ResourceManager.GetString("ADP_DataAdapterExceptionMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The argument is too long..
-        /// </summary>
-        internal static string ADP_DatabaseNameTooLong {
-            get {
-                return ResourceManager.GetString("ADP_DatabaseNameTooLong", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call {0} when reader is closed..
         /// </summary>
         internal static string ADP_DataReaderClosed {
             get {
                 return ResourceManager.GetString("ADP_DataReaderClosed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DB concurrency violation..
-        /// </summary>
-        internal static string ADP_DBConcurrencyExceptionMessage {
-            get {
-                return ResourceManager.GetString("ADP_DBConcurrencyExceptionMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the DbDataRecord is read only..
-        /// </summary>
-        internal static string ADP_DbDataUpdatableRecordReadOnly {
-            get {
-                return ResourceManager.GetString("ADP_DbDataUpdatableRecordReadOnly", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the record is read only..
-        /// </summary>
-        internal static string ADP_DbRecordReadOnly {
-            get {
-                return ResourceManager.GetString("ADP_DbRecordReadOnly", resourceCulture);
             }
         }
         
@@ -475,15 +268,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot enlist in the transaction because the connection is the primary connection for a delegated or promoted transaction..
-        /// </summary>
-        internal static string ADP_DelegatedTransactionPresent {
-            get {
-                return ResourceManager.GetString("ADP_DelegatedTransactionPresent", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {0} DeriveParameters only supports CommandType.StoredProcedure, not CommandType.{1}..
         /// </summary>
         internal static string ADP_DeriveParametersNotSupported {
@@ -493,92 +277,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Descending.
-        /// </summary>
-        internal static string ADP_Descending {
-            get {
-                return ResourceManager.GetString("ADP_Descending", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The acceptable values for the property &apos;{0}&apos; are &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
         internal static string ADP_DoubleValuedProperty {
             get {
                 return ResourceManager.GetString("ADP_DoubleValuedProperty", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation is not supported against multiple base tables..
-        /// </summary>
-        internal static string ADP_DynamicSQLJoinUnsupported {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLJoinUnsupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation not supported against table names &apos;{0}&apos; that contain the QuotePrefix or QuoteSuffix character &apos;{1}&apos;..
-        /// </summary>
-        internal static string ADP_DynamicSQLNestedQuote {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLNestedQuote", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not return any key column information..
-        /// </summary>
-        internal static string ADP_DynamicSQLNoKeyInfoDelete {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoDelete", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not contain a row version column..
-        /// </summary>
-        internal static string ADP_DynamicSQLNoKeyInfoRowVersionDelete {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoRowVersionDelete", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not contain a row version column..
-        /// </summary>
-        internal static string ADP_DynamicSQLNoKeyInfoRowVersionUpdate {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoRowVersionUpdate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not return any key column information..
-        /// </summary>
-        internal static string ADP_DynamicSQLNoKeyInfoUpdate {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoUpdate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic SQL generation is not supported against a SelectCommand that does not return any base table information..
-        /// </summary>
-        internal static string ADP_DynamicSQLNoTableInfo {
-            get {
-                return ResourceManager.GetString("ADP_DynamicSQLNoTableInfo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Expecting non-empty array for &apos;{0}&apos; parameter..
-        /// </summary>
-        internal static string ADP_EmptyArray {
-            get {
-                return ResourceManager.GetString("ADP_EmptyArray", resourceCulture);
             }
         }
         
@@ -597,60 +300,6 @@ namespace System {
         internal static string ADP_EmptyString {
             get {
                 return ResourceManager.GetString("ADP_EmptyString", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos;:The length of the literal value must be even..
-        /// </summary>
-        internal static string ADP_EvenLengthLiteralValue {
-            get {
-                return ResourceManager.GetString("ADP_EvenLengthLiteralValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Hierarchical chapter columns must map to an AutoIncrement DataColumn..
-        /// </summary>
-        internal static string ADP_FillChapterAutoIncrement {
-            get {
-                return ResourceManager.GetString("ADP_FillChapterAutoIncrement", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fill: expected a non-empty string for the SourceTable name..
-        /// </summary>
-        internal static string ADP_FillRequiresSourceTableName {
-            get {
-                return ResourceManager.GetString("ADP_FillRequiresSourceTableName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to FillSchema: expected a non-empty string for the SourceTable name..
-        /// </summary>
-        internal static string ADP_FillSchemaRequiresSourceTableName {
-            get {
-                return ResourceManager.GetString("ADP_FillSchemaRequiresSourceTableName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos;:The literal value must be a string with hexadecimal digits.
-        /// </summary>
-        internal static string ADP_HexDigitLiteralValue {
-            get {
-                return ResourceManager.GetString("ADP_HexDigitLiteralValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Incorrect async result..
-        /// </summary>
-        internal static string ADP_IncorrectAsyncResult {
-            get {
-                return ResourceManager.GetString("ADP_IncorrectAsyncResult", resourceCulture);
             }
         }
         
@@ -682,24 +331,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid argument value for method &apos;{0}&apos;..
-        /// </summary>
-        internal static string ADP_InvalidArgumentValue {
-            get {
-                return ResourceManager.GetString("ADP_InvalidArgumentValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Buffer offset &apos;{1}&apos; plus the bytes available &apos;{0}&apos; is greater than the length of the passed in buffer..
-        /// </summary>
-        internal static string ADP_InvalidBufferSizeOrIndex {
-            get {
-                return ResourceManager.GetString("ADP_InvalidBufferSizeOrIndex", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Invalid CommandTimeout value {0}; the value must be &gt;= 0..
         /// </summary>
         internal static string ADP_InvalidCommandTimeout {
@@ -727,29 +358,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid &apos;Connect Timeout&apos; value which must be an integer &gt;= 0..
-        /// </summary>
-        internal static string ADP_InvalidConnectTimeoutValue {
-            get {
-                return ResourceManager.GetString("ADP_InvalidConnectTimeoutValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The DataDirectory substitute is not a string..
         /// </summary>
         internal static string ADP_InvalidDataDirectory {
             get {
                 return ResourceManager.GetString("ADP_InvalidDataDirectory", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Data length &apos;{0}&apos; is less than 0..
-        /// </summary>
-        internal static string ADP_InvalidDataLength {
-            get {
-                return ResourceManager.GetString("ADP_InvalidDataLength", resourceCulture);
             }
         }
         
@@ -772,15 +385,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Data type &apos;{0}&apos; can not be formatted as a literal because it has an invalid date time digits..
-        /// </summary>
-        internal static string ADP_InvalidDateTimeDigits {
-            get {
-                return ResourceManager.GetString("ADP_InvalidDateTimeDigits", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Invalid destination buffer (size of {0}) offset: {1}.
         /// </summary>
         internal static string ADP_InvalidDestinationBufferIndex {
@@ -799,24 +403,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The value can not be formatted as a literal of the requested type..
-        /// </summary>
-        internal static string ADP_InvalidFormatValue {
-            get {
-                return ResourceManager.GetString("ADP_InvalidFormatValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Implicit conversion of object type &apos;{0}&apos; to data type &apos;{1}&apos; is not supported..
-        /// </summary>
-        internal static string ADP_InvalidImplicitConversion {
-            get {
-                return ResourceManager.GetString("ADP_InvalidImplicitConversion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {0} Invalid JSON string for vector..
         /// </summary>
         internal static string ADP_InvalidJsonStringForVector {
@@ -831,24 +417,6 @@ namespace System {
         internal static string ADP_InvalidKey {
             get {
                 return ResourceManager.GetString("ADP_InvalidKey", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Data type &apos;{0}&apos; can not be formatted as a literal because it has an invalid maximum scale..
-        /// </summary>
-        internal static string ADP_InvalidMaximumScale {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMaximumScale", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The MaxRecords value of {0} is invalid; the value must be &gt;= 0..
-        /// </summary>
-        internal static string ADP_InvalidMaxRecords {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMaxRecords", resourceCulture);
             }
         }
         
@@ -1033,42 +601,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SourceColumn is required to be a non-empty string..
-        /// </summary>
-        internal static string ADP_InvalidSourceColumn {
-            get {
-                return ResourceManager.GetString("ADP_InvalidSourceColumn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SourceTable is required to be a non-empty string.
-        /// </summary>
-        internal static string ADP_InvalidSourceTable {
-            get {
-                return ResourceManager.GetString("ADP_InvalidSourceTable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The StartRecord value of {0} is invalid; the value must be &gt;= 0..
-        /// </summary>
-        internal static string ADP_InvalidStartRecord {
-            get {
-                return ResourceManager.GetString("ADP_InvalidStartRecord", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid UDL file..
-        /// </summary>
-        internal static string ADP_InvalidUDL {
-            get {
-                return ResourceManager.GetString("ADP_InvalidUDL", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The value contains embedded nulls (\u0000)..
         /// </summary>
         internal static string ADP_InvalidValue {
@@ -1105,15 +637,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The literal value provided is not a valid literal for the data type &apos;{0}&apos;..
-        /// </summary>
-        internal static string ADP_LiteralValueIsInvalid {
-            get {
-                return ResourceManager.GetString("ADP_LiteralValueIsInvalid", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cannot enlist in the transaction because a local transaction is in progress on the connection.  Finish local transaction and retry..
         /// </summary>
         internal static string ADP_LocalTransactionPresent {
@@ -1132,92 +655,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Missing SourceColumn mapping for &apos;{0}&apos;..
-        /// </summary>
-        internal static string ADP_MissingColumnMapping {
-            get {
-                return ResourceManager.GetString("ADP_MissingColumnMapping", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Use of key &apos;{0}&apos; requires the key &apos;{1}&apos; to be present..
         /// </summary>
         internal static string ADP_MissingConnectionOptionValue {
             get {
                 return ResourceManager.GetString("ADP_MissingConnectionOptionValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataReader.GetFieldType({0}) returned null..
-        /// </summary>
-        internal static string ADP_MissingDataReaderFieldType {
-            get {
-                return ResourceManager.GetString("ADP_MissingDataReaderFieldType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The SelectCommand property has not been initialized before calling &apos;{0}&apos;..
-        /// </summary>
-        internal static string ADP_MissingSelectCommand {
-            get {
-                return ResourceManager.GetString("ADP_MissingSelectCommand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The DataAdapter.SelectCommand property needs to be initialized..
-        /// </summary>
-        internal static string ADP_MissingSourceCommand {
-            get {
-                return ResourceManager.GetString("ADP_MissingSourceCommand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The DataAdapter.SelectCommand.Connection property needs to be initialized;.
-        /// </summary>
-        internal static string ADP_MissingSourceCommandConnection {
-            get {
-                return ResourceManager.GetString("ADP_MissingSourceCommandConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing SourceTable mapping: &apos;{0}&apos;.
-        /// </summary>
-        internal static string ADP_MissingTableMapping {
-            get {
-                return ResourceManager.GetString("ADP_MissingTableMapping", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing TableMapping when TableMapping.DataSetTable=&apos;{0}&apos;..
-        /// </summary>
-        internal static string ADP_MissingTableMappingDestination {
-            get {
-                return ResourceManager.GetString("ADP_MissingTableMappingDestination", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing the &apos;{0}&apos; DataTable for the &apos;{1}&apos; SourceTable..
-        /// </summary>
-        internal static string ADP_MissingTableSchema {
-            get {
-                return ResourceManager.GetString("ADP_MissingTableSchema", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Multiple return value parameters are not supported..
-        /// </summary>
-        internal static string ADP_MultipleReturnValue {
-            get {
-                return ResourceManager.GetString("ADP_MultipleReturnValue", resourceCulture);
             }
         }
         
@@ -1249,15 +691,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A Non CLS Exception was caught..
-        /// </summary>
-        internal static string ADP_NonCLSException {
-            get {
-                return ResourceManager.GetString("ADP_NonCLSException", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Timeout attempting to open the connection.  The time period elapsed prior to attempting to open the connection has been exceeded.  This may have occurred because of too many simultaneous non-pooled connection attempts..
         /// </summary>
         internal static string ADP_NonPooledOpenTimeout {
@@ -1281,15 +714,6 @@ namespace System {
         internal static string ADP_NonSequentialColumnAccess {
             get {
                 return ResourceManager.GetString("ADP_NonSequentialColumnAccess", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The QuotePrefix and QuoteSuffix properties cannot be changed once an Insert, Update, or Delete command has been generated..
-        /// </summary>
-        internal static string ADP_NoQuoteChange {
-            get {
-                return ResourceManager.GetString("ADP_NoQuoteChange", resourceCulture);
             }
         }
         
@@ -1321,15 +745,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Metadata must be SqlDbType.Row.
-        /// </summary>
-        internal static string ADP_NotRowType {
-            get {
-                return ResourceManager.GetString("ADP_NotRowType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the {2} method..
         /// </summary>
         internal static string ADP_NotSupportedEnumerationValue {
@@ -1339,74 +754,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unexpected null DataSet argument..
-        /// </summary>
-        internal static string ADP_NullDataSet {
-            get {
-                return ResourceManager.GetString("ADP_NullDataSet", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unexpected null DataTable argument.
-        /// </summary>
-        internal static string ADP_NullDataTable {
-            get {
-                return ResourceManager.GetString("ADP_NullDataTable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to &apos;null&apos; value not supported for output parameter &apos;{0}&apos; of SqlDbtype Vector..
         /// </summary>
         internal static string ADP_NullOutputParameterValueForVector {
             get {
                 return ResourceManager.GetString("ADP_NullOutputParameterValueForVector", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The numerical value is too large to fit into a 96 bit decimal..
-        /// </summary>
-        internal static string ADP_NumericToDecimalOverflow {
-            get {
-                return ResourceManager.GetString("ADP_NumericToDecimalOverflow", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The &apos;{0}&apos; keyword is obsolete. Use &apos;{1}&apos; instead..
-        /// </summary>
-        internal static string ADP_ObsoleteKeyword {
-            get {
-                return ResourceManager.GetString("ADP_ObsoleteKeyword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The ODBC provider did not return results from SQLGETTYPEINFO..
-        /// </summary>
-        internal static string ADP_OdbcNoTypesFromProvider {
-            get {
-                return ResourceManager.GetString("ADP_OdbcNoTypesFromProvider", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset must refer to a location within the value..
-        /// </summary>
-        internal static string ADP_OffsetOutOfRangeException {
-            get {
-                return ResourceManager.GetString("ADP_OffsetOutOfRangeException", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Only specify one item in the dataTables array when using non-zero values for startRecords or maxRecords..
-        /// </summary>
-        internal static string ADP_OnlyOneTableForStartRecordOrMaxRecords {
-            get {
-                return ResourceManager.GetString("ADP_OnlyOneTableForStartRecordOrMaxRecords", resourceCulture);
             }
         }
         
@@ -1425,42 +777,6 @@ namespace System {
         internal static string ADP_OpenConnectionRequired {
             get {
                 return ResourceManager.GetString("ADP_OpenConnectionRequired", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the updating command to have an open connection object. {1}.
-        /// </summary>
-        internal static string ADP_OpenConnectionRequired_Clone {
-            get {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Clone", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the {0}Command to have an open connection object. {1}.
-        /// </summary>
-        internal static string ADP_OpenConnectionRequired_Delete {
-            get {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Delete", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the {0}Command to have an open connection object. {1}.
-        /// </summary>
-        internal static string ADP_OpenConnectionRequired_Insert {
-            get {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Insert", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update requires the {0}Command to have an open connection object. {1}.
-        /// </summary>
-        internal static string ADP_OpenConnectionRequired_Update {
-            get {
-                return ResourceManager.GetString("ADP_OpenConnectionRequired_Update", resourceCulture);
             }
         }
         
