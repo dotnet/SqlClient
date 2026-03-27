@@ -154,7 +154,7 @@ extends:
       sbom:
         enabled: true
         packageName: Microsoft.Data.SqlClient
-        packageVersion: $(assemblyBuildNumber)
+        packageVersion: $(Build.BuildNumber)
       policheck:
         enabled: true
         break: true
