@@ -372,45 +372,6 @@
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>The collection that holds custom user information.</value>
   </data>
-  <data name="DataSetCaseSensitiveDescr" xml:space="preserve">
-    <value>Indicates whether comparing strings within the DataSet is case sensitive.</value>
-  </data>
-  <data name="DataSetDataSetNameDescr" xml:space="preserve">
-    <value>The name of this DataSet.</value>
-  </data>
-  <data name="DataSetDefaultViewDescr" xml:space="preserve">
-    <value>Indicates a custom "view" of the data contained by the DataSet. This view allows filtering, searching, and navigating through the custom data view.</value>
-  </data>
-  <data name="DataSetEnforceConstraintsDescr" xml:space="preserve">
-    <value>Indicates whether constraint rules are to be followed.</value>
-  </data>
-  <data name="DataSetHasErrorsDescr" xml:space="preserve">
-    <value>Indicates that the DataSet has errors.</value>
-  </data>
-  <data name="DataSetLocaleDescr" xml:space="preserve">
-    <value>Indicates a locale under which to compare strings within the DataSet.</value>
-  </data>
-  <data name="DataSetNamespaceDescr" xml:space="preserve">
-    <value>Indicates the XML uri namespace for the root element pointed at by this DataSet.</value>
-  </data>
-  <data name="DataSetPrefixDescr" xml:space="preserve">
-    <value>Indicates the prefix of the namespace used for this DataSet.</value>
-  </data>
-  <data name="DataSetRelationsDescr" xml:space="preserve">
-    <value>The collection that holds the relations for this DataSet.</value>
-  </data>
-  <data name="DataSetTablesDescr" xml:space="preserve">
-    <value>The collection that holds the tables for this DataSet.</value>
-  </data>
-  <data name="DataSetMergeFailedDescr" xml:space="preserve">
-    <value>Occurs when it is not possible to merge schemas for two tables with the same name.</value>
-  </data>
-  <data name="DataSetInitializedDescr" xml:space="preserve">
-    <value>Occurs after Initialization is finished.</value>
-  </data>
-  <data name="DataSetDescr" xml:space="preserve">
-    <value>Represents an in-memory cache of data.</value>
-  </data>
   <data name="DataTableCaseSensitiveDescr" xml:space="preserve">
     <value>Indicates whether comparing strings within the table is case sensitive.</value>
   </data>
@@ -485,18 +446,6 @@
   </data>
   <data name="DataTableRowsNewRowDescr" xml:space="preserve">
     <value>Occurs after a new DataRow has been instantiated.</value>
-  </data>
-  <data name="DataRelationRelationNameDescr" xml:space="preserve">
-    <value>The name used to look up this relation in the Relations collection of a DataSet.</value>
-  </data>
-  <data name="DataRelationChildColumnsDescr" xml:space="preserve">
-    <value>Indicates the child columns of this relation.</value>
-  </data>
-  <data name="DataRelationParentColumnsDescr" xml:space="preserve">
-    <value>Indicates the parent columns of this relation.</value>
-  </data>
-  <data name="DataRelationNested" xml:space="preserve">
-    <value>Indicates whether relations are nested.</value>
   </data>
   <data name="ForeignKeyConstraintDeleteRuleDescr" xml:space="preserve">
     <value>For deletions, indicates what kind of cascading should take place across this relation.</value>
@@ -819,210 +768,6 @@
   <data name="Data_InvalidOffsetLength" xml:space="preserve">
     <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
-  <data name="DataKey_TableMismatch" xml:space="preserve">
-    <value>Cannot create a Key from Columns that belong to different tables.</value>
-  </data>
-  <data name="DataKey_NoColumns" xml:space="preserve">
-    <value>Cannot have 0 columns.</value>
-  </data>
-  <data name="DataKey_TooManyColumns" xml:space="preserve">
-    <value>Cannot have more than {0} columns.</value>
-  </data>
-  <data name="DataKey_DuplicateColumns" xml:space="preserve">
-    <value>Cannot create a Key when the same column is listed more than once: '{0}'</value>
-  </data>
-  <data name="DataKey_RemovePrimaryKey" xml:space="preserve">
-    <value>Cannot remove unique constraint since it's the primary key of a table.</value>
-  </data>
-  <data name="DataKey_RemovePrimaryKey1" xml:space="preserve">
-    <value>Cannot remove unique constraint since it's the primary key of table {0}.</value>
-  </data>
-  <data name="DataRelation_ColumnsTypeMismatch" xml:space="preserve">
-    <value>Parent Columns and Child Columns don't have type-matching columns.</value>
-  </data>
-  <data name="DataRelation_KeyColumnsIdentical" xml:space="preserve">
-    <value>ParentKey and ChildKey are identical.</value>
-  </data>
-  <data name="DataRelation_KeyLengthMismatch" xml:space="preserve">
-    <value>ParentColumns and ChildColumns should be the same length.</value>
-  </data>
-  <data name="DataRelation_KeyZeroLength" xml:space="preserve">
-    <value>ParentColumns and ChildColumns must not be zero length.</value>
-  </data>
-  <data name="DataRelation_ForeignRow" xml:space="preserve">
-    <value>The row doesn't belong to the same DataSet as this relation.</value>
-  </data>
-  <data name="DataRelation_NoName" xml:space="preserve">
-    <value>RelationName is required when it is part of a DataSet.</value>
-  </data>
-  <data name="DataRelation_ForeignTable" xml:space="preserve">
-    <value>GetChildRows requires a row whose Table is {0}, but the specified row's Table is {1}.</value>
-  </data>
-  <data name="DataRelation_ForeignDataSet" xml:space="preserve">
-    <value>This relation should connect two tables in this DataSet to be added to this DataSet.</value>
-  </data>
-  <data name="DataRelation_GetParentRowTableMismatch" xml:space="preserve">
-    <value>GetParentRow requires a row whose Table is {0}, but the specified row's Table is {1}.</value>
-  </data>
-  <data name="DataRelation_SetParentRowTableMismatch" xml:space="preserve">
-    <value>SetParentRow requires a child row whose Table is {0}, but the specified row's Table is {1}.</value>
-  </data>
-  <data name="DataRelation_DataSetMismatch" xml:space="preserve">
-    <value>Cannot have a relationship between tables in different DataSets.</value>
-  </data>
-  <data name="DataRelation_TablesInDifferentSets" xml:space="preserve">
-    <value>Cannot create a relation between tables in different DataSets.</value>
-  </data>
-  <data name="DataRelation_AlreadyExists" xml:space="preserve">
-    <value>A relation already exists for these child columns.</value>
-  </data>
-  <data name="DataRelation_DoesNotExist" xml:space="preserve">
-    <value>This relation doesn't belong to this relation collection.</value>
-  </data>
-  <data name="DataRelation_AlreadyInOtherDataSet" xml:space="preserve">
-    <value>This relation already belongs to another DataSet.</value>
-  </data>
-  <data name="DataRelation_AlreadyInTheDataSet" xml:space="preserve">
-    <value>This relation already belongs to this DataSet.</value>
-  </data>
-  <data name="DataRelation_DuplicateName" xml:space="preserve">
-    <value>A Relation named '{0}' already belongs to this DataSet.</value>
-  </data>
-  <data name="DataRelation_NotInTheDataSet" xml:space="preserve">
-    <value>Relation {0} does not belong to this DataSet.</value>
-  </data>
-  <data name="DataRelation_OutOfRange" xml:space="preserve">
-    <value>Cannot find relation {0}.</value>
-  </data>
-  <data name="DataRelation_TableNull" xml:space="preserve">
-    <value>Cannot create a collection on a null table.</value>
-  </data>
-  <data name="DataRelation_TableWasRemoved" xml:space="preserve">
-    <value>The table this collection displays relations for has been removed from its DataSet.</value>
-  </data>
-  <data name="DataRelation_ChildTableMismatch" xml:space="preserve">
-    <value>Cannot add a relation to this table's ParentRelation collection where this table isn't the child table.</value>
-  </data>
-  <data name="DataRelation_ParentTableMismatch" xml:space="preserve">
-    <value>Cannot add a relation to this table's ChildRelation collection where this table isn't the parent table.</value>
-  </data>
-  <data name="DataRelation_RelationNestedReadOnly" xml:space="preserve">
-    <value>Cannot set the 'Nested' property to false for this relation.</value>
-  </data>
-  <data name="DataRelation_TableCantBeNestedInTwoTables" xml:space="preserve">
-    <value>The same table '{0}' cannot be the child table in two nested relations.</value>
-  </data>
-  <data name="DataRelation_LoopInNestedRelations" xml:space="preserve">
-    <value>The table ({0}) cannot be the child table to itself in nested relations.</value>
-  </data>
-  <data name="DataRelation_CaseLocaleMismatch" xml:space="preserve">
-    <value>Cannot add a DataRelation or Constraint that has different Locale or CaseSensitive settings between its parent and child tables.</value>
-  </data>
-  <data name="DataRelation_ParentOrChildColumnsDoNotHaveDataSet" xml:space="preserve">
-    <value>Cannot create a DataRelation if Parent or Child Columns are not in a DataSet.</value>
-  </data>
-  <data name="DataRelation_InValidNestedRelation" xml:space="preserve">
-    <value>Nested table '{0}' which inherits its namespace cannot have multiple parent tables in different namespaces.</value>
-  </data>
-  <data name="DataRelation_InValidNamespaceInNestedRelation" xml:space="preserve">
-    <value>Nested table '{0}' with empty namespace cannot have multiple parent tables in different namespaces.</value>
-  </data>
-  <data name="DataRow_NotInTheDataSet" xml:space="preserve">
-    <value>The row doesn't belong to the same DataSet as this relation.</value>
-  </data>
-  <data name="DataRow_NotInTheTable" xml:space="preserve">
-    <value>Cannot perform this operation on a row not in the table.</value>
-  </data>
-  <data name="DataRow_ParentRowNotInTheDataSet" xml:space="preserve">
-    <value>This relation and child row don't belong to same DataSet.</value>
-  </data>
-  <data name="DataRow_EditInRowChanging" xml:space="preserve">
-    <value>Cannot change a proposed value in the RowChanging event.</value>
-  </data>
-  <data name="DataRow_EndEditInRowChanging" xml:space="preserve">
-    <value>Cannot call EndEdit() inside an OnRowChanging event.</value>
-  </data>
-  <data name="DataRow_BeginEditInRowChanging" xml:space="preserve">
-    <value>Cannot call BeginEdit() inside the RowChanging event.</value>
-  </data>
-  <data name="DataRow_CancelEditInRowChanging" xml:space="preserve">
-    <value>Cannot call CancelEdit() inside an OnRowChanging event.  Throw an exception to cancel this update.</value>
-  </data>
-  <data name="DataRow_DeleteInRowDeleting" xml:space="preserve">
-    <value>Cannot call Delete inside an OnRowDeleting event.  Throw an exception to cancel this delete.</value>
-  </data>
-  <data name="DataRow_ValuesArrayLength" xml:space="preserve">
-    <value>Input array is longer than the number of columns in this table.</value>
-  </data>
-  <data name="DataRow_NoCurrentData" xml:space="preserve">
-    <value>There is no Current data to access.</value>
-  </data>
-  <data name="DataRow_NoOriginalData" xml:space="preserve">
-    <value>There is no Original data to access.</value>
-  </data>
-  <data name="DataRow_NoProposedData" xml:space="preserve">
-    <value>There is no Proposed data to access.</value>
-  </data>
-  <data name="DataRow_RemovedFromTheTable" xml:space="preserve">
-    <value>This row has been removed from a table and does not have any data.  BeginEdit() will allow creation of new data in this row.</value>
-  </data>
-  <data name="DataRow_DeletedRowInaccessible" xml:space="preserve">
-    <value>Deleted row information cannot be accessed through the row.</value>
-  </data>
-  <data name="DataRow_InvalidVersion" xml:space="preserve">
-    <value>Version must be Original, Current, or Proposed.</value>
-  </data>
-  <data name="DataRow_OutOfRange" xml:space="preserve">
-    <value>There is no row at position {0}.</value>
-  </data>
-  <data name="DataRow_RowInsertOutOfRange" xml:space="preserve">
-    <value>The row insert position {0} is invalid.</value>
-  </data>
-  <data name="DataRow_RowInsertTwice" xml:space="preserve">
-    <value>The rowOrder value={0} has been found twice for table named '{1}'.</value>
-  </data>
-  <data name="DataRow_RowInsertMissing" xml:space="preserve">
-    <value>Values are missing in the rowOrder sequence for table '{0}'.</value>
-  </data>
-  <data name="DataRow_RowOutOfRange" xml:space="preserve">
-    <value>The given DataRow is not in the current DataRowCollection.</value>
-  </data>
-  <data name="DataRow_AlreadyInOtherCollection" xml:space="preserve">
-    <value>This row already belongs to another table.</value>
-  </data>
-  <data name="DataRow_AlreadyInTheCollection" xml:space="preserve">
-    <value>This row already belongs to this table.</value>
-  </data>
-  <data name="DataRow_AlreadyDeleted" xml:space="preserve">
-    <value>Cannot delete this row since it's already deleted.</value>
-  </data>
-  <data name="DataRow_Empty" xml:space="preserve">
-    <value>This row is empty.</value>
-  </data>
-  <data name="DataRow_AlreadyRemoved" xml:space="preserve">
-    <value>Cannot remove a row that's already been removed.</value>
-  </data>
-  <data name="DataRow_MultipleParents" xml:space="preserve">
-    <value>A child row has multiple parents.</value>
-  </data>
-  <data name="DataRow_InvalidRowBitPattern" xml:space="preserve">
-    <value>Unrecognized row state bit pattern.</value>
-  </data>
-  <data name="DataSet_SetNameToEmpty" xml:space="preserve">
-    <value>Cannot change the name of the DataSet to an empty string.</value>
-  </data>
-  <data name="DataSet_SetDataSetNameConflicting" xml:space="preserve">
-    <value>The name '{0}' is invalid. A DataSet cannot have the same name of the DataTable.</value>
-  </data>
-  <data name="DataSet_UnsupportedSchema" xml:space="preserve">
-    <value>The schema namespace is invalid. Please use this one instead: {0}.</value>
-  </data>
-  <data name="DataSet_CannotChangeCaseLocale" xml:space="preserve">
-    <value>Cannot change CaseSensitive or Locale property. This change would lead to at least one DataRelation or Constraint to have different Locale or CaseSensitive settings between its related tables.</value>
-  </data>
-  <data name="DataSet_CannotChangeSchemaSerializationMode" xml:space="preserve">
-    <value>SchemaSerializationMode property can be set only if it is overridden by derived DataSet.</value>
-  </data>
   <data name="DataTable_ForeignPrimaryKey" xml:space="preserve">
     <value>PrimaryKey columns do not belong to this table.</value>
   </data>
@@ -1085,39 +830,6 @@
   </data>
   <data name="DataTable_TableNotFound" xml:space="preserve">
     <value>DataTable '{0}' does not match to any DataTable in source.</value>
-  </data>
-  <data name="DataMerge_MissingDefinition" xml:space="preserve">
-    <value>Target DataSet missing definition for {0}.</value>
-  </data>
-  <data name="DataMerge_MissingConstraint" xml:space="preserve">
-    <value>Target DataSet missing {0} {1}.</value>
-  </data>
-  <data name="DataMerge_DataTypeMismatch" xml:space="preserve">
-    <value>&lt;target&gt;.{0} and &lt;source&gt;.{0} have conflicting properties: DataType property mismatch.</value>
-  </data>
-  <data name="DataMerge_PrimaryKeyMismatch" xml:space="preserve">
-    <value>&lt;target&gt;.PrimaryKey and &lt;source&gt;.PrimaryKey have different Length.</value>
-  </data>
-  <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
-    <value>Mismatch columns in the PrimaryKey : &lt;target&gt;.{0} versus &lt;source&gt;.{1}.</value>
-  </data>
-  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
-    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
-  </data>
-  <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
-    <value>Target table {0} missing definition for column {1}.</value>
-  </data>
-  <data name="DataMerge_MissingPrimaryKeyColumnInSource" xml:space="preserve">
-    <value>PrimaryKey column {0} does not exist in source Table.</value>
-  </data>
-  <data name="DataIndex_RecordStateRange" xml:space="preserve">
-    <value>The RowStates parameter must be set to a valid combination of values from the DataViewRowState enumeration.</value>
-  </data>
-  <data name="DataIndex_FindWithoutSortOrder" xml:space="preserve">
-    <value>Find finds a row based on a Sort order, and no Sort order is specified.</value>
-  </data>
-  <data name="DataIndex_KeyLength" xml:space="preserve">
-    <value>Expecting {0} value(s) for the key being indexed, but received {1} value(s).</value>
   </data>
   <data name="DataStorage_AggregateException" xml:space="preserve">
     <value>Invalid usage of aggregate function {0}() and Type: {1}.</value>
@@ -1194,9 +906,6 @@
   <data name="DataView_RemoveExternalObject" xml:space="preserve">
     <value>Cannot remove objects not in the list.</value>
   </data>
-  <data name="DataROWView_PropertyNotFound" xml:space="preserve">
-    <value>{0} is neither a DataColumn nor a DataRelation for table {1}.</value>
-  </data>
   <data name="Range_Argument" xml:space="preserve">
     <value>Min ({0}) must be less than or equal to max ({1}) in a Range object.</value>
   </data>
@@ -1208,39 +917,6 @@
   </data>
   <data name="SqlConvert_ConvertFailed" xml:space="preserve">
     <value>Cannot convert object of type '{0}' to object of type '{1}'.</value>
-  </data>
-  <data name="DataSet_DefaultDataException" xml:space="preserve">
-    <value>Data Exception.</value>
-  </data>
-  <data name="DataSet_DefaultConstraintException" xml:space="preserve">
-    <value>Constraint Exception.</value>
-  </data>
-  <data name="DataSet_DefaultDeletedRowInaccessibleException" xml:space="preserve">
-    <value>Deleted rows inaccessible.</value>
-  </data>
-  <data name="DataSet_DefaultDuplicateNameException" xml:space="preserve">
-    <value>Duplicate name not allowed.</value>
-  </data>
-  <data name="DataSet_DefaultInRowChangingEventException" xml:space="preserve">
-    <value>Operation not supported in the RowChanging event.</value>
-  </data>
-  <data name="DataSet_DefaultInvalidConstraintException" xml:space="preserve">
-    <value>Invalid constraint.</value>
-  </data>
-  <data name="DataSet_DefaultMissingPrimaryKeyException" xml:space="preserve">
-    <value>Missing primary key.</value>
-  </data>
-  <data name="DataSet_DefaultNoNullAllowedException" xml:space="preserve">
-    <value>Null not allowed.</value>
-  </data>
-  <data name="DataSet_DefaultReadOnlyException" xml:space="preserve">
-    <value>Column is marked read only.</value>
-  </data>
-  <data name="DataSet_DefaultRowNotInTableException" xml:space="preserve">
-    <value>Row not found in table.</value>
-  </data>
-  <data name="DataSet_DefaultVersionNotFoundException" xml:space="preserve">
-    <value>Version not found.</value>
   </data>
   <data name="Load_ReadOnlyDataModified" xml:space="preserve">
     <value>ReadOnly Data is Modified.</value>
@@ -1274,60 +950,6 @@
   </data>
   <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
     <value>Simple type '{0}' has already be declared with different '{1}'.</value>
-  </data>
-  <data name="DataDom_Foliation" xml:space="preserve">
-    <value>Invalid foliation.</value>
-  </data>
-  <data name="DataDom_TableNameChange" xml:space="preserve">
-    <value>Cannot change the table name once the associated DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_TableNamespaceChange" xml:space="preserve">
-    <value>Cannot change the table namespace once the associated DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_ColumnNameChange" xml:space="preserve">
-    <value>Cannot change the column name once the associated DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_ColumnNamespaceChange" xml:space="preserve">
-    <value>Cannot change the column namespace once the associated DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_ColumnMappingChange" xml:space="preserve">
-    <value>Cannot change the ColumnMapping property once the associated DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_TableColumnsChange" xml:space="preserve">
-    <value>Cannot add or remove columns from the table once the DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_DataSetTablesChange" xml:space="preserve">
-    <value>Cannot add or remove tables from the DataSet once the DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_DataSetNestedRelationsChange" xml:space="preserve">
-    <value>Cannot add, remove, or change Nested relations from the DataSet once the DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_DataSetNull" xml:space="preserve">
-    <value>The DataSet parameter is invalid. It cannot be null.</value>
-  </data>
-  <data name="DataDom_DataSetNameChange" xml:space="preserve">
-    <value>Cannot change the DataSet name once the DataSet is mapped to a loaded XML document.</value>
-  </data>
-  <data name="DataDom_CloneNode" xml:space="preserve">
-    <value>This type of node cannot be cloned: {0}.</value>
-  </data>
-  <data name="DataDom_MultipleLoad" xml:space="preserve">
-    <value>Cannot load XmlDataDocument if it already contains data. Please use a new XmlDataDocument.</value>
-  </data>
-  <data name="DataDom_MultipleDataSet" xml:space="preserve">
-    <value>DataSet can be associated with at most one XmlDataDocument. Cannot associate the DataSet with the current XmlDataDocument because the DataSet is already associated with another XmlDataDocument.</value>
-  </data>
-  <data name="DataDom_EnforceConstraintsShouldBeOff" xml:space="preserve">
-    <value>Please set DataSet.EnforceConstraints == false before trying to edit XmlDataDocument using XML operations.</value>
-  </data>
-  <data name="DataDom_NotSupport_GetElementById" xml:space="preserve">
-    <value>GetElementById() is not supported on DataDocument.</value>
-  </data>
-  <data name="DataDom_NotSupport_EntRef" xml:space="preserve">
-    <value>Cannot create entity references on DataDocument.</value>
-  </data>
-  <data name="DataDom_NotSupport_Clear" xml:space="preserve">
-    <value>Clear function on DateSet and DataTable is not supported on XmlDataDocument.</value>
   </data>
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Cannot remove column since it is built in to this dataSet.</value>
