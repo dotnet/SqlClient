@@ -372,81 +372,6 @@
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>The collection that holds custom user information.</value>
   </data>
-  <data name="DataTableCaseSensitiveDescr" xml:space="preserve">
-    <value>Indicates whether comparing strings within the table is case sensitive.</value>
-  </data>
-  <data name="DataTableChildRelationsDescr" xml:space="preserve">
-    <value>Returns the child relations for this table.</value>
-  </data>
-  <data name="DataTableColumnsDescr" xml:space="preserve">
-    <value>The collection that holds the columns for this table.</value>
-  </data>
-  <data name="DataTableConstraintsDescr" xml:space="preserve">
-    <value>The collection that holds the constraints for this table.</value>
-  </data>
-  <data name="DataTableDataSetDescr" xml:space="preserve">
-    <value>Indicates the DataSet to which this table belongs.</value>
-  </data>
-  <data name="DataTableDefaultViewDescr" xml:space="preserve">
-    <value>This is the default DataView for the table.</value>
-  </data>
-  <data name="DataTableDisplayExpressionDescr" xml:space="preserve">
-    <value>The expression used to compute the data-bound value of this row.</value>
-  </data>
-  <data name="DataTableHasErrorsDescr" xml:space="preserve">
-    <value>Returns whether the table has errors.</value>
-  </data>
-  <data name="DataTableLocaleDescr" xml:space="preserve">
-    <value>Indicates a locale under which to compare strings within the table.</value>
-  </data>
-  <data name="DataTableMinimumCapacityDescr" xml:space="preserve">
-    <value>Indicates an initial starting size for this table.</value>
-  </data>
-  <data name="DataTableNamespaceDescr" xml:space="preserve">
-    <value>Indicates the XML uri namespace for the elements contained in this table.</value>
-  </data>
-  <data name="DataTablePrefixDescr" xml:space="preserve">
-    <value>Indicates the Prefix of the namespace used for this table in XML representation.</value>
-  </data>
-  <data name="DataTableParentRelationsDescr" xml:space="preserve">
-    <value>Returns the parent relations for this table.</value>
-  </data>
-  <data name="DataTablePrimaryKeyDescr" xml:space="preserve">
-    <value>Indicates the column(s) that represent the primary key for this table.</value>
-  </data>
-  <data name="DataTableRowsDescr" xml:space="preserve">
-    <value>Indicates the collection that holds the rows of data for this table.</value>
-  </data>
-  <data name="DataTableTableNameDescr" xml:space="preserve">
-    <value>Indicates the name used to look up this table in the Tables collection of a DataSet.</value>
-  </data>
-  <data name="DataTableRowChangedDescr" xml:space="preserve">
-    <value>Occurs after a row in the table has been successfully edited.</value>
-  </data>
-  <data name="DataTableRowChangingDescr" xml:space="preserve">
-    <value>Occurs when the row is being changed so that the event handler can modify or cancel the change. The user can modify values in the row and should throw an  exception to cancel the edit.</value>
-  </data>
-  <data name="DataTableRowDeletedDescr" xml:space="preserve">
-    <value>Occurs after a row in the table has been successfully deleted.</value>
-  </data>
-  <data name="DataTableRowDeletingDescr" xml:space="preserve">
-    <value>Occurs when a row in the table marked for deletion.  Throw an exception to cancel the deletion.</value>
-  </data>
-  <data name="DataTableColumnChangingDescr" xml:space="preserve">
-    <value>Occurs when a value has been submitted for this column.  The user can modify the proposed value and should throw an exception to cancel the edit.</value>
-  </data>
-  <data name="DataTableColumnChangedDescr" xml:space="preserve">
-    <value>Occurs when a value has been changed for this column.</value>
-  </data>
-  <data name="DataTableRowsClearingDescr" xml:space="preserve">
-    <value>Occurs prior to clearing all rows from the table.</value>
-  </data>
-  <data name="DataTableRowsClearedDescr" xml:space="preserve">
-    <value>Occurs after all rows in the table has been successfully cleared.</value>
-  </data>
-  <data name="DataTableRowsNewRowDescr" xml:space="preserve">
-    <value>Occurs after a new DataRow has been instantiated.</value>
-  </data>
   <data name="ForeignKeyConstraintDeleteRuleDescr" xml:space="preserve">
     <value>For deletions, indicates what kind of cascading should take place across this relation.</value>
   </data>
@@ -470,48 +395,6 @@
   </data>
   <data name="KeyConstraintIsPrimaryKeyDescr" xml:space="preserve">
     <value>Indicates if this constraint is a primary key.</value>
-  </data>
-  <data name="DataViewAllowDeleteDescr" xml:space="preserve">
-    <value>Indicates whether this DataView and the user interface associated with it allows deletes.</value>
-  </data>
-  <data name="DataViewAllowEditDescr" xml:space="preserve">
-    <value>Indicates whether this DataView and the user interface associated with it allows edits.</value>
-  </data>
-  <data name="DataViewAllowNewDescr" xml:space="preserve">
-    <value>Indicates whether this DataView and the user interface associated with it allows new rows to be added.</value>
-  </data>
-  <data name="DataViewCountDescr" xml:space="preserve">
-    <value>Returns the number of items currently in this view.</value>
-  </data>
-  <data name="DataViewDataViewManagerDescr" xml:space="preserve">
-    <value>This returns a pointer to back to the DataViewManager that owns this DataSet (if any).</value>
-  </data>
-  <data name="DataViewIsOpenDescr" xml:space="preserve">
-    <value>Indicates whether the view is open.</value>
-  </data>
-  <data name="DataViewRowFilterDescr" xml:space="preserve">
-    <value>Indicates an expression used to filter the data returned by this DataView.</value>
-  </data>
-  <data name="DataViewRowStateFilterDescr" xml:space="preserve">
-    <value>Indicates the versions of data returned by this DataView.</value>
-  </data>
-  <data name="DataViewSortDescr" xml:space="preserve">
-    <value>Indicates the names of the column and the order in which data is returned by this DataView.</value>
-  </data>
-  <data name="DataViewApplyDefaultSortDescr" xml:space="preserve">
-    <value>Indicates whether to use the default sort if the Sort property is not set.</value>
-  </data>
-  <data name="DataViewTableDescr" xml:space="preserve">
-    <value>Indicates the table this DataView uses to get data.</value>
-  </data>
-  <data name="DataViewListChangedDescr" xml:space="preserve">
-    <value>Indicates that the data returned by this DataView has somehow changed.</value>
-  </data>
-  <data name="DataViewManagerDataSetDescr" xml:space="preserve">
-    <value>Indicates the source of data for this DataViewManager.</value>
-  </data>
-  <data name="DataViewManagerTableSettingsDescr" xml:space="preserve">
-    <value>Indicates the sorting/filtering/state settings for any table in the corresponding DataSet.</value>
   </data>
   <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
     <value>DataSet doesn't support 'union' or 'list' as simpleType.</value>
@@ -768,144 +651,6 @@
   <data name="Data_InvalidOffsetLength" xml:space="preserve">
     <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
-  <data name="DataTable_ForeignPrimaryKey" xml:space="preserve">
-    <value>PrimaryKey columns do not belong to this table.</value>
-  </data>
-  <data name="DataTable_CannotAddToSimpleContent" xml:space="preserve">
-    <value>Cannot add a nested relation or an element column to a table containing a SimpleContent column.</value>
-  </data>
-  <data name="DataTable_NoName" xml:space="preserve">
-    <value>TableName is required when it is part of a DataSet.</value>
-  </data>
-  <data name="DataTable_MultipleSimpleContentColumns" xml:space="preserve">
-    <value>DataTable already has a simple content column.</value>
-  </data>
-  <data name="DataTable_MissingPrimaryKey" xml:space="preserve">
-    <value>Table doesn't have a primary key.</value>
-  </data>
-  <data name="DataTable_InvalidSortString" xml:space="preserve">
-    <value>{0} isn't a valid Sort string entry.</value>
-  </data>
-  <data name="DataTable_CanNotSerializeDataTableHierarchy" xml:space="preserve">
-    <value>Cannot serialize the DataTable. A DataTable being used in one or more DataColumn expressions is not a descendant of current DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotRemoteDataTable" xml:space="preserve">
-    <value>This DataTable can only be remoted as part of DataSet. One or more Expression Columns has reference to other DataTable(s).</value>
-  </data>
-  <data name="DataTable_CanNotSetRemotingFormat" xml:space="preserve">
-    <value>Cannot have different remoting format property value for DataSet and DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotSerializeDataTableWithEmptyName" xml:space="preserve">
-    <value>Cannot serialize the DataTable. DataTable name is not set.</value>
-  </data>
-  <data name="DataTable_DuplicateName" xml:space="preserve">
-    <value>A DataTable named '{0}' already belongs to this DataSet.</value>
-  </data>
-  <data name="DataTable_DuplicateName2" xml:space="preserve">
-    <value>A DataTable named '{0}' with the same Namespace '{1}' already belongs to this DataSet.</value>
-  </data>
-  <data name="DataTable_SelfnestedDatasetConflictingName" xml:space="preserve">
-    <value>The table ({0}) cannot be the child table to itself in a nested relation: the DataSet name conflicts with the table name.</value>
-  </data>
-  <data name="DataTable_DatasetConflictingName" xml:space="preserve">
-    <value>The name '{0}' is invalid. A DataTable cannot have the same name of the DataSet.</value>
-  </data>
-  <data name="DataTable_AlreadyInOtherDataSet" xml:space="preserve">
-    <value>DataTable already belongs to another DataSet.</value>
-  </data>
-  <data name="DataTable_AlreadyInTheDataSet" xml:space="preserve">
-    <value>DataTable already belongs to this DataSet.</value>
-  </data>
-  <data name="DataTable_NotInTheDataSet" xml:space="preserve">
-    <value>Table {0} does not belong to this DataSet.</value>
-  </data>
-  <data name="DataTable_OutOfRange" xml:space="preserve">
-    <value>Cannot find table {0}.</value>
-  </data>
-  <data name="DataTable_InRelation" xml:space="preserve">
-    <value>Cannot remove a table that has existing relations.  Remove relations first.</value>
-  </data>
-  <data name="DataTable_InConstraint" xml:space="preserve">
-    <value>Cannot remove table {0}, because it referenced in ForeignKeyConstraint {1}.  Remove the constraint first.</value>
-  </data>
-  <data name="DataTable_TableNotFound" xml:space="preserve">
-    <value>DataTable '{0}' does not match to any DataTable in source.</value>
-  </data>
-  <data name="DataStorage_AggregateException" xml:space="preserve">
-    <value>Invalid usage of aggregate function {0}() and Type: {1}.</value>
-  </data>
-  <data name="DataStorage_InvalidStorageType" xml:space="preserve">
-    <value>Invalid storage type: {0}.</value>
-  </data>
-  <data name="DataStorage_ProblematicChars" xml:space="preserve">
-    <value>The DataSet Xml persistency does not support the value '{0}' as Char value, please use Byte storage instead.</value>
-  </data>
-  <data name="DataStorage_SetInvalidDataType" xml:space="preserve">
-    <value>Type of value has a mismatch with column type</value>
-  </data>
-  <data name="DataStorage_IComparableNotDefined" xml:space="preserve">
-    <value>Type '{0}' does not implement IComparable interface. Comparison cannot be done.</value>
-  </data>
-  <data name="DataView_SetFailed" xml:space="preserve">
-    <value>Cannot set {0}.</value>
-  </data>
-  <data name="DataView_SetDataSetFailed" xml:space="preserve">
-    <value>Cannot change DataSet on a DataViewManager that's already the default view for a DataSet.</value>
-  </data>
-  <data name="DataView_SetRowStateFilter" xml:space="preserve">
-    <value>RowStateFilter cannot show ModifiedOriginals and ModifiedCurrents at the same time.</value>
-  </data>
-  <data name="DataView_SetTable" xml:space="preserve">
-    <value>Cannot change Table property on a DefaultView or a DataView coming from a DataViewManager.</value>
-  </data>
-  <data name="DataView_CanNotSetDataSet" xml:space="preserve">
-    <value>Cannot change DataSet property once it is set.</value>
-  </data>
-  <data name="DataView_CanNotUseDataViewManager" xml:space="preserve">
-    <value>DataSet must be set prior to using DataViewManager.</value>
-  </data>
-  <data name="DataView_CanNotSetTable" xml:space="preserve">
-    <value>Cannot change Table property once it is set.</value>
-  </data>
-  <data name="DataView_CanNotUse" xml:space="preserve">
-    <value>DataTable must be set prior to using DataView.</value>
-  </data>
-  <data name="DataView_CanNotBindTable" xml:space="preserve">
-    <value>Cannot bind to DataTable with no name.</value>
-  </data>
-  <data name="DataView_SetIListObject" xml:space="preserve">
-    <value>Cannot set an object into this list.</value>
-  </data>
-  <data name="DataView_AddNewNotAllowNull" xml:space="preserve">
-    <value>Cannot call AddNew on a DataView where AllowNew is false.</value>
-  </data>
-  <data name="DataView_NotOpen" xml:space="preserve">
-    <value>DataView is not open.</value>
-  </data>
-  <data name="DataView_CreateChildView" xml:space="preserve">
-    <value>The relation is not parented to the table to which this DataView points.</value>
-  </data>
-  <data name="DataView_CanNotDelete" xml:space="preserve">
-    <value>Cannot delete on a DataSource where AllowDelete is false.</value>
-  </data>
-  <data name="DataView_CanNotEdit" xml:space="preserve">
-    <value>Cannot edit on a DataSource where AllowEdit is false.</value>
-  </data>
-  <data name="DataView_GetElementIndex" xml:space="preserve">
-    <value>Index {0} is either negative or above rows count.</value>
-  </data>
-  <data name="DataView_AddExternalObject" xml:space="preserve">
-    <value>Cannot add external objects to this list.</value>
-  </data>
-  <data name="DataView_CanNotClear" xml:space="preserve">
-    <value>Cannot clear this list.</value>
-  </data>
-  <data name="DataView_InsertExternalObject" xml:space="preserve">
-    <value>Cannot insert external objects to this list.</value>
-  </data>
-  <data name="DataView_RemoveExternalObject" xml:space="preserve">
-    <value>Cannot remove objects not in the list.</value>
-  </data>
   <data name="Range_Argument" xml:space="preserve">
     <value>Min ({0}) must be less than or equal to max ({1}) in a Range object.</value>
   </data>
@@ -920,27 +665,6 @@
   </data>
   <data name="Load_ReadOnlyDataModified" xml:space="preserve">
     <value>ReadOnly Data is Modified.</value>
-  </data>
-  <data name="DataTableReader_InvalidDataTableReader" xml:space="preserve">
-    <value>DataTableReader is invalid for current DataTable '{0}'.</value>
-  </data>
-  <data name="DataTableReader_SchemaInvalidDataTableReader" xml:space="preserve">
-    <value>Schema of current DataTable '{0}' in DataTableReader has changed, DataTableReader is invalid.</value>
-  </data>
-  <data name="DataTableReader_CannotCreateDataReaderOnEmptyDataSet" xml:space="preserve">
-    <value>DataTableReader Cannot be created. There is no DataTable in DataSet.</value>
-  </data>
-  <data name="DataTableReader_DataTableReaderArgumentIsEmpty" xml:space="preserve">
-    <value>Cannot create DataTableReader. Argument is Empty.</value>
-  </data>
-  <data name="DataTableReader_ArgumentContainsNullValue" xml:space="preserve">
-    <value>Cannot create DataTableReader. Arguments contain null value.</value>
-  </data>
-  <data name="DataTableReader_InvalidRowInDataTableReader" xml:space="preserve">
-    <value>Current DataRow is either in Deleted or Detached state.</value>
-  </data>
-  <data name="DataTableReader_DataTableCleared" xml:space="preserve">
-    <value>Current DataTable '{0}' is empty. There is no DataRow in DataTable.</value>
   </data>
   <data name="RbTree_InvalidState" xml:space="preserve">
     <value>DataTable internal index is corrupted: '{0}'.</value>
@@ -1958,21 +1682,6 @@
   </data>
   <data name="ADP_OperationAbortedExceptionMessage" xml:space="preserve">
     <value>Operation aborted due to an exception (see InnerException for details).</value>
-  </data>
-  <data name="DataTableMapping_ColumnMappings" xml:space="preserve">
-    <value>Individual columns mappings when this table mapping is matched.</value>
-  </data>
-  <data name="DataTableMapping_DataSetTable" xml:space="preserve">
-    <value>DataTable.TableName</value>
-  </data>
-  <data name="DataTableMapping_SourceTable" xml:space="preserve">
-    <value>The DataTableMapping source table name. This name is case sensitive.</value>
-  </data>
-  <data name="DataTableMappings_Count" xml:space="preserve">
-    <value>The number of items in the collection</value>
-  </data>
-  <data name="DataTableMappings_Item" xml:space="preserve">
-    <value>The specified DataTableMapping object</value>
   </data>
   <data name="DbDataAdapter_DeleteCommand" xml:space="preserve">
     <value>Used during Update for deleted rows in DataSet.</value>
