@@ -78,11 +78,6 @@ parameters:
     type: string
     default: $(ci_var_defaultPoolName)
 
-  # True to add a Stress Test stage to the pipeline.
-  - name: enableStressTests
-    type: boolean
-    default: false
-
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
     type: number
@@ -217,19 +212,6 @@ stages:
       azureArtifactsName: $(azureArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
-
-  # Run the stress tests, if desired.
-  - ${{ if eq(parameters.enableStressTests, true) }}:
-      - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          additionalDependsOn:
-            - build_sqlclient_package_stage
-            - build_azure_package_stage
-          mdsArtifactsName: $(mdsArtifactsName)
-          mdsPackageVersion: $(mdsPackageVersion)
-          azurePackageVersion: $(azurePackageVersion)
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
