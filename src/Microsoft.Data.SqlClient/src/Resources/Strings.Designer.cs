@@ -3175,29 +3175,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The instance of SQL Server you attempted to connect to does not support CTAIP..
-        /// </summary>
-        internal static string SQL_CTAIPNotSupportedByServer {
-            get {
-                return ResourceManager.GetString("SQL_CTAIPNotSupportedByServer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The Collation specified by SQL Server is not supported..
         /// </summary>
         internal static string SQL_CultureIdError {
             get {
                 return ResourceManager.GetString("SQL_CultureIdError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type {0} is not supported on this platform..
-        /// </summary>
-        internal static string SQL_DbTypeNotSupportedOnThisPlatform {
-            get {
-                return ResourceManager.GetString("SQL_DbTypeNotSupportedOnThisPlatform", resourceCulture);
             }
         }
         
@@ -3292,15 +3274,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Specified data length {0} exceeds the allowed maximum length of {1}..
-        /// </summary>
-        internal static string SQL_ExceedsMaxDataLength {
-            get {
-                return ResourceManager.GetString("SQL_ExceedsMaxDataLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to ClientConnectionId:{0}.
         /// </summary>
         internal static string SQL_ExClientConnectionId {
@@ -3342,15 +3315,6 @@ namespace System {
         internal static string SQL_FailAsyncPendsEnabled {
             get {
                 return ResourceManager.GetString("SQL_FailAsyncPendsEnabled", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Timeout expired.  The connection has been broken as a result..
-        /// </summary>
-        internal static string SQL_FatalTimeout {
-            get {
-                return ResourceManager.GetString("SQL_FatalTimeout", resourceCulture);
             }
         }
         
@@ -3427,15 +3391,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The length of the value for the connection parameter &lt;{0}&gt; exceeds the maximum allowed 65535 characters..
-        /// </summary>
-        internal static string SQL_InvalidOptionLength {
-            get {
-                return ResourceManager.GetString("SQL_InvalidOptionLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Invalid &apos;Packet Size&apos;.  The value must be an integer &gt;= 512 and &lt;= 32768..
         /// </summary>
         internal static string SQL_InvalidPacketSizeValue {
@@ -3477,24 +3432,6 @@ namespace System {
         internal static string SQL_InvalidRead {
             get {
                 return ResourceManager.GetString("SQL_InvalidRead", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The server certificate failed application validation..
-        /// </summary>
-        internal static string SQL_InvalidServerCertificate {
-            get {
-                return ResourceManager.GetString("SQL_InvalidServerCertificate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The SqlDbType &apos;{0}&apos; is invalid for {1}.  Only {2} is supported..
-        /// </summary>
-        internal static string SQL_InvalidSqlDbTypeWithOneAllowedType {
-            get {
-                return ResourceManager.GetString("SQL_InvalidSqlDbTypeWithOneAllowedType", resourceCulture);
             }
         }
         
@@ -3562,29 +3499,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with &apos;kinit&apos; and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication..
-        /// </summary>
-        internal static string SQL_KerberosTicketMissingError {
-            get {
-                return ResourceManager.GetString("SQL_KerberosTicketMissingError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
             get {
                 return ResourceManager.GetString("SQL_MarsUnsupportedOnConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to MetaData parameter array must have length equivalent to ParameterDirection array argument..
-        /// </summary>
-        internal static string Sql_MismatchedMetaDataDirectionArrayLengths {
-            get {
-                return ResourceManager.GetString("Sql_MismatchedMetaDataDirectionArrayLengths", resourceCulture);
             }
         }
         
@@ -3630,15 +3549,6 @@ namespace System {
         internal static string SQL_Multiplexer_PartialPacketNotNull {
             get {
                 return ResourceManager.GetString("SQL_Multiplexer_PartialPacketNotNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Nested TransactionScopes are not supported..
-        /// </summary>
-        internal static string SQL_NestedTransactionScopesNotSupported {
-            get {
-                return ResourceManager.GetString("SQL_NestedTransactionScopesNotSupported", resourceCulture);
             }
         }
         
@@ -3697,29 +3607,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Notifications require SQL Server 9.0 or later..
-        /// </summary>
-        internal static string SQL_NotificationsRequireYukon {
-            get {
-                return ResourceManager.GetString("SQL_NotificationsRequireYukon", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider..
         /// </summary>
         internal static string SQL_NotSupportedEnumerationValue {
             get {
                 return ResourceManager.GetString("SQL_NotSupportedEnumerationValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Command parameter must have a non null and non empty command text..
-        /// </summary>
-        internal static string Sql_NullCommandText {
-            get {
-                return ResourceManager.GetString("Sql_NullCommandText", resourceCulture);
             }
         }
         
@@ -4093,15 +3985,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the SqlDataRecord is read only..
-        /// </summary>
-        internal static string SQL_SqlUpdatableRecordReadOnly {
-            get {
-                return ResourceManager.GetString("SQL_SqlUpdatableRecordReadOnly", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The target principal name is incorrect.  Cannot generate SSPI context..
         /// </summary>
         internal static string SQL_SSPIGenerateError {
@@ -4170,15 +4053,6 @@ namespace System {
         internal static string SQL_TextReaderNotSupportOnColumnType {
             get {
                 return ResourceManager.GetString("SQL_TextReaderNotSupportOnColumnType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Timeout expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
-        /// </summary>
-        internal static string SQL_Timeout {
-            get {
-                return ResourceManager.GetString("SQL_Timeout", resourceCulture);
             }
         }
         
@@ -4309,15 +4183,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Too many values..
-        /// </summary>
-        internal static string SQL_TooManyValues {
-            get {
-                return ResourceManager.GetString("SQL_TooManyValues", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to SqlParameter.TypeName is an invalid multipart name.
         /// </summary>
         internal static string SQL_TypeName {
@@ -4332,15 +4197,6 @@ namespace System {
         internal static string SQL_UDTTypeName {
             get {
                 return ResourceManager.GetString("SQL_UDTTypeName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unexpected server event: {0}..
-        /// </summary>
-        internal static string SQL_UnexpectedSmiEvent {
-            get {
-                return ResourceManager.GetString("SQL_UnexpectedSmiEvent", resourceCulture);
             }
         }
         
@@ -4381,15 +4237,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The server is attempting to use a feature that is not supported on this platform..
-        /// </summary>
-        internal static string SQL_UnsupportedFeature {
-            get {
-                return ResourceManager.GetString("SQL_UnsupportedFeature", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The keyword &apos;{0}&apos; is not supported on this platform..
         /// </summary>
         internal static string SQL_UnsupportedKeyword {
@@ -4399,29 +4246,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SQL authentication method &apos;{0}&apos; is not supported..
-        /// </summary>
-        internal static string SQL_UnsupportedSqlAuthenticationMethod {
-            get {
-                return ResourceManager.GetString("SQL_UnsupportedSqlAuthenticationMethod", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The currently loaded System.Transactions.dll does not support Global Transactions..
         /// </summary>
         internal static string SQL_UnsupportedSysTxVersion {
             get {
                 return ResourceManager.GetString("SQL_UnsupportedSysTxVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Received an unsupported token &apos;{0}&apos; while reading data from the server..
-        /// </summary>
-        internal static string SQL_UnsupportedToken {
-            get {
-                return ResourceManager.GetString("SQL_UnsupportedToken", resourceCulture);
             }
         }
         
@@ -4458,15 +4287,6 @@ namespace System {
         internal static string SQL_VectorTypeNotSupported {
             get {
                 return ResourceManager.GetString("SQL_VectorTypeNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..
-        /// </summary>
-        internal static string SQL_WrongType {
-            get {
-                return ResourceManager.GetString("SQL_WrongType", resourceCulture);
             }
         }
         
@@ -4516,47 +4336,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The decimal separator used in numeric literals..
-        /// </summary>
-        internal static string SqlCommandBuilder_DecimalSeparator {
-            get {
-                return ResourceManager.GetString("SqlCommandBuilder_DecimalSeparator", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The character used in a text command as the opening quote for quoting identifiers that contain special characters..
-        /// </summary>
-        internal static string SqlCommandBuilder_QuotePrefix {
-            get {
-                return ResourceManager.GetString("SqlCommandBuilder_QuotePrefix", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The character used in a text command as the closing quote for quoting identifiers that contain special characters..
-        /// </summary>
-        internal static string SqlCommandBuilder_QuoteSuffix {
-            get {
-                return ResourceManager.GetString("SqlCommandBuilder_QuoteSuffix", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Access token to use for authentication..
         /// </summary>
         internal static string SqlConnection_AccessToken {
             get {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
-        /// </summary>
-        internal static string SqlConnection_Asynchronous {
-            get {
-                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
         
@@ -4597,15 +4381,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Custom column encryption key store providers..
-        /// </summary>
-        internal static string SqlConnection_CustomColumnEncryptionKeyStoreProviders {
-            get {
-                return ResourceManager.GetString("SqlConnection_CustomColumnEncryptionKeyStoreProviders", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Current SQL Server database, &apos;Initial Catalog=X&apos; in the connection string..
         /// </summary>
         internal static string SqlConnection_Database {
@@ -4629,15 +4404,6 @@ namespace System {
         internal static string SqlConnection_PacketSize {
             get {
                 return ResourceManager.GetString("SqlConnection_PacketSize", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Information used to connect for replication..
-        /// </summary>
-        internal static string SqlConnection_Replication {
-            get {
-                return ResourceManager.GetString("SqlConnection_Replication", resourceCulture);
             }
         }
         
@@ -4876,15 +4642,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Command is already associated with another dependency object. Can not overwrite..
-        /// </summary>
-        internal static string SqlDependency_Duplicate {
-            get {
-                return ResourceManager.GetString("SqlDependency_Duplicate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to SqlDependency does not support calling Start() with different connection strings having the same server, user, and database in the same app domain..
         /// </summary>
         internal static string SqlDependency_DuplicateStart {
@@ -4966,15 +4723,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Dependency object used to receive query notifications..
-        /// </summary>
-        internal static string SqlDependency_SqlDependency {
-            get {
-                return ResourceManager.GetString("SqlDependency_SqlDependency", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Unexpected type detected on deserialize..
         /// </summary>
         internal static string SqlDependency_UnexpectedValueOnDeserialize {
@@ -5047,74 +4795,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to GetMetaData is not valid for this SqlDbType..
-        /// </summary>
-        internal static string SqlMetaData_NoMetadata {
-            get {
-                return ResourceManager.GetString("SqlMetaData_NoMetadata", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The sort order and ordinal must either both be specified, or neither should be specified (SortOrder.Unspecified and -1).  The values given were: order = {0}, ordinal = {1}..
         /// </summary>
         internal static string SqlMetaData_SpecifyBothSortOrderAndOrdinal {
             get {
                 return ResourceManager.GetString("SqlMetaData_SpecifyBothSortOrderAndOrdinal", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SQL Type has already been loaded with data..
-        /// </summary>
-        internal static string SqlMisc_AlreadyFilledMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_AlreadyFilledMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Arithmetic Overflow..
-        /// </summary>
-        internal static string SqlMisc_ArithOverflowMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_ArithOverflowMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The buffer is insufficient. Read or write operation failed..
-        /// </summary>
-        internal static string SqlMisc_BufferInsufficientMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_BufferInsufficientMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to access a closed XmlReader..
-        /// </summary>
-        internal static string SqlMisc_ClosedXmlReaderMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_ClosedXmlReaderMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Two strings to be compared have different collation..
-        /// </summary>
-        internal static string SqlMisc_CompareDiffCollationMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_CompareDiffCollationMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Two strings to be concatenated have different collation..
-        /// </summary>
-        internal static string SqlMisc_ConcatDiffCollationMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_ConcatDiffCollationMessage", resourceCulture);
             }
         }
         
@@ -5137,92 +4822,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Divide by zero error encountered..
-        /// </summary>
-        internal static string SqlMisc_DivideByZeroMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_DivideByZeroMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The input wasn&apos;t in a correct format..
-        /// </summary>
-        internal static string SqlMisc_FormatMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_FormatMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Invalid array size..
         /// </summary>
         internal static string SqlMisc_InvalidArraySizeMessage {
             get {
                 return ResourceManager.GetString("SqlMisc_InvalidArraySizeMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid SqlDateTime..
-        /// </summary>
-        internal static string SqlMisc_InvalidDateTimeMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidDateTimeMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Argument to GetDayOfWeek must be integer between 1 and 7..
-        /// </summary>
-        internal static string SqlMisc_InvalidFirstDayMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidFirstDayMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid flag value..
-        /// </summary>
-        internal static string SqlMisc_InvalidFlagMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidFlagMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream is closed..
-        /// </summary>
-        internal static string SqlMisc_InvalidOpStreamClosed {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamClosed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream non-readable..
-        /// </summary>
-        internal static string SqlMisc_InvalidOpStreamNonReadable {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonReadable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream is non-seekable..
-        /// </summary>
-        internal static string SqlMisc_InvalidOpStreamNonSeekable {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonSeekable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream non-writable..
-        /// </summary>
-        internal static string SqlMisc_InvalidOpStreamNonWritable {
-            get {
-                return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonWritable", resourceCulture);
             }
         }
         
@@ -5236,92 +4840,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The SqlBytes and SqlChars don&apos;t support length of more than 2GB in this version..
-        /// </summary>
-        internal static string SqlMisc_LenTooLargeMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_LenTooLargeMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Message.
-        /// </summary>
-        internal static string SqlMisc_MessageString {
-            get {
-                return ResourceManager.GetString("SqlMisc_MessageString", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to There is no buffer. Read or write operation failed..
-        /// </summary>
-        internal static string SqlMisc_NoBufferMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_NoBufferMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SQL Type has not been loaded with data..
-        /// </summary>
-        internal static string SqlMisc_NotFilledMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_NotFilledMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Null.
         /// </summary>
         internal static string SqlMisc_NullString {
             get {
                 return ResourceManager.GetString("SqlMisc_NullString", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Data is Null. This method or property cannot be called on Null values..
-        /// </summary>
-        internal static string SqlMisc_NullValueMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_NullValueMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Conversion from SqlDecimal to Decimal overflows..
-        /// </summary>
-        internal static string SqlMisc_NumeToDecOverflowMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_NumeToDecOverflowMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot set to non-zero length, because current value is Null..
-        /// </summary>
-        internal static string SqlMisc_SetNonZeroLenOnNullMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_SetNonZeroLenOnNullMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SqlType error..
-        /// </summary>
-        internal static string SqlMisc_SqlTypeMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_SqlTypeMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Stream has been closed or disposed..
-        /// </summary>
-        internal static string SqlMisc_StreamClosedMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_StreamClosedMessage", resourceCulture);
             }
         }
         
@@ -5335,56 +4858,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Subclass did not override a required method..
-        /// </summary>
-        internal static string SqlMisc_SubclassMustOverride {
-            get {
-                return ResourceManager.GetString("SqlMisc_SubclassMustOverride", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A time zone was specified. SqlDateTime does not support time zones..
-        /// </summary>
-        internal static string SqlMisc_TimeZoneSpecifiedMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_TimeZoneSpecifiedMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Data returned is larger than 2Gb in size. Use SequentialAccess command behavior in order to get all of the data..
         /// </summary>
         internal static string SqlMisc_TruncationMaxDataMessage {
             get {
                 return ResourceManager.GetString("SqlMisc_TruncationMaxDataMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Numeric arithmetic causes truncation..
-        /// </summary>
-        internal static string SqlMisc_TruncationMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_TruncationMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot write to non-zero offset, because current value is Null..
-        /// </summary>
-        internal static string SqlMisc_WriteNonZeroOffsetOnNullMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_WriteNonZeroOffsetOnNullMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer..
-        /// </summary>
-        internal static string SqlMisc_WriteOffsetLargerThanLenMessage {
-            get {
-                return ResourceManager.GetString("SqlMisc_WriteOffsetLargerThanLenMessage", resourceCulture);
             }
         }
         

@@ -453,9 +453,6 @@
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
     <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
   </data>
-  <data name="SQL_WrongType" xml:space="preserve">
-    <value>Expecting argument of type {1}, but received type {0}.</value>
-  </data>
   <data name="ADP_InvalidConnectionOptionValue" xml:space="preserve">
     <value>Invalid value for key '{0}'.</value>
   </data>
@@ -633,9 +630,6 @@
   <data name="SQL_CannotGetDTCAddress" xml:space="preserve">
     <value>Unable to get the address of the distributed transaction coordinator for the server, from the server.  Is DTC enabled on the server?</value>
   </data>
-  <data name="SQL_InvalidOptionLength" xml:space="preserve">
-    <value>The length of the value for the connection parameter &lt;{0}&gt; exceeds the maximum allowed 65535 characters.</value>
-  </data>
   <data name="SQL_InvalidPacketSizeValue" xml:space="preserve">
     <value>Invalid 'Packet Size'.  The value must be an integer &gt;= 512 and &lt;= 32768.</value>
   </data>
@@ -675,9 +669,6 @@
   <data name="SQL_EncryptionNotSupportedByServer" xml:space="preserve">
     <value>The instance of SQL Server you attempted to connect to does not support encryption.</value>
   </data>
-  <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to does not support CTAIP.</value>
-  </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
     <value>Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
   </data>
@@ -686,9 +677,6 @@
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
     <value>The connection attempt timed out.</value>
-  </data>
-  <data name="SQL_FatalTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection has been broken as a result.</value>
   </data>
   <data name="SQL_InstanceFailure" xml:space="preserve">
     <value>Instance failure.</value>
@@ -726,9 +714,6 @@
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>The authentication '{0}' is not supported.</value>
   </data>
-  <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
-    <value>SQL authentication method '{0}' is not supported.</value>
-  </data>
   <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>Failed to instantiate an authentication provider with type '{1}' for '{0}'.</value>
   </data>
@@ -752,9 +737,6 @@
   </data>
   <data name="SQL_NonXmlResult" xml:space="preserve">
     <value>Invalid command sent to ExecuteXmlReader.  The command must return an Xml result.</value>
-  </data>
-  <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
-    <value>Notifications require SQL Server 9.0 or later.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">
     <value>Invalid 3 part name format for UdtTypeName.</value>
@@ -849,9 +831,6 @@
   <data name="SQL_SSPIInitializeError" xml:space="preserve">
     <value>Cannot initialize SSPI package.</value>
   </data>
-  <data name="SQL_Timeout" xml:space="preserve">
-    <value>Timeout expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
-  </data>
   <data name="SQL_Timeout_PreLogin_Begin" xml:space="preserve">
     <value>Connection Timeout Expired.  The timeout period elapsed at the start of the pre-login phase.  This could be because of insufficient time provided for connection timeout.</value>
   </data>
@@ -897,12 +876,6 @@
   <data name="SQL_UserInstanceFailure" xml:space="preserve">
     <value>A user instance was requested in the connection string but the server specified does not support this option.</value>
   </data>
-  <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>The server certificate failed application validation.</value>
-  </data>
-  <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
-    <value>Specified data length {0} exceeds the allowed maximum length of {1}.</value>
-  </data>
   <data name="SQL_InvalidRead" xml:space="preserve">
     <value>Invalid attempt to read when no data is present.</value>
   </data>
@@ -926,9 +899,6 @@
   </data>
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Data length '{0}' is less than 0.</value>
-  </data>
-  <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the SqlDataRecord is read only.</value>
   </data>
   <data name="SQL_BulkLoadMappingInaccessible" xml:space="preserve">
     <value>The mapped collection is in use and cannot be accessed at this time;</value>
@@ -999,18 +969,6 @@
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
   </data>
-  <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
-    <value>Nested TransactionScopes are not supported.</value>
-  </data>
-  <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
-    <value>Unexpected server event: {0}.</value>
-  </data>
-  <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>The SqlDbType '{0}' is invalid for {1}.  Only {2} is supported.</value>
-  </data>
-  <data name="SQL_TooManyValues" xml:space="preserve">
-    <value>Too many values.</value>
-  </data>
   <data name="SQL_StreamWriteNotSupported" xml:space="preserve">
     <value>The Stream does not support writing.</value>
   </data>
@@ -1035,44 +993,11 @@
   <data name="SqlMisc_NullString" xml:space="preserve">
     <value>Null</value>
   </data>
-  <data name="SqlMisc_MessageString" xml:space="preserve">
-    <value>Message</value>
-  </data>
-  <data name="SqlMisc_ArithOverflowMessage" xml:space="preserve">
-    <value>Arithmetic Overflow.</value>
-  </data>
-  <data name="SqlMisc_DivideByZeroMessage" xml:space="preserve">
-    <value>Divide by zero error encountered.</value>
-  </data>
-  <data name="SqlMisc_NullValueMessage" xml:space="preserve">
-    <value>Data is Null. This method or property cannot be called on Null values.</value>
-  </data>
-  <data name="SqlMisc_TruncationMessage" xml:space="preserve">
-    <value>Numeric arithmetic causes truncation.</value>
-  </data>
   <data name="SqlMisc_DateTimeOverflowMessage" xml:space="preserve">
     <value>SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.</value>
   </data>
-  <data name="SqlMisc_ConcatDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be concatenated have different collation.</value>
-  </data>
-  <data name="SqlMisc_CompareDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be compared have different collation.</value>
-  </data>
-  <data name="SqlMisc_InvalidFlagMessage" xml:space="preserve">
-    <value>Invalid flag value.</value>
-  </data>
-  <data name="SqlMisc_NumeToDecOverflowMessage" xml:space="preserve">
-    <value>Conversion from SqlDecimal to Decimal overflows.</value>
-  </data>
   <data name="SqlMisc_ConversionOverflowMessage" xml:space="preserve">
     <value>Conversion overflows.</value>
-  </data>
-  <data name="SqlMisc_InvalidDateTimeMessage" xml:space="preserve">
-    <value>Invalid SqlDateTime.</value>
-  </data>
-  <data name="SqlMisc_TimeZoneSpecifiedMessage" xml:space="preserve">
-    <value>A time zone was specified. SqlDateTime does not support time zones.</value>
   </data>
   <data name="SqlMisc_InvalidArraySizeMessage" xml:space="preserve">
     <value>Invalid array size.</value>
@@ -1080,77 +1005,17 @@
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
     <value>Invalid numeric precision/scale.</value>
   </data>
-  <data name="SqlMisc_FormatMessage" xml:space="preserve">
-    <value>The input wasn't in a correct format.</value>
-  </data>
-  <data name="SqlMisc_SqlTypeMessage" xml:space="preserve">
-    <value>SqlType error.</value>
-  </data>
-  <data name="SqlMisc_LenTooLargeMessage" xml:space="preserve">
-    <value>The SqlBytes and SqlChars don't support length of more than 2GB in this version.</value>
-  </data>
   <data name="SqlMisc_StreamErrorMessage" xml:space="preserve">
     <value>An error occurred while reading.</value>
   </data>
-  <data name="SqlMisc_StreamClosedMessage" xml:space="preserve">
-    <value>Stream has been closed or disposed.</value>
-  </data>
-  <data name="SqlMisc_NoBufferMessage" xml:space="preserve">
-    <value>There is no buffer. Read or write operation failed.</value>
-  </data>
-  <data name="SqlMisc_SetNonZeroLenOnNullMessage" xml:space="preserve">
-    <value>Cannot set to non-zero length, because current value is Null.</value>
-  </data>
-  <data name="SqlMisc_BufferInsufficientMessage" xml:space="preserve">
-    <value>The buffer is insufficient. Read or write operation failed.</value>
-  </data>
-  <data name="SqlMisc_WriteNonZeroOffsetOnNullMessage" xml:space="preserve">
-    <value>Cannot write to non-zero offset, because current value is Null.</value>
-  </data>
-  <data name="SqlMisc_WriteOffsetLargerThanLenMessage" xml:space="preserve">
-    <value>Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer.</value>
-  </data>
   <data name="SqlMisc_TruncationMaxDataMessage" xml:space="preserve">
     <value>Data returned is larger than 2Gb in size. Use SequentialAccess command behavior in order to get all of the data.</value>
-  </data>
-  <data name="SqlMisc_InvalidFirstDayMessage" xml:space="preserve">
-    <value>Argument to GetDayOfWeek must be integer between 1 and 7.</value>
-  </data>
-  <data name="SqlMisc_NotFilledMessage" xml:space="preserve">
-    <value>SQL Type has not been loaded with data.</value>
-  </data>
-  <data name="SqlMisc_AlreadyFilledMessage" xml:space="preserve">
-    <value>SQL Type has already been loaded with data.</value>
-  </data>
-  <data name="SqlMisc_ClosedXmlReaderMessage" xml:space="preserve">
-    <value>Invalid attempt to access a closed XmlReader.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamClosed" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is closed.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonWritable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-writable.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonReadable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-readable.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonSeekable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is non-seekable.</value>
-  </data>
-  <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
-    <value>Subclass did not override a required method.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>Cannot create normalizer for '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Internal Error</value>
-  </data>
-  <data name="Sql_NullCommandText" xml:space="preserve">
-    <value>Command parameter must have a non null and non empty command text.</value>
-  </data>
-  <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
-    <value>MetaData parameter array must have length equivalent to ParameterDirection array argument.</value>
   </data>
   <data name="ADP_OperationAborted" xml:space="preserve">
     <value>Operation aborted.</value>
@@ -1284,12 +1149,6 @@
   <data name="SqlConnection_AccessToken" xml:space="preserve">
     <value>Access token to use for authentication.</value>
   </data>
-  <data name="SqlConnection_Asynchronous" xml:space="preserve">
-    <value>State of connection, synchronous or asynchronous.  'Asynchronous Processing=x' in the connection string.</value>
-  </data>
-  <data name="SqlConnection_Replication" xml:space="preserve">
-    <value>Information used to connect for replication.</value>
-  </data>
   <data name="SqlConnection_ConnectionString" xml:space="preserve">
     <value>Information used to connect to a DataSource, such as 'Data Source=x;Initial Catalog=x;Integrated Security=SSPI'.</value>
   </data>
@@ -1313,9 +1172,6 @@
   </data>
   <data name="SqlConnection_StatisticsEnabled" xml:space="preserve">
     <value>Collect statistics for this connection.</value>
-  </data>
-  <data name="SqlConnection_CustomColumnEncryptionKeyStoreProviders" xml:space="preserve">
-    <value>Custom column encryption key store providers.</value>
   </data>
   <data name="SqlConnection_ClientConnectionId" xml:space="preserve">
     <value>A guid to represent the physical connection.</value>
@@ -1355,15 +1211,6 @@
   </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
     <value>The DataAdapter for which to automatically generate SqlCommands</value>
-  </data>
-  <data name="SqlCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>The decimal separator used in numeric literals.</value>
-  </data>
-  <data name="SqlCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>The character used in a text command as the opening quote for quoting identifiers that contain special characters.</value>
-  </data>
-  <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>The character used in a text command as the closing quote for quoting identifiers that contain special characters.</value>
   </data>
   <data name="SqlParameter_ParameterName" xml:space="preserve">
     <value>Name of the parameter, like '@p1'</value>
@@ -1512,9 +1359,6 @@
   <data name="SqlDelegatedTransaction_PromotionFailed" xml:space="preserve">
     <value>Failure while attempting to promote transaction.</value>
   </data>
-  <data name="SqlDependency_SqlDependency" xml:space="preserve">
-    <value>Dependency object used to receive query notifications.</value>
-  </data>
   <data name="SqlDependency_HasChanges" xml:space="preserve">
     <value>Property to indicate if this dependency is invalid.</value>
   </data>
@@ -1526,9 +1370,6 @@
   </data>
   <data name="SqlDependency_AddCommandDependency" xml:space="preserve">
     <value>To add a command to existing dependency object.</value>
-  </data>
-  <data name="SqlDependency_Duplicate" xml:space="preserve">
-    <value>Command is already associated with another dependency object. Can not overwrite.</value>
   </data>
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>This SqlCommand object is already associated with another SqlDependency object.</value>
@@ -1559,9 +1400,6 @@
   </data>
   <data name="SQLNotify_ErrorFormat" xml:space="preserve">
     <value>Notification Error. Type={0}, Info={1}, Source={2}.</value>
-  </data>
-  <data name="SqlMetaData_NoMetadata" xml:space="preserve">
-    <value>GetMetaData is not valid for this SqlDbType.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
     <value>The dbType {0} is invalid for this constructor.</value>
@@ -2496,14 +2334,8 @@
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Exception occurred while trying to set the AppContext Switch '{0}'={1}.</value>
   </data>
-  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
-    <value>Type {0} is not supported on this platform.</value>
-  </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Globalization Invariant Mode is not supported.</value>
-  </data>
-  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
-    <value>Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with 'kinit' and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication.</value>
   </data>
   <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
     <value>The keyword 'Network Library' is not supported on this platform, prefix the 'Data Source' with the protocol desired instead ('tcp:' for a TCP connection, or 'np:' for a Named Pipe connection).</value>
@@ -2511,17 +2343,11 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Socket did not throw expected '{0}' with error code '{1}'.</value>
   </data>
-  <data name="SQL_UnsupportedFeature" xml:space="preserve">
-    <value>The server is attempting to use a feature that is not supported on this platform.</value>
-  </data>
   <data name="SQL_UnsupportedKeyword" xml:space="preserve">
     <value>The keyword '{0}' is not supported on this platform.</value>
   </data>
   <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
     <value>The currently loaded System.Transactions.dll does not support Global Transactions.</value>
-  </data>
-  <data name="SQL_UnsupportedToken" xml:space="preserve">
-    <value>Received an unsupported token '{0}' while reading data from the server.</value>
   </data>
   <data name="SSPIInvalidHandleType" xml:space="preserve">
     <value>'{0}' is not a supported handle type.</value>
