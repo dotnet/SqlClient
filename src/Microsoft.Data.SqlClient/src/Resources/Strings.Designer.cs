@@ -160,15 +160,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to retrieve the ComputerNameDnsFullyQualified, {0}..
-        /// </summary>
-        internal static string ADP_ComputerNameEx {
-            get {
-                return ResourceManager.GetString("ADP_ComputerNameEx", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection was not closed. {0}.
         /// </summary>
         internal static string ADP_ConnectionAlreadyOpen {
@@ -3949,15 +3940,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by SQL Server 7.0 or SQL Server 2000..
-        /// </summary>
-        internal static string SQL_SnapshotNotSupported {
-            get {
-                return ResourceManager.GetString("SQL_SnapshotNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Memory allocation for internal connection failed..
         /// </summary>
         internal static string SQL_SNIPacketAllocationFailure {
@@ -4053,24 +4035,6 @@ namespace System {
         internal static string SQL_TextReaderNotSupportOnColumnType {
             get {
                 return ResourceManager.GetString("SQL_TextReaderNotSupportOnColumnType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request..
-        /// </summary>
-        internal static string SQL_Timeout_Active_Directory_DeviceFlow_Authentication {
-            get {
-                return ResourceManager.GetString("SQL_Timeout_Active_Directory_DeviceFlow_Authentication", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
-        /// </summary>
-        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
-            get {
-                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
             }
         }
         

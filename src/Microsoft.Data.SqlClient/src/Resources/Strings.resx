@@ -384,9 +384,6 @@
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
   </data>
-  <data name="ADP_ComputerNameEx" xml:space="preserve">
-    <value>Unable to retrieve the ComputerNameDnsFullyQualified, {0}.</value>
-  </data>
   <data name="ADP_CommandTextRequired" xml:space="preserve">
     <value>{0}: CommandText property has not been initialized</value>
   </data>
@@ -518,9 +515,6 @@
   </data>
   <data name="SQL_NullEmptyTransactionName" xml:space="preserve">
     <value>Invalid transaction or invalid name for a point at which to save within the transaction.</value>
-  </data>
-  <data name="SQL_SnapshotNotSupported" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by SQL Server 7.0 or SQL Server 2000.</value>
   </data>
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
     <value>User Instance and Failover are not compatible options.  Please choose only one of the two in the connection string.</value>
@@ -2013,9 +2007,6 @@
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
     <value>Unsupported authentication specified in this context: {0}</value>
   </data>
-  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
-  </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
   </data>
@@ -2024,9 +2015,6 @@
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
     <value>Server Process Id (SPID) of the active connection.</value>
-  </data>
-  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.</value>
