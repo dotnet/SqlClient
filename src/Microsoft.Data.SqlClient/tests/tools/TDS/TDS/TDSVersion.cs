@@ -12,16 +12,6 @@ namespace Microsoft.SqlServer.TDS
     public static class TDSVersion
     {
         /// <summary>
-        /// 7.0 (Sphinx) TDS version
-        /// </summary>
-        public static Version SqlServer7_0 = new Version(7, 0, 0, 0);
-
-        /// <summary>
-        /// 2000 (Shiloh) TDS version
-        /// </summary>
-        public static Version SqlServer2000 = new Version(7, 1, 0, 1);
-
-        /// <summary>
         /// 2005 (Yukon) TDS version
         /// </summary>
         public static Version SqlServer2005 = new Version(7, 2, 9, 2);
@@ -56,14 +46,6 @@ namespace Microsoft.SqlServer.TDS
             {
                 return SqlServer2005;
             }
-            else if (buildVersion.Major == 8)
-            {
-                return SqlServer2000;
-            }
-            else if (buildVersion.Major == 7)
-            {
-                return SqlServer7_0;
-            }
             else
             {
                 // Not supported TDS version
@@ -97,7 +79,7 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static bool IsSupported(Version tdsVersion)
         {
-            return tdsVersion >= SqlServer7_0 && tdsVersion <= SqlServer2012;
+            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2012;
         }
     }
 }
