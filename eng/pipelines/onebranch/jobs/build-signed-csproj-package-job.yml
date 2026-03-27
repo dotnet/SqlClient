@@ -134,7 +134,7 @@ jobs:
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
       # Perform Roslyn analysis before building, since this step will clobber build output.
-      - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
         parameters:
           msBuildArguments: >-
             -t:$(buildTarget)
@@ -143,7 +143,7 @@ jobs:
             ${{ parameters.versionProperties }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
-      - template: /eng/pipelines/onebranch/steps/compound-build-csproj-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/build-csproj-step.yml@self
         parameters:
           buildTarget: $(buildTarget)
           buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -151,7 +151,7 @@ jobs:
 
       - ${{ if eq(parameters.isOfficial, true) }}:
           # ESRP sign the DLLs.
-          - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
             parameters:
               appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
               appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
@@ -182,7 +182,7 @@ jobs:
           flattenFolders: false
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).
-      - template: /eng/pipelines/onebranch/steps/compound-pack-csproj-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/pack-csproj-step.yml@self
         parameters:
           packTarget: $(packTarget)
           buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -190,7 +190,7 @@ jobs:
 
       - ${{ if eq(parameters.isOfficial, true) }}:
           # ESRP sign the NuGet package.
-          - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
             parameters:
               appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
               appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
@@ -198,11 +198,22 @@ jobs:
               authSignCertName: ${{ parameters.authSignCertName }}
               esrpClientId: ${{ parameters.esrpClientId }}
               esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-              pattern: ${{ parameters.packageFullName }}.*nupkg
+              searchPath: $(PACK_OUTPUT)
+              searchPattern: '${{ parameters.packageFullName }}.*nupkg'
 
       # Publish symbols to servers
+      # @TODO: Get these parameters from variables/libraries
       - ${{ if eq(parameters.publishSymbols, true) }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
-              packageFullName: ${{ parameters.packageFullName }}
-              packageVersion: ${{ parameters.packageVersion }}
+              artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)'
+              azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+              packageName: '${{ parameters.packageFullName }}'
+              publishProjectName: 'Microsoft.Data.SqlClient.SNI'
+              publishServer: '$(SymbolServer)'
+              publishToInternal: 'true'
+              publishToPublic: 'true'
+              publishTokenUri: '$(SymbolTokenUri)'
+              searchPattern: '**/${{ parameters.packageFullName }}*.pdb'
+              uploadAccount: 'SqlClientDrivers'
+              version: '${{ parameters.packageVersion }}'
