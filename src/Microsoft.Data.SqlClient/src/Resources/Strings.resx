@@ -249,9 +249,6 @@
   <data name="MDF_TooManyRestrictions" xml:space="preserve">
     <value>More restrictions were provided than the requested schema ('{0}') supports.</value>
   </data>
-  <data name="MDF_InvalidRestrictionValue" xml:space="preserve">
-    <value>'{2}' is not a valid value for the '{1}' restriction of the '{0}' schema collection.</value>
-  </data>
   <data name="MDF_UndefinedCollection" xml:space="preserve">
     <value>The requested collection ({0}) is not defined.</value>
   </data>
@@ -260,15 +257,6 @@
   </data>
   <data name="MDF_UnsupportedVersion" xml:space="preserve">
     <value>The requested collection ({0}) is not supported by this version of the provider.</value>
-  </data>
-  <data name="MDF_MissingDataSourceInformationColumn" xml:space="preserve">
-    <value>One of the required DataSourceInformation tables columns is missing.</value>
-  </data>
-  <data name="MDF_IncorrectNumberOfDataSourceInformationRows" xml:space="preserve">
-    <value>The DataSourceInformation table must contain exactly one row.</value>
-  </data>
-  <data name="MDF_MissingRestrictionColumn" xml:space="preserve">
-    <value>One or more of the required columns of the restrictions collection is missing.</value>
   </data>
   <data name="MDF_MissingRestrictionRow" xml:space="preserve">
     <value>A restriction exists for which there is no matching row in the restrictions collection.</value>
@@ -287,12 +275,6 @@
   </data>
   <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
     <value>The collection '{0}' is missing from the metadata XML.</value>
-  </data>
-  <data name="MDF_InvalidXml" xml:space="preserve">
-    <value>The metadata XML is invalid.</value>
-  </data>
-  <data name="MDF_InvalidXmlMissingColumn" xml:space="preserve">
-    <value>The metadata XML is invalid. The {0} collection must contain a {1} column and it must be a string column.</value>
   </data>
   <data name="MDF_InvalidXmlInvalidValue" xml:space="preserve">
     <value>The metadata XML is invalid. The {1} column of the {0} collection must contain a non-empty string.</value>
@@ -335,30 +317,6 @@
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Connection Resiliency</value>
-  </data>
-  <data name="ForeignKeyConstraintDeleteRuleDescr" xml:space="preserve">
-    <value>For deletions, indicates what kind of cascading should take place across this relation.</value>
-  </data>
-  <data name="ForeignKeyConstraintUpdateRuleDescr" xml:space="preserve">
-    <value>For updates, indicates what kind of cascading should take place across this relation.</value>
-  </data>
-  <data name="ForeignKeyConstraintAcceptRejectRuleDescr" xml:space="preserve">
-    <value>For accept and reject changes, indicates what kind of cascading should take place across this relation.</value>
-  </data>
-  <data name="ForeignKeyConstraintChildColumnsDescr" xml:space="preserve">
-    <value>Indicates the child columns of this constraint.</value>
-  </data>
-  <data name="ForeignKeyConstraintParentColumnsDescr" xml:space="preserve">
-    <value>Indicates the parent columns of this constraint.</value>
-  </data>
-  <data name="ForeignKeyRelatedTableDescr" xml:space="preserve">
-    <value>Indicates the child table of this constraint.</value>
-  </data>
-  <data name="KeyConstraintColumnsDescr" xml:space="preserve">
-    <value>Indicates the columns of this constraint.</value>
-  </data>
-  <data name="KeyConstraintIsPrimaryKeyDescr" xml:space="preserve">
-    <value>Indicates if this constraint is a primary key.</value>
   </data>
   <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
     <value>DataSet doesn't support 'union' or 'list' as simpleType.</value>
@@ -483,17 +441,11 @@
   <data name="SqlConvert_ConvertFailed" xml:space="preserve">
     <value>Cannot convert object of type '{0}' to object of type '{1}'.</value>
   </data>
-  <data name="Load_ReadOnlyDataModified" xml:space="preserve">
-    <value>ReadOnly Data is Modified.</value>
-  </data>
   <data name="RbTree_InvalidState" xml:space="preserve">
     <value>DataTable internal index is corrupted: '{0}'.</value>
   </data>
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>Collection was modified; enumeration operation might not execute.</value>
-  </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
-    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Cannot remove column since it is built in to this dataSet.</value>
@@ -561,9 +513,6 @@
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
     <value>SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name</value>
   </data>
-  <data name="ODBC_ODBCCommandText" xml:space="preserve">
-    <value>OdbcCommandBuilder.DeriveParameters failed because the OdbcCommand.CommandText property value is an invalid multipart name</value>
-  </data>
   <data name="OLEDB_OLEDBCommandText" xml:space="preserve">
     <value>OleDbCommandBuilder.DeriveParameters failed because the OleDbCommandBuilder.CommandText property value is an invalid multipart name</value>
   </data>
@@ -572,9 +521,6 @@
   </data>
   <data name="ADP_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the {2} method.</value>
-  </data>
-  <data name="ODBC_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework Odbc Data Provider.</value>
   </data>
   <data name="OLEDB_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider.</value>
@@ -704,63 +650,6 @@
   </data>
   <data name="ADP_NonSeqByteAccess" xml:space="preserve">
     <value>Invalid {2} attempt at dataIndex '{0}'.  With CommandBehavior.SequentialAccess, you may only read from dataIndex '{1}' or greater.</value>
-  </data>
-  <data name="ODBC_GetSchemaRestrictionRequired" xml:space="preserve">
-    <value>"The ODBC managed provider requires that the TABLE_NAME restriction be specified and non-null for the GetSchema indexes collection.</value>
-  </data>
-  <data name="OdbcConnection_ConnectionStringTooLong" xml:space="preserve">
-    <value>Connection string exceeds maximum allowed length of {0}.</value>
-  </data>
-  <data name="Odbc_GetTypeMapping_UnknownType" xml:space="preserve">
-    <value>{0} - unable to map type.</value>
-  </data>
-  <data name="Odbc_UnknownSQLType" xml:space="preserve">
-    <value>Unknown SQL type - {0}.</value>
-  </data>
-  <data name="Odbc_UnknownURTType" xml:space="preserve">
-    <value>Unknown URT type - {0}.</value>
-  </data>
-  <data name="Odbc_NegativeArgument" xml:space="preserve">
-    <value>Invalid negative argument!</value>
-  </data>
-  <data name="Odbc_CantSetPropertyOnOpenConnection" xml:space="preserve">
-    <value>Can't set property on an open connection.</value>
-  </data>
-  <data name="Odbc_NoMappingForSqlTransactionLevel" xml:space="preserve">
-    <value>No valid mapping for a SQL_TRANSACTION '{0}' to a System.Data.IsolationLevel enumeration value.</value>
-  </data>
-  <data name="Odbc_CantEnableConnectionpooling" xml:space="preserve">
-    <value>{0} - unable to enable connection pooling...</value>
-  </data>
-  <data name="Odbc_CantAllocateEnvironmentHandle" xml:space="preserve">
-    <value>{0} - unable to allocate an environment handle.</value>
-  </data>
-  <data name="Odbc_FailedToGetDescriptorHandle" xml:space="preserve">
-    <value>{0} - unable to get descriptor handle.</value>
-  </data>
-  <data name="Odbc_NotInTransaction" xml:space="preserve">
-    <value>Not in a transaction</value>
-  </data>
-  <data name="Odbc_UnknownOdbcType" xml:space="preserve">
-    <value>Invalid OdbcType enumeration value={0}.</value>
-  </data>
-  <data name="Odbc_NullData" xml:space="preserve">
-    <value>Use IsDBNull when DBNull.Value data is expected.</value>
-  </data>
-  <data name="Odbc_ExceptionMessage" xml:space="preserve">
-    <value>{0} [{1}] {2}</value>
-  </data>
-  <data name="Odbc_ExceptionNoInfoMsg" xml:space="preserve">
-    <value>{0} - no error information available</value>
-  </data>
-  <data name="Odbc_ConnectionClosed" xml:space="preserve">
-    <value>The connection is closed.</value>
-  </data>
-  <data name="Odbc_OpenConnectionNoOwner" xml:space="preserve">
-    <value>An internal connection does not have an owner.</value>
-  </data>
-  <data name="Odbc_MDACWrongVersion" xml:space="preserve">
-    <value>The .NET Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
   </data>
   <data name="OleDb_MDACWrongVersion" xml:space="preserve">
     <value>The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
@@ -1626,24 +1515,6 @@
   <data name="DbConnectionString_Authentication" xml:space="preserve">
     <value>Specifies the method of authenticating with SQL Server.</value>
   </data>
-  <data name="OdbcConnection_ConnectionString" xml:space="preserve">
-    <value>Information used to connect to a Data Source.</value>
-  </data>
-  <data name="OdbcConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Current connection timeout value, not settable in the ConnectionString.</value>
-  </data>
-  <data name="OdbcConnection_Database" xml:space="preserve">
-    <value>Current data source catalog value, 'Database=X' in the connection string.</value>
-  </data>
-  <data name="OdbcConnection_DataSource" xml:space="preserve">
-    <value>Current data source, 'Server=X' in the connection string.</value>
-  </data>
-  <data name="OdbcConnection_Driver" xml:space="preserve">
-    <value>Current ODBC driver.</value>
-  </data>
-  <data name="OdbcConnection_ServerVersion" xml:space="preserve">
-    <value>Version of the product accessed by the ODBC Driver.</value>
-  </data>
   <data name="OleDbConnection_ConnectionString" xml:space="preserve">
     <value>Information used to connect to a Data Source.</value>
   </data>
@@ -1734,27 +1605,6 @@
   <data name="SqlCommand_NotificationAutoEnlist" xml:space="preserve">
     <value>Automatic enlistment in notifications used by Microsoft SQL Server.</value>
   </data>
-  <data name="OdbcCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>The DataAdapter for which to automatically generate OdbcCommands</value>
-  </data>
-  <data name="OdbcCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>The character used in a text command as the opening quote for quoting identifiers that contain special characters.</value>
-  </data>
-  <data name="OdbcCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>The character used in a text command as the closing quote for quoting identifiers that contain special characters.</value>
-  </data>
-  <data name="OleDbCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>The DataAdapter for which to automatically generate OleDbCommands</value>
-  </data>
-  <data name="OleDbCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>The decimal separator used in numeric literals.</value>
-  </data>
-  <data name="OleDbCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>The prefix string wrapped around sql objects</value>
-  </data>
-  <data name="OleDbCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>The suffix string wrapped around sql objects</value>
-  </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
     <value>The DataAdapter for which to automatically generate SqlCommands</value>
   </data>
@@ -1805,9 +1655,6 @@
   </data>
   <data name="SqlParameter_UnexpectedTypeNameForNonStruct" xml:space="preserve">
     <value>TypeName specified for parameter '{0}'.  TypeName must only be set for Structured parameters.</value>
-  </data>
-  <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
-    <value>SqlDbType.Structured type is only supported for multiple valued types.</value>
   </data>
   <data name="NullSchemaTableDataTypeNotSupported" xml:space="preserve">
     <value>DateType column for field '{0}' in schema table is null.  DataType must be non-null.</value>
@@ -2898,17 +2745,8 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
   </data>
-  <data name="net_auth_message_not_encrypted" xml:space="preserve">
-    <value>Protocol error: A received message contains a valid signature but it was not encrypted as required by the effective Protection Level.</value>
-  </data>
-  <data name="net_log_operation_failed_with_error" xml:space="preserve">
-    <value>{0} failed with error {1}.</value>
-  </data>
   <data name="net_MethodNotImplementedException" xml:space="preserve">
     <value>This method is not implemented by this class.</value>
-  </data>
-  <data name="net_securitypackagesupport" xml:space="preserve">
-    <value>The requested security package is not supported.</value>
   </data>
   <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
     <value>Incorrect physicalConnection type.</value>
@@ -2951,30 +2789,6 @@
   </data>
   <data name="LocalDBNotSupported" xml:space="preserve">
     <value>LocalDB is not supported on this platform.</value>
-  </data>
-  <data name="net_context_buffer_too_small" xml:space="preserve">
-    <value>Insufficient buffer space. Required: {0} Actual: {1}.</value>
-  </data>
-  <data name="net_gssapi_operation_failed" xml:space="preserve">
-    <value>GSSAPI operation failed with status: {0} (Minor status: {1}).</value>
-  </data>
-  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
-    <value>GSSAPI operation failed with error - {0} ({1}).</value>
-  </data>
-  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
-    <value>No support for channel binding on operating systems other than Windows.</value>
-  </data>
-  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
-    <value>Target name should be non empty if default credentials are passed.</value>
-  </data>
-  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
-    <value>Requested protection level is not supported with the GSSAPI implementation currently installed.</value>
-  </data>
-  <data name="net_nego_server_not_supported" xml:space="preserve">
-    <value>Server implementation is not supported.</value>
-  </data>
-  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
-    <value>NTLM authentication is not possible with default credentials on this platform.</value>
   </data>
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null.</value>
