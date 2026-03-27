@@ -85,9 +85,9 @@ steps:
           -t:BuildMds
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
+          -p:BuildSuffix=ci
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
