@@ -3104,7 +3104,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.JsonDocumentNotSupportedOnColumnType(metaData.column);
                 }
-                JsonDocument document = JsonDocument.Parse(data.Value as string);
+                JsonDocument document = JsonDocument.Parse(data.String);
                 return (T)(object)document;
             }
             else
