@@ -25,6 +25,11 @@ connection creation, causing severe throughput degradation under concurrent asyn
 - **Sub-issues remaining:** Transaction support (#3743, #3805), pool warmup, pool pruning, rate
   limiting, context-aware timeouts, tracing/metrics
 
+- **Switch status:** The `UseConnectionPoolV2` AppContext switch already exists to gate the new
+  pool, but setting it to `true` **throws `NotImplementedException`** — the `ChannelDbConnectionPool`
+  class is scaffolded but not functional. This confirms the pool v2 work is still early despite
+  several sub-issues being marked complete.
+
 ### [#601 — Async opening of connections in parallel is slow/blocking](https://github.com/dotnet/SqlClient/issues/601)
 
 - **Status:** Open (since 2020-06-12)
@@ -66,12 +71,24 @@ connection creation, causing severe throughput degradation under concurrent asyn
 
 - **Impact:** Spurious connection failures under load on Linux/managed SNI.
 
+- **Switch relevance:** The `MakeReadAsyncBlocking` switch forces `_syncOverAsync = true` in
+  `TryProcessDone`, which uses the same `ReadSniSyncOverAsync` path that fails here. Enabling
+  `MakeReadAsyncBlocking` would increase exposure to this class of failure by routing more reads
+  through the sync-over-async path.
+
 ---
 
 ## Category 2: Async Data Reading — Snapshot/Replay Overhead
 
 These issues relate to the TDS parser's async read mechanism, which snapshots and replays the entire
 packet chain on every async yield, causing exponential degradation with data size.
+
+> **Switch context:** There is already experimental code behind AppContext switches that addresses
+> the core snapshot/replay problem. Setting `UseCompatibilityProcessSni=false` enables a packet
+> multiplexer, and setting `UseCompatibilityAsyncBehaviour=false` enables continuation-based
+> snapshot replay (resume from where the read left off, instead of replaying from the start). Both
+> default to their legacy values and the new code paths are considered experimental. See
+> [appcontext-switches.md](appcontext-switches.md) for details.
 
 ### [#593 — Reading large data (binary, text) asynchronously is extremely slow](https://github.com/dotnet/SqlClient/issues/593)
 
@@ -90,6 +107,14 @@ packet chain on every async yield, causing exponential degradation with data siz
 
 - **Merged PRs:** #3377 (async string perf improvement), #3534 (async multi-packet fixes)
 
+- **Switch status:** The experimental continuation-based PLP read path (gated by
+  `UseCompatibilityProcessSni=false` + `UseCompatibilityAsyncBehaviour=false`) directly targets
+  this issue's root cause. Rather than replaying all previously received packets on each async
+  retry, the new path tracks a continuation offset and resumes mid-stream. This code exists today
+  in `TryReadPlpBytes` but is behind compat defaults. The issue's 250x slowdown for 10MB reads
+  should be dramatically reduced under the new path, since retry cost becomes O(1) per packet
+  instead of O(n) where n is packets already received.
+
 ### [#1562 — Huge performance problem with async](https://github.com/dotnet/SqlClient/issues/1562)
 
 - **Status:** Open (since 2022-03-28)
@@ -103,6 +128,11 @@ packet chain on every async yield, causing exponential degradation with data siz
 
 - **Community impact:** Users report "SqlClient is just broken for async", forcing workarounds like
   using sync in ASP.NET Identity.
+
+- **Switch relevance:** The `MakeReadAsyncBlocking` switch was likely introduced as a partial
+  mitigation for this class of issue — it forces sync behaviour in `TryProcessDone` to avoid the
+  snapshot/replay cost for DONE tokens. However, it trades async scalability for lower per-call
+  overhead, so it helps single-connection latency at the expense of concurrency.
 
 ### [#2408 — ReadAsync CancellationTokenSource performance problem](https://github.com/dotnet/SqlClient/issues/2408)
 
@@ -129,6 +159,13 @@ packet chain on every async yield, causing exponential degradation with data siz
   SNI's socket handling combined with MARS multiplexing overhead.
 
 - **Workaround:** Increase `ThreadPool.SetMinThreads` to match concurrent connection count.
+
+- **Switch relevance:** On Windows, users can set `UseManagedNetworkingOnWindows=true` to reproduce
+  this issue (confirming it's a managed SNI problem). Conversely, there is no switch to use native
+  SNI on Linux — the managed SNI is the only option. The `UseCompatibilityProcessSni` switch
+  controls the packet multiplexer which is related to MARS packet handling, but the multiplexer
+  is a higher-level construct (TDS packet reassembly) distinct from the MARS SMUX layer in
+  managed SNI.
 
 ### [#2418 — [Design change] Connection-level packet locking](https://github.com/dotnet/SqlClient/issues/2418)
 
@@ -184,6 +221,37 @@ packet chain on every async yield, causing exponential degradation with data siz
 - **Created:** 2026-01-28
 - **Summary:** During TVP string processing, `SetChars_FromReader` allocates a new `char[]` on every
   call. Proposal to use `ArrayPool<char>` instead.
+
+---
+
+## Cross-Cutting: AppContext Switch Implications
+
+The AppContext switch analysis (see [appcontext-switches.md](appcontext-switches.md)) reveals
+several findings that cut across the issue categories:
+
+1. **The snapshot/replay fix exists but is experimental.** Issues #593 and #1562 describe
+   the core async read performance problem. The continuation-based snapshot path behind
+   `UseCompatibilityProcessSni=false` + `UseCompatibilityAsyncBehaviour=false` is designed to
+   solve this, but both switches default to legacy mode. The new code paths have been merged
+   (PRs #2714, #3534) but are not enabled by default.
+
+2. **Switch dependencies create an all-or-nothing adoption model.** Because
+   `UseCompatibilityProcessSni=true` forcibly overrides `UseCompatibilityAsyncBehaviour` to `true`,
+   users cannot adopt the continuation-based reads without also adopting the packet multiplexer.
+   This raises the risk of the new path — it's a large behavioural change, not an incremental one.
+
+3. **The pool v2 gate exists but the implementation doesn't.** `UseConnectionPoolV2=true` throws
+   `NotImplementedException`. This means the pool redesign (#3356) is not yet testable even by
+   early adopters, despite multiple sub-PRs being merged.
+
+4. **`MakeReadAsyncBlocking` is a symptom, not a solution.** Its existence confirms that async
+   DONE token processing had regressions. It's a point fix that forces sync behaviour in one
+   specific method, trading scalability for stability. It does not address the underlying
+   snapshot/replay cost.
+
+5. **No switch exists for async connection open.** Issues #601 and #979 (serialized
+   `OpenAsync`, sync `SNIOpenSyncEx`) have no AppContext switch workaround. These require
+   architectural changes (async SNI open API, concurrent pool creation) that are not yet gated.
 
 ---
 
