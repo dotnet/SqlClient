@@ -4885,15 +4885,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Notification Error. Type={0}, Info={1}, Source={2}..
-        /// </summary>
-        internal static string SQLNotify_ErrorFormat {
-            get {
-                return ResourceManager.GetString("SQLNotify_ErrorFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to DBNull value for parameter &apos;{0}&apos; is not supported. Table-valued parameters cannot be DBNull..
         /// </summary>
         internal static string SqlParameter_DBNullNotSupportedForTVP {
@@ -4912,47 +4903,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Offset in variable length data types..
-        /// </summary>
-        internal static string SqlParameter_Offset {
-            get {
-                return ResourceManager.GetString("SqlParameter_Offset", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Name of the parameter, like &apos;@p1&apos;.
-        /// </summary>
-        internal static string SqlParameter_ParameterName {
-            get {
-                return ResourceManager.GetString("SqlParameter_ParameterName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null..
         /// </summary>
         internal static string SqlParameter_SourceColumnNullMapping {
             get {
                 return ResourceManager.GetString("SqlParameter_SourceColumnNullMapping", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The parameter native type..
-        /// </summary>
-        internal static string SqlParameter_SqlDbType {
-            get {
-                return ResourceManager.GetString("SqlParameter_SqlDbType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The server&apos;s name for the type..
-        /// </summary>
-        internal static string SqlParameter_TypeName {
-            get {
-                return ResourceManager.GetString("SqlParameter_TypeName", resourceCulture);
             }
         }
         
@@ -4971,33 +4926,6 @@ namespace System {
         internal static string SqlParameter_UnsupportedTVPOutputParameter {
             get {
                 return ResourceManager.GetString("SqlParameter_UnsupportedTVPOutputParameter", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to XmlSchemaCollectionDatabase.
-        /// </summary>
-        internal static string SqlParameter_XmlSchemaCollectionDatabase {
-            get {
-                return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionDatabase", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to XmlSchemaCollectionName.
-        /// </summary>
-        internal static string SqlParameter_XmlSchemaCollectionName {
-            get {
-                return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to XmlSchemaCollectionOwningSchema.
-        /// </summary>
-        internal static string SqlParameter_XmlSchemaCollectionOwningSchema {
-            get {
-                return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionOwningSchema", resourceCulture);
             }
         }
         
@@ -5137,42 +5065,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unexpected routing information received..
-        /// </summary>
-        internal static string SQLROR_UnexpectedRoutingInfo {
-            get {
-                return ResourceManager.GetString("SQLROR_UnexpectedRoutingInfo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Structured, multiple-valued types can only be used for parameters, and cannot be nested within another type..
-        /// </summary>
-        internal static string SQLTVP_TableTypeCanOnlyBeParameter {
-            get {
-                return ResourceManager.GetString("SQLTVP_TableTypeCanOnlyBeParameter", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The provider has failed to load the following assembly: {0}.
-        /// </summary>
-        internal static string SQLUDT_CantLoadAssembly {
-            get {
-                return ResourceManager.GetString("SQLUDT_CantLoadAssembly", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unable to get Type Info for {0},{1}.
-        /// </summary>
-        internal static string SQLUDT_InvalidDbId {
-            get {
-                return ResourceManager.GetString("SQLUDT_InvalidDbId", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
         /// </summary>
         internal static string SQLUDT_InvalidSize {
@@ -5191,38 +5083,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; is an invalid user defined type, reason: {1}..
-        /// </summary>
-        internal static string SqlUdt_InvalidUdtMessage {
-            get {
-                return ResourceManager.GetString("SqlUdt_InvalidUdtMessage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to UdtTypeName property must be set for UDT parameters..
         /// </summary>
         internal static string SQLUDT_InvalidUdtTypeName {
             get {
                 return ResourceManager.GetString("SQLUDT_InvalidUdtTypeName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to UDT parameters not permitted in the where clause unless part of the primary key..
-        /// </summary>
-        internal static string SQLUDT_InWhereClause {
-            get {
-                return ResourceManager.GetString("SQLUDT_InWhereClause", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to range: 0-8000.
-        /// </summary>
-        internal static string SQLUDT_MaxByteSizeValue {
-            get {
-                return ResourceManager.GetString("SQLUDT_MaxByteSizeValue", resourceCulture);
             }
         }
         
@@ -5245,209 +5110,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Native format can&apos;t be supported..
-        /// </summary>
-        internal static string SqlUdtReason_CannotSupportNative {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_CannotSupportNative", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to does not implement IBinarySerialize.
-        /// </summary>
-        internal static string SqlUdtReason_CannotSupportUserDefined {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_CannotSupportUserDefined", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Serialization without mapping is not yet supported..
-        /// </summary>
-        internal static string SqlUdtReason_MaplessNotYetSupported {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_MaplessNotYetSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to supports both in-memory and user-defined formats.
-        /// </summary>
-        internal static string SqlUdtReason_MultipleSerFormats {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_MultipleSerFormats", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Multiple valued assembly references must have a nonzero Assembly Id..
-        /// </summary>
-        internal static string SqlUdtReason_MultivaluedAssemblyId {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_MultivaluedAssemblyId", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The type of field &apos;{0}&apos; is marked as explicit layout which is not allowed in Native format.
-        /// </summary>
-        internal static string SqlUdtReason_NativeFormatExplicitLayoutNotAllowed {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NativeFormatExplicitLayoutNotAllowed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Native format does not support fields (directly or through another field) of type &apos;{0}&apos;.
-        /// </summary>
-        internal static string SqlUdtReason_NativeFormatNoFieldSupport {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NativeFormatNoFieldSupport", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Native UDT specifies a max byte size.
-        /// </summary>
-        internal static string SqlUdtReason_NativeUdtMaxByteSize {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NativeUdtMaxByteSize", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Native UDT not sequential layout due to type &apos;{0}&apos;.
-        /// </summary>
-        internal static string SqlUdtReason_NativeUdtNotSequentialLayout {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NativeUdtNotSequentialLayout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to field &apos;{0}&apos; is marked non-serialized.
-        /// </summary>
-        internal static string SqlUdtReason_NonSerializableField {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NonSerializableField", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to does not have a public constructor.
-        /// </summary>
-        internal static string SqlUdtReason_NoPublicConstructor {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NoPublicConstructor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to no public constructors.
-        /// </summary>
-        internal static string SqlUdtReason_NoPublicConstructors {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NoPublicConstructors", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to does not implement INullable.
-        /// </summary>
-        internal static string SqlUdtReason_NotNullable {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NotNullable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to not serializable.
-        /// </summary>
-        internal static string SqlUdtReason_NotSerializable {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NotSerializable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to no UDT attribute.
         /// </summary>
         internal static string SqlUdtReason_NoUdtAttribute {
             get {
                 return ResourceManager.GetString("SqlUdtReason_NoUdtAttribute", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;public static x Null { get; }&apos; method is missing.
-        /// </summary>
-        internal static string SqlUdtReason_NullPropertyMissing {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_NullPropertyMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;public static x Parse(System.Data.SqlTypes.SqlString)&apos; method is missing.
-        /// </summary>
-        internal static string SqlUdtReason_ParseMethodMissing {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_ParseMethodMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;public override string ToString()&apos; method is missing.
-        /// </summary>
-        internal static string SqlUdtReason_ToStringMethodMissing {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_ToStringMethodMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type is not public.
-        /// </summary>
-        internal static string SqlUdtReason_TypeNotPublic {
-            get {
-                return ResourceManager.GetString("SqlUdtReason_TypeNotPublic", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; is not a supported handle type..
-        /// </summary>
-        internal static string SSPIInvalidHandleType {
-            get {
-                return ResourceManager.GetString("SSPIInvalidHandleType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot get value because it is DBNull..
-        /// </summary>
-        internal static string StrongTyping_CannotAccessDBNull {
-            get {
-                return ResourceManager.GetString("StrongTyping_CannotAccessDBNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot remove column since it is built in to this dataSet..
-        /// </summary>
-        internal static string StrongTyping_CannotRemoveColumn {
-            get {
-                return ResourceManager.GetString("StrongTyping_CannotRemoveColumn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot remove relation since it is built in to this dataSet..
-        /// </summary>
-        internal static string StrongTyping_CannotRemoveRelation {
-            get {
-                return ResourceManager.GetString("StrongTyping_CannotRemoveRelation", resourceCulture);
             }
         }
         
@@ -5502,24 +5169,6 @@ namespace System {
         internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch {
             get {
                 return ResourceManager.GetString("TCE_BatchedUpdateColumnEncryptionSettingMismatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Failed to instantiate an enclave provider with type &apos;{1}&apos; for name &apos;{0}&apos;. Error message: {2} .
-        /// </summary>
-        internal static string TCE_CannotCreateSqlColumnEncryptionEnclaveProvider {
-            get {
-                return ResourceManager.GetString("TCE_CannotCreateSqlColumnEncryptionEnclaveProvider", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}.
-        /// </summary>
-        internal static string TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig {
-            get {
-                return ResourceManager.GetString("TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig", resourceCulture);
             }
         }
         
@@ -5799,15 +5448,6 @@ namespace System {
         internal static string TCE_EnclaveProviderNotFound {
             get {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section..
-        /// </summary>
-        internal static string TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery {
-            get {
-                return ResourceManager.GetString("TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery", resourceCulture);
             }
         }
         
@@ -6559,15 +6199,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty..
-        /// </summary>
-        internal static string TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty {
-            get {
-                return ResourceManager.GetString("TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Column encryption setting for the command. Overrides the connection level default..
         /// </summary>
         internal static string TCE_SqlCommand_ColumnEncryptionSetting {
@@ -6604,29 +6235,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Forces parameter to be encrypted before sending sensitive data to server. .
-        /// </summary>
-        internal static string TCE_SqlParameter_ForceColumnEncryption {
-            get {
-                return ResourceManager.GetString("TCE_SqlParameter_ForceColumnEncryption", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Retrieving encrypted column &apos;{0}&apos; as a {1} is not supported..
         /// </summary>
         internal static string TCE_StreamNotSupportOnEncryptedColumn {
             get {
                 return ResourceManager.GetString("TCE_StreamNotSupportOnEncryptedColumn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unable to establish secure channel. Error Message: {0}.
-        /// </summary>
-        internal static string TCE_UnableToEstablishSecureChannel {
-            get {
-                return ResourceManager.GetString("TCE_UnableToEstablishSecureChannel", resourceCulture);
             }
         }
         
@@ -6712,15 +6325,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot encrypt. Encrypting resulted in {0} bytes of ciphertext which exceeds the maximum allowed limit of {1} bytes. The specified plaintext value is likely too large (plaintext size is: {2} bytes)..
-        /// </summary>
-        internal static string TCE_VeryLargeCiphertext {
-            get {
-                return ResourceManager.GetString("TCE_VeryLargeCiphertext", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Failed to check if the enclave is running in the production mode. Contact Customer Support Services..
         /// </summary>
         internal static string VerifyEnclaveDebuggable {
@@ -6762,330 +6366,6 @@ namespace System {
         internal static string VerifyHealthCertificateChainFormat {
             get {
                 return ResourceManager.GetString("VerifyHealthCertificateChainFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The value of attribute &apos;{0}&apos; should be &apos;{1}&apos; or &apos;{2}&apos;..
-        /// </summary>
-        internal static string Xml_AttributeValues {
-            get {
-                return ResourceManager.GetString("Xml_AttributeValues", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot convert &apos;{0}&apos; to type &apos;{1}&apos;..
-        /// </summary>
-        internal static string Xml_CannotConvert {
-            get {
-                return ResourceManager.GetString("Xml_CannotConvert", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported..
-        /// </summary>
-        internal static string Xml_CanNotDeserializeObjectType {
-            get {
-                return ResourceManager.GetString("Xml_CanNotDeserializeObjectType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataSet cannot instantiate an abstract ComplexType for the node {0}..
-        /// </summary>
-        internal static string Xml_CannotInstantiateAbstract {
-            get {
-                return ResourceManager.GetString("Xml_CannotInstantiateAbstract", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataSet doesn&apos;t allow the circular reference in the ComplexType named &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_CircularComplexType {
-            get {
-                return ResourceManager.GetString("Xml_CircularComplexType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Column name &apos;{0}&apos; is defined for different mapping types..
-        /// </summary>
-        internal static string Xml_ColumnConflict {
-            get {
-                return ResourceManager.GetString("Xml_ColumnConflict", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataTable does not support schema inference from Xml..
-        /// </summary>
-        internal static string Xml_DataTableInferenceNotSupported {
-            get {
-                return ResourceManager.GetString("Xml_DataTableInferenceNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Data type not defined..
-        /// </summary>
-        internal static string Xml_DatatypeNotDefined {
-            get {
-                return ResourceManager.GetString("Xml_DatatypeNotDefined", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The constraint name {0} is already used in the schema..
-        /// </summary>
-        internal static string Xml_DuplicateConstraint {
-            get {
-                return ResourceManager.GetString("Xml_DuplicateConstraint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable..
-        /// </summary>
-        internal static string Xml_DynamicWithoutXmlSerializable {
-            get {
-                return ResourceManager.GetString("Xml_DynamicWithoutXmlSerializable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot find ElementType name=&apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_ElementTypeNotFound {
-            get {
-                return ResourceManager.GetString("Xml_ElementTypeNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly..
-        /// </summary>
-        internal static string Xml_FoundEntity {
-            get {
-                return ResourceManager.GetString("Xml_FoundEntity", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid XPath selection inside field node. Cannot find: {0}..
-        /// </summary>
-        internal static string Xml_InvalidField {
-            get {
-                return ResourceManager.GetString("Xml_InvalidField", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid &apos;Key&apos; node inside constraint named: {0}..
-        /// </summary>
-        internal static string Xml_InvalidKey {
-            get {
-                return ResourceManager.GetString("Xml_InvalidKey", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Prefix &apos;{0}&apos; is not valid, because it contains special characters..
-        /// </summary>
-        internal static string Xml_InvalidPrefix {
-            get {
-                return ResourceManager.GetString("Xml_InvalidPrefix", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid XPath selection inside selector node: {0}..
-        /// </summary>
-        internal static string Xml_InvalidSelector {
-            get {
-                return ResourceManager.GetString("Xml_InvalidSelector", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to IsDataSet attribute is missing in input Schema..
-        /// </summary>
-        internal static string Xml_IsDataSetAttributeMissingInSchema {
-            get {
-                return ResourceManager.GetString("Xml_IsDataSetAttributeMissingInSchema", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Duplicated declaration &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_MergeDuplicateDeclaration {
-            get {
-                return ResourceManager.GetString("Xml_MergeDuplicateDeclaration", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid Relation definition: different length keys..
-        /// </summary>
-        internal static string Xml_MismatchKeyLength {
-            get {
-                return ResourceManager.GetString("Xml_MismatchKeyLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid {0} syntax: missing required &apos;{1}&apos; attribute..
-        /// </summary>
-        internal static string Xml_MissingAttribute {
-            get {
-                return ResourceManager.GetString("Xml_MissingAttribute", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing &apos;{0}&apos; part in &apos;{1}&apos; constraint named &apos;{2}&apos;..
-        /// </summary>
-        internal static string Xml_MissingRefer {
-            get {
-                return ResourceManager.GetString("Xml_MissingRefer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot load diffGram. The &apos;sql&apos; node is missing..
-        /// </summary>
-        internal static string Xml_MissingSQL {
-            get {
-                return ResourceManager.GetString("Xml_MissingSQL", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot load diffGram. Table &apos;{0}&apos; is missing in the destination dataset..
-        /// </summary>
-        internal static string Xml_MissingTable {
-            get {
-                return ResourceManager.GetString("Xml_MissingTable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot proceed with serializing DataTable &apos;{0}&apos;. It contains a DataRow which has multiple parent rows on the same Foreign Key..
-        /// </summary>
-        internal static string Xml_MultipleParentRows {
-            get {
-                return ResourceManager.GetString("Xml_MultipleParentRows", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned..
-        /// </summary>
-        internal static string Xml_MultipleTargetConverterEmpty {
-            get {
-                return ResourceManager.GetString("Xml_MultipleTargetConverterEmpty", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details..
-        /// </summary>
-        internal static string Xml_MultipleTargetConverterError {
-            get {
-                return ResourceManager.GetString("Xml_MultipleTargetConverterError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Circular reference in self-nested table &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_NestedCircular {
-            get {
-                return ResourceManager.GetString("Xml_NestedCircular", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type &apos;{0}&apos; does not implement IXmlSerializable interface therefore can not proceed with serialization..
-        /// </summary>
-        internal static string Xml_PolymorphismNotSupported {
-            get {
-                return ResourceManager.GetString("Xml_PolymorphismNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Child table key is missing in relation &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_RelationChildKeyMissing {
-            get {
-                return ResourceManager.GetString("Xml_RelationChildKeyMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Child table name is missing in relation &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_RelationChildNameMissing {
-            get {
-                return ResourceManager.GetString("Xml_RelationChildNameMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parent table name is missing in relation &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_RelationParentNameMissing {
-            get {
-                return ResourceManager.GetString("Xml_RelationParentNameMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parent table key is missing in relation &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_RelationTableKeyMissing {
-            get {
-                return ResourceManager.GetString("Xml_RelationTableKeyMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DataSet doesn&apos;t support &apos;union&apos; or &apos;list&apos; as simpleType..
-        /// </summary>
-        internal static string Xml_SimpleTypeNotSupported {
-            get {
-                return ResourceManager.GetString("Xml_SimpleTypeNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot determine the DataSet Element. IsDataSet attribute exist more than once..
-        /// </summary>
-        internal static string Xml_TooManyIsDataSetAttributeInSchema {
-            get {
-                return ResourceManager.GetString("Xml_TooManyIsDataSetAttributeInSchema", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Undefined data type: &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_UndefinedDatatype {
-            get {
-                return ResourceManager.GetString("Xml_UndefinedDatatype", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Value &apos;{1}&apos; is invalid for attribute &apos;{0}&apos;..
-        /// </summary>
-        internal static string Xml_ValueOutOfRange {
-            get {
-                return ResourceManager.GetString("Xml_ValueOutOfRange", resourceCulture);
             }
         }
     }

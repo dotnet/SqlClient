@@ -318,128 +318,11 @@
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Connection Resiliency</value>
   </data>
-  <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
-    <value>DataSet doesn't support 'union' or 'list' as simpleType.</value>
-  </data>
-  <data name="Xml_MissingAttribute" xml:space="preserve">
-    <value>Invalid {0} syntax: missing required '{1}' attribute.</value>
-  </data>
-  <data name="Xml_ValueOutOfRange" xml:space="preserve">
-    <value>Value '{1}' is invalid for attribute '{0}'.</value>
-  </data>
-  <data name="Xml_AttributeValues" xml:space="preserve">
-    <value>The value of attribute '{0}' should be '{1}' or '{2}'.</value>
-  </data>
-  <data name="Xml_ElementTypeNotFound" xml:space="preserve">
-    <value>Cannot find ElementType name='{0}'.</value>
-  </data>
-  <data name="Xml_RelationParentNameMissing" xml:space="preserve">
-    <value>Parent table name is missing in relation '{0}'.</value>
-  </data>
-  <data name="Xml_RelationChildNameMissing" xml:space="preserve">
-    <value>Child table name is missing in relation '{0}'.</value>
-  </data>
-  <data name="Xml_RelationTableKeyMissing" xml:space="preserve">
-    <value>Parent table key is missing in relation '{0}'.</value>
-  </data>
-  <data name="Xml_RelationChildKeyMissing" xml:space="preserve">
-    <value>Child table key is missing in relation '{0}'.</value>
-  </data>
-  <data name="Xml_UndefinedDatatype" xml:space="preserve">
-    <value>Undefined data type: '{0}'.</value>
-  </data>
-  <data name="Xml_DatatypeNotDefined" xml:space="preserve">
-    <value>Data type not defined.</value>
-  </data>
-  <data name="Xml_InvalidField" xml:space="preserve">
-    <value>Invalid XPath selection inside field node. Cannot find: {0}.</value>
-  </data>
-  <data name="Xml_InvalidSelector" xml:space="preserve">
-    <value>Invalid XPath selection inside selector node: {0}.</value>
-  </data>
-  <data name="Xml_InvalidKey" xml:space="preserve">
-    <value>Invalid 'Key' node inside constraint named: {0}.</value>
-  </data>
-  <data name="Xml_DuplicateConstraint" xml:space="preserve">
-    <value>The constraint name {0} is already used in the schema.</value>
-  </data>
-  <data name="Xml_CannotConvert" xml:space="preserve">
-    <value>Cannot convert '{0}' to type '{1}'.</value>
-  </data>
-  <data name="Xml_MissingRefer" xml:space="preserve">
-    <value>Missing '{0}' part in '{1}' constraint named '{2}'.</value>
-  </data>
-  <data name="Xml_MismatchKeyLength" xml:space="preserve">
-    <value>Invalid Relation definition: different length keys.</value>
-  </data>
-  <data name="Xml_CircularComplexType" xml:space="preserve">
-    <value>DataSet doesn't allow the circular reference in the ComplexType named '{0}'.</value>
-  </data>
-  <data name="Xml_CannotInstantiateAbstract" xml:space="preserve">
-    <value>DataSet cannot instantiate an abstract ComplexType for the node {0}.</value>
-  </data>
-  <data name="Xml_MultipleTargetConverterError" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details.</value>
-  </data>
-  <data name="Xml_MultipleTargetConverterEmpty" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned.</value>
-  </data>
-  <data name="Xml_MergeDuplicateDeclaration" xml:space="preserve">
-    <value>Duplicated declaration '{0}'.</value>
-  </data>
-  <data name="Xml_MissingTable" xml:space="preserve">
-    <value>Cannot load diffGram. Table '{0}' is missing in the destination dataset.</value>
-  </data>
-  <data name="Xml_MissingSQL" xml:space="preserve">
-    <value>Cannot load diffGram. The 'sql' node is missing.</value>
-  </data>
-  <data name="Xml_ColumnConflict" xml:space="preserve">
-    <value>Column name '{0}' is defined for different mapping types.</value>
-  </data>
-  <data name="Xml_InvalidPrefix" xml:space="preserve">
-    <value>Prefix '{0}' is not valid, because it contains special characters.</value>
-  </data>
-  <data name="Xml_NestedCircular" xml:space="preserve">
-    <value>Circular reference in self-nested table '{0}'.</value>
-  </data>
-  <data name="Xml_FoundEntity" xml:space="preserve">
-    <value>DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly.</value>
-  </data>
-  <data name="Xml_PolymorphismNotSupported" xml:space="preserve">
-    <value>Type '{0}' does not implement IXmlSerializable interface therefore can not proceed with serialization.</value>
-  </data>
-  <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported.</value>
-  </data>
-  <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
-    <value>DataTable does not support schema inference from Xml.</value>
-  </data>
-  <data name="Xml_MultipleParentRows" xml:space="preserve">
-    <value>Cannot proceed with serializing DataTable '{0}'. It contains a DataRow which has multiple parent rows on the same Foreign Key.</value>
-  </data>
-  <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
-    <value>IsDataSet attribute is missing in input Schema.</value>
-  </data>
-  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
-    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
-  </data>
-  <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable.</value>
-  </data>
   <data name="Data_InvalidOffsetLength" xml:space="preserve">
     <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
   <data name="SqlConvert_ConvertFailed" xml:space="preserve">
     <value>Cannot convert object of type '{0}' to object of type '{1}'.</value>
-  </data>
-  <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
-    <value>Cannot remove column since it is built in to this dataSet.</value>
-  </data>
-  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
-    <value>Cannot remove relation since it is built in to this dataSet.</value>
-  </data>
-  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
   </data>
   <data name="ADP_SingleValuedProperty" xml:space="preserve">
     <value>The only acceptable value for the property '{0}' is '{1}'.</value>
@@ -1212,27 +1095,6 @@
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
     <value>The DataAdapter for which to automatically generate SqlCommands</value>
   </data>
-  <data name="SqlParameter_ParameterName" xml:space="preserve">
-    <value>Name of the parameter, like '@p1'</value>
-  </data>
-  <data name="SqlParameter_SqlDbType" xml:space="preserve">
-    <value>The parameter native type.</value>
-  </data>
-  <data name="SqlParameter_TypeName" xml:space="preserve">
-    <value>The server's name for the type.</value>
-  </data>
-  <data name="SqlParameter_Offset" xml:space="preserve">
-    <value>Offset in variable length data types.</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionDatabase" xml:space="preserve">
-    <value>XmlSchemaCollectionDatabase</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionOwningSchema" xml:space="preserve">
-    <value>XmlSchemaCollectionOwningSchema</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionName" xml:space="preserve">
-    <value>XmlSchemaCollectionName</value>
-  </data>
   <data name="SqlParameter_UnsupportedTVPOutputParameter" xml:space="preserve">
     <value>ParameterDirection '{0}' specified for parameter '{1}' is not supported. Table-valued parameters only support ParameterDirection.Input.</value>
   </data>
@@ -1257,17 +1119,8 @@
   <data name="SQL_EnumeratedRecordFieldCountChanged" xml:space="preserve">
     <value>Number of fields in record '{0}' does not match the number in the original record.</value>
   </data>
-  <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
-    <value>range: 0-8000</value>
-  </data>
   <data name="SQLUDT_Unexpected" xml:space="preserve">
     <value>unexpected error encountered in SqlClient data provider. {0}</value>
-  </data>
-  <data name="SQLUDT_InvalidDbId" xml:space="preserve">
-    <value>Unable to get Type Info for {0},{1}</value>
-  </data>
-  <data name="SQLUDT_CantLoadAssembly" xml:space="preserve">
-    <value>The provider has failed to load the following assembly: {0}</value>
   </data>
   <data name="SQLUDT_InvalidUdtTypeName" xml:space="preserve">
     <value>UdtTypeName property must be set for UDT parameters.</value>
@@ -1278,71 +1131,8 @@
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
     <value>Specified type is not registered on the target server.{0}.</value>
   </data>
-  <data name="SQLUDT_InWhereClause" xml:space="preserve">
-    <value>UDT parameters not permitted in the where clause unless part of the primary key.</value>
-  </data>
-  <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
-    <value>'{0}' is an invalid user defined type, reason: {1}.</value>
-  </data>
-  <data name="SqlUdtReason_MultipleSerFormats" xml:space="preserve">
-    <value>supports both in-memory and user-defined formats</value>
-  </data>
-  <data name="SqlUdtReason_CannotSupportNative" xml:space="preserve">
-    <value>Native format can't be supported.</value>
-  </data>
-  <data name="SqlUdtReason_CannotSupportUserDefined" xml:space="preserve">
-    <value>does not implement IBinarySerialize</value>
-  </data>
-  <data name="SqlUdtReason_NotSerializable" xml:space="preserve">
-    <value>not serializable</value>
-  </data>
-  <data name="SqlUdtReason_NoPublicConstructors" xml:space="preserve">
-    <value>no public constructors</value>
-  </data>
-  <data name="SqlUdtReason_NotNullable" xml:space="preserve">
-    <value>does not implement INullable</value>
-  </data>
-  <data name="SqlUdtReason_NoPublicConstructor" xml:space="preserve">
-    <value>does not have a public constructor</value>
-  </data>
   <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
     <value>no UDT attribute</value>
-  </data>
-  <data name="SqlUdtReason_MaplessNotYetSupported" xml:space="preserve">
-    <value>Serialization without mapping is not yet supported.</value>
-  </data>
-  <data name="SqlUdtReason_ParseMethodMissing" xml:space="preserve">
-    <value>'public static x Parse(System.Data.SqlTypes.SqlString)' method is missing</value>
-  </data>
-  <data name="SqlUdtReason_ToStringMethodMissing" xml:space="preserve">
-    <value>'public override string ToString()' method is missing</value>
-  </data>
-  <data name="SqlUdtReason_NullPropertyMissing" xml:space="preserve">
-    <value>'public static x Null { get; }' method is missing</value>
-  </data>
-  <data name="SqlUdtReason_NativeFormatNoFieldSupport" xml:space="preserve">
-    <value>Native format does not support fields (directly or through another field) of type '{0}'</value>
-  </data>
-  <data name="SqlUdtReason_TypeNotPublic" xml:space="preserve">
-    <value>Type is not public</value>
-  </data>
-  <data name="SqlUdtReason_NativeUdtNotSequentialLayout" xml:space="preserve">
-    <value>Native UDT not sequential layout due to type '{0}'</value>
-  </data>
-  <data name="SqlUdtReason_NativeUdtMaxByteSize" xml:space="preserve">
-    <value>Native UDT specifies a max byte size</value>
-  </data>
-  <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
-    <value>field '{0}' is marked non-serialized</value>
-  </data>
-  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
-    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
-  </data>
-  <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
-    <value>Multiple valued assembly references must have a nonzero Assembly Id.</value>
-  </data>
-  <data name="SQLTVP_TableTypeCanOnlyBeParameter" xml:space="preserve">
-    <value>Structured, multiple-valued types can only be used for parameters, and cannot be nested within another type.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
     <value>The path name is not valid.</value>
@@ -1397,9 +1187,6 @@
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
     <value>Timeout specified is invalid. Timeout cannot be &lt; 0.</value>
-  </data>
-  <data name="SQLNotify_ErrorFormat" xml:space="preserve">
-    <value>Notification Error. Type={0}, Info={1}, Source={2}.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
     <value>The dbType {0} is invalid for this constructor.</value>
@@ -1869,9 +1656,6 @@
   <data name="TCE_NullPlainText" xml:space="preserve">
     <value>Internal error. Plaintext value cannot be null.</value>
   </data>
-  <data name="TCE_VeryLargeCiphertext" xml:space="preserve">
-    <value>Cannot encrypt. Encrypting resulted in {0} bytes of ciphertext which exceeds the maximum allowed limit of {1} bytes. The specified plaintext value is likely too large (plaintext size is: {2} bytes).</value>
-  </data>
   <data name="TCE_NullCipherText" xml:space="preserve">
     <value>Internal error. Ciphertext value cannot be null.</value>
   </data>
@@ -1989,9 +1773,6 @@
   <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
     <value>Attestation information was not returned by SQL Server. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
   </data>
-  <data name="TCE_UnableToEstablishSecureChannel" xml:space="preserve">
-    <value>Unable to establish secure channel. Error Message: {0}</value>
-  </data>
   <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
     <value>Internal Error. Null argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be null.</value>
   </data>
@@ -2007,15 +1788,6 @@
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
     <value>Specifies an endpoint of an enclave attestation service, which will be used to verify whether the enclave, configured in the SQL Server instance for computations on database columns encrypted using Always Encrypted, is valid and secure.</value>
   </data>
-  <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}</value>
-  </data>
-  <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
-    <value>Failed to instantiate an enclave provider with type '{1}' for name '{0}'. Error message: {2} </value>
-  </data>
-  <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
-    <value>Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty.</value>
-  </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
     <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
   </data>
@@ -2024,9 +1796,6 @@
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations.</value>
-  </data>
-  <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string. </value>
@@ -2085,9 +1854,6 @@
   <data name="TCE_DbConnectionString_ColumnEncryptionSetting" xml:space="preserve">
     <value>Default column encryption setting for all the commands on the connection.</value>
   </data>
-  <data name="TCE_SqlParameter_ForceColumnEncryption" xml:space="preserve">
-    <value>Forces parameter to be encrypted before sending sensitive data to server. </value>
-  </data>
   <data name="TCE_SqlConnection_TrustedColumnMasterKeyPaths" xml:space="preserve">
     <value>Dictionary object containing SQL Server names and their trusted column master key paths.</value>
   </data>
@@ -2096,9 +1862,6 @@
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Connecting to a mirrored SQL Server instance using the ApplicationIntent ReadOnly connection option is not supported.</value>
-  </data>
-  <data name="SQLROR_UnexpectedRoutingInfo" xml:space="preserve">
-    <value>Unexpected routing information received.</value>
   </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Invalid routing information received.</value>
@@ -2348,9 +2111,6 @@
   </data>
   <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
     <value>The currently loaded System.Transactions.dll does not support Global Transactions.</value>
-  </data>
-  <data name="SSPIInvalidHandleType" xml:space="preserve">
-    <value>'{0}' is not a supported handle type.</value>
   </data>
   <data name="SqlFileStream_NotSupported" xml:space="preserve">
     <value>SqlFileStream is not supported on this platform.</value>
