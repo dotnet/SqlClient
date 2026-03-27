@@ -1258,87 +1258,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Indicates the position of the catalog name in a qualified table name in a text command..
-        /// </summary>
-        internal static string DbCommandBuilder_CatalogLocation {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_CatalogLocation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The character that separates the catalog name from the rest of the identifier in a text command..
-        /// </summary>
-        internal static string DbCommandBuilder_CatalogSeparator {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_CatalogSeparator", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to How the where clause is auto-generated for the Update and Delete commands when not specified by the user..
-        /// </summary>
-        internal static string DbCommandBuilder_ConflictOption {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_ConflictOption", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The DataAdapter for which to automatically generate Commands..
-        /// </summary>
-        internal static string DbCommandBuilder_DataAdapter {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_DataAdapter", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The prefix string wrapped around sql objects..
-        /// </summary>
-        internal static string DbCommandBuilder_QuotePrefix {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_QuotePrefix", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The suffix string wrapped around sql objects..
-        /// </summary>
-        internal static string DbCommandBuilder_QuoteSuffix {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_QuoteSuffix", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Use schema from DataTable or the SelectCommand..
-        /// </summary>
-        internal static string DbCommandBuilder_SchemaLocation {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_SchemaLocation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The character that separates the schema name from the rest of the identifier in a text command..
-        /// </summary>
-        internal static string DbCommandBuilder_SchemaSeparator {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_SchemaSeparator", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to How the set clause is auto-generated for the Update command when not specified by the user..
-        /// </summary>
-        internal static string DbCommandBuilder_SetAllValues {
-            get {
-                return ResourceManager.GetString("DbCommandBuilder_SetAllValues", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Event triggered when messages arrive from the DataSource..
         /// </summary>
         internal static string DbConnection_InfoMessage {
@@ -1353,24 +1272,6 @@ namespace System {
         internal static string DbConnection_State {
             get {
                 return ResourceManager.GetString("DbConnection_State", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Event triggered when the connection changes state..
-        /// </summary>
-        internal static string DbConnection_StateChange {
-            get {
-                return ResourceManager.GetString("DbConnection_StateChange", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to When true, indicates that managed connection pooling should be used..
-        /// </summary>
-        internal static string DbConnectionString_AdoNetPooler {
-            get {
-                return ResourceManager.GetString("DbConnectionString_AdoNetPooler", resourceCulture);
             }
         }
         
@@ -1393,15 +1294,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
-        /// </summary>
-        internal static string DbConnectionString_AsynchronousProcessing {
-            get {
-                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {
@@ -1420,29 +1312,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Specified client certificate for authenticating with SQL Server.  .
-        /// </summary>
-        internal static string DbConnectionString_Certificate {
-            get {
-                return ResourceManager.GetString("DbConnectionString_Certificate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to When true, indicates the connection state is reset when removed from the pool..
         /// </summary>
         internal static string DbConnectionString_ConnectionReset {
             get {
                 return ResourceManager.GetString("DbConnectionString_ConnectionReset", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The connection string used to connect to the Data Source..
-        /// </summary>
-        internal static string DbConnectionString_ConnectionString {
-            get {
-                return ResourceManager.GetString("DbConnectionString_ConnectionString", resourceCulture);
             }
         }
         
@@ -1474,15 +1348,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to When true, indicates the connection should be from the Sql Server context.  Available only when running in the Sql Server process..
-        /// </summary>
-        internal static string DbConnectionString_ContextConnection {
-            get {
-                return ResourceManager.GetString("DbConnectionString_ContextConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The SQL Server Language record name..
         /// </summary>
         internal static string DbConnectionString_CurrentLanguage {
@@ -1497,24 +1362,6 @@ namespace System {
         internal static string DbConnectionString_DataSource {
             get {
                 return ResourceManager.GetString("DbConnectionString_DataSource", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The name of the ODBC Driver to use when connecting to the Data Source..
-        /// </summary>
-        internal static string DbConnectionString_Driver {
-            get {
-                return ResourceManager.GetString("DbConnectionString_Driver", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The DSN to use when connecting to the Data Source..
-        /// </summary>
-        internal static string DbConnectionString_DSN {
-            get {
-                return ResourceManager.GetString("DbConnectionString_DSN", resourceCulture);
             }
         }
         
@@ -1551,15 +1398,6 @@ namespace System {
         internal static string DbConnectionString_FailoverPartnerSPN {
             get {
                 return ResourceManager.GetString("DbConnectionString_FailoverPartnerSPN", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The UDL file to use when connecting to the Data Source..
-        /// </summary>
-        internal static string DbConnectionString_FileName {
-            get {
-                return ResourceManager.GetString("DbConnectionString_FileName", resourceCulture);
             }
         }
         
@@ -1645,15 +1483,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Specifies which OLE DB Services to enable or disable with the OleDb Provider..
-        /// </summary>
-        internal static string DbConnectionString_OleDbServices {
-            get {
-                return ResourceManager.GetString("DbConnectionString_OleDbServices", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Size in bytes of the network packets used to communicate with an instance of SQL Server..
         /// </summary>
         internal static string DbConnectionString_PacketSize {
@@ -1695,15 +1524,6 @@ namespace System {
         internal static string DbConnectionString_Pooling {
             get {
                 return ResourceManager.GetString("DbConnectionString_Pooling", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The name of the OLE DB Provider to use when connecting to the Data Source..
-        /// </summary>
-        internal static string DbConnectionString_Provider {
-            get {
-                return ResourceManager.GetString("DbConnectionString_Provider", resourceCulture);
             }
         }
         
@@ -1843,209 +1663,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Number of rows to batch together before executing against the data source..
-        /// </summary>
-        internal static string DbDataAdapter_UpdateBatchSize {
-            get {
-                return ResourceManager.GetString("DbDataAdapter_UpdateBatchSize", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Used during Update for modified rows in DataSet..
         /// </summary>
         internal static string DbDataAdapter_UpdateCommand {
             get {
                 return ResourceManager.GetString("DbDataAdapter_UpdateCommand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Only necessary to set for decimal and numeric parameters when using with Prepare, FillSchema and CommandBuilder scenarios..
-        /// </summary>
-        internal static string DbDataParameter_Precision {
-            get {
-                return ResourceManager.GetString("DbDataParameter_Precision", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Only necessary to set for decimal and numeric parameters when using with Prepare, FillSchema and CommandBuilder scenarios..
-        /// </summary>
-        internal static string DbDataParameter_Scale {
-            get {
-                return ResourceManager.GetString("DbDataParameter_Scale", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The parameter generic type..
-        /// </summary>
-        internal static string DbParameter_DbType {
-            get {
-                return ResourceManager.GetString("DbParameter_DbType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Input, output, or bidirectional parameter..
-        /// </summary>
-        internal static string DbParameter_Direction {
-            get {
-                return ResourceManager.GetString("DbParameter_Direction", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to a design-time property used for strongly typed code-generation..
-        /// </summary>
-        internal static string DbParameter_IsNullable {
-            get {
-                return ResourceManager.GetString("DbParameter_IsNullable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Offset in variable length data types..
-        /// </summary>
-        internal static string DbParameter_Offset {
-            get {
-                return ResourceManager.GetString("DbParameter_Offset", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Name of the parameter..
-        /// </summary>
-        internal static string DbParameter_ParameterName {
-            get {
-                return ResourceManager.GetString("DbParameter_ParameterName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Size of variable length data types (string &amp; arrays)..
-        /// </summary>
-        internal static string DbParameter_Size {
-            get {
-                return ResourceManager.GetString("DbParameter_Size", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to When used by a DataAdapter.Update, the source column name that is used to find the DataSetColumn name in the ColumnMappings. This is to copy a value between the parameter and a data row..
-        /// </summary>
-        internal static string DbParameter_SourceColumn {
-            get {
-                return ResourceManager.GetString("DbParameter_SourceColumn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null..
-        /// </summary>
-        internal static string DbParameter_SourceColumnNullMapping {
-            get {
-                return ResourceManager.GetString("DbParameter_SourceColumnNullMapping", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to When used by a DataAdapter.Update (UpdateCommand only), the version of the DataRow value that is used to update the data source..
-        /// </summary>
-        internal static string DbParameter_SourceVersion {
-            get {
-                return ResourceManager.GetString("DbParameter_SourceVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Value of the parameter..
-        /// </summary>
-        internal static string DbParameter_Value {
-            get {
-                return ResourceManager.GetString("DbParameter_Value", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to How are the Insert/Update/DeleteCommands generated when not set by the user..
-        /// </summary>
-        internal static string DbTable_ConflictDetection {
-            get {
-                return ResourceManager.GetString("DbTable_ConflictDetection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Connection used if the the Select/Insert/Update/DeleteCommands do not already have a connection..
-        /// </summary>
-        internal static string DbTable_Connection {
-            get {
-                return ResourceManager.GetString("DbTable_Connection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Used during Update for deleted rows in the DataTable..
-        /// </summary>
-        internal static string DbTable_DeleteCommand {
-            get {
-                return ResourceManager.GetString("DbTable_DeleteCommand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Used during Update for new rows in the DataTable..
-        /// </summary>
-        internal static string DbTable_InsertCommand {
-            get {
-                return ResourceManager.GetString("DbTable_InsertCommand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Should Fill return provider specific values or common CLSCompliant values..
-        /// </summary>
-        internal static string DbTable_ReturnProviderSpecificTypes {
-            get {
-                return ResourceManager.GetString("DbTable_ReturnProviderSpecificTypes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Used during Fill..
-        /// </summary>
-        internal static string DbTable_SelectCommand {
-            get {
-                return ResourceManager.GetString("DbTable_SelectCommand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to How to map source table to DataTable..
-        /// </summary>
-        internal static string DbTable_TableMapping {
-            get {
-                return ResourceManager.GetString("DbTable_TableMapping", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Number of rows to batch together before executing against the data source..
-        /// </summary>
-        internal static string DbTable_UpdateBatchSize {
-            get {
-                return ResourceManager.GetString("DbTable_UpdateBatchSize", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Used during Update for modified rows in the DataTable..
-        /// </summary>
-        internal static string DbTable_UpdateCommand {
-            get {
-                return ResourceManager.GetString("DbTable_UpdateCommand", resourceCulture);
             }
         }
         
@@ -2068,461 +1690,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} returned {1}..
-        /// </summary>
-        internal static string event_OperationReturnedSomething {
-            get {
-                return ResourceManager.GetString("event_OperationReturnedSomething", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token received from SQL Server is expired. Contact Customer Support Services..
         /// </summary>
         internal static string ExpiredAttestationToken {
             get {
                 return ResourceManager.GetString("ExpiredAttestationToken", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error in aggregate argument: Expecting a single column argument with possible &apos;Child&apos; qualifier..
-        /// </summary>
-        internal static string Expr_AggregateArgument {
-            get {
-                return ResourceManager.GetString("Expr_AggregateArgument", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unbound reference in the aggregate expression &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_AggregateUnbound {
-            get {
-                return ResourceManager.GetString("Expr_AggregateUnbound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Operator &apos;{0}&apos; is ambiguous on operands of type &apos;{1}&apos; and &apos;{2}&apos;. Cannot mix signed and unsigned types. Please use explicit Convert() function..
-        /// </summary>
-        internal static string Expr_AmbiguousBinop {
-            get {
-                return ResourceManager.GetString("Expr_AmbiguousBinop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}() argument is out of range..
-        /// </summary>
-        internal static string Expr_ArgumentOutofRange {
-            get {
-                return ResourceManager.GetString("Expr_ArgumentOutofRange", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type mismatch in function argument: {0}(), argument {1}, expected {2}..
-        /// </summary>
-        internal static string Expr_ArgumentType {
-            get {
-                return ResourceManager.GetString("Expr_ArgumentType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type mismatch in function argument: {0}(), argument {1}, expected one of the Integer types..
-        /// </summary>
-        internal static string Expr_ArgumentTypeInteger {
-            get {
-                return ResourceManager.GetString("Expr_ArgumentTypeInteger", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot find the parent relation &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_BindFailure {
-            get {
-                return ResourceManager.GetString("Expr_BindFailure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot evaluate. Expression &apos;{0}&apos; is not an aggregate..
-        /// </summary>
-        internal static string Expr_ComputeNotAggregate {
-            get {
-                return ResourceManager.GetString("Expr_ComputeNotAggregate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot convert from {0} to {1}..
-        /// </summary>
-        internal static string Expr_DatatypeConversion {
-            get {
-                return ResourceManager.GetString("Expr_DatatypeConversion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot convert value &apos;{0}&apos; to Type: {1}..
-        /// </summary>
-        internal static string Expr_DatavalueConversion {
-            get {
-                return ResourceManager.GetString("Expr_DatavalueConversion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Divide by zero error encountered..
-        /// </summary>
-        internal static string Expr_DivideByZero {
-            get {
-                return ResourceManager.GetString("Expr_DivideByZero", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot evaluate non-constant expression without current row..
-        /// </summary>
-        internal static string Expr_EvalNoContext {
-            get {
-                return ResourceManager.GetString("Expr_EvalNoContext", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Expression is too complex..
-        /// </summary>
-        internal static string Expr_ExpressionTooComplex {
-            get {
-                return ResourceManager.GetString("Expr_ExpressionTooComplex", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unbound reference in the expression &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_ExpressionUnbound {
-            get {
-                return ResourceManager.GetString("Expr_ExpressionUnbound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Filter expression &apos;{0}&apos; does not evaluate to a Boolean term..
-        /// </summary>
-        internal static string Expr_FilterConversion {
-            get {
-                return ResourceManager.GetString("Expr_FilterConversion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid number of arguments: function {0}()..
-        /// </summary>
-        internal static string Expr_FunctionArgumentCount {
-            get {
-                return ResourceManager.GetString("Expr_FunctionArgumentCount", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression contains invalid date constant &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_InvalidDate {
-            get {
-                return ResourceManager.GetString("Expr_InvalidDate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;hours&apos; argument is out of range. Value must be between -14 and +14..
-        /// </summary>
-        internal static string Expr_InvalidHoursArgument {
-            get {
-                return ResourceManager.GetString("Expr_InvalidHoursArgument", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &apos;minutes&apos; argument is out of range. Value must be between -59 and +59..
-        /// </summary>
-        internal static string Expr_InvalidMinutesArgument {
-            get {
-                return ResourceManager.GetString("Expr_InvalidMinutesArgument", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid column name [{0}]..
-        /// </summary>
-        internal static string Expr_InvalidName {
-            get {
-                return ResourceManager.GetString("Expr_InvalidName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression contains invalid name: &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_InvalidNameBracketing {
-            get {
-                return ResourceManager.GetString("Expr_InvalidNameBracketing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Error in Like operator: the string pattern &apos;{0}&apos; is invalid..
-        /// </summary>
-        internal static string Expr_InvalidPattern {
-            get {
-                return ResourceManager.GetString("Expr_InvalidPattern", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression contains an invalid string constant: {0}..
-        /// </summary>
-        internal static string Expr_InvalidString {
-            get {
-                return ResourceManager.GetString("Expr_InvalidString", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Provided range for time one exceeds total of 14 hours..
-        /// </summary>
-        internal static string Expr_InvalidTimeZoneRange {
-            get {
-                return ResourceManager.GetString("Expr_InvalidTimeZoneRange", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid type name &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_InvalidType {
-            get {
-                return ResourceManager.GetString("Expr_InvalidType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Need a row or a table to Invoke DataFilter..
-        /// </summary>
-        internal static string Expr_InvokeArgument {
-            get {
-                return ResourceManager.GetString("Expr_InvokeArgument", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error: The IN keyword must be followed by a non-empty list of expressions separated by commas, and also must be enclosed in parentheses..
-        /// </summary>
-        internal static string Expr_InWithoutList {
-            get {
-                return ResourceManager.GetString("Expr_InWithoutList", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error: The items following the IN keyword must be separated by commas and be enclosed in parentheses..
-        /// </summary>
-        internal static string Expr_InWithoutParentheses {
-            get {
-                return ResourceManager.GetString("Expr_InWithoutParentheses", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error: Invalid usage of &apos;Is&apos; operator. Correct syntax: &lt;expression&gt; Is [Not] Null..
-        /// </summary>
-        internal static string Expr_IsSyntax {
-            get {
-                return ResourceManager.GetString("Expr_IsSyntax", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error in Lookup expression: Expecting keyword &apos;Parent&apos; followed by a single column argument with possible relation qualifier: Parent[(&lt;relation_name&gt;)].&lt;column_name&gt;..
-        /// </summary>
-        internal static string Expr_LookupArgument {
-            get {
-                return ResourceManager.GetString("Expr_LookupArgument", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Kind property of provided DateTime argument, does not match &apos;hours&apos; and &apos;minutes&apos; arguments..
-        /// </summary>
-        internal static string Expr_MismatchKindandTimeSpan {
-            get {
-                return ResourceManager.GetString("Expr_MismatchKindandTimeSpan", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error: Missing operand after &apos;{0}&apos; operator..
-        /// </summary>
-        internal static string Expr_MissingOperand {
-            get {
-                return ResourceManager.GetString("Expr_MissingOperand", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error: Missing operand before &apos;{0}&apos; operator..
-        /// </summary>
-        internal static string Expr_MissingOperandBefore {
-            get {
-                return ResourceManager.GetString("Expr_MissingOperandBefore", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression is missing the closing parenthesis..
-        /// </summary>
-        internal static string Expr_MissingRightParen {
-            get {
-                return ResourceManager.GetString("Expr_MissingRightParen", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Only constant expressions are allowed in the expression list for the IN operator..
-        /// </summary>
-        internal static string Expr_NonConstantArgument {
-            get {
-                return ResourceManager.GetString("Expr_NonConstantArgument", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The feature not implemented. {0}..
-        /// </summary>
-        internal static string Expr_NYI {
-            get {
-                return ResourceManager.GetString("Expr_NYI", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Value is either too large or too small for Type &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_Overflow {
-            get {
-                return ResourceManager.GetString("Expr_Overflow", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Syntax error in the expression..
-        /// </summary>
-        internal static string Expr_Syntax {
-            get {
-                return ResourceManager.GetString("Expr_Syntax", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression has too many closing parentheses..
-        /// </summary>
-        internal static string Expr_TooManyRightParentheses {
-            get {
-                return ResourceManager.GetString("Expr_TooManyRightParentheses", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type mismatch in expression &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_TypeMismatch {
-            get {
-                return ResourceManager.GetString("Expr_TypeMismatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot perform &apos;{0}&apos; operation on {1} and {2}..
-        /// </summary>
-        internal static string Expr_TypeMismatchInBinop {
-            get {
-                return ResourceManager.GetString("Expr_TypeMismatchInBinop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot find column [{0}]..
-        /// </summary>
-        internal static string Expr_UnboundName {
-            get {
-                return ResourceManager.GetString("Expr_UnboundName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression contains undefined function call {0}()..
-        /// </summary>
-        internal static string Expr_UndefinedFunction {
-            get {
-                return ResourceManager.GetString("Expr_UndefinedFunction", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot interpret token &apos;{0}&apos; at position {1}..
-        /// </summary>
-        internal static string Expr_UnknownToken {
-            get {
-                return ResourceManager.GetString("Expr_UnknownToken", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Expected {0}, but actual token at the position {2} is {1}..
-        /// </summary>
-        internal static string Expr_UnknownToken1 {
-            get {
-                return ResourceManager.GetString("Expr_UnknownToken1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The table [{0}] involved in more than one relation. You must explicitly mention a relation name in the expression &apos;{1}&apos;..
-        /// </summary>
-        internal static string Expr_UnresolvedRelation {
-            get {
-                return ResourceManager.GetString("Expr_UnresolvedRelation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The expression contains unsupported operator &apos;{0}&apos;..
-        /// </summary>
-        internal static string Expr_UnsupportedOperator {
-            get {
-                return ResourceManager.GetString("Expr_UnsupportedOperator", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A DataColumn of type &apos;{0}&apos; does not support expression..
-        /// </summary>
-        internal static string Expr_UnsupportedType {
-            get {
-                return ResourceManager.GetString("Expr_UnsupportedType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The collection that holds custom user information..
-        /// </summary>
-        internal static string ExtendedPropertiesDescr {
-            get {
-                return ResourceManager.GetString("ExtendedPropertiesDescr", resourceCulture);
             }
         }
         
