@@ -1,0 +1,22 @@
+// Markdownlint config for plans/ directory.
+// Equivalent to the former .mdl-style.rb rules.
+{
+  // All rules enabled by default (markdownlint-cli2 default).
+
+  // MD007: Unordered list indentation — 2 spaces per level.
+  "MD007": { "indent": 2 },
+
+  // MD013: Line length — max 100 chars, skip code blocks and tables.
+  "MD013": {
+    "line_length": 100,
+    "code_blocks": false,
+    "tables": false
+  },
+
+  // MD029: Ordered list style — sequential numbering (1, 2, 3).
+  "MD029": { "style": "ordered" },
+
+  // MD033: Inline HTML — allow all elements (needed for generic type
+  // syntax like IAsyncEnumerable<T> in headings and text).
+  "MD033": false
+}
