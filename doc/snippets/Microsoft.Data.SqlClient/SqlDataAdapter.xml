@@ -72,7 +72,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -84,7 +84,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                   // Assumes that connection is a valid SqlConnection object
                   SqlDataAdapter adapter = new SqlDataAdapter();
                   adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
-          
+
                   // Create the commands.
                   adapter.SelectCommand = new SqlCommand(
                       "SELECT CustomerID, CompanyName FROM CUSTOMERS", connection);
@@ -96,7 +96,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       "WHERE CustomerID = @oldCustomerID", connection);
                   adapter.DeleteCommand = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
-          
+
                   // Create the parameters.
                   adapter.InsertCommand.Parameters.Add(
                       "@CustomerID",
@@ -108,7 +108,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       SqlDbType.VarChar,
                       40,
                       "CompanyName");
-          
+
                   adapter.UpdateCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
@@ -125,22 +125,22 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand.Parameters.Add(
                     "@CustomerID",
                     SqlDbType.Char,
                     5,
                     "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   return adapter;
               }
-          
+
               public static SqlDataAdapter CustomerUpdateCommand(SqlDataAdapter adapter)
               {
                   // Assumes that connection is a valid SqlAdapter object
                   adapter.UpdateCommand.Parameters.Add(
-                      "@CompanyName", 
+                      "@CompanyName",
                       SqlDbType.VarChar,
                       15,
                       "CompanyName");
@@ -197,7 +197,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -208,19 +208,19 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
               {
                   SqlDataAdapter adapter = new SqlDataAdapter(selectCommand);
                   adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
-          
+
                   // Create the other commands.
                   adapter.InsertCommand = new SqlCommand(
                       "INSERT INTO Customers (CustomerID, CompanyName) " +
                       "VALUES (@CustomerID, @CompanyName)", connection);
-          
+
                   adapter.UpdateCommand = new SqlCommand(
                       "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
                       "WHERE CustomerID = @oldCustomerID", connection);
-          
+
                   adapter.DeleteCommand = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
-          
+
                   // Create the parameters.
                   adapter.InsertCommand.Parameters.Add(
                       "@CustomerID",
@@ -232,7 +232,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       SqlDbType.VarChar,
                       40,
                       "CompanyName");
-          
+
                   adapter.UpdateCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
@@ -249,14 +249,14 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   return adapter;
               }
           }
@@ -311,31 +311,31 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
               {
               }
-            
+
               public static SqlDataAdapter CreateSqlDataAdapter(string commandText, SqlConnection connection)
               {
                   SqlDataAdapter adapter = new SqlDataAdapter(commandText, connection);
-          
+
                   adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
-          
+
                   // Create the other commands.
                   adapter.InsertCommand = new SqlCommand(
                       "INSERT INTO Customers (CustomerID, CompanyName) " +
                       "VALUES (@CustomerID, @CompanyName)");
-          
+
                   adapter.UpdateCommand = new SqlCommand(
                       "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
                       "WHERE CustomerID = @oldCustomerID");
-          
+
                   adapter.DeleteCommand = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID");
-          
+
                   // Create the parameters.
                   adapter.InsertCommand.Parameters.Add(
                       "@CustomerID",
@@ -347,7 +347,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       SqlDbType.VarChar,
                       40,
                       "CompanyName");
-          
+
                   adapter.UpdateCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
@@ -364,14 +364,14 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   return adapter;
               }
           }
@@ -426,32 +426,32 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
               {
               }
-            
+
               public static SqlDataAdapter CreateSqlDataAdapter(string commandText, string connectionString)
               {
                   SqlDataAdapter adapter = new SqlDataAdapter(commandText, connectionString);
                   SqlConnection connection = adapter.SelectCommand.Connection;
-          
+
                   adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
-          
+
                   // Create the commands.
                   adapter.InsertCommand = new SqlCommand(
                       "INSERT INTO Customers (CustomerID, CompanyName) " +
                       "VALUES (@CustomerID, @CompanyName)", connection);
-          
+
                   adapter.UpdateCommand = new SqlCommand(
                       "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
                       "WHERE CustomerID = @oldCustomerID", connection);
-          
+
                   adapter.DeleteCommand = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
-          
+
                   // Create the parameters.
                   adapter.InsertCommand.Parameters.Add(
                       "@CustomerID",
@@ -463,7 +463,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       SqlDbType.VarChar,
                       40,
                       "CompanyName");
-          
+
                   adapter.UpdateCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
@@ -480,14 +480,14 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand.Parameters.Add(
                       "@CustomerID",
                       SqlDbType.Char,
                       5,
                       "CustomerID"
                   ).SourceVersion = DataRowVersion.Original;
-          
+
                   return adapter;
               }
           }
@@ -589,7 +589,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -599,53 +599,53 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
               public static SqlDataAdapter CreateCustomerAdapter(SqlConnection connection)
               {
                   SqlDataAdapter adapter = new SqlDataAdapter();
-          
+
                   // Create the SelectCommand.
                   SqlCommand command = new SqlCommand("SELECT * FROM Customers " +
                       "WHERE Country = @Country AND City = @City", connection);
-          
+
                   // Add the parameters for the SelectCommand.
                   command.Parameters.Add("@Country", SqlDbType.NVarChar, 15);
                   command.Parameters.Add("@City", SqlDbType.NVarChar, 15);
-          
+
                   adapter.SelectCommand = command;
-          
+
                   // Create the InsertCommand.
                   command = new SqlCommand(
                       "INSERT INTO Customers (CustomerID, CompanyName) " +
                       "VALUES (@CustomerID, @CompanyName)", connection);
-          
+
                   // Add the parameters for the InsertCommand.
                   command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
-          
+
                   adapter.InsertCommand = command;
-          
+
                   // Create the UpdateCommand.
                   command = new SqlCommand(
                       "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
                       "WHERE CustomerID = @oldCustomerID", connection);
-          
+
                   // Add the parameters for the UpdateCommand.
                   command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
                   SqlParameter parameter = command.Parameters.Add(
                       "@oldCustomerID", SqlDbType.NChar, 5, "CustomerID");
                   parameter.SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.UpdateCommand = command;
-          
+
                   // Create the DeleteCommand.
                   command = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
-          
+
                   // Add the parameters for the DeleteCommand.
                   parameter = command.Parameters.Add(
                       "@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   parameter.SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand = command;
-          
+
                   return adapter;
               }
           }
@@ -738,63 +738,63 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
               {
               }
-            
+
               public static SqlDataAdapter CreateCustomerAdapter(SqlConnection connection)
               {
                   SqlDataAdapter adapter = new SqlDataAdapter();
-          
+
                   // Create the SelectCommand.
                   SqlCommand command = new SqlCommand("SELECT * FROM Customers " +
                       "WHERE Country = @Country AND City = @City", connection);
-          
+
                   // Add the parameters for the SelectCommand.
                   command.Parameters.Add("@Country", SqlDbType.NVarChar, 15);
                   command.Parameters.Add("@City", SqlDbType.NVarChar, 15);
-          
+
                   adapter.SelectCommand = command;
-          
+
                   // Create the InsertCommand.
                   command = new SqlCommand(
                       "INSERT INTO Customers (CustomerID, CompanyName) " +
                       "VALUES (@CustomerID, @CompanyName)", connection);
-          
+
                   // Add the parameters for the InsertCommand.
                   command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
-          
+
                   adapter.InsertCommand = command;
-          
+
                   // Create the UpdateCommand.
                   command = new SqlCommand(
                       "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
                       "WHERE CustomerID = @oldCustomerID", connection);
-          
+
                   // Add the parameters for the UpdateCommand.
                   command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
                   SqlParameter parameter = command.Parameters.Add(
                       "@oldCustomerID", SqlDbType.NChar, 5, "CustomerID");
                   parameter.SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.UpdateCommand = command;
-          
+
                   // Create the DeleteCommand.
                   command = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
-          
+
                   // Add the parameters for the DeleteCommand.
                   parameter = command.Parameters.Add(
                       "@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   parameter.SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand = command;
-          
+
                   return adapter;
               }
           }
@@ -833,11 +833,11 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
         </para>
         <list type="number">
           <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised.</description></item>
           <item><description>The command executes.</description></item>
           <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
           <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event is raised.</description></item>
           <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
         </list>
       </remarks>
@@ -853,55 +853,55 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System.Windows.Forms;
           using System.Xml;
           using Microsoft.Data.SqlClient;
-          
+
           public class Form1 : Form
           {
               private DataSet DataSet1;
               private DataGrid dataGrid1;
-          
+
               // handler for RowUpdating event
               private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
               {
                   PrintEventArgs(e);
               }
-          
+
               // handler for RowUpdated event
               private static void OnRowUpdated(object sender, SqlRowUpdatedEventArgs e)
               {
                   PrintEventArgs(e);
               }
-          
+
               public static int Main()
               {
                   const string connectionString = "Integrated Security=SSPI;database=Northwind;server=MSSQL1";
                   const string queryString = "SELECT * FROMProducts";
-          
+
                   // create DataAdapter
                   SqlDataAdapter adapter = new SqlDataAdapter(queryString, connectionString);
                   SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
-          
+
                   // Create and fill DataSet (select only first 5 rows)
                   DataSet dataSet = new DataSet();
                   adapter.Fill(dataSet, 0, 5, "Table");
-          
+
                   // Modify DataSet
                   DataTable table = dataSet.Tables["Table"];
                   table.Rows[0][1] = "new product";
-          
+
                   // add handlers
                   adapter.RowUpdating += new SqlRowUpdatingEventHandler(OnRowUpdating);
                   adapter.RowUpdated += new SqlRowUpdatedEventHandler(OnRowUpdated);
-          
-                  // update, this operation fires two events 
-                  // (RowUpdating/RowUpdated) per changed row 
+
+                  // update, this operation fires two events
+                  // (RowUpdating/RowUpdated) per changed row
                   adapter.Update(dataSet, "Table");
-          
+
                   // remove handlers
                   adapter.RowUpdating -= new SqlRowUpdatingEventHandler(OnRowUpdating);
                   adapter.RowUpdated -= new SqlRowUpdatedEventHandler(OnRowUpdated);
                   return 0;
               }
-          
+
               private static void PrintEventArgs(SqlRowUpdatingEventArgs args)
               {
                   Console.WriteLine("OnRowUpdating");
@@ -910,7 +910,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       " commandType=" + args.StatementType +
                       " status=" + args.Status + ")");
               }
-          
+
               private static void PrintEventArgs(SqlRowUpdatedEventArgs args)
               {
                   Console.WriteLine("OnRowUpdated");
@@ -946,11 +946,11 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
         </para>
         <list type="number">
           <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised.</description></item>
           <item><description>The command executes.</description></item>
           <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
           <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
-          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description>The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event is raised.</description></item>
           <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
         </list>
       </remarks>
@@ -966,55 +966,55 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System.Windows.Forms;
           using System.Xml;
           using Microsoft.Data.SqlClient;
-          
+
           public class Form1 : Form
           {
               private DataSet DataSet1;
               private DataGrid dataGrid1;
-          
+
               // handler for RowUpdating event
               private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
               {
                   PrintEventArgs(e);
               }
-          
+
               // handler for RowUpdated event
               private static void OnRowUpdated(object sender, SqlRowUpdatedEventArgs e)
               {
                   PrintEventArgs(e);
               }
-          
+
               public static int Main()
               {
                   const string connectionString = "Integrated Security=SSPI;database=Northwind;server=MSSQL1";
                   const string queryString = "SELECT * FROMProducts";
-          
+
                   // create DataAdapter
                   SqlDataAdapter adapter = new SqlDataAdapter(queryString, connectionString);
                   SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
-          
+
                   // Create and fill DataSet (select only first 5 rows)
                   DataSet dataSet = new DataSet();
                   adapter.Fill(dataSet, 0, 5, "Table");
-          
+
                   // Modify DataSet
                   DataTable table = dataSet.Tables["Table"];
                   table.Rows[0][1] = "new product";
-          
+
                   // add handlers
                   adapter.RowUpdating += new SqlRowUpdatingEventHandler(OnRowUpdating);
                   adapter.RowUpdated += new SqlRowUpdatedEventHandler(OnRowUpdated);
-          
-                  // update, this operation fires two events 
-                  // (RowUpdating/RowUpdated) per changed row 
+
+                  // update, this operation fires two events
+                  // (RowUpdating/RowUpdated) per changed row
                   adapter.Update(dataSet, "Table");
-          
+
                   // remove handlers
                   adapter.RowUpdating -= new SqlRowUpdatingEventHandler(OnRowUpdating);
                   adapter.RowUpdated -= new SqlRowUpdatedEventHandler(OnRowUpdated);
                   return 0;
               }
-          
+
               private static void PrintEventArgs(SqlRowUpdatingEventArgs args)
               {
                   Console.WriteLine("OnRowUpdating");
@@ -1023,7 +1023,7 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
                       " commandType=" + args.StatementType +
                       " status=" + args.Status + ")");
               }
-          
+
               private static void PrintEventArgs(SqlRowUpdatedEventArgs args)
               {
                   Console.WriteLine("OnRowUpdated");
@@ -1073,63 +1073,63 @@ The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
               {
               }
-            
+
               public static SqlDataAdapter CreateCustomerAdapter(SqlConnection connection)
               {
                   SqlDataAdapter adapter = new SqlDataAdapter();
-          
+
                   // Create the SelectCommand.
                   SqlCommand command = new SqlCommand("SELECT * FROM Customers " +
                       "WHERE Country = @Country AND City = @City", connection);
-          
+
                   // Add the parameters for the SelectCommand.
                   command.Parameters.Add("@Country", SqlDbType.NVarChar, 15);
                   command.Parameters.Add("@City", SqlDbType.NVarChar, 15);
-          
+
                   adapter.SelectCommand = command;
-          
+
                   // Create the InsertCommand.
                   command = new SqlCommand(
                       "INSERT INTO Customers (CustomerID, CompanyName) " +
                       "VALUES (@CustomerID, @CompanyName)", connection);
-          
+
                   // Add the parameters for the InsertCommand.
                   command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
-          
+
                   adapter.InsertCommand = command;
-          
+
                   // Create the UpdateCommand.
                   command = new SqlCommand(
                       "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
                       "WHERE CustomerID = @oldCustomerID", connection);
-          
+
                   // Add the parameters for the UpdateCommand.
                   command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
                   SqlParameter parameter = command.Parameters.Add(
                       "@oldCustomerID", SqlDbType.NChar, 5, "CustomerID");
                   parameter.SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.UpdateCommand = command;
-          
+
                   // Create the DeleteCommand.
                   command = new SqlCommand(
                       "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
-          
+
                   // Add the parameters for the DeleteCommand.
                   parameter = command.Parameters.Add(
                       "@CustomerID", SqlDbType.NChar, 5, "CustomerID");
                   parameter.SourceVersion = DataRowVersion.Original;
-          
+
                   adapter.DeleteCommand = command;
-          
+
                   return adapter;
               }
           }
