@@ -429,32 +429,14 @@
   <data name="Data_InvalidOffsetLength" xml:space="preserve">
     <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
-  <data name="Range_Argument" xml:space="preserve">
-    <value>Min ({0}) must be less than or equal to max ({1}) in a Range object.</value>
-  </data>
-  <data name="Range_NullRange" xml:space="preserve">
-    <value>This is a null range.</value>
-  </data>
-  <data name="RecordManager_MinimumCapacity" xml:space="preserve">
-    <value>MinimumCapacity must be non-negative.</value>
-  </data>
   <data name="SqlConvert_ConvertFailed" xml:space="preserve">
     <value>Cannot convert object of type '{0}' to object of type '{1}'.</value>
-  </data>
-  <data name="RbTree_InvalidState" xml:space="preserve">
-    <value>DataTable internal index is corrupted: '{0}'.</value>
-  </data>
-  <data name="RbTree_EnumerationBroken" xml:space="preserve">
-    <value>Collection was modified; enumeration operation might not execute.</value>
   </data>
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Cannot remove column since it is built in to this dataSet.</value>
   </data>
   <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
     <value>Cannot remove relation since it is built in to this dataSet.</value>
-  </data>
-  <data name="propertyChangedEventDescr" xml:space="preserve">
-    <value>Occurs whenever a property for this control changes.</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>Cannot get value because it is DBNull.</value>
@@ -513,17 +495,11 @@
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
     <value>SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name</value>
   </data>
-  <data name="OLEDB_OLEDBCommandText" xml:space="preserve">
-    <value>OleDbCommandBuilder.DeriveParameters failed because the OleDbCommandBuilder.CommandText property value is an invalid multipart name</value>
-  </data>
   <data name="SQLMSF_FailoverPartnerNotSupported" xml:space="preserve">
     <value>Connecting to a mirrored SQL Server instance using the MultiSubnetFailover connection option is not supported.</value>
   </data>
   <data name="ADP_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the {2} method.</value>
-  </data>
-  <data name="OLEDB_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider.</value>
   </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
@@ -651,195 +627,6 @@
   <data name="ADP_NonSeqByteAccess" xml:space="preserve">
     <value>Invalid {2} attempt at dataIndex '{0}'.  With CommandBehavior.SequentialAccess, you may only read from dataIndex '{1}' or greater.</value>
   </data>
-  <data name="OleDb_MDACWrongVersion" xml:space="preserve">
-    <value>The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed.</value>
-  </data>
-  <data name="OleDb_SchemaRowsetsNotSupported" xml:space="preserve">
-    <value>'{0}' interface is not supported by the '{1}' provider.  GetOleDbSchemaTable is unavailable with the current provider.</value>
-  </data>
-  <data name="OleDb_NoErrorInformation2" xml:space="preserve">
-    <value>'{0}' failed with no error message available, result code: {1}.</value>
-  </data>
-  <data name="OleDb_NoErrorInformation" xml:space="preserve">
-    <value>No error message available, result code: {0}.</value>
-  </data>
-  <data name="OleDb_MDACNotAvailable" xml:space="preserve">
-    <value>The .NET Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later.</value>
-  </data>
-  <data name="OleDb_MSDASQLNotSupported" xml:space="preserve">
-    <value>The .NET Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .NET Framework Data Provider for ODBC (System.Data.Odbc).</value>
-  </data>
-  <data name="OleDb_PossiblePromptNotUserInteractive" xml:space="preserve">
-    <value>The .NET Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment.</value>
-  </data>
-  <data name="OleDb_ProviderUnavailable" xml:space="preserve">
-    <value>The '{0}' provider is not registered on the local machine.</value>
-  </data>
-  <data name="OleDb_CommandTextNotSupported" xml:space="preserve">
-    <value>The ICommandText interface is not supported by the '{0}' provider. Use CommandType.TableDirect instead.</value>
-  </data>
-  <data name="OleDb_TransactionsNotSupported" xml:space="preserve">
-    <value>The ITransactionLocal interface is not supported by the '{0}' provider.  Local transactions are unavailable with the current provider.</value>
-  </data>
-  <data name="OleDb_ConnectionStringSyntax" xml:space="preserve">
-    <value>Format of the initialization string does not conform to the OLE DB specification.  Starting around char[{0}] in the connection string.</value>
-  </data>
-  <data name="OleDb_AsynchronousNotSupported" xml:space="preserve">
-    <value>'Asynchronous Processing' is not a supported feature of the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
-  </data>
-  <data name="OleDb_NoProviderSpecified" xml:space="preserve">
-    <value>An OLE DB Provider was not specified in the ConnectionString.  An example would be, 'Provider=SQLOLEDB;'.</value>
-  </data>
-  <data name="OleDb_InvalidProviderSpecified" xml:space="preserve">
-    <value>The OLE DB Provider specified in the ConnectionString is too long.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsDbInfoKeywords" xml:space="preserve">
-    <value>No restrictions are expected for the DbInfoKeywords OleDbSchemaGuid.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsDbInfoLiteral" xml:space="preserve">
-    <value>No restrictions are expected for the DbInfoLiterals OleDbSchemaGuid.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsSchemaGuids" xml:space="preserve">
-    <value>No restrictions are expected for the schema guid OleDbSchemaGuid.</value>
-  </data>
-  <data name="OleDb_NotSupportedSchemaTable" xml:space="preserve">
-    <value>The {0} OleDbSchemaGuid is not a supported schema by the '{1}' provider.</value>
-  </data>
-  <data name="OleDb_ConfigWrongNumberOfValues" xml:space="preserve">
-    <value>The '{0}' configuration setting has the wrong number of values.</value>
-  </data>
-  <data name="OleDb_ConfigUnableToLoadXmlMetaDataFile" xml:space="preserve">
-    <value>Unable to load the XML file specified in configuration setting '{0}'.</value>
-  </data>
-  <data name="OleDb_CommandParameterBadAccessor" xml:space="preserve">
-    <value>Command parameter[{0}] '{1}' is invalid.</value>
-  </data>
-  <data name="OleDb_CommandParameterCantConvertValue" xml:space="preserve">
-    <value>Command parameter[{0}] '{1}' data value could not be converted for reasons other than sign mismatch or data overflow.</value>
-  </data>
-  <data name="OleDb_CommandParameterSignMismatch" xml:space="preserve">
-    <value>Conversion failed for command parameter[{0}] '{1}' because the data value was signed and the type used by the provider was unsigned.</value>
-  </data>
-  <data name="OleDb_CommandParameterDataOverflow" xml:space="preserve">
-    <value>Conversion failed for command parameter[{0}] '{1}' because the data value overflowed the type used by the provider.</value>
-  </data>
-  <data name="OleDb_CommandParameterUnavailable" xml:space="preserve">
-    <value>Provider encountered an error while sending command parameter[{0}] '{1}' value and stopped processing.</value>
-  </data>
-  <data name="OleDb_CommandParameterDefault" xml:space="preserve">
-    <value>Parameter[{0}] '{1}' has no default value.</value>
-  </data>
-  <data name="OleDb_CommandParameterError" xml:space="preserve">
-    <value>Error occurred with parameter[{0}]: {1}.</value>
-  </data>
-  <data name="OleDb_BadStatus_ParamAcc" xml:space="preserve">
-    <value>Microsoft.Data.OleDb.OleDbDataAdapter internal error: invalid parameter accessor: {0} {1}.</value>
-  </data>
-  <data name="OleDb_UninitializedParameters" xml:space="preserve">
-    <value>Parameter[{0}]: the OleDbType property is uninitialized: OleDbType.{1}.</value>
-  </data>
-  <data name="OleDb_NoProviderSupportForParameters" xml:space="preserve">
-    <value>The ICommandWithParameters interface is not supported by the '{0}' provider.  Command parameters are unsupported with the current provider.</value>
-  </data>
-  <data name="OleDb_NoProviderSupportForSProcResetParameters" xml:space="preserve">
-    <value>Retrieving procedure parameter information is not supported by the '{0}' provider.</value>
-  </data>
-  <data name="OleDb_CanNotDetermineDecimalSeparator" xml:space="preserve">
-    <value>Can not determine the server's decimal separator. Non-integer numeric literals can not be created.</value>
-  </data>
-  <data name="OleDb_Fill_NotADODB" xml:space="preserve">
-    <value>Object is not an ADODB.RecordSet or an ADODB.Record.</value>
-  </data>
-  <data name="OleDb_Fill_EmptyRecordSet" xml:space="preserve">
-    <value>Unable to retrieve the '{0}' interface from the ADODB.RecordSet object.</value>
-  </data>
-  <data name="OleDb_Fill_EmptyRecord" xml:space="preserve">
-    <value>Unable to retrieve the IRow interface from the ADODB.Record object.</value>
-  </data>
-  <data name="OleDb_ISourcesRowsetNotSupported" xml:space="preserve">
-    <value>Type does not support the OLE DB interface ISourcesRowset</value>
-  </data>
-  <data name="OleDb_IDBInfoNotSupported" xml:space="preserve">
-    <value>Cannot construct the ReservedWords schema collection because the provider does not support IDBInfo.</value>
-  </data>
-  <data name="OleDb_PropertyNotSupported" xml:space="preserve">
-    <value>The property's value was not set because the provider did not support the '{0}' property, or the consumer attempted to get or set values of properties not in the Initialization property group and the data source object is uninitialized.</value>
-  </data>
-  <data name="OleDb_PropertyBadValue" xml:space="preserve">
-    <value>Failed to initialize the '{0}' property for one of the following reasons:
-	The value data type was not the data type of the property or was not null. For example, the property was DBPROP_MEMORYUSAGE, which has a data type of Int32, and the data type was Int64.
-	The value was not a valid value. For example, the property was DBPROP_MEMORYUSAGE and the value was negative.
-	The value was a valid value for the property and the provider supports the property as a settable property, but the provider does not support the value specified. This includes the case where the value was added to the property in OLE DB after the provider was written.</value>
-  </data>
-  <data name="OleDb_PropertyBadOption" xml:space="preserve">
-    <value>The value of Options was invalid.</value>
-  </data>
-  <data name="OleDb_PropertyBadColumn" xml:space="preserve">
-    <value>The ColumnID element was invalid.</value>
-  </data>
-  <data name="OleDb_PropertyNotAllSettable" xml:space="preserve">
-    <value>A '{0}' property was specified to be applied to all columns but could not be applied to one or more of them.</value>
-  </data>
-  <data name="OleDb_PropertyNotSettable" xml:space="preserve">
-    <value>The '{0}' property was read-only, or the consumer attempted to set values of properties in the Initialization property group after the data source object was initialized. Consumers can set the value of a read-only property to its current value. This status is also returned if a settable column property could not be set for the particular column.</value>
-  </data>
-  <data name="OleDb_PropertyNotSet" xml:space="preserve">
-    <value>The optional '{0}' property's value was not set to the specified value and setting the property to the specified value was not possible.</value>
-  </data>
-  <data name="OleDb_PropertyConflicting" xml:space="preserve">
-    <value>The '{0}'property's value was not set because doing so would have conflicted with an existing property.</value>
-  </data>
-  <data name="OleDb_PropertyNotAvailable" xml:space="preserve">
-    <value>(Reserved).</value>
-  </data>
-  <data name="OleDb_PropertyStatusUnknown" xml:space="preserve">
-    <value>The provider returned an unknown DBPROPSTATUS_ value '{0}'.</value>
-  </data>
-  <data name="OleDb_BadAccessor" xml:space="preserve">
-    <value>Accessor validation was deferred and was performed while the method returned data. The binding was invalid for this column or parameter.</value>
-  </data>
-  <data name="OleDb_BadStatusRowAccessor" xml:space="preserve">
-    <value>OleDbDataAdapter internal error: invalid row set accessor: Ordinal={0} Status={1}.</value>
-  </data>
-  <data name="OleDb_CantConvertValue" xml:space="preserve">
-    <value>The data value could not be converted for reasons other than sign mismatch or data overflow. For example, the data was corrupted in the data store but the row was still retrievable.</value>
-  </data>
-  <data name="OleDb_CantCreate" xml:space="preserve">
-    <value>The provider could not allocate memory in which to return {0} data.</value>
-  </data>
-  <data name="OleDb_DataOverflow" xml:space="preserve">
-    <value>Conversion failed because the {0} data value overflowed the type specified for the {0} value part in the consumer's buffer.</value>
-  </data>
-  <data name="OleDb_GVtUnknown" xml:space="preserve">
-    <value>OleDbDataAdapter internal error: [get] Unknown OLE DB data type: 0x{0} ({1}).</value>
-  </data>
-  <data name="OleDb_SignMismatch" xml:space="preserve">
-    <value>Conversion failed because the {0} data value was signed and the type specified for the {0} value part in the consumer's buffer was unsigned.</value>
-  </data>
-  <data name="OleDb_SVtUnknown" xml:space="preserve">
-    <value>OleDbDataAdapter internal error: [set] Unknown OLE DB data type: 0x{0} ({1}).</value>
-  </data>
-  <data name="OleDb_Unavailable" xml:space="preserve">
-    <value>The provider could not determine the {0} value. For example, the row was just created, the default for the {0} column was not available, and the consumer had not yet set a new {0} value.</value>
-  </data>
-  <data name="OleDb_UnexpectedStatusValue" xml:space="preserve">
-    <value>OLE DB Provider returned an unexpected status value of {0}.</value>
-  </data>
-  <data name="OleDb_ThreadApartmentState" xml:space="preserve">
-    <value>The OleDbDataReader.Read must be used from the same thread on which is was created if that thread's ApartmentState was not ApartmentState.MTA.</value>
-  </data>
-  <data name="OleDb_NoErrorMessage" xml:space="preserve">
-    <value>Unspecified error: {0}</value>
-  </data>
-  <data name="OleDb_FailedGetDescription" xml:space="preserve">
-    <value>IErrorInfo.GetDescription failed with {0}.</value>
-  </data>
-  <data name="OleDb_FailedGetSource" xml:space="preserve">
-    <value>IErrorInfo.GetSource failed with {0}.</value>
-  </data>
-  <data name="OleDb_DBBindingGetVector" xml:space="preserve">
-    <value>DBTYPE_VECTOR data is not supported by the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb).</value>
-  </data>
   <data name="ADP_InvalidMinMaxPoolSizeValues" xml:space="preserve">
     <value>Invalid min or max pool size values, min pool size cannot be greater than the max pool size.</value>
   </data>
@@ -882,9 +669,6 @@
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
     <value>Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.</value>
   </data>
-  <data name="SQL_Certificate" xml:space="preserve">
-    <value>Incorrect authentication parameters specified with certificate authentication.</value>
-  </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
   </data>
@@ -899,9 +683,6 @@
   </data>
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>{0} cannot be changed while async operation is in progress.</value>
-  </data>
-  <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
-    <value>This command requires an asynchronous connection. Set "Asynchronous Processing=true" in the connection string.</value>
   </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
     <value>The connection attempt timed out.</value>
@@ -939,9 +720,6 @@
   <data name="SQL_MSALInnerException" xml:space="preserve">
     <value>Error code 0x{0}</value>
   </data>
-  <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
-    <value>ChangePassword requires SQL Server 9.0 or later.</value>
-  </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>SSE Instance re-direction is not supported for non-local user instances.</value>
   </data>
@@ -957,9 +735,6 @@
   <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
     <value>Failed to instantiate a SqlAuthenticationInitializer with type '{0}'.</value>
   </data>
-  <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
-    <value>The provider '{0}' threw an exception while initializing.</value>
-  </data>
   <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
     <value>The provider '{0}' does not support authentication '{1}'.</value>
   </data>
@@ -969,14 +744,8 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
   </data>
-  <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
-    <value>Failed to read the config section for authentication providers.</value>
-  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parameter '{0}' cannot be null or empty.</value>
-  </data>
-  <data name="SQL_AsyncOperationCompleted" xml:space="preserve">
-    <value>The asynchronous operation has already completed.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
     <value>The command execution cannot proceed due to a pending asynchronous operation already in progress.</value>
@@ -1235,9 +1004,6 @@
   </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
     <value>Unexpected server event: {0}.</value>
-  </data>
-  <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
-    <value>The length of '{0}' must match the length of '{1}'.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
     <value>The SqlDbType '{0}' is invalid for {1}.  Only {2} is supported.</value>
@@ -1515,24 +1281,6 @@
   <data name="DbConnectionString_Authentication" xml:space="preserve">
     <value>Specifies the method of authenticating with SQL Server.</value>
   </data>
-  <data name="OleDbConnection_ConnectionString" xml:space="preserve">
-    <value>Information used to connect to a Data Source.</value>
-  </data>
-  <data name="OleDbConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Current connection timeout value, 'Connect Timeout=X' in the ConnectionString.</value>
-  </data>
-  <data name="OleDbConnection_Database" xml:space="preserve">
-    <value>Current data source catalog value, 'Initial Catalog=X' in the connection string.</value>
-  </data>
-  <data name="OleDbConnection_DataSource" xml:space="preserve">
-    <value>Current data source, 'Data Source=X' in the connection string.</value>
-  </data>
-  <data name="OleDbConnection_Provider" xml:space="preserve">
-    <value>Current OLE DB provider ProgID, 'Provider=X' in the connection string.</value>
-  </data>
-  <data name="OleDbConnection_ServerVersion" xml:space="preserve">
-    <value>Version of the product accessed by the OLE DB Provider.</value>
-  </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
     <value>Access token to use for authentication.</value>
   </data>
@@ -1616,12 +1364,6 @@
   </data>
   <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
     <value>The character used in a text command as the closing quote for quoting identifiers that contain special characters.</value>
-  </data>
-  <data name="OdbcParameter_OdbcType" xml:space="preserve">
-    <value>The parameter native type.</value>
-  </data>
-  <data name="OleDbParameter_OleDbType" xml:space="preserve">
-    <value>The parameter native type.</value>
   </data>
   <data name="SqlParameter_ParameterName" xml:space="preserve">
     <value>Name of the parameter, like '@p1'</value>
