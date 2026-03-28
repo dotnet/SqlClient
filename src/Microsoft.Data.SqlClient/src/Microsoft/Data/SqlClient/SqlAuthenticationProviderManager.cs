@@ -188,17 +188,17 @@ namespace Microsoft.Data.SqlClient
             // simply have no default and the app must provide one if they
             // attempt to use Active Directory authentication.
             catch (Exception ex)
-            when (ex is ArgumentNullException ||
-                  ex is ArgumentException ||
-                  ex is BadImageFormatException ||
-                  ex is FileLoadException ||
-                  ex is FileNotFoundException ||
-                  ex is MemberAccessException ||
-                  ex is MethodAccessException ||
-                  ex is MissingMethodException ||
-                  ex is NotSupportedException ||
-                  ex is TargetInvocationException ||
-                  ex is TypeLoadException)
+            when (ex is
+                      ArgumentException or
+                      BadImageFormatException or
+                      FileLoadException or
+                      FileNotFoundException or
+                      MemberAccessException or
+                      MethodAccessException or
+                      MissingMethodException or
+                      NotSupportedException or
+                      TargetInvocationException or
+                      TypeLoadException)
             {
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
