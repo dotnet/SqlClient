@@ -450,19 +450,14 @@ namespace Microsoft.Data.SqlClient.Connection
                         break;
                     }
                     catch (SqlException sqlex)
+                        when (
+                            connectionEstablishCount != i + 1
+                            && applyTransientFaultHandling
+                            && !_timeout.IsExpired
+                            && _timeout.MillisecondsRemaining >= transientRetryIntervalInMilliSeconds
+                            && IsTransientError(sqlex))
                     {
-                        if (connectionEstablishCount == i + 1
-                            || !applyTransientFaultHandling
-                            || _timeout.IsExpired
-                            || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
-                            || !IsTransientError(sqlex))
-                        {
-                            throw;
-                        }
-                        else
-                        {
-                            Thread.Sleep(transientRetryIntervalInMilliSeconds);
-                        }
+                        Thread.Sleep(transientRetryIntervalInMilliSeconds);
                     }
                 }
             }
@@ -2100,13 +2095,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 // If an exception occurred, the inner connection will be marked as unusable and
                 // destroyed upon returning to the pool
                 DoomThisConnection();
@@ -3862,13 +3852,9 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    LoginFailure();
-                }
-
+                LoginFailure();
                 throw;
             }
 
