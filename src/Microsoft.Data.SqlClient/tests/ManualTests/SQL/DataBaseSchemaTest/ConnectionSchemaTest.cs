@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -107,29 +108,91 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             VerifySchemaTable(SqlClientMetaDataCollectionNames.StructuredTypeMembers, new string[] { "TYPE_CATALOG", "TYPE_SCHEMA", "TYPE_NAME", "MEMBER_NAME", "ORDINAL_POSITION" });
         }
 
-        private static void VerifySchemaTable(string schemaItemName, string[] testColumnNames)
+        [ConditionalFact(nameof(CanRunSchemaTests))]
+        public static void GetDataTypesFromSchema()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            DataTable schemaTable = VerifySchemaTable(DbMetaDataCollectionNames.DataTypes, [
+                DbMetaDataColumnNames.TypeName,
+                DbMetaDataColumnNames.ProviderDbType,
+                DbMetaDataColumnNames.ColumnSize,
+                DbMetaDataColumnNames.CreateFormat,
+                DbMetaDataColumnNames.CreateParameters,
+                DbMetaDataColumnNames.DataType,
+                DbMetaDataColumnNames.IsAutoIncrementable,
+                DbMetaDataColumnNames.IsBestMatch,
+                DbMetaDataColumnNames.IsCaseSensitive,
+                DbMetaDataColumnNames.IsFixedLength,
+                DbMetaDataColumnNames.IsFixedPrecisionScale,
+                DbMetaDataColumnNames.IsLong,
+                DbMetaDataColumnNames.IsNullable,
+                DbMetaDataColumnNames.IsSearchable,
+                DbMetaDataColumnNames.IsSearchableWithLike,
+                DbMetaDataColumnNames.IsUnsigned,
+                DbMetaDataColumnNames.MaximumScale,
+                DbMetaDataColumnNames.MinimumScale,
+                DbMetaDataColumnNames.IsConcurrencyType,
+                DbMetaDataColumnNames.IsLiteralSupported,
+                DbMetaDataColumnNames.LiteralPrefix,
+                DbMetaDataColumnNames.LiteralSuffix
+            ]);
+
+            VerifyDataTypesTable(schemaTable);
+        }
+
+        private static DataTable GetSchemaTable(string schemaItemName)
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 InitialCatalog = "master"
             };
 
-            using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+            using SqlConnection connection = new(builder.ConnectionString);
+            // Connect to the database then retrieve the schema information
+            connection.Open();
+
+            return connection.GetSchema(schemaItemName);
+        }
+
+        private static DataTable VerifySchemaTable(string schemaItemName, string[] testColumnNames)
+        {
+            HashSet<string> columnNames = [];
+            DataTable schemaTable = GetSchemaTable(schemaItemName);
+
+            // Get all table columns
+            foreach (DataColumn column in schemaTable.Columns)
             {
-                // Connect to the database then retrieve the schema information
-                connection.Open();
-                DataTable table = connection.GetSchema(schemaItemName);
-
-                // Get all table columns
-                HashSet<string> columnNames = new HashSet<string>();
-
-                foreach (DataColumn column in table.Columns)
-                {
-                    columnNames.Add(column.ColumnName);
-                }
-
-                Assert.All<string>(testColumnNames, column => Assert.Contains<string>(column, columnNames));
+                columnNames.Add(column.ColumnName);
             }
+
+            Assert.All(testColumnNames, column => Assert.Contains(column, columnNames));
+            return schemaTable;
+        }
+
+        private static void VerifyDataTypesTable(DataTable dataTypesTable)
+        {
+            string[] expectedTypes = [
+                "smallint", "int", "real", "float", "money", "smallmoney", "bit", "tinyint", "bigint", "timestamp",
+                "binary", "image", "text", "ntext", "decimal", "numeric", "datetime", "smalldatetime", "sql_variant", "xml",
+                "varchar", "char", "nchar", "nvarchar", "varbinary", "uniqueidentifier", "date", "time", "datetime2", "datetimeoffset"
+            ];
+            HashSet<string> actualTypes = [];
+
+            // Get every type name, asserting that it is a unique string.
+            foreach (DataRow row in dataTypesTable.Rows)
+            {
+                string typeName = row[DbMetaDataColumnNames.TypeName] as string;
+
+                Assert.False(string.IsNullOrEmpty(typeName));
+                Assert.True(actualTypes.Add(typeName));
+            }
+
+            // Every expected type should be present. There will often be additional types present - user-defined table types
+            // and CLR types (such as geography and geometry.)
+            Assert.All(expectedTypes, type => Assert.Contains(type, actualTypes));
+
+            // The "json" type should only be present when running against a SQL Server version which supports it.
+            // SQL Azure reports a version of 12.x but supports JSON, so SqlClient doesn't include it in the list of types.
+            Assert.Equal(DataTestUtility.IsJsonSupported && DataTestUtility.IsNotAzureServer(), actualTypes.Contains("json"));
         }
     }
 }
