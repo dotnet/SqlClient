@@ -124,22 +124,26 @@ namespace Microsoft.Data.SqlClient
                         SqlSecurityUtility.DecryptSymmetricKey(cipherMdCopy, sqlCommand.Connection, sqlCommand);
                     }
                     catch (Exception ex)
+                        when (ex is
+                                  SqlException or
+                                  ArgumentException or
+                                  ArgumentNullException)
                     {
                         // Invalidate the cache entry.
                         InvalidateCacheEntry(sqlCommand);
 
-                        // If we get one of the expected exceptions, just fail the cache lookup, otherwise throw.
-                        if (ex is SqlException || ex is ArgumentException || ex is ArgumentNullException)
+                        foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
                         {
-                            foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
-                            {
-                                paramToCleanup.CipherMetadata = null;
-                            }
-
-                            IncrementCacheMisses();
-                            return false;
+                            paramToCleanup.CipherMetadata = null;
                         }
 
+                        IncrementCacheMisses();
+                        return false;
+                    }
+                    catch (Exception)
+                    {
+                        // Invalidate the cache entry.
+                        InvalidateCacheEntry(sqlCommand);
                         throw;
                     }
                 }

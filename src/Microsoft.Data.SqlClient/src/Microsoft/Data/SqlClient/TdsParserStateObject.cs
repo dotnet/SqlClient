@@ -1083,13 +1083,8 @@ namespace Microsoft.Data.SqlClient
                     goodForReuse = true;
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 ADP.TraceExceptionWithoutRethrow(e);
             }
             return goodForReuse;
@@ -3825,12 +3820,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 SendAttention(mustTakeWriteLock: true, asyncClose);
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
                                 // if unable to send attention, cancel the _networkPacketTaskSource to
                                 // request the parser be broken.  SNIWritePacket errors will already
                                 // be in the _errors collection.

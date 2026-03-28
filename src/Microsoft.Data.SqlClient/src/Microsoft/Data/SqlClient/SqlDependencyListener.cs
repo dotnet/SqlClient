@@ -177,13 +177,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 _timeoutParam.Value = _defaultWaitforTimeout; // Sync successful, extend timeout to 60 seconds.
                 AsynchronouslyQueryServiceBrokerQueue();
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                 if (setupCompleted)
                 {
@@ -400,12 +395,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         {
                             com.ExecuteNonQuery(); // Cannot add 'IF OBJECT_ID' to create procedure query - wrap and discard failure.
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
                             ADP.TraceExceptionWithoutRethrow(e);
 
                             try
@@ -416,12 +407,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                     trans = null;
                                 }
                             }
-                            catch (Exception f)
+                            catch (Exception f) when (ADP.IsCatchableExceptionType(f))
                             {
-                                if (!ADP.IsCatchableExceptionType(f))
-                                {
-                                    throw;
-                                }
                                 ADP.TraceExceptionWithoutRethrow(f); // Discard failure, but trace for now.
                             }
                         }
@@ -479,12 +466,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             trans.Rollback();
                             trans = null;
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                         }
                     }
@@ -580,12 +563,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                             {
                                                 dispatcher.InvalidateCommandID(notification); // CROSS APP-DOMAIN CALL!
                                             }
-                                            catch (Exception e)
+                                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                             {
-                                                if (!ADP.IsCatchableExceptionType(e))
-                                                {
-                                                    throw;
-                                                }
                                                 ADP.TraceExceptionWithoutRethrow(e); // Discard failure.  User event could throw exception.
                                             }
                                         }
@@ -664,12 +643,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             {
                                 _con.Close();
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
                                 ADP.TraceExceptionWithoutRethrow(e); // Discard close failure, if it occurs.  Only trace it.
                             }
                         }
@@ -717,12 +692,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                 {
                                     CreateQueueAndService(true); // Ensure service, queue, etc is present, if we created it.
                                 }
-                                catch (Exception e)
+                                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                 {
-                                    if (!ADP.IsCatchableExceptionType(e))
-                                    {
-                                        throw;
-                                    }
                                     ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                                     failure = true;
                                 }
@@ -765,12 +736,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         TearDownAndDispose(); // Function will lock(this).
                     }
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
                     ADP.TraceExceptionWithoutRethrow(e);
 
                     try
@@ -786,12 +753,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                                        SqlNotificationType.Change,
                                                                        null));
                     }
-                    catch (Exception f)
+                    catch (Exception f) when (ADP.IsCatchableExceptionType(f))
                     {
-                        if (!ADP.IsCatchableExceptionType(f))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(f); // Discard exception from Invalidate.  User events can throw.
                     }
 
@@ -799,12 +762,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     {
                         _con.Close();
                     }
-                    catch (Exception f)
+                    catch (Exception f) when (ADP.IsCatchableExceptionType(f))
                     {
-                        if (!ADP.IsCatchableExceptionType(f))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(f); // Discard close failure, if it occurs.  Only trace it.
                     }
 
@@ -885,12 +844,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             // Rather than fighting the race condition, just call it and discard any potential failure.
                             _com.Cancel(); // Cancel the pending command.  No-op if connection closed.
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
                         }
                         _stop = true;
@@ -993,12 +948,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                     _com.Parameters.Remove(_timeoutParam);
                                     _com.ExecuteNonQuery();
                                 }
-                                catch (Exception e)
+                                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                 {
-                                    if (!ADP.IsCatchableExceptionType(e))
-                                    {
-                                        throw;
-                                    }
                                     ADP.TraceExceptionWithoutRethrow(e); // Discard failure.
                                 }
                             }
@@ -1017,12 +968,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                 {
                                     _com.ExecuteNonQuery();
                                 }
-                                catch (Exception e)
+                                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                 {
-                                    if (!ADP.IsCatchableExceptionType(e))
-                                    {
-                                        throw;
-                                    }
                                     ADP.TraceExceptionWithoutRethrow(e); // Discard failure.
                                 }
                             }
@@ -1105,12 +1052,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                             type = temp;
                                         }
                                     }
-                                    catch (Exception e)
+                                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                     {
-                                        if (!ADP.IsCatchableExceptionType(e))
-                                        {
-                                            throw;
-                                        }
                                         ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
                                     }
                                     messageAttributes |= MessageAttributes.Type;
@@ -1124,12 +1067,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                             source = temp;
                                         }
                                     }
-                                    catch (Exception e)
+                                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                     {
-                                        if (!ADP.IsCatchableExceptionType(e))
-                                        {
-                                            throw;
-                                        }
                                         ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
                                     }
                                     messageAttributes |= MessageAttributes.Source;
@@ -1469,17 +1408,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     {
                         perAppDomainDispatcher.InvalidateServer(server, sqlNotification);
                     }
-                    catch (Exception f)
+                    catch (Exception f) when (ADP.IsCatchableExceptionType(f))
                     {
                         // Since we are looping over dependency dispatchers, do not allow one Invalidate
                         // that results in a throw prevent us from invalidating all dependencies
                         // related to this server.
                         // NOTE - SqlDependencyPerAppDomainDispatcher already wraps individual dependency invalidates
                         // with try/catch, but we should be careful and do the same here.
-                        if (!ADP.IsCatchableExceptionType(f))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(f); // Discard failure, but trace.
                     }
                 }

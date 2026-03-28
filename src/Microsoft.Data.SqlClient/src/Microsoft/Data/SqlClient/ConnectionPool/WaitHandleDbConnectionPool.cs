@@ -548,13 +548,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _errorWait = ERROR_WAIT_DEFAULT;
             }
             catch (Exception e)
-            {
                 // UNDONE - should not be catching all exceptions!!!
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
+                when (ADP.IsCatchableExceptionType(e))
+            {
                 ADP.TraceExceptionWithoutRethrow(e);
 
                 if (!IsBlockingPeriodEnabled())
@@ -1303,13 +1299,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                     QueuePoolCreateRequest();
                                 }
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
-
                                 // Now that CreateObject can throw, we need to catch the exception and discard it.
                                 // There is no further action we can take beyond tracing.  The error will be 
                                 // thrown to the user the next time they request a connection.
