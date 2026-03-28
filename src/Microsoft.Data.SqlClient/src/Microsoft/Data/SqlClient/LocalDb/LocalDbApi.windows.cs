@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                             {
                                 int hResult = Marshal.GetLastWin32Error();
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{0}", hResult);
-                                throw CreateLocalDbException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
+                                throw CreateLocalDbException(errorMessage: StringsHelper.GetString(Strings.LocalDB_MethodNotFound));
                             }
 
                             s_localDbCreateInstance = (LocalDbCreateInstanceDelegate)Marshal.GetDelegateForFunctionPointer(functionAddr, typeof(LocalDbCreateInstanceDelegate));
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                             {
                                 SniNativeWrapper.SniGetLastError(out SniError sniError);
                                 throw CreateLocalDbException(
-                                    errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"),
+                                    errorMessage: StringsHelper.GetString(Strings.LocalDB_FailedGetDLLHandle),
                                     sniError: sniError.sniError);
                             }
                         }
@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
 
             if (hr < 0)
             {
-                throw CreateLocalDbException(errorMessage: StringsHelper.GetString("LocalDB_CreateFailed"), instance: instance, localDbError: hr);
+                throw CreateLocalDbException(errorMessage: StringsHelper.GetString(Strings.LocalDB_CreateFailed), instance: instance, localDbError: hr);
             }
 
             // Mark instance as created
