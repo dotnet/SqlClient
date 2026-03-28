@@ -173,11 +173,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
                     catch (Exception ex)
                         when (!timeout.IsExpired &&
-                              ex is
-                                  SocketException or
-                                  ArgumentException or
-                                  AggregateException &&
-                              hasCachedDNSInfo)
+                              hasCachedDNSInfo &&
+                              ex is (SocketException or ArgumentException or AggregateException))
                     {
                         // Retry with cached IP address
                         int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
