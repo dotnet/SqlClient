@@ -25,6 +25,11 @@ variables:
   - name: BUILD_OUTPUT
     value: $(REPO_ROOT)/artifacts
 
+  # This is where downloaded artifacts should be placed. This will enable other build jobs to
+  # do local NuGet installations with packages build by earlier stages.
+  - name: PACK_INPUT
+    value: $(REPO_ROOT)/packages
+
   # This is where our C# projects place their NuGet package outputs.  This is intentionally
   # separate from packages/ (where downloaded pipeline artifacts go) so that ESRP signing and
   # OneBranch artifact publishing only operate on packages built by the current job.

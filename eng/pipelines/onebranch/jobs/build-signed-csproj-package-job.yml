@@ -16,7 +16,6 @@
 
 parameters:
 
-
   # Signing Parameters -----------------------------------------------------
 
   - name: signingAppRegistrationClientId
@@ -49,11 +48,9 @@ parameters:
 
   - name: symbolsPublishServer
     type: string
-    default: '$(SymbolServer)'
 
   - name: symbolsPublishTokenUri
     type: string
-    default: '$(SymbolTokenUri)'
 
   - name: symbolsUploadAccount
     type: string
@@ -127,15 +124,20 @@ jobs:
       type: windows
 
     variables:
+      # Inform OneBranch that files put in this directory should be uploaded as artifacts.
       ob_outputDirectory: $(PACK_OUTPUT)
+
       # APIScan configuration for this Extension package
       ob_sdl_apiscan_enabled: true
-      ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
-      ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
+      ob_sdl_apiscan_softwareFolder: $(REPO_ROOT)/apiScan/${{ parameters.packageName }}/dlls
+      ob_sdl_apiscan_symbolsFolder: $(REPO_ROOT)/apiScan/${{ parameters.packageName }}/pdbs
       ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
       ob_sdl_apiscan_versionNumber: ${{ parameters.assemblyFileVersion }}
 
+      # If parameters.buildTarget is not provided, default to "Build{parameters.packageName}"
       buildTarget: ${{ coalesce(parameters.buildTarget, format('Build{0}', parameters.packageName)) }}
+
+      # If parameters.packTarget is not provided, default to "Pack{parameters.packageName}"
       packTarget: ${{ coalesce(parameters.packTarget, format('Pack{0}', parameters.packageName)) }}
 
     steps:
@@ -147,7 +149,7 @@ jobs:
             displayName: Download ${{ artifact.displayName }}
             inputs:
               artifactName: ${{ artifact.artifactName }}
-              targetPath: $(Build.SourcesDirectory)/packages
+              targetPath: $(REPO_ROOT)/packages
 
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
@@ -155,7 +157,7 @@ jobs:
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
         parameters:
-          buildTarget: '$(buildTarget)'
+          buildTarget: '${{ variables.buildTarget }}'
           msBuildArguments: >-
             -p:Configuration=Release
             -p:ReferenceType=Package
@@ -164,7 +166,7 @@ jobs:
       # Build the package, producing DLLs only (no NuGet package yet).
       - template: /eng/pipelines/onebranch/steps/build-csproj-step.yml@self
         parameters:
-          buildTarget: $(buildTarget)
+          buildTarget: '${{ variables.buildTarget }}'
           versionProperties: ${{ parameters.versionProperties }}
 
       - ${{ if eq(parameters.isOfficial, true) }}:
@@ -185,7 +187,7 @@ jobs:
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
           Contents: "**/${{ parameters.packageFullName }}.dll"
-          TargetFolder: $(ob_sdl_apiscan_softwareFolder)
+          TargetFolder: ${{ variables.ob_sdl_apiscan_softwareFolder }}
           # We must preserve the folder structure since our C# projects may produce multiple
           # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
           # etc.), and we need to keep those separate for APIScan to work correctly.
@@ -196,13 +198,13 @@ jobs:
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
           Contents: "**/${{ parameters.packageFullName }}.pdb"
-          TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
+          TargetFolder: ${{ variables.ob_sdl_apiscan_symbolsFolder }}
           flattenFolders: false
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).
       - template: /eng/pipelines/onebranch/steps/pack-csproj-step.yml@self
         parameters:
-          packTarget: $(packTarget)
+          packTarget: ${{ variables.packTarget }}
           versionProperties: ${{ parameters.versionProperties }}
 
       - ${{ if eq(parameters.isOfficial, true) }}:
