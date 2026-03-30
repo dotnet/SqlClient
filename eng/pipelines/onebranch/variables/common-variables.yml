@@ -84,11 +84,11 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: mdsPackageVersion
-    value: '7.0.0'
+    value: '7.1.0'
 
   # The NuGet package version for preview releases.
   - name: mdsPackagePreviewVersion
-    value: 7.0.0-preview4.$(Build.BuildNumber)
+    value: 7.1.0-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the MDS package.
   - name: mdsAssemblyFileVersion
