@@ -209,7 +209,7 @@ jobs:
               artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)'
               azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
               packageName: '${{ parameters.packageFullName }}'
-              publishProjectName: 'Microsoft.Data.SqlClient.SNI'
+              publishProjectName: 'Microsoft.Data.SqlClient.SNI' # This is used for all SqlClient packages. Don't know why, but it is.
               publishServer: '$(SymbolServer)'
               publishToInternal: 'true'
               publishToPublic: 'true'
