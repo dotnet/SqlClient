@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             ColumnMappings.Add("ShipName", "shipname");
 
                             bulkcopy.NotifyAfter = 3;
-                            DataTestUtility.AssertThrowsWrapper<OperationAbortedException>(() => bulkcopy.WriteToServer(reader));
+                            DataTestUtility.AssertThrows<OperationAbortedException>(() => bulkcopy.WriteToServer(reader));
                             bulkcopy.SqlRowsCopied -= new SqlRowsCopiedEventHandler(OnRowCopied);
                             bulkcopy.Close();
                         }
