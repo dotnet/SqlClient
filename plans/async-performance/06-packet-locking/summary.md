@@ -41,9 +41,26 @@ Move locking from stream-level to connection-level (`SniTcpHandle`/`SniNpHandle`
 | 3 | [Modernize MARS send flow control](03-mars-send-flow.md) | High | Medium |
 | 4 | [Replace MARS receive queue locking](04-mars-receive-lock.md) | Medium | Low-Medium |
 
+## AppContext Switch Consideration
+
+> **From the [AppContext switch analysis](../appcontext-switches.md):** The
+> `UseCompatibilityProcessSni=false` path introduces a new packet multiplexer
+> (`TdsParserStateObject.Multiplexer.cs`) that fundamentally changes how incoming packets are
+> processed. It maintains `_partialPacket` state, reassembles partial TDS packets, splits buffers
+> containing multiple complete packets, and allocates `Packet` objects to track boundaries.
+>
+> The locking redesign proposed here (moving from stream-level to connection-level `SemaphoreSlim`)
+> must account for this alternative packet processing model. If the compat multiplexer is eventually
+> disabled by default (as recommended in the P2 assessment), the new multiplexer's concurrency
+> assumptions — particularly around `_partialPacket` state and the stricter `AppendPacketData`
+> assertions — become part of the locking contract. The redesigned locks must protect both the
+> current compat path and the new multiplexer path, or be sequenced after the multiplexer becomes
+> the sole path.
+
 ## Dependencies
 
 - Fix 1 is the highest-impact standalone change
 - Fix 2 mirrors Fix 1 for Named Pipes
 - Fixes 3-4 are MARS-specific and more complex
 - A prior MARS rewrite (PR #1357) was reverted — proceed with caution
+- Locking changes should be validated against both `UseCompatibilityProcessSni` modes

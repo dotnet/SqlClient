@@ -46,7 +46,7 @@ The core get/return/create logic is merged. Remaining work:
 
 **Addresses:** #593, #1562
 **Impact:** High — eliminates 250x slowdown for large async reads
-**Effort:** Very High — "akin to brain surgery" per contributor assessment
+**Effort:** ~~Very High~~ High (revised — see AppContext switch analysis)
 
 ### Why P2
 
@@ -62,34 +62,64 @@ issue (#593) represents the most community frustration of any async performance 
 ### Current State
 
 Incremental fixes (#3377, #3534, #2714, #2663) have improved the constant factor but the fundamental
-O(n²) replay problem remains.
+O(n²) replay problem remains **under default settings**.
 
-### P2 Recommendation
+> **AppContext switch analysis finding:** A continuation-based PLP read path that eliminates the
+> O(n²) replay already exists behind two experimental switches:
+>
+> ```text
+> UseCompatibilityProcessSni = false
+>      └─ enables → UseCompatibilityAsyncBehaviour = false
+>           └─ enables → Snapshot.ContinueEnabled = true
+>                └─ enables → continuation-based PLP reads
+> ```
+>
+> When both switches are set to `false`, `TryReadByteArrayWithContinue`,
+> `TryReadStringWithContinue`, and `TryReadPlpBytes` resume from the last offset instead of
+> restarting — precisely the fix for the O(n²) blowup on large values. This code already exists in
+> the codebase but is gated as experimental. See
+> [appcontext-switches.md](appcontext-switches.md#2-usecompatibilityasyncbehaviour) for full
+> analysis.
 
-This is the hardest problem and the most impactful long-term improvement. Two potential approaches:
+This shifts the primary P2 effort from "write new continuation logic" to "harden, test, and
+graduate the existing experimental continuation mode."
 
-**Option A: State Machine Transformation** Convert the TDS parser from a "call stack deep"
-synchronous reader to a resumable state machine that can save/restore only its parsing position (not
-replay from the start).
+### P2 Recommendation (Revised)
 
-- Pro — Eliminates the quadratic complexity entirely
-- Con — Massive refactor of the core TDS parsing loop
-- Reference — PR #2663 (TDS Reader) lays groundwork for this
+**Option C (New, Preferred): Graduate the Existing Continuation Mode** Harden the experimental
+`UseCompatibilityProcessSni=false` + `UseCompatibilityAsyncBehaviour=false` path and promote it
+to default.
 
-**Option B: Streaming Read for Large Values** For `MAX`-typed columns (where the problem is worst),
-implement a streaming read that processes data packet-by-packet rather than buffering the entire
-value.
+1. **Audit** the multiplexer path (`TdsParserStateObject.Multiplexer.cs`) and continuation logic
+   for correctness across connection resets, MARS sessions, and attention signals
+2. **Benchmark** against the #593 scenario (10MB async read) to validate O(n²) elimination
+3. **Identify gaps** in continuation coverage — which PLP read operations are _not_ covered?
+4. **Harden** stricter `AppendPacketData` assertions in the multiplexer that may trigger in edge
+   cases
+5. **Graduate** via phased rollout: AppContext switch opt-in → default → remove compat path
 
-- Pro — Addresses the worst-case scenario without rewriting everything
-- Con — Requires API changes (users would get a `Stream` instead of a `byte[]`)
-- Note — `CommandBehavior.SequentialAccess` + `GetStream()` may already partially address this, but
-  needs verification for async correctness
+- Pro — Code already exists; risk is stabilisation, not greenfield implementation
+- Pro — The multiplexer also provides clean packet boundaries, benefiting other async work
+- Con — The multiplexer adds per-packet `Packet` object allocation overhead
+- Con — Experimental status means limited test coverage today
+
+**Option A: State Machine Transformation** (Long-term, lower urgency if Option C succeeds)
+
+- Eliminates the quadratic complexity entirely for all read operations, not just PLP
+- Massive refactor of the core TDS parsing loop
+- PR #2663 (TDS Reader) lays groundwork
+- Urgency reduced if Option C covers the worst cases (large PLP column reads)
+
+**Option B: Streaming Read for Large Values** (Short-term)
+
+- Addresses the worst-case scenario without rewriting everything
+- `CommandBehavior.SequentialAccess` + `GetStream()` may already partially address this
+- Needs verification for async correctness
 
 **Short-term:** Document that `SequentialAccess` + streaming APIs are the recommended workaround for
 large value reads in async code paths.
 
-**Medium-term:** Investigate whether the TDS Reader (#2663) provides sufficient abstraction to
-implement Option A incrementally.
+**Medium-term:** Pursue Option C — audit, benchmark, and graduate the existing continuation mode.
 
 ---
 
@@ -148,6 +178,13 @@ toward managed SNI for async workloads.
 
 3. Consider making managed SNI the default on all platforms once it reaches performance parity with
    native SNI
+
+> **AppContext switch caveat:** Recommending `UseManagedNetworkingOnWindows=true` for async
+> workloads has implications beyond the open path. Managed SNI replaces IOCP-based I/O completions
+> (dedicated I/O thread pool) with `NetworkStream.ReadAsync` / `SslStream.ReadAsync` on the .NET
+> thread pool, changing **all** steady-state async read/write characteristics. This trade-off
+> should be benchmarked and documented before recommending managed SNI as the default on Windows
+> for async scenarios. See [appcontext-switches.md](appcontext-switches.md#5-usemanagednetworkingonwindows).
 
 ---
 
@@ -211,6 +248,13 @@ actual production errors rather than suboptimal thread usage.
 3. Carefully test MARS scenarios — the reverted PR #1357 is a cautionary tale
 4. This is marked Up-for-Grabs and could be a good community contribution target with proper
    guidance
+
+> **AppContext switch caveat:** The `UseCompatibilityProcessSni=false` multiplexer path introduces
+> new concurrency state (`_partialPacket`, `Packet` object tracking, stricter packet boundary
+> assertions) with its own locking assumptions. Any locking redesign must be validated against both
+> the compat and multiplexer packet processing paths — especially if P2's recommendation to
+> graduate the multiplexer to default is pursued. See
+> [appcontext-switches.md](appcontext-switches.md#3-usecompatibilityprocesssni).
 
 ---
 

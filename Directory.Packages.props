@@ -89,49 +89,35 @@
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
       Version="[$(AkvProviderPackageVersion), $(AkvProviderVersionCeiling))" />
   </ItemGroup>
-
   <!-- ===================================================================== -->
   <!-- Dependencies shared by multiple projects -->
-
   <ItemGroup>
     <PackageVersion Include="Azure.Core" Version="1.51.1" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.2" />
   </ItemGroup>
-
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.13" />
   </ItemGroup>
-
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
   </ItemGroup>
-
   <!-- ===================================================================== -->
   <!-- SqlServer Dependencies -->
-
   <!-- None -->
-
   <!-- ===================================================================== -->
   <!-- Logging Dependencies -->
-
   <!-- None -->
-
   <!-- ===================================================================== -->
   <!-- Abstractions Dependencies -->
-
   <!-- None -->
-
   <!-- ===================================================================== -->
   <!-- Azure Dependencies -->
-
   <ItemGroup>
     <PackageVersion Include="Azure.Identity" Version="1.18.0" />
     <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.84.2" />
   </ItemGroup>
-
   <!-- ===================================================================== -->
   <!-- SqlClient Dependencies -->
-
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="$(SniVersionRange)" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(SniVersionRange)" />
@@ -146,26 +132,21 @@
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
     <PackageVersion Include="System.Threading.Channels" Version="10.0.3" />
   </ItemGroup>
-
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.13" />
     <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="9.0.16" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.13" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.13" />
   </ItemGroup>
-
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
   </ItemGroup>
-
   <!-- ===================================================================== -->
   <!-- AKV Dependencies -->
-
   <ItemGroup>
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.9.0" />
   </ItemGroup>
-
 </Project>
