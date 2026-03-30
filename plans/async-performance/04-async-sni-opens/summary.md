@@ -47,6 +47,20 @@ SqlConnection.OpenAsync()
 | 4 | [Async TDS login](04-async-login.md) | High | Medium |
 | 5 | [End-to-end async open pipeline](05-async-open-pipeline.md) | High | High |
 
+## AppContext Switch Consideration
+
+> **From the [AppContext switch analysis](../appcontext-switches.md):** The
+> `UseManagedNetworkingOnWindows` switch controls native vs managed SNI on Windows. Native SNI uses
+> IOCP-based async I/O with a separate I/O thread pool for completions; managed SNI uses
+> `NetworkStream.ReadAsync` / `SslStream.ReadAsync` on the .NET thread pool.
+>
+> Recommending managed SNI for async workloads (the practical path, since native SNI has no async
+> open API) has implications **beyond the open path**: it changes the entire steady-state I/O
+> completion model. All async read completions move from dedicated IOCP threads to the .NET thread
+> pool, increasing thread pool pressure under heavy load. This trade-off should be explicitly
+> documented and benchmarked before making managed SNI the recommended default for async scenarios
+> on Windows.
+
 ## Dependencies
 
 - Fix 1 is the highest-impact standalone change

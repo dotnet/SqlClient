@@ -332,4 +332,5 @@
     </Project>
   </Folder>
   <Project Path="../doc/apps/AzureAuthentication/AzureAuthentication.csproj" />
+  <Project Path="../plans/async-performance/apps/ThreadStarvation/ThreadStarvation.csproj" />
 </Solution>
