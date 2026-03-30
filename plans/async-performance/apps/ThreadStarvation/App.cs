@@ -45,6 +45,7 @@ public class App : IDisposable
         public bool LogEvents { get; set; }
         public bool Trace { get; set; }
         public bool Verbose { get; set; }
+        public string OutputFormat { get; set; } = "table";
     }
 
     #endregion
@@ -153,12 +154,19 @@ public class App : IDisposable
 
         try
         {
-            // Determine which passes to run.
-            List<PassConfig> passes = BuildPasses(options, baseConnectionString);
-
-            foreach (PassConfig pass in passes)
+            if (options.Mode == "preconnect")
             {
-                RunPass(pass, options).GetAwaiter().GetResult();
+                RunPreconnectMode(baseConnectionString, options).GetAwaiter().GetResult();
+            }
+            else
+            {
+                // Determine which passes to run.
+                List<PassConfig> passes = BuildPasses(options, baseConnectionString);
+
+                foreach (PassConfig pass in passes)
+                {
+                    RunPass(pass, options).GetAwaiter().GetResult();
+                }
             }
 
             return 0;
@@ -270,18 +278,20 @@ public class App : IDisposable
         Stopwatch stopwatch = Stopwatch.StartNew();
         int errorCount;
         int slowCount;
+        long[] latencies;
+        int latencyCount;
 
         if (pass.IsSync)
         {
-            (errorCount, slowCount) = RunSyncPass(pass, options);
+            (errorCount, slowCount, latencies, latencyCount) = RunSyncPass(pass, options);
         }
         else if (options.Launch == "whenall")
         {
-            (errorCount, slowCount) = await RunAsyncWhenAllPass(pass, options, cts.Token);
+            (errorCount, slowCount, latencies, latencyCount) = await RunAsyncWhenAllPass(pass, options, cts.Token);
         }
         else
         {
-            (errorCount, slowCount) = await RunAsyncParallelPass(pass, options, cts.Token);
+            (errorCount, slowCount, latencies, latencyCount) = await RunAsyncParallelPass(pass, options, cts.Token);
         }
 
         stopwatch.Stop();
@@ -293,25 +303,21 @@ public class App : IDisposable
             catch (OperationCanceledException) { }
         }
 
-        Out($"""
-
-            ── Results: {pass.Label} ──────────────────────
-              Total time:    {stopwatch.ElapsedMilliseconds}ms
-              Per query avg: {stopwatch.ElapsedMilliseconds / options.Connections}ms
-              Slow queries:  {slowCount} (>{options.SlowThresholdMs}ms)
-              Errors:        {errorCount}
-            """);
+        PrintPassResults(pass.Label, stopwatch.ElapsedMilliseconds, options,
+            errorCount, slowCount, latencies, latencyCount);
         PrintThreadPoolInfo("Final");
     }
 
     /// <summary>
     /// Runs the async pass using Parallel.ForEachAsync with optional Thread.Sleep injection.
     /// </summary>
-    private async Task<(int errorCount, int slowCount)> RunAsyncParallelPass(
+    private async Task<(int errorCount, int slowCount, long[] latencies, int latencyCount)> RunAsyncParallelPass(
         PassConfig pass, RunOptions options, CancellationToken ct)
     {
         int errors = 0;
         int slows = 0;
+        long[] latencies = new long[options.Connections];
+        int latencyCount = 0;
 
         await Parallel.ForEachAsync(
             Enumerable.Range(1, options.Connections),
@@ -325,24 +331,31 @@ public class App : IDisposable
                 if (options.SleepMs > 0)
                     Thread.Sleep(options.SleepMs);
 
+                Stopwatch sw = Stopwatch.StartNew();
                 (bool ok, bool slow) = await ExecuteQueryAsync(
                     pass.ConnectionString, i, token, options);
+                sw.Stop();
+
+                if (ok)
+                    latencies[Interlocked.Increment(ref latencyCount) - 1] = sw.ElapsedMilliseconds;
                 if (!ok) Interlocked.Increment(ref errors);
                 if (slow) Interlocked.Increment(ref slows);
             });
 
-        return (errors, slows);
+        return (errors, slows, latencies, latencyCount);
     }
 
     /// <summary>
     /// Runs the async pass using Task.WhenAll — fires all queries concurrently without
     /// the Parallel.ForEachAsync scheduling or Thread.Sleep throttle.
     /// </summary>
-    private async Task<(int errorCount, int slowCount)> RunAsyncWhenAllPass(
+    private async Task<(int errorCount, int slowCount, long[] latencies, int latencyCount)> RunAsyncWhenAllPass(
         PassConfig pass, RunOptions options, CancellationToken ct)
     {
         int errors = 0;
         int slows = 0;
+        long[] latencies = new long[options.Connections];
+        int latencyCount = 0;
 
         Task[] tasks = new Task[options.Connections];
         for (int i = 0; i < options.Connections; i++)
@@ -353,8 +366,13 @@ public class App : IDisposable
                 if (options.SleepMs > 0)
                     Thread.Sleep(options.SleepMs);
 
+                Stopwatch sw = Stopwatch.StartNew();
                 (bool ok, bool slow) = await ExecuteQueryAsync(
                     pass.ConnectionString, id, ct, options);
+                sw.Stop();
+
+                if (ok)
+                    latencies[Interlocked.Increment(ref latencyCount) - 1] = sw.ElapsedMilliseconds;
                 if (!ok) Interlocked.Increment(ref errors);
                 if (slow) Interlocked.Increment(ref slows);
             }, ct);
@@ -362,17 +380,19 @@ public class App : IDisposable
 
         await Task.WhenAll(tasks);
 
-        return (errors, slows);
+        return (errors, slows, latencies, latencyCount);
     }
 
     /// <summary>
     /// Runs sync queries via Parallel.ForEach with optional Thread.Sleep injection.
     /// </summary>
-    private (int errorCount, int slowCount) RunSyncPass(
+    private (int errorCount, int slowCount, long[] latencies, int latencyCount) RunSyncPass(
         PassConfig pass, RunOptions options)
     {
         int errors = 0;
         int slows = 0;
+        long[] latencies = new long[options.Connections];
+        int latencyCount = 0;
 
         Parallel.ForEach(
             Enumerable.Range(1, options.Connections),
@@ -382,13 +402,252 @@ public class App : IDisposable
                 if (options.SleepMs > 0)
                     Thread.Sleep(options.SleepMs);
 
+                Stopwatch sw = Stopwatch.StartNew();
                 (bool ok, bool slow) = ExecuteQuerySync(
                     pass.ConnectionString, i, options);
+                sw.Stop();
+
+                if (ok)
+                    latencies[Interlocked.Increment(ref latencyCount) - 1] = sw.ElapsedMilliseconds;
                 if (!ok) Interlocked.Increment(ref errors);
                 if (slow) Interlocked.Increment(ref slows);
             });
 
-        return (errors, slows);
+        return (errors, slows, latencies, latencyCount);
+    }
+
+    #endregion
+
+    // ──────────────────────────────────────────────────────────────────
+    #region Preconnect Mode
+
+    /// <summary>
+    /// Opens all connections up front, then runs queries on them — first sync, then async.
+    /// This isolates query execution time from connection establishment time.
+    /// </summary>
+    private async Task RunPreconnectMode(string baseConnectionString, RunOptions options)
+    {
+        Out($"""
+
+            ══════════════════════════════════════════════════════════
+              Preconnect Mode  ({options.Connections} connections)
+            ══════════════════════════════════════════════════════════
+            """);
+
+        // ── Phase 1: Open all connections ────────────────────────────
+        Out($"Opening {options.Connections} connections...");
+        Stopwatch connectSw = Stopwatch.StartNew();
+
+        SqlConnection[] connections = new SqlConnection[options.Connections];
+        try
+        {
+            for (int i = 0; i < options.Connections; i++)
+            {
+                connections[i] = new SqlConnection(baseConnectionString);
+                await connections[i].OpenAsync().ConfigureAwait(false);
+            }
+
+            connectSw.Stop();
+            Out($"All {options.Connections} connections opened in {connectSw.ElapsedMilliseconds}ms.\n");
+            PrintThreadPoolInfo("Post-Connect");
+
+            // ── Phase 2: Sync queries on pre-opened connections ─────
+            Out($"""
+
+                ── Preconnect: Sync Pass ──────────────────────────────
+                """);
+
+            using CancellationTokenSource syncCts = new();
+            Task? syncMonitor = StartMonitor(syncCts.Token, options);
+
+            Stopwatch syncSw = Stopwatch.StartNew();
+            int syncErrors = 0;
+            int syncSlows = 0;
+            long[] syncLatencies = new long[options.Connections];
+            int syncLatencyCount = 0;
+
+            Parallel.For(0, options.Connections,
+                new ParallelOptions { MaxDegreeOfParallelism = options.Connections },
+                i =>
+                {
+                    if (options.SleepMs > 0)
+                        Thread.Sleep(options.SleepMs);
+
+                    Stopwatch sw = Stopwatch.StartNew();
+                    (bool ok, bool slow) = ExecuteQueryOnOpenConnectionSync(
+                        connections[i], i + 1, options);
+                    sw.Stop();
+
+                    if (ok)
+                        syncLatencies[Interlocked.Increment(ref syncLatencyCount) - 1] = sw.ElapsedMilliseconds;
+                    if (!ok) Interlocked.Increment(ref syncErrors);
+                    if (slow) Interlocked.Increment(ref syncSlows);
+                });
+
+            syncSw.Stop();
+            syncCts.Cancel();
+            await StopMonitor(syncMonitor);
+
+            PrintPassResults("Preconnect Sync", syncSw.ElapsedMilliseconds, options,
+                syncErrors, syncSlows, syncLatencies, syncLatencyCount);
+            PrintThreadPoolInfo("Post-Sync");
+
+            // ── Phase 3: Async queries on pre-opened connections ────
+            Out($"""
+
+                ── Preconnect: Async Pass ─────────────────────────────
+                """);
+
+            using CancellationTokenSource asyncCts = new();
+            Task? asyncMonitor = StartMonitor(asyncCts.Token, options);
+
+            Stopwatch asyncSw = Stopwatch.StartNew();
+            int asyncErrors = 0;
+            int asyncSlows = 0;
+            long[] asyncLatencies = new long[options.Connections];
+            int asyncLatencyCount = 0;
+
+            Task[] tasks = new Task[options.Connections];
+            for (int i = 0; i < options.Connections; i++)
+            {
+                int id = i + 1;
+                SqlConnection conn = connections[i];
+                tasks[i] = Task.Run(async () =>
+                {
+                    if (options.SleepMs > 0)
+                        Thread.Sleep(options.SleepMs);
+
+                    Stopwatch sw = Stopwatch.StartNew();
+                    (bool ok, bool slow) = await ExecuteQueryOnOpenConnectionAsync(
+                        conn, id, CancellationToken.None, options);
+                    sw.Stop();
+
+                    if (ok)
+                        asyncLatencies[Interlocked.Increment(ref asyncLatencyCount) - 1] = sw.ElapsedMilliseconds;
+                    if (!ok) Interlocked.Increment(ref asyncErrors);
+                    if (slow) Interlocked.Increment(ref asyncSlows);
+                });
+            }
+
+            await Task.WhenAll(tasks);
+
+            asyncSw.Stop();
+            asyncCts.Cancel();
+            await StopMonitor(asyncMonitor);
+
+            PrintPassResults("Preconnect Async", asyncSw.ElapsedMilliseconds, options,
+                asyncErrors, asyncSlows, asyncLatencies, asyncLatencyCount);
+            PrintThreadPoolInfo("Post-Async");
+        }
+        finally
+        {
+            // Dispose all connections.
+            foreach (SqlConnection? conn in connections)
+            {
+                conn?.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Executes a query synchronously on an already-open connection.
+    /// </summary>
+    private static (bool ok, bool slow) ExecuteQueryOnOpenConnectionSync(
+        SqlConnection connection, int connectionId, RunOptions options)
+    {
+        Stopwatch sw = Stopwatch.StartNew();
+        try
+        {
+            using SqlCommand command = new(options.Query, connection);
+            command.CommandTimeout = 30;
+
+            using SqlDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                _ = reader.GetValue(0);
+            }
+
+            sw.Stop();
+            bool slow = sw.ElapsedMilliseconds > options.SlowThresholdMs;
+            if (slow)
+                Out($"[{connectionId}] SLOW: {sw.ElapsedMilliseconds}ms");
+            else if (connectionId > 0 && connectionId % 100 == 0)
+                Out($"[{connectionId}] {sw.ElapsedMilliseconds}ms");
+
+            return (true, slow);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            Out($"[{connectionId}] ERROR after {sw.ElapsedMilliseconds}ms: {ex.Message}");
+            return (false, false);
+        }
+    }
+
+    /// <summary>
+    /// Executes a query asynchronously on an already-open connection.
+    /// </summary>
+    private static async Task<(bool ok, bool slow)> ExecuteQueryOnOpenConnectionAsync(
+        SqlConnection connection, int connectionId, CancellationToken ct, RunOptions options)
+    {
+        Stopwatch sw = Stopwatch.StartNew();
+        try
+        {
+            using SqlCommand command = new(options.Query, connection);
+            command.CommandTimeout = 30;
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync(ct)
+                .ConfigureAwait(false);
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                _ = reader.GetValue(0);
+            }
+
+            sw.Stop();
+            bool slow = sw.ElapsedMilliseconds > options.SlowThresholdMs;
+            if (slow)
+                Out($"[{connectionId}] SLOW: {sw.ElapsedMilliseconds}ms");
+            else if (connectionId > 0 && connectionId % 100 == 0)
+                Out($"[{connectionId}] {sw.ElapsedMilliseconds}ms");
+
+            return (true, slow);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            Out($"[{connectionId}] ERROR after {sw.ElapsedMilliseconds}ms: {ex.Message}");
+            return (false, false);
+        }
+    }
+
+    /// <summary>
+    /// Starts a thread-pool monitor task if monitoring is enabled.
+    /// </summary>
+    private static Task? StartMonitor(CancellationToken ct, RunOptions options)
+    {
+        if (options.MonitorIntervalMs <= 0)
+            return null;
+
+        return Task.Run(async () =>
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(options.MonitorIntervalMs, ct).ConfigureAwait(false);
+                PrintThreadPoolInfo("Monitor");
+            }
+        }, ct);
+    }
+
+    /// <summary>
+    /// Stops a monitor task gracefully.
+    /// </summary>
+    private static async Task StopMonitor(Task? monitorTask)
+    {
+        if (monitorTask != null)
+        {
+            try { await monitorTask; }
+            catch (OperationCanceledException) { }
+        }
     }
 
     #endregion
@@ -539,6 +798,170 @@ public class App : IDisposable
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Error.WriteLine(message);
         Console.ResetColor();
+    }
+
+    #endregion
+
+    // ──────────────────────────────────────────────────────────────────
+    #region Statistics & Formatting
+
+    private record LatencyStats(
+        int Count, long Min, long Max, double Avg,
+        long P50, long P95, long P99);
+
+    private static LatencyStats ComputeStats(long[] latencies, int count)
+    {
+        if (count == 0)
+            return new(0, 0, 0, 0, 0, 0, 0);
+
+        Array.Sort(latencies, 0, count);
+        long sum = 0;
+        for (int i = 0; i < count; i++)
+            sum += latencies[i];
+
+        return new(
+            count,
+            latencies[0],
+            latencies[count - 1],
+            (double)sum / count,
+            Percentile(latencies, count, 50),
+            Percentile(latencies, count, 95),
+            Percentile(latencies, count, 99));
+    }
+
+    private static long Percentile(long[] sorted, int count, int p)
+    {
+        double rank = p / 100.0 * (count - 1);
+        int lower = (int)rank;
+        int upper = lower + 1;
+        if (upper >= count)
+            return sorted[count - 1];
+        double frac = rank - lower;
+        return (long)(sorted[lower] + frac * (sorted[upper] - sorted[lower]));
+    }
+
+    private static void PrintPassResults(
+        string label, long totalMs, RunOptions options,
+        int errorCount, int slowCount, long[] latencies, int latencyCount)
+    {
+        LatencyStats stats = ComputeStats(latencies, latencyCount);
+
+        switch (options.OutputFormat)
+        {
+            case "json":
+                PrintResultsJson(label, totalMs, options, errorCount, slowCount, stats);
+                break;
+            case "histogram":
+                PrintResultsTable(label, totalMs, options, errorCount, slowCount, stats);
+                PrintHistogram(latencies, latencyCount);
+                break;
+            default: // "table"
+                PrintResultsTable(label, totalMs, options, errorCount, slowCount, stats);
+                break;
+        }
+    }
+
+    private static void PrintResultsTable(
+        string label, long totalMs, RunOptions options,
+        int errorCount, int slowCount, LatencyStats stats)
+    {
+        Out($"""
+
+            ── Results: {label} ──────────────────────
+              Total time:    {totalMs}ms
+              Per query avg: {totalMs / Math.Max(options.Connections, 1)}ms
+              Slow queries:  {slowCount} (>{options.SlowThresholdMs}ms)
+              Errors:        {errorCount}
+            """);
+
+        if (stats.Count > 0)
+        {
+            Out($"""
+              Latency (ms):
+                Min:  {stats.Min}
+                Max:  {stats.Max}
+                Avg:  {stats.Avg:F1}
+                P50:  {stats.P50}
+                P95:  {stats.P95}
+                P99:  {stats.P99}
+            """);
+        }
+    }
+
+    private static void PrintResultsJson(
+        string label, long totalMs, RunOptions options,
+        int errorCount, int slowCount, LatencyStats stats)
+    {
+        var result = new
+        {
+            pass = label,
+            totalMs,
+            perQueryAvgMs = totalMs / Math.Max(options.Connections, 1),
+            slowQueries = slowCount,
+            slowThresholdMs = options.SlowThresholdMs,
+            errors = errorCount,
+            latency = new
+            {
+                count = stats.Count,
+                minMs = stats.Min,
+                maxMs = stats.Max,
+                avgMs = Math.Round(stats.Avg, 1),
+                p50Ms = stats.P50,
+                p95Ms = stats.P95,
+                p99Ms = stats.P99
+            }
+        };
+
+        Out(System.Text.Json.JsonSerializer.Serialize(result,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void PrintHistogram(long[] latencies, int count)
+    {
+        if (count == 0)
+            return;
+
+        long[] bucketCeilings = { 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000 };
+        int bucketCount = bucketCeilings.Length + 1;
+        int[] buckets = new int[bucketCount];
+
+        for (int i = 0; i < count; i++)
+        {
+            long val = latencies[i];
+            int b = 0;
+            while (b < bucketCeilings.Length && val > bucketCeilings[b])
+                b++;
+            buckets[b]++;
+        }
+
+        int maxBucket = 0;
+        for (int i = 0; i < bucketCount; i++)
+            if (buckets[i] > maxBucket)
+                maxBucket = buckets[i];
+
+        const int barWidth = 40;
+        Out("\n  Latency Histogram (ms):");
+
+        for (int i = 0; i < bucketCount; i++)
+        {
+            if (buckets[i] == 0)
+                continue;
+
+            string rangeLabel;
+            if (i == 0)
+                rangeLabel = $"    0-{bucketCeilings[0],5}";
+            else if (i < bucketCeilings.Length)
+                rangeLabel = $"{bucketCeilings[i - 1],5}-{bucketCeilings[i],5}";
+            else
+                rangeLabel = $"{bucketCeilings[^1],5}+    ";
+
+            int barLen = maxBucket > 0 ? (int)((long)buckets[i] * barWidth / maxBucket) : 0;
+            if (buckets[i] > 0 && barLen == 0)
+                barLen = 1;
+
+            string bar = new('\u2588', barLen);
+            Out($"  {rangeLabel} |{bar} {buckets[i]}");
+        }
     }
 
     #endregion

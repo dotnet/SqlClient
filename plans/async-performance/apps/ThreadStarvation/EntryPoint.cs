@@ -32,11 +32,12 @@ public static class EntryPoint
         Option<string> modeOption = new("--mode", "-m")
         {
             Description =
-                "Execution mode: async, sync, or both. " +
-                "'both' runs sync first, then async, for direct comparison.",
+                "Execution mode: async, sync, both, or preconnect. " +
+                "'both' runs sync first, then async, for direct comparison. " +
+                "'preconnect' opens all connections first, then runs queries sync and async.",
             DefaultValueFactory = _ => "async"
         };
-        modeOption.AcceptOnlyFromAmong("async", "sync", "both");
+        modeOption.AcceptOnlyFromAmong("async", "sync", "both", "preconnect");
 
         Option<bool> marsOption = new("--mars")
         {
@@ -126,6 +127,14 @@ public static class EntryPoint
             Description = "Enable verbose output with detailed error information."
         };
 
+        Option<string> outputFormatOption = new("--output-format")
+        {
+            Description =
+                "Output format for results: 'table' (default), 'json', or 'histogram'.",
+            DefaultValueFactory = _ => "table"
+        };
+        outputFormatOption.AcceptOnlyFromAmong("table", "json", "histogram");
+
         // ── Root command ────────────────────────────────────────────
         RootCommand rootCommand = new(
             """
@@ -154,7 +163,8 @@ public static class EntryPoint
             poolingOption,
             logOption,
             traceOption,
-            verboseOption
+            verboseOption,
+            outputFormatOption
         };
 
         rootCommand.SetAction(parseResult =>
@@ -177,7 +187,8 @@ public static class EntryPoint
                 Pooling = parseResult.GetValue(poolingOption),
                 LogEvents = parseResult.GetValue(logOption),
                 Trace = parseResult.GetValue(traceOption),
-                Verbose = parseResult.GetValue(verboseOption)
+                Verbose = parseResult.GetValue(verboseOption),
+                OutputFormat = parseResult.GetValue(outputFormatOption)!
             };
 
             using App app = new();

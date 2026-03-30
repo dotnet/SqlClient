@@ -46,6 +46,7 @@ The user has identified a Work Item that currently lacks adequate detail. Your j
 5.  **Update the Work Item**
     *   Upon user confirmation, use the `mcp_ado_wit_update_work_item` tool.
     *   **Crucial**: specific fields like "Acceptance Criteria" or "Reproduction Steps" are often not visible on all work item types (especially Tasks). **Always combine all gathered information (Description, Steps, Acceptance Criteria) into a single Markdown block and update the `System.Description` field.** Do not split them into separate fields.
+    *   **Markdown rendering**: Azure DevOps defaults multiline fields to HTML mode, which does not render Markdown correctly. After writing the description content, always use `mcp_ado_wit_update_work_items_batch` with `"format": "Markdown"` and `"op": "Replace"` on `/fields/System.Description` to ensure the field is stored and rendered as Markdown. A single-item batch is fine.
     *   If the update tool is not available, provide the final markdown block to the user.
 
 ## Variables
