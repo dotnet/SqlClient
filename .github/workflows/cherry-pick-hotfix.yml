@@ -59,11 +59,12 @@ jobs:
           # Pass label names via env to avoid script injection from label text.
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          # Extract all version strings (e.g. "7.0.1", "8.0.0") from "Hotfix X.Y.Z" labels
-          # and build a JSON array for the matrix strategy.
-          VERSIONS=$(echo "${LABELS}" | tr ',' '\n' | sed -n 's/^Hotfix \(.*\)/\1/p')
+          # Extract version strings matching X.Y.Z (e.g. "7.0.1", "8.0.0") from
+          # "Hotfix X.Y.Z" labels. Rejects malformed labels to avoid invalid
+          # branch names or milestone lookups.
+          VERSIONS=$(echo "${LABELS}" | tr ',' '\n' | sed -n 's/^Hotfix \([0-9]\+\.[0-9]\+\.[0-9]\+\)$/\1/p')
           if [[ -z "${VERSIONS}" ]]; then
-            echo "::error::No 'Hotfix <version>' label found."
+            echo "::error::No valid 'Hotfix X.Y.Z' label found. Labels must match 'Hotfix <major>.<minor>.<patch>'."
             exit 1
           fi
           # Convert newline-separated list to JSON array: ["7.0.1","8.0.0"]
@@ -121,7 +122,7 @@ jobs:
 
           # --mainline 1 is required for merge commits (2+ parents) but fails
           # on squash-merge commits (single parent). Detect and adapt.
-          PARENT_COUNT=$(git rev-list --count --parents -n1 "${MERGE_COMMIT_SHA}" | awk '{print NF - 1}')
+          PARENT_COUNT=$(git rev-list --parents -n1 "${MERGE_COMMIT_SHA}" | awk '{print NF - 1}')
           MAINLINE_FLAG=""
           if [[ "${PARENT_COUNT}" -gt 1 ]]; then
             MAINLINE_FLAG="--mainline 1"
@@ -155,5 +156,5 @@ jobs:
               --head "${CHERRY_PICK_BRANCH}" \
               --title "[${VERSION} Cherry-pick - CONFLICTS] ${PR_TITLE}" \
               --milestone "${VERSION}" \
-              --body $'Cherry-pick of #'"${PR_NUMBER}"' ('"${MERGE_COMMIT_SHA}"') into `'"${TARGET_BRANCH}"'` **failed due to merge conflicts**.\n\nPlease resolve manually:\n```bash\ngit fetch origin\ngit checkout -b cherry-pick/pr-'"${PR_NUMBER}"'-to-'"${VERSION}"' origin/'"${TARGET_BRANCH}"'\ngit cherry-pick '"${MERGE_COMMIT_SHA}"' '"${MAINLINE_FLAG}"'\n# resolve conflicts\ngit push origin cherry-pick/pr-'"${PR_NUMBER}"'-to-'"${VERSION}"' --force\n```'
+              --body $'Cherry-pick of #'"${PR_NUMBER}"' ('"${MERGE_COMMIT_SHA}"') into `'"${TARGET_BRANCH}"'` **failed due to merge conflicts**.\n\nPlease resolve manually:\n```bash\ngit fetch origin\ngit checkout '"${CHERRY_PICK_BRANCH}"'\ngit cherry-pick '"${MERGE_COMMIT_SHA}"' '"${MAINLINE_FLAG}"'\n# resolve conflicts\ngit push origin '"${CHERRY_PICK_BRANCH}"' --force\n```'
           fi
