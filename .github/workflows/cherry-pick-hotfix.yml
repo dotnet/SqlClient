@@ -156,6 +156,14 @@ jobs:
           CHERRY_PICK_BRANCH="dev/automation/pr-${PR_NUMBER}-to-${VERSION}"
 
           git fetch origin "${TARGET_BRANCH}"
+
+          # Check if the commit's changes are already applied on the target branch.
+          # 'git cherry' marks already-applied patches with '-' and unapplied with '+'.
+          if git cherry "origin/${TARGET_BRANCH}" "${MERGE_COMMIT_SHA}^" "${MERGE_COMMIT_SHA}" | grep -q '^-'; then
+            echo "::notice::Commit ${MERGE_COMMIT_SHA} is already applied on ${TARGET_BRANCH}. Skipping cherry-pick."
+            exit 0
+          fi
+
           git checkout -b "${CHERRY_PICK_BRANCH}" "origin/${TARGET_BRANCH}"
 
           # --mainline 1 is required for merge commits (2+ parents) but fails
