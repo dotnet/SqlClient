@@ -562,6 +562,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        public void TestGetFieldTypeReturnsSqlVectorForVectorColumn()
+        {
+            using var connection = new SqlConnection(s_connectionString);
+            connection.Open();
+
+            // Insert a row so we can query it
+            using (var insertCmd = new SqlCommand(s_insertCmdString, connection))
+            {
+                var param = insertCmd.Parameters.Add(s_vectorParamName, SqlDbTypeExtensions.Vector);
+                param.Value = new SqlVector<float>(VectorFloat32TestData.testData);
+                insertCmd.ExecuteNonQuery();
+            }
+
+            using var selectCmd = new SqlCommand(s_selectCmdString, connection);
+            using var reader = selectCmd.ExecuteReader();
+
+            // Verify GetFieldType returns SqlVector<float> for the vector column
+            Assert.Equal(typeof(SqlVector<float>), reader.GetFieldType(0));
+
+            // Verify GetProviderSpecificFieldType also returns SqlVector<float>
+            Assert.Equal(typeof(SqlVector<float>), reader.GetProviderSpecificFieldType(0));
+
+            // Verify that GetValue returns an instance consistent with GetFieldType
+            Assert.True(reader.Read(), "No data found in the table.");
+            object value = reader.GetValue(0);
+            Assert.IsType<SqlVector<float>>(value);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
         public void TestInsertVectorsFloat32WithPrepare()
         {
             SqlConnection conn = new SqlConnection(s_connectionString);

@@ -1307,6 +1307,17 @@ namespace Microsoft.Data.SqlClient
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    switch (metaData.scale)
+                    {
+                        case (byte)MetaType.SqlVectorElementType.Float32:
+                            fieldType = typeof(SqlVector<float>);
+                            break;
+                        default:
+                            throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
+                    }
+                }
                 else
                 { // For all other types, including Xml - use data in MetaType.
                     if (metaData.cipherMD != null)
@@ -1421,6 +1432,17 @@ namespace Microsoft.Data.SqlClient
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
+                }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    switch (metaData.scale)
+                    {
+                        case (byte)MetaType.SqlVectorElementType.Float32:
+                            providerSpecificFieldType = typeof(SqlVector<float>);
+                            break;
+                        default:
+                            throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
+                    }
                 }
                 else
                 {
