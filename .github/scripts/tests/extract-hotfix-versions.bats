@@ -147,21 +147,20 @@ get_versions() {
   export EVENT_LABEL="Hotfix 7.0.1"
   export LABELS="Hotfix 7.0.1,Hotfix 8.0.0"
 
-  # Mock git and gh to report no existing branch/PR.
-  # Create stub 'git' and 'gh' in PATH that return empty/zero.
+  # Mock gh to report no existing branch or PR.
+  # The script now uses 'gh api' for branch checks (no git checkout in this job).
   local stub_dir
   stub_dir="$(mktemp -d)"
-  cat > "${stub_dir}/git" <<'STUB'
-#!/usr/bin/env bash
-# ls-remote --heads: return nothing (no existing branch)
-exit 0
-STUB
   cat > "${stub_dir}/gh" <<'STUB'
 #!/usr/bin/env bash
-# pr list: return empty array ("0" PRs)
+# gh api repos/.../git/ref/heads/...: exit 1 (branch not found)
+# gh pr list: return "0" PRs
+if [[ "$1" == "api" && "$2" == repos/*/git/ref/heads/* ]]; then
+  exit 1
+fi
 echo "0"
 STUB
-  chmod +x "${stub_dir}/git" "${stub_dir}/gh"
+  chmod +x "${stub_dir}/gh"
 
   export PATH="${stub_dir}:${PATH}"
   run bash "${SCRIPT}"
@@ -198,12 +197,15 @@ STUB
 
   local stub_dir
   stub_dir="$(mktemp -d)"
-  # git ls-remote returns a matching ref (branch exists).
-  cat > "${stub_dir}/git" <<'STUB'
+  # gh api returns success — branch exists on the remote.
+  cat > "${stub_dir}/gh" <<'STUB'
 #!/usr/bin/env bash
-echo "abc123	refs/heads/dev/automation/pr-42-to-7.0.1"
+if [[ "$1" == "api" && "$2" == repos/*/git/ref/heads/* ]]; then
+  exit 0
+fi
+echo "0"
 STUB
-  chmod +x "${stub_dir}/git"
+  chmod +x "${stub_dir}/gh"
   export PATH="${stub_dir}:${PATH}"
 
   run bash "${SCRIPT}"
@@ -221,16 +223,15 @@ STUB
 
   local stub_dir
   stub_dir="$(mktemp -d)"
-  # git ls-remote returns nothing (no branch), but gh reports an existing PR.
-  cat > "${stub_dir}/git" <<'STUB'
-#!/usr/bin/env bash
-exit 0
-STUB
+  # gh api for branch check returns 1 (not found), but pr list returns 1 PR.
   cat > "${stub_dir}/gh" <<'STUB'
 #!/usr/bin/env bash
+if [[ "$1" == "api" && "$2" == repos/*/git/ref/heads/* ]]; then
+  exit 1
+fi
 echo "1"
 STUB
-  chmod +x "${stub_dir}/git" "${stub_dir}/gh"
+  chmod +x "${stub_dir}/gh"
   export PATH="${stub_dir}:${PATH}"
 
   run bash "${SCRIPT}"

@@ -170,7 +170,8 @@ lookup_milestone() {
 }
 
 # -- Step 4: Attempt the cherry-pick ------------------------------------------
-if git cherry-pick "${MERGE_COMMIT_SHA}" ${MAINLINE_FLAG}; then
+# Options (--mainline) must precede the commit operand.
+if git cherry-pick ${MAINLINE_FLAG} "${MERGE_COMMIT_SHA}"; then
   # --- Success path ---
   echo "Cherry-pick succeeded. Pushing branch and creating PR."
   git push origin "${CHERRY_PICK_BRANCH}"
@@ -189,11 +190,12 @@ else
   git cherry-pick --abort
 
   # Build the cherry-pick command for inclusion in the conflict-resolution
-  # instructions. Only include --mainline 1 when the commit is a true merge.
-  CHERRY_PICK_CMD="git cherry-pick ${MERGE_COMMIT_SHA}"
+  # instructions. Options must precede the commit SHA.
+  CHERRY_PICK_CMD="git cherry-pick"
   if [[ -n "${MAINLINE_FLAG}" ]]; then
     CHERRY_PICK_CMD="${CHERRY_PICK_CMD} ${MAINLINE_FLAG}"
   fi
+  CHERRY_PICK_CMD="${CHERRY_PICK_CMD} ${MERGE_COMMIT_SHA}"
 
   # Create a branch with an empty commit so a PR can be opened. The PR body
   # contains step-by-step instructions for manual conflict resolution.

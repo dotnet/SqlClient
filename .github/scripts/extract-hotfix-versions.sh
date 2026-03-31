@@ -102,9 +102,13 @@ if [[ "${EVENT_ACTION}" == "labeled" ]]; then
   # Guard against duplicate cherry-picks.  If the cherry-pick branch already
   # exists on the remote, or a PR (open, closed, or merged) was already created
   # from it, there is nothing left to do.
+  #
+  # NOTE: We use the GitHub API rather than 'git ls-remote' because the
+  # detect-versions job does not check out the repository (no .git directory).
   CHERRY_PICK_BRANCH="dev/automation/pr-${PR_NUMBER}-to-${CANDIDATE}"
 
-  if git ls-remote --heads origin "${CHERRY_PICK_BRANCH}" | grep -q .; then
+  if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${CHERRY_PICK_BRANCH}" \
+      --silent 2>/dev/null; then
     echo "Cherry-pick branch '${CHERRY_PICK_BRANCH}' already exists. Skipping."
     echo "versions=[]" >> "${GITHUB_OUTPUT}"
     exit 0
