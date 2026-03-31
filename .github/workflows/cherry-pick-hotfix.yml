@@ -45,9 +45,12 @@ jobs:
   # a JSON array so the matrix strategy can fan out one job per version.
   detect-versions:
     runs-on: ubuntu-latest
-    # Only fire for merged PRs that have at least one "Hotfix *" label.
+    # Only fire for merged PRs targeting the default branch that have at least
+    # one "Hotfix *" label.  The default-branch guard prevents recursive
+    # cherry-picks when a cherry-pick PR is merged into a release branch.
     if: >-
       github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
       join(github.event.pull_request.labels.*.name, ' ') != '' &&
       contains(join(github.event.pull_request.labels.*.name, ','), 'Hotfix ')
     outputs:
@@ -58,11 +61,46 @@ jobs:
         env:
           # Pass label names via env to avoid script injection from label text.
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          # For the 'labeled' event, this is the single label that was just added.
+          # For the 'closed' event this is empty, meaning all labels are processed.
+          EVENT_LABEL: ${{ github.event.label.name || '' }}
+          EVENT_ACTION: ${{ github.event.action }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # For the 'labeled' event, only process the newly added label to avoid
+          # re-processing labels that were already cherry-picked.
+          if [[ "${EVENT_ACTION}" == "labeled" ]]; then
+            CANDIDATE=$(echo "${EVENT_LABEL}" | sed -n 's/^Hotfix \([0-9]\+\.[0-9]\+\.[0-9]\+\)$/\1/p')
+            if [[ -z "${CANDIDATE}" ]]; then
+              echo "Label '${EVENT_LABEL}' is not a valid 'Hotfix X.Y.Z' label. Skipping."
+              echo "versions=[]" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+
+            # Skip if a cherry-pick branch or open PR already exists for this version.
+            CHERRY_PICK_BRANCH="dev/automation/pr-${PR_NUMBER}-to-${CANDIDATE}"
+            if git ls-remote --heads origin "${CHERRY_PICK_BRANCH}" | grep -q .; then
+              echo "Cherry-pick branch '${CHERRY_PICK_BRANCH}' already exists. Skipping."
+              echo "versions=[]" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+            EXISTING_PR=$(gh pr list --head "${CHERRY_PICK_BRANCH}" --state all --json number --jq 'length')
+            if [[ "${EXISTING_PR}" -gt 0 ]]; then
+              echo "A cherry-pick PR from '${CHERRY_PICK_BRANCH}' already exists. Skipping."
+              echo "versions=[]" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+
+            VERSIONS="${CANDIDATE}"
+          else
+            # 'closed' event: process all hotfix labels on the PR.
+            VERSIONS=$(echo "${LABELS}" | tr ',' '\n' | sed -n 's/^Hotfix \([0-9]\+\.[0-9]\+\.[0-9]\+\)$/\1/p')
+          fi
+
           # Extract version strings matching X.Y.Z (e.g. "7.0.1", "8.0.0") from
           # "Hotfix X.Y.Z" labels. Rejects malformed labels to avoid invalid
           # branch names or milestone lookups.
-          VERSIONS=$(echo "${LABELS}" | tr ',' '\n' | sed -n 's/^Hotfix \([0-9]\+\.[0-9]\+\.[0-9]\+\)$/\1/p')
           if [[ -z "${VERSIONS}" ]]; then
             echo "::error::No valid 'Hotfix X.Y.Z' label found. Labels must match 'Hotfix <major>.<minor>.<patch>'."
             exit 1
@@ -131,16 +169,33 @@ jobs:
           if git cherry-pick "${MERGE_COMMIT_SHA}" ${MAINLINE_FLAG}; then
             git push origin "${CHERRY_PICK_BRANCH}"
 
+            # Look up the milestone; if it doesn't exist yet, create the PR
+            # without one and note the gap in the description.
+            MILESTONE_ARG=""
+            MILESTONE_NOTE=""
+            if gh api "repos/${GITHUB_REPOSITORY}/milestones" --jq '.[].title' | grep -qx "${VERSION}"; then
+              MILESTONE_ARG="--milestone ${VERSION}"
+            else
+              echo "::warning::Milestone '${VERSION}' does not exist. PR will be created without a milestone."
+              MILESTONE_NOTE=$'\n\n> **Note:** Milestone `'"${VERSION}"'` does not exist yet. Please create it and assign this PR manually.'
+            fi
+
             gh pr create \
               --base "${TARGET_BRANCH}" \
               --head "${CHERRY_PICK_BRANCH}" \
               --title "[${VERSION} Cherry-pick] ${PR_TITLE}" \
-              --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`." \
-              --milestone "${VERSION}"
+              --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`.${MILESTONE_NOTE}" \
+              ${MILESTONE_ARG}
           else
             # Surface the failure in the workflow run summary.
             echo "::error::Cherry-pick of ${MERGE_COMMIT_SHA} failed due to conflicts."
             git cherry-pick --abort
+
+            # Build the cherry-pick command for the conflict-resolution instructions.
+            CHERRY_PICK_CMD="git cherry-pick ${MERGE_COMMIT_SHA}"
+            if [[ -n "${MAINLINE_FLAG}" ]]; then
+              CHERRY_PICK_CMD="${CHERRY_PICK_CMD} ${MAINLINE_FLAG}"
+            fi
 
             # Create a PR with an empty commit so the team is notified and can
             # resolve conflicts manually. The PR body includes the commands needed.
@@ -148,13 +203,23 @@ jobs:
             git checkout -B "${CHERRY_PICK_BRANCH}"
             git commit --allow-empty \
               -m "Cherry-pick of #${PR_NUMBER} requires manual resolution" \
-              -m "To resolve, run:  git cherry-pick ${MERGE_COMMIT_SHA} ${MAINLINE_FLAG}"
+              -m "To resolve, run:  ${CHERRY_PICK_CMD}"
             git push origin "${CHERRY_PICK_BRANCH}"
+
+            # Look up the milestone for the conflict PR as well.
+            MILESTONE_ARG=""
+            MILESTONE_NOTE=""
+            if gh api "repos/${GITHUB_REPOSITORY}/milestones" --jq '.[].title' | grep -qx "${VERSION}"; then
+              MILESTONE_ARG="--milestone ${VERSION}"
+            else
+              echo "::warning::Milestone '${VERSION}' does not exist. PR will be created without a milestone."
+              MILESTONE_NOTE=$'\n\n> **Note:** Milestone `'"${VERSION}"'` does not exist yet. Please create it and assign this PR manually.'
+            fi
 
             gh pr create \
               --base "${TARGET_BRANCH}" \
               --head "${CHERRY_PICK_BRANCH}" \
               --title "[${VERSION} Cherry-pick - CONFLICTS] ${PR_TITLE}" \
-              --milestone "${VERSION}" \
-              --body $'Cherry-pick of #'"${PR_NUMBER}"' ('"${MERGE_COMMIT_SHA}"') into `'"${TARGET_BRANCH}"'` **failed due to merge conflicts**.\n\nPlease resolve manually:\n```bash\ngit fetch origin\ngit checkout '"${CHERRY_PICK_BRANCH}"'\ngit cherry-pick '"${MERGE_COMMIT_SHA}"' '"${MAINLINE_FLAG}"'\n# resolve conflicts\ngit push origin '"${CHERRY_PICK_BRANCH}"' --force\n```'
+              ${MILESTONE_ARG} \
+              --body $'Cherry-pick of #'"${PR_NUMBER}"' ('"${MERGE_COMMIT_SHA}"') into `'"${TARGET_BRANCH}"'` **failed due to merge conflicts**.'"${MILESTONE_NOTE}"$'\n\nPlease resolve manually:\n```bash\ngit fetch origin\ngit checkout '"${CHERRY_PICK_BRANCH}"'\n'"${CHERRY_PICK_CMD}"$'\n# resolve conflicts\ngit push origin '"${CHERRY_PICK_BRANCH}"' --force\n```'
           fi

@@ -55,13 +55,13 @@ trigger:
 
   branches:
     include:
-    # GitHub main and release branches.
-    - main
-    - release/*
+      # GitHub main and release branches.
+      - main
+      - release/*
 
-    # ADO main and release branches.
-    - internal/main
-    - internal/release/*
+      # ADO main and release branches.
+      - internal/main
+      - internal/release/*
 
 # Trigger this pipline on a schedule.
 schedules:
