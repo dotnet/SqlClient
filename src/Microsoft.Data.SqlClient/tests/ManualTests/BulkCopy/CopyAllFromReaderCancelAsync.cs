@@ -1,0 +1,67 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Xunit;
+
+namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
+{
+    public class CopyAllFromReaderCancelAsync
+    {
+        static CancellationTokenSource cts = null;
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Test()
+        {
+            string srcConstr = DataTestUtility.TCPConnectionString;
+            string dstConstr = DataTestUtility.TCPConnectionString;
+            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_AsyncTest5", false);
+            cts = new CancellationTokenSource();
+            cts.Cancel();
+            Task t = TestAsync(srcConstr, dstConstr, dstTable, cts.Token);
+            DataTestUtility.AssertThrowsWrapper<AggregateException, TaskCanceledException>(() => t.Wait());
+            Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
+        }
+
+        private static async Task TestAsync(string srcConstr, string dstConstr, string dstTable, CancellationToken ctoken)
+        {
+            string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(20), col3 nvarchar(10))";
+            string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
+            string srcTable = "employees";
+
+            string sourceQuery = string.Format(sourceQueryTemplate, srcTable);
+            string initialQuery = string.Format(initialQueryTemplate, dstTable);
+
+            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlCommand dstCmd = dstConn.CreateCommand())
+            {
+                dstConn.Open();
+                try
+                {
+                    Helpers.TryExecute(dstCmd, initialQuery);
+                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
+                    {
+                        srcConn.Open();
+
+                        using (DbDataReader reader = srcCmd.ExecuteReader())
+                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
+                        {
+                            bulkcopy.DestinationTableName = dstTable;
+                            await bulkcopy.WriteToServerAsync(reader, ctoken);
+                        }
+                    }
+                }
+                finally
+                {
+                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+                }
+            }
+
+        }
+    }
+}
