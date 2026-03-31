@@ -13,7 +13,7 @@ parameters:
   - name: loggingPackageVersion
     type: string
 
-  - name: mdsPackageVersion
+  - name: sqlClientPackageVersion
     type: string
 
 steps:
@@ -24,7 +24,7 @@ steps:
     name: keyFile
 
   - task: MSBuild@1
-    displayName: 'Build2.proj - BuildMds'
+    displayName: 'Build2.proj - Build SqlClient'
     inputs:
       solution: '$(REPO_ROOT)/build2.proj'
       configuration: 'Release'
@@ -33,7 +33,7 @@ steps:
         -p:BuildNumber="$(Build.BuildNumber)"
         -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
         -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
-        -p:PackageVersionMds="${{ parameters.mdsPackageVersion }}"
+        -p:PackageVersionMds="${{ parameters.sqlClientPackageVersion }}"
         -p:ReferenceType=Package
         -p:SigningKeyPath="$(keyFile.secureFilePath)"
 

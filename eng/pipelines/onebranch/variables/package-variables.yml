@@ -110,7 +110,7 @@ variables:
   # SqlClient Package
   # Microsoft.Data.SqlClient
   - name: sqlClientArtifactsName
-    value: 'drop_build_dependent_build_package_Mds' # @TODO: Just give up ... make it SqlClient.
+    value: 'drop_build_dependent_build_package_SqlClient'
 
   - name: sqlClientFileVersion
     value: '7.0.0.$(_assemblyBuildNumber)'

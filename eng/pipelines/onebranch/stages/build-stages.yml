@@ -236,7 +236,7 @@ stages:
 
   # ====================================================================
   # Stage 3: Core packages (depend on Abstractions)
-  # MDS and Extensions.Azure build in parallel after Abstractions.
+  # SqlClient and Extensions.Azure build in parallel after Abstractions.
   # Stage name kept as 'build_dependent' for validate job compatibility.
   # ====================================================================
   - ${{ if eq(parameters.buildSqlClient, true) }}:
@@ -245,7 +245,7 @@ stages:
         dependsOn: build_abstractions
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-signed-mds-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
             parameters:
               apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
               apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
@@ -266,9 +266,9 @@ stages:
               abstractionsArtifactName: '${{ parameters.abstractionsArtifactsName }}'
               abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
               loggingArtifactName: '${{ parameters.loggingArtifactsName }}'
-              loggingPackageVersion: '$ {{ parameters.loggingPackageVersion }}'
-              mdsAssemblyFileVersion: '$(mdsAssemblyFileVersion)'
-              mdsPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+              loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+              sqlClientAssemblyFileVersion: '${{ parameters.sqlClientFileVersion }}'
+              sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
           - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
             parameters:
@@ -303,7 +303,7 @@ stages:
 
   # ====================================================================
   # Stage 4: Add-on packages (depend on core packages)
-  # Akv Provider builds after MDS completes.
+  # Akv Provider builds after SqlClient completes.
   # ====================================================================
   - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
       - stage: build_addons
@@ -349,14 +349,14 @@ stages:
   # Validation
   # ====================================================================
   - ${{ if eq(parameters.buildSqlClient, true) }}:
-      - stage: mds_package_validation
-        displayName: "MDS Package Validation"
+      - stage: sqlclient_package_validation
+        displayName: "SqlClient Package Validation"
         dependsOn: build_dependent
         jobs:
           - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
             parameters:
               artifactName: '${{ parameters.sqlClientArtifactsName }}'
-              expectedFileVersion: '${{ parameters.sqlClientAssemblyFileVersion }}'
+              expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
               expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
               isPreview: ${{ parameters.isPreview }}
               isOfficial: ${{ parameters.isOfficial }}

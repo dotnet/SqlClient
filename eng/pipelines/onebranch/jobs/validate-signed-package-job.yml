@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  # The name of the pipeline artifact to download that contains the MDS NuGet package.
+  # The name of the pipeline artifact to download that contains the SqlClient NuGet package.
   - name: artifactName
     type: string
 
@@ -55,7 +55,7 @@ jobs:
       - name: artifactPath
         value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}'
 
-      # Path to MDS NuGet package after installation. This path will only exist once the package
+      # Path to the SqlClient NuGet package after installation. This path will only exist once the package
       # been installed.
       - name: nugetPackageInstallPath
         value: '$(Pipeline.Workspace)\nugetPackageInstalls\Microsoft.Data.SqlClient\${{ parameters.expectedPackageVersion }}'
