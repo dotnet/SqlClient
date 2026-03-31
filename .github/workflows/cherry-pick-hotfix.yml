@@ -1,0 +1,144 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Cherry-pick Hotfix to Release Branch
+#
+# Automatically cherry-picks merged PRs into release branches when a
+# "Hotfix <version>" label is present. Supports multiple hotfix labels on
+# a single PR — each one produces an independent cherry-pick PR targeting
+# the corresponding release/<version> branch.
+#
+# Usage:
+#   1. Merge a PR to the default branch.
+#   2. Add a "Hotfix <version>" label (e.g. "Hotfix 7.0.1") either before
+#      or after merging.
+#   3. The workflow creates a cherry-pick PR to release/<version> with the
+#      same title, prefixed with "[<version> Cherry-pick]".
+#   4. If the cherry-pick has conflicts, a placeholder PR is opened with
+#      "[<version> Cherry-pick - CONFLICTS]" and manual resolution steps.
+#
+#################################################################################
+
+name: Cherry-pick Hotfix to release branch
+
+# Triggers:
+#   - 'closed': fires at merge time — if a "Hotfix <version>" label is already present,
+#     the cherry-pick runs immediately.
+#   - 'labeled': fires when a label is added after merge — allows retroactive cherry-picks
+#     by adding the label to an already-merged PR.
+on:
+  pull_request:
+    types: [closed, labeled]
+
+# 'contents: write' is needed to push the cherry-pick branch.
+# 'pull-requests: write' is needed to create the new PR via the GitHub CLI.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # First job: extract all hotfix versions from the PR labels and emit them as
+  # a JSON array so the matrix strategy can fan out one job per version.
+  detect-versions:
+    runs-on: ubuntu-latest
+    # Only fire for merged PRs that have at least one "Hotfix *" label.
+    if: >-
+      github.event.pull_request.merged == true &&
+      join(github.event.pull_request.labels.*.name, ' ') != '' &&
+      contains(join(github.event.pull_request.labels.*.name, ','), 'Hotfix ')
+    outputs:
+      versions: ${{ steps.extract.outputs.versions }}
+    steps:
+      - name: Extract hotfix versions from labels
+        id: extract
+        env:
+          # Pass label names via env to avoid script injection from label text.
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          # Extract all version strings (e.g. "7.0.1", "8.0.0") from "Hotfix X.Y.Z" labels
+          # and build a JSON array for the matrix strategy.
+          VERSIONS=$(echo "${LABELS}" | tr ',' '\n' | sed -n 's/^Hotfix \(.*\)/\1/p')
+          if [[ -z "${VERSIONS}" ]]; then
+            echo "::error::No 'Hotfix <version>' label found."
+            exit 1
+          fi
+          # Convert newline-separated list to JSON array: ["7.0.1","8.0.0"]
+          JSON=$(echo "${VERSIONS}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "versions=${JSON}" >> "${GITHUB_OUTPUT}"
+          echo "Detected hotfix versions: ${JSON}"
+
+  # Second job: runs once per detected version, cherry-picking the merge commit
+  # into each target release branch.
+  cherry-pick:
+    needs: detect-versions
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel other cherry-picks if one version fails.
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.detect-versions.outputs.versions) }}
+    name: Cherry-pick to release/${{ matrix.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history is required so the merge commit and target branch are available
+          # for the cherry-pick operation.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Cherry-pick and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          TARGET_BRANCH="release/${VERSION}"
+          CHERRY_PICK_BRANCH="cherry-pick/pr-${PR_NUMBER}-to-${VERSION}"
+
+          git fetch origin "${TARGET_BRANCH}"
+          git checkout -b "${CHERRY_PICK_BRANCH}" "origin/${TARGET_BRANCH}"
+
+          # --mainline 1 tells git to treat the first parent as the mainline,
+          # which is necessary when cherry-picking merge commits.
+          if git cherry-pick "${MERGE_COMMIT_SHA}" --mainline 1; then
+            git push origin "${CHERRY_PICK_BRANCH}"
+
+            gh pr create \
+              --base "${TARGET_BRANCH}" \
+              --head "${CHERRY_PICK_BRANCH}" \
+              --title "[${VERSION} Cherry-pick] ${PR_TITLE}" \
+              --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`." \
+              --milestone "${VERSION}"
+          else
+            # Surface the failure in the workflow run summary.
+            echo "::error::Cherry-pick of ${MERGE_COMMIT_SHA} failed due to conflicts."
+            git cherry-pick --abort
+
+            # Create a PR with an empty commit so the team is notified and can
+            # resolve conflicts manually. The PR body includes the commands needed.
+            git checkout "origin/${TARGET_BRANCH}"
+            git checkout -B "${CHERRY_PICK_BRANCH}"
+            git commit --allow-empty \
+              -m "Cherry-pick of #${PR_NUMBER} requires manual resolution" \
+              -m "To resolve, run:  git cherry-pick ${MERGE_COMMIT_SHA} --mainline 1"
+            git push origin "${CHERRY_PICK_BRANCH}"
+
+            gh pr create \
+              --base "${TARGET_BRANCH}" \
+              --head "${CHERRY_PICK_BRANCH}" \
+              --title "[${VERSION} Cherry-pick - CONFLICTS] ${PR_TITLE}" \
+              --milestone "${VERSION}" \
+              --body $'Cherry-pick of #'"${PR_NUMBER}"' ('"${MERGE_COMMIT_SHA}"') into `'"${TARGET_BRANCH}"'` **failed due to merge conflicts**.\n\nPlease resolve manually:\n```bash\ngit fetch origin\ngit checkout -b cherry-pick/pr-'"${PR_NUMBER}"'-to-'"${VERSION}"' origin/'"${TARGET_BRANCH}"'\ngit cherry-pick '"${MERGE_COMMIT_SHA}"' --mainline 1\n# resolve conflicts\ngit push origin cherry-pick/pr-'"${PR_NUMBER}"'-to-'"${VERSION}"' --force\n```'
+          fi
