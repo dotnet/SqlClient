@@ -36,6 +36,10 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
+  <Target Name="RestoreTools">
+    <Exec Command="dotnet tool restore" />
+  </Target>
+
   <!-- Trim Docs for IntelliSense ====================================== -->
   <!--
     It has been determined that including the remarks section in IntelliSense docs looks bad in
@@ -46,12 +50,11 @@
   <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
   <Target Name="TrimDocsForIntelliSense"
           AfterTargets="Build"
+          DependsOnTargets="RestoreTools"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
     <PropertyGroup>
-      <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
-      <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
       <PowerShellCommand>
-        $(PowerShellCommand)
+        dotnet tool run pwsh
           -NonInteractive
           -ExecutionPolicy Unrestricted
           -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
