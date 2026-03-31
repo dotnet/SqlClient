@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Text.Json;
 
 namespace Microsoft.Data.SqlClient.Samples.ThreadStarvation;
 
@@ -18,8 +19,16 @@ public static class EntryPoint
         {
             Description =
                 "ADO.NET connection string. " +
-                "Must include Data Source. Authentication keywords are optional.",
-            Required = true
+                "Must include Data Source. Authentication keywords are optional. " +
+                "Required unless --config is provided."
+        };
+
+        Option<string> configFileOption = new("--config")
+        {
+            Description =
+                "Path to a JSON config file with an array of endpoints: " +
+                "[{ \"name\": \"...\", \"connectionString\": \"...\" }]. " +
+                "Tests run for each entry. Mutually exclusive with --connection-string."
         };
 
         // ── Test shape ──────────────────────────────────────────────
@@ -148,6 +157,7 @@ public static class EntryPoint
             """)
         {
             connectionStringOption,
+            configFileOption,
             connectionsOption,
             modeOption,
             marsOption,
@@ -169,32 +179,114 @@ public static class EntryPoint
 
         rootCommand.SetAction(parseResult =>
         {
-            App.RunOptions options = new()
-            {
-                ConnectionString = parseResult.GetValue(connectionStringOption)!,
-                Connections = parseResult.GetValue(connectionsOption),
-                Mode = parseResult.GetValue(modeOption)!,
-                Mars = parseResult.GetValue(marsOption),
-                Launch = parseResult.GetValue(launchOption)!,
-                Query = parseResult.GetValue(queryOption)!,
-                SleepMs = parseResult.GetValue(sleepOption),
-                MinThreads = parseResult.GetValue(minThreadsOption),
-                MaxThreads = parseResult.GetValue(maxThreadsOption),
-                IoThreads = parseResult.GetValue(ioThreadsOption),
-                SlowThresholdMs = parseResult.GetValue(slowOption),
-                MonitorIntervalMs = parseResult.GetValue(monitorOption),
-                ConnectTimeout = parseResult.GetValue(connectTimeoutOption),
-                Pooling = parseResult.GetValue(poolingOption),
-                LogEvents = parseResult.GetValue(logOption),
-                Trace = parseResult.GetValue(traceOption),
-                Verbose = parseResult.GetValue(verboseOption),
-                OutputFormat = parseResult.GetValue(outputFormatOption)!
-            };
+            string? configPath = parseResult.GetValue(configFileOption);
+            string? connStr = parseResult.GetValue(connectionStringOption);
 
-            using App app = new();
-            return app.Run(options);
+            if (configPath is null && connStr is null)
+            {
+                Console.Error.WriteLine(
+                    "Error: either --connection-string or --config must be provided.");
+                return 1;
+            }
+
+            if (configPath is not null && connStr is not null)
+            {
+                Console.Error.WriteLine(
+                    "Error: --connection-string and --config are mutually exclusive.");
+                return 1;
+            }
+
+            // Build the list of endpoints to test.
+            List<(string? name, string connectionString)> endpoints;
+            if (configPath is not null)
+            {
+                try
+                {
+                    string json = File.ReadAllText(configPath);
+                    var entries = JsonSerializer.Deserialize<List<EndpointEntry>>(
+                        json,
+                        new JsonSerializerOptions
+                        {
+                            AllowTrailingCommas = true,
+                            PropertyNameCaseInsensitive = true,
+                            ReadCommentHandling = JsonCommentHandling.Skip,
+                        });
+
+                    if (entries is null || entries.Count == 0)
+                    {
+                        Console.Error.WriteLine("Error: config file contains no endpoint entries.");
+                        return 1;
+                    }
+
+                    endpoints = entries
+                        .Select(e => (e.Name, e.ConnectionString ?? string.Empty))
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error reading config file: {ex.Message}");
+                    return 1;
+                }
+            }
+            else
+            {
+                endpoints = [(null, connStr!)];
+            }
+
+            int exitCode = 0;
+            for (int idx = 0; idx < endpoints.Count; idx++)
+            {
+                var (name, cs) = endpoints[idx];
+
+                if (endpoints.Count > 1)
+                {
+                    Console.WriteLine($"\n{'=',-60}");
+                    Console.WriteLine(
+                        $"  Endpoint {idx + 1}/{endpoints.Count}: {name ?? "(unnamed)"}");
+                    Console.WriteLine($"{'=',-60}");
+                }
+
+                App.RunOptions options = new()
+                {
+                    ConnectionString = cs,
+                    EndpointName = name,
+                    Connections = parseResult.GetValue(connectionsOption),
+                    Mode = parseResult.GetValue(modeOption)!,
+                    Mars = parseResult.GetValue(marsOption),
+                    Launch = parseResult.GetValue(launchOption)!,
+                    Query = parseResult.GetValue(queryOption)!,
+                    SleepMs = parseResult.GetValue(sleepOption),
+                    MinThreads = parseResult.GetValue(minThreadsOption),
+                    MaxThreads = parseResult.GetValue(maxThreadsOption),
+                    IoThreads = parseResult.GetValue(ioThreadsOption),
+                    SlowThresholdMs = parseResult.GetValue(slowOption),
+                    MonitorIntervalMs = parseResult.GetValue(monitorOption),
+                    ConnectTimeout = parseResult.GetValue(connectTimeoutOption),
+                    Pooling = parseResult.GetValue(poolingOption),
+                    LogEvents = parseResult.GetValue(logOption),
+                    Trace = parseResult.GetValue(traceOption),
+                    Verbose = parseResult.GetValue(verboseOption),
+                    OutputFormat = parseResult.GetValue(outputFormatOption)!
+                };
+
+                using App app = new();
+                int result = app.Run(options);
+                if (result != 0)
+                {
+                    exitCode = result;
+                }
+            }
+
+            return exitCode;
         });
 
         return rootCommand.Parse(args).Invoke();
     }
+
+    private sealed class EndpointEntry
+    {
+        public string? Name { get; set; }
+        public string? ConnectionString { get; set; }
+    }
+
 }
