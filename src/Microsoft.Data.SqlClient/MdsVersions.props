@@ -69,7 +69,6 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <Build Condition="'$(BuildSuffix)' != ''">$(BuildSuffix)</Build>
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
         <MdsPackageVersion>$(MdsVersionDefault)-$(BuildSuffix)</MdsPackageVersion>
