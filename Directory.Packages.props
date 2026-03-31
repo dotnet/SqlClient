@@ -19,6 +19,7 @@
       version specified.
     -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0" />
     <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
   </ItemGroup>
   <!--

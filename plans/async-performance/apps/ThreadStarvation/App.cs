@@ -29,6 +29,7 @@ public class App : IDisposable
     internal class RunOptions
     {
         public string ConnectionString { get; set; } = string.Empty;
+        public string? EndpointName { get; set; }
         public int Connections { get; set; } = 200;
         public string Mode { get; set; } = "async";
         public bool Mars { get; set; }
@@ -78,7 +79,9 @@ public class App : IDisposable
         {
             Err($"Failed to parse connection string: {ex.Message}");
             if (options.Verbose)
+            {
                 Err($"  {ex}");
+            }
             return 1;
         }
 
@@ -87,6 +90,7 @@ public class App : IDisposable
         Out($"""
 
             Connection details:
+              Endpoint:         {options.EndpointName ?? "(unnamed)"}
               Data Source:      {builder.DataSource}
               Initial Catalog:  {builder.InitialCatalog}
               Authentication:   {builder.Authentication}
@@ -113,7 +117,8 @@ public class App : IDisposable
               Query:            {options.Query}
               Sleep per query:  {options.SleepMs}ms
               Slow threshold:   {options.SlowThresholdMs}ms
-              Monitor interval: {(options.MonitorIntervalMs > 0 ? $"{options.MonitorIntervalMs}ms" : "disabled")}
+              Monitor interval: {(options.MonitorIntervalMs > 0
+                  ? $"{options.MonitorIntervalMs}ms" : "disabled")}
               Min threads:      {options.MinThreads}
               Max threads:      {options.MaxThreads}
               IO threads:       {options.IoThreads}
@@ -135,7 +140,8 @@ public class App : IDisposable
                 PID: {Process.GetCurrentProcess().Id}
                 Attach dotnet-trace and press Enter to resume:
 
-                  dotnet-trace collect -p {Process.GetCurrentProcess().Id} --providers Microsoft.Data.SqlClient.EventSource:1FFF:5
+                  dotnet-trace collect -p {Process.GetCurrentProcess().Id} \
+                    --providers Microsoft.Data.SqlClient.EventSource:1FFF:5
 
                 """);
             Console.ReadLine();
@@ -175,7 +181,9 @@ public class App : IDisposable
         {
             Err($"Fatal error: {ex.Message}");
             if (options.Verbose)
+            {
                 Err($"  {ex}");
+            }
             return 1;
         }
     }
@@ -207,18 +215,27 @@ public class App : IDisposable
         switch (options.Mode)
         {
             case "sync":
+            {
                 passes.Add(new("Sync", baseConnectionString, IsSync: true));
                 if (options.Mars)
+                {
                     passes.Add(new("Sync+MARS", marsConnectionString, IsSync: true));
+                }
                 break;
+            }
 
             case "async":
+            {
                 passes.Add(new("Async", baseConnectionString, IsSync: false));
                 if (options.Mars)
+                {
                     passes.Add(new("Async+MARS", marsConnectionString, IsSync: false));
+                }
                 break;
+            }
 
             case "both":
+            {
                 passes.Add(new("Sync", baseConnectionString, IsSync: true));
                 passes.Add(new("Async", baseConnectionString, IsSync: false));
                 if (options.Mars)
@@ -227,6 +244,7 @@ public class App : IDisposable
                     passes.Add(new("Async+MARS", marsConnectionString, IsSync: false));
                 }
                 break;
+            }
         }
 
         return passes;
@@ -252,10 +270,14 @@ public class App : IDisposable
         // Warm up: single query to pre-fetch tokens, warm caches, etc.
         Out("Warming up...");
         if (pass.IsSync)
+        {
             ExecuteQuerySync(pass.ConnectionString, 0, options, throwOnError: true);
+        }
         else
+        {
             await ExecuteQueryAsync(pass.ConnectionString, 0, CancellationToken.None, options,
                 throwOnError: true);
+        }
         Out("Warm-up complete.\n");
 
         Out($"Executing {options.Connections} parallel queries...\n");
@@ -287,11 +309,13 @@ public class App : IDisposable
         }
         else if (options.Launch == "whenall")
         {
-            (errorCount, slowCount, latencies, latencyCount) = await RunAsyncWhenAllPass(pass, options, cts.Token);
+            (errorCount, slowCount, latencies, latencyCount) =
+                await RunAsyncWhenAllPass(pass, options, cts.Token);
         }
         else
         {
-            (errorCount, slowCount, latencies, latencyCount) = await RunAsyncParallelPass(pass, options, cts.Token);
+            (errorCount, slowCount, latencies, latencyCount) =
+                await RunAsyncParallelPass(pass, options, cts.Token);
         }
 
         stopwatch.Stop();
@@ -311,8 +335,8 @@ public class App : IDisposable
     /// <summary>
     /// Runs the async pass using Parallel.ForEachAsync with optional Thread.Sleep injection.
     /// </summary>
-    private async Task<(int errorCount, int slowCount, long[] latencies, int latencyCount)> RunAsyncParallelPass(
-        PassConfig pass, RunOptions options, CancellationToken ct)
+    private async Task<(int errorCount, int slowCount, long[] latencies, int latencyCount)>
+        RunAsyncParallelPass(PassConfig pass, RunOptions options, CancellationToken ct)
     {
         int errors = 0;
         int slows = 0;
@@ -329,7 +353,9 @@ public class App : IDisposable
             async (i, token) =>
             {
                 if (options.SleepMs > 0)
+                {
                     Thread.Sleep(options.SleepMs);
+                }
 
                 Stopwatch sw = Stopwatch.StartNew();
                 (bool ok, bool slow) = await ExecuteQueryAsync(
@@ -337,9 +363,17 @@ public class App : IDisposable
                 sw.Stop();
 
                 if (ok)
+                {
                     latencies[Interlocked.Increment(ref latencyCount) - 1] = sw.ElapsedMilliseconds;
-                if (!ok) Interlocked.Increment(ref errors);
-                if (slow) Interlocked.Increment(ref slows);
+                }
+                if (!ok)
+                {
+                    Interlocked.Increment(ref errors);
+                }
+                if (slow)
+                {
+                    Interlocked.Increment(ref slows);
+                }
             });
 
         return (errors, slows, latencies, latencyCount);
@@ -349,8 +383,8 @@ public class App : IDisposable
     /// Runs the async pass using Task.WhenAll — fires all queries concurrently without
     /// the Parallel.ForEachAsync scheduling or Thread.Sleep throttle.
     /// </summary>
-    private async Task<(int errorCount, int slowCount, long[] latencies, int latencyCount)> RunAsyncWhenAllPass(
-        PassConfig pass, RunOptions options, CancellationToken ct)
+    private async Task<(int errorCount, int slowCount, long[] latencies, int latencyCount)>
+        RunAsyncWhenAllPass(PassConfig pass, RunOptions options, CancellationToken ct)
     {
         int errors = 0;
         int slows = 0;
@@ -364,7 +398,9 @@ public class App : IDisposable
             tasks[i] = Task.Run(async () =>
             {
                 if (options.SleepMs > 0)
+                {
                     Thread.Sleep(options.SleepMs);
+                }
 
                 Stopwatch sw = Stopwatch.StartNew();
                 (bool ok, bool slow) = await ExecuteQueryAsync(
@@ -372,9 +408,17 @@ public class App : IDisposable
                 sw.Stop();
 
                 if (ok)
+                {
                     latencies[Interlocked.Increment(ref latencyCount) - 1] = sw.ElapsedMilliseconds;
-                if (!ok) Interlocked.Increment(ref errors);
-                if (slow) Interlocked.Increment(ref slows);
+                }
+                if (!ok)
+                {
+                    Interlocked.Increment(ref errors);
+                }
+                if (slow)
+                {
+                    Interlocked.Increment(ref slows);
+                }
             }, ct);
         }
 
@@ -400,7 +444,9 @@ public class App : IDisposable
             i =>
             {
                 if (options.SleepMs > 0)
+                {
                     Thread.Sleep(options.SleepMs);
+                }
 
                 Stopwatch sw = Stopwatch.StartNew();
                 (bool ok, bool slow) = ExecuteQuerySync(
@@ -408,9 +454,17 @@ public class App : IDisposable
                 sw.Stop();
 
                 if (ok)
+                {
                     latencies[Interlocked.Increment(ref latencyCount) - 1] = sw.ElapsedMilliseconds;
-                if (!ok) Interlocked.Increment(ref errors);
-                if (slow) Interlocked.Increment(ref slows);
+                }
+                if (!ok)
+                {
+                    Interlocked.Increment(ref errors);
+                }
+                if (slow)
+                {
+                    Interlocked.Increment(ref slows);
+                }
             });
 
         return (errors, slows, latencies, latencyCount);
@@ -448,7 +502,8 @@ public class App : IDisposable
             }
 
             connectSw.Stop();
-            Out($"All {options.Connections} connections opened in {connectSw.ElapsedMilliseconds}ms.\n");
+            Out($"All {options.Connections} connections opened "
+                + $"in {connectSw.ElapsedMilliseconds}ms.\n");
             PrintThreadPoolInfo("Post-Connect");
 
             // ── Phase 2: Sync queries on pre-opened connections ─────
@@ -471,7 +526,9 @@ public class App : IDisposable
                 i =>
                 {
                     if (options.SleepMs > 0)
+                    {
                         Thread.Sleep(options.SleepMs);
+                    }
 
                     Stopwatch sw = Stopwatch.StartNew();
                     (bool ok, bool slow) = ExecuteQueryOnOpenConnectionSync(
@@ -479,9 +536,18 @@ public class App : IDisposable
                     sw.Stop();
 
                     if (ok)
-                        syncLatencies[Interlocked.Increment(ref syncLatencyCount) - 1] = sw.ElapsedMilliseconds;
-                    if (!ok) Interlocked.Increment(ref syncErrors);
-                    if (slow) Interlocked.Increment(ref syncSlows);
+                    {
+                        int idx = Interlocked.Increment(ref syncLatencyCount) - 1;
+                        syncLatencies[idx] = sw.ElapsedMilliseconds;
+                    }
+                    if (!ok)
+                    {
+                        Interlocked.Increment(ref syncErrors);
+                    }
+                    if (slow)
+                    {
+                        Interlocked.Increment(ref syncSlows);
+                    }
                 });
 
             syncSw.Stop();
@@ -515,7 +581,9 @@ public class App : IDisposable
                 tasks[i] = Task.Run(async () =>
                 {
                     if (options.SleepMs > 0)
+                    {
                         Thread.Sleep(options.SleepMs);
+                    }
 
                     Stopwatch sw = Stopwatch.StartNew();
                     (bool ok, bool slow) = await ExecuteQueryOnOpenConnectionAsync(
@@ -523,9 +591,18 @@ public class App : IDisposable
                     sw.Stop();
 
                     if (ok)
-                        asyncLatencies[Interlocked.Increment(ref asyncLatencyCount) - 1] = sw.ElapsedMilliseconds;
-                    if (!ok) Interlocked.Increment(ref asyncErrors);
-                    if (slow) Interlocked.Increment(ref asyncSlows);
+                    {
+                        int idx = Interlocked.Increment(ref asyncLatencyCount) - 1;
+                        asyncLatencies[idx] = sw.ElapsedMilliseconds;
+                    }
+                    if (!ok)
+                    {
+                        Interlocked.Increment(ref asyncErrors);
+                    }
+                    if (slow)
+                    {
+                        Interlocked.Increment(ref asyncSlows);
+                    }
                 });
             }
 
@@ -570,9 +647,13 @@ public class App : IDisposable
             sw.Stop();
             bool slow = sw.ElapsedMilliseconds > options.SlowThresholdMs;
             if (slow)
+            {
                 Out($"[{connectionId}] SLOW: {sw.ElapsedMilliseconds}ms");
+            }
             else if (connectionId > 0 && connectionId % 100 == 0)
+            {
                 Out($"[{connectionId}] {sw.ElapsedMilliseconds}ms");
+            }
 
             return (true, slow);
         }
@@ -606,9 +687,13 @@ public class App : IDisposable
             sw.Stop();
             bool slow = sw.ElapsedMilliseconds > options.SlowThresholdMs;
             if (slow)
+            {
                 Out($"[{connectionId}] SLOW: {sw.ElapsedMilliseconds}ms");
+            }
             else if (connectionId > 0 && connectionId % 100 == 0)
+            {
                 Out($"[{connectionId}] {sw.ElapsedMilliseconds}ms");
+            }
 
             return (true, slow);
         }
@@ -626,7 +711,9 @@ public class App : IDisposable
     private static Task? StartMonitor(CancellationToken ct, RunOptions options)
     {
         if (options.MonitorIntervalMs <= 0)
+        {
             return null;
+        }
 
         return Task.Run(async () =>
         {
@@ -671,7 +758,10 @@ public class App : IDisposable
         catch (Exception ex)
         {
             Out($"[{connectionId}] CONNECTION ERROR: {ex.Message}");
-            if (throwOnError) throw;
+            if (throwOnError)
+            {
+                throw;
+            }
             return (false, false);
         }
 
@@ -694,9 +784,13 @@ public class App : IDisposable
 
             bool slow = sw.ElapsedMilliseconds > options.SlowThresholdMs;
             if (slow)
+            {
                 Out($"[{connectionId}] SLOW: {sw.ElapsedMilliseconds}ms");
+            }
             else if (connectionId > 0 && connectionId % 100 == 0)
+            {
                 Out($"[{connectionId}] {sw.ElapsedMilliseconds}ms");
+            }
 
             return (true, slow);
         }
@@ -705,8 +799,13 @@ public class App : IDisposable
             sw.Stop();
             Out($"[{connectionId}] ERROR after {sw.ElapsedMilliseconds}ms: {ex.Message}");
             if (options.Verbose)
+            {
                 Out($"  {ex}");
-            if (throwOnError) throw;
+            }
+            if (throwOnError)
+            {
+                throw;
+            }
             return (false, false);
         }
     }
@@ -727,7 +826,10 @@ public class App : IDisposable
         catch (Exception ex)
         {
             Out($"[{connectionId}] CONNECTION ERROR: {ex.Message}");
-            if (throwOnError) throw;
+            if (throwOnError)
+            {
+                throw;
+            }
             return (false, false);
         }
 
@@ -749,9 +851,13 @@ public class App : IDisposable
 
             bool slow = sw.ElapsedMilliseconds > options.SlowThresholdMs;
             if (slow)
+            {
                 Out($"[{connectionId}] SLOW: {sw.ElapsedMilliseconds}ms");
+            }
             else if (connectionId > 0 && connectionId % 100 == 0)
+            {
                 Out($"[{connectionId}] {sw.ElapsedMilliseconds}ms");
+            }
 
             return (true, slow);
         }
@@ -760,8 +866,13 @@ public class App : IDisposable
             sw.Stop();
             Out($"[{connectionId}] ERROR after {sw.ElapsedMilliseconds}ms: {ex.Message}");
             if (options.Verbose)
+            {
                 Out($"  {ex}");
-            if (throwOnError) throw;
+            }
+            if (throwOnError)
+            {
+                throw;
+            }
             return (false, false);
         }
     }
@@ -812,12 +923,16 @@ public class App : IDisposable
     private static LatencyStats ComputeStats(long[] latencies, int count)
     {
         if (count == 0)
+        {
             return new(0, 0, 0, 0, 0, 0, 0);
+        }
 
         Array.Sort(latencies, 0, count);
         long sum = 0;
         for (int i = 0; i < count; i++)
+        {
             sum += latencies[i];
+        }
 
         return new(
             count,
@@ -835,7 +950,9 @@ public class App : IDisposable
         int lower = (int)rank;
         int upper = lower + 1;
         if (upper >= count)
+        {
             return sorted[count - 1];
+        }
         double frac = rank - lower;
         return (long)(sorted[lower] + frac * (sorted[upper] - sorted[lower]));
     }
@@ -849,15 +966,21 @@ public class App : IDisposable
         switch (options.OutputFormat)
         {
             case "json":
+            {
                 PrintResultsJson(label, totalMs, options, errorCount, slowCount, stats);
                 break;
+            }
             case "histogram":
+            {
                 PrintResultsTable(label, totalMs, options, errorCount, slowCount, stats);
                 PrintHistogram(latencies, latencyCount);
                 break;
+            }
             default: // "table"
+            {
                 PrintResultsTable(label, totalMs, options, errorCount, slowCount, stats);
                 break;
+            }
         }
     }
 
@@ -919,7 +1042,9 @@ public class App : IDisposable
     private static void PrintHistogram(long[] latencies, int count)
     {
         if (count == 0)
+        {
             return;
+        }
 
         long[] bucketCeilings = { 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000 };
         int bucketCount = bucketCeilings.Length + 1;
@@ -930,34 +1055,50 @@ public class App : IDisposable
             long val = latencies[i];
             int b = 0;
             while (b < bucketCeilings.Length && val > bucketCeilings[b])
+            {
                 b++;
+            }
             buckets[b]++;
         }
 
         int maxBucket = 0;
         for (int i = 0; i < bucketCount; i++)
+        {
             if (buckets[i] > maxBucket)
+            {
                 maxBucket = buckets[i];
+            }
+        }
 
-        const int barWidth = 40;
+        const int BarWidth = 40;
         Out("\n  Latency Histogram (ms):");
 
         for (int i = 0; i < bucketCount; i++)
         {
             if (buckets[i] == 0)
+            {
                 continue;
+            }
 
             string rangeLabel;
             if (i == 0)
+            {
                 rangeLabel = $"    0-{bucketCeilings[0],5}";
+            }
             else if (i < bucketCeilings.Length)
+            {
                 rangeLabel = $"{bucketCeilings[i - 1],5}-{bucketCeilings[i],5}";
+            }
             else
+            {
                 rangeLabel = $"{bucketCeilings[^1],5}+    ";
+            }
 
-            int barLen = maxBucket > 0 ? (int)((long)buckets[i] * barWidth / maxBucket) : 0;
+            int barLen = maxBucket > 0 ? (int)((long)buckets[i] * BarWidth / maxBucket) : 0;
             if (buckets[i] > 0 && barLen == 0)
+            {
                 barLen = 1;
+            }
 
             string bar = new('\u2588', barLen);
             Out($"  {rangeLabel} |{bar} {buckets[i]}");
