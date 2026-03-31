@@ -7,12 +7,10 @@
 # Common variables shared across all OneBranch Official pipelines.
 
 variables:
-  # @TODO: WHAT ARE WE USING FROM THIS?
-  - group: Release Variables
-
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
 
+  ##########################################################################
   # "Well-Known" Variables that are ok to use directly, anywhere in the pipeline.
 
   # The root of our repo.
@@ -20,29 +18,18 @@ variables:
     value: $(Build.SourcesDirectory)
 
   # This is where our C# projects place their build outputs (see Directory.Build.props
-  # <ArtifactsPath>).  We exclude the reference type here since Official pipelines always use
+  # <ArtifactsPath>). We exclude the reference type here since Official pipelines always use
   # Package mode.
   - name: BUILD_OUTPUT
     value: $(REPO_ROOT)/artifacts
 
   # This is where downloaded artifacts should be placed. This will enable other build jobs to
-  # do local NuGet installations with packages build by earlier stages.
+  # do local NuGet installations with packages built by earlier stages.
   - name: PACK_INPUT
     value: $(REPO_ROOT)/packages
 
-  # This is where our C# projects place their NuGet package outputs.  This is intentionally
-  # separate from packages/ (where downloaded pipeline artifacts go) so that ESRP signing and
+  # This is where our C# projects place their NuGet package outputs. This is intentionally
+  # separated from packages/ (where downloaded pipeline artifacts go) so that ESRP signing and
   # OneBranch artifact publishing only operate on packages built by the current job.
   - name: PACK_OUTPUT
     value: $(REPO_ROOT)/output
-
-  # ----------------------------------------------------------------------------
-  # MDS Symbols Publishing
-  #
-  # Alias variables for MDS publish-symbols-step.yml, which defaults to
-  # $(SymbolServer) and $(SymbolTokenUri).  These map to the values provided
-  # by the "Symbols publishing" library group.
-  - name: SymbolServer
-    value: $(SymbolsPublishServer)
-  - name: SymbolTokenUri
-    value: $(SymbolsPublishTokenUri)

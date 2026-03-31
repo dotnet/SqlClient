@@ -30,10 +30,15 @@ variables:
   # SymbolsUploadAccount
   - group: 'symbols-variables-v2'
 
-  # onebranch template variables
+  # OneBranch Template Variables ###########################################
+
+  # https://aka.ms/obpipelines/sdl
   - name: ob_sdl_binskim_break
-    value: true # https://aka.ms/obpipelines/sdl
+    value: true
+
   - name: Packaging.EnableSBOMSigning
     value: true
+
+  # Docker image which is used to build the project https://aka.ms/obpipelines/containers
   - name: WindowsContainerImage
-    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest" # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest"
