@@ -12,7 +12,7 @@ parameters:
   - name: isPreview
     type: boolean
 
-  # True if this build is an official build. This will be used to gate some checks 
+  # True if this build is an official build. This will be used to gate some checks
   # that only apply to official builds, such as signature verification.
   - name: isOfficial
     type: boolean
@@ -210,7 +210,7 @@ jobs:
             }
           }
         displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
-      
+
       - ${{ if eq(parameters.isOfficial, true) }}:
           - powershell: |
               # Verify all dlls status are Valid
@@ -235,6 +235,7 @@ jobs:
           # This will check each DLL's ProductVersion and FileVersion against
           # expected values.
           $failed = 0
+          $expectedFileVersion = "$(mdsPackageVersion)".Split('-')[0] + ".$(assemblyBuildNumber)"
 
           foreach ( $pVersion in Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object versioninfo )
           {
@@ -248,13 +249,13 @@ jobs:
                     $failed = 1
               }
 
-              if ($pVersion.FileVersion -eq '$(mdsAssemblyFileVersion)')
+              if ($pVersion.FileVersion -eq $expectedFileVersion)
               {
                   Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
               }
               else
               {
-                  Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $(mdsAssemblyFileVersion); found: $($pVersion.FileVersion)"
+                  Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $expectedFileVersion; found: $($pVersion.FileVersion)"
                   $failed = 1
               }
           }
@@ -266,23 +267,3 @@ jobs:
 
           Get-ChildItem *.dll -Path $(extractedNugetPath)  -Recurse | ForEach-Object VersionInfo | Format-List
         displayName: 'Verify "File Version" matches expected values for DLLs'
-
-      - powershell: |
-          # Check assembly versions.
-          #
-          # GOTCHA: This expects the Versions.props file having XML elements in a
-          # certain order.  If the order changes, this check will fail!
-          #
-          # TODO: This also isn't checking the versions of the actual assemblies in
-          # the package, so it isn't terribly useful.
-
-          [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props"
-          $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[2].AssemblyFileVersion
-          $AssemblyVersion = $versionprops.Project.PropertyGroup[2].AssemblyVersion
-
-          if($AssemblyFileVersion -eq $AssemblyVersion)
-          {
-              Write-Host AssemblyFileVersion: $AssemblyFileVersion should not be equal to: $AssemblyVersion
-              Exit -1
-          }
-        displayName: 'Check "AssemblyFileVersion" is not same as "AssemblyVersion" in version.props'
