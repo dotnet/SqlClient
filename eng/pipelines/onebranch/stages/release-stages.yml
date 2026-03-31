@@ -153,7 +153,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.SqlServer.Server
-              artifactName: drop_build_independent_build_package_SqlServer
+              artifactName: $(sqlServerArtifactsName)
               packagePath: Microsoft.SqlServer.Server.$(effectiveSqlServerVersion).nupkg
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -163,7 +163,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Internal.Logging
-              artifactName: drop_build_independent_build_package_Logging
+              artifactName: $(loggingArtifactsName)
               packagePath: Microsoft.Data.SqlClient.Internal.Logging.$(effectiveLoggingVersion).nupkg
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -173,7 +173,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              artifactName: drop_build_abstractions_build_package_Abstractions
+              artifactName: $(abstractionsArtifactsName)
               packagePath: Microsoft.Data.SqlClient.Extensions.Abstractions.$(effectiveAbstractionsVersion).nupkg
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -183,7 +183,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient
-              artifactName: drop_build_dependent_build_package_SqlClient
+              artifactName: $(sqlClientArtifactsName)
               packagePath: Microsoft.Data.SqlClient.$(effectiveSqlClientVersion).nupkg
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -193,7 +193,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Azure
-              artifactName: drop_build_dependent_build_package_Azure
+              artifactName: $(azureArtifactsName)
               packagePath: Microsoft.Data.SqlClient.Extensions.Azure.$(effectiveAzureVersion).nupkg
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
@@ -203,7 +203,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              artifactName: drop_build_addons_build_package_AkvProvider
+              artifactName: $(akvArtifactsName)
               packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
