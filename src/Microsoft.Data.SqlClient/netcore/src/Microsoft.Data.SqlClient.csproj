@@ -1002,9 +1002,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SQLResource.cs">
-      <Link>Microsoft\Data\SQLTypes\SQLResource.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
     </Compile>
@@ -1022,6 +1019,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)TypeForwards.netcore.cs">
       <Link>TypeForwards.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)TypeForwards.Abstractions.cs">
+      <Link>TypeForwards.Abstractions.cs</Link>
     </Compile>
   </ItemGroup>
 
