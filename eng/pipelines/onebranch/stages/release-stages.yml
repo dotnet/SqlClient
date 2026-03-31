@@ -106,7 +106,7 @@ parameters:
   - name: releaseAzure
     type: boolean
 
-  - name: releaseAKVProvider
+  - name: releaseAkvProvider
     type: boolean
 
 stages:
@@ -123,7 +123,7 @@ stages:
   #   true  → NuGet Production feed.
   #   false → NuGet Test feed.
   # ====================================================================
-  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAKVProvider) }}:
+  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAkvProvider) }}:
     - stage: release_${{ parameters.stageNameSuffix }}
       ${{ if eq(parameters.releaseToProduction, true) }}:
         displayName: Release to NuGet Production
@@ -137,7 +137,7 @@ stages:
         - ${{ if or(parameters.releaseSqlClient, parameters.releaseAzure) }}:
           - build_dependent
           - mds_package_validation
-        - ${{ if parameters.releaseAKVProvider }}:
+        - ${{ if parameters.releaseAkvProvider }}:
           - build_addons
 
       variables:
@@ -228,11 +228,11 @@ stages:
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
-        - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+        - ${{ if eq(parameters.releaseAkvProvider, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              artifactName: '${{ parameters.akvArtifactsName }}'
+              artifactName: '${{ parameters.akvProviderArtifactsName }}'
               packagePath: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.${{ parameters.akvProviderPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}

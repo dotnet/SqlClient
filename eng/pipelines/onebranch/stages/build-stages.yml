@@ -12,7 +12,7 @@
 #   - build_independent: builds packages with no cross-package dependencies (Logging, SqlServer)
 #   - build_abstractions: builds the Abstractions package, which depends on Logging
 #   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
-#   - build_addons: builds add-on packages with dependencies on the core packages (AKV Provider)
+#   - build_addons: builds add-on packages with dependencies on the core packages (Akv Provider)
 
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
@@ -39,7 +39,7 @@ parameters:
   - name: buildSqlClient
     type: boolean
 
-  - name: buildAKVProvider
+  - name: buildAkvProvider
     type: boolean
 
   # Package Parameters -----------------------------------------------------
@@ -144,7 +144,7 @@ stages:
     displayName: "Build Independent Packages"
 
     jobs:
-      - ${{ if or(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
+      - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
@@ -303,9 +303,9 @@ stages:
 
   # ====================================================================
   # Stage 4: Add-on packages (depend on core packages)
-  # AKV Provider builds after MDS completes.
+  # Akv Provider builds after MDS completes.
   # ====================================================================
-  - ${{ if and(eq(parameters.buildAKVProvider, true), eq(parameters.buildSqlClient, true)) }}:
+  - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
       - stage: build_addons
         displayName: "Build Add-on Packages"
         dependsOn: build_dependent
@@ -331,11 +331,11 @@ stages:
               packageVersion: '${{ parameters.akvProviderPackageVersion }}'
               versionProperties: >-
                 -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
-                -p:AkvAssemblyFileVersion=${{ parameters.akvFileVersion }}
+                -p:AkvAssemblyFileVersion=${{ parameters.akvProviderFileVersion }}
                 -p:MdsPackageVersion=${{ parameters.sqlClientPackageVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-              assemblyFileVersion: '${{ parameters.akvFileVersion }}'
+              assemblyFileVersion: '${{ parameters.akvProviderFileVersion }}'
               publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.sqlClientArtifactsName }}'
