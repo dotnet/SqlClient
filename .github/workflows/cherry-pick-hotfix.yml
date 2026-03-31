@@ -114,7 +114,7 @@ jobs:
           fi
 
           TARGET_BRANCH="release/${BRANCH_VERSION}"
-          CHERRY_PICK_BRANCH="cherry-pick/pr-${PR_NUMBER}-to-${VERSION}"
+          CHERRY_PICK_BRANCH="dev/automation/pr-${PR_NUMBER}-to-${VERSION}"
 
           git fetch origin "${TARGET_BRANCH}"
           git checkout -b "${CHERRY_PICK_BRANCH}" "origin/${TARGET_BRANCH}"
