@@ -14,8 +14,8 @@
 # It runs via CI push triggers and schedules and uses the Release build
 # configuration:
 #
-#   - Commits to GitHub main
-#   - Commits to ADO internal/main
+#   - Commits to GitHub main and release/* branches
+#   - Commits to ADO internal/main and internal/release/* branches
 #   - Weekdays at 01:00 UTC on GitHub main
 #   - Thursdays at 05:00 UTC on ADO internal/main
 #
@@ -55,11 +55,13 @@ trigger:
 
   branches:
     include:
-    # GitHub main branch.
+    # GitHub main and release branches.
     - main
+    - release/*
 
-    # ADO internal/main branch.
+    # ADO main and release branches.
     - internal/main
+    - internal/release/*
 
 # Trigger this pipline on a schedule.
 schedules:
