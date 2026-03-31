@@ -95,7 +95,6 @@ variables:
   - template: /eng/pipelines/onebranch/variables/package-variables.yml@self
     parameters:
       isPreview: ${{ parameters.isPreview }}
-  - template: /eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml@self
 
 resources:
   repositories:

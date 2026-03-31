@@ -356,5 +356,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
             parameters:
               artifactName: '${{ parameters.sqlClientArtifactsName }}'
+              expectedFileVersion: '${{ parameters.sqlClientAssemblyFileVersion }}'
+              expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
               isPreview: ${{ parameters.isPreview }}
               isOfficial: ${{ parameters.isOfficial }}
