@@ -115,31 +115,31 @@ variables:
 
   # Define the effective versions for all of the packages we build and release.
   - ${{ if parameters.isPreview }}:
-    - name: effectiveSqlServerVersion
-      value: $(sqlServerPackagePreviewVersion)
-    - name: effectiveLoggingVersion
-      value: $(loggingPackagePreviewVersion)
-    - name: effectiveAbstractionsVersion
-      value: $(abstractionsPackagePreviewVersion)
-    - name: effectiveSqlClientVersion
-      value: $(mdsPackagePreviewVersion)
-    - name: effectiveAzureVersion
-      value: $(azurePackagePreviewVersion)
-    - name: effectiveAkvProviderVersion
-      value: $(akvPackagePreviewVersion)
+      - name: effectiveSqlServerVersion
+        value: $(sqlServerPackagePreviewVersion)
+      - name: effectiveLoggingVersion
+        value: $(loggingPackagePreviewVersion)
+      - name: effectiveAbstractionsVersion
+        value: $(abstractionsPackagePreviewVersion)
+      - name: effectiveSqlClientVersion
+        value: $(mdsPackagePreviewVersion)
+      - name: effectiveAzureVersion
+        value: $(azurePackagePreviewVersion)
+      - name: effectiveAkvProviderVersion
+        value: $(akvPackagePreviewVersion)
   - ${{ else }}:
-    - name: effectiveSqlServerVersion
-      value: $(sqlServerPackageVersion)
-    - name: effectiveLoggingVersion
-      value: $(loggingPackageVersion)
-    - name: effectiveAbstractionsVersion
-      value: $(abstractionsPackageVersion)
-    - name: effectiveSqlClientVersion
-      value: $(mdsPackageVersion)
-    - name: effectiveAzureVersion
-      value: $(azurePackageVersion)
-    - name: effectiveAkvProviderVersion
-      value: $(akvPackageVersion)
+      - name: effectiveSqlServerVersion
+        value: $(sqlServerPackageVersion)
+      - name: effectiveLoggingVersion
+        value: $(loggingPackageVersion)
+      - name: effectiveAbstractionsVersion
+        value: $(abstractionsPackageVersion)
+      - name: effectiveSqlClientVersion
+        value: $(mdsPackageVersion)
+      - name: effectiveAzureVersion
+        value: $(azurePackageVersion)
+      - name: effectiveAkvProviderVersion
+        value: $(akvPackageVersion)
 
 resources:
   repositories:
@@ -153,8 +153,8 @@ extends:
   template: /v2/OneBranch.Official.CrossPlat.yml@templates
   parameters:
     release:
-       # This indicates the pipeline category to deploy Box products.  See:
-       # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+      # This indicates the pipeline category to deploy Box products.  See:
+      # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
       category: NonAzure
     featureFlags:
       EnableCDPxPAT: false
@@ -208,6 +208,7 @@ extends:
         parameters:
           debug: ${{ parameters.debug }}
           isPreview: ${{ parameters.isPreview }}
+          isOfficial: true # This is an official pipeline.
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
