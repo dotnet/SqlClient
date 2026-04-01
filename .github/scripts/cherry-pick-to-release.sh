@@ -66,29 +66,9 @@ set -euo pipefail
 
 # -- Runtime help -------------------------------------------------------------
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-  cat <<'EOF'
-Usage: cherry-pick-to-release.sh
-
-Cherry-picks a merge commit into a release branch and opens a PR.
-
-Required environment variables:
-  VERSION            Hotfix version (e.g. "7.0.1")
-  MERGE_COMMIT_SHA   SHA of the merge commit
-  PR_NUMBER          Original PR number
-  PR_TITLE           Original PR title
-  GH_TOKEN           GitHub token
-  GITHUB_REPOSITORY  owner/repo (set by Actions)
-
-Behavior:
-  - Derives release branch from major.minor (7.0.1 → release/7.0)
-  - Skips if patch is already applied on the target branch
-  - Creates a clean PR on success, or a CONFLICTS PR on failure
-  - Milestone is set if it exists; otherwise a warning is logged
-
-Exit codes:
-  0  Success (including "already applied" — no PR created)
-  1  Error (e.g. version parse failure)
-EOF
+  # Print the header comment block (between the license banner and the
+  # closing banner), stripping the leading '# ' prefix.
+  awk '/^#{2,}$/ { n++; next } n == 2 { sub(/^# ?/, ""); print }' "$0"
   exit 0
 fi
 

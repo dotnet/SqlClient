@@ -70,7 +70,7 @@ STUB
   run bash "${SCRIPT}" --help
   [ "$status" -eq 0 ]
   [[ "$output" == *"Cherry-picks a merge commit"* ]]
-  [[ "$output" == *"Required environment variables"* ]]
+  [[ "$output" == *"REQUIRED ENVIRONMENT VARIABLES"* ]]
 }
 
 @test "prints help text with -h" {

@@ -28,6 +28,7 @@ setup() {
   export EVENT_LABEL=""
   export PR_NUMBER="42"
   export GH_TOKEN="fake-token"
+  export GITHUB_REPOSITORY="dotnet/SqlClient"
 }
 
 teardown() {
@@ -45,7 +46,7 @@ get_versions() {
   run bash "${SCRIPT}" --help
   [ "$status" -eq 0 ]
   [[ "$output" == *"Parses"* ]]
-  [[ "$output" == *"Required environment variables"* ]]
+  [[ "$output" == *"REQUIRED ENVIRONMENT VARIABLES"* ]]
 }
 
 @test "prints help text with -h" {

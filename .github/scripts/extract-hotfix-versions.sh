@@ -26,12 +26,13 @@
 #
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
-#   LABELS        Comma-separated list of all label names on the PR.
-#   EVENT_ACTION  The GitHub event action: "closed" or "labeled".
-#   EVENT_LABEL   For 'labeled' events, the name of the label that was added.
-#                 Empty or unset for 'closed' events.
-#   PR_NUMBER     The pull request number (used to derive cherry-pick branch names).
-#   GH_TOKEN      GitHub token for API calls (gh CLI auth).
+#   LABELS             Comma-separated list of all label names on the PR.
+#   EVENT_ACTION       The GitHub event action: "closed" or "labeled".
+#   EVENT_LABEL        For 'labeled' events, the name of the label that was added.
+#                      Empty or unset for 'closed' events.
+#   PR_NUMBER          The pull request number (used to derive cherry-pick branch names).
+#   GH_TOKEN           GitHub token for API calls (gh CLI auth).
+#   GITHUB_REPOSITORY  Owner/repo (e.g. "dotnet/SqlClient"). Set automatically by Actions.
 #
 # OUTPUTS
 # -------
@@ -58,26 +59,9 @@ set -euo pipefail
 
 # -- Runtime help -------------------------------------------------------------
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-  cat <<'EOF'
-Usage: extract-hotfix-versions.sh
-
-Parses "Hotfix X.Y.Z" labels from a GitHub PR and emits a JSON array for
-matrix fan-out.
-
-Required environment variables:
-  LABELS         Comma-separated label names on the PR
-  EVENT_ACTION   "closed" or "labeled"
-  EVENT_LABEL    The label just added (labeled events only)
-  PR_NUMBER      PR number
-  GH_TOKEN       GitHub token for gh CLI
-
-Output (written to $GITHUB_OUTPUT):
-  versions=["7.0.1","8.0.0"]
-
-Exit codes:
-  0  Success (including "nothing to do" — versions=[])
-  1  Error (e.g. no valid Hotfix labels on a 'closed' event)
-EOF
+  # Print the header comment block (between the license banner and the
+  # closing banner), stripping the leading '# ' prefix.
+  awk '/^#{2,}$/ { n++; next } n == 2 { sub(/^# ?/, ""); print }' "$0"
   exit 0
 fi
 
@@ -85,6 +69,7 @@ fi
 : "${LABELS:?LABELS environment variable is required}"
 : "${EVENT_ACTION:?EVENT_ACTION environment variable is required}"
 : "${PR_NUMBER:?PR_NUMBER environment variable is required}"
+: "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY environment variable is required}"
 
 # -- 'labeled' event: process only the newly added label ----------------------
 if [[ "${EVENT_ACTION}" == "labeled" ]]; then
@@ -114,7 +99,7 @@ if [[ "${EVENT_ACTION}" == "labeled" ]]; then
     exit 0
   fi
 
-  EXISTING_PR=$(gh pr list --head "${CHERRY_PICK_BRANCH}" --state all \
+  EXISTING_PR=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${CHERRY_PICK_BRANCH}" --state all \
     --json number --jq 'length')
   if [[ "${EXISTING_PR}" -gt 0 ]]; then
     echo "A cherry-pick PR from '${CHERRY_PICK_BRANCH}' already exists. Skipping."
