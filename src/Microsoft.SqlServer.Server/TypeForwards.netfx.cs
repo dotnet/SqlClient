@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETFRAMEWORK
+
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.IBinarySerialize))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.InvalidUdtException))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.Format))]
@@ -12,4 +14,5 @@
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.DataAccessKind))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.SystemDataAccessKind))]
-namespace Microsoft.SqlServer.Server { }
+
+#endif

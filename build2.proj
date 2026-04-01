@@ -157,6 +157,20 @@
     </PackageVersionMdsArgument>
 
     <!--
+      PackageVersionSqlServer
+      Applies to:     BuildSqlServer
+      Description:    Specifies the package version to use for Microsoft.SqlServer.Server. If this
+                      is specified, it will be used preferentially: assembly version and file
+                      version will be derived from the specified package version.
+      Default value:  [blank]
+      Example:        1.0.0-dev2345
+    -->
+    <PackageVersionSqlServer Condition="'$(PackageVersionSqlServer)' == ''" />
+    <PackageVersionSqlServerArgument Condition="'$(PackageVersionSqlServer)' != ''">
+      -p:SqlServerPackageVersion=$(PackageVersionSqlServer)
+    </PackageVersionSqlServerArgument>
+
+    <!--
       ReferenceType
       Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
       Description:    Determines how to build MDS. If set to "Project", any cross-project
@@ -586,6 +600,57 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Text=">>> Running unit tests for MDS via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
+  <!-- Microsoft.SqlServer.Server Targets -->
+  <PropertyGroup>
+    <SqlServerSrcRoot>$(RepoRoot)src/Microsoft.SqlServer.Server/</SqlServerSrcRoot>
+    <SqlServerProjectPath>$(SqlServerSrcRoot)Microsoft.SqlServer.Server.csproj</SqlServerProjectPath>
+  </PropertyGroup>
+
+  <!-- Build SqlServer Target ========================================== -->
+  <!-- BuildSqlServer: Builds the Microsoft.SqlServer.Server project -->
+  <Target Name="BuildSqlServer">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(SqlServerProjectPath)
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!--Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- PackSqlServer: Packages the Microsoft.SqlServer.Server project -->
+  <Target Name="PackSqlServer">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack $(SqlServerProjectPath)
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 </Project>

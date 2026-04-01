@@ -36,37 +36,6 @@
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
   </ItemGroup>
 
-  <!-- SqlServer Targets -->
-  <PropertyGroup>
-    <SqlServerProperties>$(CommonProperties)</SqlServerProperties>
-
-    <SqlServerProperties Condition="'$(SqlServerPackageVersion)' != ''">
-      $(SqlServerProperties);SqlServerPackageVersion=$(SqlServerPackageVersion)
-    </SqlServerProperties>
-
-    <SqlServerProperties Condition="'$(SqlServerAssemblyFileVersion)' != ''">
-      $(SqlServerProperties);SqlServerAssemblyFileVersion=$(SqlServerAssemblyFileVersion)
-    </SqlServerProperties>
-  </PropertyGroup>
-
-  <Target Name="RestoreSqlServer">
-    <MSBuild Projects="@(SqlServer)" Targets="restore" Properties="$(SqlServerProperties)" />
-  </Target>
-
-  <Target Name="BuildSqlServer" DependsOnTargets="RestoreSqlServer">
-    <MSBuild
-      Projects="@(SqlServer)"
-      Targets="Build"
-      Properties="$(CI);$(SqlServerProperties)" />
-  </Target>
-
-  <Target Name="PackSqlServer">
-    <MSBuild
-      Projects="@(SqlServer)"
-      Targets="Pack"
-      Properties="$(SqlServerProperties);NoBuild=true" />
-  </Target>
-
   <!-- Abstractions Targets -->
   <PropertyGroup>
     <AbstractionsProperties>$(CommonProperties)</AbstractionsProperties>

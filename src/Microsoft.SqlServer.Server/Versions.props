@@ -1,0 +1,81 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    This file contains versioning information for the Microsoft.SqlServer.Server package.
+    We will calculate three different version variables, used for different purposes:
+
+    * SqlServerPackageVersion - this will be used as the <Version> property, the version of the
+      NuGet package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
+    * SqlServerFileVersion - this will be used as the <FileVersion> property. It should be in the
+      form: (Major).(Minor).(Patch).(BuildNumber)
+    * SqlServerAssemblyVersion - this will be used as the <AssemblyVersion> property. This is the
+      version reported to user if they open the assembly properties. It *must not* change within
+      major versions in order for minor versions to be considered backwards compatible via strong
+      naming. It must be in the form: (Major).0.0.0
+  -->
+
+  <!-- Set up the default version for fallback if a version is not provided -->
+  <PropertyGroup>
+    <!--
+      This is the *next* version to release of SqlServer. Update this when the next version is
+      decided.
+    -->
+    <SqlServerVersionDefault>1.0.0</SqlServerVersionDefault>
+
+    <!--
+      Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.
+      It is stored as: AssemblyBuildNumber
+    -->
+  </PropertyGroup>
+
+  <!-- Determine file version and package version based on what was provided. -->
+  <Choose>
+    <When Condition="'$(SqlServerPackageVersion)' != ''">
+      <!--
+        When a package version is provided, it supercedes all other choices. It will be used as the
+        package version and the file version will be based on it. This situation is used for
+        local developer scenarios and (@TODO:) old build pipelines that stored their version
+        information in the pipeline yaml.
+      -->
+      <PropertyGroup>
+        <SqlServerFileVersion>$(SqlServerPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</SqlServerFileVersion>
+      </PropertyGroup>
+    </When>
+
+    <When Condition="'$(BuildNumber)' != '' AND '$(BuildNumber)' != '0'">
+      <!--
+        When a build number is provided, the default version is used as the base of the package and
+        file versions.
+
+        If a build suffix is provided, this is appended to the package version. This is meant to be
+        used by automated pre-release systems to indicate the source of the build.
+
+        If a build suffix is not provided, no pre-release tag will be added to package version. If
+        the default version already has a pre-release tag added to it (eg, "7.0.0-preview1") this
+        will be retained for the package version, but will be stripped off for the file version
+        (letters are not allowed in file/assembly versions). This is meant to be used by official
+        build pipelines to generate production-ready builds.
+      -->
+      <PropertyGroup>
+        <SqlServerPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlServerVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</SqlServerPackageVersion>
+        <SqlServerPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlServerVersionDefault)</SqlServerPackageVersion>
+
+        <SqlServerFileVersion>$(SqlServerVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</SqlServerFileVersion>
+      </PropertyGroup>
+    </When>
+
+    <Otherwise>
+      <!--
+        When a build number or package number are not provided, the build is expected to be a pre-
+        release version. In this case, a suffix is appended to the default version, and 0 is used
+        for the build number in the file version. This is meant to be used by developers that
+        want a quick build without supplying any parameters.
+      -->
+      <PropertyGroup>
+        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
+
+        <SqlServerPackageVersion>$(SqlServerVersionDefault)-$(BuildSuffix)</SqlServerPackageVersion>
+        <SqlServerFileVersion>$(SqlServerVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</SqlServerFileVersion>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+</Project>
