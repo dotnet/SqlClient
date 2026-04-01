@@ -33,6 +33,15 @@
 .PARAMETER SymbolServerName
     A friendly display name for the symbol server, used in log output.
 
+.PARAMETER MaxRetries
+    Maximum number of attempts when symbols are not yet available.  The
+    first attempt runs immediately; subsequent attempts wait
+    RetryIntervalSeconds between them.  Defaults to 10 (~5 minutes total
+    with default interval).
+
+.PARAMETER RetryIntervalSeconds
+    Seconds to wait between retry attempts (default 30).
+
 .EXAMPLE
     .\validate-symbols.ps1 `
         -ArtifactPath    "C:\agent\_work\1\drop_SqlClient" `
@@ -63,12 +72,8 @@ param(
     [Parameter(Mandatory)]
     [string]$SymbolServerName,
 
-    # Maximum number of attempts when symbols are not yet available.  The first
-    # attempt runs immediately; subsequent attempts wait RetryIntervalSeconds
-    # between them.  Defaults to 10 (~5 minutes total with default interval).
     [int]$MaxRetries = 10,
 
-    # Seconds to wait between retry attempts (default 30).
     [int]$RetryIntervalSeconds = 30
 )
 
