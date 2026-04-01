@@ -42,14 +42,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             {
                 string failValue;
-                DataTestUtility.AssertThrowsWrapper<IndexOutOfRangeException>(() => failValue = opc[0].ParameterName, "Invalid index 0 for this SqlParameterCollection with Count=0.");
+                DataTestUtility.AssertThrows<IndexOutOfRangeException>(() => failValue = opc[0].ParameterName, "Invalid index 0 for this SqlParameterCollection with Count=0.");
 
-                DataTestUtility.AssertThrowsWrapper<IndexOutOfRangeException>(() => failValue = opc["@p1"].ParameterName, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
+                DataTestUtility.AssertThrows<IndexOutOfRangeException>(() => failValue = opc["@p1"].ParameterName, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
 
-                DataTestUtility.AssertThrowsWrapper<IndexOutOfRangeException>(() => opc["@p1"] = null, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
+                DataTestUtility.AssertThrows<IndexOutOfRangeException>(() => opc["@p1"] = null, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
             }
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => opc.Add(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
+            DataTestUtility.AssertThrows<ArgumentNullException>(() => opc.Add(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
 
             opc.Add((object)new SqlParameter());
             IEnumerator enm = opc.GetEnumerator();
@@ -70,11 +70,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlParameter p = opc[0];
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => opc.Add((object)p), "The SqlParameter is already contained by another SqlParameterCollection.");
+            DataTestUtility.AssertThrows<ArgumentException>(() => opc.Add((object)p), "The SqlParameter is already contained by another SqlParameterCollection.");
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => new SqlCommand().Parameters.Add(p), "The SqlParameter is already contained by another SqlParameterCollection.");
+            DataTestUtility.AssertThrows<ArgumentException>(() => new SqlCommand().Parameters.Add(p), "The SqlParameter is already contained by another SqlParameterCollection.");
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => opc.Remove(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
+            DataTestUtility.AssertThrows<ArgumentNullException>(() => opc.Remove(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
 
             string pname = p.ParameterName;
             p.ParameterName = pname;
@@ -106,13 +106,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             new SqlCommand().Parameters.CopyTo(new object[0], 0);
             Assert.False(new SqlCommand().Parameters.GetEnumerator().MoveNext(), "FAILED: Expected MoveNext to be false");
 
-            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => new SqlCommand().Parameters.Add(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
+            DataTestUtility.AssertThrows<InvalidCastException>(() => new SqlCommand().Parameters.Add(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
 
-            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => new SqlCommand().Parameters.Insert(0, 0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
+            DataTestUtility.AssertThrows<InvalidCastException>(() => new SqlCommand().Parameters.Insert(0, 0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
 
-            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => new SqlCommand().Parameters.Remove(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
+            DataTestUtility.AssertThrows<InvalidCastException>(() => new SqlCommand().Parameters.Remove(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => new SqlCommand().Parameters.Remove(new SqlParameter()), "Attempted to remove an SqlParameter that is not contained by this SqlParameterCollection.");
+            DataTestUtility.AssertThrows<ArgumentException>(() => new SqlCommand().Parameters.Remove(new SqlParameter()), "Attempted to remove an SqlParameter that is not contained by this SqlParameterCollection.");
         }
 
         // TODO Synapse: Parse error at line: 1, column: 12: Incorrect syntax near 'IF'.
