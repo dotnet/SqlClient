@@ -1,0 +1,27 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Builds the Microsoft.SqlServer.Server project via build2.proj
+
+parameters:
+  # Build configuration - Release or Debug.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Version to assign to the Microsoft.SqlServer.Server package.
+  # @TODO: This can be eliminated with usage of BuildNumber alone.
+  - name: packageVersion
+    type: string
+
+step:
+  - template: /eng/pipelines/common/steps/build-build2proj-step.yml@self
+    parameters:
+      buildConfiguration: '${{ parameters.buildConfiguration }}'
+      packageShortName: 'SqlServer'
+      versionProperties: '-p:PackageVersionSqlServer=${{ parameters.packageVersion }}'

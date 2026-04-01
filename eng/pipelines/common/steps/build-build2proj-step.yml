@@ -1,0 +1,54 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This collection of steps to build a project via the build2.proj.
+
+parameters:
+  # Any additional parameters that should be passed directly into the MSBuild command.
+  - name: additionalParameters
+    type: string
+    default: ''
+
+  # Build configuration - Release or Debug.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Project to build. This short name will be appended to "Build" to generate the appropriate
+  # target to build from build2.proj.
+  - name: packageShortName
+    type: string
+    values:
+      - Mds
+      - SqlServer
+
+  # Any versioning properties for the
+  - name: versionProperties
+    type: string
+
+steps:
+  - task: DownloadSecureFile@1
+    displayName: 'Download Signing Key'
+    inputs:
+      secureFile: 'netfxKeypair.snk'
+    name: keyFile
+
+  - task: MSBuild@1
+    displayName: 'Build2.proj - Build${{ parameters.packageShortName }}'
+    inputs:
+      solution: '$(REPO_ROOT)/build2.proj'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:Build${{ parameters.packageShortName }}
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:SigningKeyPath="$(keyFile.secureFilePath)"
+        ${{ parameters.versionProperties }}
+        ${{ parameters.additionalParameters }}
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree
