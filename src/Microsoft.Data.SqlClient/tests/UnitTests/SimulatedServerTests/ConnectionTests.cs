@@ -841,10 +841,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(false)]
         public void TestConnWithUserAgentFeatureExtension(bool sendAck)
         {
-            // Enable sending the UserAgent if desired.
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.EnableUserAgent = true;
-
             // Start the test server.
             using TdsServer server = new();
             server.Start();
@@ -912,10 +908,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Fact]
         public void TestConnWithoutUserAgentFeatureExtension()
         {
-            // Disable the client-side UserAgent field entirely
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.EnableUserAgent = false;
-
             using var server = new TdsServer();
             server.Start();
 
