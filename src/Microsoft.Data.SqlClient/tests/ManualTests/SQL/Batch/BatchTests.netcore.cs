@@ -16,56 +16,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class BatchTests
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void SqlCommandGetColumnSchemaKeyInfo()
-        {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            {
-                connection.Open();
-
-                using (var cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT * FROM Categories";
-
-                    using var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo);
-
-                    Assert.False(reader.Read());
-
-                    var schema = reader.GetColumnSchema();
-
-                    Assert.Equal(4, schema.Count);
-                    Assert.True(schema[0].IsKey);
-                }
-            }
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void SqlBatchCommandGetColumnSchemaKeyInfo()
-        {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            {
-                connection.Open();
-
-                using (var batch = connection.CreateBatch())
-                {
-                    var cmd = new SqlBatchCommand();
-                    cmd.CommandText = "SELECT * FROM Categories";
-                    cmd.CommandBehavior = CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo;
-
-                    batch.BatchCommands.Add(cmd);
-
-                    using var reader = batch.ExecuteReader();
-
-                    Assert.False(reader.Read());
-
-                    var schema = reader.GetColumnSchema();
-
-                    Assert.Equal(4, schema.Count);
-                    Assert.True(schema[0].IsKey);
-                }
-            }
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingCommandTextThrows()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -678,6 +628,64 @@ END";
 
             Assert.Equal(10, resultSetCount);
             Assert.Equal(10, resultRowCount);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReaderCommandCommandBehaviorSchemaOnlyKeyInfo()
+        {
+            System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlBatch batch = new SqlBatch(conn))
+            {
+                conn.Open();
+
+                var cmd = new SqlBatchCommand("SELECT * FROM Categories");
+                cmd.CommandBehavior = CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo;
+                batch.BatchCommands.Add(cmd);
+
+                using var reader = batch.ExecuteReader();
+
+                Assert.False(reader.Read());
+
+                schema = reader.GetColumnSchema();
+            }
+
+            Assert.Equal(4, schema.Count);
+            Assert.True(schema[0].IsKey);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReaderCommandBehaviorCloseConnection()
+        {
+            int resultSetCount = 0;
+            int resultRowCount = 0;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlBatch batch = new SqlBatch(conn))
+            {
+                conn.Open();
+
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1"));
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2"));
+
+                using (var reader = batch.ExecuteReader(CommandBehavior.CloseConnection))
+                {
+                    do
+                    {
+                        resultSetCount += 1;
+                        while (reader.Read())
+                        {
+                            resultRowCount += 1;
+                        }
+                    } while (reader.NextResult());
+                }
+
+                Assert.Equal(ConnectionState.Closed, conn.State);
+            }
+
+            Assert.Equal(2, resultSetCount);
+            Assert.Equal(2, resultRowCount);
         }
 
         private static SqlParameter CreateParameter<T>(string name, SqlDbType type, T value, ParameterDirection direction = ParameterDirection.Input)

@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -185,13 +185,22 @@ namespace Microsoft.Data.SqlClient
             return _batchCommand.ExecuteReaderAsync(cancellationToken);
         }
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader();
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        {
+            ValidateCommandBehavior(nameof(ExecuteDbDataReader), behavior);
+
+            CheckDisposed();
+            SetupBatchCommandExecute();
+            return _batchCommand.ExecuteReader(behavior);
+        }
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
+            ValidateCommandBehavior(nameof(ExecuteDbDataReaderAsync), behavior);
+
             CheckDisposed();
             SetupBatchCommandExecute();
-            return _batchCommand.ExecuteReaderAsync(cancellationToken)
+            return _batchCommand.ExecuteReaderAsync(behavior, cancellationToken)
                 .ContinueWith<DbDataReader>((result) =>
                 {
                     if (result.IsFaulted)
@@ -237,6 +246,15 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.AddBatchCommand(_commands[index]);
             }
             _batchCommand.SetBatchRPCModeReadyToExecute();
+        }
+
+        internal static void ValidateCommandBehavior(string method, CommandBehavior behavior)
+        {
+            if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))
+            {
+                ADP.ValidateCommandBehavior(behavior);
+                throw ADP.NotSupportedCommandBehavior(behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection), method);
+            }
         }
     }
 }

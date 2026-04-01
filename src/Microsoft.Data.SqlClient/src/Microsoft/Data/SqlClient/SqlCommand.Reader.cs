@@ -463,7 +463,7 @@ namespace Microsoft.Data.SqlClient
             SqlParameter sqlParam;
 
             // @batch_text
-            string text = GetCommandText(behavior) + GetOptionsResetString(behavior);
+            string text = GetCommandText(behavior);
             sqlParam = rpc.systemParams[0];
             sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
@@ -1383,7 +1383,7 @@ namespace Microsoft.Data.SqlClient
                             $"Command Text '{CommandText}'");
                     }
 
-                    string text = GetCommandText(cmdBehavior) + GetOptionsResetString(cmdBehavior);
+                    string text = GetCommandText(cmdBehavior);
 
                     // If the query requires enclave computations, pass the enclave package in the
                     // SqlBatch TDS stream
