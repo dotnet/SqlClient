@@ -15,13 +15,6 @@
         "apicompat"
       ],
       "rollForward": false
-    },
-    "powershell": {
-      "version": "7.6.0",
-      "commands": [
-        "pwsh"
-      ],
-      "rollForward": false
     }
   }
 }
