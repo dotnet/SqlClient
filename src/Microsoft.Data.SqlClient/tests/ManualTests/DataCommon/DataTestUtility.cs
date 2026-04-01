@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
+        private static string s_sqlServerVersion;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
@@ -125,9 +125,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
+                    s_sqlServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
-                return s_sQLServerVersion;
+                return s_sqlServerVersion;
             }
         }
 

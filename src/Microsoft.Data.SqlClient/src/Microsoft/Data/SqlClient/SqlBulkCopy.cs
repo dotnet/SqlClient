@@ -494,6 +494,13 @@ namespace Microsoft.Data.SqlClient
             //   7 = GRAPH_TO_OBJ_ID
             //
             // See: https://learn.microsoft.com/sql/relational-databases/graphs/sql-graph-architecture#syscolumns
+            //
+            // The column-name query is built as dynamic SQL and executed via sp_executesql so
+            // that it is not compiled (and rejected) on SQL Server versions that lack the
+            // graph_type column (e.g. SQL 2016).  CatalogName and escapedObjectName are
+            // interpolated directly into the SQL string because SQL Server does not allow
+            // identifiers (database/schema/table names) to be passed as parameters.  Both
+            // values are escaped via SqlServerEscapeHelper before interpolation.
             return $"""
 SELECT @@TRANCOUNT;
 
