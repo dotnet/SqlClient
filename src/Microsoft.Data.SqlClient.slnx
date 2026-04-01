@@ -257,6 +257,9 @@
     <Project Path="Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
   </Folder>
   <Folder Name="/Microsoft.Data.SqlClient/tests/" />
+  <Folder Name="/Microsoft.SqlServer.Server/">
+    <Project Path="Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <File Path="Directory.Build.props" />
     <Project Path="Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj">
@@ -264,7 +267,6 @@
       <BuildDependency Project="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />
       <BuildDependency Project="Microsoft.Data.SqlClient/netfx/ref/Microsoft.Data.SqlClient.csproj" />
     </Project>
-    <Project Path="Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
   </Folder>
   <Folder Name="/src/netcore/">
     <Project Path="Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj" />

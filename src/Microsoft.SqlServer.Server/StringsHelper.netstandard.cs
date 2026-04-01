@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETSTANDARD
+
 using System.Globalization;
 using System.Resources;
 using System.Runtime.CompilerServices;
@@ -32,7 +34,7 @@ namespace Microsoft.SqlServer.Server
         public static ResourceManager Resources => GetLoader()._resources;
 
 
-        // This method is used to decide if we need to append the exception message parameters to the message when calling Strings.Format. 
+        // This method is used to decide if we need to append the exception message parameters to the message when calling Strings.Format.
         // by default it returns false.
         // Native code generators can replace the value this returns based on user input at the time of native code generation.
         // Marked as NoInlining because if this is used in an AoT compiled app that is not compiled into a single file, the user
@@ -129,3 +131,5 @@ namespace Microsoft.SqlServer.Server
         }
     }
 }
+
+#endif

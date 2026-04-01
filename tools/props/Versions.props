@@ -12,24 +12,15 @@
     <AssemblyBuildNumber>$(BuildNumber.Split('.')[0])</AssemblyBuildNumber>
   </PropertyGroup>
 
-  <!-- SqlServer Package Properties -->
-  <PropertyGroup>
-    <!-- This version section corresponds to version info of Microsoft.SqlServer.Server Assembly. -->
-    <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
-    <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 1.0.0.0 -->
-    <SqlServerAssemblyVersion>1.0.0.0</SqlServerAssemblyVersion>
-    <SqlServerAssemblyFileVersion Condition="'$(SqlServerAssemblyFileVersion)' == ''">1.0.0.0</SqlServerAssemblyFileVersion>
-    <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0.$(BuildNumber)-dev</SqlServerPackageVersion>
-    <SqlServerVersion>$(SqlServerPackageVersion)</SqlServerVersion>
-  </PropertyGroup>
-
   <!-- Abstractions Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\AbstractionsVersions.props" />
 
   <!-- Logging Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Internal\Logging\src\LoggingVersions.props" />
 
-  <!-- For MDS Versioning, see src/Microsoft.Data.SqlClient/MdsVersions.props -->
+  <!-- For Microsoft.Data.SqlClient Versioning, see: src/Microsoft.Data.SqlClient/MdsVersions.props -->
+
+  <!-- For Microsoft.SqlServer.Server versioning, see: src/Microsoft.SqlServer.Server/Versions.props -->
 
   <!-- Azure Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
