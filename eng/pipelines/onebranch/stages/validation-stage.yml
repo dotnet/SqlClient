@@ -17,6 +17,14 @@
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
 
+  # True to enable debug information and steps.
+  - name: debug
+    type: boolean
+
+  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
+  - name: isOfficial
+    type: boolean
+
   # True if this is a preview build.
   - name: isPreview
     type: boolean
@@ -55,12 +63,14 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
           parameters:
             artifactName: $(sqlClientArtifactsName)
+            isOfficial: ${{ parameters.isOfficial }}
             isPreview: ${{ parameters.isPreview }}
 
       # ── Symbol-server validation ───────────────────────────────────
       - ${{ if eq(parameters.publishSymbols, true) }}:
         - template: /eng/pipelines/onebranch/jobs/validate-symbols-job.yml@self
           parameters:
+            debug: ${{ parameters.debug }}
             packages:
               # SqlServer — only when buildSqlServerServer is true.
               - ${{ if eq(parameters.buildSqlServerServer, true) }}:

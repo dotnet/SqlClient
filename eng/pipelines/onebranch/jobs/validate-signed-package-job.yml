@@ -8,13 +8,13 @@ parameters:
   - name: artifactName
     type: string
 
-  # True if this build is a preview.
-  - name: isPreview
-    type: boolean
-
   # True if this build is an official build. This will be used to gate some checks
   # that only apply to official builds, such as signature verification.
   - name: isOfficial
+    type: boolean
+
+  # True if this build is a preview.
+  - name: isPreview
     type: boolean
 
 jobs:

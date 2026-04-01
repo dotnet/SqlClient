@@ -33,14 +33,14 @@ parameters:
   - name: debug
     type: boolean
 
-  # True if this is a preview build, which uses the preview version numbers from
-  # common-variables.yml.
-  - name: isPreview
-    type: boolean
-
   # True if this is an official build, which runs additional ESRP malware scanning
   # and codesigning steps.
   - name: isOfficial
+    type: boolean
+
+  # True if this is a preview build, which uses the preview version numbers from
+  # common-variables.yml.
+  - name: isPreview
     type: boolean
 
   # True to publish symbols to public and private servers.

@@ -11,6 +11,10 @@
 # specified in the 'symbolServers' parameter.
 
 parameters:
+  # True to enable debug information and steps.
+  - name: debug
+    type: boolean
+
   # The list of symbol servers to verify against.  Each entry has a 'name' (friendly display name)
   # and 'url' (the symbol server URL that symchk can query).
   - name: symbolServers
@@ -43,8 +47,9 @@ jobs:
       extractRoot: $(Build.SourcesDirectory)\symchk_packages
 
     steps:
-    - script: SET
-      displayName: Print Environment Variables
+    - ${{ if parameters.debug }}:
+      - script: SET
+        displayName: Print Environment Variables
 
     # ── Download, extract, and verify symbols for each package ──────────────
 
@@ -55,12 +60,14 @@ jobs:
         displayName: Download ${{ pkg.packageName }}
 
       - ${{ each server in parameters.symbolServers }}:
-        - powershell: >
-            $(Build.SourcesDirectory)\eng\pipelines\onebranch\jobs\validate-symbols.ps1
-            -ArtifactPath  "$(Pipeline.Workspace)\${{ pkg.artifactName }}"
-            -ExtractPath   "$(extractRoot)\${{ pkg.packageName }}"
-            -PackageName   "${{ pkg.packageName }}"
-            -DllPath       "${{ pkg.dllPath }}"
-            -SymbolServerUrl  "${{ server.url }}"
-            -SymbolServerName "${{ server.name }}"
+        - task: PowerShell@2
           displayName: Verify ${{ pkg.packageName }} on ${{ server.name }}
+          inputs:
+            filePath: eng/pipelines/onebranch/jobs/validate-symbols.ps1
+            arguments: >
+              -ArtifactPath "$(Pipeline.Workspace)\${{ pkg.artifactName }}"
+              -ExtractPath "$(extractRoot)\${{ pkg.packageName }}"
+              -PackageName "${{ pkg.packageName }}"
+              -DllPath "${{ pkg.dllPath }}"
+              -SymbolServerUrl "${{ server.url }}"
+              -SymbolServerName "${{ server.name }}"

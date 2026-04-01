@@ -42,6 +42,10 @@ parameters:
   - name: debug
     type: boolean
 
+  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
+  - name: isOfficial
+    type: boolean
+
   # Controls where packages are pushed during the release stage.
   #
   # When true, packages are pushed to the NuGet Production feed.
@@ -50,10 +54,6 @@ parameters:
   - name: releaseToProduction
     type: boolean
     default: false
-
-  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
-  - name: isOfficial
-    type: boolean
 
   # The stage name suffix, used in the stage ID (e.g. release_production) and display name.
   - name: stageNameSuffix
@@ -103,6 +103,11 @@ stages:
       ${{ else }}:
         displayName: Release to NuGet Test
       dependsOn:
+        # We always depend on validation.  That stage has its own checks to gate execution of the
+        # validation jobs, so it's safe to depend on it unconditionally.
+        - validation
+        # Additionally, we depend on the build stages corresponding to any packages we intend to
+        # release.
         - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
           - build_independent
         - ${{ if parameters.releaseAbstractions }}:

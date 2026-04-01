@@ -207,8 +207,9 @@ extends:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           debug: ${{ parameters.debug }}
+          # This is an official pipeline.
+          isOfficial: true
           isPreview: ${{ parameters.isPreview }}
-          isOfficial: true # This is an official pipeline.
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
@@ -216,6 +217,8 @@ extends:
 
       - template: /eng/pipelines/onebranch/stages/validation-stage.yml@self
         parameters:
+          debug: ${{ parameters.debug }}
+          isOfficial: true
           isPreview: ${{ parameters.isPreview }}
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
@@ -225,9 +228,8 @@ extends:
       - template: /eng/pipelines/onebranch/stages/release-stage.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          releaseToProduction: ${{ parameters.releaseToProduction }}
-          # This is an official pipeline.
           isOfficial: true
+          releaseToProduction: ${{ parameters.releaseToProduction }}
           stageNameSuffix: production
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
