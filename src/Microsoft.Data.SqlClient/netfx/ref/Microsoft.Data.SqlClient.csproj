@@ -26,6 +26,9 @@
     <Compile Include="../../ref/Microsoft.Data.SqlClient.Diagnostics.cs" />
     <Compile Include="../../ref/Microsoft.Data.SqlClient.Server.cs" />
     <Compile Include="../../ref/Microsoft.Data.SqlTypes.cs" />
+    <Compile Include="$(CommonSourceRoot)TypeForwards.Abstractions.cs">
+      <Link>TypeForwards.Abstractions.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!-- References -->
@@ -43,6 +46,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />

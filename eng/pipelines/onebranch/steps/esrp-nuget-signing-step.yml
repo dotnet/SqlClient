@@ -30,8 +30,12 @@ parameters:
   - name: esrpClientId
     type: string
 
-  # Glob pattern to match NuGet packages for scanning and signing.
-  - name: pattern
+  # Folder path to search for NuGet packages to sign
+  - name: searchPath
+    type: string
+
+  # Globbing pattern to use to search for NuGet packages. If not provided, defaults to '*.*nupkg'
+  - name: searchPattern
     type: string
     default: '*.*nupkg'
 
@@ -45,8 +49,8 @@ steps:
       CleanupTempStorage: 1
       ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
       EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
+      FolderPath: '${{ parameters.searchPath }}'
+      Pattern: '${{ parameters.searchPattern }}'
       UseMSIAuthentication: true
       VerboseLogin: 1
 
@@ -60,8 +64,8 @@ steps:
       EsrpClientId: '${{ parameters.esrpClientId }}'
       AuthAKVName: '${{ parameters.authAkvName }}'
       AuthSignCertName: '${{ parameters.authSignCertName }}'
-      FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
+      FolderPath: '${{ parameters.searchPath }}'
+      Pattern: '${{ parameters.searchPattern }}'
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |

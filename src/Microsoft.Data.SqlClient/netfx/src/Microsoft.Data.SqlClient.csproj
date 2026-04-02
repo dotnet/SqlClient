@@ -979,9 +979,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVector.cs">
       <Link>Microsoft\Data\SqlTypes\SqlVector.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SQLResource.cs">
-      <Link>Microsoft\Data\SqlTypes\SQLResource.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
     </Compile>
@@ -1005,6 +1002,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
       <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)TypeForwards.Abstractions.cs">
+      <Link>TypeForwards.Abstractions.cs</Link>
     </Compile>
   </ItemGroup>
 
