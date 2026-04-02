@@ -191,6 +191,7 @@ jobs:
           authSignCertName: ${{ parameters.authSignCertName }}
           esrpClientId: ${{ parameters.esrpClientId }}
           esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
+          pattern: '${{ parameters.packageFullName }}.*nupkg'
 
       # Publish symbols to servers
       - ${{ if eq(parameters.publishSymbols, true) }}:

@@ -30,6 +30,11 @@ parameters:
   - name: esrpClientId
     type: string
 
+  # Glob pattern to match NuGet packages for scanning and signing.
+  - name: pattern
+    type: string
+    default: '*.*nupkg'
+
 steps:
   # See: https://aka.ms/esrp.scantask
   - task: EsrpMalwareScanning@6
@@ -41,7 +46,7 @@ steps:
       ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
       EsrpClientId: '${{ parameters.esrpClientId }}'
       FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '*.*nupkg'
+      Pattern: '${{ parameters.pattern }}'
       UseMSIAuthentication: true
       VerboseLogin: 1
 
@@ -56,7 +61,7 @@ steps:
       AuthAKVName: '${{ parameters.authAkvName }}'
       AuthSignCertName: '${{ parameters.authSignCertName }}'
       FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '*.*nupkg'
+      Pattern: '${{ parameters.pattern }}'
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |
