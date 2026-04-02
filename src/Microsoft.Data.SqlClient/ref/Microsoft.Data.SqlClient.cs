@@ -818,7 +818,7 @@ public sealed class SqlCommandBuilder : System.Data.Common.DbCommandBuilder
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
 public sealed class SqlConfigurableRetryFactory
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/BaselineTransientErrors/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/BaselineTransientErrors/*' />
     public static System.Collections.ObjectModel.ReadOnlyCollection<int> BaselineTransientErrors { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
     public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
@@ -885,7 +885,7 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     [System.ComponentModel.BrowsableAttribute(false)]
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     public Microsoft.Data.SqlClient.SqlCredential Credential { get { throw null; } set { } }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
     public SspiContextProvider SspiContextProvider { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*'/>
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
@@ -1359,7 +1359,7 @@ public sealed class SqlDataAdapter : System.Data.Common.DbDataAdapter, System.Da
     public event Microsoft.Data.SqlClient.SqlRowUpdatedEventHandler RowUpdated { add { } remove { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*'/>
     public event Microsoft.Data.SqlClient.SqlRowUpdatingEventHandler RowUpdating { add { } remove { } }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
     protected override void OnRowUpdated(System.Data.Common.RowUpdatedEventArgs value) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
     protected override void OnRowUpdating(System.Data.Common.RowUpdatingEventArgs value) { }
@@ -2181,7 +2181,7 @@ public sealed class SspiAuthenticationParameters
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ctor'/>
     public SspiAuthenticationParameters(
-        string serverName, 
+        string serverName,
         string resource,
         string userId = null,
         string databaseName = null,
