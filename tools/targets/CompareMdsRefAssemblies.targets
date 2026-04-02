@@ -113,13 +113,6 @@
   </Target>
 
   <!-- ================================================================== -->
-  <!-- _RestoreTools                                                      -->
-  <!-- ================================================================== -->
-  <Target Name="_RestoreTools" DependsOnTargets="_SetApiCompatProperties">
-    <Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />
-  </Target>
-
-  <!-- ================================================================== -->
   <!-- _BuildLegacyRefNetFx                                               -->
   <!-- ================================================================== -->
   <Target Name="_BuildLegacyRefNetFx" DependsOnTargets="_SetApiCompatProperties" Condition="'$(IsEnabledWindows)' == 'true'">

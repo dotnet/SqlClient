@@ -40,6 +40,9 @@ steps:
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
+  # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+  - template: /eng/pipelines/steps/tool-restore.yml@self
+
   - task: MSBuild@1
     displayName: 'BuildAllConfigurations using build.proj'
     inputs:

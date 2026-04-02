@@ -36,9 +36,6 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
-  <Target Name="RestoreTools">
-    <Exec Command="dotnet tool restore" />
-  </Target>
 
   <!-- Trim Docs for IntelliSense ====================================== -->
   <!--
