@@ -27,8 +27,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // Arrange
-                // Insert valid VARCHAR values - '42-43' is a valid string, not an invalid number
-                DataTestUtility.CreateTable(connection, tableName, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
+                // Insert valid VARCHAR values - '42-43' is a valid string but not a valid number
+                DataTestUtility.CreateTable(connection, tableName, "(Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED, Val VARCHAR(10) NOT NULL)");
                 using (SqlCommand insertCmd = connection.CreateCommand())
                 {
                     insertCmd.CommandText =
@@ -68,9 +68,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // Arrange
-                // sourceTable.Val is VARCHAR - both '12345' and '42-43' are valid strings
-                DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
-                DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL, Val1 INT NOT NULL, Val2 INT NOT NULL)");
+                // sourceTable.Val is VARCHAR - both '12345' and '42-43' are valid strings but not valid numbers
+                DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED, Val VARCHAR(10) NOT NULL)");
+                DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED, Val1 INT NOT NULL, Val2 INT NOT NULL)");
                 using (SqlCommand insertCmd = connection.CreateCommand())
                 {
                     insertCmd.CommandText =
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // Arrange
-                DataTestUtility.CreateTable(connection, tableName, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
+                DataTestUtility.CreateTable(connection, tableName, "(Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED, Val VARCHAR(10) NOT NULL)");
                 using (SqlCommand insertCmd = connection.CreateCommand())
                 {
                     insertCmd.CommandText =
@@ -203,9 +203,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // Arrange
-                // sourceTable.Val is VARCHAR - both '12345' and '42-43' are valid strings
-                DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL, Val VARCHAR(10) NOT NULL)");
-                DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL, Val1 INT NOT NULL, Val2 INT NOT NULL)");
+                // sourceTable.Val is VARCHAR - both '12345' and '42-43' are valid strings but not valid numbers
+                DataTestUtility.CreateTable(connection, sourceTable, "(Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED, Val VARCHAR(10) NOT NULL)");
+                DataTestUtility.CreateTable(connection, targetTable, "(Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED, Val1 INT NOT NULL, Val2 INT NOT NULL)");
                 using (SqlCommand insertCmd = connection.CreateCommand())
                 {
                     insertCmd.CommandText =
