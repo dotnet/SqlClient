@@ -47,7 +47,6 @@
   <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
   <Target Name="TrimDocsForIntelliSense"
           AfterTargets="Build"
-          DependsOnTargets="RestoreTools"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
     <PropertyGroup>
       <PowerShellCommand>

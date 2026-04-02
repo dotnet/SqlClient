@@ -148,7 +148,7 @@
   <!-- _RunRefApiCompat                                                   -->
   <!-- ================================================================== -->
   <Target Name="_RunRefApiCompat"
-          DependsOnTargets="_DownloadBaselinePackage;_RestoreTools;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
+          DependsOnTargets="_DownloadBaselinePackage;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
 
     <!--
       For each TFM, compare:
