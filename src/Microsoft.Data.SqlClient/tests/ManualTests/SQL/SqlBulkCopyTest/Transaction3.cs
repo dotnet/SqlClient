@@ -37,13 +37,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 bulkcopy.DestinationTableName = dstTable;
 
                                 string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
 
                                 SqlCommand myCmd = dstConn.CreateCommand();
                                 myCmd.CommandText = "select * from " + dstTable;
                                 myCmd.Transaction = myTrans;
 
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => myCmd.ExecuteReader(), exceptionMessage: exceptionMsg);
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => myCmd.ExecuteReader(), exceptionMessage: exceptionMsg);
                             }
                         }
                     }

@@ -9,7 +9,7 @@
   <Import Project="../MdsVersions.props" />
   <PropertyGroup>
     <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
-    <FileVersion>$(MdsAssemblyVersion)</FileVersion>
+    <FileVersion>$(MdsFileVersion)</FileVersion>
     <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
