@@ -30,6 +30,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
         Assert.False(LocalAppContextSwitches.EnableUserAgent);
         Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
+        Assert.False(LocalAppContextSwitches.VerifyRecoveredDatabaseContext);
         #if NET
         Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
         #endif

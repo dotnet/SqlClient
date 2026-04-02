@@ -4,6 +4,7 @@
 
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
@@ -398,17 +399,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
-        #region Reconnection Tests — Buggy Server (no database in recovery)
+        #region Reconnection Tests — Buggy Server (wrong database in recovery)
 
         /// <summary>
         /// Simulates a server bug where session recovery acknowledges the feature but does
         /// NOT restore the database context — the ENV_CHANGE carries the initial catalog
-        /// instead of the recovered database.  Despite the incorrect ENV_CHANGE, the client
-        /// should trust the recovery state it sent and report the recovered database.
+        /// instead of the recovered database.
+        ///
+        /// When <c>VerifyRecoveredDatabaseContext</c> is <c>true</c>, the client detects
+        /// the mismatch and issues a corrective <c>USE</c> command.  When <c>false</c>
+        /// (the default), the client trusts the server's ENV_CHANGE and reports the
+        /// initial catalog.
         /// </summary>
-        [Fact]
-        public void UseDatabase_BuggyRecovery_DatabaseContextPreservedAfterReconnect()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void UseDatabase_BuggyRecovery_DatabaseContextDependsOnSwitch(
+            bool verifyRecoveredDb)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = verifyRecoveredDb;
+
             using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendInitialCatalog);
             SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
 
@@ -432,19 +443,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // The buggy server sent InitialCatalog in ENV_CHANGE.
             Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
 
-            // After successful recovery, the client should reflect the recovered database
-            // regardless of the server's ENV_CHANGE.
-            Assert.Equal(SwitchedDatabase, connection.Database);
+            string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
+            Assert.Equal(expectedDatabase, connection.Database);
         }
 
         /// <summary>
-        /// Simulates a server that doesn't restore the database during session recovery
-        /// using <see cref="SqlConnection.ChangeDatabase"/>.  Despite the incorrect
-        /// ENV_CHANGE, the client should preserve the recovered database context.
+        /// Same as <see cref="UseDatabase_BuggyRecovery_DatabaseContextDependsOnSwitch"/>
+        /// but using <see cref="SqlConnection.ChangeDatabase"/>.
         /// </summary>
-        [Fact]
-        public void ChangeDatabase_BuggyRecovery_DatabaseContextPreservedAfterReconnect()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ChangeDatabase_BuggyRecovery_DatabaseContextDependsOnSwitch(
+            bool verifyRecoveredDb)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = verifyRecoveredDb;
+
             using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendInitialCatalog);
             SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
 
@@ -463,19 +478,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
 
-            // After successful recovery, the client should reflect the recovered database.
-            Assert.Equal(SwitchedDatabase, connection.Database);
+            string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
+            Assert.Equal(expectedDatabase, connection.Database);
         }
+
+        #endregion
+
+        #region Reconnection Tests — Buggy Server (omitted database ENV_CHANGE)
 
         /// <summary>
         /// Simulates a server bug where the database ENV_CHANGE token is completely
-        /// omitted from the login response during session recovery.  Despite the missing
-        /// ENV_CHANGE, the client should trust the recovery state it sent and report the
-        /// recovered database.
+        /// omitted from the login response during session recovery.
+        ///
+        /// When <c>VerifyRecoveredDatabaseContext</c> is <c>true</c>, the client detects
+        /// the mismatch and issues a corrective <c>USE</c> command.  When <c>false</c>
+        /// (the default), the client falls back to the initial catalog.
         /// </summary>
-        [Fact]
-        public void UseDatabase_OmittedEnvChange_DatabaseContextPreservedAfterReconnect()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void UseDatabase_OmittedEnvChange_DatabaseContextDependsOnSwitch(
+            bool verifyRecoveredDb)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = verifyRecoveredDb;
+
             using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.OmitDatabaseEnvChange);
             SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
 
@@ -499,17 +526,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // The server never sent a database ENV_CHANGE.
             Assert.Null(server.LastLoginResponseDatabase);
 
-            // After successful recovery, the client should reflect the recovered database
-            // regardless of missing ENV_CHANGE.
-            Assert.Equal(SwitchedDatabase, connection.Database);
+            string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
+            Assert.Equal(expectedDatabase, connection.Database);
         }
 
         /// <summary>
-        /// Same as above but using <see cref="SqlConnection.ChangeDatabase"/>.
+        /// Same as <see cref="UseDatabase_OmittedEnvChange_DatabaseContextDependsOnSwitch"/>
+        /// but using <see cref="SqlConnection.ChangeDatabase"/>.
         /// </summary>
-        [Fact]
-        public void ChangeDatabase_OmittedEnvChange_DatabaseContextPreservedAfterReconnect()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ChangeDatabase_OmittedEnvChange_DatabaseContextDependsOnSwitch(
+            bool verifyRecoveredDb)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = verifyRecoveredDb;
+
             using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.OmitDatabaseEnvChange);
             SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
 
@@ -528,8 +561,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Null(server.LastLoginResponseDatabase);
 
-            // After successful recovery, the client should reflect the recovered database.
-            Assert.Equal(SwitchedDatabase, connection.Database);
+            string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
+            Assert.Equal(expectedDatabase, connection.Database);
         }
 
         #endregion

@@ -25,14 +25,21 @@ preserved.
 10.      new SqlConnectionInternal(recoverySessionData)
 11.        Login: CurrentDatabase = InitialCatalog     ← temporarily wrong
 12.        TdsLogin sends _recoverySessionData._database = "MyDb" in recovery packet
-13.        Server restores session → ENV_CHANGE → CurrentDatabase = "MyDb"  ← corrected
-14.      CompleteLogin: _recoverySessionData = null
+13.        Server restores session → ENV_CHANGE → CurrentDatabase = server's DB
+14.      CompleteLogin:
+14a.       recoveredDatabase = _recoverySessionData._database ("MyDb")
+14b.       _recoverySessionData = null
+14c.       if CurrentDatabase != recoveredDatabase:
+14d.         → execute USE [MyDb] on the wire → server switches to MyDb
+14e.         → ENV_CHANGE → CurrentDatabase = "MyDb"
 15.  ReconnectAsync returns
 16.  Command re-executes on new connection (CurrentDatabase = "MyDb")
 ```
 
 **Database context preserved?** Yes — if session recovery is acknowledged by the server and
-`_unrecoverableStatesCount == 0`.
+`_unrecoverableStatesCount == 0`. Even if the server does not properly restore the database
+context, the fix in `CompleteLogin()` detects the mismatch and issues a `USE` command to force
+alignment between client and server. See [Issue G in 03-issues.md](03-issues.md).
 
 **Files**: `SqlCommand.NonQuery.cs` line 756, `SqlCommand.Reader.cs` line 1265, `SqlConnection.cs`
 lines 1662–1830, `SqlConnectionInternal.cs` constructor.

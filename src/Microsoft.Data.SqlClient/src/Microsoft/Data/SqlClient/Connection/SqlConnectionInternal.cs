@@ -2321,7 +2321,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 // omitted the token entirely — we must issue a USE command to realign
                 // the server and then update CurrentDatabase to match.
                 string recoveredDatabase = null;
-                if (_recoverySessionData != null)
+                if (_recoverySessionData != null
+                    && LocalAppContextSwitches.VerifyRecoveredDatabaseContext)
                 {
                     recoveredDatabase = _recoverySessionData._database
                         ?? _recoverySessionData._initialDatabase;
