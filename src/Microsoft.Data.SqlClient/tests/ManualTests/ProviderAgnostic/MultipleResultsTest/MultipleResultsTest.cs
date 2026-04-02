@@ -78,10 +78,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
             using SqlCommand command = connection.CreateCommand();
-            ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
-
-            connection.InfoMessage += (object sender, SqlInfoMessageEventArgs args) =>
-                messages.Enqueue(args.Message);
 
             connection.Open();
 
