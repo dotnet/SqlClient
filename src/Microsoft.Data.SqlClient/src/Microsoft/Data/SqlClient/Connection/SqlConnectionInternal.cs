@@ -2314,7 +2314,46 @@ namespace Microsoft.Data.SqlClient.Connection
                     _currentSessionData._encrypted = isEncrypted;
                 }
 
+                // After successful session recovery, ensure that both the client and
+                // server agree on the current database.  The recovery data carries the
+                // database the session was using before the connection dropped.  If the
+                // server's login response (ENV_CHANGE) set a different database — or
+                // omitted the token entirely — we must issue a USE command to realign
+                // the server and then update CurrentDatabase to match.
+                string recoveredDatabase = null;
+                if (_recoverySessionData != null)
+                {
+                    recoveredDatabase = _recoverySessionData._database
+                        ?? _recoverySessionData._initialDatabase;
+                }
+
                 _recoverySessionData = null;
+
+                if (recoveredDatabase != null
+                    && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.OrdinalIgnoreCase))
+                {
+                    // The server is not on the expected database.  Force it there.
+                    string safeName = SqlConnection.FixupDatabaseTransactionName(recoveredDatabase);
+                    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+                    Task executeTask = _parser.TdsExecuteSQLBatch(
+                        $"USE {safeName}",
+                        ConnectionOptions.ConnectTimeout,
+                        notificationRequest: null,
+                        _parser._physicalStateObj,
+                        sync: true);
+                    Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+                    _parser.Run(
+                        RunBehavior.UntilDone,
+                        cmdHandler: null,
+                        dataStream: null,
+                        bulkCopyHandler: null,
+                        _parser._physicalStateObj);
+                    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+
+                    // The USE command triggers an ENV_CHANGE that updates CurrentDatabase,
+                    // but set it explicitly in case the response is unexpected.
+                    CurrentDatabase = recoveredDatabase;
+                }
             }
 
             Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext,

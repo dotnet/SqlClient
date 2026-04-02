@@ -2,6 +2,7 @@
 // file to you under the MIT license.  See the LICENSE file in the project root for more
 // information.
 
+using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.Done;
@@ -18,9 +19,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     /// Tests for database context preservation across reconnections.
     /// Reproduces the scenario from dotnet/SqlClient#4108: after executing USE [db] and then
     /// losing the connection, the reconnected session should retain the switched database.
-    /// Baseline tests (no reconnection) pass.  The three reconnection tests are expected to
-    /// FAIL until issue #4108 is fixed — they demonstrate that <c>connection.Database</c>
-    /// silently reverts to <c>InitialCatalog</c> after the physical connection is replaced.
     /// </summary>
     [Collection("SimulatedServerTests")]
     public class DatabaseContextReconnectionTests
@@ -28,7 +26,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         private const string InitialDatabase = "initialdb";
         private const string SwitchedDatabase = "switcheddb";
 
+        /// <summary>
+        /// Minimum delay (ms) after disconnecting clients to ensure the
+        /// <c>CheckConnectionWindow</c> (5 ms) in <c>ValidateSNIConnection</c> has expired,
+        /// so that the broken connection is detected before the next command.
+        /// </summary>
+        private const int PostDisconnectDelayMs = 50;
+
         #region Test Infrastructure
+
+        /// <summary>
+        /// Controls how the test server handles the database ENV_CHANGE during a session
+        /// recovery login.
+        /// </summary>
+        private enum RecoveryDatabaseBehavior
+        {
+            /// <summary>
+            /// The server correctly sends ENV_CHANGE with the recovered database name taken
+            /// from the session recovery feature request.  This is proper server behavior.
+            /// </summary>
+            SendRecoveredDatabase,
+
+            /// <summary>
+            /// The server ignores the recovered database and sends ENV_CHANGE with the
+            /// login packet's initial catalog instead.  This simulates a server bug where
+            /// session recovery does not restore the database context.
+            /// </summary>
+            SendInitialCatalog,
+
+            /// <summary>
+            /// The server omits the database ENV_CHANGE token entirely from the login
+            /// response.  This simulates a server bug where the database change notification
+            /// is completely missing after session recovery.
+            /// </summary>
+            OmitDatabaseEnvChange,
+        }
 
         /// <summary>
         /// A query engine that recognises USE [database] commands and updates the session's
@@ -39,12 +71,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             private static readonly Regex s_useDbRegex = new(
                 @"^\s*use\s+\[?(?<db>[^\]\s;]+)\]?\s*;?\s*$",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-            /// <summary>
-            /// The database name received during the most recent session recovery login.
-            /// Null if no recovery login has occurred.
-            /// </summary>
-            public string? LastRecoveryDatabase { get; set; }
 
             public DatabaseContextQueryEngine(TdsServerArguments arguments)
                 : base(arguments)
@@ -62,8 +88,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     return HandleUseDatabase(session, match.Groups["db"].Value);
                 }
 
-                // Fall back to the built-in query engine for everything else (SELECT 1,
-                // db_name(), etc.)
                 return base.CreateQueryResponse(session, batchRequest);
             }
 
@@ -73,7 +97,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 string oldDatabase = session.Database;
                 session.Database = newDatabase;
 
-                // Build the response: ENV_CHANGE(Database) + INFO(5701) + DONE
                 var envChange = new TDSEnvChangeToken(
                     TDSEnvChangeTokenType.Database, newDatabase, oldDatabase);
 
@@ -90,34 +113,105 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// A TDS server subclass that exposes the protected
-        /// <see cref="GenericTdsServer{T}.DisconnectAllClients"/>
-        /// method and wires up the custom query engine.
+        /// A TDS server subclass that supports testing database context recovery during
+        /// reconnection.  Exposes <see cref="GenericTdsServer{T}.DisconnectAllClients"/>
+        /// and allows controlling whether the login response carries the recovered database
+        /// or the initial catalog via <see cref="RecoveryBehavior"/>.
         /// </summary>
         private sealed class DisconnectableTdsServer : GenericTdsServer<TdsServerArguments>
         {
-            public DatabaseContextQueryEngine QueryEngine { get; }
-
             public int Port => EndPoint.Port;
 
-            public DisconnectableTdsServer()
-                : this(new TdsServerArguments())
+            /// <summary>
+            /// Controls how the server responds to session recovery with a changed database.
+            /// Default is <see cref="RecoveryDatabaseBehavior.SendRecoveredDatabase"/> (correct
+            /// server behavior).
+            /// </summary>
+            public RecoveryDatabaseBehavior RecoveryBehavior { get; set; }
+                = RecoveryDatabaseBehavior.SendRecoveredDatabase;
+
+            /// <summary>
+            /// The database name the server used in the most recent login ENV_CHANGE response.
+            /// Useful for test assertions.
+            /// </summary>
+            public string? LastLoginResponseDatabase { get; private set; }
+
+            public DisconnectableTdsServer(
+                RecoveryDatabaseBehavior behavior = RecoveryDatabaseBehavior.SendRecoveredDatabase)
+                : this(new TdsServerArguments(), behavior)
             {
             }
 
-            private DisconnectableTdsServer(TdsServerArguments args)
+            private DisconnectableTdsServer(TdsServerArguments args,
+                RecoveryDatabaseBehavior behavior)
                 : base(args, new DatabaseContextQueryEngine(args))
             {
-                QueryEngine = (DatabaseContextQueryEngine)Engine;
+                RecoveryBehavior = behavior;
                 Start();
             }
 
-            /// <summary>
-            /// Publicly expose the protected <see cref="GenericTdsServer{T}.DisconnectAllClients"/>
-            /// for use by tests.
-            /// </summary>
             public new void DisconnectAllClients()
                 => base.DisconnectAllClients();
+
+            /// <summary>
+            /// Overrides the login response to control whether the database ENV_CHANGE
+            /// carries the recovered database or the initial catalog.
+            /// </summary>
+            protected override TDSMessageCollection OnAuthenticationCompleted(
+                ITDSServerSession session)
+            {
+                if (RecoveryBehavior == RecoveryDatabaseBehavior.SendInitialCatalog
+                    && session.IsSessionRecoveryEnabled
+                    && Login7Count > 1)
+                {
+                    // Simulate a server bug: after session recovery inflated the session
+                    // (which set session.Database to the recovered DB), forcibly revert
+                    // session.Database to the initial catalog before the base class builds
+                    // the ENV_CHANGE token.
+                    session.Database = InitialDatabase;
+                }
+
+                TDSMessageCollection result = base.OnAuthenticationCompleted(session);
+
+                TDSMessage msg = result[0];
+
+                if (RecoveryBehavior == RecoveryDatabaseBehavior.OmitDatabaseEnvChange
+                    && session.IsSessionRecoveryEnabled
+                    && Login7Count > 1)
+                {
+                    // Strip the database ENV_CHANGE and its accompanying INFO(5701)
+                    // token from the response to simulate a server that never sends
+                    // the database change notification.
+                    for (int i = msg.Count - 1; i >= 0; i--)
+                    {
+                        if (msg[i] is TDSEnvChangeToken ec
+                            && ec.Type == TDSEnvChangeTokenType.Database)
+                        {
+                            msg.RemoveAt(i);
+                        }
+                        else if (msg[i] is TDSInfoToken info && info.Number == 5701)
+                        {
+                            msg.RemoveAt(i);
+                        }
+                    }
+
+                    LastLoginResponseDatabase = null;
+                }
+                else
+                {
+                    // Capture the database from the ENV_CHANGE for test assertions.
+                    foreach (var token in msg)
+                    {
+                        if (token is TDSEnvChangeToken envChange
+                            && envChange.Type == TDSEnvChangeTokenType.Database)
+                        {
+                            LastLoginResponseDatabase = (string)envChange.NewValue;
+                        }
+                    }
+                }
+
+                return result;
+            }
         }
 
         #endregion
@@ -137,6 +231,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 10,
                 Pooling = false,
             };
+        }
+
+        /// <summary>
+        /// Disconnect all server clients and wait for the
+        /// <c>CheckConnectionWindow</c> to expire so that the next
+        /// <c>ValidateSNIConnection</c> call properly detects the dead link.
+        /// </summary>
+        private static void DisconnectAndWait(DisconnectableTdsServer server)
+        {
+            server.DisconnectAllClients();
+            System.Threading.Thread.Sleep(PostDisconnectDelayMs);
         }
 
         #endregion
@@ -167,7 +272,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// Verifies that <see cref="SqlConnection.ChangeDatabase"/> sends the correct protocol
-        /// messages and updates the Database property, as a contrast to the raw USE command path.
+        /// messages and updates the Database property.
         /// </summary>
         [Fact]
         public void ChangeDatabase_UpdatesConnectionDatabaseProperty()
@@ -187,26 +292,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
-        #region Reconnection Tests
+        #region Reconnection Tests — Proper Server Recovery
 
         /// <summary>
-        /// Reproduces issue dotnet/SqlClient#4108: after switching the database via USE [db], the
-        /// connection is broken and then transparently reconnected. The expectation is that the
-        /// reconnected session restores the switched database context.
-        ///
-        /// The critical invariant is: the database context must NEVER silently revert to
-        /// InitialCatalog. Either reconnection preserves the switched database, or it throws.
+        /// After switching the database via USE [db] and reconnecting, the server properly
+        /// restores the database context via session recovery and sends the correct ENV_CHANGE.
+        /// The client's <see cref="SqlConnection.Database"/> must reflect the recovered database.
         /// </summary>
         [Fact]
-        public void UseDatabase_ConnectionDropped_DatabaseContextPreservedAfterReconnect()
+        public void UseDatabase_ProperRecovery_DatabaseContextPreservedAfterReconnect()
         {
-            using DisconnectableTdsServer server = new();
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendRecoveredDatabase);
             SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
 
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
 
-            // Switch database via USE command
             using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
             {
                 cmd.ExecuteNonQuery();
@@ -214,36 +315,226 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            // Forcibly break all TCP connections on the server side. The listener stays up so
-            // the client can reconnect.
-            server.DisconnectAllClients();
+            DisconnectAndWait(server);
 
-            // The next command should trigger ValidateAndReconnect, which detects the broken SNI
-            // link, snapshots the SessionData (including the current database), and performs a
-            // reconnection with session recovery.
-            bool reconnected = false;
             using (SqlCommand cmd = new("SELECT 1", connection))
             {
-                try
-                {
-                    cmd.ExecuteNonQuery();
-                    reconnected = true;
-                }
-                catch (SqlException)
-                {
-                    // Reconnection failed — acceptable.
-                }
+                cmd.ExecuteNonQuery();
             }
 
-            // Issue #4108 core assertion: regardless of whether reconnection succeeded or
-            // failed, the Database property must not have silently reverted to the initial catalog.
-            Assert.NotEqual(InitialDatabase, connection.Database);
-
-            if (reconnected)
-            {
-                Assert.Equal(SwitchedDatabase, connection.Database);
-            }
+            // The server sent ENV_CHANGE with the recovered database.
+            Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
         }
+
+        /// <summary>
+        /// After switching via <see cref="SqlConnection.ChangeDatabase"/> and reconnecting,
+        /// the server properly restores the database context.
+        /// </summary>
+        [Fact]
+        public void ChangeDatabase_ProperRecovery_DatabaseContextPreservedAfterReconnect()
+        {
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendRecoveredDatabase);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            connection.ChangeDatabase(SwitchedDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            DisconnectAndWait(server);
+
+            using (SqlCommand cmd = new("SELECT 1", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
+        }
+
+        /// <summary>
+        /// With pooling enabled, the reconnected connection should still preserve the database
+        /// context through session recovery when the server properly handles it.
+        /// </summary>
+        [Fact]
+        public void UseDatabase_ProperRecovery_Pooled_DatabaseContextPreservedAfterReconnect()
+        {
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendRecoveredDatabase);
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.Port}",
+                InitialCatalog = InitialDatabase,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectRetryCount = 2,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 10,
+                Pooling = true,
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            DisconnectAndWait(server);
+
+            using (SqlCommand cmd = new("SELECT 1", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            SqlConnection.ClearPool(connection);
+        }
+
+        #endregion
+
+        #region Reconnection Tests — Buggy Server (no database in recovery)
+
+        /// <summary>
+        /// Simulates a server bug where session recovery acknowledges the feature but does
+        /// NOT restore the database context — the ENV_CHANGE carries the initial catalog
+        /// instead of the recovered database.  Despite the incorrect ENV_CHANGE, the client
+        /// should trust the recovery state it sent and report the recovered database.
+        /// </summary>
+        [Fact]
+        public void UseDatabase_BuggyRecovery_DatabaseContextPreservedAfterReconnect()
+        {
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendInitialCatalog);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            DisconnectAndWait(server);
+
+            using (SqlCommand cmd = new("SELECT 1", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            // The buggy server sent InitialCatalog in ENV_CHANGE.
+            Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
+
+            // After successful recovery, the client should reflect the recovered database
+            // regardless of the server's ENV_CHANGE.
+            Assert.Equal(SwitchedDatabase, connection.Database);
+        }
+
+        /// <summary>
+        /// Simulates a server that doesn't restore the database during session recovery
+        /// using <see cref="SqlConnection.ChangeDatabase"/>.  Despite the incorrect
+        /// ENV_CHANGE, the client should preserve the recovered database context.
+        /// </summary>
+        [Fact]
+        public void ChangeDatabase_BuggyRecovery_DatabaseContextPreservedAfterReconnect()
+        {
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendInitialCatalog);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            connection.ChangeDatabase(SwitchedDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            DisconnectAndWait(server);
+
+            using (SqlCommand cmd = new("SELECT 1", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
+
+            // After successful recovery, the client should reflect the recovered database.
+            Assert.Equal(SwitchedDatabase, connection.Database);
+        }
+
+        /// <summary>
+        /// Simulates a server bug where the database ENV_CHANGE token is completely
+        /// omitted from the login response during session recovery.  Despite the missing
+        /// ENV_CHANGE, the client should trust the recovery state it sent and report the
+        /// recovered database.
+        /// </summary>
+        [Fact]
+        public void UseDatabase_OmittedEnvChange_DatabaseContextPreservedAfterReconnect()
+        {
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.OmitDatabaseEnvChange);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            DisconnectAndWait(server);
+
+            using (SqlCommand cmd = new("SELECT 1", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            // The server never sent a database ENV_CHANGE.
+            Assert.Null(server.LastLoginResponseDatabase);
+
+            // After successful recovery, the client should reflect the recovered database
+            // regardless of missing ENV_CHANGE.
+            Assert.Equal(SwitchedDatabase, connection.Database);
+        }
+
+        /// <summary>
+        /// Same as above but using <see cref="SqlConnection.ChangeDatabase"/>.
+        /// </summary>
+        [Fact]
+        public void ChangeDatabase_OmittedEnvChange_DatabaseContextPreservedAfterReconnect()
+        {
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.OmitDatabaseEnvChange);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            connection.ChangeDatabase(SwitchedDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            DisconnectAndWait(server);
+
+            using (SqlCommand cmd = new("SELECT 1", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Null(server.LastLoginResponseDatabase);
+
+            // After successful recovery, the client should reflect the recovered database.
+            Assert.Equal(SwitchedDatabase, connection.Database);
+        }
+
+        #endregion
+
+        #region No-Retry Tests
 
         /// <summary>
         /// Verifies that with ConnectRetryCount=0, session recovery is not negotiated and a
@@ -274,104 +565,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            server.DisconnectAllClients();
+            DisconnectAndWait(server);
 
-            // With ConnectRetryCount=0, no transparent reconnection should occur.  The next
-            // command must throw.
+            // With ConnectRetryCount=0, no transparent reconnection should occur.
             using SqlCommand cmd2 = new("SELECT 1", connection);
             Assert.ThrowsAny<SqlException>(() => cmd2.ExecuteNonQuery());
-        }
-
-        /// <summary>
-        /// Verifies that ChangeDatabase context is preserved across a transparent reconnection,
-        /// similar to the USE [db] test but exercising the ChangeDatabase API path.
-        /// </summary>
-        [Fact]
-        public void ChangeDatabase_ConnectionDropped_DatabaseContextPreservedAfterReconnect()
-        {
-            using DisconnectableTdsServer server = new();
-            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
-
-            connection.ChangeDatabase(SwitchedDatabase);
-            Assert.Equal(SwitchedDatabase, connection.Database);
-
-            server.DisconnectAllClients();
-
-            bool reconnected = false;
-            try
-            {
-                using SqlCommand cmd = new("SELECT 1", connection);
-                cmd.ExecuteNonQuery();
-                reconnected = true;
-            }
-            catch (SqlException)
-            {
-                // Reconnection may fail — acceptable.
-            }
-
-            Assert.NotEqual(InitialDatabase, connection.Database);
-
-            if (reconnected)
-            {
-                Assert.Equal(SwitchedDatabase, connection.Database);
-            }
-        }
-
-        /// <summary>
-        /// When <c>Pooling=true</c>, a reconnected connection obtained from the pool after a
-        /// severed link should still preserve the database context through session recovery.
-        /// </summary>
-        [Fact]
-        public void UseDatabase_ConnectionDropped_Pooled_DatabaseContextPreservedAfterReconnect()
-        {
-            using DisconnectableTdsServer server = new();
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = $"localhost,{server.Port}",
-                InitialCatalog = InitialDatabase,
-                Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectRetryCount = 2,
-                ConnectRetryInterval = 1,
-                ConnectTimeout = 10,
-                Pooling = true,
-            };
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
-
-            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
-
-            Assert.Equal(SwitchedDatabase, connection.Database);
-
-            server.DisconnectAllClients();
-
-            bool reconnected = false;
-            try
-            {
-                using SqlCommand cmd = new("SELECT 1", connection);
-                cmd.ExecuteNonQuery();
-                reconnected = true;
-            }
-            catch (SqlException)
-            {
-                // Reconnection may fail — acceptable.
-            }
-
-            Assert.NotEqual(InitialDatabase, connection.Database);
-
-            if (reconnected)
-            {
-                Assert.Equal(SwitchedDatabase, connection.Database);
-            }
-
-            // Clean up the pool for this connection string so it doesn't leak into other tests.
-            SqlConnection.ClearPool(connection);
         }
 
         #endregion
