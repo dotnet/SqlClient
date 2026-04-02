@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = $"{script} -Prefix {InstanceNamePrefix} -Instance {InstanceName}",
+                    Arguments = $"{script} -Prefix \"{InstanceNamePrefix}\" -Instance \"{InstanceName}\"",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
