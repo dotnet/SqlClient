@@ -75,8 +75,11 @@ fi
 if [[ "${EVENT_ACTION}" == "labeled" ]]; then
   # Extract version from the new label. If it doesn't match "Hotfix X.Y.Z",
   # this is a non-hotfix label — emit empty matrix and exit cleanly.
-  CANDIDATE=$(echo "${EVENT_LABEL:-}" \
-    | sed -n 's/^Hotfix \([0-9]\+\.[0-9]\+\.[0-9]\+\)$/\1/p')
+  if [[ "${EVENT_LABEL:-}" =~ ^Hotfix\ ([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+    CANDIDATE="${BASH_REMATCH[1]}"
+  else
+    CANDIDATE=""
+  fi
 
   if [[ -z "${CANDIDATE}" ]]; then
     echo "Label '${EVENT_LABEL:-}' is not a valid 'Hotfix X.Y.Z' label. Skipping."
@@ -111,8 +114,9 @@ if [[ "${EVENT_ACTION}" == "labeled" ]]; then
 else
   # -- 'closed' event: process all hotfix labels on the PR --------------------
   # Split by comma, keep only labels matching "Hotfix X.Y.Z", extract the version.
+  # Use sed -E for portable extended regex (works on both GNU and BSD sed).
   VERSIONS=$(echo "${LABELS}" | tr ',' '\n' \
-    | sed -n 's/^Hotfix \([0-9]\+\.[0-9]\+\.[0-9]\+\)$/\1/p')
+    | sed -nE 's/^Hotfix ([0-9]+\.[0-9]+\.[0-9]+)$/\1/p')
 fi
 
 # -- Validate that at least one version was found ----------------------------

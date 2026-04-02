@@ -45,6 +45,24 @@ cd bats-core
 sudo ./install.sh /usr/local
 ```
 
+## Additional Prerequisites
+
+The scripts under test also require:
+
+- **jq** — used to build JSON matrix output
+- **gh** (GitHub CLI) — used for API calls and PR creation (mocked during tests,
+  but must be on `$PATH` for the test stubs to shadow it)
+
+Most CI runners and development machines have these pre-installed. If not:
+
+```bash
+# Linux (apt)
+sudo apt-get install -y jq gh
+
+# macOS (Homebrew)
+brew install jq gh
+```
+
 ### Verify installation
 
 ```bash

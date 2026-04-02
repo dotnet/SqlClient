@@ -56,6 +56,13 @@ jobs:
     outputs:
       versions: ${{ steps.extract.outputs.versions }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
       - name: Extract hotfix versions from labels
         id: extract
         env:

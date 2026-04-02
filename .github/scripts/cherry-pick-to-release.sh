@@ -81,8 +81,12 @@ fi
 
 # -- Step 1: Derive target branch from major.minor ---------------------------
 # "7.0.1" → "7.0", so target branch is "release/7.0".
-# Use '|| true' to prevent set -e from aborting on a non-matching grep.
-BRANCH_VERSION=$(echo "${VERSION}" | grep -oP '^\d+\.\d+' || true)
+# Use a bash regex for portability (grep -P is not available on macOS BSD grep).
+if [[ "${VERSION}" =~ ^([0-9]+)\.([0-9]+) ]]; then
+  BRANCH_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+else
+  BRANCH_VERSION=""
+fi
 if [[ -z "${BRANCH_VERSION}" ]]; then
   echo "::error::Could not parse major.minor from version '${VERSION}'."
   exit 1
@@ -103,7 +107,7 @@ git fetch origin "${TARGET_BRANCH}"
 # 'git cherry' compares patches between two points. A '-' prefix means the
 # patch is already present (equivalent commit exists on the target branch).
 # A '+' prefix means it has not been applied yet.
-if git cherry "origin/${TARGET_BRANCH}" "${MERGE_COMMIT_SHA}^" "${MERGE_COMMIT_SHA}" \
+if git cherry "origin/${TARGET_BRANCH}" "${MERGE_COMMIT_SHA}^" \
     | grep -q '^-'; then
   echo "::notice::Commit ${MERGE_COMMIT_SHA} is already applied on" \
        "${TARGET_BRANCH}. Skipping cherry-pick."
