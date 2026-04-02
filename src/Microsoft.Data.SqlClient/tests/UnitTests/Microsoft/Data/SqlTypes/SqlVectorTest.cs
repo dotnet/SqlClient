@@ -29,6 +29,12 @@ public class SqlVectorTest
     }
 
     [Fact]
+    public void Construct_Length_Exceeds_8000()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(1999));
+    }
+
+    [Fact]
     public void Construct_Length()
     {
         var vec = SqlVector<float>.CreateNull(5);
