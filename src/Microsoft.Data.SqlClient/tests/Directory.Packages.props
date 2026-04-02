@@ -12,6 +12,7 @@
   <!-- SqlClient test dependencies. -->
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.13" />
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="181.15.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="170.1000.7" />

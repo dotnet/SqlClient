@@ -39,6 +39,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         public const int o_uniqueidentifier = 0;
         public const int o_xml = 1;
+        public const int o_json = 2;
+        public const int o_vector = 3;
 
         public const string Bit = "bit";
         public const string Int = "int";
@@ -65,5 +67,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public const string VarBinary = "varbinary";
         public const string UniqueIdentifier = "uniqueidentifier";
         public const string Xml = "xml";
+        public const string Json = "json";
+        public const string Vector = "vector";
     }
 }
