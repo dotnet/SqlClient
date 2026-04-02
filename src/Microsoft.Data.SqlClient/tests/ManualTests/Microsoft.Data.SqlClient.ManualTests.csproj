@@ -98,6 +98,7 @@
     <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\DatabaseContextReconnectionTest.cs" />
     <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
@@ -421,5 +422,5 @@
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
-  
+
 </Project>

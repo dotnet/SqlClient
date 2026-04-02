@@ -1,7 +1,56 @@
 # Identified Issues
 
-Six issues were found during the analysis. They are ordered from highest to lowest severity relative
-to the invariant: *internal reconnections must maintain the current database context*.
+Seven issues were found during the analysis. They are ordered from highest to lowest severity
+relative to the invariant: *internal reconnections must maintain the current database context*.
+
+---
+
+## Issue G — `CompleteLogin` does not verify database context after session recovery
+
+**Severity**: High (silent data corruption — client and server on different databases)
+**Conditions**: Session recovery succeeds but the server does not restore the database context
+**Default impact**: After reconnection, `CurrentDatabase` reflects whatever the server sent in
+`ENV_CHANGE` (the initial catalog), not the database the session was actually using before the
+connection dropped. Subsequent queries silently execute against the wrong database.
+
+### Description
+
+During a reconnection with session recovery, the client sends the correct database in the recovery
+feature request (`_recoverySessionData._database`). The server is supposed to restore the session to
+that database and confirm via `ENV_CHANGE(ENV_DATABASE)`. However, `CompleteLogin()` never checks
+whether the server actually honoured the recovery request. It unconditionally nulls
+`_recoverySessionData` and trusts whatever `CurrentDatabase` was set to by the server's
+`ENV_CHANGE`.
+
+If the server fails to restore the database (sends the initial catalog in `ENV_CHANGE`, or omits the
+database `ENV_CHANGE` entirely), the client silently ends up on the wrong database.
+
+### Root cause
+
+`CompleteLogin()` in `SqlConnectionInternal.cs` (line ~2315) nulls `_recoverySessionData` without
+comparing the recovered database against `CurrentDatabase`. There is no corrective action when they
+differ.
+
+### Location
+
+`SqlConnectionInternal.cs`, `CompleteLogin()` method — the block after encryption validation where
+`_recoverySessionData = null` is set.
+
+### Effect
+
+After a transparent reconnection:
+- `SqlConnection.Database` returns the initial catalog instead of the `USE`-switched database
+- All subsequent queries execute against the wrong database
+- The mismatch is completely silent — no exception, no warning
+
+This is the root cause of [dotnet/SqlClient#4108](https://github.com/dotnet/SqlClient/issues/4108).
+
+### Fix applied
+
+See [04-recommendations.md](04-recommendations.md) Fix 1. In `CompleteLogin()`, after session
+recovery is acknowledged and encryption is verified, the fix compares `CurrentDatabase` against the
+recovered database from `_recoverySessionData`. If they differ, it issues a `USE [database]` command
+to force the server to the correct database, ensuring both client and server agree.
 
 ---
 

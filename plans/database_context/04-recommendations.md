@@ -4,7 +4,62 @@ Fixes are prioritised by the severity rankings in [03-issues.md](03-issues.md).
 
 ---
 
-## Fix 1 — Implement `ChannelDbConnectionPool.ReplaceConnection` (Issue A)
+## Fix 1 — Verify and correct database context after session recovery (Issue G) ✅ IMPLEMENTED
+
+### Goal
+
+After a successful session recovery, ensure both the client and server are on the database the
+session was using before the connection dropped.
+
+### Root cause
+
+`CompleteLogin()` unconditionally trusts the server's `ENV_CHANGE(ENV_DATABASE)` response after
+session recovery. If the server fails to restore the database (sends the initial catalog, or omits
+the database `ENV_CHANGE` entirely), `CurrentDatabase` silently ends up wrong.
+
+### Approach
+
+In `CompleteLogin()`, after the server has acknowledged session recovery and encryption is verified:
+
+1. Read the expected database from `_recoverySessionData._database` (the database at disconnect
+   time), falling back to `_recoverySessionData._initialDatabase` if `_database` is null (meaning
+   the database was never changed from the initial login).
+2. Null `_recoverySessionData` (as before).
+3. Compare the expected database against `CurrentDatabase` (which was set by the server's
+   `ENV_CHANGE` during login).
+4. If they differ, issue a `USE [database]` command over the wire to force the server to the
+   correct database. This ensures both client and server agree.
+5. Set `CurrentDatabase` to the recovered database as a final safety net.
+
+When the databases already match (the normal case with a well-behaved server), no `USE` is sent —
+zero overhead.
+
+### Files changed
+
+| File | Change |
+| ---- | ------ |
+| `SqlConnectionInternal.cs` | Added database context verification and `USE` correction in `CompleteLogin()` after session recovery |
+
+### Tests added
+
+| Test | Scenario |
+| ---- | -------- |
+| `UseDatabase_ProperRecovery_DatabaseContextPreservedAfterReconnect` | Server properly restores DB via session recovery — baseline |
+| `ChangeDatabase_ProperRecovery_DatabaseContextPreservedAfterReconnect` | Same, via `ChangeDatabase()` |
+| `UseDatabase_ProperRecovery_Pooled_DatabaseContextPreservedAfterReconnect` | Same, with pooling enabled |
+| `UseDatabase_BuggyRecovery_DatabaseContextPreservedAfterReconnect` | Server sends wrong DB in `ENV_CHANGE` — fix issues `USE` to correct |
+| `ChangeDatabase_BuggyRecovery_DatabaseContextPreservedAfterReconnect` | Same, via `ChangeDatabase()` |
+| `UseDatabase_OmittedEnvChange_DatabaseContextPreservedAfterReconnect` | Server omits DB `ENV_CHANGE` entirely — fix issues `USE` to correct |
+| `ChangeDatabase_OmittedEnvChange_DatabaseContextPreservedAfterReconnect` | Same, via `ChangeDatabase()` |
+| `UseDatabase_ConnectionDropped_NoRetry_ThrowsOnNextCommand` | `ConnectRetryCount=0` — no recovery, error surfaces |
+
+### Verification
+
+All 10 tests pass. Full unit test suite (631 tests) shows no regressions.
+
+---
+
+## Fix 2 — Implement `ChannelDbConnectionPool.ReplaceConnection` (Issue A)
 
 ### Goal
 
@@ -38,7 +93,7 @@ Implement `ReplaceConnection` in `ChannelDbConnectionPool` to mirror the behavio
 
 ---
 
-## Fix 2 — Make `CurrentSessionData` snapshot atomic (Issue B)
+## Fix 3 — Make `CurrentSessionData` snapshot atomic (Issue B)
 
 ### Goal
 
@@ -88,7 +143,7 @@ different thread) don't affect the recovery data. This is safer but allocates.
 
 ---
 
-## Fix 3 — Document `USE [db]` vs `ChangeDatabase` resilience difference (Issue F)
+## Fix 4 — Document `USE [db]` vs `ChangeDatabase` resilience difference (Issue F)
 
 ### Goal
 
@@ -114,7 +169,7 @@ retry.
 
 ---
 
-## Fix 4 (Optional) — Warn when `USE [db]` is detected without session recovery (Issue F)
+## Fix 5 (Optional) — Warn when `USE [db]` is detected without session recovery (Issue F)
 
 ### Goal
 
