@@ -1309,14 +1309,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (metaData.type == SqlDbTypeExtensions.Vector)
                 {
-                    switch (metaData.scale)
-                    {
-                        case (byte)MetaType.SqlVectorElementType.Float32:
-                            fieldType = typeof(SqlVector<float>);
-                            break;
-                        default:
-                            throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
-                    }
+                    fieldType = GetVectorFieldType(metaData.scale);
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
@@ -1338,6 +1331,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             return fieldType;
+        }
+
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetVectorFieldType(byte scale)
+        {
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)scale;
+            return elementType switch
+            {
+                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
         }
 
         virtual internal int GetLocaleId(int i)
@@ -1435,14 +1441,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (metaData.type == SqlDbTypeExtensions.Vector)
                 {
-                    switch (metaData.scale)
-                    {
-                        case (byte)MetaType.SqlVectorElementType.Float32:
-                            providerSpecificFieldType = typeof(SqlVector<float>);
-                            break;
-                        default:
-                            throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
-                    }
+                    providerSpecificFieldType = GetVectorFieldType(metaData.scale);
                 }
                 else
                 {
