@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // InstanceName will get replaced with an instance name in the connection string
         private static string InstanceName = "MSSQLSERVER";
-        
+
         // s_instanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
         private static string InstanceNamePrefix = "";
 
@@ -54,6 +54,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (DataTestUtility.IsSQL2017())
                 {
                     return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                if (DataTestUtility.IsSQL2016())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL13.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 return string.Empty;
             }
@@ -224,7 +228,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     proc.Kill();
                     // allow async output to process
                     proc.WaitForExit(2000);
-                    throw new Exception($"Could not generate certificate.Error out put: {output}");
+                    throw new Exception($"Could not generate certificate. Error output: {output}");
+                }
+
+                if (proc.ExitCode != 0)
+                {
+                    throw new Exception($"Certificate generation script failed with exit code {proc.ExitCode}. Output: {output}");
                 }
             }
             else
@@ -252,6 +261,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RemoveCertificate()
         {
+            if (string.IsNullOrEmpty(_thumbprint))
+            {
+                return;
+            }
+
             using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
             certStore.Open(OpenFlags.ReadWrite);
             X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, _thumbprint, false);
