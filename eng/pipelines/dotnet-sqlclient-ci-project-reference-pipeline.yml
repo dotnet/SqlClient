@@ -40,25 +40,6 @@ trigger:
     - release/6.0
     - internal/release/6.0
 
-# Scheduled runs.
-schedules:
-
-  # GitHub on Sundays 06:00 UTC.
-  - cron: '0 6 * * Sun'
-    displayName: Sunday Run
-    branches:
-      include:
-      - release/6.0
-    always: true
-
-  # ADO on Sundays 07:00 UTC.
-  - cron: '0 7 * * Sun'
-    displayName: Sunday Run
-    branches:
-      include:
-      - internal/release/6.0
-    always: true
-
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
   displayName: 'Enable debug output'

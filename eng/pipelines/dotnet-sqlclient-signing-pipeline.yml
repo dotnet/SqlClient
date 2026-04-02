@@ -20,14 +20,6 @@ trigger:
     - '*.cmd'
     - '*.sh'
 
-schedules:
-- cron: '0 5 * * Mon'
-  displayName: Weekly Sunday 10:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/release/6.0
-  always: true
-
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
   displayName: 'Enable debug output'
