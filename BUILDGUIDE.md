@@ -374,3 +374,38 @@ $ dotnet run -c Release -f net9.0
 
 $ RUNNER_CONFIG=~/.configs/runnerconfig.json dotnet run -c Release -f net9.0
 ```
+
+### Available Benchmark Runners
+
+The performance test suite includes the following benchmark runners, each configurable via `runnerconfig.json`:
+
+| Runner | Config Key | Description |
+|--------|-----------|-------------|
+| SqlConnectionRunner | `SqlConnectionRunnerConfig` | Connection open/close with pooling and MARS variants |
+| SqlCommandRunner | `SqlCommandRunnerConfig` | ExecuteReader, ExecuteScalar, ExecuteNonQuery, ExecuteXmlReader |
+| SqlBulkCopyRunner | `SqlBulkCopyRunnerConfig` | Bulk copy with IDataReader, SqlDataReader, DataTable sources |
+| DataTypeReaderRunner | `DataTypeReaderRunnerConfig` | Sync data type reads across all SQL Server types |
+| DataTypeReaderAsyncRunner | `DataTypeReaderAsyncRunnerConfig` | Async data type reads |
+| ConnectionPoolRunner | `ConnectionPoolRunnerConfig` | Concurrent/multi-threaded pool access |
+| PreparedStatementRunner | `PreparedStatementRunnerConfig` | Prepared vs non-prepared statement execution |
+| ParameterizedQueryRunner | `ParameterizedQueryRunnerConfig` | Parameterized vs non-parameterized queries |
+| CommandBehaviorRunner | `CommandBehaviorRunnerConfig` | CommandBehavior flag impact on read performance |
+| StoredProcedureRunner | `StoredProcedureRunnerConfig` | Stored procedure vs inline SQL |
+| TransactionRunner | `TransactionRunnerConfig` | Transaction isolation levels, commit vs rollback |
+| BatchApiRunner | `BatchApiRunnerConfig` | SqlBatch API vs individual commands (.NET only) |
+| LargeDataTypeRunner | `LargeDataTypeRunnerConfig` | VARCHAR(MAX), NVARCHAR(MAX), VARBINARY(MAX), XML |
+| AlwaysEncryptedRunner | `AlwaysEncryptedRunnerConfig` | Always Encrypted overhead (disabled by default) |
+
+### Exporting Results for CI Comparison
+
+To export benchmark results in JSON format for comparison:
+
+```bash
+$ dotnet run -c Release -f net9.0 -- --export json
+```
+
+Results are written to `BenchmarkDotNet.Artifacts/results/`. Use the comparison script to detect regressions:
+
+```bash
+$ python tools/scripts/Compare-BenchmarkResults.py --baseline baseline.json --current current.json --threshold 10
+```

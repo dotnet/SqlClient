@@ -4,9 +4,8 @@
 
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Toolchains.InProcess.Emit;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
@@ -17,9 +16,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddDiagnoser(ThreadingDiagnoser.Default)
-            .AddExporter(MarkdownExporter.GitHub)
+            .AddExporter(JsonExporter.Full)
             .AddJob(
-                Job.MediumRun.WithToolchain(InProcessEmitToolchain.Instance)
+                Job.LongRun
                 .WithLaunchCount(runnerJob.LaunchCount)
                 .WithInvocationCount(runnerJob.InvocationCount)
                 .WithIterationCount(runnerJob.IterationCount)

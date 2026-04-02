@@ -1,21 +1,22 @@
 ﻿{
-    "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
+    "ConnectionString": "Server=localhost,1434; UID=sa; PWD=Moonshine4me; TrustServerCertificate=true;",
     "UseManagedSniOnWindows": false,
+    "UseOptimizedAsyncBehaviour": true,
     "Benchmarks": {
         "SqlConnectionRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 50,
-            "InvocationCount":30,
-            "WarmupCount": 5,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 2,
             "RowCount": 0
         },
         "SqlCommandRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 10,
-            "InvocationCount": 2,
-            "WarmupCount": 1,
+            "InvocationCount": 1,
+            "WarmupCount": 2,
             "RowCount": 10000
         },
         "SqlBulkCopyRunnerConfig": {
@@ -41,6 +42,78 @@
             "InvocationCount": 2,
             "WarmupCount": 1,
             "RowCount": 1000
+        },
+        "ConnectionPoolRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "PreparedStatementRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "ParameterizedQueryRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "CommandBehaviorRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 10000
+        },
+        "StoredProcedureRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "TransactionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "BatchApiRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "LargeDataTypeRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "AlwaysEncryptedRunnerConfig": {
+            "Enabled": false,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 0
         }
     }
 }

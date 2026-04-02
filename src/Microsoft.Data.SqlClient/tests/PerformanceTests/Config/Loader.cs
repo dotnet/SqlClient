@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using System.Text.Json;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
@@ -45,6 +46,19 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
               ? path
               : Environment.GetEnvironmentVariable(envOverride)
                 ?? path;
+
+            // When running out-of-process (BenchmarkDotNet spawns child
+            // processes), the working directory may differ from where the
+            // config file lives.  Fall back to the assembly's directory.
+            if (!File.Exists(configFile))
+            {
+                string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string candidate = Path.Combine(assemblyDir, configFile);
+                if (File.Exists(candidate))
+                {
+                    configFile = candidate;
+                }
+            }
 
             T config = null;
             Exception error = null;

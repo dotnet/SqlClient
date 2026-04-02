@@ -14,7 +14,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         private static Table s_srcTable;
         private static Table s_tgtTable;
         private static IDataReader s_reader;
-        private const int BatchCount = 1000;
 
         private static SqlConnection s_sqlConnection;
         private static SqlCommand s_sqlCommand;
@@ -25,6 +24,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </summary>
         [Params(7, 25, 50)]
         public int Columns { get; set; }
+
+        /// <summary>
+        /// Batch size for SqlBulkCopy operations.
+        /// </summary>
+        [Params(100, 1000, 5000)]
+        public int BatchSize { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -96,10 +101,18 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             await bc.WriteToServerAsync(s_sqlReader);
         }
 
+        [Benchmark]
+        public void BulkCopy_DataTable()
+        {
+            DataTable dt = s_srcTable.AsDataTable(s_rowCount);
+            using SqlBulkCopy bc = GetBulkCopyWriter(s_tgtTable);
+            bc.WriteToServer(dt);
+        }
+
         private SqlBulkCopy GetBulkCopyWriter(Table table) =>
             new(s_config.ConnectionString)
             {
-                BatchSize = BatchCount,
+                BatchSize = BatchSize,
                 DestinationTableName = table.Name,
                 BulkCopyTimeout = 60
             };

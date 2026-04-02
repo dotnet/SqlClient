@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using BenchmarkDotNet.Attributes;
@@ -97,6 +99,92 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             using XmlReader reader = await sqlCommand.ExecuteXmlReaderAsync();
             while (await reader.ReadAsync())
             { }
+        }
+
+        /// <summary>
+        /// Fire 64 concurrent ExecuteReaderAsync + ReadAsync loops, each on
+        /// its own pooled connection. The flood of I/O completions and
+        /// continuations saturates the thread pool.
+        /// </summary>
+        [Benchmark]
+        public async Task ConcurrentReaderAsyncStarvation()
+        {
+            const int concurrency = 64;
+            var tasks = new Task[concurrency];
+            for (int i = 0; i < concurrency; i++)
+            {
+                tasks[i] = Task.Run(async () =>
+                {
+                    using var conn = new SqlConnection(s_config.ConnectionString + ";Pooling=true");
+                    await conn.OpenAsync();
+                    using var cmd = new SqlCommand(_query, conn);
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync()) { }
+                });
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        /// Sync-over-async pattern: block 64 thread pool threads each doing
+        /// sync ExecuteReader + Read. This forces the thread pool to grow
+        /// and exposes contention in TdsParser and connection pool layers.
+        /// </summary>
+        [Benchmark]
+        public void ConcurrentReaderSyncStarvation()
+        {
+            const int concurrency = 64;
+            var tasks = new Task[concurrency];
+            for (int i = 0; i < concurrency; i++)
+            {
+                tasks[i] = Task.Run(() =>
+                {
+                    using var conn = new SqlConnection(s_config.ConnectionString + ";Pooling=true");
+                    conn.Open();
+                    using var cmd = new SqlCommand(_query, conn);
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read()) { }
+                });
+            }
+            Task.WaitAll(tasks);
+        }
+
+        /// <summary>
+        /// Mix sync and async readers on overlapping thread pool threads.
+        /// Sync readers block threads while async completions queue behind
+        /// them, creating worst-case starvation.
+        /// </summary>
+        [Benchmark]
+        public async Task MixedSyncAsyncReaderStarvation()
+        {
+            const int concurrency = 64;
+            var tasks = new Task[concurrency];
+            for (int i = 0; i < concurrency; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    tasks[i] = Task.Run(() =>
+                    {
+                        using var conn = new SqlConnection(s_config.ConnectionString + ";Pooling=true");
+                        conn.Open();
+                        using var cmd = new SqlCommand(_query, conn);
+                        using var reader = cmd.ExecuteReader();
+                        while (reader.Read()) { }
+                    });
+                }
+                else
+                {
+                    tasks[i] = Task.Run(async () =>
+                    {
+                        using var conn = new SqlConnection(s_config.ConnectionString + ";Pooling=true");
+                        await conn.OpenAsync();
+                        using var cmd = new SqlCommand(_query, conn);
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        while (await reader.ReadAsync()) { }
+                    });
+                }
+            }
+            await Task.WhenAll(tasks);
         }
     }
 }

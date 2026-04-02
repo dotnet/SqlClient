@@ -153,6 +153,14 @@
         {
             "Name": "xml",
             "DefaultValue": "<div><h1>Hello World</h1></div>"
+        },
+        {
+            "Name": "json",
+            "DefaultValue": "{\"key\":\"value\",\"number\":42}"
+        },
+        {
+            "Name": "vector",
+            "DefaultValue": "[0.1, 0.2, 0.3, 0.4, 0.5]"
         }
     ]
 }
