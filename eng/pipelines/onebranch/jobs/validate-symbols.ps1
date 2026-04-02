@@ -80,7 +80,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# ── Extract the package (skip if already done) ────────────────────────────────
+# -- Extract the package (skip if already done) --------------------------------
 
 $dllFullPath = Join-Path $ExtractPath $DllPath
 
@@ -111,7 +111,7 @@ if (-not (Test-Path $dllFullPath)) {
     exit 1
 }
 
-# ── Locate symchk.exe ────────────────────────────────────────────────────────
+# -- Locate symchk.exe ---------------------------------------------------------
 
 $symchkCandidates = @(
     "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\symchk.exe"
@@ -131,7 +131,7 @@ if (-not $symchkPath) {
     exit 1
 }
 
-# ── Verify symbols (with retries for publishing latency) ──────────────────────
+# -- Verify symbols (with retries for publishing latency) ----------------------
 
 $dllLeaf = Split-Path $dllFullPath -Leaf
 
@@ -146,7 +146,7 @@ $symchkArgs = @(
 )
 
 for ($attempt = 1; $attempt -le $MaxRetries; $attempt++) {
-    Write-Host "Attempt $attempt of $MaxRetries — running: symchk $($symchkArgs -join ' ')"
+    Write-Host "Attempt $attempt of $MaxRetries -- running: symchk $($symchkArgs -join ' ')"
     $output = & $symchkPath @symchkArgs 2>&1 | Out-String
     $symchkExit = $LASTEXITCODE
 

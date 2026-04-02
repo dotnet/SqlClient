@@ -63,6 +63,7 @@ jobs:
         - task: PowerShell@2
           displayName: Verify ${{ pkg.packageName }} on ${{ server.name }}
           inputs:
+            pwsh: true
             filePath: eng/pipelines/onebranch/jobs/validate-symbols.ps1
             arguments: >
               -ArtifactPath "$(Pipeline.Workspace)\${{ pkg.artifactName }}"
