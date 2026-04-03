@@ -50,7 +50,7 @@
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
     <PropertyGroup>
       <PowerShellCommand>
-        dotnet tool run pwsh
+        dotnet pwsh
           -NonInteractive
           -ExecutionPolicy Unrestricted
           -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"

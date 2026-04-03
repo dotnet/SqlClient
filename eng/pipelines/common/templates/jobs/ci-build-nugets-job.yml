@@ -120,7 +120,7 @@ jobs:
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
-  - template: /eng/pipelines/steps/tool-restore.yml@self
+  - template: /eng/pipelines/steps/dotnet-tool-restore.yml@self
 
   # When we're performing a Debug build, we still want to try _compiling_ the
   # code in Release mode to ensure downstream pipelines don't encounter
