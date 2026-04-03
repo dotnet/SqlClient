@@ -8651,36 +8651,18 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
-#if NETFRAMEWORK
-            char[] charData;
-            byte[] byteData = null;
-
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
-            if (encoding == null)
-            {
-                encoding = _defaultEncoding;
-            }
+            encoding ??= _defaultEncoding;
 
-            charData = s.ToCharArray(offset, numChars);
-
-            byteData = new byte[encoding.GetByteCount(charData, 0, charData.Length)];
-            encoding.GetBytes(charData, 0, charData.Length, byteData, 0);
-
-            return byteData;
-#else
             return encoding.GetBytes(s, offset, numChars);
-#endif
         }
 
         private Task WriteEncodingChar(string s, int numChars, int offset, Encoding encoding, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
-            if (encoding == null)
-            {
-                encoding = _defaultEncoding;
-            }
+            encoding ??= _defaultEncoding;
 
             // Optimization: if the entire string fits in the current buffer, then copy it directly
             int bytesLeft = stateObj._outBuff.Length - stateObj._outBytesUsed;
@@ -8692,23 +8674,14 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-#if NETFRAMEWORK
-                char[] charData = s.ToCharArray(offset, numChars);
-                byte[] byteData = encoding.GetBytes(charData, 0, numChars);
-                Debug.Assert(byteData != null, "no data from encoding");
-                return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
-#else
                 byte[] byteData = encoding.GetBytes(s, offset, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
-#endif
             }
         }
 
         internal int GetEncodingCharLength(string value, int numChars, int charOffset, Encoding encoding)
         {
-            // UNDONE: (PERF) this is an expensive way to get the length.  Also, aren't we
-            // UNDONE: (PERF) going through these steps twice when we write out a value?
             if (string.IsNullOrEmpty(value))
             {
                 return 0;
@@ -8726,9 +8699,7 @@ namespace Microsoft.Data.SqlClient
                 encoding = _defaultEncoding;
             }
 
-            char[] charData = value.ToCharArray(charOffset, numChars);
-
-            return encoding.GetByteCount(charData, 0, numChars);
+            return encoding.GetByteCount(value, charOffset, numChars);
         }
 
         //
