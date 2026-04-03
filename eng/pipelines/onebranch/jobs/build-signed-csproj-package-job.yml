@@ -133,6 +133,9 @@ jobs:
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
+      # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+      - template: /eng/pipelines/steps/dotnet-tool-restore.yml@self
+
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
         parameters:
