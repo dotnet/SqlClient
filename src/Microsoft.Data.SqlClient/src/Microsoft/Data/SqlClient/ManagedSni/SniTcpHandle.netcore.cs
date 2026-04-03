@@ -172,80 +172,73 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         }
                     }
                     catch (Exception ex)
+                        when (!timeout.IsExpired &&
+                              hasCachedDNSInfo &&
+                              ex is (SocketException or ArgumentException or AggregateException))
                     {
-                        if (timeout.IsExpired)
-                        {
-                            throw;
-                        }
                         // Retry with cached IP address
-                        if (ex is SocketException || ex is ArgumentException || ex is AggregateException)
+                        int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
+
+                        string firstCachedIP;
+                        string secondCachedIP;
+
+                        if (SqlConnectionIPAddressPreference.IPv6First == ipPreference)
                         {
-                            if (hasCachedDNSInfo == false)
-                            {
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Cached DNS Info not found, exception occurred thrown: {1}", args0: _connectionId, args1: ex?.Message);
-                                throw;
-                            }
-                            else
-                            {
-                                int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
-
-                                string firstCachedIP;
-                                string secondCachedIP;
-
-                                if (SqlConnectionIPAddressPreference.IPv6First == ipPreference)
-                                {
-                                    firstCachedIP = cachedDNSInfo.AddrIPv6;
-                                    secondCachedIP = cachedDNSInfo.AddrIPv4;
-                                }
-                                else
-                                {
-                                    firstCachedIP = cachedDNSInfo.AddrIPv4;
-                                    secondCachedIP = cachedDNSInfo.AddrIPv6;
-                                }
-
-                                try
-                                {
-                                    if (parallel)
-                                    {
-                                        _socket = TryConnectParallel(firstCachedIP, portRetry, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);
-                                    }
-                                    else
-                                    {
-                                        _socket = Connect(firstCachedIP, portRetry, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
-                                    }
-                                }
-                                catch (Exception exRetry)
-                                {
-                                    if (timeout.IsExpired)
-                                    {
-                                        throw;
-                                    }
-                                    if (exRetry is SocketException || exRetry is ArgumentNullException
-                                        || exRetry is ArgumentException || exRetry is ArgumentOutOfRangeException || exRetry is AggregateException)
-                                    {
-                                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying exception {1}", args0: _connectionId, args1: exRetry?.Message);
-                                        if (parallel)
-                                        {
-                                            _socket = TryConnectParallel(secondCachedIP, portRetry, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);
-                                        }
-                                        else
-                                        {
-                                            _socket = Connect(secondCachedIP, portRetry, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Retry failed, exception occurred: {1}", args0: _connectionId, args1: exRetry?.Message);
-                                        throw;
-                                    }
-                                }
-                            }
+                            firstCachedIP = cachedDNSInfo.AddrIPv6;
+                            secondCachedIP = cachedDNSInfo.AddrIPv4;
                         }
                         else
                         {
+                            firstCachedIP = cachedDNSInfo.AddrIPv4;
+                            secondCachedIP = cachedDNSInfo.AddrIPv6;
+                        }
+
+                        try
+                        {
+                            if (parallel)
+                            {
+                                _socket = TryConnectParallel(firstCachedIP, portRetry, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                            }
+                            else
+                            {
+                                _socket = Connect(firstCachedIP, portRetry, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                            }
+                        }
+                        catch (Exception exRetry)
+                            when (!timeout.IsExpired &&
+                                  exRetry is
+                                      SocketException or
+                                      ArgumentNullException or
+                                      ArgumentException or
+                                      ArgumentOutOfRangeException or
+                                      AggregateException)
+                        {
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying exception {1}", args0: _connectionId, args1: exRetry?.Message);
+                            if (parallel)
+                            {
+                                _socket = TryConnectParallel(secondCachedIP, portRetry, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                            }
+                            else
+                            {
+                                _socket = Connect(secondCachedIP, portRetry, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                            }
+                        }
+                        catch (Exception exRetry) when (!timeout.IsExpired)
+                        {
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Retry failed, exception occurred: {1}", args0: _connectionId, args1: exRetry?.Message);
                             throw;
                         }
+                    }
+                    catch (Exception ex)
+                        when (!timeout.IsExpired &&
+                              ex is
+                                  SocketException or
+                                  ArgumentException or
+                                  AggregateException)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Cached DNS Info not found, exception occurred thrown: {1}", args0: _connectionId, args1: ex?.Message);
+                        throw;
                     }
 
                     if (_socket == null || !_socket.Connected)
