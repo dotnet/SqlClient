@@ -882,6 +882,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Request that the current task is stopped
                     _cancelAsyncOnCloseTokenSource.Cancel();
+                    _cancelAsyncOnCloseTokenSource.Dispose();
                     var currentTask = _currentTask;
                     if ((currentTask != null) && (!currentTask.IsCompleted))
                     {
@@ -1122,6 +1123,7 @@ namespace Microsoft.Data.SqlClient
                 _isClosed = true;
                 // Request that the current task is stopped
                 _cancelAsyncOnCloseTokenSource.Cancel();
+                _cancelAsyncOnCloseTokenSource.Dispose();
                 if (stateObj != null)
                 {
                     var networkPacketTaskSource = stateObj._networkPacketTaskSource;
