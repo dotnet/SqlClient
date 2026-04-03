@@ -2129,9 +2129,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Notes:
-                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with 2005 and greater.
-                    // it fails in sql server 2000
+                    // Elevation from (n)(var)char (4001+) to (n)text for SQL Server 2000 compatibility (legacy behavior)
                     maxSizeInBytes = (sizeInCharacters > actualSizeInBytes) ? sizeInCharacters : actualSizeInBytes;
                 }
 

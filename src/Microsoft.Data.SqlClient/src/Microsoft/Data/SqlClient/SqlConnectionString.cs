@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient
         internal enum TypeSystem
         {
             Latest = 2008,
-            SQLServer2000 = 2000,
             SQLServer2005 = 2005,
             SQLServer2008 = 2008,
             SQLServer2012 = 2012,
@@ -35,7 +34,6 @@ namespace Microsoft.Data.SqlClient
         internal static class TYPESYSTEMVERSION
         {
             internal const string Latest = "Latest";
-            internal const string SQL_Server_2000 = "SQL Server 2000";
             internal const string SQL_Server_2005 = "SQL Server 2005";
             internal const string SQL_Server_2008 = "SQL Server 2008";
             internal const string SQL_Server_2012 = "SQL Server 2012";
@@ -408,10 +406,6 @@ namespace Microsoft.Data.SqlClient
             if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.Latest, StringComparison.OrdinalIgnoreCase))
             {
                 _typeSystemVersion = TypeSystem.Latest;
-            }
-            else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2000, StringComparison.OrdinalIgnoreCase))
-            {
-                _typeSystemVersion = TypeSystem.SQLServer2000;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
             {
