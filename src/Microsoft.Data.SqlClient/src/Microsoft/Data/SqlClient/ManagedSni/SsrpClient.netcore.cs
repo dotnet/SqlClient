@@ -414,23 +414,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     Task<int> sendTask = clientListener.SendAsync(CLNT_BCAST_EX_Request, CLNT_BCAST_EX_Request.Length, new IPEndPoint(IPAddress.Broadcast, SqlServerBrowserPort));
                     Task<UdpReceiveResult> receiveTask = null;
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Waiting for UDP Client to fetch list of instances.");
-                    Stopwatch sw = new Stopwatch(); //for waiting until 15 sec elapsed
-                    sw.Start();
-                    try
+                    Stopwatch sw = Stopwatch.StartNew(); //for waiting until 15 sec elapsed
+                    while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= ReceiveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
                     {
-                        while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= ReceiveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
+                        currentTimeOut = ReceiveTimeoutsForCLNT_BCAST_EX;
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Received instnace info from UDP Client.");
+                        if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
                         {
-                            currentTimeOut = ReceiveTimeoutsForCLNT_BCAST_EX;
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Received instnace info from UDP Client.");
-                            if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
-                            {
-                                response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)
-                            }
+                            response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)
                         }
-                    }
-                    finally
-                    {
-                        sw.Stop();
                     }
                 }
             }
