@@ -26,7 +26,9 @@
     },
     // Restore tools to enable compose file edits via powershell
     "initializeCommand": "dotnet tool restore && dotnet tool run pwsh -- -NoProfile -ExecutionPolicy Bypass -File .devcontainer/init.ps1",
-    "postCreateCommand": "bash .devcontainer/setup-sqlserver.sh",
+    // Refreshing the git index now gets the container immediately ready for git operations,
+    // otherwise a git command needs to be manually run to refresh the index. 
+    "postCreateCommand": "git update-index --really-refresh && bash .devcontainer/setup-sqlserver.sh",
     // Restore tools again within the container to ensure they are available for developer use
     "postStartCommand": "dotnet tool restore",
     "remoteUser": "vscode"
