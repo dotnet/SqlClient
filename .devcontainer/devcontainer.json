@@ -1,6 +1,10 @@
 {
     "name": "Microsoft.Data.SqlClient",
-    "dockerComposeFile": "docker-compose.yml",
+    "dockerComposeFile": [
+        "docker-compose.yml",
+        "docker-compose.worktree.yml",
+        "docker-compose.local.yml"
+    ],
     "service": "devcontainer",
     "workspaceFolder": "/workspaces/SqlClient",
     "features": {
@@ -20,6 +24,10 @@
             }
         }
     },
+    // Restore tools to enable compose file edits via powershell
+    "initializeCommand": "dotnet tool restore && dotnet tool run pwsh -- -NoProfile -ExecutionPolicy Bypass -File .devcontainer/init.ps1",
     "postCreateCommand": "bash .devcontainer/setup-sqlserver.sh",
+    // Restore tools again within the container to ensure they are available for developer use
+    "postStartCommand": "dotnet tool restore",
     "remoteUser": "vscode"
 }
