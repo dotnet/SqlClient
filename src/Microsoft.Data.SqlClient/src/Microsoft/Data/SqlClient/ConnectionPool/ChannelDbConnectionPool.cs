@@ -96,6 +96,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Identity = identity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
+            TransactedConnectionPool = new(this);
 
             _connectionSlots = new(MaxPoolSize);
 
@@ -147,6 +148,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <inheritdoc />
         public DbConnectionPoolState State { get; private set; }
+
+        /// <inheritdoc />
+        public TransactedConnectionPool TransactedConnectionPool { get; }
 
         /// <inheritdoc />
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;

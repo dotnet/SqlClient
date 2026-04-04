@@ -1,5 +1,5 @@
 ---
-name: doc-comments
+name: generate-doc-comments
 description: Generate XML documentation comments for C# code following .NET best practices.
 argument-hint: <code>
 agent: agent
