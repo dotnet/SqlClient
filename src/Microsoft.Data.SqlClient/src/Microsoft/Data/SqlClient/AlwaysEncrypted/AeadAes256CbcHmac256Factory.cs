@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -10,12 +9,12 @@ using System.Text;
 
 #nullable enable
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 {
     /// <summary>
     /// This is a factory class for AEAD_AES_256_CBC_HMAC_SHA256.
     /// </summary>
-    internal class AeadAes256CbcHmac256Factory : EncryptionAlgorithmFactory
+    internal sealed class AeadAes256CbcHmac256Factory : EncryptionAlgorithmFactory
     {
         /// <summary>
         /// Factory classes cache the <see cref="SqlAeadAes256CbcHmac256EncryptionKey" /> objects to avoid recomputation of the derived keys.

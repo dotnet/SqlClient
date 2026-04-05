@@ -304,6 +304,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\AeadAes256CbcHmac256Factory.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\AeadAes256CbcHmac256Factory.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs</Link>
     </Compile>
@@ -639,9 +642,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs</Link>
