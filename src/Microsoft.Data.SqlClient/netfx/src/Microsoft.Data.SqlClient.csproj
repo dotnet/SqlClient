@@ -310,6 +310,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactory.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactory.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactoryList.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactoryList.cs</Link>
     </Compile>
@@ -675,9 +678,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>

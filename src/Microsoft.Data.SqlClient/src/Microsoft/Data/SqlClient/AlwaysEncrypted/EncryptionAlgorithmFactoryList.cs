@@ -26,7 +26,7 @@ internal static class EncryptionAlgorithmFactoryList
     /// <param name="encryptionAlgorithm">Specified cryptographic algorithm's implementation.</param>
     public static void GetAlgorithm(SqlClientSymmetricKey key, byte type, string algorithmName, out SqlClientEncryptionAlgorithm encryptionAlgorithm)
     {
-        SqlClientEncryptionAlgorithmFactory factory = algorithmName switch
+        EncryptionAlgorithmFactory factory = algorithmName switch
         {
             SqlAeadAes256CbcHmac256Algorithm.AlgorithmName => SqlAeadAes256CbcHmac256Factory.Instance,
             _ => throw SQL.UnknownColumnEncryptionAlgorithm(algorithmName, RegisteredCipherAlgorithmNames)
