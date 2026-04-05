@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private readonly ConcurrentDictionary<string, SqlAeadAes256CbcHmac256Algorithm> _encryptionAlgorithms =
             new ConcurrentDictionary<string, SqlAeadAes256CbcHmac256Algorithm>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/, capacity: 2);
+
+        public static SqlAeadAes256CbcHmac256Factory Instance => field ??= new();
 
         /// <summary>
         /// Creates an instance of AeadAes256CbcHmac256Algorithm class with a given key
