@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     // @TODO: This isn't a delegate... it's a utility class
     internal sealed partial class EnclaveDelegate
     {
-        private static readonly SqlAeadAes256CbcHmac256Factory s_sqlAeadAes256CbcHmac256Factory = new SqlAeadAes256CbcHmac256Factory();
+        private static readonly AeadAes256CbcHmac256Factory s_aeadAes256CbcHmac256Factory = new AeadAes256CbcHmac256Factory();
         private static readonly EnclaveDelegate s_enclaveDelegate = new EnclaveDelegate();
 
         private readonly object _lock;
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 SqlClientSymmetricKey symmetricKey = new SqlClientSymmetricKey(sessionKey);
-                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = s_sqlAeadAes256CbcHmac256Factory.Create(
+                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = s_aeadAes256CbcHmac256Factory.Create(
                     symmetricKey,
                     SqlClientEncryptionType.Randomized,
                     SqlAeadAes256CbcHmac256Algorithm.AlgorithmName

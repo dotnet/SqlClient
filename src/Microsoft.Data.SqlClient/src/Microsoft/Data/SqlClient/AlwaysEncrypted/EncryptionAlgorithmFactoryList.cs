@@ -28,7 +28,7 @@ internal static class EncryptionAlgorithmFactoryList
     {
         EncryptionAlgorithmFactory factory = algorithmName switch
         {
-            SqlAeadAes256CbcHmac256Algorithm.AlgorithmName => SqlAeadAes256CbcHmac256Factory.Instance,
+            SqlAeadAes256CbcHmac256Algorithm.AlgorithmName => AeadAes256CbcHmac256Factory.Instance,
             _ => throw SQL.UnknownColumnEncryptionAlgorithm(algorithmName, RegisteredCipherAlgorithmNames)
         };
 
