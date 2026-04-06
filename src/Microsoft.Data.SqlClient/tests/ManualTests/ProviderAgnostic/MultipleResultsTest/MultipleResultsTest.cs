@@ -78,20 +78,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
             using SqlCommand command = connection.CreateCommand();
-            ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
-
-            connection.InfoMessage += (object sender, SqlInfoMessageEventArgs args) =>
-                messages.Enqueue(args.Message);
 
             connection.Open();
 
             command.CommandText = s_sqlStatement;
 
-            // ExecuteScalar will select the first result set and the info message preceding it, then stop.
-            command.ExecuteScalar();
-            Assert.True(messages.TryDequeue(out string lastMessage));
-            Assert.Empty(messages);
-            Assert.Equal(ResultSet1_Message, lastMessage);
+            // ExecuteScalar now drains all result sets to ensure errors are not silently ignored (GH #3736 fix).
+            // Since the SQL statement contains RAISERRORs after the first result set, an exception is thrown.
+            SqlException ex = Assert.Throws<SqlException>(() => command.ExecuteScalar());
+            Assert.Contains("Error 1", ex.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
