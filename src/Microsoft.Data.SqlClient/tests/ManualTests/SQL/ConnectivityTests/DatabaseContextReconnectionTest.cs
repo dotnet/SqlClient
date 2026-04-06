@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,6 +40,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         private readonly string _baseConnectionString;
 
+        /// <summary>
+        /// Tracks tables created during a test so they can be cleaned up from
+        /// the initial catalog if a test failure causes them to land in the
+        /// wrong database.
+        /// </summary>
+        private readonly List<string> _createdTableNames = new();
+
         public DatabaseContextReconnectionTest()
         {
             _baseConnectionString = DataTestUtility.TCPConnectionString;
@@ -55,6 +63,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection conn = new(_baseConnectionString);
             conn.Open();
+
+            // Clean up any tables that may have been created in the initial
+            // catalog if the database context bug caused DDL to execute in the
+            // wrong database.
+            if (_createdTableNames.Count > 0)
+            {
+                string initialCatalog = new SqlConnectionStringBuilder(
+                    _baseConnectionString).InitialCatalog;
+
+                if (!string.IsNullOrEmpty(initialCatalog)
+                    && !string.Equals(initialCatalog, _tempDbName,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (string tableName in _createdTableNames)
+                    {
+                        try
+                        {
+                            using SqlCommand cmd = conn.CreateCommand();
+                            cmd.CommandText =
+                                $"IF OBJECT_ID(N'[{initialCatalog}].dbo.[{tableName}]') " +
+                                $"IS NOT NULL DROP TABLE [{initialCatalog}].dbo.[{tableName}]";
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch
+                        {
+                            // Best-effort cleanup
+                        }
+                    }
+                }
+            }
+
             DataTestUtility.DropDatabase(conn, _tempDbName);
         }
 
@@ -153,8 +192,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_PreservesContext()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -185,8 +223,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void ChangeDatabase_KillReconnect_PreservesContext()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -213,8 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_Pooled_PreservesContext()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -246,8 +282,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_MARS_PreservesContext()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -281,8 +316,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_StressLoop_PreservesContext()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -320,8 +354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void ChangeDatabase_KillReconnect_StressLoop_PreservesContext()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -360,14 +393,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_CreateTable_LandsInCorrectDb()
         {
             AppContext.SetSwitch(SwitchName, false);
 
             var builder = BuildConnectionString(pooling: false);
             string tableName = "tbl_ctx_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            _createdTableNames.Add(tableName);
 
             using SqlConnection conn = new(builder.ConnectionString);
             conn.Open();
@@ -436,8 +469,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_StressCreateTables_LandInCorrectDb()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -494,6 +526,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Reconnection happens here — create a table
                 string tableName = $"tbl_s{i}_{Guid.NewGuid().ToString("N").Substring(0, 6)}";
                 tableNames[i] = tableName;
+                _createdTableNames.Add(tableName);
 
                 using (SqlCommand createCmd = new(
                     $"CREATE TABLE [{tableName}] (Id INT)", conn))
@@ -548,8 +581,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void MultipleDatabaseSwitches_KillReconnect_LastSwitchWins()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -558,6 +590,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string initialCatalog = new SqlConnectionStringBuilder(
                 _baseConnectionString).InitialCatalog;
             string tableName = "tbl_multi_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            _createdTableNames.Add(tableName);
 
             using SqlConnection conn = new(builder.ConnectionString);
             conn.Open();
@@ -621,8 +654,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_DoubleKill_CreateTable_LandsInCorrectDb()
         {
             AppContext.SetSwitch(SwitchName, false);
@@ -630,6 +662,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var builder = BuildConnectionString(pooling: false);
             builder.ConnectRetryCount = 3; // Need extra retries for double kill
             string tableName = "tbl_dblkill_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            _createdTableNames.Add(tableName);
 
             using SqlConnection conn = new(builder.ConnectionString);
             conn.Open();
@@ -678,14 +711,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureSynapse),
-            nameof(DataTestUtility.IsNotManagedInstance))]
+            nameof(DataTestUtility.IsNotAzureServer))]
         public async Task UseDatabase_KillReconnect_Async_CreateTable_LandsInCorrectDb()
         {
             AppContext.SetSwitch(SwitchName, false);
 
             var builder = BuildConnectionString(pooling: false);
             string tableName = "tbl_async_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            _createdTableNames.Add(tableName);
 
             using SqlConnection conn = new(builder.ConnectionString);
             await conn.OpenAsync();
