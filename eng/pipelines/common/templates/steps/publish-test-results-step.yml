@@ -45,14 +45,13 @@ steps:
         TestResults/*.trx
         TestResults/**/*.coverage
       testRunTitle: 'Unix Tests'
-  condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+  condition: succeededOrFailed()
 
 - powershell: |
    cd TestResults
    $TF="${{parameters.targetFramework }}"
    Get-ChildItem -Filter "*.coverage" -Recurse | Rename-Item -NewName {"$TF" + $_.name}
   displayName: 'Rename coverage files'
-  condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
 
 - ${{ if eq(parameters.debug, true)}}:
   - powershell: |
@@ -65,4 +64,4 @@ steps:
   inputs:
     targetPath: TestResults
     artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'
-  condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+  condition: succeededOrFailed()

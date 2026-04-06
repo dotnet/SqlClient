@@ -341,6 +341,11 @@ jobs:
           installDir: $(dotnetx86RootPath)
           runtimes: [8.x, 9.x]
 
+  # Ensure TestResults directory exists so that publish steps don't fail when
+  # tests are skipped due to a setup failure.
+  - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+    displayName: 'Create TestResults Directory'
+
   # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
   # install, etc.) completed successfully.  Test steps condition on this variable
   # so they are skipped when setup fails, yet remain independent of each
