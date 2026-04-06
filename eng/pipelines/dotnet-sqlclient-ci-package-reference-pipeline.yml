@@ -63,7 +63,7 @@ trigger:
       - internal/main
       - internal/release/*
 
-# Trigger this pipline on a schedule.
+# Trigger this pipeline on a schedule.
 schedules:
 
   # GitHub main on weekdays

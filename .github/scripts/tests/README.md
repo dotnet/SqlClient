@@ -126,8 +126,8 @@ Both test files use the same general approach:
    needed.
 
 3. **Assertions** check `$status` (exit code) and `$output` (combined stdout/stderr) for expected
-   values, error messages, or GitHub Actions workflow commands (`::set-output::`, `::error::`,
-   `::notice::`).
+   values, error messages, GitHub Actions output file writes via `$GITHUB_OUTPUT`, or other
+   workflow commands such as `::error::` and `::notice::`.
 
 4. **`teardown()`** removes the temporary directory and mock binaries.
 

@@ -80,6 +80,7 @@ jobs:
   # into each target release branch.
   cherry-pick:
     needs: detect-versions
+    if: needs.detect-versions.outputs.versions != '[]'
     runs-on: ubuntu-latest
     strategy:
       # Don't cancel other cherry-picks if one version fails.

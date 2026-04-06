@@ -104,10 +104,11 @@ echo "Merge commit:       ${MERGE_COMMIT_SHA}"
 git fetch origin "${TARGET_BRANCH}"
 
 # -- Step 2: Check if the patch is already applied ----------------------------
-# 'git cherry' compares patches between two points. A '-' prefix means the
-# patch is already present (equivalent commit exists on the target branch).
-# A '+' prefix means it has not been applied yet.
-if git cherry "origin/${TARGET_BRANCH}" "${MERGE_COMMIT_SHA}^" \
+# 'git cherry <upstream> <head> <limit>' lists commits in <limit>..<head> and
+# marks each with '-' (patch already on <upstream>) or '+' (not yet applied).
+# By passing <head>=MERGE_COMMIT_SHA and <limit>=MERGE_COMMIT_SHA^ we scope
+# the check to exactly one commit — the PR being cherry-picked.
+if git cherry "origin/${TARGET_BRANCH}" "${MERGE_COMMIT_SHA}" "${MERGE_COMMIT_SHA}^" \
     | grep -q '^-'; then
   echo "::notice::Commit ${MERGE_COMMIT_SHA} is already applied on" \
        "${TARGET_BRANCH}. Skipping cherry-pick."
@@ -143,7 +144,7 @@ lookup_milestone() {
   MILESTONE_NOTE=""
 
   if gh api "repos/${GITHUB_REPOSITORY}/milestones" --paginate \
-      --jq '.[].title' | grep -qx "${version}"; then
+      --field state=open --jq '.[].title' | grep -qx "${version}"; then
     MILESTONE_ARG="--milestone ${version}"
     echo "Milestone '${version}' found."
   else
