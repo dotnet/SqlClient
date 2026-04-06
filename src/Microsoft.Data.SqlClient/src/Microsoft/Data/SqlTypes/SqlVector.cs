@@ -15,7 +15,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes;
 
-/// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
 public readonly struct SqlVector<T> : INullable, ISqlVector
 where T : unmanaged
 {
@@ -55,10 +55,10 @@ where T : unmanaged
         Memory = new();
     }
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
     public static SqlVector<T> CreateNull(int length) => new(length);
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
     public SqlVector(ReadOnlyMemory<T> memory)
     {
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
@@ -101,16 +101,16 @@ where T : unmanaged
 
     #region Properties
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
     public bool IsNull { get; }
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
     public static SqlVector<T>? Null => null;
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
     public int Length { get; }
     
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
     public ReadOnlyMemory<T> Memory { get; }
 
     #endregion
