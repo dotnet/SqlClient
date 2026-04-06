@@ -304,11 +304,20 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\AeadAes256CbcHmac256Factory.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\AeadAes256CbcHmac256Factory.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\ColumnMasterKeyMetadata.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptedColumnEncryptionKeyParameters.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactory.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactory.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactoryList.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncrypted\EncryptionAlgorithmFactoryList.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
@@ -634,9 +643,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256EncryptionKey.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParametersBuilder.cs</Link>
     </Compile>
@@ -672,12 +678,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactory.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs">
-      <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithmFactoryList.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>

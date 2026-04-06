@@ -21,9 +21,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         // reflections
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
         public static Type sqlClientSymmetricKey = systemData.GetType("Microsoft.Data.SqlClient.SqlClientSymmetricKey");
-        public static Type sqlAeadAes256CbcHmac256Factory = systemData.GetType("Microsoft.Data.SqlClient.SqlAeadAes256CbcHmac256Factory");
+        public static Type aeadAes256CbcHmac256Factory = systemData.GetType("Microsoft.Data.SqlClient.AlwaysEncrypted.AeadAes256CbcHmac256Factory");
         public static ConstructorInfo sqlColumnEncryptionKeyConstructor = sqlClientSymmetricKey.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
-        public static MethodInfo sqlAeadAes256CbcHmac256FactoryCreate = sqlAeadAes256CbcHmac256Factory.GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static MethodInfo aeadAes256CbcHmac256FactoryCreate = aeadAes256CbcHmac256Factory.GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type sqlClientEncryptionAlgorithm = systemData.GetType("Microsoft.Data.SqlClient.SqlClientEncryptionAlgorithm");
         public static MethodInfo sqlClientEncryptionAlgorithmEncryptData = sqlClientEncryptionAlgorithm.GetMethod("EncryptData", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type SqlCipherMetadata = systemData.GetType("Microsoft.Data.SqlClient.SqlCipherMetadata");
@@ -191,11 +191,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Object columnEncryptionKey = sqlColumnEncryptionKeyConstructor.Invoke(new object[] { key });
             Assert.True(columnEncryptionKey != null);
 
-            Object aesFactory = Activator.CreateInstance(sqlAeadAes256CbcHmac256Factory);
+            Object aesFactory = Activator.CreateInstance(aeadAes256CbcHmac256Factory);
             Assert.True(aesFactory != null);
 
             object[] parameters = new object[] { columnEncryptionKey, encryptionType, ColumnEncryptionAlgorithmName };
-            Object authenticatedAES = sqlAeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
+            Object authenticatedAES = aeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
             Assert.True(authenticatedAES != null);
 
             parameters = new object[] { plainTextData };
@@ -259,11 +259,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Object columnEncryptionKey = sqlColumnEncryptionKeyConstructor.Invoke(new object[] { key });
             Assert.True(columnEncryptionKey != null);
 
-            Object aesFactory = Activator.CreateInstance(sqlAeadAes256CbcHmac256Factory);
+            Object aesFactory = Activator.CreateInstance(aeadAes256CbcHmac256Factory);
             Assert.True(aesFactory != null);
 
             object[] parameters = new object[] { columnEncryptionKey, encryptionType, ColumnEncryptionAlgorithmName };
-            Object authenticatedAES = sqlAeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
+            Object authenticatedAES = aeadAes256CbcHmac256FactoryCreate.Invoke(aesFactory, parameters);
             Assert.True(authenticatedAES != null);
 
             parameters = new object[] { encryptedCellBlob };
