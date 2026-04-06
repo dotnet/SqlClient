@@ -160,7 +160,7 @@ steps:
         command: custom
         projects: build.proj
         custom: msbuild
-        arguments: '-t:RunUnitTests -p:TF=${{ parameters.targetFramework }} -p:TestSet=${{ parameters.testSet }} -p:=TestMicrosoftDataSqlClientVersion=${{ parameters.nugetPackageVersion }} -p:platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:Filter="category=flaky"'
+        arguments: '-t:RunUnitTests -p:TF=${{ parameters.targetFramework }} -p:TestSet=${{ parameters.testSet }} -p:TestMicrosoftDataSqlClientVersion=${{ parameters.nugetPackageVersion }} -p:platform=${{ parameters.platform }} -p:Configuration=${{ parameters.configuration }} -p:Filter="category=flaky"'
         verbosityRestore: Detailed
         verbosityPack: Detailed
       condition: succeededOrFailed()
