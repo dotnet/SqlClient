@@ -345,7 +345,7 @@ jobs:
   # install, etc.) completed successfully.  Test steps condition on this variable
   # so they are skipped when setup fails, yet remain independent of each
   # other's results.
-  - script: echo "##vso[task.setvariable variable=setupSucceeded]true"
+  - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
     displayName: 'Gate: Mark Setup Succeeded'
 
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
