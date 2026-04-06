@@ -61,7 +61,7 @@ trigger:
     # ADO internal/release/7.0 branch.
     - internal/release/7.0
 
-# Trigger this pipline on a schedule.
+# Trigger this pipeline on a schedule.
 schedules:
 
   # GitHub release/7.0 on Sundays (1 hour after release/6.1's 04:00 UTC run).
