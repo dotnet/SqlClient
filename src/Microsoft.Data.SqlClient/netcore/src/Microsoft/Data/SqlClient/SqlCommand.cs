@@ -2915,15 +2915,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (Exception e)
                             {
-                                // exception thrown by Dispose or NextResultAsync cancellation...
-                                if (e is OperationCanceledException && cancellationToken.IsCancellationRequested)
-                                {
-                                    source.SetCanceled();
-                                }
-                                else
-                                {
-                                    source.SetException(e);
-                                }
+                                // exception thrown by Dispose...
+                                source.SetException(e);
                             }
                         },
                         TaskScheduler.Default
