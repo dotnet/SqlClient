@@ -79,7 +79,7 @@ steps:
   - ${{if eq(parameters.referenceType, 'Project')}}:
     - task: MSBuild@1
       displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
-      condition: succeededOrFailed()
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
         solution: build2.proj
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
@@ -101,7 +101,7 @@ steps:
 
     - task: MSBuild@1
       displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
-      condition: succeededOrFailed()
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
         solution: build2.proj
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
@@ -128,7 +128,7 @@ steps:
 
   - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       solution: build2.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
@@ -155,7 +155,7 @@ steps:
           -p:TestResultsFolderPath=TestResults
 
   - task: MSBuild@1
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
     inputs:
       solution: build2.proj
@@ -188,7 +188,7 @@ steps:
     continueOnError: true
 
   - task: MSBuild@1
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
     inputs:
       solution: build2.proj
@@ -219,7 +219,7 @@ steps:
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
   - task: MSBuild@1
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Flaky Manual Tests ${{parameters.msbuildArchitecture }}'
     inputs:
       solution: build2.proj
@@ -257,7 +257,7 @@ steps:
   - ${{if eq(parameters.referenceType, 'Project')}}:
     - task: DotNetCoreCLI@2
       displayName: 'Run Unit Tests'
-      condition: succeededOrFailed()
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
         command: custom
         projects: build2.proj
@@ -276,7 +276,7 @@ steps:
 
     - task: DotNetCoreCLI@2
       displayName: 'Run Flaky Unit Tests'
-      condition: succeededOrFailed()
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
         command: custom
         projects: build2.proj
@@ -298,7 +298,7 @@ steps:
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests'
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       command: custom
       projects: build2.proj
@@ -316,7 +316,7 @@ steps:
       verbosityPack: Detailed
 
   - task: DotNetCoreCLI@2
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Flaky Functional Tests'
     inputs:
       command: custom
@@ -339,7 +339,7 @@ steps:
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Manual Tests'
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       command: custom
       projects: build2.proj
@@ -360,7 +360,7 @@ steps:
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Flaky Manual Tests'
-    condition: succeededOrFailed()
+    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       command: custom
       projects: build2.proj
