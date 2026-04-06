@@ -1336,9 +1336,9 @@ namespace Microsoft.Data.SqlClient
 #if !NETFRAMEWORK
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-        private static Type GetVectorFieldType(byte scale)
+        private static Type GetVectorFieldType(byte vectorElementType)
         {
-            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)scale;
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
             return elementType switch
             {
                 MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
