@@ -142,7 +142,7 @@ lookup_milestone() {
   MILESTONE_ARG=""
   MILESTONE_NOTE=""
 
-  if gh api "repos/${GITHUB_REPOSITORY}/milestones" \
+  if gh api "repos/${GITHUB_REPOSITORY}/milestones" --paginate \
       --jq '.[].title' | grep -qx "${version}"; then
     MILESTONE_ARG="--milestone ${version}"
     echo "Milestone '${version}' found."
