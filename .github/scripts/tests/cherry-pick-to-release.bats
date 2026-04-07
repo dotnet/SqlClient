@@ -138,6 +138,8 @@ STUB
   [ "$status" -eq 0 ]
   # Verify the git fetch targeted release/7.0.
   grep -q "GIT: fetch origin release/7.0" "${STUB_DIR}/git.log"
+  # Milestone lookup must use GET to avoid accidentally POSTing to the create endpoint.
+  grep "GH: api repos/dotnet/SqlClient/milestones" "${STUB_DIR}/gh.log" | grep -q "\-\-method GET"
 }
 
 @test "derives release/8.0 from version 8.0.0" {
@@ -259,6 +261,8 @@ STUB
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"does not exist"* ]]
+  # Milestone lookup must use GET to avoid accidentally POSTing to the create endpoint.
+  grep "GH: api repos/dotnet/SqlClient/milestones" "${STUB_DIR}/gh.log" | grep -q "\-\-method GET"
 }
 
 # ── Conflict handling ───────────────────────────────────────────────────────
