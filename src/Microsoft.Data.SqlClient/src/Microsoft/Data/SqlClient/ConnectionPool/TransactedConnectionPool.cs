@@ -56,6 +56,9 @@ internal class TransactedConnectionPool
     /// <value>A unique integer identifier used for logging and diagnostics.</value>
     internal int Id => _objectID;
 
+    // Transaction objects are safe to use as dictionary keys even after disposal. GetHashCode() and
+    // Equals() delegate to the internal transaction's TransactionHash (an int), which remains valid
+    // regardless of the Transaction's disposed state.
     internal ConcurrentDictionary<Transaction, List<DbConnectionInternal>> TransactedConnections { get; }
 
     #endregion

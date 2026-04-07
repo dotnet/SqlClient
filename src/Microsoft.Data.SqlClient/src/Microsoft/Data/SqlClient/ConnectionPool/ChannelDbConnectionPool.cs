@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Identity = identity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
-            TransactedConnectionPool = new(this);
+            TransactedConnectionPool = new();
 
             _connectionSlots = new(MaxPoolSize);
 
