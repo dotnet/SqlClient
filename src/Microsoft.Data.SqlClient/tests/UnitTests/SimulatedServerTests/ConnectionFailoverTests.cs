@@ -11,8 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Collection("SimulatedServerTests")]
     [Trait("Category", "flaky")]
+    [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors

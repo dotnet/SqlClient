@@ -37,6 +37,8 @@
       The provided path should be ended to a `\` character without white spaces: Ex. C:\x86\
     -->
     <DotnetPath></DotnetPath>
+    <!-- Default filter for test runs. Override with -p:Filter=... -->
+    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky</Filter>
     <!-- Using these properties to compile and pack netfx dll fixes nuget package explorer error "Compiler flags: missing" -->
     <NugetPackProperties>DebugType=portable;DebugSymbols=true;IncludeSymbols=true;SymbolPackageFormat=snupkg;PublishRepositoryUrl=true;RepositoryUrl=https://github.com/dotnet/sqlclient;RepositoryType=git;EmbedUnTrackedSources=true;Deterministic=true;</NugetPackProperties>
     <!-- TF_BUILD is enabled only within AzureDevOps pipeline to support continuous integation build. -->
@@ -226,7 +228,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing%26category!=flaky"
+        --filter "$(Filter)"
         --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -247,7 +249,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=failing%26category!=flaky"
+        --filter "$(Filter)"
         --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
     </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -273,7 +275,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --filter "$(Filter)&amp;category!=non$(TargetGroup)tests&amp;category!=nonwindowstests"
         --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -296,7 +298,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --filter "$(Filter)&amp;category!=nonnetcoreapptests&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
         --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -322,7 +324,7 @@
         -p:TestTargetOS=Windows$(TargetGroup)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --filter "$(Filter)&amp;category!=non$(TargetGroup)tests&amp;category!=nonwindowstests"
         --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
@@ -345,7 +347,7 @@
         -p:TestTargetOS=Unixnetcoreapp
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --filter "$(Filter)&amp;category!=nonnetcoreapptests&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
         --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>

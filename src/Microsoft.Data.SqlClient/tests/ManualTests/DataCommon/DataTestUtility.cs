@@ -331,6 +331,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return match.Groups[1].Value;
         }
 
+        // @TODO: Depending on the test runner, ClassName may or may not be populated!
         private static readonly Regex TestNameRegex = new(
             // Capture the ClassName.MethodName portion, which may terminate
             // the name, or have (args...) appended.
