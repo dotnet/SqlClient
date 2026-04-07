@@ -1176,6 +1176,11 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 } while (returnLastResult && ds.NextResult());
+
+                // Drain remaining results to ensure all error tokens are processed
+                // before returning the result (fix for GH issue #3736).
+                while (ds.NextResult())
+                { }
             }
             finally
             {
@@ -2853,7 +2858,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlDataReader reader = executeTask.Result;
                     reader.ReadAsync(cancellationToken)
-                        .ContinueWith((Task<bool> readTask) =>
+                        .ContinueWith(async (Task<bool> readTask) =>
                         {
                             try
                             {
@@ -2886,6 +2891,11 @@ namespace Microsoft.Data.SqlClient
                                                 exception = e;
                                             }
                                         }
+
+                                        // Drain remaining results to ensure all error tokens are processed
+                                        // before returning the result (fix for GH issue #3736).
+                                        while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
+                                        { }
                                     }
                                     finally
                                     {
