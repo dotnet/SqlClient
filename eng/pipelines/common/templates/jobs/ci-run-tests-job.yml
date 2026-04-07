@@ -206,6 +206,9 @@ jobs:
       ${{ else }}:
         runtimes: [8.x, 9.x]
 
+  # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+  - template: /eng/pipelines/steps/tool-restore.yml@self
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 

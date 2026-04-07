@@ -36,6 +36,7 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
+
   <!-- Trim Docs for IntelliSense ====================================== -->
   <!--
     It has been determined that including the remarks section in IntelliSense docs looks bad in
@@ -48,10 +49,8 @@
           AfterTargets="Build"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
     <PropertyGroup>
-      <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
-      <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
       <PowerShellCommand>
-        $(PowerShellCommand)
+        dotnet tool run pwsh
           -NonInteractive
           -ExecutionPolicy Unrestricted
           -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
