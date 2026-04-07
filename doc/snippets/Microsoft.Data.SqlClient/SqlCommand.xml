@@ -357,35 +357,35 @@ Next, compile and execute the following:
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Class1
           {
               static void Main()
               {
-                  // This is a simple example that demonstrates the usage of the 
+                  // This is a simple example that demonstrates the usage of the
                   // BeginExecuteNonQuery functionality.
-                  // The WAITFOR statement simply adds enough time to prove the 
+                  // The WAITFOR statement simply adds enough time to prove the
                   // asynchronous nature of the command.
-          
+
                   string commandText =
                       "UPDATE Production.Product SET ReorderPoint = ReorderPoint + 1 " +
                       "WHERE ReorderPoint Is Not Null;" +
                       "WAITFOR DELAY '0:0:3';" +
                       "UPDATE Production.Product SET ReorderPoint = ReorderPoint - 1 " +
                       "WHERE ReorderPoint Is Not Null";
-          
+
                   RunCommandAsynchronously(commandText, GetConnectionString());
-          
+
                   Console.WriteLine("Press ENTER to continue.");
                   Console.ReadLine();
               }
-          
+
               private static void RunCommandAsynchronously(string commandText, string connectionString)
               {
                   // Given command text and connection string, asynchronously execute
                   // the specified command against the connection. For this example,
-                  // the code displays an indicator as it is working, verifying the 
-                  // asynchronous behavior. 
+                  // the code displays an indicator as it is working, verifying the
+                  // asynchronous behavior.
                   using (SqlConnection connection = new SqlConnection(connectionString))
                   {
                       try
@@ -393,17 +393,17 @@ Next, compile and execute the following:
                           int count = 0;
                           SqlCommand command = new SqlCommand(commandText, connection);
                           connection.Open();
-          
+
                           IAsyncResult result = command.BeginExecuteNonQuery();
                           while (!result.IsCompleted)
                           {
                               Console.WriteLine("Waiting ({0})", count++);
                               // Wait for 1/10 second, so the counter
-                              // does not consume all available resources 
+                              // does not consume all available resources
                               // on the main thread.
                               System.Threading.Thread.Sleep(100);
                           }
-                        
+
                           Console.WriteLine("Command complete. Affected {0} rows.",
                               command.EndExecuteNonQuery(result));
                       }
@@ -423,11 +423,11 @@ Next, compile and execute the following:
                       }
                   }
               }
-          
+
               private static string GetConnectionString()
               {
-                  // To avoid storing the connection string in your code,            
-                  // you can retrieve it from a configuration file. 
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file.
                   return "Data Source=(local);Integrated Security=SSPI;" +
                          "Initial Catalog=AdventureWorks";
               }
@@ -527,7 +527,7 @@ Next, compile and execute the following:
           using System.Text;
           using System.Windows.Forms;
           using Microsoft.Data.SqlClient;
-          
+
           namespace Microsoft.AdoDotNet.CodeSamples
           {
               public partial class Form1 : Form
@@ -536,9 +536,9 @@ Next, compile and execute the following:
                   {
                       InitializeComponent();
                   }
-          
-                  // Hook up the form's Load event handler (you can double-click on 
-                  // the form's design surface in Visual Studio), and then add 
+
+                  // Hook up the form's Load event handler (you can double-click on
+                  // the form's design surface in Visual Studio), and then add
                   // this code to the form's class:
                   private void Form1_Load(object sender, EventArgs e)
                   {
@@ -546,42 +546,42 @@ Next, compile and execute the following:
                       this.FormClosing += new System.Windows.Forms.
                           FormClosingEventHandler(this.Form1_FormClosing);
                   }
-          
+
                   // You need this delegate in order to display text from a thread
                   // other than the form's thread. See the HandleCallback
                   // procedure for more information.
-                  // This same delegate matches both the DisplayStatus 
+                  // This same delegate matches both the DisplayStatus
                   // and DisplayResults methods.
                   private delegate void DisplayInfoDelegate(string Text);
-          
+
                   // This flag ensures that the user does not attempt
-                  // to restart the command or close the form while the 
+                  // to restart the command or close the form while the
                   // asynchronous command is executing.
                   private bool isExecuting;
-          
-                  // This example maintains the connection object 
+
+                  // This example maintains the connection object
                   // externally, so that it is available for closing.
                   private SqlConnection connection;
-          
+
                   private static string GetConnectionString()
                   {
-                      // To avoid storing the connection string in your code,            
+                      // To avoid storing the connection string in your code,
                       // you can retrieve it from a configuration file.
                       return "Data Source=(local);Integrated Security=true;" +
                              "Initial Catalog=AdventureWorks";
                   }
-          
+
                   private void DisplayStatus(string Text)
                   {
                       this.label1.Text = Text;
                   }
-          
+
                   private void DisplayResults(string Text)
                   {
                       this.label1.Text = Text;
                       DisplayStatus("Ready");
                   }
-          
+
                   private void Form1_FormClosing(object sender, System.Windows.Forms.FormClosingEventArgs e)
                   {
                       if (isExecuting)
@@ -591,7 +591,7 @@ Next, compile and execute the following:
                           e.Cancel = true;
                       }
                   }
-          
+
                   private void button1_Click(object sender, System.EventArgs e)
                   {
                       if (isExecuting)
@@ -608,7 +608,7 @@ Next, compile and execute the following:
                               DisplayResults("");
                               DisplayStatus("Connecting...");
                               connection = new SqlConnection(GetConnectionString());
-                              // To emulate a long-running query, wait for 
+                              // To emulate a long-running query, wait for
                               // a few seconds before working with the data.
                               // This command does not do much, but that's the point--
                               // it does not change your data, in the long run.
@@ -618,19 +618,19 @@ Next, compile and execute the following:
                                   "WHERE ReorderPoint Is Not Null;" +
                                   "UPDATE Production.Product SET ReorderPoint = ReorderPoint - 1 " +
                                   "WHERE ReorderPoint Is Not Null";
-          
+
                               command = new SqlCommand(commandText, connection);
                               connection.Open();
-          
+
                               DisplayStatus("Executing...");
                               isExecuting = true;
-                              // Although it is not required that you pass the 
-                              // SqlCommand object as the second parameter in the 
+                              // Although it is not required that you pass the
+                              // SqlCommand object as the second parameter in the
                               // BeginExecuteNonQuery call, doing so makes it easier
                               // to call EndExecuteNonQuery in the callback procedure.
                               AsyncCallback callback = new AsyncCallback(HandleCallback);
                               command.BeginExecuteNonQuery(callback, command);
-          
+
                           }
                           catch (Exception ex)
                           {
@@ -643,7 +643,7 @@ Next, compile and execute the following:
                           }
                       }
                   }
-          
+
                   private void HandleCallback(IAsyncResult result)
                   {
                       try
@@ -658,38 +658,38 @@ Next, compile and execute the following:
                           {
                               rowText = " row affected.";
                           }
-                        
+
                           rowText = rowCount + rowText;
-          
+
                           // You may not interact with the form and its contents
                           // from a different thread, and this callback procedure
                           // is all but guaranteed to be running from a different thread
-                          // than the form. Therefore you cannot simply call code that 
+                          // than the form. Therefore you cannot simply call code that
                           // displays the results, like this:
                           // DisplayResults(rowText)
-          
+
                           // Instead, you must call the procedure from the form's thread.
                           // One simple way to accomplish this is to call the Invoke
                           // method of the form, which calls the delegate you supply
-                          // from the form's thread. 
+                          // from the form's thread.
                           DisplayInfoDelegate del = new DisplayInfoDelegate(DisplayResults);
                           this.Invoke(del, rowText);
-          
+
                       }
                       catch (Exception ex)
                       {
-                          // Because you are now running code in a separate thread, 
+                          // Because you are now running code in a separate thread,
                           // if you do not handle the exception here, none of your other
-                          // code catches the exception. Because none of 
+                          // code catches the exception. Because none of
                           // your code is on the call stack in this thread, there is nothing
-                          // higher up the stack to catch the exception if you do not 
-                          // handle it here. You can either log the exception or 
-                          // invoke a delegate (as in the non-error case in this 
+                          // higher up the stack to catch the exception if you do not
+                          // handle it here. You can either log the exception or
+                          // invoke a delegate (as in the non-error case in this
                           // example) to display the error on the form. In no case
                           // can you simply display the error without executing a delegate
-                          // as in the try block here. 
-          
-                          // You can create the delegate instance as you 
+                          // as in the try block here.
+
+                          // You can create the delegate instance as you
                           // invoke it, like this:
                           this.Invoke(new DisplayInfoDelegate(DisplayStatus),
                               String.Format("Ready(last error: {0}", ex.Message));
@@ -851,7 +851,7 @@ Next, compile and execute the following:
                   // Display the data within the reader.
                   while (reader.Read())
                   {
-                      // Display all the columns. 
+                      // Display all the columns.
                       for (int i = 0; i &lt; reader.FieldCount; i++)
                       {
                           Console.Write("{0}\t", reader.GetValue(i));
@@ -862,8 +862,8 @@ Next, compile and execute the following:
 
               private static string GetConnectionString()
               {
-                  // To avoid storing the connection string in your code,            
-                  // you can retrieve it from a configuration file. 
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file.
 
                   return "Data Source=(local);Integrated Security=true;" +
                       "Initial Catalog=AdventureWorks";
@@ -953,54 +953,54 @@ Next, compile and execute the following:
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Class1
           {
               static void Main()
               {
                   // This example is not terribly useful, but it proves a point.
-                  // The WAITFOR statement simply adds enough time to prove the 
+                  // The WAITFOR statement simply adds enough time to prove the
                   // asynchronous nature of the command.
                   string commandText = "WAITFOR DELAY '00:00:03';" +
                       "SELECT ProductID, Name FROM Production.Product WHERE ListPrice &lt; 100";
-          
+
                   RunCommandAsynchronously(commandText, GetConnectionString());
-          
+
                   Console.WriteLine("Press ENTER to continue.");
                   Console.ReadLine();
               }
-          
+
               private static void RunCommandAsynchronously(string commandText, string connectionString)
               {
                   // Given command text and connection string, asynchronously execute
                   // the specified command against the connection. For this example,
-                  // the code displays an indicator as it is working, verifying the 
-                  // asynchronous behavior. 
+                  // the code displays an indicator as it is working, verifying the
+                  // asynchronous behavior.
                   try
                   {
                       // The code does not need to handle closing the connection explicitly--
                       // the use of the CommandBehavior.CloseConnection option takes care
-                      // of that for you. 
+                      // of that for you.
                       SqlConnection connection = new SqlConnection(connectionString);
                       SqlCommand command = new SqlCommand(commandText, connection);
-          
+
                       connection.Open();
                       IAsyncResult result = command.BeginExecuteReader(CommandBehavior.CloseConnection);
-          
+
                       // Although it is not necessary, the following code
-                      // displays a counter in the console window, indicating that 
-                      // the main thread is not blocked while awaiting the command 
+                      // displays a counter in the console window, indicating that
+                      // the main thread is not blocked while awaiting the command
                       // results.
                       int count = 0;
                       while (!result.IsCompleted)
                       {
                           Console.WriteLine("Waiting ({0})", count++);
                           // Wait for 1/10 second, so the counter
-                          // does not consume all available resources 
+                          // does not consume all available resources
                           // on the main thread.
                           System.Threading.Thread.Sleep(100);
                       }
-          
+
                       using (SqlDataReader reader = command.EndExecuteReader(result))
                       {
                           DisplayResults(reader);
@@ -1021,26 +1021,26 @@ Next, compile and execute the following:
                       Console.WriteLine("Error: {0}", ex.Message);
                   }
               }
-          
+
               private static void DisplayResults(SqlDataReader reader)
               {
                   // Display the data within the reader.
                   while (reader.Read())
                   {
-                      // Display all the columns. 
+                      // Display all the columns.
                       for (int i = 0; i &lt; reader.FieldCount; i++)
                       {
                           Console.Write("{0}\t", reader.GetValue(i));
                       }
-                    
+
                       Console.WriteLine();
                   }
               }
-          
+
               private static string GetConnectionString()
               {
-                  // To avoid storing the connection string in your code,            
-                  // you can retrieve it from a configuration file. 
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file.
                   return "Data Source=(local);Integrated Security=true;" +
                          "Initial Catalog=AdventureWorks";
               }
@@ -1138,54 +1138,54 @@ Next, compile and execute the following:
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Class1
           {
               static void Main()
               {
                   // This example is not terribly useful, but it proves a point.
-                  // The WAITFOR statement simply adds enough time to prove the 
+                  // The WAITFOR statement simply adds enough time to prove the
                   // asynchronous nature of the command.
                   string commandText = "WAITFOR DELAY '00:00:03';" +
                       "SELECT ProductID, Name FROM Production.Product WHERE ListPrice &lt; 100";
-          
+
                   RunCommandAsynchronously(commandText, GetConnectionString());
-          
+
                   Console.WriteLine("Press ENTER to continue.");
                   Console.ReadLine();
               }
-          
+
               private static void RunCommandAsynchronously(string commandText, string connectionString)
               {
                   // Given command text and connection string, asynchronously execute
                   // the specified command against the connection. For this example,
-                  // the code displays an indicator as it is working, verifying the 
-                  // asynchronous behavior. 
+                  // the code displays an indicator as it is working, verifying the
+                  // asynchronous behavior.
                   try
                   {
                       // The code does not need to handle closing the connection explicitly--
                       // the use of the CommandBehavior.CloseConnection option takes care
-                      // of that for you. 
+                      // of that for you.
                       SqlConnection connection = new SqlConnection(connectionString);
                       SqlCommand command = new SqlCommand(commandText, connection);
-          
+
                       connection.Open();
                       IAsyncResult result = command.BeginExecuteReader(CommandBehavior.CloseConnection);
-          
+
                       // Although it is not necessary, the following code
-                      // displays a counter in the console window, indicating that 
-                      // the main thread is not blocked while awaiting the command 
+                      // displays a counter in the console window, indicating that
+                      // the main thread is not blocked while awaiting the command
                       // results.
                       int count = 0;
                       while (!result.IsCompleted)
                       {
                           Console.WriteLine("Waiting ({0})", count++);
                           // Wait for 1/10 second, so the counter
-                          // does not consume all available resources 
+                          // does not consume all available resources
                           // on the main thread.
                           System.Threading.Thread.Sleep(100);
                       }
-          
+
                       using (SqlDataReader reader = command.EndExecuteReader(result))
                       {
                           DisplayResults(reader);
@@ -1206,26 +1206,26 @@ Next, compile and execute the following:
                       Console.WriteLine("Error: {0}", ex.Message);
                   }
               }
-          
+
               private static void DisplayResults(SqlDataReader reader)
               {
                   // Display the data within the reader.
                   while (reader.Read())
                   {
-                      // Display all the columns. 
+                      // Display all the columns.
                       for (int i = 0; i &lt; reader.FieldCount; i++)
                       {
                           Console.Write("{0}\t", reader.GetValue(i));
                       }
-                    
+
                       Console.WriteLine();
                   }
               }
-          
+
               private static string GetConnectionString()
               {
-                  // To avoid storing the connection string in your code,            
-                  // you can retrieve it from a configuration file. 
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file.
                   return "Data Source=(local);Integrated Security=true;" +
                          "Initial Catalog=AdventureWorks";
               }
@@ -1335,7 +1335,7 @@ Next, compile and execute the following:
           using System.Text;
           using System.Windows.Forms;
           using Microsoft.Data.SqlClient;
-          
+
           namespace Microsoft.AdoDotNet.CodeSamples
           {
               public partial class Form1 : Form
@@ -1344,28 +1344,28 @@ Next, compile and execute the following:
                   {
                       InitializeComponent();
                   }
-                
-                  // Hook up the form's Load event handler (you can double-click on 
-                  // the form's design surface in Visual Studio), and then add 
+
+                  // Hook up the form's Load event handler (you can double-click on
+                  // the form's design surface in Visual Studio), and then add
                   // this code to the form's class:
                   // You need this delegate in order to fill the grid from
                   // a thread other than the form's thread. See the HandleCallback
                   // procedure for more information.
                   private delegate void FillGridDelegate(SqlDataReader reader);
-          
+
                   // You need this delegate to update the status bar.
                   private delegate void DisplayStatusDelegate(string Text);
-          
+
                   // This flag ensures that the user does not attempt
-                  // to restart the command or close the form while the 
+                  // to restart the command or close the form while the
                   // asynchronous command is executing.
                   private bool isExecuting;
-          
+
                   private void DisplayStatus(string Text)
                   {
                       this.label1.Text = Text;
                   }
-          
+
                   private void FillGrid(SqlDataReader reader)
                   {
                       try
@@ -1385,7 +1385,7 @@ Next, compile and execute the following:
                       finally
                       {
                           // Closing the reader also closes the connection,
-                          // because this reader was created using the 
+                          // because this reader was created using the
                           // CommandBehavior.CloseConnection value.
                           if (reader != null)
                           {
@@ -1393,7 +1393,7 @@ Next, compile and execute the following:
                           }
                       }
                   }
-          
+
                   private void HandleCallback(IAsyncResult result)
                   {
                       try
@@ -1403,37 +1403,37 @@ Next, compile and execute the following:
                           // of the IAsyncResult parameter.
                           SqlCommand command = (SqlCommand)result.AsyncState;
                           SqlDataReader reader = command.EndExecuteReader(result);
-                        
+
                           // You may not interact with the form and its contents
                           // from a different thread, and this callback procedure
                           // is all but guaranteed to be running from a different thread
-                          // than the form. Therefore you cannot simply call code that 
+                          // than the form. Therefore you cannot simply call code that
                           // fills the grid, like this:
                           // FillGrid(reader);
                           // Instead, you must call the procedure from the form's thread.
                           // One simple way to accomplish this is to call the Invoke
                           // method of the form, which calls the delegate you supply
-                          // from the form's thread. 
+                          // from the form's thread.
                           FillGridDelegate del = new FillGridDelegate(FillGrid);
                           this.Invoke(del, reader);
-                        
-                          // Do not close the reader here, because it is being used in 
+
+                          // Do not close the reader here, because it is being used in
                           // a separate thread. Instead, have the procedure you have
                           // called close the reader once it is done with it.
                       }
                       catch (Exception ex)
                       {
-                          // Because you are now running code in a separate thread, 
+                          // Because you are now running code in a separate thread,
                           // if you do not handle the exception here, none of your other
-                          // code catches the exception. Because there is none of 
+                          // code catches the exception. Because there is none of
                           // your code on the call stack in this thread, there is nothing
-                          // higher up the stack to catch the exception if you do not 
-                          // handle it here. You can either log the exception or 
-                          // invoke a delegate (as in the non-error case in this 
+                          // higher up the stack to catch the exception if you do not
+                          // handle it here. You can either log the exception or
+                          // invoke a delegate (as in the non-error case in this
                           // example) to display the error on the form. In no case
                           // can you simply display the error without executing a delegate
-                          // as in the try block here. 
-                          // You can create the delegate instance as you 
+                          // as in the try block here.
+                          // You can create the delegate instance as you
                           // invoke it, like this:
                           this.Invoke(new DisplayStatusDelegate(DisplayStatus), "Error: " + ex.Message);
                       }
@@ -1442,15 +1442,15 @@ Next, compile and execute the following:
                           isExecuting = false;
                       }
                   }
-          
+
                   private string GetConnectionString()
                   {
-                      // To avoid storing the connection string in your code, 
-                      // you can retrieve it from a configuration file. 
+                      // To avoid storing the connection string in your code,
+                      // you can retrieve it from a configuration file.
                       return "Data Source=(local);Integrated Security=true;" +
                              "Initial Catalog=AdventureWorks";
                   }
-          
+
                   private void button1_Click(object sender, System.EventArgs e)
                   {
                       if (isExecuting)
@@ -1467,17 +1467,17 @@ Next, compile and execute the following:
                           {
                               DisplayStatus("Connecting...");
                               connection = new SqlConnection(GetConnectionString());
-                              // To emulate a long-running query, wait for 
+                              // To emulate a long-running query, wait for
                               // a few seconds before retrieving the real data.
                               command = new SqlCommand("WAITFOR DELAY '0:0:5';" +
                                   "SELECT ProductID, Name, ListPrice, Weight FROM Production.Product",
                                   connection);
                               connection.Open();
-          
+
                               DisplayStatus("Executing...");
                               isExecuting = true;
-                              // Although it is not required that you pass the 
-                              // SqlCommand object as the second parameter in the 
+                              // Although it is not required that you pass the
+                              // SqlCommand object as the second parameter in the
                               // BeginExecuteReader call, doing so makes it easier
                               // to call EndExecuteReader in the callback procedure.
                               AsyncCallback callback = new AsyncCallback(HandleCallback);
@@ -1494,13 +1494,13 @@ Next, compile and execute the following:
                           }
                       }
                   }
-          
+
                   private void Form1_Load(object sender, System.EventArgs e)
                   {
                       this.button1.Click += new System.EventHandler(this.button1_Click);
                       this.FormClosing += new FormClosingEventHandler(Form1_FormClosing);
                   }
-          
+
                   void Form1_FormClosing(object sender, FormClosingEventArgs e)
                   {
                       if (isExecuting)
@@ -1605,58 +1605,58 @@ Next, compile and execute the following:
           using System.Data;
           using Microsoft.Data.SqlClient;
           using System.Xml;
-          
+
           class Class1
           {
               static void Main()
               {
                   // This example is not terribly effective, but it proves a point.
-                  // The WAITFOR statement simply adds enough time to prove the 
+                  // The WAITFOR statement simply adds enough time to prove the
                   // asynchronous nature of the command.
                   string commandText =
                       "WAITFOR DELAY '00:00:03';" +
                       "SELECT Name, ListPrice FROM Production.Product " +
                       "WHERE ListPrice &lt; 100 " +
                       "FOR XML AUTO, XMLDATA";
-          
+
                   RunCommandAsynchronously(commandText, GetConnectionString());
-          
+
                   Console.WriteLine("Press ENTER to continue.");
                   Console.ReadLine();
               }
-          
+
               private static void RunCommandAsynchronously(string commandText, string connectionString)
               {
                   // Given command text and connection string, asynchronously execute
                   // the specified command against the connection. For this example,
-                  // the code displays an indicator as it is working, verifying the 
-                  // asynchronous behavior. 
+                  // the code displays an indicator as it is working, verifying the
+                  // asynchronous behavior.
                   using (SqlConnection connection = new SqlConnection(connectionString))
                   {
                       SqlCommand command = new SqlCommand(commandText, connection);
-          
+
                       connection.Open();
                       IAsyncResult result = command.BeginExecuteXmlReader();
-          
+
                       // Although it is not necessary, the following procedure
-                      // displays a counter in the console window, indicating that 
-                      // the main thread is not blocked while awaiting the command 
+                      // displays a counter in the console window, indicating that
+                      // the main thread is not blocked while awaiting the command
                       // results.
                       int count = 0;
                       while (!result.IsCompleted)
                       {
                           Console.WriteLine("Waiting ({0})", count++);
                           // Wait for 1/10 second, so the counter
-                          // does not consume all available resources 
+                          // does not consume all available resources
                           // on the main thread.
                           System.Threading.Thread.Sleep(100);
                       }
-          
+
                       XmlReader reader = command.EndExecuteXmlReader(result);
                       DisplayProductInfo(reader);
                   }
               }
-          
+
               private static void DisplayProductInfo(XmlReader reader)
               {
                   // Display the data within the reader.
@@ -1670,11 +1670,11 @@ Next, compile and execute the following:
                       }
                   }
               }
-          
+
               private static string GetConnectionString()
               {
-                  // To avoid storing the connection string in your code,            
-                  // you can retrieve it from a configuration file. 
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file.
                   return "Data Source=(local);Integrated Security=true;" +
                          "Initial Catalog=AdventureWorks";
               }
@@ -1788,49 +1788,49 @@ Next, compile and execute the following:
           using System.Windows.Forms;
           using System.Xml;
           using Microsoft.Data.SqlClient;
-          
+
           namespace Microsoft.AdoDotNet.CodeSamples
           {
               public partial class Form1 : Form
               {
-                  // Hook up the form's Load event handler and then add 
+                  // Hook up the form's Load event handler and then add
                   // this code to the form's class:
                   // You need these delegates in order to display text from a thread
                   // other than the form's thread. See the HandleCallback
                   // procedure for more information.
                   private delegate void DisplayInfoDelegate(string Text);
                   private delegate void DisplayReaderDelegate(XmlReader reader);
-          
+
                   private bool isExecuting;
-          
-                  // This example maintains the connection object 
+
+                  // This example maintains the connection object
                   // externally, so that it is available for closing.
                   private SqlConnection connection;
-          
+
                   public Form1()
                   {
                       InitializeComponent();
                   }
-          
+
                   private string GetConnectionString()
                   {
-                      // To avoid storing the connection string in your code, 
-                      // you can retrieve it from a configuration file. 
+                      // To avoid storing the connection string in your code,
+                      // you can retrieve it from a configuration file.
                       return "Data Source=(local);Integrated Security=true;" +
                              "Initial Catalog=AdventureWorks";
                   }
-          
+
                   private void DisplayStatus(string Text)
                   {
                       this.label1.Text = Text;
                   }
-          
+
                   private void ClearProductInfo()
                   {
                       // Clear the list box.
                       this.listBox1.Items.Clear();
                   }
-          
+
                   private void DisplayProductInfo(XmlReader reader)
                   {
                       // Display the data within the reader.
@@ -1845,7 +1845,7 @@ Next, compile and execute the following:
                       }
                       DisplayStatus("Ready");
                   }
-          
+
                   private void Form1_FormClosing(object sender,
                       System.Windows.Forms.FormClosingEventArgs e)
                   {
@@ -1856,7 +1856,7 @@ Next, compile and execute the following:
                           e.Cancel = true;
                       }
                   }
-          
+
                   private void button1_Click(object sender, System.EventArgs e)
                   {
                       if (isExecuting)
@@ -1873,27 +1873,27 @@ Next, compile and execute the following:
                               ClearProductInfo();
                               DisplayStatus("Connecting...");
                               connection = new SqlConnection(GetConnectionString());
-          
-                              // To emulate a long-running query, wait for 
+
+                              // To emulate a long-running query, wait for
                               // a few seconds before working with the data.
                               string commandText =
                                   "WAITFOR DELAY '00:00:03';" +
                                   "SELECT Name, ListPrice FROM Production.Product " +
                                   "WHERE ListPrice &lt; 100 " +
                                   "FOR XML AUTO, XMLDATA";
-          
+
                               command = new SqlCommand(commandText, connection);
                               connection.Open();
-          
+
                               DisplayStatus("Executing...");
                               isExecuting = true;
-                              // Although it is not required that you pass the 
-                              // SqlCommand object as the second parameter in the 
+                              // Although it is not required that you pass the
+                              // SqlCommand object as the second parameter in the
                               // BeginExecuteXmlReader call, doing so makes it easier
                               // to call EndExecuteXmlReader in the callback procedure.
                               AsyncCallback callback = new AsyncCallback(HandleCallback);
                               command.BeginExecuteXmlReader(callback, command);
-          
+
                           }
                           catch (Exception ex)
                           {
@@ -1906,7 +1906,7 @@ Next, compile and execute the following:
                           }
                       }
                   }
-          
+
                   private void HandleCallback(IAsyncResult result)
                   {
                       try
@@ -1916,34 +1916,34 @@ Next, compile and execute the following:
                           // of the IAsyncResult parameter.
                           SqlCommand command = (SqlCommand)result.AsyncState;
                           XmlReader reader = command.EndExecuteXmlReader(result);
-          
+
                           // You may not interact with the form and its contents
                           // from a different thread, and this callback procedure
                           // is all but guaranteed to be running from a different thread
-                          // than the form. 
-          
+                          // than the form.
+
                           // Instead, you must call the procedure from the form's thread.
                           // One simple way to accomplish this is to call the Invoke
                           // method of the form, which calls the delegate you supply
-                          // from the form's thread. 
+                          // from the form's thread.
                           DisplayReaderDelegate del = new DisplayReaderDelegate(DisplayProductInfo);
                           this.Invoke(del, reader);
-          
+
                       }
                       catch (Exception ex)
                       {
-                          // Because you are now running code in a separate thread, 
+                          // Because you are now running code in a separate thread,
                           // if you do not handle the exception here, none of your other
-                          // code catches the exception. Because none of 
+                          // code catches the exception. Because none of
                           // your code is on the call stack in this thread, there is nothing
-                          // higher up the stack to catch the exception if you do not 
-                          // handle it here. You can either log the exception or 
-                          // invoke a delegate (as in the non-error case in this 
+                          // higher up the stack to catch the exception if you do not
+                          // handle it here. You can either log the exception or
+                          // invoke a delegate (as in the non-error case in this
                           // example) to display the error on the form. In no case
                           // can you simply display the error without executing a delegate
-                          // as in the try block here. 
-          
-                          // You can create the delegate instance as you 
+                          // as in the try block here.
+
+                          // You can create the delegate instance as you
                           // invoke it, like this:
                           this.Invoke(new DisplayInfoDelegate(DisplayStatus),
                           String.Format("Ready(last error: {0}", ex.Message));
@@ -1957,7 +1957,7 @@ Next, compile and execute the following:
                           }
                       }
                   }
-          
+
                   private void Form1_Load(object sender, System.EventArgs e)
                   {
                       this.button1.Click += new System.EventHandler(this.button1_Click);
@@ -2031,22 +2031,22 @@ Next, compile and execute the following:
           using System.Data;
           using System.Threading;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               private static SqlCommand m_rCommand;
-          
+
               public static SqlCommand Command
               {
                   get { return m_rCommand; }
                   set { m_rCommand = value; }
               }
-          
+
               public static void Thread_Cancel()
               {
                   Command.Cancel();
               }
-          
+
               static void Main()
               {
                   string connectionString = GetConnectionString();
@@ -2055,7 +2055,7 @@ Next, compile and execute the following:
                       using (SqlConnection connection = new SqlConnection(connectionString))
                       {
                           connection.Open();
-          
+
                           Command = connection.CreateCommand();
                           Command.CommandText = "DROP TABLE TestCancel";
                           try
@@ -2063,19 +2063,19 @@ Next, compile and execute the following:
                               Command.ExecuteNonQuery();
                           }
                           catch { }
-          
+
                           Command.CommandText = "CREATE TABLE TestCancel(co1 int, co2 char(10))";
                           Command.ExecuteNonQuery();
                           Command.CommandText = "INSERT INTO TestCancel VALUES (1, '1')";
                           Command.ExecuteNonQuery();
-          
+
                           Command.CommandText = "SELECT * FROM TestCancel";
                           SqlDataReader reader = Command.ExecuteReader();
-          
+
                           Thread rThread2 = new Thread(new ThreadStart(Thread_Cancel));
                           rThread2.Start();
                           rThread2.Join();
-          
+
                           reader.Read();
                           System.Console.WriteLine(reader.FieldCount);
                           reader.Close();
@@ -2088,7 +2088,7 @@ Next, compile and execute the following:
               }
               static private string GetConnectionString()
               {
-                  // To avoid storing the connection string in your code, 
+                  // To avoid storing the connection string in your code,
                   // you can retrieve it from a configuration file.
                   return "Data Source=(local);Initial Catalog=AdventureWorks;"
                        + "Integrated Security=SSPI";
@@ -2528,7 +2528,7 @@ If the option is enabled and a parameter with Direction Output or InputOutput is
           Although the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery" /> returns no rows, any output parameters or return values mapped to parameters are populated with data.
         </para>
         <para>
-          For UPDATE, INSERT, and DELETE statements, the return value is the number of rows affected by the command. For all other types of statements, the return value is -1. When a trigger exists on a table being inserted or updated, the return value includes the number of rows affected by both the insert or update operation and the number of rows affected by the trigger or triggers. When SET NOCOUNT ON is set on the connection (before or as part of executing the command, or as part of a trigger initiated by the execution of the command) the rows affected by individual statements stop contributing to the count of rows affected that is returned by this method. If no statements are detected that contribute to the count, the return value is -1. If a rollback occurs, the return value is also -1. 
+          For UPDATE, INSERT, and DELETE statements, the return value is the number of rows affected by the command. For all other types of statements, the return value is -1. When a trigger exists on a table being inserted or updated, the return value includes the number of rows affected by both the insert or update operation and the number of rows affected by the trigger or triggers. When SET NOCOUNT ON is set on the connection (before or as part of executing the command, or as part of a trigger initiated by the execution of the command) the rows affected by individual statements stop contributing to the count of rows affected that is returned by this method. If no statements are detected that contribute to the count, the return value is -1. If a rollback occurs, the return value is also -1.
         </para>
       </remarks>
       <example>
@@ -2540,7 +2540,7 @@ If the option is enabled and a parameter with Direction Output or InputOutput is
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           namespace SqlCommandCS
           {
               class Program
@@ -3040,7 +3040,7 @@ For more information about asynchronous programming in the .NET Framework Data P
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           public class Sample
           {
               public void CreateSqlCommand(string queryString, SqlConnection connection)
@@ -3182,7 +3182,7 @@ For more information about asynchronous programming in the .NET Framework Data P
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           private static void CreateXMLReader(string queryString, string connectionString)
           {
               using (SqlConnection connection = new SqlConnection(connectionString))
@@ -3438,9 +3438,9 @@ The blocking connection simulates a situation like a command still running in th
 
 ### How to use with legacy asynchronous commands
 Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute%60%601(System.Object,System.Func{%60%600})>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute``1(System.Object,System.Func{``0})>
 - <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync(System.Object,System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)>
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync%60%601(System.Object,System.Func{System.Threading.Tasks.Task{%60%600}},System.Threading.CancellationToken)>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync``1(System.Object,System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)>
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#4)]
 
@@ -3509,7 +3509,7 @@ If you call an `Execute` method after calling <xref:Microsoft.Data.SqlClient.Sql
 
 Output parameters (whether prepared or not) must have a user-specified data type. If you specify a variable length data type except vector, you must also specify the maximum <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A>.
 
-For vector data types, the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property is ignored. The size of the vector is inferred from the <xref:Microsoft.Data.SqlClient.SqlParameter.Value%2A> of type <xref:Microsoft.Data.SqlTypes.SqlVector%2A>.
+For vector data types, the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property is ignored. The size of the vector is inferred from the <xref:Microsoft.Data.SqlClient.SqlParameter.Value%2A> of type <xref:Microsoft.Data.SqlTypes.SqlVector`1>.
 
 Prior to Visual Studio 2010, <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> threw an exception.  Beginning in Visual Studio 2010, this method does not throw an exception.
 
