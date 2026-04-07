@@ -321,6 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Build builders
             SqlConnectionStringBuilder connStringbuilder = new SqlConnectionStringBuilder(connectionString);
             DataSourceBuilder dataSourceBuilder = new DataSourceBuilder(connStringbuilder.DataSource);
+            string originalServerName = dataSourceBuilder.ServerName;
 
             // Setup proxy
             Task<System.Net.IPHostEntry> ipEntryTask = Dns.GetHostEntryAsync(dataSourceBuilder.ServerName);
@@ -337,6 +338,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             dataSourceBuilder.Port = proxy.LocalPort;
             connStringbuilder.DataSource = dataSourceBuilder.ToString();
             connStringbuilder.Remove("Network Library");
+
+            if (string.IsNullOrEmpty(connStringbuilder.ServerSPN))
+            {
+                connStringbuilder.ServerSPN = $"MSSQLSvc/{DataTestUtility.GetMachineFQDN(originalServerName)}";
+            }
 
             newConnectionString = connStringbuilder.ToString();
             return proxy;
