@@ -79,7 +79,7 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static bool IsSupported(Version tdsVersion)
         {
-            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2012;
+            return tdsVersion <= SqlServer2012;
         }
     }
 }
