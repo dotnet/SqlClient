@@ -3,7 +3,7 @@ name: update-build-pipelines
 description: Guided workflow for updating Azure DevOps CI/CD pipelines for Microsoft.Data.SqlClient.
 argument-hint: <describe the pipeline change needed>
 agent: agent
-tools: ['edit/createFile', 'edit/editFiles', 'read/readFile', 'codebase/search']
+tools: ['edit/createFile', 'edit/editFiles', 'read/readFile', 'search']
 ---
 
 Update the Azure DevOps build pipelines for: "${input:change}".
