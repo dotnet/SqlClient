@@ -65,7 +65,7 @@ jobs:
 
     variables:
       - name: ob_outputDirectory
-        value: $(Build.SourcesDirectory)/output
+        value: $(PACK_OUTPUT)
 
       - name: artifactPath
         value: $(Pipeline.Workspace)/${{ parameters.artifactName }}

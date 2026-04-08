@@ -67,14 +67,14 @@ parameters:
   - name: loggingPackageVersion
     type: string
 
-  - name: mdsAssemblyFileVersion
+  - name: sqlClientAssemblyFileVersion
     type: string
 
-  - name: mdsPackageVersion
+  - name: sqlClientPackageVersion
     type: string
 
 jobs:
-  - job: build_package_Mds
+  - job: build_package_SqlClient
     displayName: 'Build Microsoft.Data.SqlClient'
     pool:
       type: windows
@@ -84,7 +84,7 @@ jobs:
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
       ob_sdl_apiscan_softwarename: 'Microsoft.Data.SqlClient'
-      ob_sdl_apiscan_versionNumber: ${{ parameters.mdsAssemblyFileVersion }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.sqlClientAssemblyFileVersion }}
 
     steps:
       # Dump environment and parameters
@@ -114,21 +114,21 @@ jobs:
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
       # Perform analysis before building, since this step will clobber build output
-      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-mds-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-sqlclient-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
-          mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
       # Perform the actual build
-      - template: /eng/pipelines/onebranch/steps/build-mds-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/build-sqlclient-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
-          mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
       # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
-      - template: /eng/pipelines/onebranch/steps/copy-apiscan-files-mds-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/copy-apiscan-files-sqlclient-step.yml@self
         parameters:
           dllPath: '${{ parameters.apiScanDllPath }}'
           pdbPath: '${{ parameters.apiScanPdbPath }}'
@@ -147,11 +147,11 @@ jobs:
               pattern: 'Microsoft.Data.SqlClient*.dll'
 
       # Package the build output into a NuGet package
-      - template: /eng/pipelines/onebranch/steps/pack-mds-step.yml
+      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
-          mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
       # Sign the NuGet packages
       - ${{ if parameters.isOfficial }}:
@@ -169,7 +169,7 @@ jobs:
       - ${{ if parameters.publishSymbols }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
-              artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.mdsPackageVersion }}_$(System.TimelineId)'
+              artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.sqlClientPackageVersion }}_$(System.TimelineId)'
               azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               packageName: 'Microsoft.Data.SqlClient'
               publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
@@ -179,4 +179,4 @@ jobs:
               publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
               searchPattern: '**/Microsoft.Data.SqlClient*.pdb' # @TODO: This seems very heavy
               uploadAccount: '${{ parameters.symbolsUploadAccount }}'
-              version: '${{ parameters.mdsPackageVersion }}'
+              version: '${{ parameters.sqlClientPackageVersion }}'
