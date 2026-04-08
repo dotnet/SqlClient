@@ -329,6 +329,33 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
+  # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
+  # is only used to execute the test runtime (framework to test is specified in build params), so
+  # it should be acceptable to just install a specific version in all cases.
+  # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
+  #    earlier in the job. There has to be a cleaner way of doing this.
+  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
+    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
+      # Install the .NET SDK and Runtimes for x86.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: x86
+          debug: ${{ parameters.debug }}
+          installDir: $(dotnetx86RootPath)
+          runtimes: [8.x, 9.x]
+
+  # Ensure TestResults directory exists so that publish steps don't fail when
+  # tests are skipped due to a setup failure.
+  - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+    displayName: 'Create TestResults Directory'
+
+  # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
+  # install, etc.) completed successfully.  Test steps condition on this variable
+  # so they are skipped when setup fails, yet remain independent of each
+  # other's results.
+  - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
+    displayName: 'Gate: Mark Setup Succeeded'
+
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests
       parameters:
@@ -343,20 +370,6 @@ jobs:
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
-    # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
-    # is only used to execute the test runtime (framework to test is specified in build params), so
-    # it should be acceptable to just install a specific version in all cases.
-    # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
-    #    earlier in the job. There has to be a cleaner way of doing this.
-    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
-      # Install the .NET SDK and Runtimes for x86.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
-        parameters:
-          architecture: x86
-          debug: ${{ parameters.debug }}
-          installDir: $(dotnetx86RootPath)
-          runtimes: [8.x, 9.x]
-
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}

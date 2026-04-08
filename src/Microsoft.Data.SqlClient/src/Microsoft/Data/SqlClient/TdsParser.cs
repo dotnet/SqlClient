@@ -9663,7 +9663,7 @@ namespace Microsoft.Data.SqlClient
                 checked
                 {
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
-                    if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
                     {
                         length += WriteUserAgentFeatureRequest(userAgent, write);
                     }
