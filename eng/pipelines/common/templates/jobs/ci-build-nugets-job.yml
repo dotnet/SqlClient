@@ -85,7 +85,6 @@ jobs:
     name: ${{parameters.poolName }}
     demands:
     - imageOverride -equals ${{ parameters.imageOverride }}
-    - msbuild
 
   variables:
     - template: /eng/pipelines/libraries/ci-build-variables.yml@self
@@ -184,7 +183,14 @@ jobs:
       configurationToPack: ${{ parameters.buildConfiguration }}
       nobuild: true
       packDirectory: $(packagePath)
-      buildProperties: ReferenceType=${{ parameters.referenceType }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};SqlClientPackageVersion=${{ parameters.mdsPackageVersion }};AkvProviderPackageVersion=${{ parameters.akvPackageVersion }};BuildNumber=$(Build.BuildNumber);AssemblyBuildNumber=$(assemblyBuildNumber)
+      buildProperties: >-
+        ReferenceType=${{ parameters.referenceType }};
+        AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};
+        LoggingPackageVersion=${{ parameters.loggingPackageVersion }};
+        SqlClientPackageVersion=${{ parameters.mdsPackageVersion }};
+        AkvProviderPackageVersion=${{ parameters.akvPackageVersion }};
+        BuildNumber=$(Build.BuildNumber);
+        AssemblyBuildNumber=$(assemblyBuildNumber)
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'
