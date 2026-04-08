@@ -84,15 +84,20 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: mdsPackageVersion
-    value: '7.0.0'
+    value: '7.0.1'
 
   # The NuGet package version for preview releases.
+  #
+  # Since we're on the release/7.0 branch, there will never be another legitimate preview release.
+  # However, we routinely want to run preview builds to test other changes, so we continue to
+  # maintain this variable such that these testing preview builds receive newer version numbers
+  # than previous builds.
   - name: mdsPackagePreviewVersion
-    value: 7.0.0-preview4.$(Build.BuildNumber)
+    value: 7.0.2-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the MDS package.
   - name: mdsAssemblyFileVersion
-    value: 7.0.0.$(assemblyBuildNumber)
+    value: 7.0.1.$(assemblyBuildNumber)
 
   # The path to the NuGet packaging specification file used to generate the MDS NuGet package.
   - name: nuspecPath

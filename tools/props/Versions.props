@@ -31,7 +31,7 @@
 
   <!-- MDS Package Properties -->
   <PropertyGroup>
-    <MdsVersionDefault>7.0.0</MdsVersionDefault>
+    <MdsVersionDefault>7.0.1</MdsVersionDefault>
 
     <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)-dev</MdsPackageVersion>
 
