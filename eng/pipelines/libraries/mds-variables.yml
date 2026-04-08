@@ -6,3 +6,5 @@
 
 variables:
   - group: Release Variables
+    # SymbolServer
+    # SymbolTokenUri
