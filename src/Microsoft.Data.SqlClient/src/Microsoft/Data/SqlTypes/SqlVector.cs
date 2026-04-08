@@ -39,21 +39,16 @@ where T : unmanaged
 
     private SqlVector(int length)
     {
-        if (length < 0)
+        (_elementType, _elementSize, int maxElements) = GetTypeFieldsOrThrow();
+        if (length < 0 || length > maxElements)
         {
             throw ADP.InvalidArraySize(nameof(length));
         }
-
-        (_elementType, _elementSize) = GetTypeFieldsOrThrow();
 
         IsNull = true;
 
         Length = length;
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
-        if (_size > TdsEnums.MAXSIZE)
-        {
-            throw ADP.InvalidArraySize(nameof(length));
-        }
 
         _tdsBytes = Array.Empty<byte>();
         Memory = new();
@@ -65,16 +60,16 @@ where T : unmanaged
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
     public SqlVector(ReadOnlyMemory<T> memory)
     {
-        (_elementType, _elementSize) = GetTypeFieldsOrThrow();
+        (_elementType, _elementSize, int maxElements) = GetTypeFieldsOrThrow();
+        if (memory.Length > maxElements)
+        {
+            throw ADP.InvalidArraySize(nameof(memory));
+        }
 
         IsNull = false;
 
         Length = memory.Length;
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
-        if (_size > TdsEnums.MAXSIZE)
-        {
-            throw ADP.InvalidArraySize(nameof(memory));
-        }
 
         _tdsBytes = MakeTdsBytes(memory);
         Memory = memory;
@@ -82,7 +77,7 @@ where T : unmanaged
 
     internal SqlVector(byte[] tdsBytes)
     {
-        (_elementType, _elementSize) = GetTypeFieldsOrThrow();
+        (_elementType, _elementSize, _) = GetTypeFieldsOrThrow();
 
         (Length, _size) = GetCountsOrThrow(tdsBytes);
 
@@ -133,10 +128,11 @@ where T : unmanaged
 
     #region Helpers
 
-    private (byte, byte) GetTypeFieldsOrThrow()
+    private static (byte, byte, int) GetTypeFieldsOrThrow()
     {
         byte elementType;
         byte elementSize;
+        int maxSize;
 
         if (typeof(T) == typeof(float))
         {
@@ -147,8 +143,11 @@ where T : unmanaged
         {
             throw SQL.VectorTypeNotSupported(typeof(T).FullName);
         }
+        // The size of a vector (including its header) must not exceed the maximum size of a TDS packet.
+        // Calculate the maximum number of elements to simplify the validation of input sizes in constructors.
+        maxSize = (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / elementSize;
 
-        return (elementType, elementSize);
+        return (elementType, elementSize, maxSize);
     }
 
     private byte[] MakeTdsBytes(ReadOnlyMemory<T> values)
