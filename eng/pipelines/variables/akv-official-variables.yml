@@ -16,13 +16,13 @@ variables:
       # SymbolsPublishTokenUri
       # SymbolsUploadAccount
 
-    # Well-Known Variables -------------------------------------------------      
+    # Well-Known Variables -------------------------------------------------
     - name: PACKAGE_NAME
       value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
 
     # Base Variables -------------------------------------------------------
     - name: mdsPackageVersion
-      value: '6.1.1'
+      value: '6.1.5'
 
     # @TODO: Version should ideally be pulled from one location (versions.props?)
     - name: versionMajor
@@ -32,7 +32,7 @@ variables:
     - name: versionPatch
       value: '2'
     - name: versionPreview
-      value: '-preview1'
+      value: ''
 
     # Compound Variables ---------------------------------------------------
     - name: assemblyFileVersion
@@ -40,5 +40,3 @@ variables:
     - name: nugetPackageVersion
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}'
       #value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
-
-

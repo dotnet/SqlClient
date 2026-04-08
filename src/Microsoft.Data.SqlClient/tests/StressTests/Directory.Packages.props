@@ -7,7 +7,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-  
+
   <!--
     If the $(MdsPackageVersion) property is set, typically for CI builds, use
     that as the MDS version.  Otherwise, use a specific nuget.org published
@@ -21,12 +21,7 @@
     </When>
     <Otherwise>
       <PropertyGroup>
-        <!-- <MdsVersion>5.1.7</MdsVersion> -->
-        <!-- <MdsVersion>5.2.3</MdsVersion> -->
-        <!-- <MdsVersion>6.0.1</MdsVersion> -->
-        <!-- <MdsVersion>6.0.2</MdsVersion> -->
-        <!-- <MdsVersion>6.1.0-preview1.25120.4</MdsVersion> -->
-        <MdsVersion>6.1.0-preview2.25178.5</MdsVersion>
+        <MdsVersion>6.1.4</MdsVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

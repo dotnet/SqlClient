@@ -16,7 +16,7 @@ variables:
   - name: Configuration
     value: Release
   - name: CommitHead
-    value: '' # the value will be extracted from the repo's head  
+    value: '' # the value will be extracted from the repo's head
   - name: REPOROOT
     value: $(Build.SourcesDirectory)
   - name: softwareFolder
@@ -32,13 +32,13 @@ variables:
   - name: Minor
     value: '1'
   - name: Patch
-    value: '1'
+    value: '5'
 
     # Update this for preview releases.
   - name: Preview
-    value: '-preview'
+    value: ''
   - name: Revision
-    value: '3'
+    value: ''
 
   - name: NugetPackageVersion
     value: $(Major).$(Minor).$(Patch)
