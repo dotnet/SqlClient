@@ -26,7 +26,7 @@ parameters:
   - name: packageShortName
     type: string
     values:
-      - @TODO
+      - SqlServer
 
   #  Version to assign to the project to build. This will be passed into msbuild as
   #  "-p:PackageVersion(packageShortName)".

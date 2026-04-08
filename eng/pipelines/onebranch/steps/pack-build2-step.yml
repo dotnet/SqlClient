@@ -30,14 +30,14 @@ parameters:
   - name: packageFullName
     type: string
     values:
-      - @TODO
+      - Microsoft.SqlServer.Server
 
   # Project to build. This short name will be appended to "Pack" to generate the appropriate
   # target to package via build2.proj.
   - name: packageShortName
     type: string
     values:
-      - @TODO
+      - SqlServer
 
   #  Version to assign to the project to build. This will be passed into msbuild as
   #  "-p:PackageVersion(packageShortName)".
