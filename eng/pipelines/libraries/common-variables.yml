@@ -34,16 +34,19 @@ variables:
   - name: Patch
     value: '5'
 
-    # Update this for preview releases.
-  - name: Preview
-    value: ''
-  - name: Revision
-    value: ''
-
   - name: NugetPackageVersion
     value: $(Major).$(Minor).$(Patch)
+
+  # Since we're on the release/6.1 branch, there will never be another legitimate preview release.
+  # However, we routinely want to run preview builds to test other changes, so we continue to
+  # maintain this variable such that these testing preview builds receive newer version numbers
+  # than previous builds.
   - name: PreviewNugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
+    value: 6.1.6-preview1
+
+  # GOTCHA: We're intentionally omitting the '.' between Minor and Patch because the BuildNumber
+  # already contains a '.' and assembly file versions must only contain a maximum of three '.'
+  # characters.
   - name: AssemblyFileVersion
     value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
   - name: nuspecPath
