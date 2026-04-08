@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlErrorCollection _errors;
         internal SqlErrorCollection _warnings;
         internal object _errorAndWarningsLock = new object();
-        private bool _hasErrorOrWarning;
+        private volatile bool _hasErrorOrWarning;
 
         // local exceptions to cache warnings and errors that occurred prior to sending attention
         internal SqlErrorCollection _preAttentionErrors;
@@ -2672,6 +2672,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (!_hasErrorOrWarning)
+                {
+                    return 0;
+                }
                 int count = 0;
                 lock (_errorAndWarningsLock)
                 {
@@ -2713,6 +2717,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (!_hasErrorOrWarning)
+                {
+                    return 0;
+                }
                 int count = 0;
                 lock (_errorAndWarningsLock)
                 {
