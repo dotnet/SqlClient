@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -41,7 +41,7 @@ where T : unmanaged
     {
         if (length < 0)
         {
-            throw ADP.ArgumentOutOfRange(nameof(length), SQLResource.InvalidArraySizeMessage);
+            throw ADP.InvalidArraySize(nameof(length));
         }
 
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
@@ -52,7 +52,7 @@ where T : unmanaged
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
         if (_size > TdsEnums.MAXSIZE)
         {
-            throw ADP.ArgumentOutOfRange(nameof(length), SQLResource.InvalidArraySizeMessage);
+            throw ADP.InvalidArraySize(nameof(length));
         }
 
         _tdsBytes = Array.Empty<byte>();
@@ -73,7 +73,7 @@ where T : unmanaged
         _size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
         if (_size > TdsEnums.MAXSIZE)
         {
-            throw ADP.ArgumentOutOfRange(nameof(memory), SQLResource.InvalidArraySizeMessage);
+            throw ADP.InvalidArraySize(nameof(memory));
         }
 
         _tdsBytes = MakeTdsBytes(memory);
@@ -100,7 +100,7 @@ where T : unmanaged
     {
         if (IsNull)
         {
-            return SQLResource.NullString;
+            return SQLMessage.NullString();
         }
         return JsonSerializer.Serialize(Memory);
     }

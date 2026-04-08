@@ -1937,8 +1937,10 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
                     {
                         result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete,
+                            continuationAction: static (task, state) => s_openAsyncComplete(task, state),
                             state: operationId, // connection is passed in TaskCompletionSource async state
+                            cancellationToken: CancellationToken.None, // we want the continuation task to run even if the original operation was cancelled
+                            continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
                             scheduler: TaskScheduler.Default
                         );
                     }
