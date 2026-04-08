@@ -49,7 +49,7 @@ Key parameters:
 - `runAlwaysEncryptedTests` — include AE test set; default `true`
 - `runLegacySqlTests` — include SQL Server 2016/2017 manual-test legs; default `true`
 - `debug` — enable debug output; default `false`
-- `dotnetVerbosity` — MSBuild verbosity; default `normal`
+- `dotnetVerbosity` — build verbosity; default `normal`
 
 ## Build Stage Order
 

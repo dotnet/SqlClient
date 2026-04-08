@@ -9,7 +9,7 @@ The comparison uses `Microsoft.DotNet.ApiCompat.Tool` in **strict mode**, which 
 ## Usage
 
 ```
-dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+dotnet build build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
 ```
 
 - `BaselinePackageVersion` is **required** (no default). The user must specify which published package to compare against.
@@ -111,7 +111,7 @@ Add one line after the existing `.targets` imports (after line 7):
 ## Verification
 
 ```
-dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+dotnet build build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
 ```
 
 - Downloads 6.1.4 nupkg, builds both ref project variants, runs 8 comparisons (4 TFMs × 2 variants).
