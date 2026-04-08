@@ -168,7 +168,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void PutObjectFromTransactedPool(DbConnectionInternal connection)
         {
-            throw new NotImplementedException();
+            Debug.Assert(connection != null, "null pooledObject?");
+            Debug.Assert(connection.EnlistedTransaction == null, "pooledObject is still enlisted?");
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.",
+                Id,
+                connection.ObjectID);
+
+            if (State is Running && connection.CanBePooled)
+            {
+                connection.ResetConnection();
+                var written = _idleConnectionWriter.TryWrite(connection);
+                Debug.Assert(written, "Failed to write post-transaction connection to the idle channel.");
+            }
+            else
+            {
+                RemoveConnection(connection);
+            }
         }
 
         /// <inheritdoc />
@@ -197,16 +214,42 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 connection.ObjectID);
             connection.DeactivateConnection();
 
-            if (connection.IsConnectionDoomed || 
-                !connection.CanBePooled || 
-                State == ShuttingDown)
+            if (connection.IsConnectionDoomed)
+            {
+                RemoveConnection(connection);
+            }
+            else if (connection.CanBePooled)
+            {
+                // We must check for an enlisted transaction while inside a lock to prevent a
+                // race condition with the transaction asynchronously completing on another thread.
+                lock (connection)
+                {
+                    Transaction? transaction = connection.EnlistedTransaction;
+                    if (transaction != null)
+                    {
+                        // Connection is enlisted in a transaction - route to transacted pool
+                        Debug.Assert(TransactedConnectionPool != null, "Transacted connection pool was not expected to be null.");
+                        TransactedConnectionPool.PutTransactedObject(transaction, connection);
+                    }
+                    else if (State == ShuttingDown)
+                    {
+                        RemoveConnection(connection);
+                    }
+                    else
+                    {
+                        // Return to general pool
+                        var written = _idleConnectionWriter.TryWrite(connection);
+                        Debug.Assert(written, "Failed to write returning connection to the idle channel.");
+                    }
+                }
+            }
+            else if (State == ShuttingDown)
             {
                 RemoveConnection(connection);
             }
             else
             {
-                var written = _idleConnectionWriter.TryWrite(connection);
-                Debug.Assert(written, "Failed to write returning connection to the idle channel.");
+                RemoveConnection(connection);
             }
         }
 
@@ -225,7 +268,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
-            throw new NotImplementedException();
+            Debug.Assert(transaction != null, "null transaction?");
+            Debug.Assert(transactedObject != null, "null transactedObject?");
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed",
+                Id,
+                transaction.GetHashCode(),
+                transactedObject.ObjectID);
+
+            TransactedConnectionPool transactedConnectionPool = TransactedConnectionPool;
+            if (transactedConnectionPool != null)
+            {
+                transactedConnectionPool.TransactionEnded(transaction, transactedObject);
+            }
         }
 
         /// <inheritdoc />
@@ -282,8 +338,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // We're potentially on a new thread, so we need to properly set the ambient transaction.
                 // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
-                // so that we can access it here. Read: area for improvement.
-                // TODO: ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
+                // so that we can access it here.
+                ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
                 DbConnectionInternal? connection = null;
 
                 try
@@ -376,6 +432,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
         private bool IsLiveConnection(DbConnectionInternal connection)
         {
+            // TODO: also need to check if connection has been doomed (CanBePooled) due to a pool clear or dooming event
             if (!connection.IsConnectionAlive())
             {
                 return false;
@@ -454,8 +511,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeSpan timeout)
         {
             DbConnectionInternal? connection = null;
+            Transaction? transaction = null;
             using CancellationTokenSource cancellationTokenSource = new(timeout);
             CancellationToken cancellationToken = cancellationTokenSource.Token;
+
+            // If automatic transaction enlistment is required, try to get a connection
+            // from the transacted connection pool first.
+            if (HasTransactionAffinity)
+            {
+                connection = GetFromTransactedPool(out transaction);
+            }
 
             // Continue looping until we create or retrieve a connection
             do
@@ -503,7 +568,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             while (connection is null);
 
-            PrepareConnection(owningConnection, connection);
+            PrepareConnection(owningConnection, connection, transaction);
             return connection;
         }
 
@@ -541,15 +606,71 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
+        /// Retrieves a connection from the transacted connection pool that is already enlisted
+        /// in the current ambient transaction.
+        /// </summary>
+        /// <param name="transaction">When this method returns, contains the current ambient transaction, or null if none.</param>
+        /// <returns>A connection enlisted in the current transaction, or null if none is available.</returns>
+        private DbConnectionInternal? GetFromTransactedPool(out Transaction? transaction)
+        {
+            transaction = ADP.GetCurrentTransaction();
+            DbConnectionInternal? connection = null;
+
+            if (transaction != null && TransactedConnectionPool != null)
+            {
+                connection = TransactedConnectionPool.GetTransactedObject(transaction);
+
+                if (connection != null)
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.",
+                        Id,
+                        connection.ObjectID);
+
+                    SqlClientDiagnostics.Metrics.ExitFreeConnection();
+
+                    if (connection.IsTransactionRoot)
+                    {
+                        try
+                        {
+                            connection.IsConnectionAlive(true);
+                        }
+                        catch
+                        {
+                            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                                "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.",
+                                Id,
+                                connection.ObjectID);
+                            RemoveConnection(connection);
+                            throw;
+                        }
+                    }
+                    else if (!connection.IsConnectionAlive())
+                    {
+                        SqlClientEventSource.Log.TryPoolerTraceEvent(
+                            "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.",
+                            Id,
+                            connection.ObjectID);
+                        RemoveConnection(connection);
+                        connection = null;
+                    }
+                }
+            }
+
+            return connection;
+        }
+
+        /// <summary>
         /// Sets connection state and activates the connection for use. Should always be called after a connection is 
         /// created or retrieved from the pool.
         /// </summary>
         /// <param name="owningObject">The owning DbConnection instance.</param>
         /// <param name="connection">The DbConnectionInternal to be activated.</param>
+        /// <param name="transaction">The transaction to enlist the connection in, or null if none.</param>
         /// <exception cref="Exception">
         /// Thrown when any exception occurs during connection activation. 
         /// </exception>
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection)
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection, Transaction? transaction)
         {
             lock (connection)
             {   
@@ -559,8 +680,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                //TODO: pass through transaction
-                connection.ActivateConnection(null);
+                connection.ActivateConnection(transaction);
             }
             catch
             {
