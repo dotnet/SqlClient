@@ -2719,7 +2719,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (!_hasErrorOrWarning)
+                if (!_hasErrorOrWarning && _warnings == null)
                 {
                     return 0;
                 }
