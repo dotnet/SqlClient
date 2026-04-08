@@ -129,95 +129,9 @@
   <Folder Name="/eng/">
     <File Path="../build.proj" />
     <File Path="../build2.proj" />
-  </Folder>
-  <Folder Name="/eng/pipelines/">
-    <File Path="../eng/pipelines/dotnet-sqlclient-ci-core.yml" />
-    <File Path="../eng/pipelines/dotnet-sqlclient-ci-package-reference-pipeline.yml" />
-    <File Path="../eng/pipelines/dotnet-sqlclient-ci-project-reference-pipeline.yml" />
-    <File Path="../eng/pipelines/sqlclient-pr-package-ref-pipeline.yml" />
-    <File Path="../eng/pipelines/sqlclient-pr-project-ref-pipeline.yml" />
-    <File Path="../eng/pipelines/stress-tests-pipeline.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/common/" />
-  <Folder Name="/eng/pipelines/common/templates/" />
-  <Folder Name="/eng/pipelines/common/templates/jobs/">
-    <File Path="../eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml" />
-    <File Path="../eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml" />
-    <File Path="../eng/pipelines/common/templates/jobs/ci-run-tests-job.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/common/templates/stages/">
-    <File Path="../eng/pipelines/common/templates/stages/ci-run-tests-stage.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/common/templates/steps/">
-    <File Path="../eng/pipelines/common/templates/steps/build-and-run-tests-netcore-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/build-and-run-tests-netfx-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/ci-project-build-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/configure-sql-server-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/generate-nuget-package-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/override-sni-version.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/pre-build-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/prepare-test-db-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/publish-test-results-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/run-all-tests-step.yml" />
-    <File Path="../eng/pipelines/common/templates/steps/update-config-file-step.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/jobs/">
-    <File Path="../eng/pipelines/jobs/pack-abstractions-package-ci-job.yml" />
-    <File Path="../eng/pipelines/jobs/pack-azure-package-ci-job.yml" />
-    <File Path="../eng/pipelines/jobs/pack-logging-package-ci-job.yml" />
-    <File Path="../eng/pipelines/jobs/stress-tests-ci-job.yml" />
-    <File Path="../eng/pipelines/jobs/test-abstractions-package-ci-job.yml" />
-    <File Path="../eng/pipelines/jobs/test-azure-package-ci-job.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/libraries/">
-    <File Path="../eng/pipelines/libraries/ci-build-variables.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/onebranch/">
-    <File Path="../eng/pipelines/onebranch/sqlclient-non-official.yml" />
-    <File Path="../eng/pipelines/onebranch/sqlclient-official.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/onebranch/jobs/">
-    <File Path="../eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml" />
-    <File Path="../eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml" />
-    <File Path="../eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml" />
-    <File Path="../eng/pipelines/onebranch/jobs/validate-signed-package-job.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/onebranch/stages/">
-    <File Path="../eng/pipelines/onebranch/stages/build-stages.yml" />
-    <File Path="../eng/pipelines/onebranch/stages/release-stages.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/onebranch/steps/">
-    <File Path="../eng/pipelines/onebranch/steps/build-all-configurations-signed-dlls-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/code-analyze-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/compound-build-csproj-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/compound-nuget-pack-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/compound-pack-csproj-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/compound-publish-symbols-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/esrp-code-signing-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/publish-symbols-step.yml" />
-    <File Path="../eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/onebranch/variables/">
-    <File Path="../eng/pipelines/onebranch/variables/common-variables.yml" />
-    <File Path="../eng/pipelines/onebranch/variables/onebranch-variables.yml" />
-    <File Path="../eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/stages/">
-    <File Path="../eng/pipelines/stages/build-abstractions-package-ci-stage.yml" />
-    <File Path="../eng/pipelines/stages/build-azure-package-ci-stage.yml" />
-    <File Path="../eng/pipelines/stages/build-logging-package-ci-stage.yml" />
-    <File Path="../eng/pipelines/stages/build-sqlclient-package-ci-stage.yml" />
-    <File Path="../eng/pipelines/stages/generate-secrets-ci-stage.yml" />
-    <File Path="../eng/pipelines/stages/stress-tests-ci-stage.yml" />
-  </Folder>
-  <Folder Name="/eng/pipelines/steps/">
-    <File Path="../eng/pipelines/steps/install-dotnet-arm64.ps1" />
-    <File Path="../eng/pipelines/steps/install-dotnet.yml" />
+    <Project Path="../eng/pipelines/Pipelines.csproj">
+      <Build Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/src/">
     <File Path="Directory.Build.props" />

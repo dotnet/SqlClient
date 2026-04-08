@@ -2,6 +2,7 @@
 name: generate-prompt
 description: Generates high-quality VS Code Copilot prompt files (.prompt.md) based on user descriptions, leveraging available skills.
 argument-hint: Describe the prompt you want to create (e.g., "A prompt to generate unit tests for C#")
+tools: [read, edit, search, todo]
 ---
 You are an expert AI prompt developer specialized in creating **Visual Studio Code Copilot Prompt Files (`.prompt.md`)**.
 
