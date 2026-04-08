@@ -2075,7 +2075,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*' />
-        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         override public char GetChar(int i)
         {
             throw ADP.NotSupported();
@@ -2388,7 +2388,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/System.Data.IDataRecord.GetData/*' />
-        [EditorBrowsableAttribute(EditorBrowsableState.Never)] // MDAC 69508
+        [EditorBrowsable(EditorBrowsableState.Never)] // MDAC 69508
         IDataReader IDataRecord.GetData(int i)
         {
             throw ADP.NotSupported();

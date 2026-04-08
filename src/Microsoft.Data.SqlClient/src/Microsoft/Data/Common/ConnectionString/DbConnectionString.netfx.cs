@@ -16,7 +16,7 @@ using Microsoft.Data.SqlClient.Internal;
 namespace Microsoft.Data.Common
 {
     // @TODO: Theoretically this class could be replaced with SqlConnectionString.
-    
+
     [Serializable] // MDAC 83147
     internal sealed class DbConnectionString
     {
@@ -324,7 +324,7 @@ namespace Microsoft.Data.Common
                         HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
                         combined.ExceptWith(component);
                         Debug.Assert(combined.Count == 0, "Combined set allows values not allowed by component set");
-#endif 
+#endif
                     }
                     else if (combinedSet._behavior == KeyRestrictionBehavior.PreventUsage)
                     {
@@ -348,7 +348,7 @@ namespace Microsoft.Data.Common
                         HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
                         combined.IntersectWith(component);
                         Debug.Assert(combined.Count == 0, "Combined values allows values prevented by component set");
-#endif 
+#endif
                     }
                     else if (combinedSet._behavior == KeyRestrictionBehavior.PreventUsage)
                     {
@@ -360,7 +360,7 @@ namespace Microsoft.Data.Common
                         HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
                         component.IntersectWith(combined);
                         Debug.Assert(component.Count == 0, "Combined values does not prevent all of the values prevented by the component set");
-#endif 
+#endif
                     }
                     else
                     {
@@ -562,7 +562,7 @@ namespace Microsoft.Data.Common
             return restrictions;
         }
 
-        [ConditionalAttribute("DEBUG")]
+        [Conditional("DEBUG")]
         private static void Verify(string[] restrictionValues)
         {
             if (restrictionValues != null)

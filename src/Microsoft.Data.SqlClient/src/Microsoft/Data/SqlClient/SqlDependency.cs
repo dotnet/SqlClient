@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
         private List<EventContextPair> _eventList = new();
         private readonly object _eventHandlerLock = new(); // Lock for event serialization.
         // Track the time that this dependency should time out. If the server didn't send a change
-        // notification or a time-out before this point then the client will perform a client-side 
+        // notification or a time-out before this point then the client will perform a client-side
         // timeout.
         private DateTime _expirationTime = DateTime.MaxValue;
         // Used for invalidation of dependencies based on which servers they rely upon.
@@ -247,8 +247,8 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly object s_startStopLock = new();
         private static readonly string s_appDomainKey = Guid.NewGuid().ToString();
-        // Hashtable containing all information to match from a server, user, database triple to the service started for that 
-        // triple.  For each server, there can be N users.  For each user, there can be N databases.  For each server, user, 
+        // Hashtable containing all information to match from a server, user, database triple to the service started for that
+        // triple.  For each server, there can be N users.  For each user, there can be N databases.  For each server, user,
         // database, there can only be one service.
         private static readonly Dictionary<string, Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>> s_serverUserHash =
                    new(StringComparer.OrdinalIgnoreCase);
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient
         // The following two strings are used for AppDomain.CreateInstance.
         private static readonly string s_assemblyName = (typeof(SqlDependencyProcessDispatcher)).Assembly.FullName;
         private static readonly string s_typeName = (typeof(SqlDependencyProcessDispatcher)).FullName;
-#endif 
+#endif
 
         // EventSource members
         private static int s_objectTypeCount; // EventSourceCounter counter
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
         // Constructors
 #if NETFRAMEWORK
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+        [HostProtection(ExternalThreading = true)]
 #endif
         public SqlDependency() : this(null, null, SQL.SqlDependencyTimeoutDefault)
         {
@@ -274,7 +274,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
 #if NETFRAMEWORK
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+        [HostProtection(ExternalThreading = true)]
 #endif
         public SqlDependency(SqlCommand command) : this(command, null, SQL.SqlDependencyTimeoutDefault)
         {
@@ -313,8 +313,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_HasChanges))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_HasChanges))
         ]
 #endif
         public bool HasChanges => _dependencyFired;
@@ -322,8 +322,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_Id))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_Id))
         ]
 #endif
         public string Id => _id;
@@ -344,8 +344,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_OnChange))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_OnChange))
         ]
 #endif
         public event OnChangeEventHandler OnChange
@@ -422,8 +422,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_AddCommandDependency))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_AddCommandDependency))
         ]
 #endif
         public void AddCommandDependency(SqlCommand command)
@@ -466,9 +466,9 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 #endif // DEBUG
-                
+
                 _AppDomain masterDomain = AppDomain.CurrentDomain;
-                
+
                 ObjectHandle handle = CreateProcessDispatcher(masterDomain);
                 if (handle != null)
                 {
@@ -484,9 +484,9 @@ namespace Microsoft.Data.SqlClient
                             SqlClientObjRef objRef = new(s_processDispatcher);
                             DataContractSerializer serializer = new(objRef.GetType());
                             GetSerializedObject(objRef, serializer, stream);
-                            
+
                             // Native will be forced to synchronize and not overwrite.
-                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray()); 
+                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray());
                         }
                     }
                     else
@@ -914,7 +914,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static string GetDefaultComposedOptions(string server, string failoverServer, IdentityUserNamePair identityUser, string database)
         {
-            // Server must be an exact match, but user and database only needs to match exactly if there is more than one 
+            // Server must be an exact match, but user and database only needs to match exactly if there is more than one
             // for the given user or database passed.  That is ambiguous and we must fail.
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{0}', failoverServer: '{1}', database: '{2}'", server, failoverServer, database);
             try
@@ -1014,7 +1014,7 @@ namespace Microsoft.Data.SqlClient
 
         // Internal Methods
 
-        // Called by SqlCommand upon execution of a SqlNotificationRequest class created by this dependency.  We 
+        // Called by SqlCommand upon execution of a SqlNotificationRequest class created by this dependency.  We
         // use this list for a reverse lookup based on server.
         internal void AddToServerList(string server)
         {
