@@ -17,6 +17,10 @@ The general rule we follow is "_use Visual Studio defaults_".
    Windows script files, which may use CRLF.
 1. Lines should be a maximum of 100 characters.  Exceptions are made for long content such as URLs,
    and when breaking text would be less readable.
+1. When wrapping long lines, prefer to break on natural boundaries like braces, brackets, or commas.
+   Leave as much text on the previous line as will fit.
+1. When splitting long strings, prefer to fill as much as the max line length without unnaturally
+   breaking long content like URLs.
 1. We use [Allman style](http://en.wikipedia.org/wiki/Indent_style#Allman_style) braces, where each
    brace begins on a new line. A single line statement block can go without braces but the block
    must be properly indented on its own line and must not be nested in other statement blocks that
@@ -33,7 +37,7 @@ The general rule we follow is "_use Visual Studio defaults_".
 1. We always specify the visibility, even if it's the default (e.g. `private string _foo` not
    `string _foo`). Visibility should be the first modifier (e.g. `public abstract` not `abstract
    public`).
-1. Namespace imports should be specified at the top of the file, *outside* of `namespace`
+1. Namespace imports should be specified at the top of the file, _outside_ of `namespace`
    declarations, and should be sorted alphabetically, with the exception of `System.*` namespaces,
    which are to be placed on top of all others.
 1. Avoid more than one empty line at any time. For example, do not have two blank lines between
@@ -60,7 +64,6 @@ The general rule we follow is "_use Visual Studio defaults_".
 1. When using a single-statement if, we follow these conventions:
    - Never use single-line form (for example: `if (source == null) throw new
      ArgumentNullException("source");`)
-   - Using braces is always accepted, and required if any block of an `if`/`else if`/.../`else`
-     compound statement uses braces or if a single statement body spans multiple lines.
-   - Braces may be omitted only if the body of *every* block associated with an `if`/`else
-     if`/.../`else` compound statement is placed on a single line.
+   - Braces are always required for `if`, `else if`, and `else` blocks.
+1. When using `switch` statements, each `case` and `default` body must be wrapped in braces.
+1. Loop bodies (`for`, `foreach`, `while`, `do`) must always use braces.

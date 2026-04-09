@@ -1,0 +1,292 @@
+using System.CommandLine;
+using System.Text.Json;
+
+namespace Microsoft.Data.SqlClient.Samples.ThreadStarvation;
+
+/// <summary>
+/// Contains the application entry point responsible for parsing command-line arguments and
+/// delegating execution to <see cref="App"/>.
+/// </summary>
+public static class EntryPoint
+{
+    /// <summary>
+    /// Application entry point. Parses command-line arguments and executes the test.
+    /// </summary>
+    public static int Main(string[] args)
+    {
+        // ── Connection ──────────────────────────────────────────────
+        Option<string> connectionStringOption = new("--connection-string", "-c")
+        {
+            Description =
+                "ADO.NET connection string. " +
+                "Must include Data Source. Authentication keywords are optional. " +
+                "Required unless --config is provided."
+        };
+
+        Option<string> configFileOption = new("--config")
+        {
+            Description =
+                "Path to a JSON config file with an array of endpoints: " +
+                "[{ \"name\": \"...\", \"connectionString\": \"...\" }]. " +
+                "Tests run for each entry. Mutually exclusive with --connection-string."
+        };
+
+        // ── Test shape ──────────────────────────────────────────────
+        Option<int> connectionsOption = new("--connections", "-n")
+        {
+            Description = "Number of parallel connections/queries per pass.",
+            DefaultValueFactory = _ => 200
+        };
+
+        Option<string> modeOption = new("--mode", "-m")
+        {
+            Description =
+                "Execution mode: async, sync, both, or preconnect. " +
+                "'both' runs sync first, then async, for direct comparison. " +
+                "'preconnect' opens all connections first, then runs queries sync and async.",
+            DefaultValueFactory = _ => "async"
+        };
+        modeOption.AcceptOnlyFromAmong("async", "sync", "both", "preconnect");
+
+        Option<bool> marsOption = new("--mars")
+        {
+            Description =
+                "Also run a MARS (MultipleActiveResultSets) pass after the primary pass(es)."
+        };
+
+        Option<string> launchOption = new("--launch")
+        {
+            Description =
+                "Launch strategy: 'parallel' uses Parallel.ForEachAsync; " +
+                "'whenall' fires all tasks with Task.WhenAll.",
+            DefaultValueFactory = _ => "parallel"
+        };
+        launchOption.AcceptOnlyFromAmong("parallel", "whenall");
+
+        Option<string> queryOption = new("--query", "-q")
+        {
+            Description = "SQL query to execute per connection.",
+            DefaultValueFactory = _ => "SELECT 1;"
+        };
+
+        // ── Thread pool / starvation ────────────────────────────────
+        Option<int> sleepOption = new("--sleep")
+        {
+            Description =
+                "Thread.Sleep duration (ms) injected before each query " +
+                "to simulate app-side thread blocking. 0 disables.",
+            DefaultValueFactory = _ => 500
+        };
+
+        Option<int> minThreadsOption = new("--min-threads")
+        {
+            Description = "ThreadPool minimum worker threads.",
+            DefaultValueFactory = _ => 1000
+        };
+
+        Option<int> maxThreadsOption = new("--max-threads")
+        {
+            Description = "ThreadPool maximum worker threads.",
+            DefaultValueFactory = _ => 1000
+        };
+
+        Option<int> ioThreadsOption = new("--io-threads")
+        {
+            Description = "ThreadPool min and max IOCP threads (no effect on Unix).",
+            DefaultValueFactory = _ => 1
+        };
+
+        // ── Thresholds / monitoring ─────────────────────────────────
+        Option<int> slowOption = new("--slow")
+        {
+            Description = "Per-query latency threshold (ms) for SLOW logging.",
+            DefaultValueFactory = _ => 200
+        };
+
+        Option<int> monitorOption = new("--monitor-interval")
+        {
+            Description = "Thread-pool monitor print interval (ms). 0 disables.",
+            DefaultValueFactory = _ => 100
+        };
+
+        Option<int> connectTimeoutOption = new("--connect-timeout")
+        {
+            Description = "Connection timeout in seconds (overrides connection string).",
+            DefaultValueFactory = _ => 120
+        };
+
+        Option<bool> poolingOption = new("--pooling")
+        {
+            Description = "Enable connection pooling (default: disabled)."
+        };
+
+        // ── Diagnostics ─────────────────────────────────────────────
+        Option<bool> logOption = new("--log-events", "-l")
+        {
+            Description = "Enable SqlClient event emission to the console."
+        };
+
+        Option<bool> traceOption = new("--trace", "-t")
+        {
+            Description = "Pause execution to allow dotnet-trace to be attached."
+        };
+
+        Option<bool> verboseOption = new("--verbose", "-v")
+        {
+            Description = "Enable verbose output with detailed error information."
+        };
+
+        Option<string> outputFormatOption = new("--output-format")
+        {
+            Description =
+                "Output format for results: 'table' (default), 'json', or 'histogram'.",
+            DefaultValueFactory = _ => "table"
+        };
+        outputFormatOption.AcceptOnlyFromAmong("table", "json", "histogram");
+
+        // ── Root command ────────────────────────────────────────────
+        RootCommand rootCommand = new(
+            """
+            ThreadStarvation — Thread-Pool Starvation Reproducer
+            ----------------------------------------------------
+
+            Runs parallel SQL queries to surface thread-pool starvation and
+            async performance issues in Microsoft.Data.SqlClient.
+
+            Reproduces patterns from GitHub issues #601, #979, #1562, #3118.
+            """)
+        {
+            connectionStringOption,
+            configFileOption,
+            connectionsOption,
+            modeOption,
+            marsOption,
+            launchOption,
+            queryOption,
+            sleepOption,
+            minThreadsOption,
+            maxThreadsOption,
+            ioThreadsOption,
+            slowOption,
+            monitorOption,
+            connectTimeoutOption,
+            poolingOption,
+            logOption,
+            traceOption,
+            verboseOption,
+            outputFormatOption
+        };
+
+        rootCommand.SetAction(parseResult =>
+        {
+            string? configPath = parseResult.GetValue(configFileOption);
+            string? connStr = parseResult.GetValue(connectionStringOption);
+
+            if (configPath is null && connStr is null)
+            {
+                Console.Error.WriteLine(
+                    "Error: either --connection-string or --config must be provided.");
+                return 1;
+            }
+
+            if (configPath is not null && connStr is not null)
+            {
+                Console.Error.WriteLine(
+                    "Error: --connection-string and --config are mutually exclusive.");
+                return 1;
+            }
+
+            // Build the list of endpoints to test.
+            List<(string? name, string connectionString)> endpoints;
+            if (configPath is not null)
+            {
+                try
+                {
+                    string json = File.ReadAllText(configPath);
+                    var entries = JsonSerializer.Deserialize<List<EndpointEntry>>(
+                        json,
+                        new JsonSerializerOptions
+                        {
+                            AllowTrailingCommas = true,
+                            PropertyNameCaseInsensitive = true,
+                            ReadCommentHandling = JsonCommentHandling.Skip,
+                        });
+
+                    if (entries is null || entries.Count == 0)
+                    {
+                        Console.Error.WriteLine("Error: config file contains no endpoint entries.");
+                        return 1;
+                    }
+
+                    endpoints = entries
+                        .Select(e => (e.Name, e.ConnectionString ?? string.Empty))
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error reading config file: {ex.Message}");
+                    return 1;
+                }
+            }
+            else
+            {
+                endpoints = [(null, connStr!)];
+            }
+
+            int exitCode = 0;
+            for (int idx = 0; idx < endpoints.Count; idx++)
+            {
+                var (name, cs) = endpoints[idx];
+
+                if (endpoints.Count > 1)
+                {
+                    Console.WriteLine($"\n{'=',-60}");
+                    Console.WriteLine(
+                        $"  Endpoint {idx + 1}/{endpoints.Count}: {name ?? "(unnamed)"}");
+                    Console.WriteLine($"{'=',-60}");
+                }
+
+                App.RunOptions options = new()
+                {
+                    ConnectionString = cs,
+                    EndpointName = name,
+                    Connections = parseResult.GetValue(connectionsOption),
+                    Mode = parseResult.GetValue(modeOption)!,
+                    Mars = parseResult.GetValue(marsOption),
+                    Launch = parseResult.GetValue(launchOption)!,
+                    Query = parseResult.GetValue(queryOption)!,
+                    SleepMs = parseResult.GetValue(sleepOption),
+                    MinThreads = parseResult.GetValue(minThreadsOption),
+                    MaxThreads = parseResult.GetValue(maxThreadsOption),
+                    IoThreads = parseResult.GetValue(ioThreadsOption),
+                    SlowThresholdMs = parseResult.GetValue(slowOption),
+                    MonitorIntervalMs = parseResult.GetValue(monitorOption),
+                    ConnectTimeout = parseResult.GetValue(connectTimeoutOption),
+                    Pooling = parseResult.GetValue(poolingOption),
+                    LogEvents = parseResult.GetValue(logOption),
+                    Trace = parseResult.GetValue(traceOption),
+                    Verbose = parseResult.GetValue(verboseOption),
+                    OutputFormat = parseResult.GetValue(outputFormatOption)!
+                };
+
+                using App app = new();
+                int result = app.Run(options);
+                if (result != 0)
+                {
+                    exitCode = result;
+                }
+            }
+
+            return exitCode;
+        });
+
+        return rootCommand.Parse(args).Invoke();
+    }
+
+    private sealed class EndpointEntry
+    {
+        public string? Name { get; set; }
+        public string? ConnectionString { get; set; }
+    }
+
+}
