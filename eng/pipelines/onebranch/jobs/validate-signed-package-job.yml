@@ -36,10 +36,6 @@ parameters:
   - name: isOfficial
     type: boolean
 
-  # True if this build is a preview.
-  - name: isPreview
-    type: boolean
-
 jobs:
   - job: validate_nuget_package
     displayName: "Validate NuGet package"
@@ -58,7 +54,7 @@ jobs:
       # Path to the SqlClient NuGet package after installation. This path will only exist once the package
       # been installed.
       - name: nugetPackageInstallPath
-        value: '$(Pipeline.Workspace)\nugetPackageInstalls\Microsoft.Data.SqlClient\${{ parameters.expectedPackageVersion }}'
+        value: '$(Pipeline.Workspace)\nugetPackageInstalls\Microsoft.Data.SqlClient.${{ parameters.expectedPackageVersion }}'
 
       # Root folder where NuGet package will be installed locally
       - name: nugetPackageInstallRoot
@@ -119,8 +115,8 @@ jobs:
             -SkipDependencies
 
           echo "> 2. Listing contents of installed Microsoft.Data.SqlClient NuGet package:"
-          Write-Host $artifactPath
-          Get-ChildItem $artifactPath
+          Write-Host $nugetPackageInstallRoot
+          Get-ChildItem $nugetPackageInstallRoot
         displayName: "Install NuGet Package"
 
       # Find all DLL files in the installed NuGet package, verify each is signed with a strong name
