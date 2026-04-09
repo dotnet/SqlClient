@@ -162,6 +162,7 @@ extends:
           softwareFolder: $(softwareFolder)
           publishSymbols: ${{ parameters['publishSymbols'] }}
           isPreview: ${{ parameters['isPreview'] }}
+          isOfficialBuild: false
 
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'
@@ -211,7 +212,7 @@ extends:
               mdsPackageVersion: $(akvMdsPackageVersion)
               publishSymbols: ${{ parameters['publishSymbols'] }}
               isOfficialBuild: false
-              
+
     # ==================================================================
     # Release Stage — on-demand publish to NuGet.org
     #

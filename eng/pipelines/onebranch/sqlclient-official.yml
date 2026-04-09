@@ -169,6 +169,7 @@ extends:
           softwareFolder: $(softwareFolder)
           publishSymbols: ${{ parameters['publishSymbols'] }}
           isPreview: ${{ parameters['isPreview'] }}
+          isOfficialBuild: true
 
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'

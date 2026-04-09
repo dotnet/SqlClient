@@ -48,7 +48,7 @@ jobs:
     parameters:
       analyzeType: all
   
-  - if eq(${{ variables['isOfficialBuild'] }}, 'true'):
+  - if eq(${{ variables['isOfficialBuild'] }}, true):
     - template: ../steps/esrp-code-signing-step.yml@self
       parameters:
         artifactType: dll
@@ -57,7 +57,7 @@ jobs:
     parameters:
       OutputDirectory: $(artifactDirectory)
   
-  - if eq(${{ variables['isOfficialBuild'] }}, 'true'):
+  - if eq(${{ variables['isOfficialBuild'] }}, true):
     - template: ../steps/esrp-code-signing-step.yml@self
       parameters:
         artifactType: pkg
@@ -69,5 +69,5 @@ jobs:
   # Publish symbols to servers
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
-      publishSymbols: ${{ parameters['PublishSymbols'] }}
+      publishSymbols: ${{ parameters['publishSymbols'] }}
       symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
