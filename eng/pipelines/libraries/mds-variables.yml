@@ -5,7 +5,7 @@
 #################################################################################
 
 variables:
-  - group: 'akv-variables-v2'
+  - group: Symbols Publishing
     # Shared symbols publishing variables:
     # SymbolsAzureSubscription
     # SymbolsPublishProjectName

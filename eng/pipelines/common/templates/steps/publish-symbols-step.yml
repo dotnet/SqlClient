@@ -4,11 +4,11 @@
 # See the LICENSE file in the project root for more information.                   #
 #                                                                                  #
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
-#                                                                                  #
-# The Symbols* variable defaults (e.g. SymbolsPublishServer, SymbolsUploadAccount) #
-# are sourced from the 'akv-variables-v2' variable group, imported via             #
-# eng/pipelines/libraries/mds-variables.yml.                                       #
 ####################################################################################
+
+# The Symbols* variable defaults (e.g. SymbolsPublishServer, SymbolsUploadAccount) are sourced from
+# the 'Symbols Publishing' variable group, imported via eng/pipelines/libraries/mds-variables.yml.
+
 parameters:
   - name: SymAccount
     type: string
