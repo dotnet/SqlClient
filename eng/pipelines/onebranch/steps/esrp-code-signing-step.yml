@@ -19,27 +19,27 @@ parameters:
 
   - name: ESRPConnectedServiceName
     type: string
-    default: $(ESRPConnectedServiceName)
+    default: $(SigningESRPConnectedServiceName)
 
   - name: appRegistrationClientId
     type: string
-    default: $(appRegistrationClientId)
+    default: $(SigningAppRegistrationClientId)
 
   - name: appRegistrationTenantId
     type: string
-    default: $(appRegistrationTenantId)
+    default: $(SigningAppRegistrationTenantId)
 
   - name: AuthAKVName
     type: string
-    default: $(AuthAKVName)
+    default: $(SigningAuthAKVName)
 
   - name: AuthSignCertName
     type: string
-    default: $(AuthSignCertName)
+    default: $(SigningAuthSignCertName)
 
   - name: EsrpClientId
     type: string
-    default: $(EsrpClientId)
+    default: $(SigningEsrpClientId)
 
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:

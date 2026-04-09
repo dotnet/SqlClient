@@ -16,6 +16,7 @@ parameters:
 
     - name: buildConfiguration
       type: string
+      default: Release
 
     - name: nugetPackageVersion
       type: string
@@ -26,38 +27,53 @@ parameters:
     - name: publishSymbols
       type: boolean
 
+    - name: isOfficialBuild
+      type: boolean
+      default: false
+
     - name: signingAppRegistrationClientId
       type: string
+      default: $(SigningAppRegistrationClientId)
 
     - name: signingAppRegistrationTenantId
       type: string
+      default: $(SigningAppRegistrationTenantId)
 
     - name: signingAuthAkvName
       type: string
+      default: $(SigningAuthAkvName)
 
     - name: signingAuthSignCertName
       type: string
+      default: $(SigningAuthSignCertName)
 
     - name: signingEsrpClientId
       type: string
+      default: $(SigningEsrpClientId)
 
     - name: signingEsrpConnectedServiceName
       type: string
+      default: $(SigningEsrpConnectedServiceName)
 
     - name: symbolsAzureSubscription
       type: string
+      default: $(SymbolsAzureSubscription)
 
     - name: symbolsPublishProjectName
       type: string
+      default: $(SymbolsPublishProjectName)
 
     - name: symbolsPublishServer
       type: string
+      default: $(SymbolsPublishServer)
 
     - name: symbolsPublishTokenUri
       type: string
+      default: $(SymbolsPublishTokenUri)
 
     - name: symbolsUploadAccount
       type: string
+      default: $(SymbolsUploadAccount)
       
     # @TODO: This should be determined from build output, or at a higher level
     - # Note: not intended to be passed in, is only used for copying files for ApiScan.
@@ -107,15 +123,10 @@ jobs:
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 signingKeyPath: '$(Agent.TempDirectory)/netfxKeypair.snk'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
-            parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'dll'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+          - if eq(${{ parameters.isOfficialBuild }}, 'true'):
+            - template: ../steps/esrp-code-signing-step.yml@self
+              parameters:
+                  artifactType: 'dll'
 
           - template: ../steps/compound-nuget-pack-step.yml@self
             parameters:
@@ -126,15 +137,10 @@ jobs:
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'Package'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
-            parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'pkg'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+          - if eq(${{ parameters.isOfficialBuild }}, 'true'):
+            - template: ../steps/esrp-code-signing-step.yml@self
+              parameters:
+                artifactType: pkg
 
           - ${{ if parameters.publishSymbols }}:
             - template: ../steps/compound-publish-symbols-step.yml@self

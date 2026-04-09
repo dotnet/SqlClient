@@ -207,22 +207,11 @@ extends:
               apiScanDllPath: $(apiScanDllPath)
               apiScanPdbPath: $(apiScanPdbPath)
               assemblyFileVersion: $(akvAssemblyFileVersion)
-              buildConfiguration: Release
               nugetPackageVersion: $(effectiveAkvPackageVersion)
               mdsPackageVersion: $(akvMdsPackageVersion)
               publishSymbols: ${{ parameters['publishSymbols'] }}
-              signingAppRegistrationClientId: $(SigningAppRegistrationClientId)
-              signingAppRegistrationTenantId: $(SigningAppRegistrationTenantId)
-              signingAuthAkvName: $(SigningAuthAkvName)
-              signingAuthSignCertName: $(SigningAuthSignCertName)
-              signingEsrpClientId: $(SigningEsrpClientId)
-              signingEsrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
-              symbolsAzureSubscription: $(SymbolsAzureSubscription)
-              symbolsPublishProjectName: $(SymbolsPublishProjectName)
-              symbolsPublishServer: $(SymbolsPublishServer)
-              symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
-              symbolsUploadAccount: $(SymbolsUploadAccount)
-
+              isOfficialBuild: false
+              
     # ==================================================================
     # Release Stage — on-demand publish to NuGet.org
     #

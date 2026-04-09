@@ -18,6 +18,10 @@ parameters:
   - name: isPreview
     type: boolean
 
+  - name: isOfficialBuild
+    type: boolean
+    default: false
+
 jobs:
 - job: build_signed_package
   displayName: 'Build Signed MDS Package'
@@ -44,17 +48,19 @@ jobs:
     parameters:
       analyzeType: all
   
-  - template: ../steps/esrp-code-signing-step.yml@self
-    parameters:
-      artifactType: dll
+  - if eq(${{ variables['isOfficialBuild'] }}, 'true'):
+    - template: ../steps/esrp-code-signing-step.yml@self
+      parameters:
+        artifactType: dll
   
   - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       OutputDirectory: $(artifactDirectory)
   
-  - template: ../steps/esrp-code-signing-step.yml@self
-    parameters:
-      artifactType: pkg
+  - if eq(${{ variables['isOfficialBuild'] }}, 'true'):
+    - template: ../steps/esrp-code-signing-step.yml@self
+      parameters:
+        artifactType: pkg
   
   - template: ../steps/copy-dlls-for-test-step.yml@self
     parameters:
