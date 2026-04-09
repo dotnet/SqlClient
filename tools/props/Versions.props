@@ -15,8 +15,7 @@
   <!-- Abstractions Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\AbstractionsVersions.props" />
 
-  <!-- Logging Package Properties -->
-  <Import Project="..\..\src\Microsoft.Data.SqlClient.Internal\Logging\src\LoggingVersions.props" />
+  <!-- For Microsoft.Data.SqlClient.Logging versioning, see: src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props -->
 
   <!-- For Microsoft.Data.SqlClient Versioning, see:
        src/Microsoft.Data.SqlClient/MdsVersions.props -->

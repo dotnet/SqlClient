@@ -604,6 +604,58 @@
   </Target>
 
   <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.Internal.Logging Targets -->
+  <PropertyGroup>
+    <LoggingSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/src/</LoggingSrcRoot>
+    <LoggingProjectPath>$(LoggingSrcRoot)Logging.csproj</LoggingProjectPath>
+  </PropertyGroup>
+
+  <!-- Build Logging Target ============================================ -->
+  <!-- BuildLogging: Builds Microsoft.Data.SqlClient.Internal.Logging -->
+  <Target Name="BuildLogging">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(LoggingProjectPath)
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- Pack Logging Target ============================================= -->
+  <!-- PackLogging: Packages Microsoft.Data.SqlClient.Internal.Logging -->
+  <Target Name="PackLogging">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack $(LoggingProjectPath)
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
   <!-- Microsoft.SqlServer.Server Targets -->
   <PropertyGroup>
     <SqlServerSrcRoot>$(RepoRoot)src/Microsoft.SqlServer.Server/</SqlServerSrcRoot>
