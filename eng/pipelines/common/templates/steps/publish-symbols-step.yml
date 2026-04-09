@@ -66,7 +66,7 @@ steps:
       SymbolExpirationInDays: 1825 # 5 years
       SymbolsProduct: Microsoft.Data.SqlClient
       SymbolsVersion: ${{parameters.symbolsVersion }}
-      SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
+      SymbolsArtifactName: ${{parameters.symbolsArtifactName }}_$(System.JobAttempt)
       Pat: $(System.AccessToken)
     condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
 
@@ -82,7 +82,6 @@ steps:
       -PublishServer "${{parameters.symbolServer }}"
       -PublishTokenUri "${{parameters.symbolTokenUri }}"
       -PublishProjectName "Microsoft.Data.SqlClient.SNI"
-      -ArtifactName "${{parameters.symbolsArtifactName }}"
-      -JobAttempt $(System.JobAttempt)
+      -ArtifactName "${{parameters.symbolsArtifactName }}_$(System.JobAttempt)"
       -PublishToInternal $${{parameters.publishToServers.internal }}
       -PublishToPublic $${{parameters.publishToServers.public }}

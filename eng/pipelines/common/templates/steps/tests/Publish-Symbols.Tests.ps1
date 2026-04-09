@@ -25,17 +25,7 @@ Describe 'Publish-Symbols.ps1 Parameter Validation' {
     }
 
     It 'Should reject an empty ArtifactName' {
-        { & $scriptPath -PublishServer 'server' -PublishTokenUri 'https://token' -PublishProjectName 'proj' -ArtifactName '' -JobAttempt 1 } |
-            Should -Throw
-    }
-
-    It 'Should reject JobAttempt of 0' {
-        { & $scriptPath -PublishServer 'server' -PublishTokenUri 'https://token' -PublishProjectName 'proj' -ArtifactName 'art' -JobAttempt 0 } |
-            Should -Throw
-    }
-
-    It 'Should reject a negative JobAttempt' {
-        { & $scriptPath -PublishServer 'server' -PublishTokenUri 'https://token' -PublishProjectName 'proj' -ArtifactName 'art' -JobAttempt -1 } |
+        { & $scriptPath -PublishServer 'server' -PublishTokenUri 'https://token' -PublishProjectName 'proj' -ArtifactName '' } |
             Should -Throw
     }
 }
@@ -68,8 +58,7 @@ Describe 'Publish-Symbols.ps1 URL Construction' {
             -PublishServer 'myserver' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'My.Project' `
-            -ArtifactName 'test_artifact' `
-            -JobAttempt 1
+            -ArtifactName 'test_artifact'
 
         $script:restCalls.Count | Should -Be 3
 
@@ -78,46 +67,24 @@ Describe 'Publish-Symbols.ps1 URL Construction' {
         $script:restCalls[0].Method | Should -Be 'POST'
 
         # Publish call
-        $script:restCalls[1].Uri | Should -Be 'https://myserver.trafficmanager.net/projects/My.Project/requests/test_artifact_1'
+        $script:restCalls[1].Uri | Should -Be 'https://myserver.trafficmanager.net/projects/My.Project/requests/test_artifact'
         $script:restCalls[1].Method | Should -Be 'POST'
 
         # Status call
-        $script:restCalls[2].Uri | Should -Be 'https://myserver.trafficmanager.net/projects/My.Project/requests/test_artifact_1'
+        $script:restCalls[2].Uri | Should -Be 'https://myserver.trafficmanager.net/projects/My.Project/requests/test_artifact'
         $script:restCalls[2].Method | Should -Be 'GET'
     }
 
-    It 'Should append JobAttempt to the request name' {
+    It 'Should use ArtifactName directly as the request name' {
         & $scriptPath `
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'myartifact' `
-            -JobAttempt 3
+            -ArtifactName 'myartifact_3'
 
-        # All request-specific URLs should end with _3
+        # All request-specific URLs should use the artifact name as-is
         $script:restCalls[1].Uri | Should -BeLike '*myartifact_3'
         $script:restCalls[2].Uri | Should -BeLike '*myartifact_3'
-    }
-
-    It 'Should produce different request names for different JobAttempt values' {
-        & $scriptPath `
-            -PublishServer 'srv' `
-            -PublishTokenUri 'https://token-uri' `
-            -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 1
-
-        $attempt1Urls = $script:restCalls.Clone()
-        $script:restCalls = @()
-
-        & $scriptPath `
-            -PublishServer 'srv' `
-            -PublishTokenUri 'https://token-uri' `
-            -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 2
-
-        $attempt1Urls[1].Uri | Should -Not -Be $script:restCalls[1].Uri
     }
 }
 
@@ -146,8 +113,7 @@ Describe 'Publish-Symbols.ps1 Request Bodies' {
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'my_artifact' `
-            -JobAttempt 1
+            -ArtifactName 'my_artifact_1'
 
         $body = $script:restCalls[0].Body | ConvertFrom-Json
         $body.requestName | Should -Be 'my_artifact_1'
@@ -158,8 +124,7 @@ Describe 'Publish-Symbols.ps1 Request Bodies' {
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 1
+            -ArtifactName 'art'
 
         $body = $script:restCalls[1].Body | ConvertFrom-Json
         $body.publishToInternalServer | Should -Be $true
@@ -172,7 +137,6 @@ Describe 'Publish-Symbols.ps1 Request Bodies' {
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
             -ArtifactName 'art' `
-            -JobAttempt 1 `
             -PublishToInternal $false
 
         $body = $script:restCalls[1].Body | ConvertFrom-Json
@@ -186,7 +150,6 @@ Describe 'Publish-Symbols.ps1 Request Bodies' {
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
             -ArtifactName 'art' `
-            -JobAttempt 1 `
             -PublishToPublic $false
 
         $body = $script:restCalls[1].Body | ConvertFrom-Json
@@ -208,9 +171,19 @@ Describe 'Publish-Symbols.ps1 Error Handling' {
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 1 } |
+            -ArtifactName 'art' } |
             Should -Throw '*token*'
+    }
+
+    It 'Should throw when token is empty' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return '  ' }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Throw '*empty*'
     }
 
     It 'Should throw with URI details when registration fails' {
@@ -221,8 +194,7 @@ Describe 'Publish-Symbols.ps1 Error Handling' {
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 1 } |
+            -ArtifactName 'art' } |
             Should -Throw '*Failed to register*'
     }
 
@@ -239,8 +211,7 @@ Describe 'Publish-Symbols.ps1 Error Handling' {
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 1 } |
+            -ArtifactName 'art' } |
             Should -Throw '*Failed to publish*'
     }
 
@@ -257,8 +228,7 @@ Describe 'Publish-Symbols.ps1 Error Handling' {
             -PublishServer 'srv' `
             -PublishTokenUri 'https://token-uri' `
             -PublishProjectName 'proj' `
-            -ArtifactName 'art' `
-            -JobAttempt 1 } |
+            -ArtifactName 'art' } |
             Should -Throw '*Failed to check*'
     }
 }

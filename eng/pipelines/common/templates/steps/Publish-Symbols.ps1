@@ -27,12 +27,8 @@
     The project name registered with the symbol publishing service (decided during onboarding).
 
 .PARAMETER ArtifactName
-    The base name for the publishing request. A job attempt suffix is appended to ensure
-    uniqueness across retries.
-
-.PARAMETER JobAttempt
-    The job attempt number (from Azure Pipelines' System.JobAttempt). Appended to ArtifactName
-    to create a unique request name per execution.
+    The name of the publishing request. This must match the SymbolsArtifactName used by
+    the PublishSymbols@2 upload task so that upload and publish reference the same artifact.
 
 .PARAMETER PublishToInternal
     Whether to publish symbols to the internal symbol server. Defaults to $true.
@@ -45,8 +41,7 @@
         -PublishServer "mysymbolserver" `
         -PublishTokenUri "https://login.microsoftonline.com/..." `
         -PublishProjectName "Microsoft.Data.SqlClient.SNI" `
-        -ArtifactName "mds_symbols_MyProject_dotnet-sqlclient_main_6.1.5_abc123" `
-        -JobAttempt 1
+        -ArtifactName "mds_symbols_MyProject_dotnet-sqlclient_main_6.1.5_abc123_1"
 
     Publishes symbols to both internal and public servers using the specified parameters.
 
@@ -55,8 +50,7 @@
         -PublishServer "mysymbolserver" `
         -PublishTokenUri "https://login.microsoftonline.com/..." `
         -PublishProjectName "Microsoft.Data.SqlClient.SNI" `
-        -ArtifactName "mds_symbols_MyProject_dotnet-sqlclient_main_6.1.5_abc123" `
-        -JobAttempt 2 `
+        -ArtifactName "mds_symbols_MyProject_dotnet-sqlclient_main_6.1.5_abc123_2" `
         -PublishToPublic $false
 
     Publishes symbols to the internal server only (retry attempt 2).
@@ -95,13 +89,9 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$PublishProjectName,
 
-    [Parameter(Mandatory = $true, HelpMessage = "Base artifact name for the publishing request.")]
+    [Parameter(Mandatory = $true, HelpMessage = "Artifact name for the publishing request (must match PublishSymbols@2 SymbolsArtifactName).")]
     [ValidateNotNullOrEmpty()]
     [string]$ArtifactName,
-
-    [Parameter(Mandatory = $true, HelpMessage = "Job attempt number (System.JobAttempt) for uniqueness.")]
-    [ValidateRange(1, [int]::MaxValue)]
-    [int]$JobAttempt,
 
     [Parameter(Mandatory = $false, HelpMessage = "Publish symbols to the internal symbol server.")]
     [bool]$PublishToInternal = $true,
@@ -119,13 +109,12 @@ Write-Host "PublishServer:      ${PublishServer}"
 Write-Host "PublishTokenUri:    ${PublishTokenUri}"
 Write-Host "PublishProjectName: ${PublishProjectName}"
 Write-Host "ArtifactName:       ${ArtifactName}"
-Write-Host "JobAttempt:         ${JobAttempt}"
 Write-Host "PublishToInternal:  ${PublishToInternal}"
 Write-Host "PublishToPublic:    ${PublishToPublic}"
 Write-Host "=================================="
 
 # --- Build request name and URLs ---
-$requestName = "${ArtifactName}_${JobAttempt}"
+$requestName = ${ArtifactName}
 $baseUrl     = "https://${PublishServer}.trafficmanager.net/projects/${PublishProjectName}"
 $registerUrl = "${baseUrl}/requests"
 $requestUrl  = "${baseUrl}/requests/${requestName}"
@@ -143,6 +132,12 @@ $symbolPublishingToken = az account get-access-token --resource ${PublishTokenUr
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to acquire symbol publishing token via Azure CLI (exit code: ${LASTEXITCODE})."
 }
+if ($null -ne $symbolPublishingToken) {
+    $symbolPublishingToken = $symbolPublishingToken.Trim()
+}
+if ([string]::IsNullOrWhiteSpace($symbolPublishingToken)) {
+    throw "Failed to acquire symbol publishing token via Azure CLI: received an empty or whitespace-only access token."
+}
 Write-Host ">  1. Symbol publishing token acquired."
 
 $authHeaders = @{ Authorization = "Bearer ${symbolPublishingToken}" }
@@ -153,8 +148,7 @@ $requestNameRegistrationBody = @{ requestName = $requestName } | ConvertTo-Json 
 try {
     Invoke-RestMethod -Method POST -Uri ${registerUrl} -Headers ${authHeaders} -ContentType "application/json" -Body ${requestNameRegistrationBody}
 } catch {
-    Write-Error "Failed to register request name. URI: ${registerUrl} | Body: ${requestNameRegistrationBody} | Error: $_"
-    throw
+    throw "Failed to register request name. URI: ${registerUrl} | Body: ${requestNameRegistrationBody} | Error: $_"
 }
 Write-Host ">  2. Request name registered successfully."
 
@@ -168,8 +162,7 @@ Write-Host "Publishing symbols request body: ${publishSymbolsBody}"
 try {
     Invoke-RestMethod -Method POST -Uri ${requestUrl} -Headers ${authHeaders} -ContentType "application/json" -Body ${publishSymbolsBody}
 } catch {
-    Write-Error "Failed to publish symbols. URI: ${requestUrl} | Body: ${publishSymbolsBody} | Error: $_"
-    throw
+    throw "Failed to publish symbols. URI: ${requestUrl} | Body: ${publishSymbolsBody} | Error: $_"
 }
 Write-Host ">  3. Request to publish symbols submitted successfully."
 
@@ -179,8 +172,7 @@ try {
     $status = Invoke-RestMethod -Method GET -Uri ${requestUrl} -Headers ${authHeaders} -ContentType "application/json"
     $status
 } catch {
-    Write-Error "Failed to check request status. URI: ${requestUrl} | Error: $_"
-    throw
+    throw "Failed to check request status. URI: ${requestUrl} | Error: $_"
 }
 
 Write-Host ""
