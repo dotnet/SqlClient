@@ -1,0 +1,5 @@
+flowchart LR
+    A["SqlConnection.Open()"] --> B["CompleteLogin()"]
+    B --> C["Enlist(tx)"]
+    D["Pool reuses connection"] --> E["ActivateConnection(tx)"]
+    E --> C

@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant User as User Thread
+    participant Conn as Connection
+    participant SysTx as SysTx Thread
+
+    User->>Conn: Close()
+    Note over User,Conn: lock(connection)
+    User->>Conn: read EnlistedTransaction
+    SysTx->>Conn: TransactionCompleted
+    Note over SysTx,Conn: lock(transaction)
+    SysTx->>Conn: clear EnlistedTransaction

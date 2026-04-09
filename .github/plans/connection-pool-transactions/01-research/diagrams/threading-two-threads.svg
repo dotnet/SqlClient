@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 471.56000000000006 310" width="471.56000000000006" height="310" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="seq-arrow" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" />
+  </marker>
+  <marker id="seq-arrow-open" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polyline points="0 0, 8 2.5, 0 5" fill="none" stroke="var(--_arrow)" stroke-width="1" />
+  </marker>
+</defs>
+<line class="lifeline" data-actor="User" x1="85.1365" y1="70" x2="85.1365" y2="280" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="Conn" x1="230.59300000000002" y1="70" x2="230.59300000000002" y2="280" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="SysTx" x1="381.23650000000004" y1="70" x2="381.23650000000004" y2="280" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<g class="message" data-from="User" data-to="Conn" data-label="Close()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="85.1365" y1="90" x2="230.59300000000002" y2="90" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="157.86475000000002" y="80" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Close()</text>
+</g>
+<g class="message" data-from="User" data-to="Conn" data-label="read EnlistedTransaction" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="85.1365" y1="145" x2="230.59300000000002" y2="145" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="157.86475000000002" y="135" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">read EnlistedTransaction</text>
+</g>
+<g class="message" data-from="SysTx" data-to="Conn" data-label="TransactionCompleted" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="381.23650000000004" y1="185" x2="230.59300000000002" y2="185" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="305.91475" y="175" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">TransactionCompleted</text>
+</g>
+<g class="message" data-from="SysTx" data-to="Conn" data-label="clear EnlistedTransaction" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="381.23650000000004" y1="240" x2="230.59300000000002" y2="240" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="305.91475" y="230" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">clear EnlistedTransaction</text>
+</g>
+<g class="note" data-position="over" data-actors="User,Conn">
+  <polygon points="105.83575,98 203.89375,98 209.89375,104 209.89375,121 105.83575,121" fill="var(--bg)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <polygon points="203.89375,98 209.89375,104 203.89375,104" fill="var(--_inner-stroke)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="157.86475000000002" y="109.5" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">lock(connection)</text>
+</g>
+<g class="note" data-position="over" data-actors="SysTx,Conn">
+  <polygon points="253.29175000000004,193 352.5377500000001,193 358.5377500000001,199 358.5377500000001,216 253.29175000000004,216" fill="var(--bg)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <polygon points="352.5377500000001,193 358.5377500000001,199 352.5377500000001,199" fill="var(--_inner-stroke)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="305.91475" y="204.5" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">lock(transaction)</text>
+</g>
+<g class="actor" data-id="User" data-label="User Thread" data-type="participant">
+  <rect x="30" y="30" width="110.273" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="85.1365" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">User Thread</text>
+</g>
+<g class="actor" data-id="Conn" data-label="Connection" data-type="participant">
+  <rect x="180.27300000000002" y="30" width="100.64" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="230.59300000000002" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">Connection</text>
+</g>
+<g class="actor" data-id="SysTx" data-label="SysTx Thread" data-type="participant">
+  <rect x="320.913" y="30" width="120.647" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="381.23650000000004" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">SysTx Thread</text>
+</g>
+</svg>

@@ -41,7 +41,7 @@ If `TransactionCompleted` fires between the lock release and `SetInStasis()`, th
 
 `DestroyObject` has a safety guard: if `obj.IsTxRootWaitingForTxEnd` is true, it logs a trace and does nothing. This prevents premature disposal of a connection in stasis. The `TransactionCompleted` event will eventually call `PutObjectFromTransactedPool`, which calls `DestroyObject` again after `TerminateStasis` clears the flag.
 
-`ChannelDbConnectionPool.RemoveConnection` currently **lacks this guard** — this is a known gap.
+`ChannelDbConnectionPool.RemoveConnection` does not currently have this guard.
 
 ## Findings
 
@@ -58,7 +58,7 @@ See the health check asymmetry in [05-connection-transaction-binding.md](05-conn
 ### 3. Pool shutdown with active transactions
 
 - **WaitHandle pool:** `DeactivateObject` checks for pool shutdown. If the pool is shutting down and the connection `IsTransactionRoot`, it enters stasis (`SetInStasis`) to keep the connection alive until the transaction completes. Non-root connections are destroyed.
-- **Channel pool:** `Shutdown` and `Clear` currently throw `NotImplementedException`. This is a known gap — there's no handling for active transactions during shutdown.
+- **Channel pool:** `Shutdown` and `Clear` currently throw `NotImplementedException`.
 
 See stasis mechanics in [06-connection-return-and-cleanup-paths.md](06-connection-return-and-cleanup-paths.md).
 

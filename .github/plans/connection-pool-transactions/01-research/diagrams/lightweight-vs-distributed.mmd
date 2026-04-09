@@ -1,0 +1,5 @@
+flowchart LR
+    A["TransactionScope created"] --> B["1st connection enlists"]
+    B --> C{"2nd durable resource?"}
+    C -- No --> D["⚡ Lightweight\n(no MSDTC)"]
+    C -- Yes --> E["🐢 Promoted to\nDistributed (MSDTC)"]

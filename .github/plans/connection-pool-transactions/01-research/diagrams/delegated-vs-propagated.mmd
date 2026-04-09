@@ -1,0 +1,6 @@
+flowchart LR
+    E["EnlistNonNull(tx)"] --> P{"EnlistPromotableSinglePhase?"}
+    P -- "✅ Success" --> D["DELEGATED (root, BEGIN TX)"]
+    P -- "❌ Fails" --> PR["PROPAGATED (DTC cookie)"]
+    D --> B["EnlistedTx = tx.Clone()"]
+    PR --> B

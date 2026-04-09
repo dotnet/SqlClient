@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1116.011 328.23599999999993" width="1116.011" height="328.23599999999993" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<polyline class="edge" data-from="E" data-to="P" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="178.28000000000003,164.11799999999997 226.28000000000003,164.11799999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="P" data-to="D" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="✅ Success" points="433.1433333333333,122.7453333333333 641.4125,122.7453333333333" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="P" data-to="PR" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="❌ Fails" points="433.1433333333333,205.4906666666666 641.4125,205.49066666666658" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="D" data-to="B" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="860.4615,122.7453333333333 882.0532499999999,122.7453333333333 882.0532499999999,164.11799999999994 903.645,164.11799999999994" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PR" data-to="B" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="850.8285,205.49066666666658 882.0532499999999,205.49066666666658 882.0532499999999,164.11799999999994 903.645,164.11799999999994" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="P" data-to="D" data-label="✅ Success">
+  <rect x="518.516" y="106.7453333333333" width="74.08000000000001" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="555.5559999999999" y="121.89533333333331" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">✅ Success</text>
+</g>
+<g class="edge-label" data-from="P" data-to="PR" data-label="❌ Fails">
+  <rect x="547.157" y="189.49066666666658" width="55.07200000000001" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="574.6930000000001" y="204.6406666666666" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">❌ Fails</text>
+</g>
+<g class="node" data-id="E" data-label="EnlistNonNull(tx)" data-shape="rectangle">
+  <rect x="40" y="145.66799999999995" width="138.28000000000003" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="109.14000000000001" y="164.11799999999994" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">EnlistNonNull(tx)</text>
+</g>
+<g class="node" data-id="P" data-label="EnlistPromotableSinglePhase?" data-shape="diamond">
+  <polygon points="350.398,40 474.51599999999996,164.11799999999997 350.398,288.23599999999993 226.28000000000006,164.11799999999997" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="350.398" y="164.11799999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">EnlistPromotableSinglePhase?</text>
+</g>
+<g class="node" data-id="D" data-label="DELEGATED (root, BEGIN TX)" data-shape="rectangle">
+  <rect x="641.4125" y="104.2953333333333" width="219.04899999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="750.937" y="122.7453333333333" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">DELEGATED (root, BEGIN TX)</text>
+</g>
+<g class="node" data-id="PR" data-label="PROPAGATED (DTC cookie)" data-shape="rectangle">
+  <rect x="641.4125" y="187.0406666666666" width="209.41599999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="746.1205" y="205.49066666666658" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">PROPAGATED (DTC cookie)</text>
+</g>
+<g class="node" data-id="B" data-label="EnlistedTx = tx.Clone()" data-shape="rectangle">
+  <rect x="903.645" y="145.66799999999995" width="172.36599999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="989.828" y="164.11799999999994" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">EnlistedTx = tx.Clone()</text>
+</g>
+</svg>

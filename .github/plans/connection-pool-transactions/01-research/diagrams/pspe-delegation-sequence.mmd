@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant App
+    participant SysTx as System.Transactions
+    participant SqlClient
+    participant SQL as SQL Server
+
+    App->>SysTx: new TransactionScope()
+    App->>SqlClient: conn.Open()
+    SqlClient->>SysTx: EnlistPromotableSinglePhase()
+    SysTx->>SqlClient: Initialize()
+    SqlClient->>SQL: BEGIN TRANSACTION
+    Note over SqlClient: IsTransactionRoot = true
+    App->>SysTx: scope.Complete() + Dispose()
+    SysTx->>SqlClient: SinglePhaseCommit()
+    SqlClient->>SQL: COMMIT

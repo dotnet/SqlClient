@@ -1,0 +1,10 @@
+flowchart LR
+    A["TxCompleted (SysTx thread)"] --> B["DetachTransaction()"]
+    B --> C{"In stasis?"}
+    C -- No --> D["TransactionEnded()"]
+    C -- Yes --> E["TerminateStasis()"]
+    D --> F["PutObjectFromTxPool"]
+    E --> F
+    F --> G{"Pool running & CanBePooled?"}
+    G -- Yes --> H["Reset → Idle Pool"]
+    G -- No --> I["Destroy"]

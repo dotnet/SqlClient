@@ -1,0 +1,5 @@
+flowchart LR
+    A{"HasTxAffinity & Tx.Current?"} -- Yes --> B["1. Transacted Pool"]
+    A -- No --> C["2. Idle Pool"]
+    B -- Miss --> C
+    C -- Empty --> D["3. Create New"]

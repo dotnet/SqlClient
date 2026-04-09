@@ -1,0 +1,8 @@
+flowchart LR
+    A["conn.Close()"] --> B["DetachIfTxEnded()"]
+    B --> C{"Tx ended?"}
+    C -- Yes --> D["Clear EnlistedTx"]
+    C -- No --> E["Keep EnlistedTx"]
+    D --> F["→ General Pool"]
+    E --> G["→ Transacted Pool"]
+    G -.->|"Waits"| H["TxCompleted event"]

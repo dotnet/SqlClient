@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 615.7434999999999 455" width="615.7434999999999" height="455" style="--bg:#FFFFFF;--fg:#27272A;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="seq-arrow" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" />
+  </marker>
+  <marker id="seq-arrow-open" markerWidth="8" markerHeight="5" refX="8" refY="2.5" orient="auto-start-reverse">
+    <polyline points="0 0, 8 2.5, 0 5" fill="none" stroke="var(--_arrow)" stroke-width="1" />
+  </marker>
+</defs>
+<line class="lifeline" data-actor="App" x1="70" y1="70" x2="70" y2="425" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="SysTx" x1="229.95999999999998" y1="70" x2="229.95999999999998" y2="425" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="SqlClient" x1="392.83" y1="70" x2="392.83" y2="425" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<line class="lifeline" data-actor="SQL" x1="532.8299999999999" y1="70" x2="532.8299999999999" y2="425" stroke="var(--_line)" stroke-width="0.75" stroke-dasharray="6 4" />
+<g class="message" data-from="App" data-to="SysTx" data-label="new TransactionScope()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="70" y1="90" x2="229.95999999999998" y2="90" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="149.98" y="80" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">new TransactionScope()</text>
+</g>
+<g class="message" data-from="App" data-to="SqlClient" data-label="conn.Open()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="70" y1="130" x2="392.83" y2="130" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="231.415" y="120" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">conn.Open()</text>
+</g>
+<g class="message" data-from="SqlClient" data-to="SysTx" data-label="EnlistPromotableSinglePhase()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="392.83" y1="170" x2="229.95999999999998" y2="170" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="311.395" y="160" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">EnlistPromotableSinglePhase()</text>
+</g>
+<g class="message" data-from="SysTx" data-to="SqlClient" data-label="Initialize()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="229.95999999999998" y1="210" x2="392.83" y2="210" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="311.395" y="200" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">Initialize()</text>
+</g>
+<g class="message" data-from="SqlClient" data-to="SQL" data-label="BEGIN TRANSACTION" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="392.83" y1="250" x2="532.8299999999999" y2="250" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="462.8299999999999" y="240" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">BEGIN TRANSACTION</text>
+</g>
+<g class="message" data-from="App" data-to="SysTx" data-label="scope.Complete() + Dispose()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="70" y1="305" x2="229.95999999999998" y2="305" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="149.98" y="295" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">scope.Complete() + Dispose()</text>
+</g>
+<g class="message" data-from="SysTx" data-to="SqlClient" data-label="SinglePhaseCommit()" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="229.95999999999998" y1="345" x2="392.83" y2="345" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="311.395" y="335" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">SinglePhaseCommit()</text>
+</g>
+<g class="message" data-from="SqlClient" data-to="SQL" data-label="COMMIT" data-line-style="solid" data-arrow-head="filled" data-self="false">
+  <line x1="392.83" y1="385" x2="532.8299999999999" y2="385" stroke="var(--_line)" stroke-width="1" marker-end="url(#seq-arrow)" />
+  <text x="462.8299999999999" y="375" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">COMMIT</text>
+</g>
+<g class="note" data-position="over" data-actors="SqlClient">
+  <polygon points="321.793,258 457.867,258 463.867,264 463.867,281 321.793,281" fill="var(--bg)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <polygon points="457.867,258 463.867,264 457.867,264" fill="var(--_inner-stroke)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="392.83000000000004" y="269.5" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">IsTransactionRoot = true</text>
+</g>
+<g class="actor" data-id="App" data-label="App" data-type="participant">
+  <rect x="30" y="30" width="80" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="70" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">App</text>
+</g>
+<g class="actor" data-id="SysTx" data-label="System.Transactions" data-type="participant">
+  <rect x="150" y="30" width="159.92" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="229.95999999999998" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">System.Transactions</text>
+</g>
+<g class="actor" data-id="SqlClient" data-label="SqlClient" data-type="participant">
+  <rect x="349.91999999999996" y="30" width="85.82000000000001" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="392.83" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">SqlClient</text>
+</g>
+<g class="actor" data-id="SQL" data-label="SQL Server" data-type="participant">
+  <rect x="479.9164999999999" y="30" width="105.827" height="40" rx="4" ry="4" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="532.8299999999999" y="50" font-size="13" text-anchor="middle" font-weight="500" fill="var(--_text)" dy="4.55">SQL Server</text>
+</g>
+</svg>

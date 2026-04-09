@@ -81,15 +81,13 @@ Pool shutdown is non-blocking — `Shutdown()` sets state and returns immediatel
 
 ### Stasis Call Sites
 
-| # | Location | Condition | Channel Pool Equivalent |
-|---|----------|-----------|------------------------|
-| 1 | `WaitHandleDbConnectionPool.CleanupCallback` | Timer age-out of a transaction root | No cleanup timer stasis — connection would be destroyed |
-| 2 | `WaitHandleDbConnectionPool.DeactivateObject` | Pool shutting down + `IsTransactionRoot` | `RemoveConnection` — destroys immediately |
-| 3 | `WaitHandleDbConnectionPool.DeactivateObject` | `IsTransactionRoot` + `Pool == null` | Not handled |
-| 4 | `WaitHandleDbConnectionPool.DeactivateObject` | `!CanBePooled` + `IsTransactionRoot` + `!IsConnectionDoomed` | `RemoveConnection` — destroys immediately |
-| 5 | `DbConnectionInternal.CloseConnection` | Non-pooled connection + `IsTransactionRoot` | Shared code — same behavior in both pools |
-
-The Channel pool has **0 stasis call sites**. This gap is tracked in the design section.
+| # | Location | Condition |
+|---|----------|----------|
+| 1 | `WaitHandleDbConnectionPool.CleanupCallback` | Timer age-out of a transaction root |
+| 2 | `WaitHandleDbConnectionPool.DeactivateObject` | Pool shutting down + `IsTransactionRoot` |
+| 3 | `WaitHandleDbConnectionPool.DeactivateObject` | `IsTransactionRoot` + `Pool == null` |
+| 4 | `WaitHandleDbConnectionPool.DeactivateObject` | `!CanBePooled` + `IsTransactionRoot` + `!IsConnectionDoomed` |
+| 5 | `DbConnectionInternal.CloseConnection` | Non-pooled connection + `IsTransactionRoot` |
 
 ## Convergence: PutObjectFromTransactedPool
 
@@ -156,44 +154,6 @@ flowchart TD
     style GENERAL fill:#d4edda,stroke:#155724,stroke-width:3px
     style DESTROY fill:#f5c6cb,stroke:#721c24
 ```
-
-## WaitHandle vs Channel: Return Path Comparison
-
-### WaitHandle pool (DeactivateObject) — 7 branches, 3 enter stasis
-
-```
-DeactivateObject(connection):
-├── IsConnectionDoomed? → DESTROY
-└── lock(connection)
-    ├── Pool ShuttingDown?
-    │   ├── IsTransactionRoot? → STASIS
-    │   └── else → DESTROY
-    └── Pool active
-        ├── IsTransactionRoot && Pool == null? → STASIS
-        ├── CanBePooled?
-        │   ├── EnlistedTransaction != null? → TRANSACTED POOL
-        │   └── else → GENERAL POOL
-        └── !CanBePooled
-            ├── IsTransactionRoot && !Doomed? → STASIS
-            └── else → DESTROY
-```
-
-### Channel pool (ReturnInternalConnection) — 5 branches, 0 enter stasis
-
-```
-ReturnInternalConnection(connection):
-├── !IsLiveConnection? → REMOVE
-├── IsConnectionDoomed? → REMOVE
-├── CanBePooled?
-│   └── lock(connection)
-│       ├── EnlistedTransaction != null? → TRANSACTED POOL
-│       ├── ShuttingDown? → REMOVE
-│       └── else → IDLE CHANNEL
-├── ShuttingDown? → REMOVE
-└── else → REMOVE
-```
-
-The Channel pool has no stasis — non-poolable transaction roots are destroyed immediately. This is a known design gap tracked in the design section.
 
 ## Key Source Files
 
