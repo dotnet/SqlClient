@@ -48,7 +48,7 @@ jobs:
     parameters:
       analyzeType: all
   
-  - if eq(${{ parameters['isOfficialBuild'] }}, true):
+  - ${{ if eq(parameters['isOfficialBuild'], true) }}:
     - template: ../steps/esrp-code-signing-step.yml@self
       parameters:
         artifactType: dll
@@ -57,7 +57,7 @@ jobs:
     parameters:
       OutputDirectory: $(artifactDirectory)
   
-  - if eq(${{ parameters['isOfficialBuild'] }}, true):
+  - ${{ if eq(parameters['isOfficialBuild'], true) }}:
     - template: ../steps/esrp-code-signing-step.yml@self
       parameters:
         artifactType: pkg
