@@ -1,18 +1,18 @@
 # Failure Modes and Edge Cases
 
-What can go wrong at the intersection of transactions and connection pooling.
+What can go wrong at the intersection of transactions and connection pooling. This is the capstone topic — it assumes familiarity with all prior research documents.
 
 ## Inventory
 
-- [x] Transaction timeout while connection is parked in transacted pool
-- [x] Connection goes dead (network failure) while parked in transacted pool
-- [x] Pool shutdown while transactions are active
-- [x] Pool clear (`SqlConnection.ClearPool`) while transactions are active
-- [x] `CanBePooled` becomes false while connection is in transacted pool (e.g., `LoadBalanceTimeout`)
-- [x] MSDTC becomes unavailable during promotion
-- [x] Two transactions trying to use the same physical connection
-- [x] Connection leak detection for transacted connections (GC reclamation)
-- [x] `ReplaceConnection` called on a connection that's enlisted in a transaction
+1. [Transaction timeout](#1-transaction-timeout)
+2. [Connection death while parked](#2-connection-death-while-parked-in-transacted-pool)
+3. [Pool shutdown with active transactions](#3-pool-shutdown-with-active-transactions)
+4. [Pool clear](#4-pool-clear)
+5. [Connection leak / GC reclamation](#5-connection-leak--gc-reclamation)
+6. [ReplaceConnection on an enlisted connection](#6-replaceconnection-on-an-enlisted-connection)
+7. [Two transactions on the same connection](#7-two-transactions-on-the-same-connection)
+8. [MSDTC unavailable during promotion](#8-msdtc-unavailable-during-promotion)
+9. [CanBePooled becomes false while in transacted pool](#9-canbepooled-becomes-false-while-in-transacted-pool)
 
 ## Known Issues in Existing Pool
 
@@ -53,12 +53,16 @@ No special handling needed. A transaction timeout is just normal completion — 
 
 Lazy detection only. Parked transacted connections are **not** proactively health-checked. When a connection is retrieved from the transacted pool via `GetTransactedObject`, the caller health-checks it. If dead, it's destroyed and a new connection is created. The transacted pool itself never discovers a dead connection on its own.
 
+See the health check asymmetry in [05-connection-transaction-binding.md](05-connection-transaction-binding.md) — dead roots throw, dead non-roots are silently discarded.
+
 ### 3. Pool shutdown with active transactions
 
 - **WaitHandle pool:** `DeactivateObject` checks for pool shutdown. If the pool is shutting down and the connection `IsTransactionRoot`, it enters stasis (`SetInStasis`) to keep the connection alive until the transaction completes. Non-root connections are destroyed.
 - **Channel pool:** `Shutdown` and `Clear` currently throw `NotImplementedException`. This is a known gap — there's no handling for active transactions during shutdown.
 
-### 4. Pool clear (`ClearPool`)
+See stasis mechanics in [06-connection-return-and-cleanup-paths.md](06-connection-return-and-cleanup-paths.md).
+
+### 4. Pool clear
 
 `ClearPool` marks connections as non-poolable (`CanBePooled = false`) but does **not** directly touch the transacted pool. When connections are later retrieved from the transacted pool, the `CanBePooled` check causes them to be destroyed instead of reused. This is an indirect, lazy cleanup mechanism.
 
@@ -73,9 +77,9 @@ GC-triggered reclamation calls `DetachCurrentTransactionIfEnded` + `DeactivateOb
 Two sub-cases:
 
 - **Propagated (DTC) non-root connections:** Correct behavior. The distributed transaction survives the connection break because it's managed by MSDTC. The new connection can re-join via the propagation cookie (TDS `PROPAGATE_DTCTOKEN`). This is the useful case.
-- **Delegated root connections:** The transaction is already doomed. The server-side local transaction is tied to the session that created it. When the physical connection breaks, that session dies and the server rolls back the local transaction. No mechanism exists to reconnect and resume it (confirmed via public docs — the PSPE contract requires the RM to handle `SinglePhaseCommit`/`Rollback`/`Promote` callbacks on the live connection).
+- **Delegated root connections:** The transaction is already doomed. The server-side local transaction is tied to the session that created it. When the physical connection breaks, that session dies and the server rolls back the local transaction. No mechanism exists to reconnect and resume it — confirmed via public `IPromotableSinglePhaseNotification` documentation (the PSPE contract requires the RM to handle `SinglePhaseCommit`/`Rollback`/`Promote` callbacks on the live connection).
 
-The lack of guard is harmless-by-circumstance for roots: the trigger is a broken connection, and a broken root means the transaction was already lost. But it warrants a test to verify the transaction correctly aborts (see design decision #4).
+The lack of guard is harmless-by-circumstance for roots: the trigger is a broken connection, and a broken root means the transaction was already lost. But it warrants a test to verify the transaction correctly aborts (see design decision #4 in the design section).
 
 ### 7. Two transactions on the same connection
 

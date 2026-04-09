@@ -1,6 +1,8 @@
 # Connection Return and Cleanup Paths
 
-Every code path that moves a connection from "in use" to "somewhere else," and what transaction state the connection is in at each point.
+Every code path that moves a connection from "in use" to "somewhere else," and how the stasis mechanism keeps delegated transaction roots alive.
+
+This document builds on binding rules from [05-connection-transaction-binding.md](05-connection-transaction-binding.md) and the root connection concept from [02-delegated-transactions-and-pspe.md](02-delegated-transactions-and-pspe.md).
 
 ## Paths Inventory
 
@@ -15,15 +17,15 @@ Every code path that moves a connection from "in use" to "somewhere else," and w
 | Load balance timeout | Sets `DoNotPool` | May be enlisted | Next return → destroy |
 | `ReplaceConnection` | Creates new, removes old | Old may be enlisted | Old destroyed, new activated |
 
-## Path A: User closes connection (`SqlConnection.Close()`)
+## Path A: User Closes Connection
 
 1. `DbConnectionInternal.CloseConnection()` is called.
-2. `DetachCurrentTransactionIfEnded()` checks if the enlisted transaction is already dead — if so, clears `EnlistedTransaction` right there.
+2. `DetachCurrentTransactionIfEnded()` checks if the enlisted transaction is already dead — if so, clears `EnlistedTransaction` right there (see [03-connection-enlistment-lifecycle.md](03-connection-enlistment-lifecycle.md)).
 3. `Pool.ReturnInternalConnection()` is called, which calls `DeactivateConnection()` and then checks `EnlistedTransaction`:
    - **If still enlisted** (transaction is active): the connection goes to `TransactedConnectionPool.PutTransactedObject()` where it waits until Path B fires.
    - **If not enlisted** (transaction already ended or none): returns directly to the general pool.
 
-## Path B: Transaction completes asynchronously
+## Path B: Transaction Completes Asynchronously
 
 The `TransactionCompleted` event fires on `DbConnectionInternal`, which calls `CleanupConnectionOnTransactionCompletion()`. Two sub-paths:
 
@@ -42,20 +44,60 @@ Applies when a connection is a delegated transaction root that was put in stasis
    - If `_pooledCount == 1` (closed, pooled): calls `Pool.PutObjectFromTransactedPool()` → general pool.
    - If `_pooledCount == -1` (closed, non-pooled): calls `Dispose()`.
 
-## Path C: Pool pruning (`CleanupCallback`)
+## Path C: Pool Pruning
 
 1. Timer pops old connections from the idle stack.
 2. For each: checks `IsTransactionRoot` under lock.
    - If true: `SetInStasis()` — can't destroy, transaction is still running.
    - If false: `DestroyObject()`.
 
-## Convergence: `PutObjectFromTransactedPool`
+## The Stasis Mechanism
+
+Stasis is a state where a delegated transaction root connection is "parked" with no owner — not in the idle pool, not held by user code, not in the transacted pool. It exists only because the delegated transaction hasn't finished yet and the connection must stay alive to support the PSPE callbacks (`SinglePhaseCommit`/`Rollback`/`Promote`).
+
+### When It Happens
+
+During `DeactivateObject` (user closed the connection) when the connection is a transaction root but can't be placed anywhere:
+- **Pool is shutting down** — can't put it in the idle stack
+- **`CanBePooled` is false** (e.g., `LoadBalanceTimeout` expired) — can't put it in any pool
+- **`Pool == null`** — edge case, can't put it anywhere
+- **`EnlistedTransaction` is already null** — can't put it in transacted pool (no key)
+
+### Why Not Just Leave It in the Idle Stack?
+
+Any `TryGetConnection` caller could pop it and get a connection still bound to an unfinished delegated transaction. You'd have to teach every idle-pool consumer to check `IsTransactionRoot` and skip, spreading transaction-awareness across the entire pool.
+
+### Why Not Block and Wait?
+
+Pool shutdown is non-blocking — `Shutdown()` sets state and returns immediately. There's nowhere to block; the pool group pruner runs periodically checking `Count == 0`. Stasis **is** the wait mechanism — it's event-driven via `TransactionCompleted`.
+
+### How Stasis Resolves
+
+1. `DelegatedTransactionEnded()` calls `TerminateStasis()` (clears `IsTxRootWaitingForTxEnd`)
+2. Then calls `Pool.PutObjectFromTransactedPool()`
+3. `PutObjectFromTransactedPool` sees the connection is doomed/pool shutting down → `DestroyObject()`
+4. `DestroyObject()` removes from `_objectList`, decrements count
+5. Pool group pruner eventually sees `Count == 0` and finishes teardown
+
+### Stasis Call Sites
+
+| # | Location | Condition | Channel Pool Equivalent |
+|---|----------|-----------|------------------------|
+| 1 | `WaitHandleDbConnectionPool.CleanupCallback` | Timer age-out of a transaction root | No cleanup timer stasis — connection would be destroyed |
+| 2 | `WaitHandleDbConnectionPool.DeactivateObject` | Pool shutting down + `IsTransactionRoot` | `RemoveConnection` — destroys immediately |
+| 3 | `WaitHandleDbConnectionPool.DeactivateObject` | `IsTransactionRoot` + `Pool == null` | Not handled |
+| 4 | `WaitHandleDbConnectionPool.DeactivateObject` | `!CanBePooled` + `IsTransactionRoot` + `!IsConnectionDoomed` | `RemoveConnection` — destroys immediately |
+| 5 | `DbConnectionInternal.CloseConnection` | Non-pooled connection + `IsTransactionRoot` | Shared code — same behavior in both pools |
+
+The Channel pool has **0 stasis call sites**. This gap is tracked in the design section.
+
+## Convergence: PutObjectFromTransactedPool
 
 All post-transaction return paths funnel through `PutObjectFromTransactedPool()`:
 - **Pool running + `CanBePooled`**: `ResetConnection()` → general pool.
 - **Otherwise**: destroy/dispose.
 
-## Race: Close and TransactionCompleted fire simultaneously
+## Race: Close and TransactionCompleted Fire Simultaneously
 
 `CloseConnection()` calls `DetachCurrentTransactionIfEnded()` before returning to the pool. If the transaction has already completed, the connection goes straight to the general pool via Path A (with `EnlistedTransaction == null`). If the transaction is still active, the connection parks in the transacted pool and Path B handles the return. The lock inside `DetachTransaction()` on the transaction object prevents both paths from racing.
 
@@ -115,15 +157,6 @@ flowchart TD
     style DESTROY fill:#f5c6cb,stroke:#721c24
 ```
 
-## Key Source Files
-
-| File | Relevant methods |
-|------|-----------------|
-| `src/.../ProviderBase/DbConnectionInternal.cs` | `CloseConnection`, `DetachCurrentTransactionIfEnded`, `DetachTransaction`, `TransactionCompletedEvent`, `CleanupConnectionOnTransactionCompletion`, `DelegatedTransactionEnded`, `SetInStasis` |
-| `src/.../ConnectionPool/TransactedConnectionPool.cs` | `GetTransactedObject`, `PutTransactedObject`, `TransactionEnded` |
-| `src/.../ConnectionPool/WaitHandleDbConnectionPool.cs` | `DeactivateObject`, `DestroyObject`, `PutObjectFromTransactedPool`, `TransactionEnded`, `GetFromTransactedPool`, `CleanupCallback` |
-| `src/.../ConnectionPool/ChannelDbConnectionPool.cs` | `ReturnInternalConnection`, `RemoveConnection`, `PutObjectFromTransactedPool`, `TransactionEnded`, `GetFromTransactedPool` |
-
 ## WaitHandle vs Channel: Return Path Comparison
 
 ### WaitHandle pool (DeactivateObject) — 7 branches, 3 enter stasis
@@ -160,4 +193,13 @@ ReturnInternalConnection(connection):
 └── else → REMOVE
 ```
 
-The Channel pool has no stasis — non-poolable transaction roots are destroyed immediately. Stasis gaps are tracked in `03-design/pool-comparison-and-decisions.md`.
+The Channel pool has no stasis — non-poolable transaction roots are destroyed immediately. This is a known design gap tracked in the design section.
+
+## Key Source Files
+
+| File | Relevant Methods |
+|------|-----------------|
+| `DbConnectionInternal.cs` | `CloseConnection`, `DetachCurrentTransactionIfEnded`, `DetachTransaction`, `TransactionCompletedEvent`, `CleanupConnectionOnTransactionCompletion`, `DelegatedTransactionEnded`, `SetInStasis`, `TerminateStasis` |
+| `TransactedConnectionPool.cs` | `GetTransactedObject`, `PutTransactedObject`, `TransactionEnded` |
+| `WaitHandleDbConnectionPool.cs` | `DeactivateObject`, `DestroyObject`, `PutObjectFromTransactedPool`, `TransactionEnded`, `GetFromTransactedPool`, `CleanupCallback` |
+| `ChannelDbConnectionPool.cs` | `ReturnInternalConnection`, `RemoveConnection`, `PutObjectFromTransactedPool`, `TransactionEnded`, `GetFromTransactedPool` |

@@ -4,20 +4,37 @@ Goal: Add full transaction support to `ChannelDbConnectionPool`, the new pool im
 
 ## Stage 1 — Research
 
-Understand how System.Transactions works, how connections interact with transactions, and how the existing pool handles all of this.
+Understand how System.Transactions works, how connections interact with transactions, and how the existing pool handles all of this. Documents are ordered as a primer — each builds on the ones before it.
 
 **Status:** Complete
 
-| # | Document | Status | Description |
-|---|----------|--------|-------------|
-| 1 | [System.Transactions overview](01-research/01-system-transactions-overview.md) | Complete | How the framework works as a consumer: lightweight vs distributed, promotion, `TransactionScope`, `TransactionCompleted`, two-phase commit |
-| 2 | [SqlClient transaction enlistment](01-research/02-sqlclient-transaction-enlistment.md) | Complete | Code path from `Open()` through auto-enlistment, `EnlistedTransaction` lifecycle, `DetachTransaction` |
-| 3 | [Delegated transactions & promotion](01-research/03-delegated-transactions-and-promotion.md) | Complete | `IsTransactionRoot`, `IsTxRootWaitingForTxEnd`, stasis mechanism, why it exists |
-| 4 | [Connection-transaction binding rules](01-research/04-connection-transaction-binding-rules.md) | Complete | When connections share/separate, `HasTransactionAffinity`, `TransactionScopeOption` behavior |
-| 5 | [Threading model](01-research/05-threading-model.md) | Complete | `Transaction.Current`, which thread fires events, lock ordering, async interactions |
-| 6 | [Connection return & cleanup paths](01-research/06-connection-return-and-cleanup-paths.md) | Complete | Every path from "in use" to "somewhere else," diagram, race condition analysis |
-| 7 | ~~TransactedConnectionPool data structure~~ | Removed | Deleted — content was inaccurate |
-| 8 | [Failure modes & edge cases](01-research/08-failure-modes-and-edge-cases.md) | Complete | Timeouts, dead connections, pool shutdown, ReplaceConnection on roots, known race conditions, `DestroyObject` guard gap |
+### Layer 1: Foundations (no SqlClient knowledge needed)
+
+| # | Document | Description |
+|---|----------|-------------|
+| 1 | [System.Transactions fundamentals](01-research/01-system-transactions-fundamentals.md) | TransactionScope, lightweight vs distributed, promotion trigger, TransactionCompleted event, timeout, 2PC, async flow |
+
+### Layer 2: How SqlClient uses System.Transactions (single connection focus)
+
+| # | Document | Description |
+|---|----------|-------------|
+| 2 | [Delegated transactions and PSPE](01-research/02-delegated-transactions-and-pspe.md) | PSPE optimization, SqlDelegatedTransaction, delegated vs propagated paths, IsTransactionRoot, why the root can't be destroyed |
+| 3 | [Connection enlistment lifecycle](01-research/03-connection-enlistment-lifecycle.md) | Two enlistment points, EnlistedTransaction property, DetachTransaction, manual enlistment, ADP async bridging |
+| 4 | [Transaction cloning](01-research/04-transaction-cloning.md) | Clone() mechanics, why SqlClient clones (EnlistedTransaction + dictionary keys), safe disposal pattern, DependentClone |
+
+### Layer 3: Pool-level behavior (multiple connections, data structures)
+
+| # | Document | Description |
+|---|----------|-------------|
+| 5 | [Connection-transaction binding](01-research/05-connection-transaction-binding.md) | HasTransactionAffinity, lookup order, connection reuse, TransactionScopeOption effects, health check asymmetry |
+| 6 | [Connection return and cleanup paths](01-research/06-connection-return-and-cleanup-paths.md) | Path A (user close), Path B (transaction complete), stasis mechanism (consolidated), WaitHandle vs Channel comparison |
+
+### Layer 4: Cross-cutting concerns
+
+| # | Document | Description |
+|---|----------|-------------|
+| 7 | [Threading and synchronization](01-research/07-threading-and-synchronization.md) | Two competing threads, lock hierarchy, DelegatedTransactionEnded call chain, channel safety |
+| 8 | [Failure modes and edge cases](01-research/08-failure-modes-and-edge-cases.md) | 9 failure modes, CleanupCallback race, DestroyObject guard gap, root connection death |
 
 ## Stage 2 — Requirements
 
