@@ -6,7 +6,7 @@
     This script uploads and publishes debug symbols (.pdb files) to internal and/or public
     Microsoft symbol servers via the Symbols Publishing Pipeline REST API.
 
-    It performs three steps:
+    It performs four steps:
       1. Acquires a bearer token from Azure CLI for the symbol publishing service.
       2. Registers a unique request name with the publishing service.
       3. Submits the request to publish symbols to the specified servers.
@@ -56,6 +56,10 @@
     Publishes symbols to the internal server only (retry attempt 2).
 
 .NOTES
+    Licensed to the .NET Foundation under one or more agreements.
+    The .NET Foundation licenses this file to you under the MIT license.
+    See the LICENSE file in the project root for more information.
+
     File Name : Publish-Symbols.ps1
     Requires  : Azure CLI (az) must be installed and authenticated.
     Called by : publish-symbols-step.yml (Azure Pipelines template)

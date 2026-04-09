@@ -29,13 +29,12 @@ Invoke-Pester ./Publish-Symbols.Tests.ps1 -Output Detailed
 
 ## Test Coverage
 
-| Area                  | What's tested                                                    |
-|-----------------------|------------------------------------------------------------------|
-| Parameter validation  | Empty strings, zero/negative `JobAttempt`                        |
-| URL construction      | Base URL, register URL, request URL with `JobAttempt` suffix     |
-| Request uniqueness    | Different `JobAttempt` values produce different request names     |
-| Request bodies        | Registration body, default publish flags, flag overrides         |
-| Error handling        | Token failure, registration failure, publish failure, status failure — all verify expanded URI in error message |
+| Area                 | What's tested                                                    |
+|----------------------|------------------------------------------------------------------|
+| Parameter validation | Empty strings rejected for all mandatory parameters              |
+| URL construction     | Base URL, register URL, request URL built from parameters        |
+| Request bodies       | Registration body, default publish flags, flag overrides         |
+| Error handling       | Token failure, empty token, registration/publish/status failures |
 
 ## Notes
 
