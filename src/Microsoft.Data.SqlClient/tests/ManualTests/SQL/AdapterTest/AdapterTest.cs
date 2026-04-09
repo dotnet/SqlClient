@@ -107,6 +107,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        // https://github.com/dotnet/SqlClient/issues/4135
+        [Trait("Category", "flaky")]
         public void FillShouldAllowRetryLogicProviderToBeInvoked()
         {
             int maxRetries = 3;

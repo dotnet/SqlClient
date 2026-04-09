@@ -113,13 +113,6 @@
   </Target>
 
   <!-- ================================================================== -->
-  <!-- _RestoreTools                                                      -->
-  <!-- ================================================================== -->
-  <Target Name="_RestoreTools" DependsOnTargets="_SetApiCompatProperties">
-    <Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />
-  </Target>
-
-  <!-- ================================================================== -->
   <!-- _BuildLegacyRefNetFx                                               -->
   <!-- ================================================================== -->
   <Target Name="_BuildLegacyRefNetFx" DependsOnTargets="_SetApiCompatProperties" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -155,7 +148,7 @@
   <!-- _RunRefApiCompat                                                   -->
   <!-- ================================================================== -->
   <Target Name="_RunRefApiCompat"
-          DependsOnTargets="_DownloadBaselinePackage;_RestoreTools;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
+          DependsOnTargets="_DownloadBaselinePackage;_BuildLegacyRefNetFx;_BuildLegacyRefNetCore;_BuildNewRefProject">
 
     <!--
       For each TFM, compare:
