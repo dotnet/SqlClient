@@ -65,9 +65,11 @@ jobs:
   - template: ../steps/copy-dlls-for-test-step.yml@self
     parameters:
       product: MDS
+      symbolsFolder: ${{ parameters['symbolsFolder'] }}
+      softwareFolder: ${{ parameters['softwareFolder'] }}
 
   # Publish symbols to servers
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       publishSymbols: ${{ parameters['publishSymbols'] }}
-      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NugetPackageVersion)_$(System.TimelineId)
