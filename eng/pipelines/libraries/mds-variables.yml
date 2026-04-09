@@ -7,5 +7,8 @@
 variables:
   - group: 'akv-variables-v2'
     # Shared symbols publishing variables:
+    # SymbolsAzureSubscription
+    # SymbolsPublishProjectName
     # SymbolsPublishServer
     # SymbolsPublishTokenUri
+    # SymbolsUploadAccount

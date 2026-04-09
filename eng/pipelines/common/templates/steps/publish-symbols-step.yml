@@ -4,11 +4,15 @@
 # See the LICENSE file in the project root for more information.                   #
 #                                                                                  #
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
+#                                                                                  #
+# The Symbols* variable defaults (e.g. SymbolsPublishServer, SymbolsUploadAccount) #
+# are sourced from the 'akv-variables-v2' variable group, imported via             #
+# eng/pipelines/libraries/mds-variables.yml.                                       #
 ####################################################################################
 parameters:
   - name: SymAccount
     type: string
-    default: 'SqlClientDrivers'
+    default: '$(SymbolsUploadAccount)'
 
   - name: publishSymbols
     type: string
@@ -28,6 +32,14 @@ parameters:
 
   - name: symbolsArtifactName
     type: string
+
+  - name: symbolsAzureSubscription
+    type: string
+    default: '$(SymbolsAzureSubscription)'
+
+  - name: symbolsPublishProjectName
+    type: string
+    default: '$(SymbolsPublishProjectName)'
 
   - name: publishToServers
     type: object
@@ -74,14 +86,14 @@ steps:
   displayName: 'Publish symbols'
   condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
   inputs:
-    azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+    azureSubscription: '${{parameters.symbolsAzureSubscription }}'
     scriptType: ps
     scriptLocation: scriptPath
     scriptPath: '$(Build.SourcesDirectory)/eng/pipelines/common/templates/steps/Publish-Symbols.ps1'
     arguments: >-
       -PublishServer "${{parameters.symbolServer }}"
       -PublishTokenUri "${{parameters.symbolTokenUri }}"
-      -PublishProjectName "Microsoft.Data.SqlClient.SNI"
+      -PublishProjectName "${{parameters.symbolsPublishProjectName }}"
       -ArtifactName "${{parameters.symbolsArtifactName }}_$(System.JobAttempt)"
       -PublishToInternal $${{parameters.publishToServers.internal }}
       -PublishToPublic $${{parameters.publishToServers.public }}
