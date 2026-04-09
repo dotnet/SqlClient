@@ -290,50 +290,32 @@ stages:
             displayName: Enable Network DTC Access
 
           # --- Build ---
-          # Workaround: .NET 10 SDK on ADO agents fails to negotiate TFMs
-          # for P2P references to netstandard2.0 projects.  Instead of
-          # negotiating net8.0 → netstandard2.0, MSBuild passes net8.0
-          # directly, causing NETSDK1005.  We create a temporary
-          # Directory.Build.targets that explicitly sets the TFM for
-          # Extensions P2P references, bypassing the broken negotiation.
-          - pwsh: |
-              @'
-              <Project>
-                <Target Name="_FixExtensionsTFM" BeforeTargets="ResolveProjectReferences">
-                  <ItemGroup>
-                    <ProjectReference Condition="'%(Filename)' == 'Abstractions' OR '%(Filename)' == 'Logging'">
-                      <SetTargetFramework>TargetFramework=netstandard2.0</SetTargetFramework>
-                    </ProjectReference>
-                  </ItemGroup>
-                </Target>
-              </Project>
-              '@ | Set-Content -Path "Directory.Build.targets" -Encoding UTF8
-              Write-Host "Created Directory.Build.targets with P2P TFM fix"
-              Get-Content "Directory.Build.targets"
-            displayName: Fix P2P TFM negotiation for Extensions
-
-          - task: DotNetCoreCLI@2
-            displayName: Build Driver
+          - task: MSBuild@1
+            displayName: Restore NuGets
             retryCountOnTaskFailure: 1
             inputs:
-              command: build
-              projects: src/Microsoft.Data.SqlClient/netcore/src/Microsoft.Data.SqlClient.csproj
-              arguments: >-
-                -c $(Configuration)
+              solution: build.proj
+              msbuildArchitecture: x64
+              msbuildArguments: >-
+                -t:restore
+                -p:ReferenceType=Project
+
+          - task: MSBuild@1
+            displayName: Build Driver (netcore)
+            retryCountOnTaskFailure: 1
+            inputs:
+              solution: build.proj
+              msbuildArchitecture: x64
+              platform: $(Platform)
+              configuration: $(Configuration)
+              msbuildArguments: >-
+                -t:BuildNetCore
                 -p:ReferenceType=Project
                 -p:GenerateDocumentationFile=false
 
           - pwsh: dotnet sdk check
             displayName: .NET SDK check
             condition: succeededOrFailed()
-
-          # Remove temporary targets file before test step
-          - pwsh: |
-              if (Test-Path "Directory.Build.targets") {
-                Remove-Item "Directory.Build.targets"
-                Write-Host "Removed temporary Directory.Build.targets"
-              }
-            displayName: Remove temporary Directory.Build.targets
 
           # --- Run tests ---
           - task: MSBuild@1
