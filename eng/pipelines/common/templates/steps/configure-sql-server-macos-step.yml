@@ -36,10 +36,12 @@ steps:
       brew update
       HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
 
-      # Start Colima with Rosetta 2 for x86_64 binary translation on Apple Silicon.
-      # This is dramatically faster than --arch x86_64 (full QEMU VM emulation).
-      # Requires macOS >= 13 (Ventura) and Colima >= 0.5.3.
-      colima start --vm-type vz --vz-rosetta --cpu 4 --memory 4
+      # Start Colima with Virtualization.framework for x86_64 binary translation
+      # on Apple Silicon.  Rosetta/binfmt emulation is enabled by default in
+      # Colima >= 0.8 when using --vm-type vz, which is dramatically faster than
+      # --arch x86_64 (full QEMU VM emulation).
+      # Requires macOS >= 13 (Ventura).
+      colima start --vm-type vz --cpu 4 --memory 4
       docker --version
       docker pull --platform linux/amd64 mcr.microsoft.com/mssql/server:2025-latest
 
