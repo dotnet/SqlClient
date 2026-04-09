@@ -346,7 +346,6 @@ Variables are defined in a layered template chain. All variable groups live insi
 dotnet-sqlclient-official-pipeline.yml
   └─ libraries/variables.yml
        └─ libraries/build-variables.yml
-            ├─ group: 'Release Variables'
             ├─ group: 'Symbols Publishing'          ← SymbolsPublishServer, SymbolsPublishTokenUri, etc.
             └─ libraries/common-variables.yml
                  ├─ group: 'ESRP Federated Creds (AME)'  ← ESRP signing credentials
@@ -381,7 +380,7 @@ The pipeline resolves `effective*Version` variables at compile time based on the
 
 | Group | Included In | Purpose |
 |-------|------------|---------|
-| `Release Variables` | `build-variables.yml` | Release-specific configuration |
+
 | `Symbols Publishing` | `build-variables.yml` | Symbol publishing credentials (`SymbolsAzureSubscription`, `SymbolsPublishServer`, `SymbolsPublishTokenUri`, `SymbolsUploadAccount`, `SymbolsPublishProjectName`) |
 | `ESRP Federated Creds (AME)` | `common-variables.yml` | Federated identity for ESRP signing (`ESRPConnectedServiceName`, `ESRPClientId`, `AppRegistrationClientId`, `AppRegistrationTenantId`, `AuthAKVName`, `AuthSignCertName`) |
 
