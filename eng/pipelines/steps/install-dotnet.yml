@@ -45,9 +45,11 @@ parameters:
   #
   # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/use-dotnet-v2
   #
+  # 10.x: Install .NET 10 for ESRP code signing tasks for official builds.
+  #
   - name: runtimes
     type: object
-    default: []
+    default: [10.x]
 
 steps:
 
