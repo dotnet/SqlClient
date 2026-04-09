@@ -202,7 +202,6 @@ extends:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           isOfficial: true # This is an official pipeline.
-          publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAkvProvider: ${{ parameters.buildAkvProvider }}
@@ -232,6 +231,27 @@ extends:
           signingAuthSignCertName: '$(SigningAuthSignCertName)'
           signingEsrpClientId: '$(SigningEsrpClientId)'
           signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
+
+      - template: /eng/pipelines/onebranch/stages/publish-symbols-stage.yml@self
+        parameters:
+          publishSymbols: ${{ parameters.publishSymbols }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+
+          abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azureArtifactsName: '${{ variables.azureArtifactsName }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
+
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
           symbolsPublishServer: '$(SymbolsPublishServer)'

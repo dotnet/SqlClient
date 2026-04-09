@@ -65,13 +65,13 @@ jobs:
 
     variables:
       - name: ob_outputDirectory
-        value: $(PACK_OUTPUT)
+        value: $(JOB_OUTPUT)
 
       - name: artifactPath
         value: $(Pipeline.Workspace)/${{ parameters.artifactName }}
 
       - name: packageToPush
-        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('{0}.*.nupkg', parameters.packageName)) }}
+        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('packages/{0}.*.nupkg', parameters.packageName)) }}
 
     # Template context inputs are used to pass parameters to the deployment job since it doesn't
     # automatically download pipeline artifacts.

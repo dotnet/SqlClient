@@ -1,0 +1,198 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Unified symbols publishing stage template for sqlclient OneBranch pipelines.
+# Consumed by both the official and non-official pipeline definitions.
+#
+# This stage publishes PDB symbol files to the internal and public symbol servers.
+# Each package's PDBs are published in a separate job to maintain unique naming and
+# versioning information per package.
+#
+# PDBs are expected to be located under the 'symbols/<PackageName>/' subdirectory
+# within each build artifact, placed there by the build job's CopyFiles step.
+#
+# The stage is excluded at compile time when publishSymbols is false.
+
+parameters:
+  # ── General parameters ─────────────────────────────────────────────────
+
+  # True to publish symbols (controls whether this stage is emitted at all).
+  - name: publishSymbols
+    type: boolean
+
+  # ── Build parameters (used to conditionally include per-package jobs) ───
+
+  - name: buildSqlServerServer
+    type: boolean
+
+  - name: buildSqlClient
+    type: boolean
+
+  - name: buildAkvProvider
+    type: boolean
+
+  # ── Package Parameters ─────────────────────────────────────────────────
+
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderArtifactsName
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: azureArtifactsName
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: loggingArtifactsName
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: sqlClientArtifactsName
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerArtifactsName
+    type: string
+
+  - name: sqlServerPackageVersion
+    type: string
+
+  # ── Symbols Publishing Parameters ──────────────────────────────────────
+
+  - name: symbolsAzureSubscription
+    type: string
+
+  - name: symbolsPublishProjectName
+    type: string
+
+  - name: symbolsPublishServer
+    type: string
+
+  - name: symbolsPublishTokenUri
+    type: string
+
+  - name: symbolsUploadAccount
+    type: string
+
+stages:
+  # Stage is only emitted when publishSymbols is true AND at least one package was built.
+  # Without the build guard, the stage would contain zero jobs and fail ADO validation.
+  - ${{ if and(eq(parameters.publishSymbols, true), or(parameters.buildSqlServerServer, parameters.buildSqlClient, parameters.buildAkvProvider)) }}:
+    - stage: publish_symbols
+      displayName: "Publish Symbols"
+
+      # Depend on whichever build stages produced artifacts we need to publish.
+      dependsOn:
+        - ${{ if or(parameters.buildSqlServerServer, parameters.buildSqlClient) }}:
+          - build_independent
+        - ${{ if parameters.buildSqlClient }}:
+          - build_abstractions
+          - build_dependent
+        - ${{ if and(parameters.buildAkvProvider, parameters.buildSqlClient) }}:
+          - build_addons
+
+      jobs:
+        # ── Logging ────────────────────────────────────────────────────
+        - ${{ if or(parameters.buildAkvProvider, parameters.buildSqlClient) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.loggingArtifactsName }}'
+              packageName: Logging
+              packageFullName: Microsoft.Data.SqlClient.Internal.Logging
+              packageVersion: '${{ parameters.loggingPackageVersion }}'
+              searchPattern: '**/Microsoft.Data.SqlClient.Internal.Logging*.pdb'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+        # ── SqlServer.Server ───────────────────────────────────────────
+        - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.sqlServerArtifactsName }}'
+              packageName: SqlServer
+              packageFullName: Microsoft.SqlServer.Server
+              packageVersion: '${{ parameters.sqlServerPackageVersion }}'
+              searchPattern: '**/Microsoft.SqlServer.Server*.pdb'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+        # ── Abstractions ───────────────────────────────────────────────
+        - ${{ if eq(parameters.buildSqlClient, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.abstractionsArtifactsName }}'
+              packageName: Abstractions
+              packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
+              packageVersion: '${{ parameters.abstractionsPackageVersion }}'
+              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Abstractions*.pdb'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+        # ── SqlClient ──────────────────────────────────────────────────
+        - ${{ if eq(parameters.buildSqlClient, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.sqlClientArtifactsName }}'
+              packageName: SqlClient
+              packageFullName: Microsoft.Data.SqlClient
+              packageVersion: '${{ parameters.sqlClientPackageVersion }}'
+              searchPattern: '**/Microsoft.Data.SqlClient*.pdb'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+        # ── Azure ──────────────────────────────────────────────────────
+        - ${{ if eq(parameters.buildSqlClient, true) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.azureArtifactsName }}'
+              packageName: Azure
+              packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
+              packageVersion: '${{ parameters.azurePackageVersion }}'
+              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Azure*.pdb'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+        # ── AKV Provider ───────────────────────────────────────────────
+        - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
+          - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.akvProviderArtifactsName }}'
+              packageName: AkvProvider
+              packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              packageVersion: '${{ parameters.akvProviderPackageVersion }}'
+              searchPattern: '**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.pdb'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'

@@ -43,6 +43,13 @@ parameters:
     - name: searchPattern
       type: string
 
+    # Root folder to search for PDB files. When called from a build job this is typically
+    # $(BUILD_OUTPUT); when called from the dedicated symbols stage it points at the
+    # downloaded artifact path containing the PDBs.
+    - name: symbolsFolder
+      type: string
+      default: '$(BUILD_OUTPUT)'
+
     # Account/org where the symbols will be uploaded
     - name: uploadAccount
       type: string
@@ -69,7 +76,7 @@ steps:
           SymbolExpirationInDays: 1825 # 5 years
           SymbolServerType: 'TeamServices'
           SymbolsArtifactName: '${{ parameters.artifactName }}'
-          SymbolsFolder: '$(BUILD_OUTPUT)'
+          SymbolsFolder: '${{ parameters.symbolsFolder }}'
           SymbolsMaximumWaitTime: 60
           SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
@@ -78,76 +85,13 @@ steps:
       displayName: 'Publish Symbols'
       inputs:
         azureSubscription: '${{ parameters.azureSubscription }}'
-        scriptLocation: inlineScript
         scriptType: ps
-        inlineScript: |
-          # Propagate parameters to PS variables ################################################
-          $artifactName = "${{ parameters.artifactName }}"
-          echo "artifactName= $artifactName"
-
-          $publishProjectName = "${{ parameters.publishProjectName }}"
-          echo "publishProjectName= $publishProjectName"
-
-          $publishToInternal = "${{ parameters.publishToInternal }}".ToLower()
-          echo "publishToInternal= $publishToInternal"
-
-          $publishToPublic = "${{ parameters.publishToPublic }}".ToLower()
-          echo "publishToPublic= $publishToPublic"
-
-          $publishServer = "${{ parameters.publishServer }}"
-          echo "publishServer= $publishServer"
-
-          $publishTokenUri = "${{ parameters.publishTokenUri }}"
-          echo "publishTokenUri= $publishTokenUri"
-
-          # Publish symbols #####################################################################
-          # 1) Get the access token for the symbol publishing service
-          echo ">  1.Acquiring symbol publishing token..."
-          $symbolPublishingToken = az account get-access-token --resource $publishTokenUri --query accessToken -o tsv
-          echo ">  1.Symbol publishing token acquired."
-
-          # 2) Register the request name
-          echo ">  2.Registering request name..."
-          $requestNameRegistrationBody = "{'requestName': '$artifactName'}"
-          Invoke-RestMethod `
-            -Method POST `
-            -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests" `
-            -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
-            -ContentType "application/json" `
-            -Body $requestNameRegistrationBody
-          echo ">  2.Request name registered successfully."
-
-          # 3) Publish the symbols
-          echo ">  3.Submitting request to publish symbols..."
-          $publishSymbolsBody = "{'publishToInternalServer': $publishToInternal, 'publishToPublicServer': $publishToPublic}"
-          Invoke-RestMethod `
-            -Method POST `
-            -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests/$artifactName" `
-            -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
-            -ContentType "application/json" `
-            -Body $publishSymbolsBody
-          echo ">  3.Request to publish symbols submitted successfully."
-
-          # The following REST calls are used to check publishing status.
-          echo ">  4.Checking the status of the request ..."
-          Invoke-RestMethod `
-            -Method GET `
-            -Uri "https://$publishServer.trafficmanager.net/projects/$publishProjectName/requests/$artifactName" `
-            -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
-            -ContentType "application/json"
-
-          echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-
-          echo "PublishingStatus"
-          echo "-----------------"
-          echo "0	NotRequested; The request has not been requested to publish."
-          echo "1	Submitted; The request is submitted to be published"
-          echo "2	Processing; The request is still being processed"
-          echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-
-          echo "PublishingResult"
-          echo "-----------------"
-          echo "0	Pending; The request has not completed or has not been requested."
-          echo "1	Succeeded; The request has published successfully"
-          echo "2	Failed; The request has failed to publish"
-          echo "3	Cancelled; The request was cancelled"
+        scriptLocation: scriptPath
+        scriptPath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/steps/Publish-Symbols.ps1'
+        arguments: >-
+          -PublishServer "${{ parameters.publishServer }}"
+          -PublishTokenUri "${{ parameters.publishTokenUri }}"
+          -PublishProjectName "${{ parameters.publishProjectName }}"
+          -ArtifactName "${{ parameters.artifactName }}"
+          -PublishToInternal $${{ parameters.publishToInternal }}
+          -PublishToPublic $${{ parameters.publishToPublic }}
