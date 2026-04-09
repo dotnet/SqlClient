@@ -4,13 +4,11 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Common variables shared across all OneBranch Official pipelines.
+# Common variables shared across all OneBranch pipelines.
 
 variables:
-  - group: Release Variables
-
-  # Symbols publishing credentials
-  - group: Symbols publishing
+  # Symbols Publishing credentials
+  - group: Symbols Publishing
     # SymbolsAzureSubscription
     # SymbolsPublishProjectName
     # SymbolsPublishServer
@@ -174,14 +172,3 @@ variables:
   # The AssemblyFileVersion for all assemblies in the AKV Provider package.
   - name: akvAssemblyFileVersion
     value: 7.0.0.$(assemblyBuildNumber)
-
-  # ----------------------------------------------------------------------------
-  # MDS Symbols Publishing
-  #
-  # Alias variables for MDS publish-symbols-step.yml, which defaults to
-  # $(SymbolServer) and $(SymbolTokenUri).  These map to the values provided
-  # by the "Symbols publishing" library group.
-  - name: SymbolServer
-    value: $(SymbolsPublishServer)
-  - name: SymbolTokenUri
-    value: $(SymbolsPublishTokenUri)

@@ -347,10 +347,10 @@ dotnet-sqlclient-official-pipeline.yml
   └─ libraries/variables.yml
        └─ libraries/build-variables.yml
             ├─ group: 'Release Variables'
-            ├─ group: 'Symbols publishing'          ← SymbolsPublishServer, SymbolsPublishTokenUri, etc.
+            ├─ group: 'Symbols Publishing'          ← SymbolsPublishServer, SymbolsPublishTokenUri, etc.
             └─ libraries/common-variables.yml
                  ├─ group: 'ESRP Federated Creds (AME)'  ← ESRP signing credentials
-                 ├─ SymbolServer / SymbolTokenUri aliases ← mapped from Symbols publishing group
+                 ├─ SymbolServer / SymbolTokenUri aliases ← mapped from Symbols Publishing group
                  └─ all package versions, paths, build variables
 ```
 
@@ -382,7 +382,7 @@ The pipeline resolves `effective*Version` variables at compile time based on the
 | Group | Included In | Purpose |
 |-------|------------|---------|
 | `Release Variables` | `build-variables.yml` | Release-specific configuration |
-| `Symbols publishing` | `build-variables.yml` | Symbol publishing credentials (`SymbolsAzureSubscription`, `SymbolsPublishServer`, `SymbolsPublishTokenUri`, `SymbolsUploadAccount`, `SymbolsPublishProjectName`) |
+| `Symbols Publishing` | `build-variables.yml` | Symbol publishing credentials (`SymbolsAzureSubscription`, `SymbolsPublishServer`, `SymbolsPublishTokenUri`, `SymbolsUploadAccount`, `SymbolsPublishProjectName`) |
 | `ESRP Federated Creds (AME)` | `common-variables.yml` | Federated identity for ESRP signing (`ESRPConnectedServiceName`, `ESRPClientId`, `AppRegistrationClientId`, `AppRegistrationTenantId`, `AuthAKVName`, `AuthSignCertName`) |
 
 ---
@@ -513,7 +513,7 @@ pr: none
 | **Build agents** | OneBranch-managed Windows containers (`WindowsHostVersion: 1ESWindows2022`) |
 | **.NET SDK** | Pinned via `global.json` (with `useGlobalJson: true` in install steps) |
 | **Code signing** | ESRP v2 with federated identity (Azure Key Vault backed) |
-| **Symbol publishing** | Optional, controlled by `publishSymbols` parameter; uses `Symbols publishing` variable group (aliases `SymbolServer`/`SymbolTokenUri` defined in `common-variables.yml`) |
+| **Symbol publishing** | Optional, controlled by `publishSymbols` parameter; uses `Symbols Publishing` variable group (aliases `SymbolServer`/`SymbolTokenUri` defined in `common-variables.yml`) |
 
 ---
 

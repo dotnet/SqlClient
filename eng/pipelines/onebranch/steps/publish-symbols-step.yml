@@ -5,6 +5,10 @@
 #                                                                                  #
 # doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
 ####################################################################################
+
+# The Symbols* variable defaults (e.g. SymbolsPublishServer, SymbolsUploadAccount) are sourced from
+# the 'Symbols Publishing' variable group, imported via common-variables.yml.
+
 parameters:
 
   # The full name of the package whose symbols are being published.
@@ -18,17 +22,17 @@ parameters:
   # Our symbols account name.
   - name: symbolsAccount
     type: string
-    default: SqlClientDrivers
+    default: $(SymbolsUploadAccount)
 
   # The symbols server to publish to.
   - name: symbolServer
     type: string
-    default: $(SymbolServer)
+    default: $(SymbolsPublishServer)
 
   # The token URI for the symbol publishing service.
   - name: symbolTokenUri
     type: string
-    default: $(SymbolTokenUri)
+    default: $(SymbolsPublishTokenUri)
 
   # A pair of flags indicating whether to publish to the internal and public symbol servers.  Both
   # default to true.
@@ -62,7 +66,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Publish symbols'
   inputs:
-    azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+    azureSubscription: $(SymbolsAzureSubscription)
     scriptType: ps
     scriptLocation: inlineScript
     inlineScript: |
@@ -76,7 +80,7 @@ steps:
       $symbolServer = "${{parameters.symbolServer }}"
       $tokenUri = "${{parameters.symbolTokenUri }}"
       # Registered project name in the symbol publishing pipeline: https://portal.microsofticm.com/imp/v3/incidents/incident/520844254/summary
-      $projectName = "Microsoft.Data.SqlClient.SNI"
+      $projectName = "$(SymbolsPublishProjectName)"
 
       # Get the access token for the symbol publishing service
       $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
