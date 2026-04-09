@@ -20,18 +20,18 @@ parameters:
 
   - name: symbolServer
     type: string
-    default: '$(SymbolServer)'
-  
+    default: '$(SymbolsPublishServer)'
+
   - name: symbolTokenUri
     type: string
-    default: '$(SymbolTokenUri)'
-  
+    default: '$(SymbolsPublishTokenUri)'
+
   - name: symbolsArtifactName
     type: string
-  
+
   - name: publishToServers
     type: object
-    default: 
+    default:
       internal: true
       public: true
 
@@ -76,56 +76,13 @@ steps:
   inputs:
     azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
     scriptType: ps
-    scriptLocation: inlineScript
-    inlineScript: |
-      $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
-      $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
-
-      echo "Publishing request name: ${{parameters.symbolsArtifactName }}"
-      echo "Publish to internal server: $publishToInternalServer"
-      echo "Publish to public server: $publishToPublicServer"      
-
-      $symbolServer = "${{parameters.symbolServer }}"
-      $tokenUri = "${{parameters.symbolTokenUri }}"
-      # Registered project name in the symbol publishing pipeline: https://portal.microsofticm.com/imp/v3/incidents/incident/520844254/summary
-      $projectName = "Microsoft.Data.SqlClient.SNI"
-
-      # Get the access token for the symbol publishing service
-      $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
-
-      echo ">  1.Symbol publishing token acquired."
-
-      echo "Registering the request name ..."
-      $requestName = "${{parameters.symbolsArtifactName }}"
-      $requestNameRegistrationBody = "{'requestName': '$requestName'}"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
-
-      echo ">  2.Registration of request name succeeded."
-
-      echo "Publishing the symbols ..."
-      $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
-      echo "Publishing symbols request body: $publishSymbolsBody"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $publishSymbolsBody
-
-      echo ">  3.Request to publish symbols succeeded."
-
-      # The following REST calls are used to check publishing status.
-      echo ">  4.Checking the status of the request ..."
-
-      Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
-      
-      echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-      
-      echo "PublishingStatus"
-      echo "-----------------"
-      echo "0	NotRequested; The request has not been requested to publish."
-      echo "1	Submitted; The request is submitted to be published"
-      echo "2	Processing; The request is still being processed"
-      echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-      
-      echo "PublishingResult"
-      echo "-----------------"
-      echo "0	Pending; The request has not completed or has not been requested."
-      echo "1	Succeeded; The request has published successfully"
-      echo "2	Failed; The request has failed to publish"
-      echo "3	Cancelled; The request was cancelled"
+    scriptLocation: scriptPath
+    scriptPath: '$(Build.SourcesDirectory)/eng/pipelines/common/templates/steps/Publish-Symbols.ps1'
+    arguments: >-
+      -PublishServer "${{parameters.symbolServer }}"
+      -PublishTokenUri "${{parameters.symbolTokenUri }}"
+      -PublishProjectName "Microsoft.Data.SqlClient.SNI"
+      -ArtifactName "${{parameters.symbolsArtifactName }}"
+      -JobAttempt $(System.JobAttempt)
+      -PublishToInternal $${{parameters.publishToServers.internal }}
+      -PublishToPublic $${{parameters.publishToServers.public }}

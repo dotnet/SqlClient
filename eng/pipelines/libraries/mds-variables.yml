@@ -5,6 +5,7 @@
 #################################################################################
 
 variables:
-  - group: Release Variables
-    # SymbolServer
-    # SymbolTokenUri
+  - group: 'akv-variables-v2'
+    # Shared symbols publishing variables:
+    # SymbolsPublishServer
+    # SymbolsPublishTokenUri
