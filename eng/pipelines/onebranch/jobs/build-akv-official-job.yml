@@ -123,7 +123,7 @@ jobs:
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 signingKeyPath: '$(Agent.TempDirectory)/netfxKeypair.snk'
 
-          - if eq(${{ parameters.isOfficialBuild }}, 'true'):
+          - ${{ if eq(parameters.isOfficialBuild, true) }}:
             - template: ../steps/esrp-code-signing-step.yml@self
               parameters:
                   artifactType: 'dll'
@@ -137,7 +137,7 @@ jobs:
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'Package'
 
-          - if eq(${{ parameters.isOfficialBuild }}, 'true'):
+          - ${{ if eq(parameters.isOfficialBuild, true) }}:
             - template: ../steps/esrp-code-signing-step.yml@self
               parameters:
                 artifactType: pkg
