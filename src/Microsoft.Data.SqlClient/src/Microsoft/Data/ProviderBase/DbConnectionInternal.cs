@@ -263,6 +263,7 @@ namespace Microsoft.Data.ProviderBase
         /// </remarks>
         protected bool EnlistedTransactionDisposed
         {
+            //TODO: this is only used in one spot... Can we remove it?
             get
             {
                 // Until the Transaction.Disposed property is public it is necessary to access a member
