@@ -162,11 +162,29 @@ steps:
         #Change the access level for FileStream for SQLServer
         Set-ExecutionPolicy Unrestricted
         Import-Module "sqlps"
-        Invoke-Sqlcmd -ServerInstance "$machineName" @"
-            EXEC sp_configure filestream_access_level, 2;
-            RECONFIGURE;
+
+        # Retry loop: SQL Server may be temporarily unavailable after enabling FileStream via WMI
+        $tries = 0
+        while ($true) {
+            $tries++
+            try {
+                Invoke-Sqlcmd -ServerInstance "$machineName" @"
+                    EXEC sp_configure filestream_access_level, 2;
+                    RECONFIGURE;
         "@
+                Write-Host "FileStream access level configured successfully."
+                break
+            } catch {
+                if ($tries -ge 10) {
+                    Write-Host "##[error]Failed to configure FileStream access level after $tries tries."
+                    throw
+                }
+                Write-Host "Failed to connect to SQL Server (attempt $tries/10). Retrying in 5 seconds..."
+                Start-Sleep -Seconds 5
+            }
+        }
       displayName: 'Enable FileStream [Win]'
+      retryCountOnTaskFailure: 1
       env:
         SQL_USER: ${{parameters.user }}
         SQL_PASSWD: ${{ parameters.saPassword }}
@@ -249,6 +267,30 @@ steps:
 
       Restart-Service -Name "$serviceName" -Force
       Restart-Service -Name MSSQLSERVER* -Force
+
+      # Wait for SQL Server to be ready to accept connections after restart
+      $machineName = $env:COMPUTERNAME
+      if ("${{parameters.instanceName }}" -ne "MSSQLSERVER") {
+          $machineName += "\${{parameters.instanceName }}"
+      }
+
+      Import-Module "sqlps"
+      $tries = 0
+      while ($true) {
+          $tries++
+          try {
+              Invoke-Sqlcmd -ServerInstance "$machineName" -Query "SELECT @@VERSION" -ConnectionTimeout 5
+              Write-Host "SQL Server is ready after restart (attempt $tries)."
+              break
+          } catch {
+              if ($tries -ge 20) {
+                  Write-Host "##[error]SQL Server did not become ready after $tries attempts."
+                  throw
+              }
+              Write-Host "Waiting for SQL Server to start (attempt $tries/20)..."
+              Start-Sleep -Seconds 3
+          }
+      }
 
     displayName: 'Restart SQL Server [Win]'
 
