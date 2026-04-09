@@ -1,34 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions.Test</AssemblyName>
     <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions.Test</AssemblyName>
   </PropertyGroup>
 
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Global Usings =================================================== -->
   <ItemGroup>
-    <ProjectReference Include="../src/Abstractions.csproj" />
+    <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Embedded resources and content files ============================ -->
+  <ItemGroup>
+    <None Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>CodeCoverage.runsettings</Link>
+    </None>
+    <Content Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <!-- References ====================================================== -->
+  <!-- Test Target Reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+  </ItemGroup>
+
+  <!-- Other References -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.runner.console" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>xunit.runner.json</TargetPath>
-    </Content>
   </ItemGroup>
 
 </Project>

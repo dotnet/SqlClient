@@ -604,6 +604,96 @@
   </Target>
 
   <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
+  <PropertyGroup>
+    <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
+    <AbstractionsProjectPath>$(AbstractionsSrcRoot)src/Abstractions.csproj</AbstractionsProjectPath>
+    <AbstractionsTestProjectPath>$(AbstractionsSrcRoot)test/Abstractions.Test.csproj</AbstractionsTestProjectPath>
+  </PropertyGroup>
+
+  <!-- Build Abstractions Target ======================================= -->
+  <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
+  <Target Name="BuildAbstractions">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAbstractionsArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- Pack Abstractions Target ======================================== -->
+  <!-- PackAbstractions: Packages Microsoft.Data.SqlClient.Extensions.Abstractions -->
+  <Target Name="PackAbstractions">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(AbstractionsProjectpath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAbstractionsArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- Test Abstractions Targets ======================================= -->
+  <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
+  <Target Name="TestAbstractions">
+    <PropertyGroup>
+      <!--
+        Note: This test exclusively uses project references, so neither ReferenceType nor any
+            package version arguments are specified in this command.
+      -->
+      <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AbstractionsTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.Internal.Logging Targets -->
   <PropertyGroup>
     <LoggingSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/src/</LoggingSrcRoot>
