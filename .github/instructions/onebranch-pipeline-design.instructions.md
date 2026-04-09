@@ -349,7 +349,6 @@ dotnet-sqlclient-official-pipeline.yml
             ├─ group: 'Symbols Publishing'          ← SymbolsPublishServer, SymbolsPublishTokenUri, etc.
             └─ libraries/common-variables.yml
                  ├─ group: 'ESRP Federated Creds (AME)'  ← ESRP signing credentials
-                 ├─ SymbolServer / SymbolTokenUri aliases ← mapped from Symbols Publishing group
                  └─ all package versions, paths, build variables
 ```
 
@@ -373,8 +372,11 @@ The pipeline resolves `effective*Version` variables at compile time based on the
 | Variable | Defined In | Purpose |
 |----------|-----------|---------|
 | `NuGetServiceConnection` | `libraries/common-variables.yml` | External NuGet service connection name for `NuGetCommand@2` push |
-| `SymbolServer` | `libraries/common-variables.yml` (alias) | Alias for `$(SymbolsPublishServer)` — used by MDS `publish-symbols-step.yml` |
-| `SymbolTokenUri` | `libraries/common-variables.yml` (alias) | Alias for `$(SymbolsPublishTokenUri)` — used by MDS `publish-symbols-step.yml` |
+| `SymbolsPublishServer` | `Symbols Publishing` variable group | Symbol publishing service hostname prefix |
+| `SymbolsPublishTokenUri` | `Symbols Publishing` variable group | Resource URI for acquiring a bearer token |
+| `SymbolsAzureSubscription` | `Symbols Publishing` variable group | Azure subscription for the AzureCLI@2 publish task |
+| `SymbolsUploadAccount` | `Symbols Publishing` variable group | Account name for the PublishSymbols@2 upload task |
+| `SymbolsPublishProjectName` | `Symbols Publishing` variable group | Project name registered with the symbol publishing service |
 
 ### 6.4 Variable Groups
 
@@ -512,7 +514,7 @@ pr: none
 | **Build agents** | OneBranch-managed Windows containers (`WindowsHostVersion: 1ESWindows2022`) |
 | **.NET SDK** | Pinned via `global.json` (with `useGlobalJson: true` in install steps) |
 | **Code signing** | ESRP v2 with federated identity (Azure Key Vault backed) |
-| **Symbol publishing** | Optional, controlled by `publishSymbols` parameter; uses `Symbols Publishing` variable group (aliases `SymbolServer`/`SymbolTokenUri` defined in `common-variables.yml`) |
+| **Symbol publishing** | Optional, controlled by `publishSymbols` parameter; uses `Symbols Publishing` variable group variables directly. The publish step calls an extracted `Publish-Symbols.ps1` script with structured error handling. `_$(System.JobAttempt)` is appended to the artifact name for retry safety. |
 
 ---
 
