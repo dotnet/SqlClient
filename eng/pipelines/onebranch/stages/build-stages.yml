@@ -22,11 +22,6 @@ parameters:
   - name: isOfficial
     type: boolean
 
-  # True if this is a preview build, which uses the preview version numbers from
-  # common-variables.yml.
-  - name: isPreview
-    type: boolean
-
   # True to publish symbols to public and private servers.
   - name: publishSymbols
     type: boolean
@@ -358,5 +353,4 @@ stages:
               artifactName: '${{ parameters.sqlClientArtifactsName }}'
               expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
               expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              isPreview: ${{ parameters.isPreview }}
               isOfficial: ${{ parameters.isOfficial }}

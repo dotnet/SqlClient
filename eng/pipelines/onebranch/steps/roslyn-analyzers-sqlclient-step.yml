@@ -32,9 +32,9 @@ steps:
         $(REPO_ROOT)/build2.proj
         -t:BuildMds
         -p:Configuration=Release
-        -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
-        -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
-        -p:PackageVersionMds="${{ parameters.sqlClientPackageVersion }}"
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionMds=${{ parameters.sqlClientPackageVersion }}
         -p:ReferenceType=Package
       msBuildVersion: 17.0
       setupCommandLinePicker: vs2022

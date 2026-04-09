@@ -201,7 +201,6 @@ extends:
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
-          isPreview: ${{ parameters.isPreview }}
           isOfficial: true # This is an official pipeline.
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
