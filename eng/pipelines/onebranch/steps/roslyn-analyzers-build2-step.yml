@@ -23,6 +23,7 @@ parameters:
   - name: packageShortName
     type: string
     values:
+      - Abstractions
       - Logging
       - SqlServer
 

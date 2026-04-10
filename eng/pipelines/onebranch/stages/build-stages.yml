@@ -170,8 +170,12 @@ stages:
         dependsOn: build_independent
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          # Build Microsoft.Data.SqlClient.Extensions.Abstractions
+          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
             parameters:
+              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/dlls'
+              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/pdbs'
+              shouldSignPackage: ${{ parameters.isOfficial }}
               signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
               signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
               signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -179,17 +183,14 @@ stages:
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
-              isOfficial: ${{ parameters.isOfficial }}
-              packageName: Abstractions
-              packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              versionProperties: >-
-                -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-                -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsFileVersion }}
-                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-              assemblyFileVersion: '${{ parameters.abstractionsFileVersion }}'
-              downloadArtifacts:
+              dependencies:
                 - artifactName: '${{ parameters.loggingArtifactsName }}'
-                  displayName: 'Logging Package'
+                  shortName: 'Logging'
+                  version: '${{ parameters.loggingPackageVersion }}'
+              fileVersion: '${{ parameters.abstractionsFileVersion }}'
+              packageFullName: 'Microsoft.Data.SqlClient.Extensions.Abstractions'
+              packageShortName: 'Abstractions'
+              packageVersion: '${{ parameters.abstractionsPackageVersion }}'
 
   # ====================================================================
   # Stage 3: Core packages (depend on Abstractions)
