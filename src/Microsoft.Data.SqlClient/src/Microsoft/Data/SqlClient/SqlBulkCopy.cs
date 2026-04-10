@@ -501,6 +501,17 @@ namespace Microsoft.Data.SqlClient
             // interpolated directly into the SQL string because SQL Server does not allow
             // identifiers (database/schema/table names) to be passed as parameters.  Both
             // values are escaped via SqlServerEscapeHelper before interpolation.
+            //
+            // SqlBulkCopy must remain compatible with Azure Synapse Analytics dedicated SQL pools
+            // and with SQL Server 2016. Azure Synapse Analytics does not allow variables assigned
+            // in the SELECT statement to appear in an expression, which prevents the consistent use of
+            //   SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name])
+            // The alternative is to use STRING_AGG, but this was only introduced in SQL Server
+            // 2017. To meet both criteria, we review the EngineEdition server property. A value
+            // of 6 indicates that the bulk copy is going to run against Azure Synapse Analytics;
+            // we use STRING_AGG in that case and the COALESCE method otherwise.
+            //
+            // See: https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
             return $"""
 SELECT @@TRANCOUNT;
 
