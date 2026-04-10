@@ -2672,7 +2672,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (!Volatile.Read(ref _hasErrorOrWarning) &&
+                if (!_hasErrorOrWarning &&
                     Volatile.Read(ref _errors) == null &&
                     Volatile.Read(ref _warnings) == null)
                 {
