@@ -35,36 +35,36 @@ Understand how System.Transactions works, how connections interact with transact
 |---|----------|-------------|
 | 7 | [Threading and synchronization](01-research/07-threading-and-synchronization.md) | Two competing threads, lock hierarchy, DelegatedTransactionEnded call chain, channel safety |
 | 8 | [Failure modes and edge cases](01-research/08-failure-modes-and-edge-cases.md) | 9 failure modes, CleanupCallback race, DestroyObject guard gap, root connection death |
+| 9 | [MARS, pooling, and transactions](01-research/09-mars-pooling-and-transactions.md) | TDS session multiplexing, session pool vs connection pool, open results blocking delegated commits, deactivation interaction with transaction roots |
 
 ## Stage 2 — Requirements
 
 Define the desired end-user behavior independent of implementation. What should a user observe when using `SqlConnection` with transactions on pool v2?
 
-**Status:** Not started
+**Status:** Complete
 
 | Document | Description |
 |----------|-------------|
-| Connection reuse within a transaction | _TODO_ — Same connection string within same `TransactionScope` should return the same physical connection |
-| Transaction isolation between callers | _TODO_ — Different transactions must never share a physical connection |
-| Commit/rollback cleanup | _TODO_ — Connections should return to the general pool after transaction completion |
-| Nested transaction scopes | _TODO_ — `Required` vs `RequiresNew` vs `Suppress` behavior |
-| Connection lifetime + transactions | _TODO_ — What happens when `LoadBalanceTimeout` expires on a transacted connection |
-| Pool shutdown + transactions | _TODO_ — What happens when the pool is shutting down but a transaction is still active |
-| Delegated transaction promotion | _TODO_ — What happens when a lightweight transaction is promoted to distributed |
-| Error cases | _TODO_ — Transaction timeout, connection failure mid-transaction, pool exhaustion during transaction |
-| Async scenarios | _TODO_ — `TransactionScopeAsyncFlowOption.Enabled`, async connection open within a scope |
+| [Requirements](02-requirements/requirements.md) | 9 categories of observable behavior requirements (REQ-1.x through REQ-9.x) covering connection reuse, isolation, cleanup, nested scopes, lifetime, shutdown, promotion, errors, and async |
 
 ## Stage 3 — Design
 
 Design a solution for `ChannelDbConnectionPool` that meets the requirements. Decide what to keep, change, or simplify from the `WaitHandleDbConnectionPool` approach.
 
-**Status:** Not started
+**Status:** Complete
 
 | Document | Description |
 |----------|-------------|
-| [Pool comparison & open decisions](03-design/pool-comparison-and-decisions.md) | Structural differences between pool implementations, stasis strategy options, open design decisions |
-| Architecture overview | _TODO_ — How `ChannelDbConnectionPool`, `TransactedConnectionPool`, and `DbConnectionInternal` collaborate |
-| Concurrency model | _TODO_ — Locking strategy, race condition analysis, channel vs lock interactions |
+| [Design](03-design/design.md) | Gap analysis, stasis strategy decision, detailed changes per component, concurrency analysis |
+| [Pool comparison & open decisions](03-design/pool-comparison-and-decisions.md) | Structural differences between pool implementations (reference) |
+| [Terminology renames](03-design/terminology-renames.md) | Naming inconsistencies to address |
+
+## Deferred
+
+| Item | Deferred To | Reason |
+|------|-------------|--------|
+| `Clear()` implementation + generation counter | [connection-pool-clear](../connection-pool-clear/outline.md) | Keep this PR focused on transaction support |
+| `Shutdown()` basic implementation | [connection-pool-shutdown](../connection-pool-shutdown/outline.md) | Implement basic shutdown first, then layer transaction-awareness on top |
 
 ## Stage 4 — Implementation
 
