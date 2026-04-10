@@ -34,6 +34,10 @@ parameters:
     type: string
     default: MDS.Artifacts
 
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
 stages:
 
   - stage: verify_nuget_packages_stage
@@ -43,6 +47,7 @@ stages:
       - build_abstractions_package_stage
       - build_azure_package_stage
       - build_logging_package_stage
+      - build_sqlserver_package_stage
       - build_sqlclient_package_stage
 
     jobs:
@@ -85,7 +90,11 @@ stages:
               artifactName: ${{ parameters.mdsArtifactsName }}
               targetPath: $(packagesDir)
 
-          # TODO: Add SqlServer here when we start building it as part of PR/CI pipelines.
+          - task: DownloadPipelineArtifact@2
+            displayName: Download SqlServer Package Artifacts
+            inputs:
+              artifactName: ${{ parameters.sqlServerArtifactsName }}
+              targetPath: $(packagesDir)
 
           # Run the verification tool against all downloaded packages.
           - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml@self

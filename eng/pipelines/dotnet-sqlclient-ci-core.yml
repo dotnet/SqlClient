@@ -119,11 +119,25 @@ variables:
   - name: mdsArtifactsName
     value: MDS.Artifacts
 
+  - name: sqlServerArtifactsName
+    value: SqlServer.Artifacts
+
 stages:
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
+
+  # Build the SqlServer package, and publish it to the pipeline artifacts
+  # under the given artifact name.  This runs in parallel with the Secrets
+  # generation stage since it has no package dependencies.
+  - template: /eng/pipelines/stages/build-sqlserver-package-ci-stage.yml@self
+    parameters:
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Build the Logging package, and publish it to the pipeline artifacts
   # under the given artifact name.  This runs in parallel with the Secrets
@@ -212,6 +226,7 @@ stages:
       azureArtifactsName: $(azureArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
 
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self

@@ -62,6 +62,13 @@ variables:
   - name: mdsPackageVersion
     value: 7.0.0-ci$(AssemblyBuildNumber)
 
+  # SqlServer library NuGet package version
+  # NOTE: SqlServer's version props derive file version from the package version by appending the
+  #    assembly build number, so this must remain a three-part SemVer base with a prerelease
+  #    suffix, not a four-part numeric version.
+  - name: sqlServerPackageVersion
+    value: 1.0.0-ci$(AssemblyBuildNumber)
+
   # Local NuGet feed directory where downloaded pipeline artifacts are placed.
   # NuGet.config references this as a local package source for restore.
   - name: localFeedPath
