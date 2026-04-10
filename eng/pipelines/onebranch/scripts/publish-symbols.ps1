@@ -181,7 +181,7 @@ $resultLabels = @{ 0 = 'Pending'; 1 = 'Succeeded'; 2 = 'Failed'; 3 = 'Cancelled'
 $failures = @()
 
 if ($PublishToInternal) {
-    $internalResult = $status.internalServerResult
+    $internalResult = $status.publishToInternalServerResult
     if ($null -ne $internalResult -and $internalResult -ge 2) {
         $label = if ($resultLabels.ContainsKey([int]$internalResult)) { $resultLabels[[int]$internalResult] } else { "Unknown($internalResult)" }
         $failures += "Internal server publishing result: ${label} (${internalResult})"
@@ -189,7 +189,7 @@ if ($PublishToInternal) {
 }
 
 if ($PublishToPublic) {
-    $publicResult = $status.publicServerResult
+    $publicResult = $status.publishToPublicServerResult
     if ($null -ne $publicResult -and $publicResult -ge 2) {
         $label = if ($resultLabels.ContainsKey([int]$publicResult)) { $resultLabels[[int]$publicResult] } else { "Unknown($publicResult)" }
         $failures += "Public server publishing result: ${label} (${publicResult})"

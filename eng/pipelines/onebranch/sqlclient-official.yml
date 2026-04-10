@@ -253,7 +253,7 @@ extends:
           sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
-          symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
+          symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
           symbolsPublishServer: '$(SymbolsPublishServer)'
           symbolsPublishTokenUri: '$(SymbolsPublishTokenUri)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'

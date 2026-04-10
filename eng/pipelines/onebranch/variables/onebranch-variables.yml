@@ -24,7 +24,7 @@ variables:
   # make it clear that these variables are used for symbols (as opposed to other msc tasks).
   #
   # SymbolsAzureSubscription
-  # SymbolsPublishProjectName
+  # SymbolsPublishProjectNameSqlClient
   # SymbolsPublishServer
   # SymbolsPublishTokenUri
   # SymbolsUploadAccount

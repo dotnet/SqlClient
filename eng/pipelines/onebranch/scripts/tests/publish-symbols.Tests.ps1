@@ -48,7 +48,7 @@ Describe 'publish-symbols.ps1 URL Construction' {
                 Uri    = $Uri
                 Body   = $Body
             }
-            return @{ internalServerStatus = 0; publicServerStatus = 0; internalServerResult = 0; publicServerResult = 0 }
+            return @{ publishToInternalServerStatus = 0; publishToPublicServerStatus = 0; publishToInternalServerResult = 0; publishToPublicServerResult = 0 }
         }
     }
 
@@ -102,7 +102,7 @@ Describe 'publish-symbols.ps1 Request Bodies' {
                 Uri    = $Uri
                 Body   = $Body
             }
-            return @{ internalServerStatus = 0; publicServerStatus = 0; internalServerResult = 0; publicServerResult = 0 }
+            return @{ publishToInternalServerStatus = 0; publishToPublicServerStatus = 0; publishToInternalServerResult = 0; publishToPublicServerResult = 0 }
         }
     }
 
@@ -239,7 +239,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 2; publicServerResult = 0 }
+            return @{ publishToInternalServerResult = 2; publishToPublicServerResult = 0 }
         }
 
         { & $scriptPath `
@@ -256,7 +256,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 1; publicServerResult = 3 }
+            return @{ publishToInternalServerResult = 1; publishToPublicServerResult = 3 }
         }
 
         { & $scriptPath `
@@ -273,7 +273,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 2; publicServerResult = 3 }
+            return @{ publishToInternalServerResult = 2; publishToPublicServerResult = 3 }
         }
 
         { & $scriptPath `
@@ -290,7 +290,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 1; publicServerResult = 1 }
+            return @{ publishToInternalServerResult = 1; publishToPublicServerResult = 1 }
         }
 
         { & $scriptPath `
@@ -307,7 +307,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 0; publicServerResult = 0 }
+            return @{ publishToInternalServerResult = 0; publishToPublicServerResult = 0 }
         }
 
         { & $scriptPath `
@@ -324,7 +324,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 2; publicServerResult = 1 }
+            return @{ publishToInternalServerResult = 2; publishToPublicServerResult = 1 }
         }
 
         { & $scriptPath `
@@ -342,7 +342,7 @@ Describe 'publish-symbols.ps1 Status Failure Detection' {
         Mock -CommandName 'Invoke-RestMethod' -MockWith {
             $global:mockCallCount++
             if ($global:mockCallCount -le 2) { return @{} }
-            return @{ internalServerResult = 1; publicServerResult = 2 }
+            return @{ publishToInternalServerResult = 1; publishToPublicServerResult = 2 }
         }
 
         { & $scriptPath `
