@@ -72,9 +72,9 @@ Proceed with all remaining triage steps regardless of missing environment detail
 ## Actions (execute in this order)
 
 **First**: Call `add_labels` with:
-- `Triage Needed :new:` (always)
+- `:new: Triage Needed` (always)
 - The best matching `Area\*` label(s) from the table above
-- `Needs more info :information_source:` if critical environment details are missing (bugs only)
+- `:information_source: Needs more info` if critical environment details are missing (bugs only)
 - `Repro Available :heavy_check_mark:` if repro steps are provided
 - `Regression :boom:` if this appears to be a regression
 
