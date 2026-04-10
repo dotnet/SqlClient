@@ -85,7 +85,7 @@ steps:
       displayName: 'Publish Symbols'
       inputs:
         azureSubscription: '${{ parameters.azureSubscription }}'
-        scriptType: ps
+        scriptType: pscore
         scriptLocation: scriptPath
         scriptPath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/steps/Publish-Symbols.ps1'
         arguments: >-

@@ -201,7 +201,7 @@ if ($failures.Count -gt 0) {
     throw "Symbol publishing reported a terminal failure. ${failureMessage}. URI: ${requestUrl}"
 }
 
-Write-Host ">  4. Status check completed — no terminal failures detected."
+Write-Host ">  4. Status check completed - no terminal failures detected."
 
 Write-Host ""
 Write-Host "Use below tables to interpret the xxxServerStatus and xxxServerResult fields from the response."
