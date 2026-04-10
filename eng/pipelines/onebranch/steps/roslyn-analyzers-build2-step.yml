@@ -1,0 +1,51 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This template defines a step to run Roslyn Analyzers on the SqlClient build. It uses the
+# RoslynAnalyzers@3 task from the Secure Development Team's SDL extension:
+#
+# https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
+#
+# GOTCHA: This step will clobber any existing build output. It should be run _before_ any build
+# steps that perform versioning or signing.
+
+parameters:
+  # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  - name: dependencyArguments
+    type: string
+    default: ''
+
+  # Project to build. This short name will be appended to "Build" to generate the appropriate
+  # target to build from build2.proj.
+  - name: packageShortName
+    type: string
+    values:
+      - SqlServer
+
+  #  Version to assign to the project to build. This will be passed into msbuild as
+  #  "-p:PackageVersion(packageShortName)".
+  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  - name: packageVersion
+    type: string
+
+steps:
+  # GOTCHA: If there are any blank lines in msbuildCommandLine, it will consider it "multiple
+  #         arguments" and fail. So, don't split msBuildCommandLine into multiple blocks.
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+    displayName: 'Roslyn Analyzers - build2.proj Build${{ parameters.packageShortName }}'
+    inputs:
+      msBuildArchitecture: x64
+      msBuildCommandLine: >-
+        msbuild
+        $(REPO_ROOT)/build2.proj
+        -t:Build${{ parameters.packageShortName }}
+        -p:Configuration=Release
+        -p:ReferenceType=Package
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
+        ${{ parameters.dependencyArguments }}
+      msBuildVersion: 17.0
+      setupCommandLinePicker: vs2022

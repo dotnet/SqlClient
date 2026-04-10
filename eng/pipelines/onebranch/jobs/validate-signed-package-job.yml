@@ -49,8 +49,8 @@ jobs:
     variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
 
       # Path within the downloaded artifact where NuGet packages are located.
-      - name: packagesPath
-        value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}\packages'
+      - name: artifactPath
+        value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}'
 
       # Path to the SqlClient NuGet package after installation. This path will only exist once the package
       # been installed.
@@ -86,31 +86,62 @@ jobs:
       - ${{ if eq(parameters.isOfficial, true) }}:
           - powershell: |
               # Propagate parameters to PS variables #######################
-              $packagesPath = "${{ variables.packagesPath }}"
-              echo "packagesPath= $packagesPath"
+              $artifactPath = "${{ variables.artifactPath }}"
+              echo "artifactPath= $artifactPath"
+
+              # Discover packages ##########################################
+              $packageFiles = Get-ChildItem -Path $artifactPath -Recurse -File -Include *.nupkg,*.snupkg
+              if ($packageFiles.Count -eq 0)
+              {
+                Write-Error "No NuGet package files were found under '$artifactPath'."
+              }
 
               # Verify package signatures ##################################
               echo "> 1. Verify signature of source package(s)"
-              nuget verify -All $packagesPath\*.nupkg
+              $packageFiles | Where-Object { $_.Extension -eq ".nupkg" } | ForEach-Object {
+                nuget verify -All $_.FullName
+              }
 
               echo "> 2. Verify signature of symbols package(s)"
-              nuget verify -All $packagesPath\*.snupkg
+              $packageFiles | Where-Object { $_.Extension -eq ".snupkg" } | ForEach-Object {
+                nuget verify -All $_.FullName
+              }
             displayName: "Verify nuget signature"
 
       # Install NuGet package to the temporary directory
       - powershell: |
           # Propagate pipeline to PS variables #############################
-          $packagesPath = "${{ variables.packagesPath }}"
-          echo "packagesPath= $packagesPath"
+          $artifactPath = "${{ variables.artifactPath }}"
+          echo "artifactPath= $artifactPath"
+
+          $expectedPackageVersion = "${{ parameters.expectedPackageVersion }}"
+          echo "expectedPackageVersion= $expectedPackageVersion"
 
           $nugetPackageInstallRoot = "${{ variables.nugetPackageInstallRoot }}"
           echo "nugetPackageInstallRoot= $nugetPackageInstallRoot"
+
+          # Find the SqlClient NuGet package ###############################
+          Get-ChildItem "$artifactPath" -Recurse
+
+          $packagePaths = @(Get-ChildItem -Path $artifactPath -Recurse -File -Filter "Microsoft.Data.SqlClient.$expectedPackageVersion.nupkg")
+          if ($packagePaths.Count -eq 0)
+          {
+            Write-Error "Unable to find Microsoft.Data.SqlClient.$expectedPackageVersion.nupkg under '$artifactPath'."
+          }
+          if ($packagePaths.Count -gt 1)
+          {
+            Write-Error "Multiple Microsoft.Data.SqlClient.$expectedPackageVersion.nupkg files were found under '$artifactPath'."
+          }
+
+          $packageSource = Split-Path -Path $packagePaths[0].FullName -Parent
+          echo "Found package path: $($packagePaths[0].FullName)"
+          echo "Using package source: $packageSource"
 
           # Install NuGet Package ##########################################
           echo "> 1. Installing Microsoft.Data.SqlClient NuGet package..."
           Install-Package `
             -Name "Microsoft.Data.SqlClient" `
-            -Source "$packagesPath" `
+            -Source "$packageSource" `
             -Destination $nugetPackageInstallRoot `
             -Force `
             -SkipDependencies
@@ -118,8 +149,6 @@ jobs:
           echo "> 2. Listing contents of installed Microsoft.Data.SqlClient NuGet package:"
           Write-Host $nugetPackageInstallRoot
           Get-ChildItem $nugetPackageInstallRoot
-          Write-Host "$packagesPath"
-          Get-ChildItem "$packagesPath"
         displayName: "Install NuGet Package"
 
       # Find all DLL files in the installed NuGet package, verify each is signed with a strong name

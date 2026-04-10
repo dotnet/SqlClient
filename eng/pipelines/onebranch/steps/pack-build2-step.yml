@@ -1,0 +1,74 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic pack step for build2.proj packages. This step runs the Pack* target to generate a NuGet
+# package of the target package. The generated NuGet packages will then be copied to $(PACK_OUTPUT).
+#
+# Note: This step assumes that the package has been built previously using a Build* target.
+#   `-p:PackBuild=false` will be passed to msbuild to ensure the previously built assemblies are
+#   not trampled.
+
+parameters:
+  # Build configuration - Release or Debug.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  # They should be in the form of "-p:PackageVersionFooBar=1.2.3 ..."
+  - name: dependencyArguments
+    type: string
+    default: ''
+
+  # The full name of the package. This will be used to generate paths when copying NuGet packages
+  # out of the build output.
+  - name: packageFullName
+    type: string
+    values:
+      - @TODO
+
+  # Project to build. This short name will be appended to "Pack" to generate the appropriate
+  # target to package via build2.proj.
+  - name: packageShortName
+    type: string
+    values:
+      - @TODO
+
+  #  Version to assign to the project to build. This will be passed into msbuild as
+  #  "-p:PackageVersion(packageShortName)".
+  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  - name: packageVersion
+    type: string
+
+steps:
+  - task: MSBuild@1
+    displayName: 'Build2.proj - Pack${{ parameters.packageShortName }}'
+    inputs:
+      solution: '$(REPO_ROOT)/build2.proj'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:Pack${{ parameters.packageShortName }}
+        -p:PackBuild=false
+        -p:ReferenceType=Package
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
+        ${{ parameters.dependencyArguments }}
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree
+
+  - task: CopyFiles@2
+    displayName: 'Copy NuGet Packages to PACK_OUTPUT'
+    inputs:
+      contents: '**/${{ parameters.packageFullName }}*.*nupkg'
+      flattenFolders: true
+      sourceFolder: '$(BUILD_OUTPUT)/${{ parameters.packageFullName }}/'
+      targetFolder: '$(PACK_OUTPUT)'
+
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: Output Package Output Tree

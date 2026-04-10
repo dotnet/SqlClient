@@ -1,0 +1,204 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic job template for building and signing simple build2.proj packages, currently:
+#  - Logging
+#  - SqlServer
+#
+# The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet packages from the
+# signed DLLs, and finally ESRP signs the NuGet packages.
+
+parameters:
+  # Common Build Job Properties ############################################
+  - name: apiScanDllPath
+    type: string
+
+  - name: apiScanPdbPath
+    type: string
+
+  # True to enable ESRP malware scanning and code signing steps, which should not be run on
+  # non-official pipelines as they access production resources. If true, Signing* parameters must
+  # be provided.
+  - name: shouldSignPackage
+    type: boolean
+
+  # Signing Parameters -----------------------------------------------------
+  # @TODO: Signing Parameters Object
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+
+  # Package Properties #####################################################
+
+  # List of packages that the package being built with this job depends on. Each entry in the
+  # object should have the fields:
+  # * artifactName - Name of the artifact to published in a previous job that contains the desired
+  #   version of the dependency.
+  # * shortName - Short name of the dependency. This name should correspond to the short name used
+  #   when building the package via build2.proj
+  # * version - the version of the dependency that this package depends on
+  - name: dependencies
+    type: object
+    default: []
+
+  # Assembly file version for APIScan (e.g. 1.0.0.12345).
+  - name: fileVersion
+    type: string
+
+  # The full name of the package. This is used in the job name, and to form DLL and PDB filenames
+  # for APIScan.
+  - name: packageFullName
+    type: string
+    values:
+      - @TODO
+
+  # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
+  # the default Build and Pack targets if those aren't specified.
+  - name: packageShortName
+    type: string
+    values:
+      - @TODO
+
+  # The version of the package.
+  - name: packageVersion
+    type: string
+
+jobs:
+  - job: 'build_package_${{ parameters.packageShortName }}'
+    displayName: 'Build: ${{ parameters.packageFullName }}'
+    pool:
+      type: windows
+
+    variables:
+      # Placeholder for dependency package arguments. This will be constructed later as it depends
+      # on scripting to decompose parameters.dependencies.
+      dependencyPackageArguments: ''
+
+      ob_outputDirectory: '$(JOB_OUTPUT)'
+
+      # APIScan configuration for the package being built by this job.
+      ob_sdl_apiscan_enabled: true
+      ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
+      ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.fileVersion }}
+
+    steps:
+      - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
+
+      # Constructs the dependency package version parameters to pass to the build steps. Generates
+      # a string of the form (eg) "-p:PackageVersionAzure=1.2.3"
+      - ${{ each package in parameters.dependencies }}:
+          # Append the dependency to the package dependency arguments argument in the form of, eg:
+          # -p:PackageVersionAzure=1.2.3
+          - script: echo "##vso[task.setvariable variable=dependencyPackageArguments]$(dependencyPackageArguments) -p:PackageVersion${{ package.shortName }}=${{ package.version }}
+            displayName: "Append Package Version Argument - ${{ package.shortName }}"
+
+          # Download the pipeline artifact for this dependency package
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Artifact - ${{ package.shortName }}"
+            inputs:
+              artifactName: ${{ package.artifactName }}
+              targetPath: $(REPO_ROOT)/packages
+
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+      # Perform Roslyn analysis before building, since this step will clobber build output.
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-build2-step.yml@self
+        parameters:
+          dependencyArguments: $(dependencyPackageArguments)
+          packageShortName: ${{ parameters.packageShortName }}
+          packageVersion: ${{ parameters.packageVersion }}
+
+      # Build the package, producing DLLs only (no NuGet package yet).
+      - template: /eng/pipelines/onebranch/steps/build-build2-step.yml@self
+        parameters:
+          buildConfiguration: Release
+          dependencyArguments: $(dependencyPackageArguments)
+          packageShortName: ${{ parameters.packageShortName }}
+          packageVersion: ${{ parameters.packageVersion }}
+
+      - ${{ if eq(parameters.shouldSignPackage, true) }}:
+          # ESRP sign the DLLs.
+          - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              pattern: '${{ parameters.packageFullName }}.dll'
+
+      # Copy signed/unsigned DLLs and PDBs to APIScan folders.
+      - task: CopyFiles@2
+        displayName: Copy DLLs for APIScan
+        inputs:
+          SourceFolder: $(BUILD_OUTPUT)/${{ parameters.packageFullName }}
+          Contents: "**/${{ parameters.packageFullName }}.dll"
+          TargetFolder: '${{ parameters.apiScanDllPath }}'
+          # We must preserve the folder structure since our C# projects may produce multiple
+          # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
+          # etc.), and we need to keep those separate for APIScan to work correctly.
+          flattenFolders: false
+
+      - task: CopyFiles@2
+        displayName: Copy PDBs for APIScan
+        inputs:
+          SourceFolder: $(BUILD_OUTPUT)/${{ parameters.packageFullName }}
+          Contents: "**/${{ parameters.packageFullName }}.pdb"
+          TargetFolder: '${{ parameters.apiScanPdbPath }}'
+          # We must preserve the folder structure since our C# projects may produce multiple
+          # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
+          # etc.), and we need to keep those separate for APIScan to work correctly.
+          flattenFolders: false
+
+      # Pack the signed DLLs into NuGet package (NoBuild=true).
+      - template: /eng/pipelines/onebranch/steps/pack-build2-step.yml@self
+        parameters:
+          buildConfiguration: Release
+          dependencyArguments: $(dependencyPackageArguments)
+          packageFullName: ${{ parameters.packageFullName }}
+          packageShortName: ${{ parameters.packageShortName }}
+          packageVersion: ${{ parameters.packageVersion }}
+
+      - ${{ if eq(parameters.shouldSignPackage, true) }}:
+          # ESRP sign the NuGet package.
+          - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              searchPath: '$(PACK_OUTPUT)'
+              searchPattern: '${{ parameters.packageFullName}}.*nupkg'
+
+      # Copy the contents of the build output for this package to the artifacts folder
+      - task: CopyFiles@2
+        displayName: Copy Build Output to Artifacts Folder
+        inputs:
+          SourceFolder: '$(BUILD_OUTPUT)/${{ parameters.packageFullName }}'
+          Contents: '**/*.*'
+          TargetFolder: '$(JOB_OUTPUT)'
+          flattenFolders: false

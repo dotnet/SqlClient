@@ -8,7 +8,7 @@
   <PropertyGroup>
     <!--
       BuildNumber
-      Applies to:     BuildMds*, PackMds
+      Applies to:     Build*, Pack*
       Description:    Number that identifies the build.
                       For local developer builds, this does not need to be used. The developer
                       should either specify an entire package version override (via
@@ -27,7 +27,7 @@
 
     <!--
       BuildSuffix
-      Aplies to:      BuildMds*, PackMds
+      Aplies to:      Build*, Pack*
       Description:    Suffix to add at the end of the package version to indicate the generated
                       version is a pre-release.
                       For local developer builds, this does not need to be set. If a specific
@@ -77,9 +77,9 @@
 
     <!--
       PackBuild
-      Applies to:     PackMds
-      Description:    Whether the PackMds target should run BuildMds before packing. If true,
-                      BuildMds will be called as a dependency of PackMds. If false, it will not.
+      Applies to:     Pack*
+      Description:    Whether the Pack* targets should buiild the project before packaging. If
+                      true, the project will be build as part of packageing. If false, it will not.
                       For most developers, building immediately before packing is the norm, and
                       this functionality is added for convenience. However, for official builds,
                       binaries are signed between building and packing, so building immediately
@@ -87,13 +87,16 @@
       Default value:  true
       Allowed values: (true|false)
     -->
+    <PackBuild Condition="'$(PackBuild)' == ''">true</PackBuild>
+    <PackBuildArgument Condition="'$(PackBuild.ToLower())' != 'true'">
+      --no-build
+    </PackBuildArgument>
     <!--
       @TODO: This is kinda hacky, ideally we can pack via dotnet pack, which will handle building,
         and can thus be switched off by passing -no-build. However, we're not there because we need
         to build multiple projects before packaging, and thus need to use nuget. So, until then we
         will switch off dependency building dynamically building the target dependencies
     -->
-    <PackBuild Condition="'$(PackBuild)' == ''">true</PackBuild>
     <PackMdsDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildMds</PackMdsDependsOn>
 
     <!--
@@ -178,9 +181,11 @@
 
     <!--
       SigningKeyPath
-      Applies to:     Build*
+      Applies to:     Build*, Pack*
       Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
                       will not be strong name signed.
+                      For Pack* targets, this only applies to a build - ie, if PackBuild is set to
+                      false, SigningKeyPath will have no effect.
       Default value:  [blank]
       Example:        C:\path\to\my\signing\key.snk
     -->

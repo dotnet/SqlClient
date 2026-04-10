@@ -17,20 +17,16 @@ parameters:
   - name: artifactName
     type: string
 
-  # Short package name used in the job name (e.g. Logging, SqlServer, SqlClient).
-  - name: packageName
-    type: string
-
   # The full NuGet package name (e.g. Microsoft.Data.SqlClient.Internal.Logging).
   - name: packageFullName
     type: string
 
-  # The package version, used for symbol versioning.
-  - name: packageVersion
+  # Short package name used in the job name (e.g. Logging, SqlServer, SqlClient).
+  - name: packageShortName
     type: string
 
-  # Pattern to use to search for PDB files to upload/publish, relative to the symbols folder.
-  - name: searchPattern
+  # The package version, used for symbol versioning.
+  - name: packageVersion
     type: string
 
   # Symbols Publishing Parameters ------------------------------------------
@@ -51,7 +47,7 @@ parameters:
     type: string
 
 jobs:
-  - job: publish_symbols_${{ parameters.packageName }}
+  - job: 'publish_symbols_${{ parameters.packageShortName }}'
     displayName: 'Publish Symbols: ${{ parameters.packageFullName }}'
     pool:
       type: windows
@@ -67,17 +63,14 @@ jobs:
       ob_sdl_binskim_enabled: false
 
       # Path where the downloaded artifact will be placed.
-      artifactPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
-
-      # Path to the PDB files within the downloaded artifact.
-      symbolsPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}/symbols
+      artifactPath: '$(Pipeline.Workspace)/${{ parameters.packageFullName }}'
 
     steps:
       - task: DownloadPipelineArtifact@2
         displayName: 'Download ${{ parameters.packageFullName }} Artifact'
         inputs:
           artifactName: '${{ parameters.artifactName }}'
-          targetPath: '$(artifactPath)'
+          targetPath: '${{ variables.artifactPath }}'
 
       - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
         parameters:
@@ -89,7 +82,7 @@ jobs:
           publishToInternal: true
           publishToPublic: true
           publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-          searchPattern: '${{ parameters.searchPattern }}'
-          symbolsFolder: '$(symbolsPath)'
+          searchPattern: '**/${{ parameters.packageFullName }}.pdb'
+          symbolsFolder: '${{ variables.artifactPath }}'
           uploadAccount: '${{ parameters.symbolsUploadAccount }}'
           version: '${{ parameters.packageVersion }}'

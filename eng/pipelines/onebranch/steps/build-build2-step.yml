@@ -1,0 +1,59 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This collection of steps to build a project via the build2.proj. This will execute the "Build*"
+# target in build2.proj, where * is the packageShortName provided in the parameters.
+
+parameters:
+  # Build configuration - Release or Debug.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  # They should be in the form of "-p:PackageVersionFooBar=1.2.3 ..."
+  - name: dependencyArguments
+    type: string
+    default: ''
+
+  # Project to build. This short name will be appended to "Build" to generate the appropriate
+  # target to build from build2.proj.
+  - name: packageShortName
+    type: string
+    values:
+      - @TODO
+
+  #  Version to assign to the project to build. This will be passed into msbuild as
+  #  "-p:PackageVersion(packageShortName)".
+  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  - name: packageVersion
+    type: string
+
+steps:
+  # Download the strong name signing key from secure file storage
+  - task: DownloadSecureFile@1
+    displayName: 'Download Signing Key'
+    inputs:
+      secureFile: 'netfxKeypair.snk'
+    name: keyFile
+
+  - task: MSBuild@1
+    displayName: 'Build2.proj - Build${{ parameters.packageShortName }}'
+    inputs:
+      solution: '$(REPO_ROOT)/build2.proj'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
+        -t:Build${{ parameters.packageShortName }}
+        -p:ReferenceType=Package
+        -p:SigningKeyPath="$(keyFile.secureFilePath)"
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
+        ${{ parameters.dependencyArguments }}
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree
