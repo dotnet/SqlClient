@@ -87,9 +87,9 @@ steps:
         fi
 
         # Verify the container is still running; no point retrying if it crashed.
-        if ! docker ps --filter "name=sql1" --filter "status=running" --format '{{.Names}}' | grep -q sql1; then
+        if ! docker ps --filter "name=^/sql1$" --filter "status=running" --format '{{.Names}}' | grep -Fxq 'sql1'; then
           echo "ERROR: sql1 container is no longer running."
-          docker ps -a --filter "name=sql1"
+          docker ps -a --filter "name=^/sql1$"
           echo "--- Container logs ---"
           docker logs sql1 2>&1 | tail -50
           rm -f $SQLCMD_ERRORS
@@ -112,7 +112,7 @@ steps:
         echo "--- sqlcmd errors ---"
         cat $SQLCMD_ERRORS
         echo "--- Container status ---"
-        docker ps -a --filter "name=sql1"
+        docker ps -a --filter "name=^/sql1$"
         echo "--- Container logs (last 80 lines) ---"
         docker logs sql1 2>&1 | tail -80
         rm -f $SQLCMD_ERRORS
