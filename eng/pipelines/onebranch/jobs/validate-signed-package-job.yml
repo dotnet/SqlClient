@@ -36,6 +36,10 @@ parameters:
   - name: isPreview
     type: boolean
 
+  - name: isOfficialBuild
+    type: boolean
+    default: false
+
 jobs:
 - job: validate_signed_package
   displayName: 'Verify signed package'
@@ -105,23 +109,24 @@ jobs:
       Write-Host "--------------------------------------------------"
     displayName: 'Extract Nuget in temp folder'
 
-  - powershell: |
-      # Artifact is stored in the Nuget folder
-      $packageType = '${{parameters.packageType}}'
+  - ${{ if eq(parameters.isOfficialBuild, true) }}:
+    - powershell: |
+        # Artifact is stored in the Nuget folder
+        $packageType = '${{parameters.packageType}}'
 
-      Write-Host "--------------------------------------------------"
-      Write-Host "This will verify the artifact signature" -ForegroundColor Green
-      Write-Host "--------------------------------------------------"
-      
-      if ($packageType -eq 'dll' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.nupkg
-      }
-      if ($packageType -eq 'pdb' -or $packageType -eq 'both')
-      {
-        nuget verify -All $(pathToDownloadedNuget)\*.snupkg
-      }
-    displayName: 'Verify nuget signature'
+        Write-Host "--------------------------------------------------"
+        Write-Host "This will verify the artifact signature" -ForegroundColor Green
+        Write-Host "--------------------------------------------------"
+        
+        if ($packageType -eq 'dll' -or $packageType -eq 'both')
+        {
+          nuget verify -All $(pathToDownloadedNuget)\*.nupkg
+        }
+        if ($packageType -eq 'pdb' -or $packageType -eq 'both')
+        {
+          nuget verify -All $(pathToDownloadedNuget)\*.snupkg
+        }
+      displayName: 'Verify nuget signature'
 
   - powershell: |
       $buildType = [string]"$(BuildType)" 
