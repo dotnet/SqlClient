@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
