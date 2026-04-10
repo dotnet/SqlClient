@@ -2,8 +2,18 @@
 on:
   issues:
     types: [opened]
+  roles: all
 
 engine: copilot
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+tools:
+  github:
+    min-integrity: none
 
 safe-outputs:
   add-comment:
@@ -36,7 +46,7 @@ Everything goes into the single triage summary at the end.
 Read the issue body. Then do ALL of the following analysis silently
 (using read tools and search only — no comments, no outputs):
 
-**A. Classify issue type**: Bug (has environment details/repro), Feature (has proposal), Question, or Task.
+**A. Classify issue type**: Bug (reports unexpected behavior, crash, regression, or incorrect results), Feature (has proposal), Question, or Task.
 
 **B. Validate environment** (bugs only): Check for these required fields:
 SqlClient version, .NET target framework, SQL Server version, OS,
@@ -74,7 +84,7 @@ Proceed with all remaining triage steps regardless of missing environment detail
 **First**: Call `add_labels` with at most 5 labels total (safe-outputs limit):
 - `:new: Triage Needed` (always)
 - Exactly **one** `Area\*` label from the table above (pick the single best match)
-- `:information_source: Needs more info` if critical environment details are missing (bugs only)
+- `Needs More Info :information_source:` if critical environment details are missing (bugs only)
 - `Repro Available :heavy_check_mark:` if repro steps are provided
 - `Regression :boom:` if this appears to be a regression
 
