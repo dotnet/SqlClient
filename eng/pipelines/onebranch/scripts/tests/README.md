@@ -12,25 +12,25 @@ Pester tests for the `publish-symbols.ps1` script used by the symbol publishing 
 From this directory:
 
 ```powershell
-Invoke-Pester ./Publish-Symbols.Tests.ps1
+Invoke-Pester ./publish-symbols.Tests.ps1
 ```
 
 Or from the repository root:
 
 ```powershell
-Invoke-Pester ./eng/pipelines/onebranch/steps/tests/
+Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
 ```
 
 For detailed output:
 
 ```powershell
-Invoke-Pester ./Publish-Symbols.Tests.ps1 -Output Detailed
+Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ```
 
 ## Test Coverage
 
 | Area                  | What's tested                                                    |
-|-----------------------|------------------------------------------------------------------|
+| --------------------- | ---------------------------------------------------------------- |
 | Parameter validation  | Empty strings rejected for all mandatory parameters              |
 | URL construction      | Base URL, register URL, request URL built from parameters        |
 | Request bodies        | Registration body, default publish flags, flag overrides         |
