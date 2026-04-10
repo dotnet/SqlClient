@@ -175,6 +175,34 @@ try {
     throw "Failed to check request status. URI: ${requestUrl} | Error: $_"
 }
 
+# Validate publishing results — fail the task when the service reports a terminal failure.
+# PublishingResult: 0=Pending, 1=Succeeded, 2=Failed, 3=Cancelled
+$resultLabels = @{ 0 = 'Pending'; 1 = 'Succeeded'; 2 = 'Failed'; 3 = 'Cancelled' }
+$failures = @()
+
+if ($PublishToInternal) {
+    $internalResult = $status.internalServerResult
+    if ($null -ne $internalResult -and $internalResult -ge 2) {
+        $label = if ($resultLabels.ContainsKey([int]$internalResult)) { $resultLabels[[int]$internalResult] } else { "Unknown($internalResult)" }
+        $failures += "Internal server publishing result: ${label} (${internalResult})"
+    }
+}
+
+if ($PublishToPublic) {
+    $publicResult = $status.publicServerResult
+    if ($null -ne $publicResult -and $publicResult -ge 2) {
+        $label = if ($resultLabels.ContainsKey([int]$publicResult)) { $resultLabels[[int]$publicResult] } else { "Unknown($publicResult)" }
+        $failures += "Public server publishing result: ${label} (${publicResult})"
+    }
+}
+
+if ($failures.Count -gt 0) {
+    $failureMessage = $failures -join '; '
+    throw "Symbol publishing reported a terminal failure. ${failureMessage}. URI: ${requestUrl}"
+}
+
+Write-Host ">  4. Status check completed — no terminal failures detected."
+
 Write-Host ""
 Write-Host "Use below tables to interpret the xxxServerStatus and xxxServerResult fields from the response."
 Write-Host ""

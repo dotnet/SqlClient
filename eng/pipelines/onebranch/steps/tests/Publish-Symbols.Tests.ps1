@@ -48,7 +48,7 @@ Describe 'Publish-Symbols.ps1 URL Construction' {
                 Uri    = $Uri
                 Body   = $Body
             }
-            return @{ internalServerStatus = 0; publicServerStatus = 0 }
+            return @{ internalServerStatus = 0; publicServerStatus = 0; internalServerResult = 0; publicServerResult = 0 }
         }
     }
 
@@ -102,7 +102,7 @@ Describe 'Publish-Symbols.ps1 Request Bodies' {
                 Uri    = $Uri
                 Body   = $Body
             }
-            return @{ internalServerStatus = 0; publicServerStatus = 0 }
+            return @{ internalServerStatus = 0; publicServerStatus = 0; internalServerResult = 0; publicServerResult = 0 }
         }
     }
 
@@ -228,5 +228,129 @@ Describe 'Publish-Symbols.ps1 Error Handling' {
             -PublishProjectName 'proj' `
             -ArtifactName 'art' } |
             Should -Throw '*Failed to check*'
+    }
+}
+
+Describe 'Publish-Symbols.ps1 Status Failure Detection' {
+
+    It 'Should throw when internal server result is Failed (2)' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 2; publicServerResult = 0 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Throw '*terminal failure*Internal server*Failed*'
+    }
+
+    It 'Should throw when public server result is Cancelled (3)' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 1; publicServerResult = 3 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Throw '*terminal failure*Public server*Cancelled*'
+    }
+
+    It 'Should throw when both servers report failure' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 2; publicServerResult = 3 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Throw '*terminal failure*Internal server*Public server*'
+    }
+
+    It 'Should not throw when both servers report Succeeded (1)' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 1; publicServerResult = 1 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Not -Throw
+    }
+
+    It 'Should not throw when results are Pending (0)' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 0; publicServerResult = 0 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Not -Throw
+    }
+
+    It 'Should not check internal result when PublishToInternal is false' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 2; publicServerResult = 1 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' `
+            -PublishToInternal $false } |
+            Should -Not -Throw
+    }
+
+    It 'Should not check public result when PublishToPublic is false' {
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }
+        $global:mockCallCount = 0
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $global:mockCallCount++
+            if ($global:mockCallCount -le 2) { return @{} }
+            return @{ internalServerResult = 1; publicServerResult = 2 }
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' `
+            -PublishToPublic $false } |
+            Should -Not -Throw
     }
 }

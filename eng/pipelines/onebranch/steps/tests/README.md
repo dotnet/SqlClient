@@ -35,6 +35,7 @@ Invoke-Pester ./Publish-Symbols.Tests.ps1 -Output Detailed
 | URL construction      | Base URL, register URL, request URL built from parameters        |
 | Request bodies        | Registration body, default publish flags, flag overrides         |
 | Error handling        | Token failure, registration failure, publish failure, status failure — all verify expanded URI in error message |
+| Status validation     | Detects Failed/Cancelled results, respects PublishToInternal/PublishToPublic flags, passes on Succeeded/Pending |
 
 ## Notes
 
