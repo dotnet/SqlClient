@@ -376,3 +376,8 @@ MigrationBackup/
 
 # MDS "Not Supported" GenAPI code
 **/notsupported/*.cs
+
+# SpecKit
+.specify/
+.github/agents/speckit*
+.github/prompts/speckit*
