@@ -689,6 +689,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
+        public void TestPutObjectFromTransactedPool()
+        {
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
+        }
+
+        [Fact]
         public void TestReplaceConnection()
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
@@ -707,6 +714,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.Startup());
+        }
+
+        [Fact]
+        public void TestTransactionEnded()
+        {
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
         }
         #endregion
 
