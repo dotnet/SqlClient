@@ -44,7 +44,7 @@ repro steps, expected vs actual behavior.
 If any are missing, list them explicitly in the triage summary (e.g. "Missing: SQL Server version, OS").
 Proceed with all remaining triage steps regardless of missing environment details.
 
-**C. Classify area**: Based on the issue content, pick the best matching area label(s) from this list:
+**C. Classify area**: Based on the issue content, pick the single best matching area label from this list:
 
 | Label | Scope |
 |-------|-------|
@@ -71,12 +71,15 @@ Proceed with all remaining triage steps regardless of missing environment detail
 
 ## Actions (execute in this order)
 
-**First**: Call `add_labels` with:
+**First**: Call `add_labels` with at most 5 labels total (safe-outputs limit):
 - `:new: Triage Needed` (always)
-- The best matching `Area\*` label(s) from the table above
+- Exactly **one** `Area\*` label from the table above (pick the single best match)
 - `:information_source: Needs more info` if critical environment details are missing (bugs only)
 - `Repro Available :heavy_check_mark:` if repro steps are provided
 - `Regression :boom:` if this appears to be a regression
+
+If the issue spans multiple areas, pick the primary area as the label and mention
+other relevant areas in the triage summary comment instead.
 
 **Then**: Call `add_comment` exactly **once** with this markdown:
 
