@@ -2,15 +2,15 @@
 
 Goal: Implement `Shutdown()` in `ChannelDbConnectionPool` so that pool group pruning and `AppDomain` unload correctly tear down pool v2 instances.
 
-**Status:** Not started — basic shutdown deferred from the [connection-pool-transactions](../connection-pool-transactions/outline.md) PR, which will layer transaction-aware behavior (stasis, root survival) on top.
+**Status:** Not started — basic shutdown deferred from the [transactions](../transactions/outline.md) PR, which will layer transaction-aware behavior (stasis, root survival) on top.
 
 ## Background
 
 The design for `Shutdown()` was developed as part of the transaction support design:
-- [Design document § Shutdown](../connection-pool-transactions/03-design/design.md#5-shutdown--implement) — implementation sketch, channel completion, idle drain
-- [REQ-6.1](../connection-pool-transactions/02-requirements/requirements.md) — Root connection survival during shutdown
-- [REQ-6.2](../connection-pool-transactions/02-requirements/requirements.md) — Post-transaction destroy on shutdown
-- [REQ-6.4](../connection-pool-transactions/02-requirements/requirements.md) — Non-root connections destroyed on shutdown
+- [Design document § Shutdown](../transactions/03-design/design.md#5-shutdown--implement) — implementation sketch, channel completion, idle drain
+- [REQ-6.1](../transactions/02-requirements/requirements.md) — Root connection survival during shutdown
+- [REQ-6.2](../transactions/02-requirements/requirements.md) — Post-transaction destroy on shutdown
+- [REQ-6.4](../transactions/02-requirements/requirements.md) — Non-root connections destroyed on shutdown
 
 ## Phasing
 

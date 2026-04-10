@@ -318,8 +318,8 @@ This chain is the same as the WaitHandle pool and is safe.
 | `ChannelDbConnectionPool.ReturnInternalConnection` | Add stasis branches for `IsTransactionRoot` during shutdown and when `!CanBePooled` | REQ-6.1 |
 | `ChannelDbConnectionPool.RemoveConnection` | Add `IsTxRootWaitingForTxEnd` guard | REQ-6.1, REQ-8.2 |
 | `ChannelDbConnectionPool.PutObjectFromTransactedPool` | Add `IsLiveConnection` check before returning to idle | REQ-5.2 |
-| `ChannelDbConnectionPool.Shutdown` | Basic shutdown **deferred to [separate PR](../../connection-pool-shutdown/outline.md)**. This PR adds transaction-aware stasis branches on top. | REQ-6.1, REQ-6.2, REQ-6.4 |
-| `ChannelDbConnectionPool.Clear` | **Deferred to [separate PR](../../connection-pool-clear/outline.md)**: generation counter, drain idle connections | REQ-6.3 |
+| `ChannelDbConnectionPool.Shutdown` | Basic shutdown **deferred to [separate PR](../../shutdown/outline.md)**. This PR adds transaction-aware stasis branches on top. | REQ-6.1, REQ-6.2, REQ-6.4 |
+| `ChannelDbConnectionPool.Clear` | **Deferred to [separate PR](../../clear/outline.md)**: generation counter, drain idle connections | REQ-6.3 |
 
 No changes needed to:
 - `TransactedConnectionPool` — works as-is
@@ -327,6 +327,6 @@ No changes needed to:
 - `GetFromTransactedPool` — retrieval logic already correct
 - `GetInternalConnection` / `TryGetConnection` — transaction flow already correct
 
-Minor additions (deferred to [connection-pool-clear](../../connection-pool-clear/outline.md)):
+Minor additions (deferred to [clear](../../clear/outline.md)):
 - `DbConnectionInternal` — add `PoolGeneration` property (used only by Channel pool's `Clear` generation counter)
 - `ChannelDbConnectionPool` — add `_clearGeneration` field

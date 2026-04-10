@@ -2,13 +2,13 @@
 
 Goal: Implement `Clear()` in `ChannelDbConnectionPool` so that `SqlConnection.ClearPool()` / `SqlConnection.ClearAllPools()` work with pool v2.
 
-**Status:** Not started — deferred from the [connection-pool-transactions](../connection-pool-transactions/outline.md) PR to keep that change focused on transaction support.
+**Status:** Not started — deferred from the [transactions](../transactions/outline.md) PR to keep that change focused on transaction support.
 
 ## Background
 
 The design for `Clear()` was developed as part of the transaction support design:
-- [Design document § Clear](../connection-pool-transactions/03-design/design.md#6-clear--implement) — generation counter approach, concurrency analysis
-- [REQ-6.3](../connection-pool-transactions/02-requirements/requirements.md) — ClearPool lazy invalidation requirement
+- [Design document § Clear](../transactions/03-design/design.md#6-clear--implement) — generation counter approach, concurrency analysis
+- [REQ-6.3](../transactions/02-requirements/requirements.md) — ClearPool lazy invalidation requirement
 
 ### Key Design Decisions (already made)
 

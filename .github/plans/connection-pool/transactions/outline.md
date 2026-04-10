@@ -63,8 +63,8 @@ Design a solution for `ChannelDbConnectionPool` that meets the requirements. Dec
 
 | Item | Deferred To | Reason |
 |------|-------------|--------|
-| `Clear()` implementation + generation counter | [connection-pool-clear](../connection-pool-clear/outline.md) | Keep this PR focused on transaction support |
-| `Shutdown()` basic implementation | [connection-pool-shutdown](../connection-pool-shutdown/outline.md) | Implement basic shutdown first, then layer transaction-awareness on top |
+| `Clear()` implementation + generation counter | [clear](../clear/outline.md) | Keep this PR focused on transaction support |
+| `Shutdown()` basic implementation | [shutdown](../shutdown/outline.md) | Implement basic shutdown first, then layer transaction-awareness on top |
 
 ## Stage 4 — Implementation
 
