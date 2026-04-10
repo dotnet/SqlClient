@@ -11,8 +11,9 @@
 # Each package's PDBs are published in a separate job to maintain unique naming and
 # versioning information per package.
 #
-# PDBs are expected to be located under the 'symbols/<PackageName>/' subdirectory
-# within each build artifact, placed there by the build job's CopyFiles step.
+# PDBs are expected to be located under the 'symbols/' directory at the root of
+# each build artifact, with target framework subdirectories preserved by the build
+# job's CopyFiles step. The publish-symbols job consumes that 'symbols' folder directly.
 #
 # The stage is excluded at compile time when publishSymbols is false.
 
@@ -98,7 +99,7 @@ stages:
 
       # Depend on whichever build stages produced artifacts we need to publish.
       dependsOn:
-        - ${{ if or(parameters.buildSqlServerServer, parameters.buildSqlClient) }}:
+        - ${{ if or(parameters.buildSqlServerServer, parameters.buildSqlClient, parameters.buildAkvProvider) }}:
           - build_independent
         - ${{ if parameters.buildSqlClient }}:
           - build_abstractions

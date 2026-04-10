@@ -9,8 +9,8 @@
 # the PDB files to the internal and public symbol servers.
 #
 # Each package's PDBs are published separately to maintain unique naming and versioning.
-# PDBs are expected to be located under the 'symbols/<packageName>/' subdirectory within the
-# downloaded artifact.
+# PDBs are expected to be located under the 'symbols/' directory within the downloaded
+# artifact.
 
 parameters:
   # The pipeline artifact name to download (OneBranch naming: drop_<stage>_<job>).
