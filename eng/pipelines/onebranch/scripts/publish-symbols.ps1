@@ -37,7 +37,7 @@
     Whether to publish symbols to the public symbol server. Defaults to $true.
 
 .EXAMPLE
-    .\Publish-Symbols.ps1 `
+    .\publish-symbols.ps1 `
         -PublishServer "mysymbolserver" `
         -PublishTokenUri "https://login.microsoftonline.com/..." `
         -PublishProjectName "Microsoft.Data.SqlClient.SNI" `
@@ -46,7 +46,7 @@
     Publishes symbols to both internal and public servers using the specified parameters.
 
 .EXAMPLE
-    .\Publish-Symbols.ps1 `
+    .\publish-symbols.ps1 `
         -PublishServer "mysymbolserver" `
         -PublishTokenUri "https://login.microsoftonline.com/..." `
         -PublishProjectName "Microsoft.Data.SqlClient.SNI" `
@@ -56,7 +56,7 @@
     Publishes symbols to the internal server only (retry attempt 2).
 
 .NOTES
-    File Name : Publish-Symbols.ps1
+    File Name : publish-symbols.ps1
     Requires  : Azure CLI (az) must be installed and authenticated.
     Called by : publish-symbols-step.yml (Azure Pipelines template)
 

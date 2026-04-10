@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-    Pester tests for Publish-Symbols.ps1
+    Pester tests for publish-symbols.ps1
 #>
 
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot '..' 'Publish-Symbols.ps1'
+    $scriptPath = Join-Path $PSScriptRoot '..' 'publish-symbols.ps1'
 }
 
 AfterAll {
@@ -13,7 +13,7 @@ AfterAll {
     Remove-Variable -Name 'mockCallCount' -Scope Global -ErrorAction SilentlyContinue
 }
 
-Describe 'Publish-Symbols.ps1 Parameter Validation' {
+Describe 'publish-symbols.ps1 Parameter Validation' {
 
     It 'Should reject an empty PublishServer' {
         { & $scriptPath -PublishServer '' -PublishTokenUri 'https://token' -PublishProjectName 'proj' -ArtifactName 'art' } |
@@ -36,7 +36,7 @@ Describe 'Publish-Symbols.ps1 Parameter Validation' {
     }
 }
 
-Describe 'Publish-Symbols.ps1 URL Construction' {
+Describe 'publish-symbols.ps1 URL Construction' {
 
     BeforeAll {
         Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token-12345' }
@@ -90,7 +90,7 @@ Describe 'Publish-Symbols.ps1 URL Construction' {
     }
 }
 
-Describe 'Publish-Symbols.ps1 Request Bodies' {
+Describe 'publish-symbols.ps1 Request Bodies' {
 
     BeforeAll {
         Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token-12345' }
@@ -160,7 +160,7 @@ Describe 'Publish-Symbols.ps1 Request Bodies' {
     }
 }
 
-Describe 'Publish-Symbols.ps1 Error Handling' {
+Describe 'publish-symbols.ps1 Error Handling' {
 
     It 'Should throw when token acquisition fails' {
         Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 1; return '' }
@@ -231,7 +231,7 @@ Describe 'Publish-Symbols.ps1 Error Handling' {
     }
 }
 
-Describe 'Publish-Symbols.ps1 Status Failure Detection' {
+Describe 'publish-symbols.ps1 Status Failure Detection' {
 
     It 'Should throw when internal server result is Failed (2)' {
         Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return 'fake-token' }

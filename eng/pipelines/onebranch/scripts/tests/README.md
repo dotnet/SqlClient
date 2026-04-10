@@ -1,6 +1,6 @@
 # Publish-Symbols Tests
 
-Pester tests for the `Publish-Symbols.ps1` script used by the symbol publishing pipeline step.
+Pester tests for the `publish-symbols.ps1` script used by the symbol publishing pipeline step.
 
 ## Prerequisites
 
@@ -40,4 +40,4 @@ Invoke-Pester ./Publish-Symbols.Tests.ps1 -Output Detailed
 ## Notes
 
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
-- Tests validate the script at `../Publish-Symbols.ps1` relative to this directory.
+- Tests validate the script at `../publish-symbols.ps1` relative to this directory.
