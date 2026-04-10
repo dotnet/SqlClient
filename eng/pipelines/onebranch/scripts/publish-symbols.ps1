@@ -3,10 +3,25 @@
     Publishes symbols to the Microsoft symbol publishing service (SymWeb/MSDL).
 
 .DESCRIPTION
-    This script uploads and publishes debug symbols (.pdb files) to internal and/or public
-    Microsoft symbol servers via the Symbols Publishing Pipeline REST API.
+    This script is Step 2 of the two-step symbols publishing process. It requests
+    the Symbols Publishing Pipeline to publish previously uploaded PDB files to
+    internal (SymWeb) and/or public (MSDL) Microsoft symbol servers.
 
-    It performs four steps:
+    The two-step process:
+      Step 1 (PublishSymbols@2 task in publish-symbols-step.yml):
+        Uploads PDB files to the Azure DevOps symbol store under a unique
+        artifact name (SymbolsArtifactName). This stores the symbols but does
+        NOT make them available on SymWeb or MSDL.
+
+      Step 2 (this script):
+        Calls the Symbols Publishing Pipeline REST API to request that the
+        uploaded symbols be published to the symbol servers.
+
+    Step 2 depends on Step 1: the -ArtifactName parameter MUST match the
+    SymbolsArtifactName used by the PublishSymbols@2 upload task so that
+    both steps reference the same uploaded artifact.
+
+    This script performs four sub-steps:
       1. Acquires a bearer token from Azure CLI for the symbol publishing service.
       2. Registers a unique request name with the publishing service.
       3. Submits the request to publish symbols to the specified servers.

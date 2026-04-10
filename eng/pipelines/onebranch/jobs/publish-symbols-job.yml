@@ -60,6 +60,12 @@ jobs:
       # OneBranch requires ob_outputDirectory to be set, even if this job produces no artifacts.
       ob_outputDirectory: $(JOB_OUTPUT)
 
+      # Disable SDL scanning — this job only uploads/publishes PDBs and produces no
+      # assemblies to scan. APIScan and BinSkim are handled by the build jobs.
+      ob_sdl_apiscan_enabled: false
+      ob_sdl_binskim_break: false
+      ob_sdl_binskim_enabled: false
+
       # Path where the downloaded artifact will be placed.
       artifactPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
 

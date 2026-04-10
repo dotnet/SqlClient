@@ -4,7 +4,23 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# For more details, see https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
+# Symbols Publishing Pipeline
+# ===========================
+# Canonical docs: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
+#
+# Publishing symbols to SymWeb (internal) and MSDL (public) is a two-step process:
+#
+#   Step 1 - Upload:  The PublishSymbols@2 task uploads PDB files to the Azure DevOps
+#            symbol store under an artifact name (SymbolsArtifactName). This stores the
+#            symbols but does NOT make them available on SymWeb or MSDL.
+#
+#   Step 2 - Publish: The publish-symbols.ps1 script calls the Symbols Publishing Pipeline
+#            REST API to request that the previously uploaded symbols be published to the
+#            internal (SymWeb) and/or public (MSDL) symbol servers.
+#
+# IMPORTANT: Step 2 depends on Step 1. The ArtifactName parameter passed to the publish
+# script MUST match the SymbolsArtifactName used by PublishSymbols@2 so that both steps
+# reference the same uploaded artifact.
 
 parameters:
     # Name of the symbols artifact that will be published
@@ -67,8 +83,10 @@ steps:
     - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
       displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
+    # Step 1 - Upload: Push PDB files to the Azure DevOps symbol store.
+    # The SymbolsArtifactName set here is the key that links this upload to Step 2.
     - task: PublishSymbols@2
-      displayName: 'Upload symbols to ${{ parameters.uploadAccount }} org'
+      displayName: 'Step 1: Upload symbols to ${{ parameters.uploadAccount }} org'
       inputs:
           IndexSources: false
           Pat: '$(System.AccessToken)'
@@ -81,8 +99,11 @@ steps:
           SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
 
+    # Step 2 - Publish: Request the Symbols Publishing Pipeline to publish the uploaded
+    # symbols to SymWeb and/or MSDL. The -ArtifactName argument must match the
+    # SymbolsArtifactName from Step 1.
     - task: AzureCLI@2
-      displayName: 'Publish Symbols'
+      displayName: 'Step 2: Publish symbols to SymWeb/MSDL'
       inputs:
         azureSubscription: '${{ parameters.azureSubscription }}'
         scriptType: pscore
