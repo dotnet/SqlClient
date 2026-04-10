@@ -119,8 +119,12 @@ stages:
 
     jobs:
       - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
-        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+        # Build Microsoft.Data.SqlClient.Internal.Logging
+        - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
           parameters:
+            apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/dlls'
+            apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/pdbs'
+            shouldSignPackage: ${{ parameters.isOfficial }}
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
             signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
             signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -128,13 +132,11 @@ stages:
             signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
             signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
-            isOfficial: ${{ parameters.isOfficial }}
-            packageName: Logging
-            packageFullName: Microsoft.Data.SqlClient.Internal.Logging
-            versionProperties: >-
-              -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-              -p:LoggingAssemblyFileVersion=${{ parameters.loggingFileVersion }}
-            assemblyFileVersion: '${{ parameters.loggingFileVersion }}'
+            dependencies: []
+            fileVersion: '${{ parameters.loggingFileVersion }}'
+            packageFullName: 'Microsoft.Data.SqlClient.Internal.Logging'
+            packageShortName: 'Logging'
+            packageVersion: '${{ parameters.loggingPackageVersion }}'
 
 
       - ${{ if eq(parameters.buildSqlServerServer, true) }}:

@@ -26,6 +26,7 @@ parameters:
   - name: packageShortName
     type: string
     values:
+      - Logging
       - SqlServer
 
   #  Version to assign to the project to build. This will be passed into msbuild as

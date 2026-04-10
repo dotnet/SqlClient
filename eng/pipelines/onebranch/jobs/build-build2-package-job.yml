@@ -5,6 +5,7 @@
 #################################################################################
 
 # Generic job template for building and signing simple build2.proj packages, currently:
+#  - Logging
 #  - SqlServer
 #
 # The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet packages from the
@@ -67,6 +68,7 @@ parameters:
   - name: packageFullName
     type: string
     values:
+      - 'Microsoft.Data.SqlClient.Internal.Logging'
       - 'Microsoft.SqlServer.Server'
 
   # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
@@ -74,6 +76,7 @@ parameters:
   - name: packageShortName
     type: string
     values:
+      - 'Logging'
       - 'SqlServer'
 
   # The version of the package.
