@@ -163,12 +163,13 @@ steps:
         Set-ExecutionPolicy Unrestricted
         Import-Module "sqlps"
 
-        # Retry loop: SQL Server may be temporarily unavailable after enabling FileStream via WMI
+        # Retry loop: SQL Server may be temporarily unavailable after enabling FileStream via WMI.
+        # Worst-case budget: 10 attempts x (5s connection timeout + 5s sleep) = ~100s
         $tries = 0
         while ($true) {
             $tries++
             try {
-                Invoke-Sqlcmd -ServerInstance "$machineName" @"
+                Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
                     EXEC sp_configure filestream_access_level, 2;
                     RECONFIGURE;
         "@
@@ -268,7 +269,8 @@ steps:
       Restart-Service -Name "$serviceName" -Force
       Restart-Service -Name MSSQLSERVER* -Force
 
-      # Wait for SQL Server to be ready to accept connections after restart
+      # Wait for SQL Server to be ready to accept connections after restart.
+      # Worst-case budget: 20 attempts x (5s connection timeout + 3s sleep) = ~160s
       $machineName = $env:COMPUTERNAME
       if ("${{parameters.instanceName }}" -ne "MSSQLSERVER") {
           $machineName += "\${{parameters.instanceName }}"
