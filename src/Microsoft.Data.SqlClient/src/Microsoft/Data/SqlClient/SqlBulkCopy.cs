@@ -511,9 +511,9 @@ DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
 
-IF SERVERPROPERTY('EngineEdition') = 6
+IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
-    SET @Column_Name_Query_SELECT = N'SELECT @Column_Names = STRING_AGG(QUOTENAME([name]), '', '') WITHIN GROUP (ORDER BY [column_id] ASC)';
+    SET @Column_Name_Query_SELECT = N'SELECT @Column_Names = STRING_AGG(CAST(QUOTENAME([name]) AS NVARCHAR(MAX)), '', '') WITHIN GROUP (ORDER BY [column_id] ASC)';
     SET @Column_Name_Query_SORT = N'';
 END
 ELSE
