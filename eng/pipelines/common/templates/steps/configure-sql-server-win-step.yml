@@ -185,7 +185,6 @@ steps:
             }
         }
       displayName: 'Enable FileStream [Win]'
-      retryCountOnTaskFailure: 1
       env:
         SQL_USER: ${{parameters.user }}
         SQL_PASSWD: ${{ parameters.saPassword }}
