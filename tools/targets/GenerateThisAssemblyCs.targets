@@ -12,7 +12,7 @@
       <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(FileVersion)</AssemblyFileVersion>
 
       <!-- Put the ThisAssembly class in the System namespace by default. -->
-      <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">System</ThisAssemblyNamespace>
+      <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">$(AssemblyName)</ThisAssemblyNamespace>
 
       <ThisAssemblyCsContents>
 // Licensed to the .NET Foundation under one or more agreements.
