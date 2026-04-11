@@ -347,7 +347,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
 
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <!-- @TODO: Should there be a package mode test for AKV? -->
   </ItemGroup>
 
@@ -421,5 +421,5 @@
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
-  
+
 </Project>
