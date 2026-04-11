@@ -5,6 +5,8 @@
 #################################################################################
 
 # Generic job template for building and signing simple build2.proj packages, currently:
+#  - Abstractions
+#  - Azure
 #  - Logging
 #  - SqlServer
 #
@@ -69,6 +71,7 @@ parameters:
     type: string
     values:
       - 'Microsoft.Data.SqlClient.Extensions.Abstractions'
+      - 'Microsoft.Data.SqlClient.Extensions.Azure'
       - 'Microsoft.Data.SqlClient.Internal.Logging'
       - 'Microsoft.SqlServer.Server'
 
@@ -78,6 +81,7 @@ parameters:
     type: string
     values:
       - 'Abstractions'
+      - 'Azure'
       - 'Logging'
       - 'SqlServer'
 

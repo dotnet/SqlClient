@@ -220,8 +220,12 @@ stages:
               sqlClientAssemblyFileVersion: '${{ parameters.sqlClientFileVersion }}'
               sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
-          - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          # Build Microsoft.Data.SqlClient.Extensions.Azure
+          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
             parameters:
+              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/dlls'
+              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/pdbs'
+              shouldSignPackage: ${{ parameters.isOfficial }}
               signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
               signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
               signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -229,20 +233,17 @@ stages:
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
-              isOfficial: ${{ parameters.isOfficial }}
-              packageName: Azure
-              packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
-              versionProperties: >-
-                -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
-                -p:AzureAssemblyFileVersion=${{ parameters.azureFileVersion }}
-                -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-              assemblyFileVersion: '${{ parameters.azureFileVersion }}'
-              downloadArtifacts:
+              dependencies:
                 - artifactName: '${{ parameters.abstractionsArtifactsName }}'
-                  displayName: Abstractions Package
+                  shortName: 'Abstractions'
+                  version: '${{ parameters.abstractionsPackageVersion }}'
                 - artifactName: '${{ parameters.loggingArtifactsName }}'
-                  displayName: Logging Package
+                  shortName: 'Logging'
+                  version: '${{ parameters.loggingPackageVersion }}'
+              fileVersion: '${{ parameters.azureFileVersion }}'
+              packageFullName: 'Microsoft.Data.SqlClient.Extensions.Azure'
+              packageShortName: 'Azure'
+              packageVersion: '${{ parameters.azurePackageVersion }}'
 
   # ====================================================================
   # Stage 4: Add-on packages (depend on core packages)

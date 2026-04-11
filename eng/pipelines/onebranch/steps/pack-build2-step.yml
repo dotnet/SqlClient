@@ -30,7 +30,9 @@ parameters:
   - name: packageFullName
     type: string
     values:
-      - Microsoft.Data.SqlClient.Extensions.Logging
+      - Microsoft.Data.SqlClient.Extensions.Abstractions
+      - Microsoft.Data.SqlClient.Extensions.Azure
+      - Microsoft.Data.SqlClient.Internal.Logging
       - Microsoft.SqlServer.Server
 
   # Project to build. This short name will be appended to "Pack" to generate the appropriate
@@ -39,6 +41,7 @@ parameters:
     type: string
     values:
       - Abstractions
+      - Azure
       - Logging
       - SqlServer
 
