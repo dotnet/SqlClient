@@ -100,7 +100,7 @@
     <PackMdsDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildMds</PackMdsDependsOn>
 
     <!--
-      PackageVersionAbstractions
+      PackageVersionAbstractions @TODO: Update
       Applies to:     BuildMds, BuildMdsRef, BuildMdsUnix, BuildMdsWindows
                       PackMds
                       TestMds, TestMdsFunctional, TestMdsManual
@@ -117,7 +117,23 @@
     </PackageVersionAbstractionsArgument>
 
     <!--
-      PackageVersionLogging
+      PackageVersionAzure @TODO: Update
+      Applies to:     BuildAzure, PackAzure
+                      TestMds, TestMdsFunctional, TestMdsManual
+      Description:    Specifies what version of the Microsoft.Data.SqlClient.Abstractions to use
+                      when compiling MDS. If not specified, the version defined in
+                      Directory.Packages.props is used. This argument only has effect if the
+                      ReferenceType argument is set to "Package".
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
+    <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
+      -p:AzurePackageVersion=$(PackageVersionAbstractions)
+    </PackageVersionAzureArgument>
+
+    <!--
+      PackageVersionLogging @TODO: Update
       Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
                       PackMds
                       TestMds, TestMdsFunctional, TestMdsManual
@@ -134,7 +150,7 @@
     </PackageVersionLoggingArgument>
 
     <!--
-      PackageVersionMds
+      PackageVersionMds @TODO: Update
       Applies to:     TestMdsFunctional, TestMdsManual (when ReferenceType is Package)
       Description:    Specifies what version of the Microsoft.Data.SqlClient package to run tests
                       against. If not specified, the version pinned in Directory.Packages.props
@@ -242,14 +258,14 @@
       TestFilters
       Applies to:     Test* targets
       Description:    Filter to use to include or exclude any tests. If not specified, this defaults
-                      to including all tests that are not in the category "failing" or "flaky". Use
+                      to including all tests that are not in the category "failing", "flaky", or "interactive". Use
                       "none" to disable filtering and run all tests in the target.
                       For more information see:
                       https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
       Default value:  category!=failing&category!=flaky
       Allowed values: (category_expression|none)
     -->
-    <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky</TestFilters>
+    <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
     <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
     <TestFiltersArgument Condition="'$(TestFilters)' != ''">
       --filter "$(TestFilters)"
@@ -684,6 +700,97 @@
         $(TestFrameworkArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.Extensions.Azure Targets -->
+  <PropertyGroup>
+    <AzureSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/</AzureSrcRoot>
+    <AzureProjectPath>$(AzureSrcRoot)src/Azure.csproj</AzureProjectPath>
+    <AzureTestProjectPath>$(AzureSrcRoot)test/Azure.Test.csproj</AzureTestProjectPath>
+  </PropertyGroup>
+
+  <!-- Build Azure Target ============================================== -->
+  <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
+  <Target Name="BuildAzure">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AzureProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAzureArgument)
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- Pack Azure Target ============================================== -->
+  <!-- PackAzure: Packages Microsoft.Data.SqlClient.Extensions.Azure -->
+  <Target Name="PackAzure">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(AzureProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAzureArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- Test Azure Targets ============================================== -->
+  <!-- TestAzure: Runs Microsoft.Data.SqlClient.Extensions.Azure.Tests -->
+  <Target Name="TestAzure">
+    <PropertyGroup>
+      <LogFilePrefix>AzureTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AzureTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+
+        $(PackageVersionMdsArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>

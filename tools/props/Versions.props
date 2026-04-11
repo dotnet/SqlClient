@@ -15,6 +15,9 @@
   <!-- For Microsoft.Data.SqlClient.Extensions.Abstractions versioning, see:
        src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props -->
 
+  <!-- For Microsoft.SqlClient.Extensions.Azure versioning, see:
+       src/Microsoft.Data.SqlClient.Extensions/Azure/src/Versions.props -->
+
   <!-- For Microsoft.Data.SqlClient.Internal.Logging versioning, see:
        src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props -->
 
@@ -23,9 +26,6 @@
 
   <!-- For Microsoft.SqlServer.Server versioning, see:
        src/Microsoft.SqlServer.Server/Versions.props -->
-
-  <!-- Azure Package Properties -->
-  <Import Project="..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\AzureVersions.props" />
 
   <!-- AKV Provider Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider\AkvProviderVersions.props" />
