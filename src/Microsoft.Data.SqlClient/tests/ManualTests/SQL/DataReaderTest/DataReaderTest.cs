@@ -1177,37 +1177,37 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                                 // Row 1: All NULL values
                                 Assert.True(await reader.ReadAsync());
                                 Assert.Equal(1, reader.GetInt32(0));
-                                Assert.True(reader.IsDBNull(1));
-                                Assert.True(reader.IsDBNull(2));
-                                Assert.True(reader.IsDBNull(3));
+                                Assert.True(await reader.IsDBNullAsync(1));
+                                Assert.True(await reader.IsDBNullAsync(2));
+                                Assert.True(await reader.IsDBNullAsync(3));
 
                                 // Row 2: All empty strings
                                 Assert.True(await reader.ReadAsync());
                                 Assert.Equal(2, reader.GetInt32(0));
-                                Assert.Equal(string.Empty, reader.GetString(1));
-                                Assert.Equal(string.Empty, reader.GetString(2));
-                                Assert.Equal(string.Empty, reader.GetString(3));
+                                Assert.Equal(string.Empty, await reader.GetFieldValueAsync<string>(1));
+                                Assert.Equal(string.Empty, await reader.GetFieldValueAsync<string>(2));
+                                Assert.Equal(string.Empty, await reader.GetFieldValueAsync<string>(3));
 
                                 // Row 3: Non-empty values
                                 Assert.True(await reader.ReadAsync());
                                 Assert.Equal(3, reader.GetInt32(0));
-                                Assert.Equal("test", reader.GetString(1));
-                                Assert.Equal("test", reader.GetString(2));
-                                Assert.Equal("test", reader.GetString(3));
+                                Assert.Equal("test", await reader.GetFieldValueAsync<string>(1));
+                                Assert.Equal("test", await reader.GetFieldValueAsync<string>(2));
+                                Assert.Equal("test", await reader.GetFieldValueAsync<string>(3));
 
                                 // Row 4: Mixed NULL and values
                                 Assert.True(await reader.ReadAsync());
                                 Assert.Equal(4, reader.GetInt32(0));
-                                Assert.True(reader.IsDBNull(1));
-                                Assert.Equal(string.Empty, reader.GetString(2));
-                                Assert.Equal("value", reader.GetString(3));
+                                Assert.True(await reader.IsDBNullAsync(1));
+                                Assert.Equal(string.Empty, await reader.GetFieldValueAsync<string>(2));
+                                Assert.Equal("value", await reader.GetFieldValueAsync<string>(3));
 
                                 // Row 5: Mixed empty and NULL
                                 Assert.True(await reader.ReadAsync());
                                 Assert.Equal(5, reader.GetInt32(0));
-                                Assert.Equal(string.Empty, reader.GetString(1));
-                                Assert.True(reader.IsDBNull(2));
-                                Assert.True(reader.IsDBNull(3));
+                                Assert.Equal(string.Empty, await reader.GetFieldValueAsync<string>(1));
+                                Assert.True(await reader.IsDBNullAsync(2));
+                                Assert.True(await reader.IsDBNullAsync(3));
 
                                 Assert.False(await reader.ReadAsync());
                             }
