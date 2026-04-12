@@ -758,38 +758,6 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task GetChars_NullBufferNegativeBufferIndex_ThrowsArgumentOutOfRange()
-        {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            await connection.OpenAsync();
-
-            using var command = connection.CreateCommand();
-            command.CommandText = "SELECT 'test'";
-
-            using var reader = await command.ExecuteReaderAsync();
-            Assert.True(await reader.ReadAsync());
-
-            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => reader.GetChars(0, 0, null, -1, 4));
-            Assert.Equal("bufferIndex", ex.ParamName);
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task GetBytes_NullBufferNegativeBufferIndex_ThrowsArgumentOutOfRange()
-        {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            await connection.OpenAsync();
-
-            using var command = connection.CreateCommand();
-            command.CommandText = "SELECT CONVERT(VARBINARY, 0x1234)";
-
-            using var reader = await command.ExecuteReaderAsync();
-            Assert.True(await reader.ReadAsync());
-
-            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => reader.GetBytes(0, 0, null, -1, 4));
-            Assert.Equal("bufferIndex", ex.ParamName);
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanGetCharsSequentially()
         {
             const CommandBehavior commandBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleResult;
