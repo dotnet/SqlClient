@@ -1142,11 +1142,11 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                     {
                         await connection.OpenAsync();
 
-                        // Create test table with PLP string columns
+                        // Create test table with large string columns (VARCHAR(MAX), NVARCHAR(MAX) are PLP types; TEXT is a deprecated LOB type)
                         using (SqlCommand cmd = connection.CreateCommand())
                         {
                             cmd.CommandText = $@"
-                                CREATE TABLE {tableName} (
+                                CREATE TABLE [{tableName}] (
                                     Id INT PRIMARY KEY,
                                     VarcharMaxCol VARCHAR(MAX),
                                     NVarcharMaxCol NVARCHAR(MAX),
@@ -1159,7 +1159,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         using (SqlCommand cmd = connection.CreateCommand())
                         {
                             cmd.CommandText = $@"
-                                INSERT INTO {tableName} (Id, VarcharMaxCol, NVarcharMaxCol, TextCol) VALUES
+                                INSERT INTO [{tableName}] (Id, VarcharMaxCol, NVarcharMaxCol, TextCol) VALUES
                                 (1, NULL, NULL, NULL),
                                 (2, '', '', ''),
                                 (3, 'test', N'test', 'test'),
@@ -1171,7 +1171,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         // Read data asynchronously - this should not throw ArgumentNullException
                         using (SqlCommand cmd = connection.CreateCommand())
                         {
-                            cmd.CommandText = $"SELECT Id, VarcharMaxCol, NVarcharMaxCol, TextCol FROM {tableName} ORDER BY Id";
+                            cmd.CommandText = $"SELECT Id, VarcharMaxCol, NVarcharMaxCol, TextCol FROM [{tableName}] ORDER BY Id";
                             using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                             {
                                 // Row 1: All NULL values
