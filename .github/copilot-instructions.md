@@ -31,7 +31,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Microsoft.SqlServer.Server**: Supplies APIs for SQL Server-specific features, including user-defined types (UDTs) and SQL Server-specific attributes.
 
 ## 🛠️ Key Features
-- **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Azure Active Directory authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
+- **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Entra ID authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
 - **Connection Resiliency**: Implements connection resiliency features to handle transient faults and network issues, ensuring reliable database connectivity.
 - **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are: 
   - **Optional**: Encryption is used if available, but not required.
@@ -128,6 +128,10 @@ When a new issue is created, follow these steps:
 - Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
 - Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
+
+## 🌿 Branch Naming
+- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
+- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.

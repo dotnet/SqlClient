@@ -15,6 +15,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 
@@ -95,6 +96,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Identity = identity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
+            TransactedConnectionPool = new(this);
 
             _connectionSlots = new(MaxPoolSize);
 
@@ -146,6 +148,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <inheritdoc />
         public DbConnectionPoolState State { get; private set; }
+
+        /// <inheritdoc />
+        public TransactedConnectionPool TransactedConnectionPool { get; }
 
         /// <inheritdoc />
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
@@ -486,8 +491,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch (ChannelClosedException)
                 {
-                    //TODO: exceptions from resource file
-                    throw new Exception("The connection pool has been shut down.");
+                    throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown));
                 }
 
                 if (connection is not null && !IsLiveConnection(connection))

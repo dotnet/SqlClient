@@ -2,6 +2,15 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsFileVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
@@ -10,6 +19,51 @@
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: Move to directory.build.props? -->
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
+    <!--
+      MSBuild will add the target framework to the end of this path by default. Telling it not to
+      is possible but also requires specifying the IntermediateOutputPath. So while it would be
+      nice to have a flatter directory structure, it's more hassle than its worth.
+    -->
+    <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
+  </PropertyGroup>
+
+  <!-- Trim Docs for IntelliSense ====================================== -->
+  <!--
+    It has been determined that including the remarks section in IntelliSense docs looks bad in
+    Visual Studio. So, before we generate the ref binaries, we trim off the remarks tags. We leave
+    them in the xml files, though, because those are the source for the docs site, which needs to
+    have the full documentation.
+  -->
+  <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
+  <Target Name="TrimDocsForIntelliSense"
+          AfterTargets="Build"
+          Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+    <PropertyGroup>
+      <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
+      <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
+      <PowerShellCommand>
+        $(PowerShellCommand)
+          -NonInteractive
+          -ExecutionPolicy Unrestricted
+          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
+      </PowerShellCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <PowerShellCommand>$([System.Text.RegularExpressions.Regex]::Replace($(PowerShellCommand), "\s+", " "))</PowerShellCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Trimming documentation file from generated documentation file: $(PowerShellCommand)"/>
+    <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" />
+  </Target>
 
   <!-- References ====================================================== -->
   <!-- Reference to Abstractions -->

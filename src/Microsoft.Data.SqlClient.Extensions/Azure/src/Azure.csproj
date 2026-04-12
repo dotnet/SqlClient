@@ -65,8 +65,12 @@
     <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
     <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
 
-    <!-- We put our docs in the bin/ directory as well. -->
-    <DocumentationFile>$(Artifacts)/doc/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
+    <!--
+      Generate XML documentation from /// comments.  The compiler places the
+      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
+      this file automatically in the NuGet package under lib/<tfm>/.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
   </PropertyGroup>
 
@@ -82,11 +86,17 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <Authors>Microsoft Corporation</Authors>
+    <Title>Microsoft.Data.SqlClient.Extensions.Azure</Title>
+    <Authors>Microsoft</Authors>
     <Company>Microsoft Corporation</Company>
     <Description>Microsoft.Data.SqlClient Extensions Azure</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient extensions azure</PackageTags>
+    <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIcon>dotnet.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -111,10 +121,10 @@
     depending on our build parameters.
   -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj"/>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"/>
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <ItemGroup>

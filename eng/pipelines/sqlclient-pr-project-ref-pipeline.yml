@@ -11,8 +11,9 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It is triggered by pushes to PRs that target dev/ and feature/ branches, and
-# the main branch in GitHub.
+# It is triggered by pushes to PRs that target the main, dev/*, feat/*, and
+# release/* branches in GitHub.  The dev/* pattern includes dev/automation/*
+# branches created by AI agents.
 #
 # It maps to the "PR-SqlClient-Project" pipeline in the Public project:
 #
@@ -33,6 +34,7 @@ pr:
       - dev/*
       - feat/*
       - main
+      - release/*
 
   paths:
     include:
@@ -44,12 +46,14 @@ pr:
       - tools/*
       - azurepipelines-coverage.yml
       - build.proj
+      - build2.proj
       - Directory.Packages.props
       - dotnet-tools.json
       - global.json
       - NuGet.config
     exclude:
       - eng/pipelines/onebranch/*
+      - eng/pipelines/stress/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none
@@ -74,12 +78,6 @@ parameters:
   # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
-    type: boolean
-    default: false
-
-  # True to run the stress tests stage.
-  - name: enableStressTests
-    displayName: Enable Stress Tests
     type: boolean
     default: false
 
@@ -132,12 +130,13 @@ extends:
     buildPlatforms: ${{ parameters.buildPlatforms }}
     referenceType: Project
     debug: ${{ parameters.debug }}
-    enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    # Legacy SQL Server tests (2016/2017) run in CI only, not on PRs.
+    runLegacySqlTests: false
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
       runAlwaysEncryptedTests: false

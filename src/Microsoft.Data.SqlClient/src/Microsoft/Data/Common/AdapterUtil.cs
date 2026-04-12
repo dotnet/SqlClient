@@ -23,6 +23,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -376,6 +377,9 @@ namespace Microsoft.Data.Common
         #region Helper Functions
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
+
+        internal static ArgumentOutOfRangeException InvalidArraySize(string parameterName) =>
+            ArgumentOutOfRange(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage), parameterName);
 
         internal static void CheckArgumentNull(object value, string parameterName)
         {

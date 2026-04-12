@@ -2390,11 +2390,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {
-                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                            throw ADP.InvalidJsonStringForVector((string)value, ex);
                         }
                     }
                     else if (
@@ -2514,7 +2514,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 string errorMsg = isUdtTypeName ? Strings.SQL_UDTTypeName : Strings.SQL_TypeName;
-                return MultipartIdentifier.ParseMultipartIdentifier(typeName, "[\"", "]\"", '.', 3, true, errorMsg, true);
+                return MultipartIdentifier.ParseMultipartIdentifier(typeName, errorMsg, true, limit: 3);
             }
             catch (ArgumentException)
             {

@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Internal;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
@@ -1936,8 +1937,10 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
                     {
                         result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete,
+                            continuationAction: static (task, state) => s_openAsyncComplete(task, state),
                             state: operationId, // connection is passed in TaskCompletionSource async state
+                            cancellationToken: CancellationToken.None, // we want the continuation task to run even if the original operation was cancelled
+                            continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
                             scheduler: TaskScheduler.Default
                         );
                     }
@@ -2923,7 +2926,7 @@ namespace Microsoft.Data.SqlClient
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {
-                throw new InvalidOperationException(o.GetType() + ": invalid Size");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_InvalidUdtSize, o.GetType().FullName));
             }
 
             byte[] retval;

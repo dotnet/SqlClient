@@ -511,9 +511,26 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
         }
 
-        internal static Exception CannotFindAuthProvider(string authentication)
+        internal static Exception CannotFindAuthProvider(SqlAuthenticationMethod authentication)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authentication));
+            string authName = authentication.ToString();
+
+            return authentication switch
+            {
+#pragma warning disable 0618
+                SqlAuthenticationMethod.ActiveDirectoryPassword or
+#pragma warning restore 0618
+                SqlAuthenticationMethod.ActiveDirectoryIntegrated or
+                SqlAuthenticationMethod.ActiveDirectoryInteractive or
+                SqlAuthenticationMethod.ActiveDirectoryServicePrincipal or
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow or
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity or
+                SqlAuthenticationMethod.ActiveDirectoryMSI or
+                SqlAuthenticationMethod.ActiveDirectoryDefault or
+                SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                    => ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindActiveDirectoryAuthProvider, authName)),
+                _ => ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authName)),
+            };
         }
 
         internal static Exception ParameterCannotBeEmpty(string paramName)
@@ -813,9 +830,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception ConversionOverflow()
+        {
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_ConversionOverflowMessage));
+        }
+
         internal static Exception DateTimeOverflow()
         {
-            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_DateTimeOverflowMessage));
         }
 
         //
@@ -2267,6 +2289,10 @@ namespace Microsoft.Data.SqlClient
         internal static string ExRoutingDestination()
         {
             return StringsHelper.GetString(Strings.SQL_ExRoutingDestination);
+        }
+        internal static string NullString()
+        {
+            return StringsHelper.GetString(Strings.SqlMisc_NullString);
         }
     }
 

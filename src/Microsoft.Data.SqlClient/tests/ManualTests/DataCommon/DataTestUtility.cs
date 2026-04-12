@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
+        private static string s_sqlServerVersion;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
@@ -125,9 +125,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
+                    s_sqlServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
-                return s_sQLServerVersion;
+                return s_sqlServerVersion;
             }
         }
 
@@ -302,9 +302,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SecureString securePassword = new SecureString();
 
             securePassword.MakeReadOnly();
-#pragma warning disable CS0618 // Type or member is obsolete
+            #pragma warning disable CS0618 // Type or member is obsolete
             result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
-#pragma warning restore CS0618 // Type or member is obsolete
+            #pragma warning restore CS0618 // Type or member is obsolete
 
             return result.AccessToken;
         });
@@ -389,7 +389,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        #nullable disable
+        #nullable restore
 
         private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
@@ -491,7 +491,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
 
-        public static bool IsSQL2016() => string.Equals("14", s_sQLServerVersion.Trim());
+        public static bool IsSQL2017() => string.Equals("14", SQLServerVersion.Trim());
+
+        public static bool IsSQL2016() => string.Equals("13", SQLServerVersion.Trim());
+
+        // "At least" version checks for use as ConditionalFact/ConditionalTheory conditions.
+        public static bool IsAtLeastSQL2017() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 14;
+
+        public static bool IsAtLeastSQL2019() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 15;
 
         public static bool IsSQLAliasSetup()
         {
@@ -951,35 +958,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TException AssertThrowsWrapper<TException>(Action actionThatFails, string exceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        #nullable enable
+
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws an exception of type
+        /// <typeparamref name="TException"/> and optionally verifies that its message contains
+        /// <paramref name="exceptionMessage"/>.
+        /// </summary>
+        public static TException AssertThrows<TException>(
+            Action actionThatFails,
+            string? exceptionMessage = null)
+        where TException : Exception
         {
             TException ex = Assert.Throws<TException>(actionThatFails);
+
             if (exceptionMessage != null)
             {
                 Assert.True(ex.Message.Contains(exceptionMessage),
                     string.Format("FAILED: Exception did not contain expected message.\nExpected: {0}\nActual: {1}", exceptionMessage, ex.Message));
             }
 
-            if (innerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException == null, "FAILED: Expected InnerException to be null.");
-            }
-
-            if (customExceptionVerifier != null)
-            {
-                Assert.True(customExceptionVerifier(ex), "FAILED: Custom exception verifier returned false for this exception.");
-            }
-
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
+        /// whose <see cref="Exception.InnerException"/> is of type <typeparamref name="TInnerException"/>.
+        /// Optionally verifies message text on both the outer and inner exceptions.
+        /// </summary>
+        public static TException AssertThrowsInner<TException, TInnerException>(
+            Action actionThatFails,
+            string? exceptionMessage = null,
+            string? innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException>(actionThatFails, exceptionMessage, innerExceptionMustBeNull, customExceptionVerifier);
+            TException ex = AssertThrows<TException>(actionThatFails, exceptionMessage);
+
+            Assert.NotNull(ex.InnerException);
+            Assert.IsAssignableFrom<TInnerException>(ex.InnerException);
 
             if (innerExceptionMessage != null)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerExceptionMessage because InnerException is null.");
                 Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
                     string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
@@ -987,25 +1007,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException, TInnerInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, string innerInnerExceptionMessage = null, bool innerInnerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception where TInnerInnerException : Exception
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
+        /// whose <see cref="Exception.InnerException"/> is either <typeparamref name="TInnerException"/>
+        /// or <typeparamref name="TAlternateInnerException"/>. Use this when a race condition
+        /// (e.g. disposal during an async read) may cause the inner exception type to vary
+        /// between runs. The <paramref name="innerExceptionMessage"/> is only verified when the
+        /// inner exception is <typeparamref name="TInnerException"/>.
+        /// </summary>
+        public static TException AssertThrowsInnerWithAlternate<TException, TInnerException, TAlternateInnerException>(
+            Action actionThatFails,
+            string? exceptionMessage = null,
+            string? innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
+        where TAlternateInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException, TInnerException>(actionThatFails, exceptionMessage, innerExceptionMessage);
-            if (innerInnerInnerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerInnerExceptionMustBeNull since InnerException is null");
-                Assert.True(ex.InnerException.InnerException == null, "FAILED: Expected InnerInnerException to be null.");
-            }
+            TException ex = AssertThrows<TException>(actionThatFails, exceptionMessage);
 
-            if (innerInnerExceptionMessage != null)
+            Assert.NotNull(ex.InnerException);
+            Assert.True(
+                ex.InnerException is TInnerException or TAlternateInnerException,
+                $"Expected {typeof(TInnerException).Name} or {typeof(TAlternateInnerException).Name}, got: {ex.InnerException?.GetType()}");
+
+            if (innerExceptionMessage != null && ex.InnerException is TInnerException)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerException is null");
-                Assert.True(ex.InnerException.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerInnerException is null");
-                Assert.True(ex.InnerException.InnerException.Message.Contains(innerInnerExceptionMessage),
-                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerInnerExceptionMessage, ex.InnerException.InnerException.Message));
+                Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
+                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
 
             return ex;
         }
+
+        #nullable restore
 
         public static TException ExpectFailure<TException>(Action actionThatFails, string[] exceptionMessages, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
         {
@@ -1320,7 +1354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return fqdn.ToString();
         }
-    }
 
-    #nullable disable
+        #nullable restore
+    }
 }

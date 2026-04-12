@@ -7,7 +7,6 @@
     <LangVersion>8.0</LangVersion>
     <IsPackable>true</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <OutputPath>$(ToolsArtifactsDir)</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -17,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Cci" />
-    <PackageReference Include="Microsoft.Composition" />
+    <PackageReference Include="System.Composition" />
     <PackageReference Include="System.Diagnostics.Contracts" />
     <PackageReference Include="System.Diagnostics.TraceSource" />
     <PackageReference Include="System.Reflection.Metadata" />

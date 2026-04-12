@@ -19,6 +19,13 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
+  # The name of the Logging pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
   # The Abstractions package verion to depend on.
   #
   # This is used when the referenceType is 'Package'.
@@ -39,7 +46,7 @@ parameters:
 
   # The prefix to prepend to the job's display name:
   #
-  #   [<prefix>] Run Stress Tests
+  #   [<prefix>] Test Azure Package
   #
   - name: displayNamePrefix
     type: string
@@ -151,9 +158,7 @@ jobs:
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
       # project.  This is defined with a non-standard Platform of 'AnyCPU', and
-      # will fail the builds if left defined.  The stress tests solution does
-      # not require any specific Platform, and so its solution file doesn't
-      # support any non-standard platforms.
+      # will fail the builds if left defined.
       #
       # Note that Azure Pipelines will inject this variable as PLATFORM into the
       # environment of all tasks in this job.
@@ -185,6 +190,13 @@ jobs:
           displayName: Download Abstractions Package Artifacts
           inputs:
             artifactName: ${{ parameters.abstractionsArtifactsName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+        # Download the Logging package artifacts into packages/.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Logging Package Artifacts
+          inputs:
+            artifactName: ${{ parameters.loggingArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
 
         # Download the MDS package artifacts into packages/.

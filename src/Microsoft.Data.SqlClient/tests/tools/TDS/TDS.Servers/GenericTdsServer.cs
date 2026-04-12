@@ -95,6 +95,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         private int _preLoginCount = 0;
 
+        /// <summary>
+        /// Counts Login7 requests to the server.
+        /// </summary>
+        protected int _login7Count = 0;
+
         private TDSServerEndPoint _endpoint;
 
         /// <summary>
@@ -137,6 +142,18 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public int PreLoginCount => _preLoginCount;
 
+        /// <summary>
+        /// Counts Login7 requests to the server.
+        /// </summary>
+        public int Login7Count => _login7Count;
+
+        /// <summary>
+        /// Counts pre-login requests that did not result in a Login7 request,
+        /// which indicates the client abandoned the connection (e.g. interval
+        /// timer timeout during TNIR or failover).
+        /// </summary>
+        public int AbandonedPreLoginCount => _preLoginCount - _login7Count;
+
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
@@ -148,9 +165,12 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 throw new InvalidOperationException("Server is already started");
             }
-            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            _endpoint.EndpointName = methodName;
-            _endpoint.EventLog = Arguments.Log;
+            _endpoint = new TDSServerEndPoint(this)
+            {
+                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
+                EndpointName = methodName,
+                EventLog = Arguments.Log
+            };
             _endpoint.Start();
         }
 
@@ -245,6 +265,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
+            Interlocked.Increment(ref _login7Count);
+
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
