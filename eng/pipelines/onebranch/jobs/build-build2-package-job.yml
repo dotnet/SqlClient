@@ -70,6 +70,7 @@ parameters:
   - name: packageFullName
     type: string
     values:
+      - 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
       - 'Microsoft.Data.SqlClient.Extensions.Abstractions'
       - 'Microsoft.Data.SqlClient.Extensions.Azure'
       - 'Microsoft.Data.SqlClient.Internal.Logging'
@@ -81,6 +82,7 @@ parameters:
     type: string
     values:
       - 'Abstractions'
+      - 'AkvProvider'
       - 'Azure'
       - 'Logging'
       - 'SqlServer'

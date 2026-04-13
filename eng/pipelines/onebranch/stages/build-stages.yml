@@ -255,8 +255,11 @@ stages:
         dependsOn: build_dependent
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
             parameters:
+              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/dlls'
+              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/pdbs'
+              shouldSignPackage: ${{ parameters.isOfficial }}
               signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
               signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
               signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -264,23 +267,20 @@ stages:
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
-              isOfficial: ${{ parameters.isOfficial }}
-              packageName: AkvProvider
-              packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              versionProperties: >-
-                -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
-                -p:AkvAssemblyFileVersion=${{ parameters.akvProviderFileVersion }}
-                -p:MdsPackageVersion=${{ parameters.sqlClientPackageVersion }}
-                -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-                -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-              assemblyFileVersion: '${{ parameters.akvProviderFileVersion }}'
-              downloadArtifacts:
-                - artifactName: '${{ parameters.sqlClientArtifactsName }}'
-                  displayName: SqlClient Package
+              dependencies:
                 - artifactName: '${{ parameters.abstractionsArtifactsName }}'
-                  displayName: Abstractions Package
+                  shortName: 'Abstractions'
+                  version: '${{ parameters.abstractionsPackageVersion }}'
                 - artifactName: '${{ parameters.loggingArtifactsName }}'
-                  displayName: Logging Package
+                  shortName: 'Logging'
+                  version: '${{ parameters.loggingPackageVersion }}'
+                - artifactName: '${{ parameters.sqlClientArtifactsName }}'
+                  shortName: 'SqlClient'
+                  version: '${{ parameters.sqlClientPackageVersion }}'
+              fileVersion: '${{ parameters.akvProviderFileVersion }}'
+              packageFullName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+              packageShortName: 'AkvProvider'
+              packageVersion: '${{ parameters.akvProviderPackageVersion }}'
 
   # ====================================================================
   # Validation

@@ -27,6 +27,7 @@ parameters:
     type: string
     values:
       - Azure
+      - AkvProvider
       - Abstractions
       - Logging
       - SqlServer
