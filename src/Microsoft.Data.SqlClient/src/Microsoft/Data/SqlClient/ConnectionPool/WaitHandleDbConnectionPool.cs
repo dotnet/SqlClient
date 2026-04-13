@@ -305,9 +305,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return State is Running; }
         }
 
-        private int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
+        internal int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
 
-        private int MinPoolSize => PoolGroupOptions.MinPoolSize;
+        internal int MinPoolSize => PoolGroupOptions.MinPoolSize;
 
         public DbConnectionPoolGroup PoolGroup => _connectionPoolGroup;
 
@@ -323,6 +323,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
         private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
+
+        public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
         private void CleanupCallback(object state)
         {
@@ -940,6 +942,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // If automatic transaction enlistment is required, then we try to
             // get the connection from the transacted connection pool first.
+            // If automatic enlistment is not enabled, then we cannot vend connections
+            // from the transacted pool.
             if (HasTransactionAffinity)
             {
                 obj = GetFromTransactedPool(out transaction);

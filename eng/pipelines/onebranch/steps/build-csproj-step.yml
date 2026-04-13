@@ -7,20 +7,13 @@
 # Generic build step for csproj-based packages.  Each project uses a build.proj target that runs
 # Build only and produces assemblies within $(BUILD_OUTPUT).  Downstream ESRP DLL signing must
 # locate the assemblies within $(BUILD_OUTPUT) for all target frameworks that the csproj targets.
-# NuGet packaging is done separately via compound-pack-csproj-step.yml after DLL signing.
+# NuGet packaging is done separately via pack-csproj-step.yml after DLL signing.
 
 parameters:
   # The MSBuild build target in build.proj (e.g. BuildLogging, BuildAbstractions,
   # BuildAzure).
   - name: buildTarget
     type: string
-
-  # Build Configuration.
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
 
   # Additional MSBuild arguments for version properties, e.g.
   # -p:LoggingPackageVersion=1.0.0 -p:LoggingAssemblyFileVersion=1.0.123
@@ -36,15 +29,15 @@ steps:
     name: keyFile
 
   - task: MSBuild@1
-    displayName: Build.proj - ${{ parameters.buildTarget }}
+    displayName: 'Build.proj - ${{ parameters.buildTarget }}'
     inputs:
-      solution: $(REPO_ROOT)/build.proj
-      configuration: ${{ parameters.buildConfiguration }}
+      solution: '$(REPO_ROOT)/build.proj'
+      configuration: 'Release'
       msbuildArguments: >-
-          -t:${{ parameters.buildTarget }}
-          -p:ReferenceType=Package
-          -p:SigningKeyPath=$(keyFile.secureFilePath)
-          ${{ parameters.versionProperties }}
+        -t:${{ parameters.buildTarget }}
+        -p:ReferenceType=Package
+        -p:SigningKeyPath=$(keyFile.secureFilePath)
+        ${{ parameters.versionProperties }}
 
   - script: tree /a /f $(BUILD_OUTPUT)
-    displayName: List Build Output Tree
+    displayName: Output Build Output Tree
