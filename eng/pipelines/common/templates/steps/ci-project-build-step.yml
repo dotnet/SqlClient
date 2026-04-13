@@ -84,12 +84,12 @@ steps:
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments:
-          -t:BuildMds
+          -t:BuildSqlClient
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.assemblyBuildNumber }}
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionMds=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
