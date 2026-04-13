@@ -43,7 +43,7 @@
       Version="$(MdsPackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-      Version="$(AkvPackageVersion)" />
+      Version="$(AkvProviderPackageVersion)" />
   </ItemGroup>
 
   <!-- ===================================================================== -->

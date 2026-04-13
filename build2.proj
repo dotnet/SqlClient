@@ -117,6 +117,19 @@
     </PackageVersionAbstractionsArgument>
 
     <!--
+      PackageVersionAkvProvider @TODO: Update
+      Applies to:     BuildAkvProvider, PackAkvProvider
+      Description:    Specifies what version of the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+                      to assign to the package.
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''" />
+    <PackageVersionAkvProviderArgument Condition="'$(PackageVersionAkvProvider)' != ''">
+      -p:AkvProviderPackageVersion=$(PackageVersionAkvProvider)
+    </PackageVersionAkvProviderArgument>
+
+    <!--
       PackageVersionAzure @TODO: Update
       Applies to:     BuildAzure, PackAzure
                       TestMds, TestMdsFunctional, TestMdsManual
@@ -620,6 +633,69 @@
   </Target>
 
   <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider Targets -->
+  <PropertyGroup>
+    <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
+    <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
+  </PropertyGroup>
+
+  <!-- Build AkvProvider Target ======================================== -->
+  <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider -->
+  <Target Name="BuildAkvProvider">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!--Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAkvProviderArgument)
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionMdsArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- PackAkvProvider: Packages Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider -->
+  <Target Name="PackAkvProvider">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(AkvProviderProjectpath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAkvProviderArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionMdsArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
   <PropertyGroup>
     <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
@@ -658,7 +734,7 @@
   <Target Name="PackAbstractions">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" pack "$(AbstractionsProjectpath)"
+        "$(DotnetPath)dotnet" pack "$(AbstractionsProjectPath)"
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)

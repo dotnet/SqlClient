@@ -12,6 +12,12 @@
     <AssemblyBuildNumber>$(BuildNumber.Split('.')[0])</AssemblyBuildNumber>
   </PropertyGroup>
 
+  <!-- For Microsoft.Data.SqlClient Versioning, see:
+       src/Microsoft.Data.SqlClient/MdsVersions.props -->
+
+  <!-- For Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider versioning, see:
+       src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props -->
+
   <!-- For Microsoft.Data.SqlClient.Extensions.Abstractions versioning, see:
        src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props -->
 
@@ -21,12 +27,6 @@
   <!-- For Microsoft.Data.SqlClient.Internal.Logging versioning, see:
        src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props -->
 
-  <!-- For Microsoft.Data.SqlClient Versioning, see:
-       src/Microsoft.Data.SqlClient/MdsVersions.props -->
-
   <!-- For Microsoft.SqlServer.Server versioning, see:
        src/Microsoft.SqlServer.Server/Versions.props -->
-
-  <!-- AKV Provider Package Properties -->
-  <Import Project="..\..\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider\AkvProviderVersions.props" />
 </Project>
