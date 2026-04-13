@@ -7,6 +7,14 @@ tools: ['execute/runInTerminal', 'execute/getTerminalOutput', 'edit/createFile',
 
 Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **ADO.Net** project. Use the `az` CLI where possible; fall back to direct REST API calls where `az` doesn't provide sufficient coverage (e.g., repo file scanning, AzureKeyVault group updates).
 
+## Safety constraints
+
+- **Read-only by default.** Steps 1–4 are purely read-only (listing, searching, summarizing). Do NOT issue any write operations (`PUT`, `PATCH`, `POST`, `az pipelines variable-group update`, or any command that modifies state) until the user has explicitly approved changes in step 5.
+- **No implicit approval.** Silence, ambiguous replies, or partial acknowledgements do NOT count as approval. You must receive an unambiguous "go" (or equivalent affirmative) from the user before proceeding to step 6.
+- **Scope lock.** Only update variable group descriptions. Never delete variable groups, modify variables within a group, or change any pipeline definitions.
+- **Dry-run first.** When presenting the summary in step 4, show the exact before/after description text for every group that would be modified so the user can verify the changes.
+- **Abort on doubt.** If any step produces unexpected errors, ambiguous results, or data that contradicts expectations, stop and ask the user for guidance rather than proceeding.
+
 ## Inputs
 
 If the user provided arguments, parse `${input:scope}` for overrides — it may contain specific repos, branches, or variable group names to scope the audit. Apply any recognized values as overrides to the defaults below; ignore unrecognized tokens.
@@ -115,12 +123,19 @@ Present a clear summary table to the user **before making any changes**. The sum
 
 ### 5. Prompt for go/no-go
 
-Ask the user to confirm before applying any changes. Offer options:
-- Go — apply all changes
-- Go — apply only a subset (let the user specify)
-- No-go — abort
+**This is a mandatory gate — do NOT skip or auto-approve.**
+
+Ask the user to confirm before applying any changes. Use the ask-questions tool to present the options so the user must actively choose. Offer options:
+- **Apply all** — apply every proposed change from step 4
+- **Apply subset** — let the user specify which groups to update (by name or ID)
+- **Export script** — write all update commands to a shell script file for the user to inspect and run manually. Do NOT execute any updates. Save the script to a path the user specifies (default: `./audit-variable-group-updates.sh`). The script must include the full `az` CLI commands and REST API `curl` fallbacks (for AzureKeyVault-type groups) with comments identifying each group by name and ID. Mark the file executable.
+- **Abort** — make no changes at all
+
+Do NOT proceed to step 6 unless the user selects "Apply all" or "Apply subset" and, for the subset case, clearly identifies which groups to update. If the user selects "Export script", generate the file and stop — do NOT execute step 6. If the user says "abort" or does not respond, stop here.
 
 ### 6. Apply description updates
+
+**Prerequisites**: Step 5 must have completed with explicit user approval. If you have not received approval, do NOT execute this step.
 
 For each group that needs updating, try:
 
