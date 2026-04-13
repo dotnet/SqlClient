@@ -8,6 +8,7 @@
 #  - Abstractions
 #  - Azure
 #  - Logging
+#  - SqlClient
 #  - SqlServer
 #
 # The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet packages from the
@@ -70,6 +71,7 @@ parameters:
   - name: packageFullName
     type: string
     values:
+      - 'Microsoft.Data.SqlClient'
       - 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
       - 'Microsoft.Data.SqlClient.Extensions.Abstractions'
       - 'Microsoft.Data.SqlClient.Extensions.Azure'
@@ -85,6 +87,7 @@ parameters:
       - 'AkvProvider'
       - 'Azure'
       - 'Logging'
+      - 'SqlClient'
       - 'SqlServer'
 
   # The version of the package.

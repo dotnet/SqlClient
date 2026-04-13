@@ -203,9 +203,11 @@ stages:
         dependsOn: build_abstractions
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
             parameters:
-              isOfficial: ${{ parameters.isOfficial }}
+              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
+              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
+              shouldSignPackage: ${{ parameters.isOfficial }}
               signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
               signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
               signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -213,12 +215,17 @@ stages:
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
-              abstractionsArtifactName: '${{ parameters.abstractionsArtifactsName }}'
-              abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
-              loggingArtifactName: '${{ parameters.loggingArtifactsName }}'
-              loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
-              sqlClientAssemblyFileVersion: '${{ parameters.sqlClientFileVersion }}'
-              sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+              dependencies:
+                - artifactName: '${{ parameters.abstractionsArtifactsName }}'
+                  shortName: 'Abstractions'
+                  version: '${{ parameters.abstractionsPackageVersion }}'
+                - artifactName: '${{ parameters.loggingArtifactsName }}'
+                  shortName: 'Logging'
+                  version: '${{ parameters.loggingPackageVersion }}'
+              fileVersion: '${{ parameters.sqlClientFileVersion }}'
+              packageFullName: 'Microsoft.Data.SqlClient'
+              packageShortName: 'SqlClient'
+              packageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
           # Build Microsoft.Data.SqlClient.Extensions.Azure
           - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self

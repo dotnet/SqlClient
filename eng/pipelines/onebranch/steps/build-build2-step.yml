@@ -30,6 +30,7 @@ parameters:
       - AkvProvider
       - Abstractions
       - Logging
+      - SqlClient
       - SqlServer
 
   #  Version to assign to the project to build. This will be passed into msbuild as
