@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -22,6 +23,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.IsNotAzureSynapse())
             {
                 yield return new object[] { _tcpMarsConnStr };
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class ConnectionPoolConnectionStringAndPoolVersionProvider : IEnumerable<object[]>
+    {
+        private static readonly string _TCPConnectionString = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = false, Pooling = true }).ConnectionString;
+        private static readonly string _tcpMarsConnStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true, Pooling = true }).ConnectionString;
+
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { _TCPConnectionString, false };
+            yield return new object[] { _TCPConnectionString, true };
+            if (DataTestUtility.IsNotAzureSynapse())
+            {
+                yield return new object[] { _tcpMarsConnStr, false };
+                yield return new object[] { _tcpMarsConnStr, true };
             }
         }
 
@@ -118,9 +138,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Tests if clearing all of the pools does actually remove the pools
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void ClearAllPoolsTest(string connectionString)
+        [ClassData(typeof(ConnectionPoolConnectionStringAndPoolVersionProvider))]
+        public static void ClearAllPoolsTest(string connectionString, bool usePoolV2)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseConnectionPoolV2 = usePoolV2;
+
             SqlConnection.ClearAllPools();
             Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
 

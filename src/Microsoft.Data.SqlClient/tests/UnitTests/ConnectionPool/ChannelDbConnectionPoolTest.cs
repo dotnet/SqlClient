@@ -705,13 +705,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        public void TestStartup()
-        {
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.Startup());
-        }
-
-        [Fact]
         public void TestTransactionEnded()
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
@@ -721,6 +714,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Pool Clear Tests
 
+        [Fact]
+        public void Clear_EmptyPool_DoesNotThrow()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert - Should complete without error
+            pool.Clear();
+            Assert.Equal(0, pool.Count);
+        }
 
         [Fact]
         public void Clear_MultipleIdleConnections_AllAreDestroyed()

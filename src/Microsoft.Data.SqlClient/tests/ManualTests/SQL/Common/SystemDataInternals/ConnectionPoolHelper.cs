@@ -16,13 +16,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static Assembly s_MicrosoftDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
         private static Type s_dbConnectionPool = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.IDbConnectionPool");
         private static Type s_waitHandleDbConnectionPool = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.WaitHandleDbConnectionPool");
+        private static Type s_channelDbConnectionPool = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.ChannelDbConnectionPool");
         private static Type s_dbConnectionPoolGroup = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolGroup");
         private static Type s_dbConnectionPoolIdentity = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolIdentity");
         private static Type s_sqlConnectionFactory = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlConnectionFactory");
         private static Type s_dbConnectionPoolKey = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolKey");
         private static Type s_dictStringPoolGroup = typeof(Dictionary<,>).MakeGenericType(s_dbConnectionPoolKey, s_dbConnectionPoolGroup);
         private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(s_dbConnectionPoolIdentity, s_dbConnectionPool);
-        private static PropertyInfo s_dbConnectionPoolCount = s_waitHandleDbConnectionPool.GetProperty("Count", BindingFlags.Instance | BindingFlags.Public);
+        // Resolve Count from the interface so it works with both pool implementations
+        private static PropertyInfo s_dbConnectionPoolCount = s_dbConnectionPool.GetProperty("Count", BindingFlags.Instance | BindingFlags.Public);
         private static PropertyInfo s_dictStringPoolGroupGetKeys = s_dictStringPoolGroup.GetProperty("Keys");
         private static PropertyInfo s_dictPoolIdentityPoolValues = s_dictPoolIdentityPool.GetProperty("Values");
         private static PropertyInfo s_sqlConnectionFactorySingleton = s_sqlConnectionFactory.GetProperty("Instance", BindingFlags.Static | BindingFlags.NonPublic);
@@ -36,6 +38,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         public static int CountFreeConnections(object pool)
         {
             VerifyObjectIsPool(pool);
+
+            if (s_channelDbConnectionPool.IsInstanceOfType(pool))
+            {
+                // ChannelDbConnectionPool doesn't have separate stacks;
+                // Count represents idle connections available in the channel.
+                return (int)s_dbConnectionPoolCount.GetValue(pool, null);
+            }
 
             ICollection oldStack = (ICollection)s_dbConnectionPoolStackOld.GetValue(pool);
             ICollection newStack = (ICollection)s_dbConnectionPoolStackNew.GetValue(pool);
@@ -107,10 +116,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// <summary>
         /// Causes the cleanup timer code in the connection pool to be invoked
         /// </summary>
-        /// <param name="obj">A connection pool object</param>
+        /// <param name="pool">A connection pool object</param>
         internal static void CleanConnectionPool(object pool)
         {
             VerifyObjectIsPool(pool);
+
+            if (s_channelDbConnectionPool.IsInstanceOfType(pool))
+            {
+                // ChannelDbConnectionPool does not have a cleanup timer callback.
+                return;
+            }
+
             s_dbConnectionPoolCleanup.Invoke(pool, new object[] { null });
         }
 

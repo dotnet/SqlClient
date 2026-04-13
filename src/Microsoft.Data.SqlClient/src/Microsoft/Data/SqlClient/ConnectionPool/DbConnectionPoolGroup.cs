@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 IDbConnectionPool newPool;
                                 if (LocalAppContextSwitches.UseConnectionPoolV2)
                                 {
-                                    throw new NotImplementedException();
+                                    newPool = new ChannelDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
                                 }
                                 else
                                 {

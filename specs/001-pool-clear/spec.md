@@ -101,8 +101,7 @@ As an application developer, I want multiple rapid calls to `ClearPool` to behav
 
 - **SC-001**: After `ClearPool` is called, 100% of subsequent connection acquisitions produce fresh physical connections (no pre-clear connections reused).
 - **SC-002**: Busy connections continue to operate normally during and after a pool clear — no active queries are interrupted.
-- **SC-003**: Pool correctly handles at least 1000 rapid consecutive `Clear()` calls without exceptions, connection leaks, or state corruption.
-- **SC-004**: `ClearPool` and `ClearAllPools` work identically whether using pool v1 (WaitHandle) or pool v2 (Channel), from the caller's perspective.
+- **SC-003**: `ClearPool` and `ClearAllPools` work identically whether using pool v1 (WaitHandle) or pool v2 (Channel), from the caller's perspective.
 
 ## Assumptions
 

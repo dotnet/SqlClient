@@ -201,6 +201,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     if (connection is not null)
                     {
+                        //TODO: should we check pool generation of the connection here?
                         RemoveConnection(connection);
                         numToDrain--;
                     }
@@ -269,7 +270,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Startup()
         {
-            throw new NotImplementedException();
+            // No-op for now, warmup will be implemented later.
         }
 
         /// <inheritdoc />
