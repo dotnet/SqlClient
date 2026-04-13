@@ -9,11 +9,11 @@ Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **A
 
 ## Inputs
 
-If the user provided arguments, parse `${input}` for overrides — it may contain specific repos, branches, or variable group names to scope the audit. Apply any recognized values as overrides to the defaults below; ignore unrecognized tokens.
+If the user provided arguments, parse `${input:scope}` for overrides — it may contain specific repos, branches, or variable group names to scope the audit. Apply any recognized values as overrides to the defaults below; ignore unrecognized tokens.
 
 The user may override any of the following defaults:
 
-- **Organization**: `https://sqlclientdrivers.visualstudio.com/`
+- **Organization**: `https://sqlclientdrivers.visualstudio.com`
 - **Project**: `ADO.Net`
 - **Repos & branches to search**:
   - `dotnet-sqlclient`: `internal/main`, `internal/release/7.0`, `internal/release/6.1`
@@ -47,7 +47,7 @@ For each repo/branch combination, use the Azure DevOps REST API (Items endpoint)
    - `group: "<name>"`  (double-quoted — name bounded by quotes)
    - `group: <name>` followed by end-of-line, whitespace, or `#` (unquoted — no trailing alphanumeric characters)
 
-Use a Bearer token from `az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798"`.
+Use a Bearer token from `az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query accessToken -o tsv`.
 
 REST API endpoints:
 - **List items**: `{org}/{project}/_apis/git/repositories/{repo}/items?recursionLevel=Full&versionDescriptor.version={branch}&versionDescriptor.versionType=branch&api-version=7.1`
