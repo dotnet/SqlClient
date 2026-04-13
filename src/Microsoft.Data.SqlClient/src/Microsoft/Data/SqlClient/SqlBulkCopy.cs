@@ -501,20 +501,47 @@ namespace Microsoft.Data.SqlClient
             // interpolated directly into the SQL string because SQL Server does not allow
             // identifiers (database/schema/table names) to be passed as parameters.  Both
             // values are escaped via SqlServerEscapeHelper before interpolation.
+            //
+            // SqlBulkCopy must remain compatible with Azure Synapse Analytics dedicated SQL pools
+            // and with SQL Server 2016. Azure Synapse Analytics does not allow variables assigned
+            // in the SELECT statement to appear in an expression, which prevents the consistent use of
+            //   SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name])
+            // The alternative is to use STRING_AGG, but this was only introduced in SQL Server
+            // 2017. To meet both criteria, we review the EngineEdition server property. A value
+            // of 6 indicates that the bulk copy is going to run against Azure Synapse Analytics;
+            // we use STRING_AGG in that case and the COALESCE method otherwise.
+            //
+            // See: https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
             return $"""
 SELECT @@TRANCOUNT;
 
 DECLARE @Object_ID INT = OBJECT_ID('{escapedObjectName}');
+DECLARE @Column_Name_Query_SELECT NVARCHAR(MAX);
+DECLARE @Column_Name_Query_FILTER NVARCHAR(MAX);
+DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
-IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+
+IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
-    SET @Column_Name_Query = N'SELECT @Column_Names = COALESCE(@Column_Names + '', '', '''') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;';
+    SET @Column_Name_Query_SELECT = N'SELECT @Column_Names = STRING_AGG(CAST(QUOTENAME([name]) AS NVARCHAR(MAX)), '', '') WITHIN GROUP (ORDER BY [column_id] ASC)';
+    SET @Column_Name_Query_SORT = N'';
 END
 ELSE
 BEGIN
-    SET @Column_Name_Query = N'SELECT @Column_Names = COALESCE(@Column_Names + '', '', '''') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID ORDER BY [column_id] ASC;';
+    SET @Column_Name_Query_SELECT = 'SELECT @Column_Names = COALESCE(@Column_Names + '', '', '''') + QUOTENAME([name])';
+    SET @Column_Name_Query_SORT = N'ORDER BY [column_id] ASC';
 END
+
+IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+BEGIN
+    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
+END
+ELSE
+BEGIN
+    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID';
+END
+SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {CatalogName}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
 
 EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
