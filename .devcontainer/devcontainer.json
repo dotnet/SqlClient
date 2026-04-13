@@ -1,6 +1,10 @@
 {
     "name": "Microsoft.Data.SqlClient",
-    "dockerComposeFile": "docker-compose.yml",
+    "dockerComposeFile": [
+        "docker-compose.yml",
+        "docker-compose.worktree.yml",
+        "docker-compose.local.yml"
+    ],
     "service": "devcontainer",
     "workspaceFolder": "/workspaces/SqlClient",
     "features": {
@@ -20,6 +24,13 @@
             }
         }
     },
+    // Restore tools to enable compose file edits via powershell
+    "initializeCommand": "dotnet tool restore && dotnet tool run pwsh -- -NoProfile -ExecutionPolicy Bypass -File .devcontainer/init.ps1",
     "postCreateCommand": "bash .devcontainer/setup-sqlserver.sh",
+    // We need to mark the repository as safe because it's not owned by the docker user.
+    // Refreshing the git index now gets the container immediately ready for git operations,
+    // otherwise a git command needs to be manually run to refresh the index.
+    // Restore tools again within the container to ensure they are available for developer use
+    "postStartCommand": "git config --global --add safe.directory /workspaces/SqlClient && git update-index --really-refresh && dotnet tool restore",
     "remoteUser": "vscode"
 }
