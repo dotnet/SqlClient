@@ -1,0 +1,39 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# @TODO: This can be made more generic
+
+parameters:
+  # Path where dll files should be copied to for APIScan
+  - name: dllPath
+    type: string
+
+  # Path where pdb files should be copied to for APIScan
+  - name: pdbPath
+    type: string
+
+  - name: referenceType
+    type: string
+    values:
+      - Package
+      - Project
+
+steps:
+  - task: CopyFiles@2
+    displayName: 'Copy DLLs for APIScan'
+    inputs:
+      contents: '**/Microsoft.Data.SqlClient.dll'
+      flattenFolders: false  # Disabled to keep different frameworks and OS builds separate in the target
+      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-Release/'
+      targetFolder: '${{ parameters.dllPath }}/'
+
+  - task: CopyFiles@2
+    displayName: 'Copy PDBs for APIScan'
+    inputs:
+      contents: '**/Microsoft.Data.SqlClient.pdb'
+      flattenFolders: false  # Disabled to keep different frameworks and OS builds separate in the target
+      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-Release/'
+      targetFolder: '${{ parameters.pdbPath }}/'
