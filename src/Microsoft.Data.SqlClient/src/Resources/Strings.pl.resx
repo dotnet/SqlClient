@@ -2584,7 +2584,7 @@
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Install the 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) to use Active Directory (Entra ID) authentication methods.</value>
+    <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zainstaluj pakiet NuGet „Microsoft.Data.SqlClient.Extensions.Azure” (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), aby korzystać z metod uwierzytelniania usługi Active Directory (Entra ID).</value>
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Nie można odczytać sekcji konfiguracji dla dostawców uwierzytelniania.</value>
@@ -4690,63 +4690,63 @@
     <value>{0} Nieprawidłowy ciąg JSON wektora.</value>
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
-    <value>Could not find an empty slot in the connection pool.</value>
+    <value>Nie znaleziono wolnego miejsca w puli połączeń.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
-    <value>The connection pool has been shut down.</value>
+    <value>Pula połączeń została zamknięta.</value>
   </data>
   <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
-    <value>Cannot get RequiredLength when HasDataLength is false.</value>
+    <value>Nie można pobrać elementu RequiredLength, gdy wartość HasDataLength ma wartość false.</value>
   </data>
   <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
-    <value>Partial packet cannot be non-null when setting to non-null.</value>
+    <value>Pakiet częściowy nie może mieć wartości innej niż null podczas ustawiania wartości innej niż null.</value>
   </data>
   <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
-    <value>MultiplexPackets cannot return both consumePartialPacket and consumeInputDirectly.</value>
+    <value>MultiplexPackets nie może jednocześnie zwracać consumePartialPacket i consumeInputDirectly.</value>
   </data>
   <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
-    <value>Attempted to pend a read when the fail async pends test hook was enabled.</value>
+    <value>Próbowano zawiesić operację odczytu, gdy włączony testowy punkt zaczepienia „fail async pends”.</value>
   </data>
   <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
-    <value>Packet modification detected. Hash is null but packet contains non-null buffer.</value>
+    <value>Wykryto modyfikację pakietu. Skrót ma wartość null, ale pakiet zawiera bufor o wartości innej niż null.</value>
   </data>
   <data name="SQL_PacketHashMismatch" xml:space="preserve">
-    <value>Packet modification detected. Hash from packet creation does not match hash from packet check.</value>
+    <value>Wykryto modyfikację pakietu. Skrót z tworzenia pakietów jest niezgodny z wartością skrótu z kontroli pakietów.</value>
   </data>
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
-    <value>Cannot transition from state '{0}' to '{1}'.</value>
+    <value>Nie można przejść ze stanu „{0}” na „{1}”.</value>
   </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
-    <value>Unsupported state: '{0}'.</value>
+    <value>Nieobsługiwany stan: „{0}”.</value>
   </data>
   <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because the retryMethod value is null or empty.</value>
+    <value>Nie można utworzyć obiektu SqlRetryLogicBaseProvider, ponieważ wartość retryMethod jest pusta lub ma wartość null.</value>
   </data>
   <data name="SQLCR_RetryMethodException" xml:space="preserve">
-    <value>Exception occurred when running the '{0}.{1}()' method.</value>
+    <value>Wystąpił wyjątek podczas uruchamiania metody „{0}.{1}()”.</value>
   </data>
   <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
-    <value>Failed to resolve the '{0}' method from '{1}' type.</value>
+    <value>Nie można odnaleźć metody „{0}” w typie „{1}”.</value>
   </data>
   <data name="SQLCR_InvalidReturnType" xml:space="preserve">
-    <value>Invalid return type; return type must be of '{0}' type.</value>
+    <value>Nieprawidłowy typ zwracany; zwracany typ musi być typu „{0}”.</value>
   </data>
   <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid '{0}' parameters.{1}The function must have a parameter of type 'SqlRetryLogicOption'.</value>
+    <value>Nie można utworzyć obiektu SqlRetryLogicBaseProvider z powodu nieprawidłowych parametrów „{0}”.{1}Funkcja musi mieć parametr typu „SqlRetryLogicOption”.</value>
   </data>
   <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
-    <value>Failed to create SqlRetryLogicBaseProvider object because of invalid retryMethod parameters.{0}Parameter '{1} {2}' doesn't have a default value.</value>
+    <value>Nie można utworzyć obiektu SqlRetryLogicBaseProvider z powodu nieprawidłowych parametrów retryMethod.{0}Parametr „{1} {2}” nie ma wartości domyślnej.</value>
   </data>
   <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
-    <value>Sequence contains more than one matching element.</value>
+    <value>Sekwencja zawiera więcej niż jeden pasujący element.</value>
   </data>
   <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
-    <value>Sequence contains no matching element.</value>
+    <value>Sekwencja nie zawiera pasującego elementu.</value>
   </data>
   <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
-    <value>Can only rent from a pool if an onCreate delegate is available.</value>
+    <value>Można wypożyczyć z puli tylko wtedy, gdy dostępny jest delegat onCreate.</value>
   </data>
   <data name="SQL_InvalidUdtSize" xml:space="preserve">
-    <value>The type '{0}' has an invalid size.</value>
+    <value>Typ „{0}” ma nieprawidłowy rozmiar.</value>
   </data>
 </root>

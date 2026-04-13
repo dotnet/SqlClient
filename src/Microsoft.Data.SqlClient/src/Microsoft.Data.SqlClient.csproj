@@ -1,11 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<!-- General Properties ============================================== -->
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	</PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsFileVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
   <ItemGroup>
@@ -62,7 +72,7 @@
     <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
     <!-- to is possible but requires also specifying the IntermediateOutputPath. So while it      -->
     <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
-    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
   <!-- Embedded resources ============================================== -->
@@ -117,6 +127,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -124,7 +135,7 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="System.ValueTuple" />
-	</ItemGroup>
+  </ItemGroup>
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">

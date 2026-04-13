@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Cci" />
-    <PackageReference Include="Microsoft.Composition" />
+    <PackageReference Include="System.Composition" />
     <PackageReference Include="System.Diagnostics.Contracts" />
     <PackageReference Include="System.Diagnostics.TraceSource" />
     <PackageReference Include="System.Reflection.Metadata" />

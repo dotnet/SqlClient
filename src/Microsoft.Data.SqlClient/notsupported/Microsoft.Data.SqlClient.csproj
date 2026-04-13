@@ -67,6 +67,14 @@
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsFileVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
+
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
     <!--
@@ -74,7 +82,7 @@
       is possible but also requires specifying the IntermediateOutputPath. So while it would be
       nice to have a flatter directory structure, it's more hassle than its worth.
     -->
-    <OutputPath>$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(Configuration)/</OutputPath>
+    <OutputPath>$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
@@ -86,7 +94,7 @@
   -->
   <PropertyGroup>
     <RefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</RefProjectPath>
-    <RefArtifactPath>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.ref/$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
+    <RefArtifactPath>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(RefProjectPath)"
