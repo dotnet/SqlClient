@@ -528,8 +528,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 newObj = _connectionFactory.CreatePooledConnection(
                     owningObject,
                     this,
-                    _connectionPoolGroup.PoolKey,
-                    _connectionPoolGroup.ConnectionOptions, 
                     userOptions);
 
                 lock (_objectList)

@@ -78,6 +78,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private readonly ChannelReader<DbConnectionInternal?> _idleConnectionReader;
         private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
+
+        /// <summary>
+        /// The current generation of the pool. Incremented atomically on each <see cref="Clear"/> call.
+        /// Connections stamped with a generation that does not match are considered stale and are destroyed
+        /// rather than returned to the idle channel.
+        /// </summary>
+        private volatile int _clearCounter;
+
+        /// <summary>
+        /// Guard to prevent concurrent <see cref="Clear"/> operations from draining the idle channel
+        /// simultaneously. The generation counter is still incremented by every caller so stale connections
+        /// are always caught lazily, but only one thread performs the actual drain.
+        /// </summary>
+        private volatile int _isClearing;
         #endregion
 
         /// <summary>
@@ -162,7 +176,43 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Clear()
         {
-            throw new NotImplementedException();
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Clearing.", Id);
+
+            Interlocked.Increment(ref _clearCounter);
+
+            // If another thread is already draining, skip the drain. The generation counter has
+            // already been incremented, so stale connections will still be caught lazily by
+            // IsLiveConnection on their next retrieval or return.
+            if (Interlocked.CompareExchange(ref _isClearing, 1, 0) == 1)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Skip drain, already clearing.", Id);
+                return;
+            }
+
+            try
+            {
+                // Drain idle connections from the channel and destroy them. Limit iterations to
+                // the current pool count to prevent an unbounded loop if connections are
+                // concurrently returned to the channel during the drain.
+                int numToDrain = Count;
+                while (numToDrain > 0 && _idleConnectionReader.TryRead(out DbConnectionInternal? connection))
+                {
+                    if (connection is not null)
+                    {
+                        RemoveConnection(connection);
+                        numToDrain--;
+                    }
+                }
+            }
+            finally
+            {
+                _isClearing = 0;
+            }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Cleared.", Id);
         }
 
         /// <inheritdoc />
@@ -353,12 +403,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
                     // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
                     // when this support is added to DbConnectionInternal.
-                    return ConnectionFactory.CreatePooledConnection(
+                    var connection = ConnectionFactory.CreatePooledConnection(
                         owningConnection,
                         this,
-                        PoolGroup.PoolKey,
-                        PoolGroup.ConnectionOptions,
                         userOptions);
+
+                    if (connection is not null)
+                    {
+                        connection.PoolGeneration = _clearCounter;
+                    }
+
+                    return connection;
                 },
                 cleanupCallback: (newConnection) =>
                 {
@@ -376,12 +431,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
         private bool IsLiveConnection(DbConnectionInternal connection)
         {
+            // Broken physical connection
             if (!connection.IsConnectionAlive())
             {
                 return false;
             }
 
+            // Connection has been alive longer than the load balance timeout
             if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
+            {
+                return false;
+            }
+
+            // Connection was created before the last Clear, so it's stale.
+            if (connection.PoolGeneration != _clearCounter)
             {
                 return false;
             }

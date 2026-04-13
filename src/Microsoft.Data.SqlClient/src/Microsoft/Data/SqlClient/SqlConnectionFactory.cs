@@ -141,15 +141,13 @@ namespace Microsoft.Data.SqlClient
         internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
             IDbConnectionPool pool,
-            DbConnectionPoolKey poolKey,
-            DbConnectionOptions options,
             DbConnectionOptions userOptions)
         {
             Debug.Assert(pool != null, "null pool?");
 
             DbConnectionInternal newConnection = CreateConnection(
-                options,
-                poolKey, // @TODO: is pool.PoolGroup.Key the same thing?
+                pool.PoolGroup.ConnectionOptions,
+                pool.PoolGroup.PoolKey,
                 pool.PoolGroup.ProviderInfo,
                 pool,
                 owningConnection,

@@ -681,12 +681,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Not Implemented Method Tests
 
-        [Fact]
-        public void TestClear()
-        {
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.Clear());
-        }
+
 
         [Fact]
         public void TestPutObjectFromTransactedPool()
@@ -722,6 +717,224 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
         }
+        #endregion
+
+        #region Pool Clear Tests
+
+
+        [Fact]
+        public void Clear_MultipleIdleConnections_AllAreDestroyed()
+        {
+            // Arrange
+            int numConnections = 5;
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var owningConnections = new SqlConnection[numConnections];
+            var internalConnections = new DbConnectionInternal?[numConnections];
+
+            for (int i = 0; i < numConnections; i++)
+            {
+                owningConnections[i] = new SqlConnection();
+                pool.TryGetConnection(
+                    owningConnections[i],
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnections[i]
+                );
+                Assert.Equal(0, internalConnections[i]!.PoolGeneration);
+            }
+
+            // Return all connections to the pool
+            for (int i = 0; i < numConnections; i++)
+            {
+                pool.ReturnInternalConnection(internalConnections[i]!, owningConnections[i]);
+            }
+
+            // Act
+            pool.Clear();
+
+            // Assert
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void Clear_BusyConnections_NotDestroyedImmediately()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? busyConnection
+            );
+            Assert.NotNull(busyConnection);
+            Assert.Equal(0, busyConnection.PoolGeneration);
+
+            // Act - Clear while connection is still busy
+            pool.Clear();
+
+            // Assert - Busy connection is still tracked in the pool and retains its old generation
+            Assert.Equal(1, pool.Count);
+            Assert.Equal(0, busyConnection.PoolGeneration);
+        }
+
+        [Fact]
+        public void Clear_BusyConnectionReturned_IsDestroyed()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? busyConnection
+            );
+            Assert.NotNull(busyConnection);
+            Assert.Equal(0, busyConnection.PoolGeneration);
+
+            // Act - Clear, then return the busy connection
+            pool.Clear();
+
+            // Assert - Busy connection is still tracked but has stale generation
+            Assert.Equal(1, pool.Count);
+
+            // Act - Return the busy connection
+            pool.ReturnInternalConnection(busyConnection, owningConnection);
+
+            // Assert - The connection should have been destroyed on return (generation mismatch)
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void Clear_MixedBusyAndIdle_OnlyIdleDestroyedImmediately()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection busyOwner = new();
+            SqlConnection idleOwner = new();
+
+            pool.TryGetConnection(
+                busyOwner,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? busyConnection
+            );
+            pool.TryGetConnection(
+                idleOwner,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? idleConnection
+            );
+            Assert.NotNull(busyConnection);
+            Assert.NotNull(idleConnection);
+            Assert.Equal(0, busyConnection.PoolGeneration);
+            Assert.Equal(0, idleConnection.PoolGeneration);
+
+            // Return only the idle connection
+            pool.ReturnInternalConnection(idleConnection, idleOwner);
+
+            // Act
+            pool.Clear();
+
+            // Assert - Only the busy connection remains with stale generation
+            Assert.Equal(1, pool.Count);
+            Assert.Equal(0, busyConnection.PoolGeneration);
+
+            // Now return the busy connection - it should be destroyed (generation 0 != pool generation 1)
+            pool.ReturnInternalConnection(busyConnection, busyOwner);
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void Clear_NewConnectionsAfterClear_ArePooledNormally()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? oldConnection
+            );
+            Assert.Equal(0, oldConnection!.PoolGeneration);
+            pool.ReturnInternalConnection(oldConnection, owningConnection);
+
+            // Act
+            pool.Clear();
+
+            // Get a new connection after clear
+            SqlConnection newOwner = new();
+            pool.TryGetConnection(
+                newOwner,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? newConnection
+            );
+            Assert.NotNull(newConnection);
+
+            // The new connection should be different from the old one and have generation 1
+            Assert.NotSame(oldConnection, newConnection);
+            Assert.Equal(1, newConnection.PoolGeneration);
+
+            // Return the new connection - it should be pooled normally
+            pool.ReturnInternalConnection(newConnection, newOwner);
+            Assert.Equal(1, pool.Count);
+
+            // Get another connection - it should reuse the post-clear connection (same generation)
+            SqlConnection reuseOwner = new();
+            pool.TryGetConnection(
+                reuseOwner,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? reusedConnection
+            );
+            Assert.Same(newConnection, reusedConnection);
+            Assert.Equal(1, reusedConnection!.PoolGeneration);
+        }
+
+        [Fact]
+        public void Clear_MultipleClearCalls_DoNotCorruptState()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? connection
+            );
+            Assert.Equal(0, connection!.PoolGeneration);
+            pool.ReturnInternalConnection(connection, owningConnection);
+
+            // Act - Call clear multiple times rapidly
+            pool.Clear();
+            pool.Clear();
+            pool.Clear();
+
+            // Assert - Pool state is still valid
+            Assert.Equal(0, pool.Count);
+
+            // New connections should have generation 3 (incremented three times)
+            SqlConnection newOwner = new();
+            pool.TryGetConnection(
+                newOwner,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out DbConnectionInternal? newConnection
+            );
+            Assert.NotNull(newConnection);
+            Assert.Equal(1, pool.Count);
+            Assert.Equal(3, newConnection.PoolGeneration);
+        }
+
         #endregion
 
         #region Test classes
