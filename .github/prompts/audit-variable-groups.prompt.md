@@ -9,6 +9,8 @@ Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **A
 
 ## Inputs
 
+If the user provided arguments, parse `${input}` for overrides — it may contain specific repos, branches, or variable group names to scope the audit. Apply any recognized values as overrides to the defaults below; ignore unrecognized tokens.
+
 The user may override any of the following defaults:
 
 - **Organization**: `https://sqlclientdrivers.visualstudio.com/`
@@ -40,10 +42,10 @@ For each repo/branch combination, use the Azure DevOps REST API (Items endpoint)
 1. List all files recursively in the repo at the given branch.
 2. Filter to `.yml` and `.yaml` files.
 3. Fetch the content of each YAML file.
-4. Search for each variable group name using these patterns:
-   - `group: '<name>'`
-   - `group: "<name>"`
-   - `group: <name>`
+4. Search for each variable group name using **exact-match** patterns that prevent prefix false positives (e.g., searching for `Foo` must not match `FooBar`). Match against these forms, ensuring the name is delimited by quotes or end-of-value (whitespace/newline/comment):
+   - `group: '<name>'`  (single-quoted — name bounded by quotes)
+   - `group: "<name>"`  (double-quoted — name bounded by quotes)
+   - `group: <name>` followed by end-of-line, whitespace, or `#` (unquoted — no trailing alphanumeric characters)
 
 Use a Bearer token from `az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798"`.
 
@@ -52,6 +54,11 @@ REST API endpoints:
 - **Get file content**: Same endpoint with `path={URL-encoded filePath}&$format=text` (URL-encode the `path` value; use `$format=text` to retrieve raw file content instead of JSON metadata)
 
 Avoid cloning repos. Only use the REST API to fetch file listings and content.
+
+**Performance & rate-limiting guidance**:
+- Filter the file listing to paths likely to contain pipelines (e.g., `eng/`, `pipelines/`, or root-level YAML files) before fetching content, to reduce API calls.
+- Add a short delay (e.g., 200ms) between file-content fetches to avoid hitting Azure DevOps rate limits.
+- If a `429 Too Many Requests` or `503` response is received, back off exponentially (1s, 2s, 4s, …) and retry up to 3 times before logging a warning and moving on.
 
 ### 3. Search Classic pipelines for variable group references
 
