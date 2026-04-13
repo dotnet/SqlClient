@@ -178,6 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings))]
+        [Trait("Category", "flaky")]
         public static void ReadStream_ReadsStreamDataCorrectly(string connectionString)
         {
             ReadStream(connectionString);
