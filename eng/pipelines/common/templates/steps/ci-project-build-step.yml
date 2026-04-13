@@ -93,26 +93,19 @@ steps:
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
-    - task: MSBuild@1
+    - task: DotNetCoreCLI@2
       displayName: 'Build AKV Provider'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments: >-
-          -t:BuildAkvProvider
+        command: build
+        projects: src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
+        arguments: >-
+          --configuration ${{ parameters.buildConfiguration }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:TestEnabled=true
-          -p:GenerateNuget=false
-          -p:Configuration=${{ parameters.buildConfiguration }}
           -p:BuildNumber=${{ parameters.buildNumber }}
           -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-          -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
+          -p:AkvProviderPackageVersion=${{ parameters.akvPackageVersion }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        verbosityRestore: Detailed
-        verbosityPack: Detailed
 
