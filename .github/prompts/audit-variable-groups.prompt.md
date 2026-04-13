@@ -5,7 +5,7 @@ argument-hint: <optional: specific repos, branches, or variable groups to audit>
 tools: ['execute/runInTerminal', 'execute/getTerminalOutput', 'edit/createFile', 'read/readFile']
 ---
 
-Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **ADO.Net** project. Use the `az` CLI for all Azure DevOps operations.
+Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **ADO.Net** project. Use the `az` CLI where possible; fall back to direct REST API calls where `az` doesn't provide sufficient coverage (e.g., repo file scanning, AzureKeyVault group updates).
 
 ## Inputs
 
@@ -49,7 +49,7 @@ Use a Bearer token from `az account get-access-token --resource "499b84ac-1321-4
 
 REST API endpoints:
 - **List items**: `{org}/{project}/_apis/git/repositories/{repo}/items?recursionLevel=Full&versionDescriptor.version={branch}&versionDescriptor.versionType=branch&api-version=7.1`
-- **Get file content**: Same endpoint with `path={filePath}`, `Accept: text/plain`
+- **Get file content**: Same endpoint with `path={URL-encoded filePath}&$format=text` (URL-encode the `path` value; use `$format=text` to retrieve raw file content instead of JSON metadata)
 
 Avoid cloning repos. Only use the REST API to fetch file listings and content.
 
