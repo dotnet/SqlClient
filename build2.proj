@@ -67,7 +67,7 @@
 
     <!--
       NugetPath
-      Applies to:     PackMds
+      Applies to:     PackSqlClient
       Description:    Path to NuGet executable. Override if `nuget` is not included in the PATH
                       variable.
       Default value:  nuget
@@ -97,15 +97,15 @@
         to build multiple projects before packaging, and thus need to use nuget. So, until then we
         will switch off dependency building dynamically building the target dependencies
     -->
-    <PackMdsDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildMds</PackMdsDependsOn>
+    <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
 
     <!--
       PackageVersionAbstractions @TODO: Update
-      Applies to:     BuildMds, BuildMdsRef, BuildMdsUnix, BuildMdsWindows
-                      PackMds
-                      TestMds, TestMdsFunctional, TestMdsManual
+      Applies to:     BuildSqlClient, BuildSqlClientRef, BuildSqlClientUnix, BuildSqlClientWindows
+                      PackSqlClient
+                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
       Description:    Specifies what version of the Microsoft.Data.SqlClient.Abstractions to use
-                      when compiling MDS. If not specified, the version defined in
+                      when compiling SqlClient. If not specified, the version defined in
                       Directory.Packages.props is used. This argument only has effect if the
                       ReferenceType argument is set to "Package".
       Default value:  [blank]
@@ -132,9 +132,9 @@
     <!--
       PackageVersionAzure @TODO: Update
       Applies to:     BuildAzure, PackAzure
-                      TestMds, TestMdsFunctional, TestMdsManual
+                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
       Description:    Specifies what version of the Microsoft.Data.SqlClient.Abstractions to use
-                      when compiling MDS. If not specified, the version defined in
+                      when compiling SqlClient. If not specified, the version defined in
                       Directory.Packages.props is used. This argument only has effect if the
                       ReferenceType argument is set to "Package".
       Default value:  [blank]
@@ -147,11 +147,11 @@
 
     <!--
       PackageVersionLogging @TODO: Update
-      Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
-                      PackMds
-                      TestMds, TestMdsFunctional, TestMdsManual
+      Applies to:     BuildSqlClient, BuildSqlClientUnix, BuildSqlClientWindows
+                      PackSqlClient
+                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
       Description:    Specifies what version of the Microsoft.Data.SqlClient.Internal.Logging to use
-                      when compiling MDS. If not specified, the version defined in
+                      when compiling SqlClient. If not specified, the version defined in
                       Directory.Packages.props is used. This argument only has effect if the
                       ReferenceType argument is set to "Package".
       Default value:  [blank]
@@ -163,27 +163,27 @@
     </PackageVersionLoggingArgument>
 
     <!--
-      PackageVersionMds @TODO: Update
-      Applies to:     TestMdsFunctional, TestMdsManual (when ReferenceType is Package)
+      PackageVersionSqlClient @TODO: Update
+      Applies to:     TestSqlClientFunctional, TestSqlClientManual (when ReferenceType is Package)
       Description:    Specifies what version of the Microsoft.Data.SqlClient package to run tests
                       against. If not specified, the version pinned in Directory.Packages.props
                       will be used.
 
-      Applies to:     BuildMds*
-      Description:    Specifies the version to assign to the MDS NuGet package and assembly files.
-                      If this is not specified, the version defined in MdsVersions.props is used.
+      Applies to:     BuildSqlClient*
+      Description:    Specifies the version to assign to the SqlClient NuGet package and assembly files.
+                      If this is not specified, the version defined in SqlClientVersions.props is used.
 
-      Applies to:     PackMds
-      Description:    Specifies the version to assign to the MDS NuGet package. If not specified,
+      Applies to:     PackSqlClient
+      Description:    Specifies the version to assign to the SqlClient NuGet package. If not specified,
                       the target will fail (@TODO).
 
       Default value:  [blank]
       Example:        7.0.0-preview4
     -->
-    <PackageVersionMds Condition="'$(PackageVersionMds)' == ''" />
-    <PackageVersionMdsArgument Condition="'$(PackageVersionMds)' != ''">
-      -p:MdsPackageVersion=$(PackageVersionMds)
-    </PackageVersionMdsArgument>
+    <PackageVersionSqlClient Condition="'$(PackageVersionSqlClient)' == ''" />
+    <PackageVersionSqlClientArgument Condition="'$(PackageVersionSqlClient)' != ''">
+      -p:SqlClientPackageVersion=$(PackageVersionSqlClient)
+    </PackageVersionSqlClientArgument>
 
     <!--
       PackageVersionSqlServer
@@ -201,16 +201,16 @@
 
     <!--
       ReferenceType
-      Applies to:     BuildMds, BuildMdsUnix, BuildMdsWindows
-      Description:    Determines how to build MDS. If set to "Project", any cross-project
-                      references (eg, Abstractions from MDS) will be made as project references. If
+      Applies to:     BuildSqlClient, BuildSqlClientUnix, BuildSqlClientWindows
+      Description:    Determines how to build SqlClient. If set to "Project", any cross-project
+                      references (eg, Abstractions from SqlClient) will be made as project references. If
                       set to "Package", package references will be made instead. When running in
                       package mode, target versions can be specified via PackageVersion* build
                       parameters. If these are not provided, the central feed version will be used
                       instead (see Directory.Packages.props). When running in project mode, the
                       dependencies will be built automatically.
 
-      Applies to:     TestMdsFunctional, TestMdsManual
+      Applies to:     TestSqlClientFunctional, TestSqlClientManual
       Description:    Determines whether to test against a project reference or a package version
                       of the test targets. Same description above applies.
 
@@ -309,8 +309,8 @@
 
     <!--
       TestSet
-      Applies to:     TestMdsManual target
-      Description:    Used to select a set of tests to run from the MDS manual tests project. If not
+      Applies to:     TestSqlClientManual target
+      Description:    Used to select a set of tests to run from the SqlClient manual tests project. If not
                       specified, all tests will be executed.
       Default value:  [blank]
       Allowed values: ([1][2][3][AE])
@@ -323,36 +323,36 @@
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
   <PropertyGroup>
-    <!-- Root for MDS projects -->
-    <MdsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient/</MdsSrcRoot>
-    <MdsArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</MdsArtifactRoot>
+    <!-- Root for SqlClient projects -->
+    <SqlClientSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient/</SqlClientSrcRoot>
+    <SqlClientArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</SqlClientArtifactRoot>
 
     <!-- Project Path -->
-    <MdsProjectPath>$(MdsSrcRoot)src/Microsoft.Data.SqlClient.csproj</MdsProjectPath>
-    <MdsRefProjectPath>$(MdsSrcRoot)ref/Microsoft.Data.SqlClient.csproj</MdsRefProjectPath>
-    <MdsNotSupportedProjectPath>$(MdsSrcRoot)notsupported/Microsoft.Data.SqlClient.csproj</MdsNotSupportedProjectPath>
+    <SqlClientProjectPath>$(SqlClientSrcRoot)src/Microsoft.Data.SqlClient.csproj</SqlClientProjectPath>
+    <SqlClientRefProjectPath>$(SqlClientSrcRoot)ref/Microsoft.Data.SqlClient.csproj</SqlClientRefProjectPath>
+    <SqlClientNotSupportedProjectPath>$(SqlClientSrcRoot)notsupported/Microsoft.Data.SqlClient.csproj</SqlClientNotSupportedProjectPath>
 
     <!-- Test Project Paths -->
-    <MdsFunctionalTestProjectPath>$(MdsSrcRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</MdsFunctionalTestProjectPath>
-    <MdsManualTestProjectPath>$(MdsSrcRoot)tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</MdsManualTestProjectPath>
-    <MdsUnitTestProjectPath>$(MdsSrcRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</MdsUnitTestProjectPath>
+    <SqlClientFunctionalTestProjectPath>$(SqlClientSrcRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</SqlClientFunctionalTestProjectPath>
+    <SqlClientManualTestProjectPath>$(SqlClientSrcRoot)tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</SqlClientManualTestProjectPath>
+    <SqlClientUnitTestProjectPath>$(SqlClientSrcRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</SqlClientUnitTestProjectPath>
 
     <!-- Tools/Specs Paths -->
-    <MdsNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</MdsNuspecPath>
+    <SqlClientNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientNuspecPath>
     <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/</GenApiPath>
     <GenApiProjectPath>$(GenApiPath)Microsoft.DotNet.GenAPI.csproj</GenApiProjectPath>
   </PropertyGroup>
 
-  <!-- Build MDS Targets =============================================== -->
-  <!-- BuildMds: Builds all binaries for MDS -->
-  <Target Name="BuildMds" DependsOnTargets="BuildMdsUnix;BuildMdsWindows;BuildMdsRef;BuildMdsNotSupported" />
+  <!-- Build SqlClient Targets =============================================== -->
+  <!-- BuildSqlClient: Builds all binaries for SqlClient -->
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientUnix;BuildSqlClientWindows;BuildSqlClientRef;BuildSqlClientNotSupported" />
 
   <!--
-    BuildMdsNotSupported: Builds a version of the MDS assemblies that always throws
+    BuildSqlClientNotSupported: Builds a version of the SqlClient assemblies that always throws
     PlatformNotSupportedException. It generates the source for this using GenAPI which is built as
     the first step of this target.
   -->
-  <Target Name="BuildMdsNotSupported">
+  <Target Name="BuildSqlClientNotSupported">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(GenApiProjectPath)"
@@ -372,7 +372,7 @@
 
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(MdsNotSupportedProjectPath)"
+        "$(DotnetPath)dotnet" build "$(SqlClientNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
         $(SigningKeyPathArgument)
@@ -380,7 +380,7 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -395,18 +395,18 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- BuildMdsRef: Builds the ref binaries project for MDS, which is OS-agnostic -->
-  <Target Name="BuildMdsRef">
+  <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
+  <Target Name="BuildSqlClientRef">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(MdsRefProjectPath)
+        "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -416,15 +416,15 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building MDS ref binaries via command: $(DotnetCommand)"/>
+    <Message Text=">>> Building SqlClient ref binaries via command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- BuildMdsUnix: Builds all unix-specific MDS binaries -->
-  <Target Name="BuildMdsUnix">
+  <!-- BuildSqlClientUnix: Builds all unix-specific SqlClient binaries -->
+  <Target Name="BuildSqlClientUnix">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(MdsProjectPath)
+        "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
         $(SigningKeyPathArgument)
@@ -432,7 +432,7 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -443,15 +443,15 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building MDS for Unix via command: $(DotnetCommand)"/>
+    <Message Text=">>> Building SqlClient for Unix via command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- BuildMdsWindows: Builds all windows-specific MDS binaries -->
-  <Target Name="BuildMdsWindows">
+  <!-- BuildSqlClientWindows: Builds all windows-specific SqlClient binaries -->
+  <Target Name="BuildSqlClientWindows">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(MdsProjectPath)
+        "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
         $(SigningKeyPathArgument)
@@ -459,7 +459,7 @@
         <!-- Versioning Arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -469,18 +469,18 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Building MDS for Windows via command: $(DotnetCommand)" />
+    <Message Text=">>> Building SqlClient for Windows via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Pack MDS Target ===================================================== -->
+  <!-- Pack SqlClient Target ===================================================== -->
   <!--
-    PackMds: Packages MDS binaries into a NuGet package.
-    Because the MDS package depends on the "not supported" and ref projects, we can't use dotnet to
+    PackSqlClient: Packages SqlClient binaries into a NuGet package.
+    Because the SqlClient package depends on the "not supported" and ref projects, we can't use dotnet to
     automatically build before packaging. Instead, we rely on target dependency to handle building
     the same binaries that will be packaged.
   -->
-  <Target Name="PackMds" DependsOnTargets="$(PackMdsDependsOn)">
+  <Target Name="PackSqlClient" DependsOnTargets="$(PackSqlClientDependsOn)">
     <Error Text="PackageVersionAbstractions must be set!"
            Condition="'$(PackageVersionAbstractions)' == ''" />
     <Error Text="PackageVersionLogging must be set!"
@@ -500,58 +500,58 @@
 
     <!-- This is a bit hacky, and can be (@TODO:) removed once packaging is done w/o a nuspec from dotnet -->
     <PropertyGroup>
-      <GetMdsPackageVersionCommand>
-        "$(DotnetPath)dotnet" msbuild "$(MdsProjectPath)"
+      <GetSqlClientPackageVersionCommand>
+        "$(DotnetPath)dotnet" msbuild "$(SqlClientProjectPath)"
         -nologo
         -verbosity:quiet
-        -getProperty:MdsPackageVersion
+        -getProperty:SqlClientPackageVersion
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionMdsArgument)
-      </GetMdsPackageVersionCommand>
+        $(PackageVersionSqlClientArgument)
+      </GetSqlClientPackageVersionCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <GetMdsPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetMdsPackageVersionCommand), "\s+", " "))</GetMdsPackageVersionCommand>
+      <GetSqlClientPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetSqlClientPackageVersionCommand), "\s+", " "))</GetSqlClientPackageVersionCommand>
     </PropertyGroup>
-    <Message Text=">>> Evaluating MDS package version via command: $(GetMdsPackageVersionCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(GetMdsPackageVersionCommand)">
-      <Output TaskParameter="ConsoleOutput" PropertyName="_EvaluatedMdsPackageVersion" />
+    <Message Text=">>> Evaluating SqlClient package version via command: $(GetSqlClientPackageVersionCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(GetSqlClientPackageVersionCommand)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_EvaluatedSqlClientPackageVersion" />
     </Exec>
-    <Error Text="Failed to evaluate MdsPackageVersion for PackMds."
-           Condition="'$(_EvaluatedMdsPackageVersion)' == ''" />
+    <Error Text="Failed to evaluate SqlClientPackageVersion for PackSqlClient."
+           Condition="'$(_EvaluatedSqlClientPackageVersion)' == ''" />
 
     <PropertyGroup>
-      <_EvaluatedMdsPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(_EvaluatedMdsPackageVersion), "\s", ""))</_EvaluatedMdsPackageVersion>
+      <_EvaluatedSqlClientPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(_EvaluatedSqlClientPackageVersion), "\s", ""))</_EvaluatedSqlClientPackageVersion>
       <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
       <NuGetCommand>
-        "$(NugetPath)" pack "$(MdsNuspecPath)"
+        "$(NugetPath)" pack "$(SqlClientNuspecPath)"
         -Symbols
         -SymbolPackageFormat snupkg
-        -Version "$(_EvaluatedMdsPackageVersion)"
-        -OutputDirectory "$(MdsArtifactRoot)/$(ReferenceType)-$(Configuration)"
+        -Version "$(_EvaluatedSqlClientPackageVersion)"
+        -OutputDirectory "$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
         -properties "COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(PackageVersionAbstractions);LoggingPackageVersion=$(PackageVersionLogging)"
       </NuGetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <NuGetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(NuGetCommand), "\s+", " "))</NuGetCommand>
     </PropertyGroup>
-    <Message Text=">>> Packing MDS nuget via command: $(NuGetCommand)" />
+    <Message Text=">>> Packing SqlClient nuget via command: $(NuGetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(NuGetCommand)" />
   </Target>
 
-  <!-- Test MDS Targets ==================================================== -->
-  <!-- TestMds: Runs all test projects for MDS -->
-  <Target Name="TestMds" DependsOnTargets="TestMdsFunctional;TestMdsManual;TestMdsUnit" />
+  <!-- Test SqlClient Targets ==================================================== -->
+  <!-- TestSqlClient: Runs all test projects for SqlClient -->
+  <Target Name="TestSqlClient" DependsOnTargets="TestSqlClientFunctional;TestSqlClientManual;TestSqlClientUnit" />
 
-  <!-- TestMdsFunctional: Runs functional tests for MDS -->
-  <Target Name="TestMdsFunctional">
+  <!-- TestSqlClientFunctional: Runs functional tests for SqlClient -->
+  <Target Name="TestSqlClientFunctional">
     <!-- @TODO: Prevent from running in non-admin user mode -->
     <PropertyGroup>
-      <LogFilePrefix>MdsFunctional-$(OS)</LogFilePrefix>
+      <LogFilePrefix>SqlClientFunctional-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>
-        "$(DotnetPath)dotnet" test "$(MdsFunctionalTestProjectPath)"
+        "$(DotnetPath)dotnet" test "$(SqlClientFunctionalTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
@@ -564,24 +564,24 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running functional tests for MDS via command: $(DotnetCommand)" />
+    <Message Text=">>> Running functional tests for SqlClient via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- TestMdsManual: Runs manual tests for MDS -->
-  <Target Name="TestMdsManual">
+  <!-- TestSqlClientManual: Runs manual tests for SqlClient -->
+  <Target Name="TestSqlClientManual">
     <PropertyGroup>
-      <LogFilePrefix>MdsManual-$(OS)</LogFilePrefix>
+      <LogFilePrefix>SqlClientManual-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
 
       <DotnetCommand>
-        "$(DotnetPath)dotnet" test "$(MdsManualTestProjectPath)"
+        "$(DotnetPath)dotnet" test "$(SqlClientManualTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
@@ -595,27 +595,27 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running manual tests for MDS via command: $(DotnetCommand)" />
+    <Message Text=">>> Running manual tests for SqlClient via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- TestMdsUnit: Runs unit tests for MDS -->
-  <Target Name="TestMdsUnit">
+  <!-- TestSqlClientUnit: Runs unit tests for SqlClient -->
+  <Target Name="TestSqlClientUnit">
     <PropertyGroup>
       <!--
         Note: This test exclusively uses project references, so neither ReferenceType nor any
             package version arguments are specified in this command.
       -->
-      <LogFilePrefix>MdsUnit-$(OS)</LogFilePrefix>
+      <LogFilePrefix>SqlClientUnit-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>
-        "$(DotnetPath)dotnet" test "$(MdsUnitTestProjectPath)"
+        "$(DotnetPath)dotnet" test "$(SqlClientUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
@@ -628,7 +628,7 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running unit tests for MDS via command: $(DotnetCommand)" />
+    <Message Text=">>> Running unit tests for SqlClient via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -657,7 +657,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -685,7 +685,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -866,7 +866,7 @@
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
 
-        $(PackageVersionMdsArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>

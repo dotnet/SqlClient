@@ -151,7 +151,7 @@
     <Project Path="Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient/">
-    <File Path="Microsoft.Data.SqlClient/MdsVersions.props" />
+    <File Path="Microsoft.Data.SqlClient/Versions.props" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient/notsupported/">
     <Project Path="../tools/GenAPI/Microsoft.Cci.Extensions/Microsoft.Cci.Extensions.csproj">

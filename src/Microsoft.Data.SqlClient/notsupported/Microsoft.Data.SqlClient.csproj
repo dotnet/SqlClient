@@ -40,7 +40,7 @@
     assumes the GenAPI project has already been built in a previous step. Instead, use the
     following command in build2.proj to build the "not supported" binaries:
 
-    > msbuild build2.proj /t:BuildMdsNotSupported
+    > msbuild build2.proj /t:BuildSqlClientNotSupported
 
     @TODO: Remove this project
     The primary prerequisite for removing this project is making the "common" MDS project OS-
@@ -55,6 +55,11 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
 
     <!--
       Files to compile will be generated per-framework by the GenerateNotSupportedSource target and
@@ -68,12 +73,15 @@
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../MdsVersions.props" />
+  <Import Project="../Versions.props" />
   <PropertyGroup>
-    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
-    <FileVersion>$(MdsFileVersion)</FileVersion>
-    <Version>$(MdsPackageVersion)</Version>
+    <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(SqlClientFileVersion)</FileVersion>
+    <Version>$(SqlClientPackageVersion)</Version>
   </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
 
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
@@ -208,7 +216,7 @@
       <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s+", " "))</GenApiCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building MDS 'Not Supported' binaries via command: $(GenApiCommand)"/>
+    <Message Text=">>> Building SqlClient 'Not Supported' binaries via command: $(GenApiCommand)"/>
     <Exec Command="$(GenApiCommand)" ConsoleToMsBuild="true" />
 
     <!-- Include the "Not Supported" source file into this project -->

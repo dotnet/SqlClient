@@ -1,16 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../MdsVersions.props" />
+  <Import Project="../Versions.props" />
   <PropertyGroup>
-    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
-    <FileVersion>$(MdsFileVersion)</FileVersion>
-    <Version>$(MdsPackageVersion)</Version>
+    <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(SqlClientFileVersion)</FileVersion>
+    <Version>$(SqlClientPackageVersion)</Version>
   </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->

@@ -3,21 +3,21 @@
     This file contains versioning information for the Microsoft.Data.SqlClient package.
     We will calculate three different version variables, used for different purposes:
 
-    * MdsPackageVersion - this will be used as the <Version> property, the version of the NuGet
-      package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
-    * MdsFileVersion - this will be used as the <FileVersion> property. It should be in the form:
-      (Major).(Minor).(Patch).(BuildNumber)
-    * MdsAssemblyVersion - this will be used as the <AssemblyVersion> property. This is the version
+    * SqlClientAssemblyVersion - this will be used as the <AssemblyVersion> property. This is the version
       reported to user if they open the assembly properties. It *must not* change within major
       versions in order for minor versions to be considered backwards compatible via strong naming.
       It must be in the form: (Major).0.0.0
+    * SqlClientFileVersion - this will be used as the <FileVersion> property. It should be in the form:
+      (Major).(Minor).(Patch).(BuildNumber)
+    * SqlClientPackageVersion - this will be used as the <Version> property, the version of the NuGet
+      package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
   -->
 
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
-    <!-- This is the *next* version to release of MDS. Update this after a version is released -->
-    <MdsVersionDefault>7.0.0</MdsVersionDefault>
+    <!-- This is the *next* version to release of SqlClient. Update this after a version is released -->
+    <SqlClientVersionDefault>7.0.0</SqlClientVersionDefault>
 
     <!--
       Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.
@@ -27,7 +27,7 @@
 
   <!-- Determine file version and package version based on what was provided. -->
   <Choose>
-    <When Condition="'$(MdsPackageVersion)' != ''">
+    <When Condition="'$(SqlClientPackageVersion)' != ''">
       <!--
         When a package version is provided, it supercedes all other choices. It will be used as the
         package version and the file version will be based on it. This situation is used for
@@ -35,7 +35,7 @@
         information in the pipeline yaml.
       -->
       <PropertyGroup>
-        <MdsFileVersion>$(MdsPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</MdsFileVersion>
+        <SqlClientFileVersion>$(SqlClientPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -54,10 +54,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <MdsPackageVersion Condition="'$(BuildSuffix)' != ''">$(MdsVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</MdsPackageVersion>
-        <MdsPackageVersion Condition="'$(BuildSuffix)' == ''">$(MdsVersionDefault)</MdsPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientVersionDefault)</SqlClientPackageVersion>
 
-        <MdsFileVersion>$(MdsVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</MdsFileVersion>
+        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -71,8 +71,8 @@
       <PropertyGroup>
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
-        <MdsPackageVersion>$(MdsVersionDefault)-$(BuildSuffix)</MdsPackageVersion>
-        <MdsFileVersion>$(MdsVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</MdsFileVersion>
+        <SqlClientPackageVersion>$(SqlClientVersionDefault)-$(BuildSuffix)</SqlClientPackageVersion>
+        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
@@ -82,7 +82,7 @@
     version.
   -->
   <PropertyGroup>
-    <MdsAssemblyVersion>$(MdsFileVersion.Split('.')[0]).0.0.0</MdsAssemblyVersion>
+    <SqlClientAssemblyVersion>$(SqlClientFileVersion.Split('.')[0]).0.0.0</SqlClientAssemblyVersion>
   </PropertyGroup>
 
 </Project>
