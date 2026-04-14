@@ -10,9 +10,11 @@
       BuildNumber
       Applies to:     Build*, Pack*
       Description:    Number that identifies the build.
+
                       For local developer builds, this does not need to be used. The developer
                       should either specify an entire package version override (via
-                      PackageVersionMds, et. al.) or by omitting the package version.
+                      PackageVersion*, et. al.) or by omitting the package version.
+
                       For automated builds, this should always be specified instead of
                       a package version. Thus, the version base is controlled via source and the
                       build number is simply appended as a revision number.
@@ -30,9 +32,11 @@
       Aplies to:      Build*, Pack*
       Description:    Suffix to add at the end of the package version to indicate the generated
                       version is a pre-release.
+
                       For local developer builds, this does not need to be set. If a specific
                       package version is needed, specify PackageVersionMds. Otherwise, the
                       generated package version will eg, 1.2.3.dev.
+
                       For automated builds, this should only be specified on pre-release builds, ie
                       PR/CI pipeline runs. For official, production-ready builds, omit this field
                       and include a BuildNumber.
@@ -79,7 +83,8 @@
       PackBuild
       Applies to:     Pack*
       Description:    Whether the Pack* targets should buiild the project before packaging. If
-                      true, the project will be build as part of packageing. If false, it will not.
+                      true, the project will be built as part of packaging. If false, it will not.
+
                       For most developers, building immediately before packing is the norm, and
                       this functionality is added for convenience. However, for official builds,
                       binaries are signed between building and packing, so building immediately
@@ -100,14 +105,19 @@
     <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
 
     <!--
-      PackageVersionAbstractions @TODO: Update
-      Applies to:     BuildSqlClient, BuildSqlClientRef, BuildSqlClientUnix, BuildSqlClientWindows
-                      PackSqlClient
-                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-      Description:    Specifies what version of the Microsoft.Data.SqlClient.Abstractions to use
-                      when compiling SqlClient. If not specified, the version defined in
-                      Directory.Packages.props is used. This argument only has effect if the
-                      ReferenceType argument is set to "Package".
+      PackageVersionAbstractions
+      Applies to:     BuildAbstractions, PackAbstractions
+      Description:    Specifies what version to assign to the Microsoft.Data.SqlClient.Extensions.Abstractions
+                      package. If this is omitted, the assigned version will default to the version
+                      calculated by Versions.props. If this is provided, it will override the
+                      package version and assembly versions will be calculated based on it.
+
+      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
+                      BuildAkvProvider, PackAkvProvider
+                      (with -p:ReferenceType=Package)
+      Description:    Specifies what version of Microsoft.Data.SqlClient.Extensions.Abstractions
+                      to use when compiling/packaging/testing the specified package.
+
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
@@ -117,10 +127,13 @@
     </PackageVersionAbstractionsArgument>
 
     <!--
-      PackageVersionAkvProvider @TODO: Update
+      PackageVersionAkvProvider
       Applies to:     BuildAkvProvider, PackAkvProvider
-      Description:    Specifies what version of the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-                      to assign to the package.
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+                      when building/packing the AKV provider. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
@@ -130,13 +143,13 @@
     </PackageVersionAkvProviderArgument>
 
     <!--
-      PackageVersionAzure @TODO: Update
+      PackageVersionAzure
       Applies to:     BuildAzure, PackAzure
-                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-      Description:    Specifies what version of the Microsoft.Data.SqlClient.Abstractions to use
-                      when compiling SqlClient. If not specified, the version defined in
-                      Directory.Packages.props is used. This argument only has effect if the
-                      ReferenceType argument is set to "Package".
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Extensions.Azure
+                      when building/packing the Azure package. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
@@ -146,14 +159,22 @@
     </PackageVersionAzureArgument>
 
     <!--
-      PackageVersionLogging @TODO: Update
-      Applies to:     BuildSqlClient, BuildSqlClientUnix, BuildSqlClientWindows
-                      PackSqlClient
-                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-      Description:    Specifies what version of the Microsoft.Data.SqlClient.Internal.Logging to use
-                      when compiling SqlClient. If not specified, the version defined in
-                      Directory.Packages.props is used. This argument only has effect if the
-                      ReferenceType argument is set to "Package".
+      PackageVersionLogging
+      Applies to:     BuildLogging, PackLogging
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Internal.Logging
+                      when building/packing the Logging package. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
+
+      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
+                      BuildAkvProvider, PackAkvProvider
+                      BuildAbstractions, PackAbstractions
+                      BuildAzure, PackAzure,
+                      (with -p:ReferenceType=Package)
+      Description:    Specifies what version of Microsoft.Data.SqlClient.Internal.Logging
+                      to use when compiling/packaging/testing the specified package.
+
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
@@ -163,19 +184,20 @@
     </PackageVersionLoggingArgument>
 
     <!--
-      PackageVersionSqlClient @TODO: Update
-      Applies to:     TestSqlClientFunctional, TestSqlClientManual (when ReferenceType is Package)
-      Description:    Specifies what version of the Microsoft.Data.SqlClient package to run tests
-                      against. If not specified, the version pinned in Directory.Packages.props
-                      will be used.
+      PackageVersionSqlClient
+      Applies to:     TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
+                      BuildAkvProvider, PackAkvProvider
+                      TestAzure
+                      (with -p:ReferenceType=Package)
+      Description     Specifies what version of Microsoft.Data.SqlClient to use when compiling
+                      to use when compiling/packaging/testing the specified package.
 
-      Applies to:     BuildSqlClient*
-      Description:    Specifies the version to assign to the SqlClient NuGet package and assembly files.
-                      If this is not specified, the version defined in SqlClientVersions.props is used.
-
-      Applies to:     PackSqlClient
-      Description:    Specifies the version to assign to the SqlClient NuGet package. If not specified,
-                      the target will fail (@TODO).
+      Applies to:     BuildSqlClient*, PackSqlClient
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient when building/
+                      packing the SqlClient package. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
 
       Default value:  [blank]
       Example:        7.0.0-preview4
@@ -271,9 +293,9 @@
       TestFilters
       Applies to:     Test* targets
       Description:    Filter to use to include or exclude any tests. If not specified, this defaults
-                      to including all tests that are not in the category "failing", "flaky", or "interactive". Use
-                      "none" to disable filtering and run all tests in the target.
-                      For more information see:
+                      to including all tests that are not in the category "failing", "flaky", or
+                      "interactive". Use "none" to disable filtering and run all tests in the
+                      target. For more information see:
                       https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
       Default value:  category!=failing&category!=flaky
       Allowed values: (category_expression|none)
@@ -302,14 +324,14 @@
       Description:   Absolute path to directory where any test results should be dumped. If not
                      specified, this path will default to test_results in the root of the
                      repository.
-      Default value: $(REPO_ROOT)\test_results
+      Default value: $(RepoRoot)\test_results
       Example:       C:\my_test_results\my_extra_special_test_run_folder\
     -->
     <TestResultsFolderPath Condition="'$(TestResultsFolderPath)' == ''">$(RepoRoot)test_results</TestResultsFolderPath>
 
     <!--
       TestSet
-      Applies to:     TestSqlClientManual target
+      Applies to:     TestSqlClientManual
       Description:    Used to select a set of tests to run from the SqlClient manual tests project. If not
                       specified, all tests will be executed.
       Default value:  [blank]
@@ -481,11 +503,6 @@
     the same binaries that will be packaged.
   -->
   <Target Name="PackSqlClient" DependsOnTargets="$(PackSqlClientDependsOn)">
-    <Error Text="PackageVersionAbstractions must be set!"
-           Condition="'$(PackageVersionAbstractions)' == ''" />
-    <Error Text="PackageVersionLogging must be set!"
-           Condition="'$(PackageVersionLogging)' == ''" />
-
     <PropertyGroup>
       <GitCommand>
         git rev-parse HEAD
@@ -639,7 +656,6 @@
     <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
   </PropertyGroup>
 
-  <!-- Build AkvProvider Target ======================================== -->
   <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider -->
   <Target Name="BuildAkvProvider">
     <PropertyGroup>
@@ -703,7 +719,6 @@
     <AbstractionsTestProjectPath>$(AbstractionsSrcRoot)test/Abstractions.Test.csproj</AbstractionsTestProjectPath>
   </PropertyGroup>
 
-  <!-- Build Abstractions Target ======================================= -->
   <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
   <Target Name="BuildAbstractions">
     <PropertyGroup>
@@ -729,7 +744,6 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Pack Abstractions Target ======================================== -->
   <!-- PackAbstractions: Packages Microsoft.Data.SqlClient.Extensions.Abstractions -->
   <Target Name="PackAbstractions">
     <PropertyGroup>
@@ -756,7 +770,6 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Test Abstractions Targets ======================================= -->
   <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
   <Target Name="TestAbstractions">
     <PropertyGroup>
@@ -793,7 +806,6 @@
     <AzureTestProjectPath>$(AzureSrcRoot)test/Azure.Test.csproj</AzureTestProjectPath>
   </PropertyGroup>
 
-  <!-- Build Azure Target ============================================== -->
   <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
   <Target Name="BuildAzure">
     <PropertyGroup>
@@ -819,7 +831,6 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Pack Azure Target ============================================== -->
   <!-- PackAzure: Packages Microsoft.Data.SqlClient.Extensions.Azure -->
   <Target Name="PackAzure">
     <PropertyGroup>
@@ -846,7 +857,6 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Test Azure Targets ============================================== -->
   <!-- TestAzure: Runs Microsoft.Data.SqlClient.Extensions.Azure.Tests -->
   <Target Name="TestAzure">
     <PropertyGroup>
@@ -883,7 +893,6 @@
     <LoggingProjectPath>$(LoggingSrcRoot)Logging.csproj</LoggingProjectPath>
   </PropertyGroup>
 
-  <!-- Build Logging Target ============================================ -->
   <!-- BuildLogging: Builds Microsoft.Data.SqlClient.Internal.Logging -->
   <Target Name="BuildLogging">
     <PropertyGroup>
@@ -905,7 +914,6 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Pack Logging Target ============================================= -->
   <!-- PackLogging: Packages Microsoft.Data.SqlClient.Internal.Logging -->
   <Target Name="PackLogging">
     <PropertyGroup>
@@ -935,7 +943,6 @@
     <SqlServerProjectPath>$(SqlServerSrcRoot)Microsoft.SqlServer.Server.csproj</SqlServerProjectPath>
   </PropertyGroup>
 
-  <!-- Build SqlServer Target ========================================== -->
   <!-- BuildSqlServer: Builds the Microsoft.SqlServer.Server project -->
   <Target Name="BuildSqlServer">
     <PropertyGroup>
