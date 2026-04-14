@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient
         ///
         /// Under NativeAOT, this method will silently fail and no default providers
         /// will be registered. Applications should use
-        /// <see cref="ActiveDirectoryAuthenticationProvider.RegisterAsDefault()"/> to
+        /// ActiveDirectoryAuthenticationProvider.RegisterAsDefault() to
         /// explicitly register the provider, or use SqlConnection.AccessTokenCallback
         /// to bypass the provider registry.
         /// </summary>
