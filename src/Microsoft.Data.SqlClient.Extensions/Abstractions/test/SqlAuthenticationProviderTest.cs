@@ -73,6 +73,47 @@ public class SqlAuthenticationProviderTest
             SqlAuthenticationProvider.SetProvider(method, new Provider()));
     }
 
+    /// <summary>
+    /// Test that providers registered via SetProvider before
+    /// RegisterProviderManager is called are buffered and replayed
+    /// once the manager registers its callbacks.
+    /// </summary>
+    [Fact]
+    public void SetProvider_BufferedAndReplayed()
+    {
+        // Arrange: register a provider while no manager callbacks
+        // are wired up (MDS assembly is not present in this test
+        // project).
+        var provider = new Provider();
+        var method =
+            SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+
+        Assert.True(
+            SqlAuthenticationProvider.SetProvider(
+                method, provider));
+
+        // Before replay, GetProvider returns null (no callback,
+        // and the reflection-based Internal.GetProvider also
+        // returns null since MDS is absent).
+        Assert.Null(
+            SqlAuthenticationProvider.GetProvider(method));
+
+        // Act: simulate the core assembly registering its manager
+        // callbacks by calling RegisterProviderManager with simple
+        // dictionary-backed delegates.
+        var store = new Dictionary<SqlAuthenticationMethod,
+            SqlAuthenticationProvider>();
+
+        SqlAuthenticationProvider.RegisterProviderManager(
+            m => store.TryGetValue(m, out var p) ? p : null,
+            (m, p) => { store[m] = p; return true; });
+
+        // Assert: the buffered provider was replayed into the
+        // store and is now retrievable via GetProvider.
+        Assert.Same(provider,
+            SqlAuthenticationProvider.GetProvider(method));
+    }
+
     #endregion
 
     #region Helpers
