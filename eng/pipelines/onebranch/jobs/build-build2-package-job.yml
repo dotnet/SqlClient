@@ -11,7 +11,7 @@
 #  - SqlClient
 #  - SqlServer
 #
-# The job builds DLLs via build.proj, ESRP signs the DLLs, then creates NuGet packages from the
+# The job builds DLLs via build2.proj, ESRP signs the DLLs, then creates NuGet packages from the
 # signed DLLs, and finally ESRP signs the NuGet packages.
 
 parameters:

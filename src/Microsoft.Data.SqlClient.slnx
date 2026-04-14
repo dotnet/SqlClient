@@ -127,7 +127,6 @@
     <File Path="../doc/snippets/Microsoft.SqlServer.Server/SystemDataAccessKind.xml" />
   </Folder>
   <Folder Name="/eng/">
-    <File Path="../build.proj" />
     <File Path="../build2.proj" />
     <Project Path="../eng/pipelines/Pipelines.csproj">
       <Build Project="false" />
