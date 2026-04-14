@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Attempts to discover and load the Azure extensions authentication provider
         /// at runtime using reflection. This method is not compatible with NativeAOT/trimming
-        /// because it uses Assembly.Load, Type.GetType, and Activator.CreateInstance.
+        /// because it uses Assembly.Load, Assembly.GetType, and Activator.CreateInstance.
         ///
         /// Under NativeAOT, this method will silently fail and no default providers
         /// will be registered. Applications should use
