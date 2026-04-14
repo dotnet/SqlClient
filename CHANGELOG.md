@@ -7,6 +7,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.0.1] - 2026-04-14
+
+This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.
+See the [full release notes](release-notes/7.0/7.0.1.md) for detailed descriptions.
+
+### Fixed
+
+- Fixed `SqlBulkCopy` failing on SQL Server 2016 with `Invalid column name 'graph_type'` error by using dynamic SQL to extract column names.
+  ([#3714](https://github.com/dotnet/SqlClient/issues/3714),
+   [#4092](https://github.com/dotnet/SqlClient/pull/4092),
+   [#4147](https://github.com/dotnet/SqlClient/pull/4147))
+
+- Fixed `SqlBulkCopy` failing on Azure Synapse Analytics dedicated SQL pools by using `STRING_AGG` for the column-list query when targeting Synapse.
+  ([#4149](https://github.com/dotnet/SqlClient/issues/4149),
+   [#4176](https://github.com/dotnet/SqlClient/pull/4176),
+   [#4182](https://github.com/dotnet/SqlClient/pull/4182))
+
+- Fixed `SqlDataReader.GetFieldType()` and `GetProviderSpecificFieldType()` returning incorrect type for vector float32 columns.
+  ([#4104](https://github.com/dotnet/SqlClient/issues/4104),
+   [#4105](https://github.com/dotnet/SqlClient/pull/4105),
+   [#4152](https://github.com/dotnet/SqlClient/pull/4152))
+
+- Added missing `System.Data.Common` (v4.3.0) NuGet package dependency for .NET Framework consumers to resolve `CS0012` compilation errors.
+  ([#4063](https://github.com/dotnet/SqlClient/pull/4063),
+   [#4074](https://github.com/dotnet/SqlClient/pull/4074))
+
+### Changed
+
+- Enabled the User Agent TDS feature extension unconditionally; removed the `Switch.Microsoft.Data.SqlClient.EnableUserAgent` AppContext switch.
+  ([#4124](https://github.com/dotnet/SqlClient/pull/4124),
+   [#4154](https://github.com/dotnet/SqlClient/pull/4154))
+
+- Added type forwards from the core assembly to public types moved to `Microsoft.Data.SqlClient.Extensions.Abstractions`.
+  ([#4067](https://github.com/dotnet/SqlClient/pull/4067),
+   [#4117](https://github.com/dotnet/SqlClient/pull/4117))
+
+- Fixed API documentation include paths and duplicate doc snippets.
+  ([#4084](https://github.com/dotnet/SqlClient/pull/4084),
+   [#4086](https://github.com/dotnet/SqlClient/pull/4086),
+   [#4107](https://github.com/dotnet/SqlClient/pull/4107),
+   [#4161](https://github.com/dotnet/SqlClient/pull/4161))
+
 ## [Stable Release 7.0.0] - 2026-03-17
 
 This section summarizes all changes across the 7.0 preview cycle for users upgrading from the latest 6.1 stable release.

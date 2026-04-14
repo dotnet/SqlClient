@@ -4,6 +4,7 @@ The following Microsoft.Data.SqlClient 7.0 releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
+| 2026-04-14 | 7.0.1 | [Release Notes](7.0.1.md) |
 | 2026-03-17 | 7.0.0 | [Release Notes](7.0.0.md) |
 | 2026-03-05 | 7.0.0-preview4.26064.3 | [Release Notes](7.0.0-preview4.md) |
 | 2025-12-08 | 7.0.0-preview3.25342.7 | [Release Notes](7.0.0-preview3.md) |
