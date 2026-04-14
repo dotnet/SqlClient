@@ -77,6 +77,70 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
+    /// <summary>
+    /// Registers a new instance of
+    /// <see cref="ActiveDirectoryAuthenticationProvider"/> as the
+    /// default provider for all Active Directory authentication
+    /// methods via <see cref="SqlAuthenticationProvider.SetProvider"/>.
+    ///
+    /// This is the AOT-safe alternative to the automatic
+    /// reflection-based discovery that SqlClient performs at startup.
+    /// Under NativeAOT the automatic discovery silently fails because
+    /// it relies on
+    /// <see cref="System.Reflection.Assembly.Load(string)"/> and
+    /// <see cref="System.Activator.CreateInstance(System.Type, object[])"/>,
+    /// which are not compatible with trimming. Call this method early
+    /// in your application (before opening any SQL connection) to
+    /// restore the default behavior that SqlClient 6.x provided out
+    /// of the box.
+    ///
+    /// Providers registered via app configuration are not
+    /// overwritten.
+    /// </summary>
+    /// <param name="applicationClientId">
+    /// Optional application (client) ID for interactive and
+    /// device-code flows. If <see langword="null"/>, the built-in
+    /// default client ID is used.
+    /// </param>
+    public static void RegisterAsDefault(
+        string? applicationClientId = null)
+    {
+        var provider = applicationClientId is not null
+            ? new ActiveDirectoryAuthenticationProvider(
+                applicationClientId)
+            : new ActiveDirectoryAuthenticationProvider();
+
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+            provider);
+        #pragma warning disable CS0618 // Type or member is obsolete
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryPassword,
+            provider);
+        #pragma warning restore CS0618 // Type or member is obsolete
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryInteractive,
+            provider);
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
+            provider);
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+            provider);
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+            provider);
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryMSI,
+            provider);
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryDefault,
+            provider);
+        SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity,
+            provider);
+    }
+
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
     public void SetDeviceCodeFlowCallback(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod) => _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
 

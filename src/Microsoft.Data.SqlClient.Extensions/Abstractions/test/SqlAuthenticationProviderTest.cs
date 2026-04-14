@@ -48,8 +48,10 @@ public class SqlAuthenticationProviderTest
     }
 
     /// <summary>
-    /// Test that SetProvider fails predictably when the MDS assembly can't be
-    /// found.
+    /// Test that SetProvider succeeds even when the MDS assembly can't be
+    /// found.  The providers are buffered and will be replayed once the
+    /// core SqlClient assembly registers its provider manager via
+    /// <see cref="SqlAuthenticationProvider.RegisterProviderManager"/>.
     /// </summary>
     [Theory]
     #pragma warning disable CS0618 // Type or member is obsolete
@@ -65,9 +67,9 @@ public class SqlAuthenticationProviderTest
     [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
     public void SetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
     {
-        // SetProvider() should return false when the MDS assembly can't be
-        // found.
-        Assert.False(
+        // SetProvider() should return true — the provider is buffered for
+        // replay once the core assembly registers via RegisterProviderManager.
+        Assert.True(
             SqlAuthenticationProvider.SetProvider(method, new Provider()));
     }
 

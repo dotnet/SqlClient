@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Internal;
@@ -56,6 +57,47 @@ namespace Microsoft.Data.SqlClient
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
 
+            // Register direct (non-reflection) callbacks with the Abstractions layer
+            // so that SqlAuthenticationProvider.GetProvider/SetProvider work under
+            // NativeAOT without relying on MethodInfo.Invoke across assembly boundaries.
+            SqlAuthenticationProvider.RegisterProviderManager(GetProvider, SetProvider);
+
+            // If our Azure extensions package is present, use its authentication provider
+            // as our default. This uses reflection and is not AOT-compatible.
+            LoadAzureExtensionProvider();
+        }
+
+        /// <summary>
+        /// Attempts to discover and load the Azure extensions authentication provider
+        /// at runtime using reflection. This method is not compatible with NativeAOT/trimming
+        /// because it uses Assembly.Load, Type.GetType, and Activator.CreateInstance.
+        ///
+        /// Under NativeAOT, this method will silently fail and no default providers
+        /// will be registered. Applications should use
+        /// <see cref="ActiveDirectoryAuthenticationProvider.RegisterAsDefault()"/> to
+        /// explicitly register the provider, or use SqlConnection.AccessTokenCallback
+        /// to bypass the provider registry.
+        /// </summary>
+        #if NET
+        [RequiresUnreferencedCode(
+            "Azure extension provider discovery uses Assembly.Load " +
+            "and Activator.CreateInstance which are not compatible " +
+            "with trimming. Use " +
+            "ActiveDirectoryAuthenticationProvider.RegisterAsDefault" +
+            "() to explicitly register the provider, or use " +
+            "SqlConnection.AccessTokenCallback with Azure.Identity " +
+            "instead.")]
+        [RequiresDynamicCode(
+            "Azure extension provider discovery uses " +
+            "Activator.CreateInstance which requires dynamic code " +
+            "generation. Use " +
+            "ActiveDirectoryAuthenticationProvider.RegisterAsDefault" +
+            "() to explicitly register the provider, or use " +
+            "SqlConnection.AccessTokenCallback with Azure.Identity " +
+            "instead.")]
+        #endif
+        private static void LoadAzureExtensionProvider()
+        {
             // If our Azure extensions package is present, use its authentication provider as our
             // default.
             try
