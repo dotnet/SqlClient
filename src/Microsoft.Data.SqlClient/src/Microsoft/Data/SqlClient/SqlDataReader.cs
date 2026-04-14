@@ -880,8 +880,12 @@ namespace Microsoft.Data.SqlClient
                     TdsParserStateObject stateObj = _stateObj;
 
                     // Request that the current task is stopped
-                    _cancelAsyncOnCloseTokenSource.Cancel();
-                    _cancelAsyncOnCloseTokenSource.Dispose();
+                    var cancelTokenSource = Interlocked.Exchange(ref _cancelAsyncOnCloseTokenSource, null);
+                    if (cancelTokenSource != null)
+                    {
+                        cancelTokenSource.Cancel();
+                        cancelTokenSource.Dispose();
+                    }
                     var currentTask = _currentTask;
                     if ((currentTask != null) && (!currentTask.IsCompleted))
                     {
@@ -1121,8 +1125,12 @@ namespace Microsoft.Data.SqlClient
                 var stateObj = _stateObj;
                 _isClosed = true;
                 // Request that the current task is stopped
-                _cancelAsyncOnCloseTokenSource.Cancel();
-                _cancelAsyncOnCloseTokenSource.Dispose();
+                var cancelTokenSource = Interlocked.Exchange(ref _cancelAsyncOnCloseTokenSource, null);
+                if (cancelTokenSource != null)
+                {
+                    cancelTokenSource.Cancel();
+                    cancelTokenSource.Dispose();
+                }
                 if (stateObj != null)
                 {
                     var networkPacketTaskSource = stateObj._networkPacketTaskSource;
