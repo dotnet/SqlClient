@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -55,7 +54,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
             Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
             Dictionary<TestVariations, object> expectedValueOverrides,
-            Dictionary<TestVariations, object> unexpectedValueOverrides)
+            Dictionary<TestVariations, object> unexpectedValueOverrides,
+            Dictionary<TestVariations, object> expectedBaseTypeOverrides)
         {
 
             List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>, string>> testVariations = new() {
@@ -81,27 +81,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 (TestVariations tag, Func<object, string, string, string, string, TestResult> action, string description) = test;
 
-                DisplayHeader(tag.ToString(), paramValue, expectedBaseTypeName);
                 try
                 {
                     TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
                     expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
                     unexpectedValueOverrides.TryGetValue(tag, out var unexpectedValueOverride);
-                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride);
+                    expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
+                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride, expectedBaseTypeOverride);
                 }
                 catch (Exception e)
                 {
-                    if (expectedExceptions.TryGetValue(tag, out var isExpectedException) && isExpectedException(e, paramValue))
+                    if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
                     {
-                        LogMessage(tag.ToString(), "[EXPECTED EXCEPTION] " + e.Message);
+                        Assert.True(isExpectedException(e, paramValue));
                     }
-                    else if (expectedInvalidOperationExceptions.TryGetValue(tag, out var isExpectedInvalidOperationException) && isExpectedInvalidOperationException(e, paramValue))
+                    else if (expectedInvalidOperationExceptions.TryGetValue(tag, out var isExpectedInvalidOperationException))
                     {
-                        LogMessage(tag.ToString(), "[EXPECTED INVALID OPERATION EXCEPTION] " + AmendTheGivenMessageDateValueException(e.Message, paramValue));
+                        Assert.True(isExpectedInvalidOperationException(e, paramValue));
                     }
-                    else if (expectedButUncaughtExceptions.TryGetValue(tag, out var isExpectedButUncaughtException) && isExpectedButUncaughtException(e, paramValue))
+                    else if (expectedButUncaughtExceptions.TryGetValue(tag, out var isExpectedButUncaughtException))
                     {
-                        DisplayError(tag.ToString(), e);
+                        Assert.True(isExpectedButUncaughtException(e, paramValue));
                     }
                     else {
                         Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
@@ -112,9 +112,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static TestResult _TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string procName = DataTestUtility.GetLongName("paramProc1");
-
+            
+            using SqlConnection conn = new(connStr);
             try {
-                using SqlConnection conn = new(connStr);
+                
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 xsql(conn, string.Format("create proc {0} (@param {1}) as begin select @param end;", procName, expectedBaseTypeName));
@@ -132,8 +133,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropStoredProcedure(conn, procName);
             }
         }
@@ -141,8 +140,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string procName = DataTestUtility.GetLongName("paramProc2");
 
+            using SqlConnection conn = new(connStr);
             try {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 xsql(conn, string.Format("create proc {0} (@param sql_variant) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName));
@@ -160,8 +159,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropStoredProcedure(conn, procName);
             }
         }
@@ -169,8 +166,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSqlDataRecordParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
 
+            using SqlConnection conn = new(connStr);
             try {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
@@ -195,8 +192,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropType(conn, tvpTypeName);
             }
         }
@@ -204,8 +199,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
 
+            using SqlConnection conn = new(connStr);
             try {
-                                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
@@ -230,8 +225,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropType(conn, tvpTypeName);
             }
         }
@@ -239,8 +232,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSqlDataReaderParameterToTVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpType");
 
+            using SqlConnection conn = new(connStr);
             try {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
@@ -268,8 +261,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropType(conn, tvpTypeName);
             }
         }
@@ -277,8 +268,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
 
+            using SqlConnection conn = new(connStr);
             try {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
@@ -308,8 +299,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropType(conn, tvpTypeName);
             }
         }
@@ -319,9 +308,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string InputTableName = DataTestUtility.GetLongName("InputTable");
             string OutputTableName = DataTestUtility.GetLongName("OutputTable");
             string ProcName = DataTestUtility.GetLongName("spTVPProc");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
 
                 DropStoredProcedure(conn, ProcName);
@@ -376,8 +366,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropStoredProcedure(conn, ProcName);
                 DropTable(conn, InputTableName);
                 DropTable(conn, OutputTableName);
@@ -390,9 +378,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string InputTableName = DataTestUtility.GetLongName("InputTable");
             string OutputTableName = DataTestUtility.GetLongName("OutputTable");
             string ProcName = DataTestUtility.GetLongName("spTVPProc_DRdrTVPVar");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
 
                 DropStoredProcedure(conn, ProcName);
@@ -447,8 +436,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropStoredProcedure(conn, ProcName);
                 DropTable(conn, InputTableName);
                 DropTable(conn, OutputTableName);
@@ -459,9 +446,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string inputTable = DataTestUtility.GetLongName("inputTable");
             string procName = DataTestUtility.GetLongName("paramProc3");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, inputTable);
                 DropStoredProcedure(conn, procName);
@@ -495,8 +483,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
             }
@@ -505,9 +491,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _TestSimpleDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string inputTable = DataTestUtility.GetLongName("inputTable");
             string procName = DataTestUtility.GetLongName("paramProc4");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, inputTable);
                 DropStoredProcedure(conn, procName);
@@ -541,8 +528,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
             }
@@ -551,9 +536,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _SqlBulkCopySqlDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -603,8 +589,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
             }
@@ -613,9 +597,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static TestResult _SqlBulkCopySqlDataReader_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -669,8 +654,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
             }
@@ -678,9 +661,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static TestResult _SqlBulkCopyDataTable_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -710,17 +694,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
         }
 
         private static TestResult _SqlBulkCopyDataTable_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -750,17 +733,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
         }
 
         private static TestResult _SqlBulkCopyDataRow_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -785,17 +767,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
         }
 
         private static TestResult _SqlBulkCopyDataRow_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName, string connStr, string tag) {
             string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
+
+            using SqlConnection conn = new(connStr);
             try
             {
-                using SqlConnection conn = new(connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -820,8 +801,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(connStr);
-                conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
         }
@@ -873,131 +852,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object actualValue, 
             string actualBaseTypeName, 
             object expectedValueOverride, 
-            object unexpectedValueOverride)
+            object unexpectedValueOverride,
+            object expectedBaseTypeOverride)
         {
             string actualTypeName = actualValue.GetType().ToString();
 
-            LogValues(expectedTypeName, string.IsNullOrEmpty(actualBaseTypeName) ? string.Empty : expectedBaseTypeName, expectedValue, actualTypeName, actualBaseTypeName, actualValue);
-
-            if (!actualTypeName.Equals(expectedTypeName))
+            //TODO: these are required to generate expected cast exceptions and should be removed
+            if (expectedTypeName == "System.DateTimeOffset")
             {
-                string ErrorMessage = string.Format(">>> ERROR: TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualTypeName,
-                    expectedTypeName);
-                LogMessage(tag, ErrorMessage);
+                Console.Error.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
+            }
+            else if (expectedTypeName == "System.DateTime")
+            {
+                Console.Error.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
             }
 
+            Assert.Equal(expectedTypeName, actualTypeName);
+
+            //TODO: pass in actualBaseType for non-variant tests to remove these IsNullOrEmpty conditionals
             if (!string.IsNullOrEmpty(actualBaseTypeName) && 
                 !string.IsNullOrEmpty(expectedBaseTypeName) && 
                 !actualBaseTypeName.Equals(expectedBaseTypeName))
             {
-                string ErrorMessage = string.Format(">>> ERROR: VARIANT BASE TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualBaseTypeName,
-                    expectedBaseTypeName);
-                LogMessage(tag, ErrorMessage);
+                if (expectedBaseTypeOverride is not null)
+                {
+                    Assert.Equal(expectedBaseTypeOverride, actualBaseTypeName);
+                }
+                else
+                {
+                    Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
+                }
             }
 
             if (!actualValue.Equals(expectedValue))
-            {
-                string ErrorMessage = "";
-                        
-                if (expectedValueOverride is not null && actualValue.Equals(expectedValueOverride))
+            {                        
+                if (expectedValueOverride is not null)
                 {
-                    ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
+                    Assert.True(actualValue.Equals(expectedValueOverride));
                 }
-                else if (unexpectedValueOverride is not null && actualValue.Equals(unexpectedValueOverride))
+                else if (unexpectedValueOverride is not null)
                 {
-                    ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
-                } else {
+                    Assert.True(actualValue.Equals(unexpectedValueOverride));
+                } 
+                else {
                     Assert.Fail();
                 }
-                LogMessage(tag, ErrorMessage);
-            }
-        }
-
-        private static string AmendTheGivenMessageDateValueException(string message, object paramValue)
-        {
-            string value;
-            if (paramValue.GetType() == typeof(DateTimeOffset))
-            {
-                DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-            }
-            else if (paramValue.GetType() == typeof(TimeSpan))
-            {
-                value = ((TimeSpan)paramValue).ToString();
-            }
-            else
-            {
-                value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-            }
-
-            return message.Replace(paramValue.ToString(), value);
-        }
-
-        // NOTE: Logging and Display
-        private static void DisplayHeader(string tag, object paramValue, string expectedBaseTypeName)
-        {
-            Console.WriteLine("");
-            string value;
-            if (paramValue.GetType() == typeof(DateTimeOffset))
-            {
-                DateTimeOffset dt = (DateTimeOffset)paramValue;
-                value = dt.DateTime.ToString("M/d/yyyy") + " " + dt.DateTime.TimeOfDay + " " + dt.Offset;
-            }
-            else if (paramValue.GetType() == typeof(TimeSpan))
-            {
-                value = ((TimeSpan)paramValue).ToString();
-            }
-            else
-            {
-                value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-            }
-
-            Console.WriteLine(string.Format("------------------------------ {0} [type: {1} value:{2}] ------------------------------", tag, expectedBaseTypeName, value));
-        }
-
-        private static void DisplayError(string tag, Exception e)
-        {
-            string ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), e.Message);
-
-            // InvalidCastException message is different between core and framework for this cast attempt.
-            // Make them the same for the purposes of comparing test output.
-            if (e is InvalidCastException &&
-                e.Message.Equals("Unable to cast object of type 'System.TimeSpan' to type 'System.DateTime'."))
-            {
-                ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "Specified cast is not valid.");
-            }
-
-            if (e is ArgumentOutOfRangeException &&
-                e.Message.Equals("The added or subtracted value results in an un-representable DateTime. (Parameter 'value')"))
-            {
-                ExceptionMessage = string.Format(">>> EXCEPTION: [{0}] {1}", e.GetType(), "The added or subtracted value results in an un-representable DateTime.\nParameter name: value");
-            }
-
-            LogMessage(tag, ExceptionMessage);
-        }
-
-        private static void LogMessage(string tag, string message)
-        {
-            Console.WriteLine(string.Format("{0}{1}", tag, message));
-        }
-
-        private static void LogValues(string expectedTypeName, string expectedBaseTypeName, object expectedValue, string actualTypeName, string actualBaseTypeName, object actualValue)
-        {
-            Console.WriteLine(string.Format("Type        => Expected : Actual == {0} : {1}", expectedTypeName, actualTypeName));
-            Console.WriteLine(string.Format("Base Type   => Expected : Actual == {0} : {1}", expectedBaseTypeName, actualBaseTypeName));
-            if (expectedTypeName == "System.DateTimeOffset")
-            {
-                Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
-            }
-            else if (expectedTypeName == "System.DateTime")
-            {
-                Console.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
             }
         }
     }
