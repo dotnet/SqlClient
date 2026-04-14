@@ -93,7 +93,12 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Type System Version = Latest")]
         [InlineData("User Instance = true")]
         [InlineData("Workstation ID = myworkstation")]
+        [InlineData("WorkstationID = myworkstation")]
         [InlineData("WSID = myworkstation")]
+        [InlineData("ConnectTimeout = 30")]
+        [InlineData("FailoverPartner = randomserver.sys.local")]
+        [InlineData("PacketSize = 8192")]
+        [InlineData("columnEncryption = Enabled")]
         [InlineData("Host Name In Certificate = tds.test.com")]
         [InlineData("HostNameInCertificate = tds.test.com")]
         [InlineData("Server Certificate = c:\\test.cer")]
@@ -935,6 +940,64 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
             Assert.Equal(expectedValue, builder.Encrypt);
+        }
+
+        [Theory]
+        [InlineData("ConnectTimeout = 45", 45)]
+        [InlineData("connecttimeout = 45", 45)]
+        [InlineData("CONNECTTIMEOUT = 45", 45)]
+        [InlineData("Connect Timeout = 45", 45)]
+        [InlineData("Connection Timeout = 45", 45)]
+        [InlineData("Timeout = 45", 45)]
+        public void ConnectTimeoutSynonymsResolveCorrectly(string connectionString, int expected)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            Assert.Equal(expected, builder.ConnectTimeout);
+        }
+
+        [Theory]
+        [InlineData("FailoverPartner = partner.sys.local")]
+        [InlineData("failoverpartner = partner.sys.local")]
+        [InlineData("FAILOVERPARTNER = partner.sys.local")]
+        [InlineData("Failover Partner = partner.sys.local")]
+        public void FailoverPartnerSynonymsResolveCorrectly(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            Assert.Equal("partner.sys.local", builder.FailoverPartner);
+        }
+
+        [Theory]
+        [InlineData("PacketSize = 16000", 16000)]
+        [InlineData("packetsize = 16000", 16000)]
+        [InlineData("PACKETSIZE = 16000", 16000)]
+        [InlineData("Packet Size = 16000", 16000)]
+        public void PacketSizeSynonymsResolveCorrectly(string connectionString, int expected)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            Assert.Equal(expected, builder.PacketSize);
+        }
+
+        [Theory]
+        [InlineData("WorkstationID = myws")]
+        [InlineData("workstationid = myws")]
+        [InlineData("WORKSTATIONID = myws")]
+        [InlineData("Workstation ID = myws")]
+        [InlineData("WSID = myws")]
+        public void WorkstationIdSynonymsResolveCorrectly(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            Assert.Equal("myws", builder.WorkstationID);
+        }
+
+        [Theory]
+        [InlineData("columnEncryption = Enabled")]
+        [InlineData("columnencryption = Enabled")]
+        [InlineData("COLUMNENCRYPTION = Enabled")]
+        [InlineData("Column Encryption Setting = Enabled")]
+        public void ColumnEncryptionSynonymsResolveCorrectly(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            Assert.Equal(SqlConnectionColumnEncryptionSetting.Enabled, builder.ColumnEncryptionSetting);
         }
 
     }
