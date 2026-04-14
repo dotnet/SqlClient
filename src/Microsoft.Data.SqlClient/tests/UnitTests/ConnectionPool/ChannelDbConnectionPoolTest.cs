@@ -681,8 +681,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Not Implemented Method Tests
 
-
-
         [Fact]
         public void TestPutObjectFromTransactedPool()
         {

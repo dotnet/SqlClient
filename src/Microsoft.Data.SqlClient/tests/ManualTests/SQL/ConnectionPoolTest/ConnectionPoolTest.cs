@@ -14,8 +14,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConnectionPoolConnectionStringProvider : IEnumerable<object[]>
     {
-        private static readonly string _TCPConnectionString = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = false, Pooling = true }).ConnectionString;
-        private static readonly string _tcpMarsConnStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true, Pooling = true }).ConnectionString;
+        private static readonly string _TCPConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
+            MultipleActiveResultSets = false, 
+            Pooling = true}.ConnectionString;
+        private static readonly string _tcpMarsConnStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
+            MultipleActiveResultSets = true,
+            Pooling = true }.ConnectionString;
 
         public IEnumerator<object[]> GetEnumerator()
         {
@@ -31,8 +35,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class ConnectionPoolConnectionStringAndPoolVersionProvider : IEnumerable<object[]>
     {
-        private static readonly string _TCPConnectionString = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = false, Pooling = true }).ConnectionString;
-        private static readonly string _tcpMarsConnStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true, Pooling = true }).ConnectionString;
+        private static readonly string _TCPConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
+            MultipleActiveResultSets = false,
+            Pooling = true }.ConnectionString;
+        private static readonly string _tcpMarsConnStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
+            MultipleActiveResultSets = true,
+            Pooling = true }.ConnectionString;
 
         public IEnumerator<object[]> GetEnumerator()
         {
