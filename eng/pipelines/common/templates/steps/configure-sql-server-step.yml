@@ -65,7 +65,7 @@ parameters:
   - name: databaseName
     type: string
     default: Northwind
-  
+
   - name: operatingSystem
     type: string
 
@@ -92,13 +92,13 @@ steps:
   # Linux only steps
   - template: configure-sql-server-linux-step.yml@self
     parameters:
-      password: ${{parameters.saPassword}}
+      saPassword: ${{parameters.saPassword}}
 
 - ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
   # macOS only steps
   - template: configure-sql-server-macos-step.yml@self
     parameters:
-      password: ${{parameters.saPassword}}
+      saPassword: ${{parameters.saPassword}}
 
 # Common steps
 - task: DotNetCoreCLI@2
