@@ -133,7 +133,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int IdleCount => _idleChannel.Count;
 
         /// <inheritdoc />
-        public bool ErrorOccurred => throw new NotImplementedException();
+        /// This will be implemented later when we add support for the pool blocking period after errors. For now, it always returns false.
+        public bool ErrorOccurred => false;
 
         /// <inheritdoc />
         public int Id => _instanceId;
@@ -259,7 +260,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Shutdown()
         {
-            throw new NotImplementedException();
+            // No-op for now, warmup will be implemented later.
         }
 
         /// <inheritdoc />

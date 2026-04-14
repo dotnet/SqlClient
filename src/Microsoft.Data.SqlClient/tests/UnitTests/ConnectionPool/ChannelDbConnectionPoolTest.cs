@@ -570,7 +570,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TestErrorOccurred()
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => _ = pool.ErrorOccurred);
+            Assert.False(pool.ErrorOccurred);
         }
 
         [Fact]
@@ -695,13 +695,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, null!));
-        }
-
-        [Fact]
-        public void TestShutdown()
-        {
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.Shutdown());
         }
 
         [Fact]
