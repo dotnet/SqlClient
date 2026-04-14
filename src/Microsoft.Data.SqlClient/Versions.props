@@ -13,10 +13,12 @@
       package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
   -->
 
-
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
-    <!-- This is the *next* version to release of SqlClient. Update this after a version is released -->
+    <!--
+      This is the *next* version to release of SqlClient. Update this after a version is released.
+      @TODO: Determine how versions should be updated in release branches vs main
+    -->
     <SqlClientVersionDefault>7.0.0</SqlClientVersionDefault>
 
     <!--
@@ -35,7 +37,7 @@
         information in the pipeline yaml.
       -->
       <PropertyGroup>
-        <SqlClientFileVersion>$(SqlClientPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</SqlClientFileVersion>
+        <SqlClientFileVersion>$(SqlClientPackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -54,10 +56,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientVersionDefault)-$(BuildSuffix)$(BuildNumber)</SqlClientPackageVersion>
         <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientVersionDefault)</SqlClientPackageVersion>
 
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</SqlClientFileVersion>
+        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -72,7 +74,7 @@
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
         <SqlClientPackageVersion>$(SqlClientVersionDefault)-$(BuildSuffix)</SqlClientPackageVersion>
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</SqlClientFileVersion>
+        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
@@ -80,9 +82,10 @@
   <!--
     Finally, we take the file version and break off the major version to determine the assembly
     version.
+
+    IMPORTANT: This must always be major.0.0.0 for assembly-level backwards compatibility.
   -->
   <PropertyGroup>
     <SqlClientAssemblyVersion>$(SqlClientFileVersion.Split('.')[0]).0.0.0</SqlClientAssemblyVersion>
   </PropertyGroup>
-
 </Project>

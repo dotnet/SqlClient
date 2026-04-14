@@ -18,13 +18,9 @@
     <!--
       This is the *next* version to release of Logging. Update this when the next version is
       decided.
+      @TODO: Determine how versions should be updated in release branches vs main
     -->
     <LoggingVersionDefault>1.0.0</LoggingVersionDefault>
-
-    <!--
-      Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.
-      It is stored as: AssemblyBuildNumber
-    -->
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -37,7 +33,7 @@
         information in the pipeline yaml.
       -->
       <PropertyGroup>
-        <LoggingFileVersion>$(LoggingPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</LoggingFileVersion>
+        <LoggingFileVersion>$(LoggingPackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
       </PropertyGroup>
     </When>
 
@@ -56,10 +52,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <LoggingPackageVersion Condition="'$(BuildSuffix)' != ''">$(LoggingVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</LoggingPackageVersion>
+        <LoggingPackageVersion Condition="'$(BuildSuffix)' != ''">$(LoggingVersionDefault)-$(BuildSuffix)$(BuildNumber)</LoggingPackageVersion>
         <LoggingPackageVersion Condition="'$(BuildSuffix)' == ''">$(LoggingVersionDefault)</LoggingPackageVersion>
 
-        <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</LoggingFileVersion>
+        <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
       </PropertyGroup>
     </When>
 
@@ -74,8 +70,18 @@
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
         <LoggingPackageVersion>$(LoggingVersionDefault)-$(BuildSuffix)</LoggingPackageVersion>
-        <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</LoggingFileVersion>
+        <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
+
+  <!--
+    Finally, we take the file version and break off the major version to determine the assembly
+    version.
+
+    IMPORTANT: This must always be major.0.0.0 for assembly-level backwards compatibility.
+  -->
+  <PropertyGroup>
+    <LoggingAssemblyVersion>$(LoggingFileVersion.Split('.')[0]).0.0.0</LoggingAssemblyVersion>
+  </PropertyGroup>
 </Project>

@@ -16,15 +16,10 @@
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
-      This is the *next* version to release of Abstractions. Update this when the next version is
-      decided.
+      This is the *next* version to release of Azure. Update this when the next version is decided.
+      @TODO: Determine how versions should be updated in release branches vs main
     -->
     <AzureVersionDefault>1.0.0</AzureVersionDefault>
-
-    <!--
-      Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.
-      It is stored as: AssemblyBuildNumber
-    -->
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -37,7 +32,7 @@
         information in the pipeline yaml.
       -->
       <PropertyGroup>
-        <AzureFileVersion>$(AzurePackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</AzureFileVersion>
+        <AzureFileVersion>$(AzurePackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </When>
 
@@ -56,10 +51,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <AzurePackageVersion Condition="'$(BuildSuffix)' != ''">$(AzureVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</AzurePackageVersion>
+        <AzurePackageVersion Condition="'$(BuildSuffix)' != ''">$(AzureVersionDefault)-$(BuildSuffix)$(BuildNumber)</AzurePackageVersion>
         <AzurePackageVersion Condition="'$(BuildSuffix)' == ''">$(AzureVersionDefault)</AzurePackageVersion>
 
-        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</AzureFileVersion>
+        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </When>
 
@@ -74,8 +69,18 @@
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
         <AzurePackageVersion>$(AzureVersionDefault)-$(BuildSuffix)</AzurePackageVersion>
-        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</AzureFileVersion>
+        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
+
+  <!--
+    Finally, we take the file version and break off the major version to determine the assembly
+    version.
+
+    IMPORTANT: This must always be major.0.0.0 for assembly-level backwards compatibility.
+  -->
+  <PropertyGroup>
+    <AzureAssemblyVersion>$(AzureFileVersion.Split('.')[0]).0.0.0</AzureAssemblyVersion>
+  </PropertyGroup>
 </Project>
