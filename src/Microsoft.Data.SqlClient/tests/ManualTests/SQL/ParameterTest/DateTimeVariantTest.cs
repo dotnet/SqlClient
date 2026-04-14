@@ -51,57 +51,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedBaseTypeName, 
             string connStr, 
             Dictionary<TestVariations, ExceptionChecker> expectedExceptions, 
-            Dictionary<TestVariations, ExceptionChecker> expectedInvalidOperationExceptions,
-            Dictionary<TestVariations, ExceptionChecker> expectedButUncaughtExceptions,
             Dictionary<TestVariations, object> expectedValueOverrides,
-            Dictionary<TestVariations, object> unexpectedValueOverrides,
             Dictionary<TestVariations, object> expectedBaseTypeOverrides)
         {
 
-            List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>, string>> testVariations = new() {
-                new(TestVariations.TestSimpleParameter_Type, _TestSimpleParameter_Type, "Test Simple Parameter [Data Type]"),
-                new(TestVariations.TestSimpleParameter_Variant, _TestSimpleParameter_Variant, "Test Simple Parameter [Variant Type]"),
-                new(TestVariations.TestSqlDataRecordParameterToTVP_Type, _TestSqlDataRecordParameterToTVP_Type, "Test SqlDataRecord Parameter To TVP [Data Type]"),
-                new(TestVariations.TestSqlDataRecordParameterToTVP_Variant, _TestSqlDataRecordParameterToTVP_Variant, "Test SqlDataRecord Parameter To TVP [Variant Type]"),
-                new(TestVariations.TestSqlDataReaderParameterToTVP_Type, _TestSqlDataReaderParameterToTVP_Type, "Test SqlDataReader Parameter To TVP [Data Type]"),
-                new(TestVariations.TestSqlDataReaderParameterToTVP_Variant, _TestSqlDataReaderParameterToTVP_Variant, "Test SqlDataReader Parameter To TVP [Variant Type]"),
-                new(TestVariations.TestSqlDataReader_TVP_Type, _TestSqlDataReader_TVP_Type, "Test SqlDataReader TVP [Data Type]"),
-                new(TestVariations.TestSqlDataReader_TVP_Variant, _TestSqlDataReader_TVP_Variant, "Test SqlDataReader TVP [Variant Type]"),
-                new(TestVariations.TestSimpleDataReader_Type, _TestSimpleDataReader_Type, "Test Simple Data Reader [Data Type]"),
-                new(TestVariations.TestSimpleDataReader_Variant, _TestSimpleDataReader_Variant, "Test Simple Data Reader [Variant Type]"),
-                new(TestVariations.SqlBulkCopySqlDataReader_Type, _SqlBulkCopySqlDataReader_Type, "SqlBulkCopy From SqlDataReader [Data Type]"),
-                new(TestVariations.SqlBulkCopySqlDataReader_Variant, _SqlBulkCopySqlDataReader_Variant, "SqlBulkCopy From SqlDataReader [Variant Type]"),
-                new(TestVariations.SqlBulkCopyDataTable_Type, _SqlBulkCopyDataTable_Type, "SqlBulkCopy From Data Table [Data Type]"),
-                new(TestVariations.SqlBulkCopyDataTable_Variant, _SqlBulkCopyDataTable_Variant, "SqlBulkCopy From Data Table [Variant Type]"),
-                new(TestVariations.SqlBulkCopyDataRow_Type, _SqlBulkCopyDataRow_Type, "SqlBulkCopy From Data Row [Data Type]"),
-                new(TestVariations.SqlBulkCopyDataRow_Variant, _SqlBulkCopyDataRow_Variant, "SqlBulkCopy From Data Row [Variant Type]")
+            List<Tuple<TestVariations, Func<object, string, string, string, string, TestResult>>> testVariations = new() {
+                new(TestVariations.TestSimpleParameter_Type, _TestSimpleParameter_Type),
+                new(TestVariations.TestSimpleParameter_Variant, _TestSimpleParameter_Variant),
+                new(TestVariations.TestSqlDataRecordParameterToTVP_Type, _TestSqlDataRecordParameterToTVP_Type),
+                new(TestVariations.TestSqlDataRecordParameterToTVP_Variant, _TestSqlDataRecordParameterToTVP_Variant),
+                new(TestVariations.TestSqlDataReaderParameterToTVP_Type, _TestSqlDataReaderParameterToTVP_Type),
+                new(TestVariations.TestSqlDataReaderParameterToTVP_Variant, _TestSqlDataReaderParameterToTVP_Variant),
+                new(TestVariations.TestSqlDataReader_TVP_Type, _TestSqlDataReader_TVP_Type),
+                new(TestVariations.TestSqlDataReader_TVP_Variant, _TestSqlDataReader_TVP_Variant),
+                new(TestVariations.TestSimpleDataReader_Type, _TestSimpleDataReader_Type),
+                new(TestVariations.TestSimpleDataReader_Variant, _TestSimpleDataReader_Variant),
+                new(TestVariations.SqlBulkCopySqlDataReader_Type, _SqlBulkCopySqlDataReader_Type),
+                new(TestVariations.SqlBulkCopySqlDataReader_Variant, _SqlBulkCopySqlDataReader_Variant),
+                new(TestVariations.SqlBulkCopyDataTable_Type, _SqlBulkCopyDataTable_Type),
+                new(TestVariations.SqlBulkCopyDataTable_Variant, _SqlBulkCopyDataTable_Variant),
+                new(TestVariations.SqlBulkCopyDataRow_Type, _SqlBulkCopyDataRow_Type),
+                new(TestVariations.SqlBulkCopyDataRow_Variant, _SqlBulkCopyDataRow_Variant)
             };
 
             foreach (var test in testVariations)
             {
-                (TestVariations tag, Func<object, string, string, string, string, TestResult> action, string description) = test;
+                (TestVariations tag, Func<object, string, string, string, string, TestResult> action) = test;
 
                 try
                 {
                     TestResult result = action(paramValue, expectedTypeName, expectedBaseTypeName, connStr, tag.ToString());
                     expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
-                    unexpectedValueOverrides.TryGetValue(tag, out var unexpectedValueOverride);
                     expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
-                    VerifyReaderTypeAndValue(description, expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, unexpectedValueOverride, expectedBaseTypeOverride);
+                    VerifyReaderTypeAndValue(expectedBaseTypeName, expectedTypeName, paramValue, result.Value, result.BaseTypeName, expectedValueOverride, expectedBaseTypeOverride);
                 }
                 catch (Exception e)
                 {
                     if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
                     {
                         Assert.True(isExpectedException(e, paramValue));
-                    }
-                    else if (expectedInvalidOperationExceptions.TryGetValue(tag, out var isExpectedInvalidOperationException))
-                    {
-                        Assert.True(isExpectedInvalidOperationException(e, paramValue));
-                    }
-                    else if (expectedButUncaughtExceptions.TryGetValue(tag, out var isExpectedButUncaughtException))
-                    {
-                        Assert.True(isExpectedButUncaughtException(e, paramValue));
                     }
                     else {
                         Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
@@ -845,26 +833,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         private static void VerifyReaderTypeAndValue(
-            string tag, 
             string expectedBaseTypeName, 
             string expectedTypeName, 
             object expectedValue, 
             object actualValue, 
             string actualBaseTypeName, 
             object expectedValueOverride, 
-            object unexpectedValueOverride,
             object expectedBaseTypeOverride)
         {
             string actualTypeName = actualValue.GetType().ToString();
 
             //TODO: these are required to generate expected cast exceptions and should be removed
-            if (expectedTypeName == "System.DateTimeOffset")
+            if (expectedTypeName == "System.DateTime")
             {
-                Console.Error.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTimeOffset)expectedValue).Ticks.ToString(), ((DateTimeOffset)actualValue).Ticks.ToString()));
-            }
-            else if (expectedTypeName == "System.DateTime")
-            {
-                Console.Error.WriteLine(string.Format("Value       => Expected : Actual == {0} : {1}", ((DateTime)expectedValue).Ticks.ToString(), ((DateTime)actualValue).Ticks.ToString()));
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+                string a = ((DateTime)expectedValue).Ticks.ToString(), b = ((DateTime)actualValue).Ticks.ToString();
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
             }
 
             Assert.Equal(expectedTypeName, actualTypeName);
@@ -890,10 +874,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Assert.True(actualValue.Equals(expectedValueOverride));
                 }
-                else if (unexpectedValueOverride is not null)
-                {
-                    Assert.True(actualValue.Equals(unexpectedValueOverride));
-                } 
                 else {
                     Assert.Fail();
                 }
