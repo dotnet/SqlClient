@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("WorkstationID = myworkstation")]
         [InlineData("WSID = myworkstation")]
         [InlineData("ConnectTimeout = 30")]
-        [InlineData("FailoverPartner = randomserver.sys.local")]
+        [InlineData("Initial Catalog = Northwind; FailoverPartner = randomserver.sys.local")]
         [InlineData("PacketSize = 8192")]
         [InlineData("columnEncryption = Enabled")]
         [InlineData("Host Name In Certificate = tds.test.com")]
@@ -956,10 +956,10 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData("FailoverPartner = partner.sys.local")]
-        [InlineData("failoverpartner = partner.sys.local")]
-        [InlineData("FAILOVERPARTNER = partner.sys.local")]
-        [InlineData("Failover Partner = partner.sys.local")]
+        [InlineData("Initial Catalog = Northwind; FailoverPartner = partner.sys.local")]
+        [InlineData("Initial Catalog = Northwind; failoverpartner = partner.sys.local")]
+        [InlineData("Initial Catalog = Northwind; FAILOVERPARTNER = partner.sys.local")]
+        [InlineData("Initial Catalog = Northwind; Failover Partner = partner.sys.local")]
         public void FailoverPartnerSynonymsResolveCorrectly(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
