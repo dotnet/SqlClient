@@ -82,6 +82,10 @@ parameters:
     type: boolean
     default: false
 
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -118,22 +122,6 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  - powershell: |
-      $guid = [guid]::NewGuid().ToString()
-      Write-Host "##vso[task.setvariable variable=password;issecret=true]$guid"
-    displayName: 'Generate Password'
-
-  - powershell: |
-      Write-Host "Password: $(password)" # prints *** to logs when set
-
-      $variableValue = "$(password)"
-      if (-not [string]::IsNullOrEmpty($variableValue)) {
-          Write-Output "The password exists with a value."
-      } else {
-          Write-Output "The password does not exist or is empty."
-      }
-    displayName: 'Verify Password'
-
   - ${{ if eq(parameters.buildType, 'Project') }}:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
@@ -143,6 +131,7 @@ jobs:
     - template: ../steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
+        saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
         ${{ if parameters.configProperties.TCPConnectionString }}:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
@@ -219,6 +208,7 @@ jobs:
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
+          saPassword: ${{ parameters.saPassword }}
           ${{ if parameters.configProperties.instanceName }}:
             instanceName: ${{ parameters.configProperties.instanceName }}
           ${{ if parameters.configProperties.user }}:
