@@ -39,6 +39,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         int Count { get; }
 
         /// <summary>
+        /// The number of connections currently sitting idle in the pool.
+        /// </summary>
+        int IdleCount { get; }
+
+        /// <summary>
         /// Indicates whether an error has occurred in the pool.
         /// Primarily used to support the pool blocking period feature.
         /// </summary>

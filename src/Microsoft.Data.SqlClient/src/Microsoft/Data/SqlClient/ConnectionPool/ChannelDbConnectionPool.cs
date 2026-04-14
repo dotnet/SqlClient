@@ -73,11 +73,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly ConnectionPoolSlots _connectionSlots;
 
         /// <summary>
-        /// Reader side for the idle connection channel. Contains nulls in order to release waiting attempts after
-        /// a connection has been physically closed/broken.
+        /// The idle connection channel. Contains nulls in order to release waiting attempts after
+        /// a connection has been physically closed/broken. Also tracks the count of non-null idle connections.
         /// </summary>
-        private readonly ChannelReader<DbConnectionInternal?> _idleConnectionReader;
-        private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
+        private readonly IdleConnectionChannel _idleChannel;
 
         /// <summary>
         /// The current generation of the pool. Incremented atomically on each <see cref="Clear"/> call.
@@ -113,13 +112,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TransactedConnectionPool = new(this);
 
             _connectionSlots = new(MaxPoolSize);
-
-            // We enforce Max Pool Size, so no need to create a bounded channel (which is less efficient)
-            // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
-            // On the producing side, we have connections being released back into the pool (both multiplexing and not)
-            var idleChannel = Channel.CreateUnbounded<DbConnectionInternal?>();
-            _idleConnectionReader = idleChannel.Reader;
-            _idleConnectionWriter = idleChannel.Writer;
+            _idleChannel = new();
 
             State = Running;
         }
@@ -135,6 +128,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <inheritdoc />
         public int Count => _connectionSlots.ReservationCount;
+
+        /// <inheritdoc />
+        public int IdleCount => _idleChannel.Count;
 
         /// <inheritdoc />
         public bool ErrorOccurred => throw new NotImplementedException();
@@ -194,14 +190,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             try
             {
                 // Drain idle connections from the channel and destroy them. Limit iterations to
-                // the current pool count to prevent an unbounded loop if connections are
+                // the current idle count to prevent an unbounded loop if connections are
                 // concurrently returned to the channel during the drain.
-                int numToDrain = Count;
-                while (numToDrain > 0 && _idleConnectionReader.TryRead(out DbConnectionInternal? connection))
+                int numToDrain = IdleCount;
+                while (numToDrain > 0 && _idleChannel.TryRead(out DbConnectionInternal? connection))
                 {
                     if (connection is not null)
                     {
-                        //TODO: should we check pool generation of the connection here?
                         RemoveConnection(connection);
                         numToDrain--;
                     }
@@ -256,7 +251,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                var written = _idleConnectionWriter.TryWrite(connection);
+                var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
             }
         }
@@ -420,7 +415,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     // If we fail to open a connection, we need to write a null to the idle channel to
                     // wake up any waiters
-                    _idleConnectionWriter?.TryWrite(null);
+                    _idleChannel?.TryWrite(null);
                     newConnection?.Dispose();
                 });
         }
@@ -464,7 +459,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
             // connection. Statement order is important since we have synchronous completions on the channel.
-            _idleConnectionWriter.TryWrite(null);
+            _idleChannel.TryWrite(null);
 
             connection.Dispose();
         }
@@ -476,7 +471,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private DbConnectionInternal? GetIdleConnection()
         {
             // The channel may contain nulls. Read until we find a non-null connection or exhaust the channel.
-            while (_idleConnectionReader.TryRead(out DbConnectionInternal? connection))
+            while (_idleChannel.TryRead(out DbConnectionInternal? connection))
             {
                 if (connection is null) 
                 {
@@ -542,7 +537,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // (first-come, first-served), which is crucial to us.
                     if (async)
                     {
-                        connection ??= await _idleConnectionReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                        connection ??= await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
@@ -589,7 +584,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             try
             {
                 ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
-                    _idleConnectionReader.ReadAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
+                    _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
                 using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
 
                 // Cancellation happens through the ReadAsync call, which will complete the task.

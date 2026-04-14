@@ -25,31 +25,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(s_dbConnectionPoolIdentity, s_dbConnectionPool);
         // Resolve Count from the interface so it works with both pool implementations
         private static PropertyInfo s_dbConnectionPoolCount = s_dbConnectionPool.GetProperty("Count", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo s_dbConnectionPoolIdleCount = s_dbConnectionPool.GetProperty("IdleCount", BindingFlags.Instance | BindingFlags.Public);
         private static PropertyInfo s_dictStringPoolGroupGetKeys = s_dictStringPoolGroup.GetProperty("Keys");
         private static PropertyInfo s_dictPoolIdentityPoolValues = s_dictPoolIdentityPool.GetProperty("Values");
         private static PropertyInfo s_sqlConnectionFactorySingleton = s_sqlConnectionFactory.GetProperty("Instance", BindingFlags.Static | BindingFlags.NonPublic);
         private static FieldInfo s_dbConnectionFactoryPoolGroupList = s_sqlConnectionFactory.GetField("_connectionPoolGroups", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_dbConnectionPoolGroupPoolCollection = s_dbConnectionPoolGroup.GetField("_poolCollection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_dbConnectionPoolStackOld = s_waitHandleDbConnectionPool.GetField("_stackOld", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_dbConnectionPoolStackNew = s_waitHandleDbConnectionPool.GetField("_stackNew", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dbConnectionPoolCleanup = s_waitHandleDbConnectionPool.GetMethod("CleanupCallback", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dictStringPoolGroupTryGetValue = s_dictStringPoolGroup.GetMethod("TryGetValue");
 
         public static int CountFreeConnections(object pool)
         {
             VerifyObjectIsPool(pool);
-
-            if (s_channelDbConnectionPool.IsInstanceOfType(pool))
-            {
-                // ChannelDbConnectionPool doesn't have separate stacks;
-                // Count represents idle connections available in the channel.
-                return (int)s_dbConnectionPoolCount.GetValue(pool, null);
-            }
-
-            ICollection oldStack = (ICollection)s_dbConnectionPoolStackOld.GetValue(pool);
-            ICollection newStack = (ICollection)s_dbConnectionPoolStackNew.GetValue(pool);
-
-            return (oldStack.Count + newStack.Count);
+            return (int)s_dbConnectionPoolIdleCount.GetValue(pool, null);
         }
 
         /// <summary>
