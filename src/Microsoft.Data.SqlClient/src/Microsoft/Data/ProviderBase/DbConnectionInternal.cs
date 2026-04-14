@@ -101,7 +101,7 @@ namespace Microsoft.Data.ProviderBase
         /// </remarks>
         // TODO: Ideally this would be readonly and set in the constructor. Piping the value all the way through the connection factory is too complicated to be worth it.
         // If we can expose the constructor to the connection pool in the future, it can be set at in the constructor.
-        internal int PoolGeneration { get; set; }
+        internal int ClearGeneration { get; set; }
 
         internal bool AllowSetConnectionString { get; }
 

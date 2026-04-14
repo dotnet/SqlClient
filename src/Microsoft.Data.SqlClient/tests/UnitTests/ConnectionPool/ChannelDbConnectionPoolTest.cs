@@ -743,7 +743,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     new DbConnectionOptions("", null),
                     out internalConnections[i]
                 );
-                Assert.Equal(0, internalConnections[i]!.PoolGeneration);
+                Assert.Equal(0, internalConnections[i]!.ClearGeneration);
             }
 
             // Return all connections to the pool
@@ -773,14 +773,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? busyConnection
             );
             Assert.NotNull(busyConnection);
-            Assert.Equal(0, busyConnection.PoolGeneration);
+            Assert.Equal(0, busyConnection.ClearGeneration);
 
             // Act - Clear while connection is still busy
             pool.Clear();
 
             // Assert - Busy connection is still tracked in the pool and retains its old generation
             Assert.Equal(1, pool.Count);
-            Assert.Equal(0, busyConnection.PoolGeneration);
+            Assert.Equal(0, busyConnection.ClearGeneration);
         }
 
         [Fact]
@@ -797,7 +797,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? busyConnection
             );
             Assert.NotNull(busyConnection);
-            Assert.Equal(0, busyConnection.PoolGeneration);
+            Assert.Equal(0, busyConnection.ClearGeneration);
 
             // Act - Clear, then return the busy connection
             pool.Clear();
@@ -834,8 +834,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             Assert.NotNull(busyConnection);
             Assert.NotNull(idleConnection);
-            Assert.Equal(0, busyConnection.PoolGeneration);
-            Assert.Equal(0, idleConnection.PoolGeneration);
+            Assert.Equal(0, busyConnection.ClearGeneration);
+            Assert.Equal(0, idleConnection.ClearGeneration);
 
             // Return only the idle connection
             pool.ReturnInternalConnection(idleConnection, idleOwner);
@@ -845,7 +845,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert - Only the busy connection remains with stale generation
             Assert.Equal(1, pool.Count);
-            Assert.Equal(0, busyConnection.PoolGeneration);
+            Assert.Equal(0, busyConnection.ClearGeneration);
 
             // Now return the busy connection - it should be destroyed (generation 0 != pool generation 1)
             pool.ReturnInternalConnection(busyConnection, busyOwner);
@@ -865,7 +865,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionOptions("", null),
                 out DbConnectionInternal? oldConnection
             );
-            Assert.Equal(0, oldConnection!.PoolGeneration);
+            Assert.Equal(0, oldConnection!.ClearGeneration);
             pool.ReturnInternalConnection(oldConnection, owningConnection);
 
             // Act
@@ -883,7 +883,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // The new connection should be different from the old one and have generation 1
             Assert.NotSame(oldConnection, newConnection);
-            Assert.Equal(1, newConnection.PoolGeneration);
+            Assert.Equal(1, newConnection.ClearGeneration);
 
             // Return the new connection - it should be pooled normally
             pool.ReturnInternalConnection(newConnection, newOwner);
@@ -898,7 +898,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? reusedConnection
             );
             Assert.Same(newConnection, reusedConnection);
-            Assert.Equal(1, reusedConnection!.PoolGeneration);
+            Assert.Equal(1, reusedConnection!.ClearGeneration);
         }
 
         [Fact]
@@ -914,7 +914,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionOptions("", null),
                 out DbConnectionInternal? connection
             );
-            Assert.Equal(0, connection!.PoolGeneration);
+            Assert.Equal(0, connection!.ClearGeneration);
             pool.ReturnInternalConnection(connection, owningConnection);
 
             // Act - Call clear multiple times rapidly
@@ -935,7 +935,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             Assert.NotNull(newConnection);
             Assert.Equal(1, pool.Count);
-            Assert.Equal(3, newConnection.PoolGeneration);
+            Assert.Equal(3, newConnection.ClearGeneration);
         }
 
         #endregion

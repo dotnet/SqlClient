@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     if (connection is not null)
                     {
-                        connection.PoolGeneration = _clearCounter;
+                        connection.ClearGeneration = _clearCounter;
                     }
 
                     return connection;
@@ -445,7 +445,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             // Connection was created before the last Clear, so it's stale.
-            if (connection.PoolGeneration != _clearCounter)
+            if (connection.ClearGeneration != _clearCounter)
             {
                 return false;
             }

@@ -7,65 +7,54 @@
 
 ## User Scenarios & Testing
 
-### User Story 1 - Clear a Specific Connection Pool (Priority: P1)
+### User Story 1 - Clear a Specific Connection Pool
 
 As an application developer, I want to call `SqlConnection.ClearPool(connection)` to invalidate all connections in a specific pool, so that the next connection request creates a fresh physical connection (e.g., after a failover, credential rotation, or configuration change on the server).
-
-**Why this priority**: This is the primary use case for pool clearing — an application detects a problem with existing connections and needs to force the pool to start fresh. Without this, applications have no way to recover from server-side changes when using pool v2.
 
 **Independent Test**: Can be tested by opening connections, calling `ClearPool`, then verifying that subsequent connection requests do not reuse pre-clear connections.
 
 **Acceptance Scenarios**:
 
 1. **Given** a pool with 10 idle connections, **When** `ClearPool` is called, **Then** all idle connections are closed and new connection requests create fresh physical connections.
-2. **Given** a pool with 5 busy (in-use) connections and 5 idle connections, **When** `ClearPool` is called, **Then** idle connections are closed immediately and busy connections are destroyed when they are returned to the pool (not while in use).
-3. **Given** a pool that has been cleared, **When** a previously-busy connection is returned, **Then** the connection is destroyed rather than returned to the idle channel.
+2. **Given** a pool with 5 busy (in-use) connections and 5 idle connections, **When** `ClearPool` is called, **Then** idle connections are closed immediately.
 
 ---
 
-### User Story 2 - Clear All Connection Pools (Priority: P1)
+### User Story 2 - Clear All Connection Pools
 
 As an application developer, I want to call `SqlConnection.ClearAllPools()` to invalidate connections across all pools in the application, so that I can recover from broad infrastructure changes (e.g., DNS migration, certificate rollover).
-
-**Why this priority**: This is equally critical to single-pool clear — it's the same mechanism applied globally. Both entry points must work.
 
 **Independent Test**: Can be tested by creating connections to multiple connection strings, calling `ClearAllPools`, and verifying all pools produce fresh connections.
 
 **Acceptance Scenarios**:
 
 1. **Given** multiple pools each with idle connections, **When** `ClearAllPools` is called, **Then** all idle connections across all pools are closed.
-2. **Given** multiple pools, **When** `ClearAllPools` is called, **Then** busy connections in all pools are destroyed when returned.
 
 ---
 
-### User Story 3 - Lazy Invalidation of Busy Connections (Priority: P2)
+### User Story 3 - Lazy Invalidation of Busy Connections
 
 As the pool infrastructure, I need busy connections that were opened before a clear to be destroyed when they are returned to the pool, so that clearing does not interrupt active operations but still ensures all pre-clear connections are eventually removed.
-
-**Why this priority**: This ensures clear is non-disruptive to in-flight operations. Without lazy invalidation, either busy connections leak or active queries are interrupted.
 
 **Independent Test**: Can be tested by opening a connection, calling `ClearPool`, executing a query on the open connection (should succeed), closing the connection, then verifying the pool destroyed it rather than reusing it.
 
 **Acceptance Scenarios**:
 
-1. **Given** a connection opened before a pool clear, **When** the connection is used after `ClearPool`, **Then** the connection continues to work normally.
-2. **Given** a connection opened before a pool clear, **When** the connection is returned to the pool, **Then** the pool detects that it predates the clear and destroys it.
+1. **Given** a connection opened and in use before a clear, **When** `ClearPool` is called, **Then** the connection continues to work normally.
+2. **Given** a connection opened and in use before a pool clear, **When** the connection is returned to the pool, **Then** the pool detects that it predates the clear and destroys it.
 3. **Given** a connection opened after a pool clear, **When** the connection is returned to the pool, **Then** it is returned to the idle channel normally.
 
 ---
 
-### User Story 4 - Multiple Consecutive Clears (Priority: P3)
+### User Story 4 - Multiple Consecutive Clears
 
-As an application developer, I want multiple rapid calls to `ClearPool` to behave correctly, so that retry logic or concurrent failover detection doesn't corrupt pool state.
-
-**Why this priority**: Correctness concern — concurrent or rapid clears must not cause double-frees, missed connections, or counter overflow.
+As an application developer, I want multiple/concurrent calls to `ClearPool` to behave correctly, so that pool state is not corrupted.
 
 **Independent Test**: Can be tested by calling `ClearPool` multiple times in rapid succession and verifying no exceptions, no connection leaks, and correct pool behavior afterward.
 
 **Acceptance Scenarios**:
 
 1. **Given** a pool with connections, **When** `ClearPool` is called twice rapidly, **Then** both calls complete without error, and only connections predating both clears are invalidated.
-2. **Given** a pool where connections are being opened concurrently with a clear, **When** ClearPool is called, **Then** connections opened after the clear are not invalidated.
 
 ---
 
@@ -73,7 +62,6 @@ As an application developer, I want multiple rapid calls to `ClearPool` to behav
 
 - What happens if `ClearPool` is called on an empty pool? The generation counter increments but no connections are closed. Subsequent connections are fresh.
 - What happens if `ClearPool` is called during pool shutdown? The clear should be a no-op or complete harmlessly — shutdown already destroys all connections.
-- What happens if a connection is returned to the pool between the generation increment and the idle channel drain? The connection is caught by the generation check in `ReturnInternalConnection` or on next retrieval from the idle channel.
 - What happens with many clears causing generation counter overflow? With `int` counter, overflow at 2^31. Even at 1 clear/second, this is 68 years. Overflow is not a practical concern. If it wraps, the worst case is one stale connection survives a single retrieval cycle.
 
 ## Requirements
@@ -92,8 +80,8 @@ As an application developer, I want multiple rapid calls to `ClearPool` to behav
 ### Key Entities
 
 - **Pool Generation Counter (`_clearGeneration`)**: A pool-level `volatile int` incremented atomically via `Interlocked.Increment` on each `Clear()` call. Represents the current "epoch" of the pool.
-- **Connection Generation (`PoolGeneration`)**: A property on `DbConnectionInternal` stamped when the connection is created or added to the pool. Used to compare against the pool's current generation.
-- **Stale Connection**: A connection whose `PoolGeneration` does not match the pool's `_clearGeneration`. Stale connections are destroyed rather than returned to the idle channel.
+- **Connection Generation (`ClearGeneration`)**: A property on `DbConnectionInternal` stamped when the connection is created or added to the pool. Used to compare against the pool's current generation.
+- **Stale Connection**: A connection whose `ClearGeneration` does not match the pool's `_clearGeneration`. Stale connections are destroyed rather than returned to the idle channel.
 
 ## Success Criteria
 
@@ -106,6 +94,6 @@ As an application developer, I want multiple rapid calls to `ClearPool` to behav
 ## Assumptions
 
 - The generation counter approach is preferred over the WaitHandle pool's `DoNotPoolThisConnection()` mark-all pattern because `ConnectionPoolSlots` is not iterable by design (CAS-based slot array).
-- `DbConnectionInternal` can accommodate a new `PoolGeneration` property without breaking existing functionality or requiring changes to the WaitHandle pool.
+- `DbConnectionInternal` can accommodate a new `ClearGeneration` property without breaking existing functionality or requiring changes to the WaitHandle pool.
 - The existing `SqlConnection.ClearPool()` → `SqlConnectionFactory.ClearPool()` → `IDbConnectionPool.Clear()` call chain is already wired up and only requires the `ChannelDbConnectionPool.Clear()` implementation.
 - Transacted connections with stale generations are handled separately as part of the transactions feature and are out of scope for Phase 1 of pool clear.
