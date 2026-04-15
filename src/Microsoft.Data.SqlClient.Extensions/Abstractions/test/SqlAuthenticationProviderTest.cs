@@ -81,37 +81,70 @@ public class SqlAuthenticationProviderTest
     [Fact]
     public void SetProvider_BufferedAndReplayed()
     {
-        // Arrange: register a provider while no manager callbacks
-        // are wired up (MDS assembly is not present in this test
-        // project).
-        var provider = new Provider();
-        var method =
-            SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+        // Snapshot static state so we can restore it after the
+        // test.  RegisterProviderManager mutates these statics
+        // and would leak into other tests otherwise.
+        var flags = BindingFlags.Static | BindingFlags.NonPublic;
+        var type = typeof(SqlAuthenticationProvider);
 
-        Assert.True(
-            SqlAuthenticationProvider.SetProvider(
-                method, provider));
+        var getField = type.GetField(
+            "s_getProviderCallback", flags)!;
+        var setField = type.GetField(
+            "s_setProviderCallback", flags)!;
+        var pendingField = type.GetField(
+            "s_pendingProviders", flags)!;
 
-        // Before replay, GetProvider returns null (no callback,
-        // and the reflection-based Internal.GetProvider also
-        // returns null since MDS is absent).
-        Assert.Null(
-            SqlAuthenticationProvider.GetProvider(method));
+        var savedGet = getField.GetValue(null);
+        var savedSet = setField.GetValue(null);
+        var savedPending = pendingField.GetValue(null);
 
-        // Act: simulate the core assembly registering its manager
-        // callbacks by calling RegisterProviderManager with simple
-        // dictionary-backed delegates.
-        var store = new Dictionary<SqlAuthenticationMethod,
-            SqlAuthenticationProvider>();
+        try
+        {
+            // Reset to a clean state (no callbacks, no pending).
+            getField.SetValue(null, null);
+            setField.SetValue(null, null);
+            pendingField.SetValue(null, null);
 
-        SqlAuthenticationProvider.RegisterProviderManager(
-            m => store.TryGetValue(m, out var p) ? p : null,
-            (m, p) => { store[m] = p; return true; });
+            // Arrange: register a provider while no manager callbacks
+            // are wired up (MDS assembly is not present in this test
+            // project).
+            var provider = new Provider();
+            var method =
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
 
-        // Assert: the buffered provider was replayed into the
-        // store and is now retrievable via GetProvider.
-        Assert.Same(provider,
-            SqlAuthenticationProvider.GetProvider(method));
+            Assert.True(
+                SqlAuthenticationProvider.SetProvider(
+                    method, provider));
+
+            // Before replay, GetProvider returns null (no callback,
+            // and the reflection-based Internal.GetProvider also
+            // returns null since MDS is absent).
+            Assert.Null(
+                SqlAuthenticationProvider.GetProvider(method));
+
+            // Act: simulate the core assembly registering its manager
+            // callbacks by calling RegisterProviderManager with simple
+            // dictionary-backed delegates.
+            var store = new Dictionary<SqlAuthenticationMethod,
+                SqlAuthenticationProvider>();
+
+            SqlAuthenticationProvider.RegisterProviderManager(
+                m => store.TryGetValue(m, out var p) ? p : null,
+                (m, p) => { store[m] = p; return true; });
+
+            // Assert: the buffered provider was replayed into the
+            // store and is now retrievable via GetProvider.
+            Assert.Same(provider,
+                SqlAuthenticationProvider.GetProvider(method));
+        }
+        finally
+        {
+            // Restore the original static state so other tests
+            // are not affected.
+            getField.SetValue(null, savedGet);
+            setField.SetValue(null, savedSet);
+            pendingField.SetValue(null, savedPending);
+        }
     }
 
     #endregion
