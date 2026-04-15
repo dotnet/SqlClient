@@ -65,11 +65,6 @@ stages:
       - name: saPassword
         value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
 
-      # Import the variable group that provides SQL Server configuration variables used by the
-      # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
-      # x86AliasRegistryPath, SQLAliasName).
-      - group: ADO Test Configuration Properties
-
     jobs:
 
     # ----------------------------------------------------------------------------------------------

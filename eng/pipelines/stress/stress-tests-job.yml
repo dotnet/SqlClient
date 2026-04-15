@@ -88,6 +88,11 @@ jobs:
 
     variables:
 
+      # Import the variable group that provides SQL Server configuration variables used by the
+      # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
+      # x86AliasRegistryPath, SQLAliasName).
+      - group: ADO Test Configuration Properties
+
       # The directory where dotnet artifacts will be staged.  Not to be
       # confused with pipeline artifacts.
       - name: dotnetArtifactsDir
@@ -101,7 +106,6 @@ jobs:
       - name: dotnetArguments
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
-          --artifacts-path $(dotnetArtifactsDir)
           --configuration ${{ parameters.buildConfiguration }}
 
       # The contents of the config file to use for all tests.  We will write this to a JSON file and
