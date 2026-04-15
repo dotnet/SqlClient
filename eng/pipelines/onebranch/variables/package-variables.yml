@@ -68,7 +68,7 @@ variables:
     value: 'drop_build_sqlclient_build_package_SqlClient'
 
   - name: sqlClientFileVersion
-    value: '6.15.$(_assemblyBuildNumber)'
+    value: '6.1.5.$(_assemblyBuildNumber)'
 
   - name: sqlClientPackageVersion
     ${{ if parameters.isPreview }}:
