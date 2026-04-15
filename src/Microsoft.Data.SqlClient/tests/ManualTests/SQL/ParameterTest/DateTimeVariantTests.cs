@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
+using System.Threading;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
@@ -59,6 +61,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Dictionary<TestVariations, object> expectedValueOverrides,
             Dictionary<TestVariations, string> expectedBaseTypeOverrides)
         {
+            CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             try
             {
                 TestResult result = action(paramValue, expectedBaseTypeName, connStr);
@@ -78,6 +82,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 else {
                     Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
                 }
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = previousCulture;
             }
         }
 
