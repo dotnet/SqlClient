@@ -1,0 +1,36 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  - name: sqlClientPackageVersion
+    type: string
+
+steps:
+  - task: NuGetToolInstaller@1
+    displayName: 'Install Latest NuGet'
+    inputs:
+      checkLatest: true
+
+  - powershell: |
+      $Commit = git rev-parse HEAD
+      Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
+    displayName: 'Get Commit Head'
+
+  - task: NuGetCommand@2
+    displayName: 'NuGet Pack Microsoft.Data.SqlClient'
+    inputs:
+      command: custom
+      arguments: >-
+        pack
+        $(REPO_ROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec
+        -Symbols
+        -SymbolPackageFormat snupkg
+        -Version ${{ parameters.sqlClientPackageVersion }}
+        -OutputDirectory $(PACK_OUTPUT)
+        -Properties "COMMITID=$(CommitHead);Configuration=Release;ReferenceType=Package"
+
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: List Pack Output Tree After Pack

@@ -1,0 +1,32 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This template defines a step to run Roslyn Analyzers on the SqlClient build. It uses the
+# RoslynAnalyzers@3 task from the Secure Development Team's SDL extension:
+#
+# https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
+#
+# GOTCHA: This step will clobber any existing build output. It should be run _before_ any build
+# steps that perform versioning or signing.
+
+parameters:
+  - name: sqlClientPackageVersion
+    type: string
+
+steps:
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+    displayName: 'Roslyn Analyzers: build.proj BuildAllConfigurations'
+    inputs:
+      msBuildArchitecture: x64
+      msBuildCommandLine: >-
+        msbuild
+        $(REPO_ROOT)/build.proj
+        -t:BuildAllConfigurations
+        -p:Configuration=Release
+        -p:GenerateNuget=false
+        -p:ReferenceType=Package
+      msBuildVersion: 17.0
+      setupCommandLinePicker: vs2022

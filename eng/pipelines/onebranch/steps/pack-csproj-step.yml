@@ -1,0 +1,50 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Generic pack step for csproj-based packages (SqlServer, AKV Provider).
+# This step creates NuGet packages from nuspec files after DLLs have been signed.
+
+parameters:
+  # Path to the nuspec file relative to $(REPO_ROOT).
+  - name: nuspecPath
+    type: string
+
+  # NuGet package version string.
+  - name: packageVersion
+    type: string
+
+  # The ReferenceType used during the build (Package or Project).
+  # Passed as a nuspec property so file paths in the nuspec resolve correctly.
+  - name: referenceType
+    type: string
+    default: 'Package'
+
+steps:
+  - task: NuGetToolInstaller@1
+    displayName: 'Install Latest NuGet'
+    inputs:
+      checkLatest: true
+
+  - powershell: |
+      $Commit = git rev-parse HEAD
+      Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
+    displayName: 'Get Commit Head'
+
+  - task: NuGetCommand@2
+    displayName: 'NuGet Pack ${{ parameters.nuspecPath }}'
+    inputs:
+      command: custom
+      arguments: >-
+        pack
+        $(REPO_ROOT)/${{ parameters.nuspecPath }}
+        -Symbols
+        -SymbolPackageFormat snupkg
+        -Version ${{ parameters.packageVersion }}
+        -OutputDirectory $(PACK_OUTPUT)
+        -Properties "COMMITID=$(CommitHead);Configuration=Release;ReferenceType=${{ parameters.referenceType }}"
+
+  - script: tree /a /f $(PACK_OUTPUT)
+    displayName: List Pack Output Tree After Pack

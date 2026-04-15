@@ -1,0 +1,149 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Job that performs a build of Microsoft.Data.SqlClient using build.proj.
+
+parameters:
+  - name: apiScanDllPath
+    type: string
+
+  - name: apiScanPdbPath
+    type: string
+
+  # Whether this build is for an "official" OneBranch pipeline. This is used to enable ESRP signing
+  # on the artifacts of this job.
+  - name: isOfficial
+    type: boolean
+
+  - name: publishSymbols
+    type: boolean
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+
+  - name: symbolsAzureSubscription
+    type: string
+
+  - name: symbolsPublishProjectName
+    type: string
+
+  - name: symbolsPublishServer
+    type: string
+
+  - name: symbolsPublishTokenUri
+    type: string
+
+  - name: symbolsUploadAccount
+    type: string
+
+  # Package Parameters
+  - name: sqlClientAssemblyFileVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+jobs:
+  - job: build_package_SqlClient
+    displayName: 'Build Microsoft.Data.SqlClient'
+    pool:
+      type: windows
+
+    variables:
+      ob_outputDirectory: '$(PACK_OUTPUT)'
+      ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
+      ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwarename: 'Microsoft.Data.SqlClient'
+      ob_sdl_apiscan_versionNumber: ${{ parameters.sqlClientAssemblyFileVersion }}
+
+    steps:
+      # Dump environment and parameters
+      - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
+
+      - powershell: |
+          $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
+          $jsonParams | ConvertFrom-Json | Format-List
+        displayName: 'Output Job Parameters'
+
+      # Install the .NET SDK
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+      # Perform analysis before building, since this step will clobber build output
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-sqlclient-step.yml@self
+        parameters:
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+
+      # Perform the actual build
+      - template: /eng/pipelines/onebranch/steps/build-sqlclient-step.yml@self
+        parameters:
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+
+      # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
+      - template: /eng/pipelines/onebranch/steps/copy-apiscan-files-sqlclient-step.yml@self
+        parameters:
+          dllPath: '${{ parameters.apiScanDllPath }}'
+          pdbPath: '${{ parameters.apiScanPdbPath }}'
+          referenceType: 'Package'
+
+      # Sign the DLLs
+      - ${{ if parameters.isOfficial }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              pattern: 'Microsoft.Data.SqlClient*.dll'
+
+      # Package the build output into a NuGet package
+      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml
+        parameters:
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+
+      # Sign the NuGet packages
+      - ${{ if parameters.isOfficial }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              searchPath: '$(PACK_OUTPUT)'
+              searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
+
+      - ${{ if parameters.publishSymbols }}:
+          - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
+            parameters:
+              artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.sqlClientPackageVersion }}_$(System.TimelineId)'
+              azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              packageName: 'Microsoft.Data.SqlClient'
+              publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              publishServer: '${{ parameters.symbolsPublishServer }}'
+              publishToInternal: true
+              publishToPublic: true
+              publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              searchPattern: '**/Microsoft.Data.SqlClient*.pdb' # @TODO: This seems very heavy
+              uploadAccount: '${{ parameters.symbolsUploadAccount }}'
+              version: '${{ parameters.sqlClientPackageVersion }}'

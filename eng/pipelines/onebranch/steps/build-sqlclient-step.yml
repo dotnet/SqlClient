@@ -1,0 +1,33 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This collection of steps builds Microsoft.Data.SqlClient via build.proj
+
+parameters:
+  - name: sqlClientPackageVersion
+    type: string
+
+steps:
+  - task: DownloadSecureFile@1
+    displayName: 'Download Signing Key'
+    inputs:
+      secureFile: 'netfxKeypair.snk'
+    name: keyFile
+
+  - task: MSBuild@1
+    displayName: 'Build.proj - BuildAllConfigurations'
+    inputs:
+      solution: '$(REPO_ROOT)/build.proj'
+      configuration: 'Release'
+      msbuildArguments: >-
+        -t:BuildAllConfigurations
+        -p:GenerateNuget=false
+        -p:AssemblyFileVersion="${{ parameters.sqlClientPackageVersion }}.$(Build.BuildNumber)"
+        -p:ReferenceType=Package
+        -p:SigningKeyPath="$(keyFile.secureFilePath)"
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree

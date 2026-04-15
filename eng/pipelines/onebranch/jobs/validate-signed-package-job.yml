@@ -1,0 +1,354 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  # The name of the pipeline artifact to download that contains the SqlClient NuGet package.
+  - name: artifactName
+    type: string
+
+  # List of versions of dotnet that are *allowed to exist* in the NuGet package. Separators do not
+  # matter as the folders in lib, runtime, etc are simply checked to see if they exist in this
+  # string.
+  - name: expectedDotnetVersions
+    type: string
+    default: 'net462;net8.0;net9.0;netstandard2.0'
+
+  # Expected file version of the assemblies within the package. This should be of the form:
+  # (major).(minor).(patch).(buildNumber)
+  - name: expectedFileVersion
+    type: string
+
+  # List of folders that are *allowed to exist* in the NuGet package. Separators do not matter as
+  # the folders are simply checked to see if they exist in this string.
+  - name: expectedFolderNames
+    type: string
+    default: 'lib;ref;runtimes'
+
+  # Expected NuGet package version. Used to build the installation path. This should be of the
+  # form: (major).(minor).(patch)[-preview(preview_number)]
+  - name: expectedPackageVersion
+    type: string
+
+  # True if this build is an official build. This will be used to gate some checks
+  # that only apply to official builds, such as signature verification.
+  - name: isOfficial
+    type: boolean
+
+jobs:
+  - job: validate_nuget_package
+    displayName: "Validate NuGet package"
+
+    pool:
+      type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+      isCustom: true
+      name: ADO-1ES-Pool
+      vmImage: "ADO-MMS22-SQL19"
+
+    variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+
+      - name: artifactPath
+        value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}'
+
+      # Path to the SqlClient NuGet package after installation. This path will only exist once the package
+      # been installed.
+      - name: nugetPackageInstallPath
+        value: '$(Pipeline.Workspace)\nugetPackageInstalls\Microsoft.Data.SqlClient.${{ parameters.expectedPackageVersion }}'
+
+      # Root folder where NuGet package will be installed locally
+      - name: nugetPackageInstallRoot
+        value: '$(Pipeline.Workspace)\nugetPackageInstalls'
+
+    steps:
+      - template: '/eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self'
+
+      - task: NuGetToolInstaller@1
+        displayName: "Install NuGet"
+
+      - powershell: |
+          echo "> 1. List all local cache directory paths"
+          nuget locals all -List
+
+          echo "> 2. Clear all files from local cache directories"
+          nuget locals all -Clear
+        displayName: "Clear local cache"
+
+      # Download NuGet packages from the specified build artifact.
+      - download: current
+        artifact: ${{ parameters.artifactName }}
+        patterns: "**/*.*nupkg"
+        displayName: "Download NuGet Package"
+
+      # Verify secure signatures on the NuGet packages.
+      # NOTE: Packages will only be signed if the build is official.
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          - powershell: |
+              # Propagate parameters to PS variables #######################
+              $artifactPath = "${{ variables.artifactPath }}"
+              echo "artifactPath= $artifactPath"
+
+              # Verify package signatures ##################################
+              echo "> 1. Verify signature of source package(s)"
+              nuget verify -All $artifactPath\*.nupkg
+
+              echo "> 2. Verify signature of symbols package(s)"
+              nuget verify -All $artifactPath\*.snupkg
+            displayName: "Verify nuget signature"
+
+      # Install NuGet package to the temporary directory
+      - powershell: |
+          # Propagate pipeline to PS variables #############################
+          $artifactPath = "${{ variables.artifactPath }}"
+          echo "artifactPath= $artifactPath"
+
+          $nugetPackageInstallRoot = "${{ variables.nugetPackageInstallRoot }}"
+          echo "nugetPackageInstallRoot= $nugetPackageInstallRoot"
+
+          # Install NuGet Package ##########################################
+          echo "> 1. Installing Microsoft.Data.SqlClient NuGet package..."
+          Install-Package `
+            -Name "Microsoft.Data.SqlClient" `
+            -Source $artifactPath `
+            -Destination $nugetPackageInstallRoot `
+            -Force `
+            -SkipDependencies
+
+          echo "> 2. Listing contents of installed Microsoft.Data.SqlClient NuGet package:"
+          Write-Host $nugetPackageInstallRoot
+          Get-ChildItem $nugetPackageInstallRoot
+        displayName: "Install NuGet Package"
+
+      # Find all DLL files in the installed NuGet package, verify each is signed with a strong name
+      - powershell: |
+          # Propagate pipeline to PS variables #############################
+          $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+          echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+
+          # Verify strong name signing #####################################
+          echo "> 1. Verifying strong name signing of DLLs ..."
+
+          # @TODO: This path seems brittle to VS upgrades, can we make it more flexible?
+          $snPath = "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe"
+
+          $dllFiles = Get-ChildItem -Path $nugetPackageInstallPath -Recurse -Filter *.dll
+          $badDlls = @()
+          foreach ($file in $dllFiles)
+          {
+            # Run sn.exe to verify the strong name on each dll
+            $result = & $snPath -vf $file.FullName
+            Write-OutPut $result
+
+            # if the dll is not valid, it would be delay signed or test-signed which is not meant for production
+            if($result[$result.Length-1] -notlike "* is valid")
+            {
+              $badDlls += $result[$result.Length-1]
+            }
+          }
+          if($badDlls.Count -gt 0)
+          {
+            Write-OutPut "Error: Invalid dlls are detected. Check the list below:"
+            foreach($dll in $badDlls)
+            {
+              Write-Output $dll
+            }
+            Exit -1
+          }
+          Write-Host "Strong name has been verified for all dlls"
+        displayName: "Verify assembly strong names"
+
+      # Validate that the folders in the nuget are expected
+      # @TODO: This does not verify we are not missing any folders, only that the folders that
+      #    exist are expected to exist.
+      - powershell: |
+          # Propagate pipeline to PS variables #############################
+          $expectedFolderNames = "${{ parameters.expectedFolderNames }}"
+          echo "expectedFolderNames= $expectedFolderNames"
+
+          $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+          echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+
+          # Verify folders are expected ####################################
+          Get-ChildItem -Path $nugetPackageInstallPath -Directory  | select Name | foreach {
+            if($expectedFolderNames.contains($_.Name)){
+              Write-Host expected folder name verfied: $_.Name
+            }
+          }
+        displayName: "Verify NuGet Root Folder Structure"
+
+      # Validate that the folders within the root folders of the nuget are expected
+      # @TODO: This does not verify we are not missing any folders, only that the folders that
+      #    exist are expected to exist.
+      - powershell: |
+          # Propagate pipeline to PS variables #############################
+          $expectedDotnetVersions = "${{ parameters.expectedDotnetVersions }}"
+          echo "expectedDotnetVersions= $expectedDotnetVersions"
+
+          $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+          echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+
+          # Verify folders are expected ####################################
+          # Checks the version of DotNetFramework and DotNet
+          $countErr = 0
+          $countPass = 0
+          $excludNamesFromRuntimeFolder = 'lib','win','unix'
+
+          Get-ChildItem -Path $nugetPackageInstallPath -Directory | foreach {
+            $parentname=$_.Name
+            Write-Host $_.FullName -ForegroundColor yellow
+
+            if($_.Name -ne 'runtimes') {
+              Get-ChildItem -Path $_.FullName -Directory | select Name | foreach {
+                if($expectedDotnetVersions.Contains($_.Name)){
+                  Write-Host "`tExpected version verified in $parentname": $_.Name -ForegroundColor green
+                  $countPass += 1
+                }
+                else{
+                  Write-Host "`tUnexpected version detected in $parentname": $_.Name
+                  $countErr += 1
+                }
+              }
+            }
+
+            elseif ($_.Name -eq 'runtimes'){
+              Get-ChildItem -Depth 3 -Path $_.FullName -Exclude $excludNamesFromRuntimeFolder -Directory | foreach{
+                if('${{ parameters.expectedDotnetVersions }}'.Contains($_.Name)){
+                  Write-Host "`tExpected version verfied in $parentname": $_.Name
+                  $countPass += 1
+                }
+                else{
+                  Write-Host "`tUnexpected version detected": $_.Name -ForegroundColor Red
+                  $countErr += 1
+                }
+              }
+            }
+            else{
+              Write-Host "`tUnknown folder " $_.Name -ForegroundColor Red
+              Exit -1
+            }
+          }
+
+          Write-Host "_______________"
+          Write-Host "Expected: $countPass"
+          Write-Host "Unexpected: $countErr"
+          Write-Host "_______________"
+          if ($countErr -ne 0)
+          {
+            Write-Host "Unexpected versions are detected!" -ForegroundColor Red
+            Exit -1
+          }
+        displayName: "Verify NuGet DotNet Versions "
+
+      - powershell: |
+          # Propagate pipeline to PS variables #############################
+          $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+          echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+
+          # Verify DLL Hierarchy ###########################################
+          foreach( $folderName in (Get-ChildItem -Path $nugetPackageInstallPath -Directory).Name)
+          {
+            # List all Childerns of the Path
+            Get-ChildItem -Path $nugetPackageInstallPath\$folderName -Recurse -File
+            $subFiles = Get-ChildItem -Path $nugetPackageInstallPath\$folderName -Recurse -File
+
+            foreach($file in $subFiles)
+            {
+              if($subFiles[0].Name -like "*.dll" )
+              {
+                Write-Host $subFiles[0].Name  -ForegroundColor Green
+                Write-Host $subFiles[1].Name  -ForegroundColor Green
+                if(($folderName -eq 'lib') -or ($folderName -eq 'ref'))
+                {
+                  if($subFiles[2].Name -like "*.dll")
+                  {
+                    Write-Host $subFiles[2].Name  -ForegroundColor Green
+                  }
+                  else
+                  {
+                    $subFiles[2].Name
+                    Write-Host "Expected file pattern for localization did not match to *.dll" -ForegroundColor Red
+                    Exit -1
+                  }
+                }
+              }
+              else
+              {
+                $subFiles[0].Name
+                $subFiles[1].Name
+                Write-Host "Expected file pattern did not match to *.dll" -ForegroundColor Red
+                Exit -1
+              }
+            }
+          }
+        displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
+
+      # Verify that all DLLs are authenticode signed
+      # NOTE: This signing is only performed on official builds.
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          - powershell: |
+              # Propagate pipeline to PS variables #############################
+              $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+              echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+
+              # Verify authenticode signature of DLLs ##########################
+              $dlls = Get-ChildItem -Path $nugetPackageInstallPath -Recurse -Include *.dll
+              foreach ($status in $dlls | Get-AuthenticodeSignature)
+              {
+                  if ($status.Status -eq "Valid")
+                  {
+                      Write-Host $status.Status $status.Path
+                  }
+                  else
+                  {
+                      Write-Host "dll status of '$status.Path' is not valid!" -ForegroundColor Red
+                      $status
+                      Exit -1
+                  }
+              }
+            displayName: "Verify all dlls status are Valid"
+
+      - powershell: |
+          # Propagate pipeline to PS variables #############################
+          $expectedFileVersion = "${{ parameters.expectedFileVersion }}"
+          echo "expectedFileVersion= $expectedFileVersion"
+
+          $expectedPackageVersion = "${{ parameters.expectedPackageVersion }}"
+          echo "expectedPackageVersion= $expectedPackageVersion"
+
+          $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+          echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+
+          # Validate ProductVersion and FileVersion fields #################
+          $failed = 0
+          foreach ( $pVersion in Get-ChildItem *.dll -Path $nugetPackageInstallPath -Recurse | ForEach-Object versioninfo )
+          {
+              if ($pVersion.ProductVersion -Like $expectedPackageVersion + '*')
+              {
+                  Write-Host -ForegroundColor Green "Correct ProductVersion detected for $($pVersion.FileName): $($pVersion.ProductVersion)"
+              }
+              else
+              {
+                    Write-Host -ForegroundColor Red "Wrong ProductVersion detected for $($pVersion.FileName); expected: $expectedPackageVersion; found: $($pVersion.ProductVersion)"
+                    $failed = 1
+              }
+
+              if ($pVersion.FileVersion -eq $expectedFileVersion)
+              {
+                  Write-Host -ForegroundColor Green "Correct FileVersion detected for $($pVersion.FileName): $($pVersion.FileVersion)"
+              }
+              else
+              {
+                  Write-Host -ForegroundColor Red "Wrong FileVersion detected for $($pVersion.FileName); expected $expectedFileVersion; found: $($pVersion.FileVersion)"
+                  $failed = 1
+              }
+
+              # @TODO: We should do a check for assembly version here.
+          }
+
+          if ($failed -ne 0)
+          {
+              Exit -1
+          }
+
+          Get-ChildItem *.dll -Path $nugetPackageInstallPath  -Recurse | ForEach-Object VersionInfo | Format-List
+        displayName: 'Verify "File Version" matches expected values for DLLs'

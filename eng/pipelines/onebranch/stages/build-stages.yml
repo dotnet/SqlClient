@@ -1,0 +1,226 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Unified build stages template for sqlclient OneBranch pipelines.
+# Consumed by both the official and non-official pipeline definitions.
+#
+# Depending on the build* parameters, this template will define the following stages:
+#
+#   - build_independent: builds packages with no cross-package dependencies (SqlServer)
+#   - build_sqlclient: builds the Microsoft.Data.SqlClient package
+#   - build_addons: builds add-on packages with dependencies on SqlClient (Akv Provider)
+
+parameters:
+  # ── General parameters ─────────────────────────────────────────────────
+
+  # True if this is an official build, which runs additional ESRP malware scanning
+  # and codesigning steps.
+  - name: isOfficial
+    type: boolean
+
+  # True to publish symbols to public and private servers.
+  - name: publishSymbols
+    type: boolean
+
+  # ── Build parameters ───────────────────────────────────────────────────
+
+  - name: buildSqlServerServer
+    type: boolean
+
+  - name: buildSqlClient
+    type: boolean
+
+  - name: buildAkvProvider
+    type: boolean
+
+  # Package Parameters -----------------------------------------------------
+
+  - name: akvProviderArtifactsName
+    type: string
+
+  - name: akvProviderFileVersion
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: sqlClientArtifactsName
+    type: string
+
+  - name: sqlClientFileVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerArtifactsName
+    type: string
+
+  - name: sqlServerFileVersion
+    type: string
+
+  - name: sqlServerPackageVersion
+    type: string
+
+  # Signing Parameters -----------------------------------------------------
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+
+  # Symbols Publishing Parameters ------------------------------------------
+
+  - name: symbolsAzureSubscription
+    type: string
+
+  - name: symbolsPublishProjectName
+    type: string
+
+  - name: symbolsPublishServer
+    type: string
+
+  - name: symbolsPublishTokenUri
+    type: string
+
+  - name: symbolsUploadAccount
+    type: string
+
+stages:
+  # ====================================================================
+  # Stage 1: Independent packages (no cross-package dependencies)
+  # SqlServer.Server builds here.
+  # ====================================================================
+  - stage: build_independent
+    displayName: "Build Independent Packages"
+
+    jobs:
+      - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+        - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+          parameters:
+            signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+            signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+            signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+            signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+            signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+            signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+            symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+            symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+            symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+            symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+            symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+            isOfficial: ${{ parameters.isOfficial }}
+            packageName: SqlServer
+            packageFullName: Microsoft.SqlServer.Server
+            packageVersion: '${{ parameters.sqlServerPackageVersion }}'
+            buildTarget: BuildSqlServerLibAnyOS
+            referenceType: Project
+            nuspecPath: tools/specs/Microsoft.SqlServer.Server.nuspec
+            versionProperties: >-
+              -p:SqlServerAssemblyFileVersion=${{ parameters.sqlServerFileVersion }}
+              -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+            assemblyFileVersion: '${{ parameters.sqlServerFileVersion }}'
+            publishSymbols: ${{ parameters.publishSymbols }}
+
+  # ====================================================================
+  # Stage 2: SqlClient package
+  # Microsoft.Data.SqlClient builds here, with no cross-package deps.
+  # ====================================================================
+  - ${{ if eq(parameters.buildSqlClient, true) }}:
+      - stage: build_sqlclient
+        displayName: "Build SqlClient Package"
+        dependsOn: []
+
+        jobs:
+          - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
+            parameters:
+              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
+              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
+              isOfficial: ${{ parameters.isOfficial }}
+              publishSymbols: ${{ parameters.publishSymbols }}
+              signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+              signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+              signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+              sqlClientAssemblyFileVersion: '${{ parameters.sqlClientFileVersion }}'
+              sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+
+  # ====================================================================
+  # Stage 3: Add-on packages (depend on core packages)
+  # Akv Provider builds after SqlClient completes.
+  # ====================================================================
+  - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
+      - stage: build_addons
+        displayName: "Build Add-on Packages"
+        dependsOn: build_sqlclient
+
+        jobs:
+          - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
+            parameters:
+              signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
+              signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
+              signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
+              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
+              isOfficial: ${{ parameters.isOfficial }}
+              packageName: AkvProvider
+              packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              packageVersion: '${{ parameters.akvProviderPackageVersion }}'
+              buildTarget: BuildAkv
+              nuspecPath: tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec
+              versionProperties: >-
+                -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
+                -p:AkvAssemblyFileVersion=${{ parameters.akvProviderFileVersion }}
+                -p:MdsPackageVersion=${{ parameters.sqlClientPackageVersion }}
+              assemblyFileVersion: '${{ parameters.akvProviderFileVersion }}'
+              publishSymbols: ${{ parameters.publishSymbols }}
+              downloadArtifacts:
+                - artifactName: '${{ parameters.sqlClientArtifactsName }}'
+                  displayName: SqlClient Package
+
+  # ====================================================================
+  # Validation
+  # ====================================================================
+  - ${{ if eq(parameters.buildSqlClient, true) }}:
+      - stage: sqlclient_package_validation
+        displayName: "SqlClient Package Validation"
+        dependsOn: build_sqlclient
+        jobs:
+          - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
+            parameters:
+              artifactName: '${{ parameters.sqlClientArtifactsName }}'
+              expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
+              expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+              isOfficial: ${{ parameters.isOfficial }}
