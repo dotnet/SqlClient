@@ -195,6 +195,12 @@ public class SqlBatchCommand
     #else
     public Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
     #endif
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CanCreateParameter/*'/>
+    #if NET
+    public override bool CanCreateParameter { get { throw null; } }
+    #else
+    public bool CanCreateParameter { get { throw null; } set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>
     #if NET
     public override string CommandText { get { throw null; } set { } }
@@ -209,6 +215,12 @@ public class SqlBatchCommand
     #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
     public System.Data.CommandBehavior CommandBehavior { get { throw null; } set { } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CreateParameter/*'/>
+    #if NET
+    public override System.Data.Common.DbParameter CreateParameter() => throw null;
+    #else
+    public System.Data.Common.DbParameter CreateParameter() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
     #if NET
     public override int RecordsAffected { get { throw null; } }
