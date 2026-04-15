@@ -47,137 +47,275 @@ public abstract class SqlAuthenticationInitializer
     public abstract void Initialize();
 }
 
-#if NET
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/SqlBatch/*'/>
+#if NET
 public class SqlBatch : System.Data.Common.DbBatch
+#else
+public class SqlBatch : System.IDisposable, System.IAsyncDisposable
+#endif
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ctor1/*'/>
     public SqlBatch() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ctor2/*'/>
     public SqlBatch(Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlTransaction transaction = null) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Timeout/*'/>
+    #if NET
     public override int Timeout { get => throw null; set { } }
+    #else
+    public int Timeout { get => throw null; set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Commands/*'/>
     public System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand> Commands { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Connection/*'/>
+    #if NET
     public new Microsoft.Data.SqlClient.SqlConnection Connection { get => throw null; set { } }
+    #else
+    public Microsoft.Data.SqlClient.SqlConnection Connection { get => throw null; set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Transaction/*'/>
+    #if NET
     public new Microsoft.Data.SqlClient.SqlTransaction Transaction { get => throw null; set { } }
+    #else
+    public Microsoft.Data.SqlClient.SqlTransaction Transaction { get => throw null; set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/BatchCommands/*'/>
+    #if NET
     public new SqlBatchCommandCollection BatchCommands { get => throw null; }
+    #else
+    public SqlBatchCommandCollection BatchCommands { get => throw null; }
+    #endif
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbBatchCommands/*'/>
     protected override System.Data.Common.DbBatchCommandCollection DbBatchCommands { get => throw null; }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbConnection/*'/>
+    #if NET
     protected override System.Data.Common.DbConnection DbConnection { get => throw null; set { } }
+    #else
+    protected virtual System.Data.Common.DbConnection DbConnection { get => throw null; set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbTransaction/*'/>
+    #if NET
     protected override System.Data.Common.DbTransaction DbTransaction { get => throw null; set { } }
+    #else
+    protected virtual System.Data.Common.DbTransaction DbTransaction { get => throw null; set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Cancel/*'/>
+    #if NET
     public override void Cancel() => throw null;
-     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
+    #else
+    public void Cancel() => throw null;
+    #endif
+    #if NET
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
     protected override System.Data.Common.DbBatchCommand CreateDbBatchCommand() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Dispose/*'/>
+    #if NET
     public override void Dispose() => throw null;
+    #else
+    public void Dispose() => throw null;
+    #endif
+    #if !NET
+    /// <inheritdoc cref="System.IAsyncDisposable.DisposeAsync"/>
+    public virtual System.Threading.Tasks.ValueTask DisposeAsync() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
+    #if NET
     protected override System.Data.Common.DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior) => throw null;
+    #else
+    protected virtual System.Data.Common.DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
+    #if NET
     protected override System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) => throw null;
+    #else
+    protected virtual System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQuery/*'/>
+    #if NET
     public override int ExecuteNonQuery() => throw null;
+    #else
+    public int ExecuteNonQuery() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQueryAsync/*'/>
+    #if NET
     public override System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #else
+    public System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader/*'/>
     public Microsoft.Data.SqlClient.SqlDataReader ExecuteReader() => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync/*'/>
+    #if NET
     public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #else
+    public System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalar/*'/>
+    #if NET
     public override object ExecuteScalar() => throw null;
+    #else
+    public object ExecuteScalar() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalarAsync/*'/>
+    #if NET
     public override System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #else
+    public System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Prepare/*'/>
+    #if NET
     public override void Prepare() => throw null;
+    #else
+    public void Prepare() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/PrepareAsync/*'/>
+    #if NET
     public override System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #else
+    public System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
+    #endif
 }
-#endif
 
-#if NET
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
-public partial class SqlBatchCommand : System.Data.Common.DbBatchCommand
+#if NET
+public class SqlBatchCommand : System.Data.Common.DbBatchCommand
+#else
+public class SqlBatchCommand
+#endif
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor1/*'/>
     public SqlBatchCommand() => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor2/*'/>
     public SqlBatchCommand(string commandText, System.Data.CommandType commandType = System.Data.CommandType.Text, System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.SqlParameter> parameters = null, Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting columnEncryptionSetting = Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting.UseConnectionSetting) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/Parameters/*'/>
+    #if NET
     public new Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
+    #else
+    public Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>
+    #if NET
     public override string CommandText { get { throw null; } set { } }
+    #else
+    public string CommandText { get { throw null; } set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandType/*'/>
+    #if NET
     public override System.Data.CommandType CommandType { get { throw null; } set { } }
+    #else
+    public System.Data.CommandType CommandType { get { throw null; } set { } }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
     public System.Data.CommandBehavior CommandBehavior { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
-    public override int RecordsAffected { get { throw null; } }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
-    protected override System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
-
     #if NET
+    public override int RecordsAffected { get { throw null; } }
+    #else
+    public int RecordsAffected { get { throw null; } }
+    #endif
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
+    #if NET
+    protected override System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
+    #else
+    protected virtual System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
+    #endif
+
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ColumnEncryptionSetting/*'/>
     public Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
-    #endif
 }
-#endif
 
-#if NET
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SqlBatchCommandCollection/*'/>
+#if NET
 public class SqlBatchCommandCollection : System.Data.Common.DbBatchCommandCollection, System.Collections.Generic.IList<SqlBatchCommand>
+#else
+public class SqlBatchCommandCollection : System.Collections.Generic.IList<Microsoft.Data.SqlClient.SqlBatchCommand>
+#endif
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Count/*'/>
+    #if NET
     public override int Count => throw null;
+    #else
+    public int Count => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IsReadOnly/*'/>
+    #if NET
     public override bool IsReadOnly => throw null;
+    #else
+    public bool IsReadOnly => throw null;
+    #endif
     System.Collections.Generic.IEnumerator<Microsoft.Data.SqlClient.SqlBatchCommand> System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.SqlBatchCommand>.GetEnumerator() => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/GetEnumerator/*'/>
     public override System.Collections.Generic.IEnumerator<System.Data.Common.DbBatchCommand> GetEnumerator() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add1/*'/>
     public void Add(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add2/*'/>
     public override void Add(System.Data.Common.DbBatchCommand item) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Clear/*'/>
+    #if NET
     public override void Clear() => throw null;
+    #else
+    public void Clear() => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Contains1/*'/>
     public bool Contains(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Contains2/*'/>
     public override bool Contains(System.Data.Common.DbBatchCommand item) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/CopyTo1/*'/>
     public void CopyTo(Microsoft.Data.SqlClient.SqlBatchCommand[] array, int arrayIndex) => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/CopyTo2/*'/>
     public override void CopyTo(System.Data.Common.DbBatchCommand[] array, int arrayIndex) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IndexOf1/*'/>
     public int IndexOf(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IndexOf2/*'/>
     public override int IndexOf(System.Data.Common.DbBatchCommand item) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Insert1/*'/>
     public void Insert(int index, Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Insert2/*'/>
     public override void Insert(int index, System.Data.Common.DbBatchCommand item) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Remove1/*'/>
     public bool Remove(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Remove2/*'/>
     public override bool Remove(System.Data.Common.DbBatchCommand item) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/RemoveAt/*'/>
+    #if NET
     public override void RemoveAt(int index) => throw null;
+    #else
+    public void RemoveAt(int index) => throw null;
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this1/*'/>
     Microsoft.Data.SqlClient.SqlBatchCommand System.Collections.Generic.IList<SqlBatchCommand>.this[int index] { get => throw null; set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this2/*'/>
+    #if NET
     public new Microsoft.Data.SqlClient.SqlBatchCommand this[int index] { get => throw null; set { } }
+    #else
+    public Microsoft.Data.SqlClient.SqlBatchCommand this[int index] { get => throw null; set { } }
+    #endif
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => throw null;
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/GetBatchCommand/*'/>
     protected override System.Data.Common.DbBatchCommand GetBatchCommand(int index) => throw null;
+    #endif
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SetBatchCommand/*'/>
     protected override void SetBatchCommand(int index, System.Data.Common.DbBatchCommand batchCommand) => throw null;
+    #endif
 }
-#endif
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
 public sealed class SqlBulkCopy : System.IDisposable
@@ -1653,6 +1791,9 @@ public sealed class SqlException : System.Data.Common.DbException
     #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
     public new Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
+    #else
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
+    public Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
     #endif
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*'/>
