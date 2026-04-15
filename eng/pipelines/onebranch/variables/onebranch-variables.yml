@@ -1,0 +1,44 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This file is only included in SqlClient OneBranch official/non-official pipelines.
+
+variables:
+  # Libraries ==============================================================
+
+  # These variables are used for running ESRP signing tasks. All names start with "Signing" to make
+  # it clear that these variables are used for signing (as opposed to other msc tasks).
+  #
+  # SigningAppRegistrationClientId
+  # SigningAppRegistrationTenantId
+  # SigningAuthAkvName
+  # SigningAuthSignCertName
+  # SigningEsrpClientId
+  # SigningEsrpConnectedServiceName
+  - group: 'esrp-variables-v2'
+
+  # These variables are used for running symbol publishing tasks. All names start with "Symbols" to
+  # make it clear that these variables are used for symbols (as opposed to other msc tasks).
+  #
+  # SymbolsAzureSubscription
+  # SymbolsPublishProjectName
+  # SymbolsPublishServer
+  # SymbolsPublishTokenUri
+  # SymbolsUploadAccount
+  - group: 'symbols-variables-v2'
+
+  # OneBranch Template Variables ###########################################
+
+  # https://aka.ms/obpipelines/sdl
+  - name: ob_sdl_binskim_break
+    value: true
+
+  - name: Packaging.EnableSBOMSigning
+    value: true
+
+  # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  - name: WindowsContainerImage
+    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest"

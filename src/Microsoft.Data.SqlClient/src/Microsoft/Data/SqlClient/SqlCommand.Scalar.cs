@@ -7,6 +7,7 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -30,7 +31,7 @@ namespace Microsoft.Data.SqlClient
             
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteScalar | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -182,6 +183,11 @@ namespace Microsoft.Data.SqlClient
                         result = reader.GetValue(0);
                     }
                 } while (returnLastResult && reader.NextResult());
+
+                // Drain remaining results to ensure all error tokens are processed
+                // before returning the result (fix for GH issue #3736).
+                while (reader.NextResult())
+                { }
             }
             finally
             {
@@ -254,7 +260,7 @@ namespace Microsoft.Data.SqlClient
                     SqlDataReader reader = executeTask.Result;
                     
                     // @TODO: Use continue with state?
-                    reader.ReadAsync(cancellationToken).ContinueWith(readTask =>
+                    reader.ReadAsync(cancellationToken).ContinueWith(async readTask =>
                     {
                         // @TODO: This seems a bit confusing with unnecessary extra dispose calls and try/finally blocks
                         try
@@ -296,6 +302,11 @@ namespace Microsoft.Data.SqlClient
                                             exception = e;
                                         }
                                     }
+
+                                    // Drain remaining results to ensure all error tokens are processed
+                                    // before returning the result (fix for GH issue #3736).
+                                    while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
+                                    { }
                                 }
                                 finally
                                 {

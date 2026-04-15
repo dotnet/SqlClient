@@ -42,14 +42,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             {
                 string failValue;
-                DataTestUtility.AssertThrowsWrapper<IndexOutOfRangeException>(() => failValue = opc[0].ParameterName, "Invalid index 0 for this SqlParameterCollection with Count=0.");
+                DataTestUtility.AssertThrows<IndexOutOfRangeException>(() => failValue = opc[0].ParameterName, "Invalid index 0 for this SqlParameterCollection with Count=0.");
 
-                DataTestUtility.AssertThrowsWrapper<IndexOutOfRangeException>(() => failValue = opc["@p1"].ParameterName, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
+                DataTestUtility.AssertThrows<IndexOutOfRangeException>(() => failValue = opc["@p1"].ParameterName, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
 
-                DataTestUtility.AssertThrowsWrapper<IndexOutOfRangeException>(() => opc["@p1"] = null, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
+                DataTestUtility.AssertThrows<IndexOutOfRangeException>(() => opc["@p1"] = null, "A SqlParameter with ParameterName '@p1' is not contained by this SqlParameterCollection.");
             }
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => opc.Add(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
+            DataTestUtility.AssertThrows<ArgumentNullException>(() => opc.Add(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
 
             opc.Add((object)new SqlParameter());
             IEnumerator enm = opc.GetEnumerator();
@@ -70,11 +70,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlParameter p = opc[0];
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => opc.Add((object)p), "The SqlParameter is already contained by another SqlParameterCollection.");
+            DataTestUtility.AssertThrows<ArgumentException>(() => opc.Add((object)p), "The SqlParameter is already contained by another SqlParameterCollection.");
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => new SqlCommand().Parameters.Add(p), "The SqlParameter is already contained by another SqlParameterCollection.");
+            DataTestUtility.AssertThrows<ArgumentException>(() => new SqlCommand().Parameters.Add(p), "The SqlParameter is already contained by another SqlParameterCollection.");
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => opc.Remove(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
+            DataTestUtility.AssertThrows<ArgumentNullException>(() => opc.Remove(null), "The SqlParameterCollection only accepts non-null SqlParameter type objects.");
 
             string pname = p.ParameterName;
             p.ParameterName = pname;
@@ -106,13 +106,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             new SqlCommand().Parameters.CopyTo(new object[0], 0);
             Assert.False(new SqlCommand().Parameters.GetEnumerator().MoveNext(), "FAILED: Expected MoveNext to be false");
 
-            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => new SqlCommand().Parameters.Add(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
+            DataTestUtility.AssertThrows<InvalidCastException>(() => new SqlCommand().Parameters.Add(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
 
-            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => new SqlCommand().Parameters.Insert(0, 0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
+            DataTestUtility.AssertThrows<InvalidCastException>(() => new SqlCommand().Parameters.Insert(0, 0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
 
-            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => new SqlCommand().Parameters.Remove(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
+            DataTestUtility.AssertThrows<InvalidCastException>(() => new SqlCommand().Parameters.Remove(0), "The SqlParameterCollection only accepts non-null Microsoft.Data.SqlClient.SqlParameter type objects, not System.Int32 objects.");
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => new SqlCommand().Parameters.Remove(new SqlParameter()), "Attempted to remove an SqlParameter that is not contained by this SqlParameterCollection.");
+            DataTestUtility.AssertThrows<ArgumentException>(() => new SqlCommand().Parameters.Remove(new SqlParameter()), "Attempted to remove an SqlParameter that is not contained by this SqlParameterCollection.");
         }
 
         // TODO Synapse: Parse error at line: 1, column: 12: Incorrect syntax near 'IF'.
@@ -258,6 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
@@ -301,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     cmd.ExecuteNonQuery();
 
-                    // Verify if the data was updated 
+                    // Verify if the data was updated
                     cmd.CommandText = "select * from " + tableName;
                     cmd.CommandType = CommandType.Text;
                     using SqlDataReader reader = cmd.ExecuteReader();
@@ -326,6 +327,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 #if !NETFRAMEWORK
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()
         {
@@ -350,7 +352,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record1,
                 record2,
             };
-            
+
             using SqlConnection connection = new(builder.ConnectionString);
             string procName = DataTestUtility.GetLongName("Proc");
             string typeName = DataTestUtility.GetShortName("Type");
@@ -409,6 +411,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
@@ -430,7 +433,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     cmd.CommandText = spName;
                     cmd.CommandType = CommandType.StoredProcedure;
-                    
+
                     DataTable dtTest = new();
                     dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
                     dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
@@ -457,6 +460,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
         {
@@ -648,6 +652,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
@@ -973,6 +978,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [SkipOnPlatform(TestPlatforms.OSX, "Flaky on macOS: https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42351")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {

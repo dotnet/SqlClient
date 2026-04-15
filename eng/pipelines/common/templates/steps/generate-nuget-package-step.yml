@@ -12,8 +12,9 @@ parameters:
 
   - name: outputDirectory
     type: string
-    default: '$(Build.SourcesDirectory)/packages'
+    default: '$(Build.SourcesDirectory)/output'
 
+  # The C# build configuration (e.g. Debug or Release) to use when building the NuGet package.
   - name: buildConfiguration
     type: string
     default: Debug
@@ -23,7 +24,6 @@ parameters:
 
   - name: generateSymbolsPackage
     type: boolean
-    default: true
 
   - name: displayName
     type: string
@@ -32,14 +32,16 @@ parameters:
     type: boolean
     default: true
 
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
-  # Semi-colon separated properties to pass to nuget via the -properties
-  # argument.
+  # Semi-colon separated properties to pass to nuget pack via the -properties argument.
   - name: properties
     type: string
     default: ''
@@ -55,7 +57,7 @@ steps:
     $Commit=git rev-parse HEAD
     Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
   displayName: CommitHead
- 
+
 - task: NuGetCommand@2
   displayName: ${{parameters.displayName }}
   inputs:

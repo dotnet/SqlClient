@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -204,10 +205,10 @@ namespace Microsoft.Data.SqlClient
                 switch (_rowSourceType)
                 {
                     case ValueSourceType.RowArray:
-                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        rowNo = ((DataTable)_dataTableSource).Rows.IndexOf((DataRow)_rowEnumerator.Current);
                         break;
                     case ValueSourceType.DataTable:
-                        rowNo = ((DataTable)_rowSource).Rows.IndexOf(_rowEnumerator.Current as DataRow);
+                        rowNo = ((DataTable)_rowSource).Rows.IndexOf((DataRow)_rowEnumerator.Current);
                         break;
                     case ValueSourceType.DbDataReader:
                     case ValueSourceType.IDataReader:
@@ -234,6 +235,13 @@ namespace Microsoft.Data.SqlClient
         private SqlConnectionInternal.SyncAsyncLock _parserLock = null;
 
         private SourceColumnMetadata[] _currentRowMetadata;
+
+        // Metadata caching fields for CacheMetadata option
+        internal BulkCopySimpleResultSet CachedMetadata { get; private set; }
+        // Per-operation clone of the destination table metadata, used when CacheMetadata is
+        // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
+        // mutate the cached BulkCopySimpleResultSet.
+        private _SqlMetaDataSet _operationMetaData;
 
 #if DEBUG
         internal static bool s_setAlwaysTaskOnWrite; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task
@@ -353,6 +361,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentOutOfRange(nameof(DestinationTableName));
                 }
+                else if (string.Equals(_destinationTableName, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                CachedMetadata = null;
                 _destinationTableName = value;
             }
         }
@@ -411,7 +425,7 @@ namespace Microsoft.Data.SqlClient
             string[] parts;
             try
             {
-                parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+                parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, Strings.SQL_BulkCopyDestinationTableName, true);
             }
             catch (Exception e)
             {
@@ -458,29 +472,78 @@ namespace Microsoft.Data.SqlClient
             }
             else if (!string.IsNullOrEmpty(CatalogName))
             {
-                CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
+                CatalogName = SqlServerEscapeHelper.EscapeStringAsLiteral(SqlServerEscapeHelper.EscapeIdentifier(CatalogName));
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
-            // Specify the column names explicitly. This is to ensure that we can map to hidden columns (e.g. columns in temporal tables.)
-            // If the target table doesn't exist, OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent SELECT *
-            // query will then continue to fail with "Invalid object name" rather than with an unusual error because the query being executed
-            // is NULL.
-            // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to exclude them explicitly.
+            // Specify the column names explicitly. This is to ensure that we can map to hidden
+            // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
+            // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
+            // SELECT * query will then continue to fail with "Invalid object name" rather than with
+            // an unusual error because the query being executed is NULL.
+            //
+            // Some hidden columns (e.g. SQL Graph columns) cannot be selected, so we need to
+            // exclude them explicitly.  The graph_type values excluded below are internal graph
+            // columns that cannot be selected directly:
+            //
+            //   1 = GRAPH_ID
+            //   3 = GRAPH_FROM_ID
+            //   4 = GRAPH_FROM_OBJ_ID
+            //   6 = GRAPH_TO_ID
+            //   7 = GRAPH_TO_OBJ_ID
+            //
+            // See: https://learn.microsoft.com/sql/relational-databases/graphs/sql-graph-architecture#syscolumns
+            //
+            // The column-name query is built as dynamic SQL and executed via sp_executesql so
+            // that it is not compiled (and rejected) on SQL Server versions that lack the
+            // graph_type column (e.g. SQL 2016).  CatalogName and escapedObjectName are
+            // interpolated directly into the SQL string because SQL Server does not allow
+            // identifiers (database/schema/table names) to be passed as parameters.  Both
+            // values are escaped via SqlServerEscapeHelper before interpolation.
+            //
+            // SqlBulkCopy must remain compatible with Azure Synapse Analytics dedicated SQL pools
+            // and with SQL Server 2016. Azure Synapse Analytics does not allow variables assigned
+            // in the SELECT statement to appear in an expression, which prevents the consistent use of
+            //   SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name])
+            // The alternative is to use STRING_AGG, but this was only introduced in SQL Server
+            // 2017. To meet both criteria, we review the EngineEdition server property. A value
+            // of 6 indicates that the bulk copy is going to run against Azure Synapse Analytics;
+            // we use STRING_AGG in that case and the COALESCE method otherwise.
+            //
+            // See: https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
             return $"""
 SELECT @@TRANCOUNT;
 
+DECLARE @Object_ID INT = OBJECT_ID('{escapedObjectName}');
+DECLARE @Column_Name_Query_SELECT NVARCHAR(MAX);
+DECLARE @Column_Name_Query_FILTER NVARCHAR(MAX);
+DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
+DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
-IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+
+IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
-    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7) ORDER BY [column_id] ASC;
+    SET @Column_Name_Query_SELECT = N'SELECT @Column_Names = STRING_AGG(CAST(QUOTENAME([name]) AS NVARCHAR(MAX)), '', '') WITHIN GROUP (ORDER BY [column_id] ASC)';
+    SET @Column_Name_Query_SORT = N'';
 END
 ELSE
 BEGIN
-    SELECT @Column_Names = COALESCE(@Column_Names + ', ', '') + QUOTENAME([name]) FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{escapedObjectName}') ORDER BY [column_id] ASC;
+    SET @Column_Name_Query_SELECT = 'SELECT @Column_Names = COALESCE(@Column_Names + '', '', '''') + QUOTENAME([name])';
+    SET @Column_Name_Query_SORT = N'ORDER BY [column_id] ASC';
 END
 
+IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+BEGIN
+    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
+END
+ELSE
+BEGIN
+    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID';
+END
+SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {CatalogName}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
+
+EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
 
 SET FMTONLY ON;
@@ -497,6 +560,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // We need to have a _parser.RunAsync to make it real async.
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
+            // Check if we have valid cached metadata for the current destination table
+            if (CachedMetadata != null)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
+                result = CachedMetadata;
+                return null;
+            }
+
             string TDSCommand = CreateInitialQuery();
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Initial Query: '{0}'", TDSCommand);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -506,6 +577,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 result = new BulkCopySimpleResultSet();
                 RunParser(result);
+                CacheMetadataIfEnabled(result);
                 return null;
             }
             else
@@ -523,17 +595,31 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {
                         var internalResult = new BulkCopySimpleResultSet();
                         RunParserReliably(internalResult);
+                        CacheMetadataIfEnabled(internalResult);
                         return internalResult;
                     }
                 }, TaskScheduler.Default);
             }
         }
 
+        private void CacheMetadataIfEnabled(BulkCopySimpleResultSet result)
+        {
+            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
+            {
+                CachedMetadata = result;
+                SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
+            }
+        }
+
         // Matches associated columns with metadata from initial query.
         // Builds and executes the update bulk command.
-        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults)
+        // metaDataSet is passed in by the caller so that when CacheMetadata is enabled, the
+        // caller can supply a clone, allowing this method to null-prune unmatched/rejected
+        // columns freely without mutating the shared cache.
+        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, _SqlMetaDataSet metaDataSet)
         {
             Debug.Assert(internalResults != null, "Where are the results from the initial query?");
+            Debug.Assert(metaDataSet != null, "metaDataSet must not be null");
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
@@ -542,7 +628,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 throw SQL.BulkLoadNoCollation();
             }
 
-            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
+            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, Strings.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
 
             // Throw if there is a transaction but no flag is set
@@ -577,8 +663,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // the next column in the command text.
             bool appendComma = false;
 
-            // Loop over the metadata for each result column.
-            _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
+            // Loop over the metadata for each result column, null-pruning unmatched/rejected
+            // columns. metaDataSet is safe to mutate here — see the call site for clone logic.
+            _operationMetaData = metaDataSet;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
@@ -586,7 +673,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 bool matched = false;
                 bool rejected = false;
-                
+
                 // Look for a local match for the remote column.
                 for (int j = 0; j < _localColumnMappings.Count; ++j)
                 {
@@ -606,7 +693,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     // Remove it from our unmatched set.
                     unmatchedColumns.Remove(localColumn.DestinationColumn);
-                    
+
                     // Check for column types that we refuse to bulk load, even
                     // though we found a match.
                     //
@@ -875,9 +962,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             _stateObj.SetTimeoutSeconds(BulkCopyTimeout);
 
-            _SqlMetaDataSet metadataCollection = internalResults[MetaDataResultId].MetaData;
+            _SqlMetaDataSet metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
             _stateObj._outputMessageType = TdsEnums.MT_BULK;
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ClearCachedMetadata/*'/>
+        public void ClearCachedMetadata()
+        {
+            CachedMetadata = null;
+            SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.ClearCachedMetadata | Info | Metadata cache cleared");
         }
 
         // Terminates the bulk copy operation.
@@ -900,6 +994,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // Dispose dependent objects
                 _columnMappings = null;
                 _parser = null;
+                CachedMetadata = null;
+                _operationMetaData = null;
                 try
                 {
                     // Just in case there is a lingering transaction (which there shouldn't be)
@@ -1390,7 +1486,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
-                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
+                _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
             }
             finally
             {
@@ -1713,7 +1809,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _dbDataReaderRowSource = reader;
@@ -1749,13 +1845,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
-                
+
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
             finally
@@ -1871,7 +1967,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 if (rows.Length == 0)
                 {
@@ -1888,9 +1984,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowSourceType = ValueSourceType.RowArray;
                 _rowEnumerator = rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
-                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); 
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
             finally
             {
@@ -1917,19 +2013,19 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 throw SQL.BulkLoadPendingOperation();
             }
-            
+
             SqlStatistics statistics = Statistics;
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
                 _dbDataReaderRowSource = reader;
                 _rowSourceType = ValueSourceType.DbDataReader;
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
                 return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
@@ -1969,7 +2065,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
                 return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
@@ -2009,7 +2105,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                
+
                 ResetWriteToServerGlobalVariables();
                 _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
                 _rowSource = table;
@@ -2017,7 +2113,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowSourceType = ValueSourceType.DataTable;
                 _rowEnumerator = table.Rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
-                
+
                 // It returns Task since _isAsyncBulkCopy = true;
                 return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
@@ -2067,7 +2163,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             bool finishedSynchronously = true;
             _isBulkCopyingInProgress = true;
-            
+
             CreateOrValidateConnection(nameof(WriteToServer));
 
             SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
@@ -2667,7 +2763,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 // Load encryption keys now (if needed)
                 _parser.LoadColumnEncryptionKeys(
-                    internalResults[MetaDataResultId].MetaData,
+                    _operationMetaData ?? internalResults[MetaDataResultId].MetaData,
                     _connection);
 
                 Task task = CopyRowsAsync(0, _savedBatchSize, cts); // This is copying 1 batch of rows and setting _hasMoreRowToCopy = true/false.
@@ -2840,7 +2936,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             try
             {
-                updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults);
+                // When CacheMetadata is enabled, internalResults IS the cached result set (see
+                // CreateAndExecuteInitialQueryAsync). Clone the metadata set so that
+                // AnalyzeTargetAndCreateUpdateBulkCommand can null-prune unmatched/rejected
+                // columns without mutating the cache across WriteToServer calls.
+                _SqlMetaDataSet metaDataSet = CachedMetadata != null
+                    ? internalResults[MetaDataResultId].MetaData.Clone()
+                    : internalResults[MetaDataResultId].MetaData;
+                updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults, metaDataSet);
 
                 if (_sortedColumnMappings.Count != 0)
                 {
@@ -3011,11 +3114,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
                         AsyncHelper.SetTimeoutExceptionWithState(
-                            completion: cancellableReconnectTS, 
+                            completion: cancellableReconnectTS,
                             timeout: BulkCopyTimeout,
                             state: _destinationTableName,
-                            onFailure: static state => 
-                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()), 
+                            onFailure: static state =>
+                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()),
                             cancellationToken: CancellationToken.None
                         );
 
@@ -3188,12 +3291,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             return resultTask;
         }
-        
+
         private void ResetWriteToServerGlobalVariables()
         {
             _dataTableSource = null;
             _dbDataReaderRowSource = null;
             _isAsyncBulkCopy = false;
+            _operationMetaData = null;
             _rowEnumerator = null;
             _rowSource = null;
             _rowSourceType = ValueSourceType.Unspecified;

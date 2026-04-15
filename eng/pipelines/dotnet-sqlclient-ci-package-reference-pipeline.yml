@@ -14,8 +14,8 @@
 # It runs via CI push triggers and schedules and uses the Release build
 # configuration:
 #
-#   - Commits to GitHub main
-#   - Commits to ADO internal/main
+#   - Commits to GitHub main and release/* branches
+#   - Commits to ADO internal/main and internal/release/* branches
 #   - Weekdays at 03:00 UTC on GitHub main
 #   - Thursdays at 07:00 UTC on ADO internal/main
 #
@@ -48,32 +48,22 @@ pr: none
 
 # Trigger this pipeline on commits to certain branches.
 trigger:
-  
+
   # Don't trigger a new run until the previous one completes.  This may cause
   # multiple commits to be batched into a single run.
   batch: true
-  
+
   branches:
     include:
-    # GitHub main branch.
-    - main
+      # GitHub main and release branches.
+      - main
+      - release/*
 
-    # ADO internal/main branch.
-    - internal/main
-  
-  paths:
-    include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng/pipelines
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
+      # ADO main and release branches.
+      - internal/main
+      - internal/release/*
 
-# Trigger this pipline on a schedule.
+# Trigger this pipeline on a schedule.
 schedules:
 
   # GitHub main on weekdays
@@ -95,7 +85,7 @@ schedules:
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use; defaults to Release.
+  # The C# build configuration to use; defaults to Release.
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
@@ -109,18 +99,9 @@ parameters:
     type: object
     default: [AnyCPU]
 
-  - name: codeCovTargetFrameworks
-    displayName: Code Coverage Target Frameworks
-    type: object
-    default: [net462, net8.0, net9.0]
-
+  # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
-    type: boolean
-    default: false
-
-  - name: enableStressTests
-    displayName: Enable Stress Tests
     type: boolean
     default: false
 
@@ -154,7 +135,7 @@ parameters:
   - name: testJobTimeout
     displayName: Test job timeout (in minutes)
     type: number
-    default: 60
+    default: 90
 
   - name: testSets
     displayName: Test Sets
@@ -186,10 +167,8 @@ extends:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
     referenceType: Package
-    codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
     debug: ${{ parameters.debug }}
     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-    enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}

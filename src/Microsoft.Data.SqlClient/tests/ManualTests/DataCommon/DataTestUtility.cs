@@ -74,7 +74,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string UdtTestDbName = "UdtTestDb";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
-        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
@@ -87,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
+        private static string s_sqlServerVersion;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
@@ -126,9 +125,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
+                    s_sqlServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
-                return s_sQLServerVersion;
+                return s_sqlServerVersion;
             }
         }
 
@@ -239,6 +238,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+
+            // Many of our tests require a Managed Identity provider to be
+            // registered.
+            //
+            // TODO: Figure out which ones and install on-demand rather than
+            // globally.
+            SqlAuthenticationProvider.SetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+                new ManagedIdentityProvider());
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -294,9 +302,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SecureString securePassword = new SecureString();
 
             securePassword.MakeReadOnly();
-#pragma warning disable CS0618 // Type or member is obsolete
+            #pragma warning disable CS0618 // Type or member is obsolete
             result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
-#pragma warning restore CS0618 // Type or member is obsolete
+            #pragma warning restore CS0618 // Type or member is obsolete
 
             return result.AccessToken;
         });
@@ -351,7 +359,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ProductMajorVersion,
             EngineEdition
         }
-        
+
         public static string GetSqlServerProperty(string connectionString, ServerProperty property)
         {
             using SqlConnection conn = new(connectionString);
@@ -381,7 +389,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        #nullable disable
+        #nullable restore
 
         private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
@@ -483,7 +491,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
 
-        public static bool IsSQL2016() => string.Equals("14", s_sQLServerVersion.Trim());
+        public static bool IsSQL2017() => string.Equals("14", SQLServerVersion.Trim());
+
+        public static bool IsSQL2016() => string.Equals("13", SQLServerVersion.Trim());
+
+        // "At least" version checks for use as ConditionalFact/ConditionalTheory conditions.
+        public static bool IsAtLeastSQL2017() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 14;
+
+        public static bool IsAtLeastSQL2019() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 15;
 
         public static bool IsSQLAliasSetup()
         {
@@ -581,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsUsingNativeSNI() =>
 #if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
-#else 
+#else
             true;
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
@@ -667,7 +682,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// succession.  The 12 characters are concatenated together without any
         /// separators.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 18 characters when withBracket is false, and 16 characters when
@@ -675,17 +690,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 30 characters long.
         /// </returns>
@@ -719,7 +734,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Generate a long unique database object name, whose maximum length is
         /// 96 characters, with the format:
-        /// 
+        ///
         ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
         ///
         /// The Prefix will be truncated to satisfy the overall maximum length.
@@ -738,24 +753,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// The UserName and MachineName are obtained from the Environment,
         /// and will be truncated to satisfy the maximum overall length.
         /// </summary>
-        /// 
+        ///
         /// <param name="prefix">
         /// The prefix to use when generating the unique name, truncated to at
         /// most 32 characters.
         ///
         /// This should not contain any characters that cannot be used in
         /// database object names.  See:
-        /// 
+        ///
         /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
         /// </param>
-        /// 
+        ///
         /// <param name="withBracket">
         /// When true, the entire generated name will be enclosed in square
         /// brackets, for example:
-        /// 
+        ///
         ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
         /// </param>
-        /// 
+        ///
         /// <returns>
         /// A unique database object name, no more than 96 characters long.
         /// </returns>
@@ -943,35 +958,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TException AssertThrowsWrapper<TException>(Action actionThatFails, string exceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        #nullable enable
+
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws an exception of type
+        /// <typeparamref name="TException"/> and optionally verifies that its message contains
+        /// <paramref name="exceptionMessage"/>.
+        /// </summary>
+        public static TException AssertThrows<TException>(
+            Action actionThatFails,
+            string? exceptionMessage = null)
+        where TException : Exception
         {
             TException ex = Assert.Throws<TException>(actionThatFails);
+
             if (exceptionMessage != null)
             {
                 Assert.True(ex.Message.Contains(exceptionMessage),
                     string.Format("FAILED: Exception did not contain expected message.\nExpected: {0}\nActual: {1}", exceptionMessage, ex.Message));
             }
 
-            if (innerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException == null, "FAILED: Expected InnerException to be null.");
-            }
-
-            if (customExceptionVerifier != null)
-            {
-                Assert.True(customExceptionVerifier(ex), "FAILED: Custom exception verifier returned false for this exception.");
-            }
-
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
+        /// whose <see cref="Exception.InnerException"/> is of type <typeparamref name="TInnerException"/>.
+        /// Optionally verifies message text on both the outer and inner exceptions.
+        /// </summary>
+        public static TException AssertThrowsInner<TException, TInnerException>(
+            Action actionThatFails,
+            string? exceptionMessage = null,
+            string? innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException>(actionThatFails, exceptionMessage, innerExceptionMustBeNull, customExceptionVerifier);
+            TException ex = AssertThrows<TException>(actionThatFails, exceptionMessage);
+
+            Assert.NotNull(ex.InnerException);
+            Assert.IsAssignableFrom<TInnerException>(ex.InnerException);
 
             if (innerExceptionMessage != null)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerExceptionMessage because InnerException is null.");
                 Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
                     string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
@@ -979,25 +1007,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException, TInnerInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, string innerInnerExceptionMessage = null, bool innerInnerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception where TInnerInnerException : Exception
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
+        /// whose <see cref="Exception.InnerException"/> is either <typeparamref name="TInnerException"/>
+        /// or <typeparamref name="TAlternateInnerException"/>. Use this when a race condition
+        /// (e.g. disposal during an async read) may cause the inner exception type to vary
+        /// between runs. The <paramref name="innerExceptionMessage"/> is only verified when the
+        /// inner exception is <typeparamref name="TInnerException"/>.
+        /// </summary>
+        public static TException AssertThrowsInnerWithAlternate<TException, TInnerException, TAlternateInnerException>(
+            Action actionThatFails,
+            string? exceptionMessage = null,
+            string? innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
+        where TAlternateInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException, TInnerException>(actionThatFails, exceptionMessage, innerExceptionMessage);
-            if (innerInnerInnerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerInnerExceptionMustBeNull since InnerException is null");
-                Assert.True(ex.InnerException.InnerException == null, "FAILED: Expected InnerInnerException to be null.");
-            }
+            TException ex = AssertThrows<TException>(actionThatFails, exceptionMessage);
 
-            if (innerInnerExceptionMessage != null)
+            Assert.NotNull(ex.InnerException);
+            Assert.True(
+                ex.InnerException is TInnerException or TAlternateInnerException,
+                $"Expected {typeof(TInnerException).Name} or {typeof(TAlternateInnerException).Name}, got: {ex.InnerException?.GetType()}");
+
+            if (innerExceptionMessage != null && ex.InnerException is TInnerException)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerException is null");
-                Assert.True(ex.InnerException.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerInnerException is null");
-                Assert.True(ex.InnerException.InnerException.Message.Contains(innerInnerExceptionMessage),
-                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerInnerExceptionMessage, ex.InnerException.InnerException.Message));
+                Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
+                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
 
             return ex;
         }
+
+        #nullable restore
 
         public static TException ExpectFailure<TException>(Action actionThatFails, string[] exceptionMessages, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
         {
@@ -1219,11 +1261,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
         }
 
-        public class AKVEventListener : BaseEventListener
-        {
-            public override string Name => AKVEventSourceName;
-        }
-
         public class MDSEventListener : BaseEventListener
         {
             private static Type s_activityCorrelatorType = Type.GetType("Microsoft.Data.Common.ActivityCorrelator, Microsoft.Data.SqlClient");
@@ -1317,7 +1354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return fqdn.ToString();
         }
-    }
 
-    #nullable disable
+        #nullable restore
+    }
 }

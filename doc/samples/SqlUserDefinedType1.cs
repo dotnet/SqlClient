@@ -1,3 +1,5 @@
+namespace SqlUserDefinedType1;
+
 //-----------------------------------------------------------------------------
 //<Snippet5>
 using System;

@@ -1,0 +1,13 @@
+# Suppressions for CodeQL analysis.  See:
+#
+# https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-docs/codeql/troubleshooting/bugs/generated-library-code
+
+path_classifiers:
+  # Suppress analysis for all of our test code.
+  #
+  # Ideally we would want to suppress specific issues or classes of issues, but CodeQL doesn't offer
+  # that level of granularity, so we have to suppress entire files and directories.
+  tests:
+    - "src/Microsoft.Data.SqlClient/tests/**/*.cs"
+    - "src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/*.cs"
+    - "src/Microsoft.Data.SqlClient.Extensions/Azure/test/*.cs"

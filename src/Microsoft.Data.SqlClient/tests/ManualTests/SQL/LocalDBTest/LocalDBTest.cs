@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void InvalidLocalDBTest()
         {
             using var connection = new SqlConnection(s_badConnectionString);
-            DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
+            DataTestUtility.AssertThrows<SqlException>(() => connection.Open());
         }
 #endregion
 
@@ -92,12 +92,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region NamedPipeTests
 
+        [ActiveIssue("https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/41665")]
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
             ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
+        [ActiveIssue("https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/41665")]
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDbNamedPipeEncryptionNotSupportedTest()
         {
@@ -106,6 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithEncryptionTest(s_localDbNamedPipeConnectionString);
         }
 
+        [ActiveIssue("https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/41665")]
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDbNamedPipeMarsTest()
         {

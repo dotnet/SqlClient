@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Common
 {

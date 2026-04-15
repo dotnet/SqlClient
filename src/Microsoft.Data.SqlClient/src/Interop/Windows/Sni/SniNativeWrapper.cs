@@ -14,9 +14,6 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
-using System.Security;
 using Interop.Windows;
 #endif
 
@@ -66,8 +63,6 @@ namespace Microsoft.Data.SqlClient
             s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
         
         #if NETFRAMEWORK
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal static uint SniAddProvider(SNIHandle pConn,
             Provider providerEnum,
             AuthProviderInfo authInfo)

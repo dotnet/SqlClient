@@ -2,7 +2,9 @@
 
 This document provides all the necessary details to build the driver and run tests present in the repository.
 
-## .NET SDK
+## Prerequisites
+
+### .NET SDK
 
 The projects in this repo require the .NET 10.0 SDK to build.  Please ensure you
 have the latest version of that SDK installed.
@@ -11,7 +13,7 @@ Tests and tools may require different .NET Runtimes that may be installed
 independently.  For example, tests targeting .NET 8.0 will need that runtime
 installed.
 
-## Visual Studio Pre-Requisites
+### Visual Studio
 
 This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
 
@@ -21,80 +23,7 @@ This project should be built with Visual Studio 2019+ for the best compatibility
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
 
-## MSBuild Reference
-
-### Targets
-
-The following build targets are defined in `build.proj`:
-
-|Target|Description|
-|-|-|
-|`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
-|`BuildNetCore`|Builds the .NET driver for all target frameworks.|
-|`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
-|`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
-|`BuildTestsNetCore`|Builds tests for the .NET driver.|
-|`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
-|`Clean`|Cleans all generated files.|
-|`Restore`|Restores NuGet packages.|
-|`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
-|`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
-|`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
-|`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
-|`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
-
-### Parameters
-
-The following parameters may be defined as MSBuild properties to configure the
-build:
-
-|Name|Supported Values|Default|Description|
-|-|-|-|-|
-|`Configuration`|`Debug`, `Release`|`Debug`|Sets the release configuration.|
-|`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using `BuildAllConfigurations` or an `AnyOS` specific target|The operating system to target.|
-|`Platform`|`AnyCPU`, `x86`, `x64`, `ARM`, `ARM64`|`AnyCPU`|May only be set when using package reference type or running tests.|
-|`TestSet`|`1`, `2`, `3`, `AE`|all|Build or run a subset of the manual tests. Omit (default) to target all tests.|
-|`DotnetPath`|Absolute file path to an installed `dotnet` version.|The system default specified by the path variable|Set to run tests using a specific dotnet version (e.g. C:\net6-win-x86\)|
-|`TF`|`net8.0`, `net462`, `net47`, `net471`, `net472`, `net48`, `net481`|`net8.0` in netcore, `net462` in netfx|Sets the target framework when building or running tests. Not applicable when building the drivers.|
-|`ResultsDirectory`|An absolute file path|./TestResults relative to current directory|Specifies where to write test results.|
-
-## Example Workflows using MSBuild (Recommended)
-
-Using the default configuration and running all tests:
-
-```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetCore
-msbuild -t:RunTests
-```
-
-Using the Release configuration:
-
-```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:Configuration=Release
-msbuild -t:BuildTestsNetCore -p:Configuration=Release
-msbuild -t:RunTests -p:Configuration=Release
-```
-
-Running only the unit tests:
-
-```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetCore
-msbuild -t:RunUnitTests
-```
-
-Using a specific .NET runtime to run tests:
-
-```bash
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetCore
-msbuild -t:RunTests -p:DotnetPath=C:\net8-win-x86\
-```
-
-### Running Manual Tests
-
-#### Pre-Requisites for running Manual tests
+### Manual Test Prerequisites
 
 Manual Tests require the below setup to run:
 
@@ -111,12 +40,12 @@ Manual Tests require the below setup to run:
   |TCPConnectionStringAASSGX | (Optional) Connection String for a TCP enabled SQL Server with a SGX Enclave and using Microsoft Azure Attestation (AAS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = AAS; Enclave Attestation Url = {AttestationURL};`|
   |EnclaveEnabled | Enables tests requiring an enclave-configured server.|
   |TracingEnabled | Enables EventSource related tests |
-  |AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Azure Active Directory (Azure AD) tenant |
-  |AADPasswordConnectionString | (Optional) Connection String for testing Azure Active Directory Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
+  |AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Entra ID (Azure AD) tenant |
+  |AADPasswordConnectionString | (Optional) Connection String for testing Entra ID Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
   |AADSecurePrincipalId | (Optional) The Application Id of a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Application ID} |
   |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
   |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
-  |AzureKeyVaultTenantId | (Optional) The Azure Active Directory tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
+  |AzureKeyVaultTenantId | (Optional) The Entra ID tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
   |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
   |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
@@ -125,77 +54,126 @@ Manual Tests require the below setup to run:
   |DNSCachingConnString | Connection string for a server that supports DNS Caching|
   |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
   |ManagedIdentitySupported | (Optional) When set to `false` **Managed Identity** related tests won't run. The default value is `true`. |
-  |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use on non-Azure bs files to compare test results. this is needed when testing against Managed Instances or TVP Tests will fail on Test set 3. The default value is `false`. |
+  |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use non-Azure bsl files to compare test results. This is needed when testing against Azure Managed Instances; otherwise TVP Tests will fail on TestSet 3. The default value is `false`. |
   |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
 
-## Example workflows using the Dotnet SDK
+## MSBuild Reference
+
+### Targets
+
+The following build targets are defined in `build.proj`:
+
+|Target|Description|
+|-|-|
+|`BuildAbstractions`|Restore and build the Abstractions package.|
+|`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
+|`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
+|`BuildAzure`|Restore and build the Azure package.|
+|`BuildLogging`|Restore and build the Logging package.|
+|`BuildNetCore`|Builds the .NET driver for all target frameworks.|
+|`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
+|`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
+|`BuildSqlClient`|Build the driver for all target frameworks.|
+|`Clean`|Cleans all generated files.|
+|`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
+|`PackAkvProvider`|Pack the Azure Key Vault Provider NuGet package (requires a prior build).|
+|`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
+|`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
+|`Restore`|Restores NuGet packages.|
+|`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
+|`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
+|`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
+|`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
+
+### Parameters
+
+The following parameters may be defined as MSBuild properties to configure the
+build:
+
+|Name|Supported Values|Default|Description|
+|-|-|-|-|
+|`Configuration`|`Debug`, `Release`|`Debug`|Sets the release configuration.|
+|`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using `BuildAllConfigurations` or an `AnyOS` specific target|The operating system to target.|
+|`Platform`|`AnyCPU`, `x86`, `x64`, `ARM`, `ARM64`|`AnyCPU`|May only be set when using package reference type or running tests.|
+|`TestSet`|`1`, `2`, `3`, `AE`, or any combination thereof|`''`|Build or run a subset of the manual tests. Omit (default) to run all tests.|
+|`DotnetPath`|Absolute file path to an installed `dotnet` version.|The system default specified by the path variable|Set to run tests using a specific dotnet version (e.g. C:\net6-win-x86\)|
+|`TF`|`net8.0`, `net462`, `net47`, `net471`, `net472`, `net48`, `net481`|`net9.0` in netcore, `net462` in netfx|Sets the target framework when building or running tests. Not applicable when building the drivers.|
+|`ResultsDirectory`|An absolute file path|./TestResults relative to current directory|Specifies where to write test results.|
+
+## Example Commands to Run Tests Using MSBuild (Recommended)
+
+Using the default configuration and running all tests:
+
+```bash
+msbuild -t:RunTests
+```
+
+Using the Release configuration:
+
+```bash
+msbuild -t:RunTests -p:Configuration=Release
+```
+
+Running only the unit tests:
+
+```bash
+msbuild -t:RunUnitTests
+```
+
+Using a specific .NET runtime to run tests:
+
+```bash
+msbuild -t:RunTests -p:DotnetPath=C:\net8-win-x86\
+```
+
+To run tests against a specific version of .NET/.NET Framework, set the `-p:TF` parameter.
+
+```bash
+msbuild -t:RunTests -p:TF=net8.0
+msbuild -t:RunTests -p:TF=net462
+```
+
+## Example Commands to Run Tests using `dotnet`
+
+Under the hood, the MSBuild commands to run tests use `dotnet` commands. But, if you wish to run
+them without the overhead of wrapping/unwrapping in MSBuild, you can run them directly.
+
+To change the processor architecture that runs the test (where possible, ie, x86 on x64), use the
+appropriate `dotnet` executable.
+
+By default, the tests will be executed on all supported .NET/.NET framework versions. To run on a
+specific version, pass the `-f` parameter with the desired version (eg `net9.0`).
+
+The `--filter` parameter is used to select which tests run. The default `category!=failing&
+category!=flaky&category!=interactive` prevents tests that are known to be failing or flaky from
+running. To run a specific test, use `FullyQualifiedName=[fully qualified name of the test method]`
+as the filter parameter. To run all possible tests, even known failing and flaky ones, simply omit
+the filter parameter. Please note, however, that this will still omit tests that cannot run on the
+current platform or with the current test configuration (eg, Windows tests on Linux, or SQL DB tests
+when Azure Synapse is configured).
 
 ### Run Functional Tests
 
-- Windows (`netfx x86`):
-
 ```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="x86" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
-```
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
+  -p:Configuration=Release \
+  --filter "category!=failing&category!=flaky&category!=interactive"
 
-- Windows (`netfx x64`):
-
-```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="x64" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
-```
-
-- AnyCPU:
-
-  Project reference only builds Driver with `AnyCPU` platform, and underlying process decides to run the tests with a compatible architecture (x64, x86, ARM64).
-
-  Windows (`netcoreapp`):
-
-```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
-```
-
-  Unix (`netcoreapp`):
-
-```bash
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
 
 ### Run Manual Tests
 
-- Windows (`netfx x86`):
-
 ```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="x86" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
-  ```
-
-- Windows (`netfx x64`):
-
-```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="x64" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
+dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" \
+  -p:Configuration=Release \
+  --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
-- Windows (`netfx`):
-
+### Run Unit Tests
 ```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
-```
-
-- Windows (`netcoreapp`):
-
-```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
-```
-
-- Unix (`netcoreapp`):
-
-```bash
-dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
-```
-
-## Run A Single Test
-
-```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
+dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" \
+  -p:Configuration=Release \
+  --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
 ## Testing with Package References
@@ -209,64 +187,29 @@ dependencies.
 Alternatively, the `ReferenceType` build property may be specified with a value
 of `Package`.  This will change inter-component dependencies to use
 `<PackageReference>` dependencies, and require that dependent components be
-built and packaged before building the depending component.  In this scenario,
-the root `NuGet.config` file must be updated to include the following entry
-under the `<packageSources>` element:
-
-```xml
-<configuration>
-  <packageSources>
-    ...
-    <add key="local" value="packages/" />
-  </packageSources>
-</configuration>
-```
-
-As a convenience, a `NuGet.config.local` file is supplied with the above
-package source already present.  You may simply copy it over `NuGet.config`
-when using `Package` references.
+built and packaged before building the depending component.  This will generate NuGet
+packages in the root packages/ directory, and will be automatically searched by NuGet
+(see our root `NuGet.config`).
 
 Then, you can specify `Package` references be used, for example:
 
 ```bash
-cp NuGet.config.local NuGet.config
-dotnet build -t:BuildAll -p:ReferenceType=Package
-dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
+dotnet build -t:BuildLogging,PackLogging
+dotnet build -t:BuildSqlServer,PackSqlServer
+dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
+dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
+dotnet build -t:BuildSqlClient -p:ReferenceType=Package
 dotnet build -t:GenerateMdsPackage
+dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
 dotnet build -t:GenerateAkvPackage
-dotnet build -t:BuildTestsNetCore -p:ReferenceType=Package
 ```
 
 The above will build the MDS and AKV components, place their NuGet packages into
-the `packages/` directory, and then build the tests using those packages.
+the `packages/` directory.
 
 A non-AnyCPU platform reference can only be used with package reference type.
 Otherwise, the specified platform will be replaced with AnyCPU in the build
 process.
-
-### Building Tests with ReferenceType
-
-For .NET:
-
-```bash
-# Project is the default reference type.  The below commands are equivalent:
-msbuild -t:BuildTestsNetCore
-msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
-
-# Package reference type:
-msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
-```
-
-For .NET Framework:
-
-```bash
-# Project is the default reference type.  The below commands are equivalent:
-msbuild -t:BuildTestsNetFx -p:TF=net462
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Project
-
-# Package reference type:
-msbuild -t:BuildTestsNetFx -p:TF=net462 -p:ReferenceType=Package
-```
 
 ### Running Tests with Reference Type
 
@@ -276,31 +219,6 @@ Provide property to `dotnet test` commands for testing desired reference type.
 dotnet test -p:ReferenceType=Project ...
 ```
 
-## Testing with Custom TargetFramework (traditional)
-
-Tests can be built and run with custom Target Frameworks. See the below examples.
-
-### Building Tests with custom target framework
-
-```bash
-# Build the tests for custom .NET Framework target
-msbuild -t:BuildTestsNetFx -p:TF=net462
-```
-
-```bash
-# Build the tests for custom .NET target
-msbuild -t:BuildTestsNetCore -p:TF=net8.0
-```
-
-### Running Tests with custom target framework (traditional)
-
-```bash
-# Run tests with custom .NET Framework target
-dotnet test -p:TargetNetFxVersion=net462 ...
-
-# Run tests with custom .NET target
-dotnet test -p:TargetNetCoreVersion=net8.0 ...
-```
 
 ## Using Managed SNI on Windows
 
@@ -331,19 +249,18 @@ When connecting to a server, if a protocol lower than TLS 1.2 is negotiated, a s
 ### Using VSTest
 
 ```bash
-dotnet test <test_properties...> --collect:"Code Coverage"
+dotnet test [test_properties...] --collect:"Code Coverage"
 ```
 
 ### Using Coverlet Collector
 
 ```bash
-dotnet test <test_properties...> --collect:"XPlat Code Coverage"
+dotnet test [test_properties...] --collect:"XPlat Code Coverage"
 ```
 
 ## Run Performance Tests
 
-The performance tests live here:
-`src\Microsoft.Data.SqlClient\tests\PerformanceTests\`
+The performance tests live here: `src\Microsoft.Data.SqlClient\tests\PerformanceTests\`
 
 They can be run from the command line by following the instructions below.
 

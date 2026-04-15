@@ -4,75 +4,133 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
+  - name: abstractionsArtifactsName
+    type: string
+
+  # The version of the Abstractions package to depend on when referenceType is 'Package'.
+  - name: abstractionsPackageVersion
+    type: string
+
+  # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The version of the Logging package to depend on when referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+
+  # The configuration properties to set in the config file.
+  #
+  # GOTCHA: The following keys are used in template expressions and must be
+  # specified as boolean strings 'true' or 'false'.  They cannot be specified as
+  # runtime variables like $(SomeBooleanVar), since those are expanded after
+  # template compilation and will literally be "$(SomeBooleanVar)" during
+  # template expansion.
+  #
+  #   EnclaveEnabled
+  #   IsAzureSynapse
+  #   IsDNSCachingSupportedCR
+  #   IsDNSCachingSupportedTR
+  #   ManagedIdentitySupported
+  #   SupportsFileStream
+  #   SupportsIntegratedSecurity
+  #   TracingEnabled
+  #
   - name: configProperties
     type: object
     default: {} # - key: 'value'
 
+  # The type of SQL Server to configure.
   - name: configSqlFor
-    type: string # local, azure, or enclave
+    type: string
+    values:
+      - azure
+      - enclave
+      - local
     default: local
 
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
 
+  # True to enable testing for the x64 architecture.
   - name: enableX64Test
     type: boolean
     default: true
 
+  # True to enable testing for the x86 architecture.
   - name: enableX86Test
     type: boolean
     default: false
 
+  # True if this job will run in a generic Azure Pipelines hosted pool; false to run in a custom 1ES
+  # pool.
   - name: hostedPool
     type: boolean
     default: false
 
+  # The VM image to use, which must exist in the specified pool.
   - name: image
     type: string
 
+  # The display name for this job.
   - name: jobDisplayName
     type: string
 
+  # The name of the SqlClient pipeline artifacts to download.
   - name: mdsArtifactsName
     type: string
 
+  # The version of the SqlClient package to depend on when referenceType is 'Package'.
   - name: mdsPackageVersion
     type: string
 
+  # TODO: What is this for?
   - name: netcoreVersionTestUtils
     type: string
 
+  # The OS to build and run the tests for.
   - name: operatingSystem
     type: string
-    default: ''
+    values:
+      - Linux
+      - Mac
+      - Windows
+    default: Windows
 
+  # The C# build configuration to build (e.g. Debug or Release).
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # The name of the Azure Pipelines pool to use.
   - name: poolName
     type: string
 
+  # Steps to run before each build, if any.
   - name: prebuildSteps
     type: stepList
     default: []
 
-  - name: publishTestResults
-    type: boolean
-    default: false
-
+  # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
     values:
-      - Project
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
+      - Project
 
+  # The target framework to build and run tests for.
   - name: targetFramework
     type: string
 
+  # The test set to run.
   - name: testSet
     type: string
 
@@ -85,9 +143,14 @@ parameters:
     type: boolean
     default: false
 
+  # True to use managed SNI, where applicable.
   - name: usemanagedSNI
     type: boolean
     default: false
+
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
 
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
@@ -110,9 +173,21 @@ jobs:
 
   steps:
 
-  # If we're testing in Package mode, download the MDS package
+  # If we're testing in Package mode, download the Abstractions and MDS package
   # artifacts and put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Abstractions Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Logging Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.loggingArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
     - task: DownloadPipelineArtifact@2
       displayName: Download MDS Package Artifacts
       inputs:
@@ -134,34 +209,19 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  - powershell: |
-      $guid = [guid]::NewGuid().ToString()
-      Write-Host "##vso[task.setvariable variable=password;issecret=true]$guid"
-    displayName: 'Generate Password'
-
-  - powershell: |
-      Write-Host "Password: $(password)" # prints *** to logs when set
-
-      $variableValue = "$(password)"
-      if (-not [string]::IsNullOrEmpty($variableValue)) {
-          Write-Output "The password exists with a value."
-      } else {
-          Write-Output "The password does not exist or is empty."
-      }
-    displayName: 'Verify Password'
-
   - ${{ if eq(parameters.referenceType, 'Project') }}:
     - template: ../steps/ci-project-build-step.yml@self
       parameters:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        referenceType: Project
+        assemblyBuildNumber: $(assemblyBuildNumber)
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
       parameters:
         debug: ${{ parameters.debug }}
+        saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
         ${{ if parameters.configProperties.TCPConnectionString }}:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
@@ -238,6 +298,7 @@ jobs:
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
           netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
+          saPassword: ${{ parameters.saPassword }}
           ${{ if parameters.configProperties.instanceName }}:
             instanceName: ${{ parameters.configProperties.instanceName }}
           ${{ if parameters.configProperties.user }}:
@@ -265,15 +326,32 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
-    - template: /eng/pipelines/common/templates/steps/build-all-tests-step.yml@self # build tests
-      parameters:
-        targetFramework: ${{ parameters.targetFramework }}
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        testSet: ${{ parameters.testSet }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-        ${{ if ne(parameters.operatingSystem, 'Windows') }}:
-          OSGroup: Unix
+  # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
+  # is only used to execute the test runtime (framework to test is specified in build params), so
+  # it should be acceptable to just install a specific version in all cases.
+  # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
+  #    earlier in the job. There has to be a cleaner way of doing this.
+  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
+    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
+      # Install the .NET SDK and Runtimes for x86.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: x86
+          debug: ${{ parameters.debug }}
+          installDir: $(dotnetx86RootPath)
+          runtimes: [8.x, 9.x]
+
+  # Ensure TestResults directory exists so that publish steps don't fail when
+  # tests are skipped due to a setup failure.
+  - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+    displayName: 'Create TestResults Directory'
+
+  # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
+  # install, etc.) completed successfully.  Test steps condition on this variable
+  # so they are skipped when setup fails, yet remain independent of each
+  # other's results.
+  - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
+    displayName: 'Gate: Mark Setup Succeeded'
 
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests
@@ -284,22 +362,11 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
-    # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
-    # is only used to execute the test runtime (framework to test is specified in build params), so
-    # it should be acceptable to just install a specific version in all cases.
-    # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
-    #    earlier in the job. There has to be a cleaner way of doing this.
-    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
-      # Install the .NET SDK and Runtimes for x86.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
-        parameters:
-          architecture: x86
-          debug: ${{ parameters.debug }}
-          installDir: $(dotnetx86RootPath)
-          runtimes: [8.x, 9.x]
-
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
@@ -310,11 +377,13 @@ jobs:
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
+        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
 
-  - ${{ if eq(parameters.publishTestResults, true) }}:
-    - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
-      parameters:
-        debug: ${{ parameters.debug }}
-        targetFramework: ${{ parameters.targetFramework }}
-        operatingSystem: ${{ parameters.operatingSystem }}
-        buildConfiguration: ${{ parameters.buildConfiguration }}
+  - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      targetFramework: ${{ parameters.targetFramework }}
+      operatingSystem: ${{ parameters.operatingSystem }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}

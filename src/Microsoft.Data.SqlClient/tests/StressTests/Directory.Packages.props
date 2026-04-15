@@ -11,31 +11,8 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- We enable transitive pinning here because we are an application project. -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-  
-  <!--
-    If the $(MdsPackageVersion) property is set, typically for CI builds, use
-    that as the MDS version.  Otherwise, use a specific nuget.org published
-    version.
-  -->
-  <Choose>
-    <When Condition="'$(MdsPackageVersion)' != ''">
-      <PropertyGroup>
-        <MdsVersion>$(MdsPackageVersion)</MdsVersion>
-      </PropertyGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <!-- <MdsVersion>5.1.9</MdsVersion> -->
-        <!-- <MdsVersion>6.0.5</MdsVersion> -->
-        <MdsVersion>6.1.4</MdsVersion>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
-
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(MdsVersion)" />
-  </ItemGroup>
 
 </Project>

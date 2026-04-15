@@ -27,6 +27,7 @@ using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -1750,7 +1751,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            using TryEventScope _ = TryEventScope.Create(nameof(TdsParser));
+            using SqlClientEventScope _ = SqlClientEventScope.Create(nameof(TdsParser));
 #if DEBUG
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
@@ -3385,6 +3386,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_ROUTING:
+                    {
                         ushort newLength;
                         result = stateObj.TryReadUInt16(out newLength);
                         if (result != TdsOperationStatus.Done)
@@ -3428,8 +3430,22 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+                        // Set the total length of the token
+                        // total = headers + size of new value + size of old value
+                        // headers = token id+newLengthHeader+oldLengthHeader = sizeof(byte) + 2*sizeof(UInt16) = 5
+                        env._length = env._newLength + oldLength + 5;
                         break;
+                    }
+
+                    case TdsEnums.ENV_ENHANCEDROUTING:
+                    {
+                        result = TryProcessEnhancedRoutingToken(env, stateObj);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        break;
+                    }
 
                     default:
                         Debug.Fail("Unknown environment change token: " + env._type);
@@ -3439,6 +3455,95 @@ namespace Microsoft.Data.SqlClient
             }
 
             sqlEnvChange = head;
+            return TdsOperationStatus.Done;
+        }
+
+        /// <summary>
+        /// Processes an enhanced routing ENVCHANGE token from the TDS stream.
+        /// This token contains the routing information for the connection, including the protocol,
+        /// port, server name, and database name. The enhanced routing token has the following structure:
+        /// <list type="bullet">
+        ///     <item>NewValueLength (USHORT) - length of the new value</item>
+        ///     <item>Protocol (BYTE) - routing protocol (must be 0 = TCP)</item>
+        ///     <item>Port (USHORT) - routing port number</item>
+        ///     <item>AlternateServerNameLength (USHORT) - length of the alternate server name in characters</item>
+        ///     <item>AlternateServerName (UNICODE_STRING) - the server name to route to</item>
+        ///     <item>AlternateDatabaseNameLength (USHORT) - length of the alternate database name in characters</item>
+        ///     <item>AlternateDatabaseName (UNICODE_STRING) - the database name to route to</item>
+        ///     <item>OldValueLength (USHORT) - length of the old value</item>
+        ///     <item>OldValue (BYTE[]) - old value (skipped)</item>
+        /// </list>
+        /// </summary>
+        private TdsOperationStatus TryProcessEnhancedRoutingToken(SqlEnvChange env, TdsParserStateObject stateObj)
+        {
+            ushort newLength;
+            TdsOperationStatus result = stateObj.TryReadUInt16(out newLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            env._newLength = newLength;
+
+            byte protocol;
+            result = stateObj.TryReadByte(out protocol);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort port;
+            result = stateObj.TryReadUInt16(out port);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort serverLen;
+            result = stateObj.TryReadUInt16(out serverLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string serverName;
+            result = stateObj.TryReadString(serverLen, out serverName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            ushort databaseLen;
+            result = stateObj.TryReadUInt16(out databaseLen);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            string databaseName;
+            result = stateObj.TryReadString(databaseLen, out databaseName);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            env._newRoutingInfo = new RoutingInfo(protocol, port, serverName, databaseName);
+
+            ushort oldLength;
+            result = stateObj.TryReadUInt16(out oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            result = stateObj.TrySkipBytes(oldLength);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+
+            // 5 = 2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+            env._length = env._newLength + oldLength + 5;
+
             return TdsOperationStatus.Done;
         }
 
@@ -9190,6 +9295,27 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Writes the Enhanced Routing Support feature request to the physical state object.
+        /// The request does not contain a payload.
+        /// </summary>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        internal int WriteEnhancedRoutingSupportFeatureRequest(bool write)
+        {
+            const int len = 5;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT);
+                // We don't send any data
+                WriteInt(0, _physicalStateObj);
+            }
+
+            return len;
+        }
+
+        /// <summary>
         ///   Writes the User Agent feature request to the physical state
         ///   object.  The request includes the feature ID, feature data length,
         ///   and UCS-2 little-endian encoded payload.
@@ -9537,7 +9663,7 @@ namespace Microsoft.Data.SqlClient
                 checked
                 {
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
-                    if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
                     {
                         length += WriteUserAgentFeatureRequest(userAgent, write);
                     }
@@ -9585,6 +9711,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                     {
                         length += WriteVectorSupportFeatureRequest(write);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.EnhancedRoutingSupport) != 0)
+                    {
+                        length += WriteEnhancedRoutingSupportFeatureRequest(write);
                     }
 
                     length++; // for terminator

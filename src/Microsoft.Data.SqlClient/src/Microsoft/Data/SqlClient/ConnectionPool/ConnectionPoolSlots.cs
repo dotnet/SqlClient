@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
                 }
 
-                throw new InvalidOperationException("Couldn't find an empty slot.");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolNoEmptySlot));
             }
             catch
             {

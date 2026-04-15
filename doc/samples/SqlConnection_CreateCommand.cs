@@ -1,3 +1,5 @@
+namespace SqlConnection_CreateCommand;
+
 using System.Data;
 // <Snippet1>
 using Microsoft.Data.SqlClient;

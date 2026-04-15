@@ -1,0 +1,35 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Common variables shared across all OneBranch Official pipelines.
+
+variables:
+  - name: CommitHead
+    value: '' # the value will be extracted from the repo's head
+
+  ##########################################################################
+  # "Well-Known" Variables that are ok to use directly, anywhere in the pipeline.
+
+  # The root of our repo.
+  - name: REPO_ROOT
+    value: $(Build.SourcesDirectory)
+
+  # This is where our C# projects place their build outputs (see Directory.Build.props
+  # <ArtifactsPath>). We exclude the reference type here since Official pipelines always use
+  # Package mode.
+  - name: BUILD_OUTPUT
+    value: $(REPO_ROOT)/artifacts
+
+  # This is where downloaded artifacts should be placed. This will enable other build jobs to
+  # do local NuGet installations with packages built by earlier stages.
+  - name: PACK_INPUT
+    value: $(REPO_ROOT)/packages
+
+  # This is where our C# projects place their NuGet package outputs. This is intentionally
+  # separated from packages/ (where downloaded pipeline artifacts go) so that ESRP signing and
+  # OneBranch artifact publishing only operate on packages built by the current job.
+  - name: PACK_OUTPUT
+    value: $(REPO_ROOT)/output

@@ -17,10 +17,10 @@ using Interop.Windows.Kernel32;
 using Interop.Windows.NtDll;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Win32.SafeHandles;
 
 #if NETFRAMEWORK
-using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using System.Text;
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlTypes
             #endif
 
             long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(scopeFormat, _objectId, (int)access, (int)options, path);
-            using (TryEventScope.Create(scopeId))
+            using (SqlClientEventScope.Create(scopeId))
             {
                 //-----------------------------------------------------------------
                 // precondition validation
@@ -510,10 +510,6 @@ namespace Microsoft.Data.SqlTypes
         }
         #endif
 
-        #if NETFRAMEWORK
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        #endif
         private static string GetFullPathInternal(string path)
         {
             //-----------------------------------------------------------------
@@ -562,8 +558,6 @@ namespace Microsoft.Data.SqlTypes
         /// Do not use this in netcore - Path.GetFullPathName does not require additional
         /// permissions like netfx does.
         /// </remarks>
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
         private static string GetFullPathNameNetfx(string path)
         {
             // In the most common case where (SqlFileStream),the 'full path' is expected to be the

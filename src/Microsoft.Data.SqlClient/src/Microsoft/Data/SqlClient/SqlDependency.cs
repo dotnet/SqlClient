@@ -13,12 +13,12 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
-using System.Runtime.Versioning;
 using System.Security.Permissions;
 #if _WINDOWS
 using Interop.Windows.Sni;
@@ -455,10 +455,6 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
         // Method to obtain AppDomain reference and then obtain the reference to the process wide dispatcher for
         // Start() and Stop() method calls on the individual SqlDependency instances.
-        // SxS: this method retrieves the primary AppDomain stored in native library. Since each System.Data.dll has its own copy of native
-        // library, this call is safe in SxS
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static void ObtainProcessDispatcher()
         {
             byte[] nativeStorage = SqlDependencyProcessDispatcherStorage.NativeGetData();
@@ -543,7 +539,7 @@ namespace Microsoft.Data.SqlClient
         private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer serializer, MemoryStream stream)
         {
             object refResult = serializer.ReadObject(stream);
-            var result = RemotingServices.Unmarshal((refResult as SqlClientObjRef).GetObjRef());
+            var result = RemotingServices.Unmarshal(((SqlClientObjRef)refResult).GetObjRef());
             return result as SqlDependencyProcessDispatcher;
         }
 #endif // NETFRAMEWORK
@@ -821,28 +817,20 @@ namespace Microsoft.Data.SqlClient
                 {
                     Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash;
 
-                    if (!s_serverUserHash.ContainsKey(server))
+                    if (!s_serverUserHash.TryGetValue(server, out identityDatabaseHash))
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerUserHash|DEP> Hash did not contain server, adding.");
                         identityDatabaseHash = new Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>();
                         s_serverUserHash.Add(server, identityDatabaseHash);
                     }
-                    else
-                    {
-                        identityDatabaseHash = s_serverUserHash[server];
-                    }
 
                     List<DatabaseServicePair> databaseServiceList;
 
-                    if (!identityDatabaseHash.ContainsKey(identityUser))
+                    if (!identityDatabaseHash.TryGetValue(identityUser, out databaseServiceList))
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerUserHash|DEP> Hash contained server but not user, adding user.");
                         databaseServiceList = new List<DatabaseServicePair>();
                         identityDatabaseHash.Add(identityUser, databaseServiceList);
-                    }
-                    else
-                    {
-                        databaseServiceList = identityDatabaseHash[identityUser];
                     }
 
                     if (!databaseServiceList.Contains(databaseService))
@@ -874,15 +862,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash;
 
-                    if (s_serverUserHash.ContainsKey(server))
+                    if (s_serverUserHash.TryGetValue(server, out identityDatabaseHash))
                     {
-                        identityDatabaseHash = s_serverUserHash[server];
-
                         List<DatabaseServicePair> databaseServiceList;
 
-                        if (identityDatabaseHash.ContainsKey(identityUser))
+                        if (identityDatabaseHash.TryGetValue(identityUser, out databaseServiceList))
                         {
-                            databaseServiceList = identityDatabaseHash[identityUser];
 
                             int index = databaseServiceList.IndexOf(databaseService);
                             if (index >= 0)
@@ -938,7 +923,9 @@ namespace Microsoft.Data.SqlClient
 
                 lock (s_serverUserHash)
                 {
-                    if (!s_serverUserHash.ContainsKey(server))
+                    Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash;
+
+                    if (!s_serverUserHash.TryGetValue(server, out identityDatabaseHash))
                     {
                         if (0 == s_serverUserHash.Count)
                         {
@@ -946,7 +933,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - no start calls have been made, about to throw.");
                             throw SQL.SqlDepDefaultOptionsButNoStart();
                         }
-                        else if (!string.IsNullOrEmpty(failoverServer) && s_serverUserHash.ContainsKey(failoverServer))
+                        else if (!string.IsNullOrEmpty(failoverServer) && s_serverUserHash.TryGetValue(failoverServer, out identityDatabaseHash))
                         {
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> using failover server instead\n");
                             server = failoverServer;
@@ -958,11 +945,9 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash = s_serverUserHash[server];
-
                     List<DatabaseServicePair> databaseList = null;
 
-                    if (!identityDatabaseHash.ContainsKey(identityUser))
+                    if (!identityDatabaseHash.TryGetValue(identityUser, out databaseList))
                     {
                         if (identityDatabaseHash.Count > 1)
                         {
@@ -980,10 +965,6 @@ namespace Microsoft.Data.SqlClient
                                 break; // Only iterate once.
                             }
                         }
-                    }
-                    else
-                    {
-                        databaseList = identityDatabaseHash[identityUser];
                     }
 
                     DatabaseServicePair pair = new(database, null);
