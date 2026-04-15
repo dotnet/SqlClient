@@ -88,10 +88,13 @@ jobs:
 
     variables:
 
-      # Import the variable group that provides SQL Server configuration variables used by the
+      # Import the variable group that provides SQL Server build properties used by the
       # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
-      # x86AliasRegistryPath, SQLAliasName).
-      - group: ADO Test Configuration Properties
+      # x86AliasRegistryPath, SQLAliasName, SQLAliasPort).
+      - group: ADO Build properties
+
+      # Import the variable group that provides SQL Server test configuration variables.
+      - group: ADO Test Configuration properties
 
       # The directory where dotnet artifacts will be staged.  Not to be
       # confused with pipeline artifacts.
