@@ -48,10 +48,11 @@ parameters:
     type: object
     default: [net462]
 
-  # The list of .NET runtimes to test against.
+  # The list of .NET runtimes to test against.  These must align with the TargetFrameworks defined
+  # in the stress test Directory.Build.props and the TFMs that SqlClient ships.
   - name: netTestRuntimes
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net8.0, net9.0]
 
 stages:
   - stage: stress_tests_stage
@@ -63,6 +64,11 @@ stages:
       # Bring the SA password from the secrets_stage into scope here.
       - name: saPassword
         value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
+
+      # Import the variable group that provides SQL Server configuration variables used by the
+      # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
+      # x86AliasRegistryPath, SQLAliasName).
+      - group: ADO Test Configuration Properties
 
     jobs:
 

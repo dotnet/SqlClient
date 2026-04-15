@@ -8,13 +8,13 @@
 #
 # Public project:
 #   Triggering pipelines: PR-SqlClient-Project, CI-SqlClient (branch main only)
-#   Pipeline name:        Stress-SqlClient
-#   Pipeline URL:         TODO: Create the Azure DevOps pipeline.
+#   Pipeline name:        sqlclient-stress
+#   Pipeline URL:         https://sqlclientdrivers.visualstudio.com/public/_build?definitionId=2250
 #
 # ADO.Net project:
 #   Triggering pipeline:  MDS Main CI (branch internal/main only)
-#   Pipeline name:        Stress-SqlClient
-#   Pipeline URL:         TODO: Create the Azure DevOps pipeline.
+#   Pipeline name:        sqlclient-stress
+#   Pipeline URL:         TODO: add URL when pipeline is created
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)

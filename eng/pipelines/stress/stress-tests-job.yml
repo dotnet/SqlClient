@@ -153,6 +153,12 @@ jobs:
             # Write the JSON content to the config file.
             $content | Out-File -FilePath "config.json"
 
+      # Authenticate with NuGet feeds so that upstream packages (e.g. runtime host packs) can be
+      # fetched through the ADO Artifacts feed.  This is required on hosted pool agents (macOS)
+      # that do not have pre-configured feed credentials.
+      - task: NuGetAuthenticate@1
+        displayName: Authenticate NuGet feeds
+
       # Build the project.
       - task: DotNetCoreCLI@2
         displayName: Build Project
