@@ -17,6 +17,12 @@ parameters:
     type: string
 
 steps:
+  - task: DownloadSecureFile@1
+    displayName: 'Download Signing Key (Roslyn Analyzers)'
+    inputs:
+      secureFile: 'netfxKeypair.snk'
+    name: analyzerKeyFile
+
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
     displayName: 'Roslyn Analyzers: build.proj BuildAllConfigurations'
     inputs:
@@ -28,5 +34,6 @@ steps:
         -p:Configuration=Release
         -p:GenerateNuget=false
         -p:ReferenceType=Package
+        -p:SigningKeyPath="$(analyzerKeyFile.secureFilePath)"
       msBuildVersion: 17.0
       setupCommandLinePicker: vs2022

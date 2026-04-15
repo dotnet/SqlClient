@@ -26,6 +26,12 @@ parameters:
     type: string
 
 steps:
+  - task: DownloadSecureFile@1
+    displayName: 'Download Signing Key (Roslyn Analyzers)'
+    inputs:
+      secureFile: 'netfxKeypair.snk'
+    name: analyzerKeyFile
+
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
     displayName: 'Roslyn Analyzers: build.proj ${{ parameters.buildTarget }}'
     inputs:
@@ -36,4 +42,5 @@ steps:
         msbuild
         $(REPO_ROOT)\build.proj
         -t:${{ parameters.buildTarget }}
+        -p:SigningKeyPath="$(analyzerKeyFile.secureFilePath)"
         ${{ parameters.msBuildArguments }}

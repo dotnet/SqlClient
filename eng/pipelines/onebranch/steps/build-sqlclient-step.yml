@@ -7,6 +7,9 @@
 # This collection of steps builds Microsoft.Data.SqlClient via build.proj
 
 parameters:
+  - name: sqlClientAssemblyFileVersion
+    type: string
+
   - name: sqlClientPackageVersion
     type: string
 
@@ -25,7 +28,7 @@ steps:
       msbuildArguments: >-
         -t:BuildAllConfigurations
         -p:GenerateNuget=false
-        -p:AssemblyFileVersion="${{ parameters.sqlClientPackageVersion }}.$(Build.BuildNumber)"
+        -p:AssemblyFileVersion="${{ parameters.sqlClientAssemblyFileVersion }}"
         -p:ReferenceType=Package
         -p:SigningKeyPath="$(keyFile.secureFilePath)"
 

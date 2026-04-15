@@ -184,7 +184,7 @@ jobs:
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
         inputs:
-          SourceFolder: $(BUILD_OUTPUT)/Package/bin
+          SourceFolder: $(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin
           Contents: "**/${{ parameters.packageFullName }}.dll"
           TargetFolder: ${{ variables.ob_sdl_apiscan_softwareFolder }}
           # We must preserve the folder structure since our C# projects may produce multiple

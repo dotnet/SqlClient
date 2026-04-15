@@ -107,11 +107,11 @@ stages:
   # Stage 1: Independent packages (no cross-package dependencies)
   # SqlServer.Server builds here.
   # ====================================================================
-  - stage: build_independent
-    displayName: "Build Independent Packages"
+  - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+    - stage: build_independent
+      displayName: "Build Independent Packages"
 
-    jobs:
-      - ${{ if eq(parameters.buildSqlServerServer, true) }}:
+      jobs:
         - template: /eng/pipelines/onebranch/jobs/build-signed-csproj-package-job.yml@self
           parameters:
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'

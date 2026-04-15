@@ -94,6 +94,7 @@ jobs:
       # Perform the actual build
       - template: /eng/pipelines/onebranch/steps/build-sqlclient-step.yml@self
         parameters:
+          sqlClientAssemblyFileVersion: '${{ parameters.sqlClientAssemblyFileVersion }}'
           sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
       # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
