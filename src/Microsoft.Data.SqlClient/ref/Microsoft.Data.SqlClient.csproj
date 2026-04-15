@@ -52,9 +52,6 @@
   <Target Name="TrimDocsForIntelliSense"
           AfterTargets="Build"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
-    <!-- @TODO: This doesn't handle non-standard dotnet paths. -->
-    <Message Text=">>> Restoring dotnet tool for powershell execution." />
-    <Exec Command="dotnet tool restore" />
 
     <PropertyGroup>
       <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
