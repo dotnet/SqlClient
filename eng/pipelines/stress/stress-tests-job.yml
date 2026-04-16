@@ -174,10 +174,15 @@ jobs:
           projects: $(project)
           arguments: $(dotnetArguments)
 
+      # Set a flag so test steps can distinguish a build failure from a test failure.
+      - script: echo "##vso[task.setvariable variable=buildSucceeded]true"
+        displayName: Set build success flag
+
       # Run the stress tests for each .NET runtime.
       - ${{ each runtime in parameters.netTestRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
+          condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           inputs:
             command: run
             projects: $(project)
@@ -187,6 +192,7 @@ jobs:
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
+          condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           inputs:
             command: run
             projects: $(project)
