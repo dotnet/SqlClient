@@ -16,8 +16,8 @@ on:
     branches: [ "release/5.1" ]
   pull_request:
     branches: [ "release/5.1" ]
-  schedule:
-    - cron: '33 23 * * 6'
+  # schedule:
+  #   - cron: '33 23 * * 6'
 
 jobs:
   analyze:
