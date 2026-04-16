@@ -226,8 +226,8 @@ extends:
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
-          symbolsPublishServer: '$(SymbolsPublishServer)'
-          symbolsPublishTokenUri: '$(SymbolsPublishTokenUri)'
+          symbolsPublishServer: '$(SymbolsPublishServerPPE)'
+          symbolsPublishTokenUri: '$(SymbolsPublishTokenUriPPE)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
