@@ -367,12 +367,8 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -398,12 +394,8 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -417,5 +409,5 @@
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
-  
+
 </Project>

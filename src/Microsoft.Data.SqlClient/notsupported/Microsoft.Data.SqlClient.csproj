@@ -129,9 +129,7 @@
     <Reference Include="System.Xml" />
 
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
-                      PrivateAssets="all"
-                      IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />

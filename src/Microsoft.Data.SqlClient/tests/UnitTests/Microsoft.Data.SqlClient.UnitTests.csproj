@@ -56,12 +56,8 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
@@ -76,12 +72,8 @@
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
