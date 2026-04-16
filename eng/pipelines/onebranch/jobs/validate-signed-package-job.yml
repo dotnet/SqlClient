@@ -120,42 +120,44 @@ jobs:
         displayName: "Install NuGet Package"
 
       # Find all DLL files in the installed NuGet package, verify each is signed with a strong name
-      - powershell: |
-          # Propagate pipeline to PS variables #############################
-          $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
-          echo "nugetPackageInstallPath= $nugetPackageInstallPath"
+      # NOTE: Assemblies will only be strong-name signed on official builds.
+      - ${{ if eq(parameters.isOfficial, true) }}:
+          - powershell: |
+              # Propagate pipeline to PS variables #############################
+              $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
+              echo "nugetPackageInstallPath= $nugetPackageInstallPath"
 
-          # Verify strong name signing #####################################
-          echo "> 1. Verifying strong name signing of DLLs ..."
+              # Verify strong name signing #####################################
+              echo "> 1. Verifying strong name signing of DLLs ..."
 
-          # @TODO: This path seems brittle to VS upgrades, can we make it more flexible?
-          $snPath = "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe"
+              # @TODO: This path seems brittle to VS upgrades, can we make it more flexible?
+              $snPath = "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe"
 
-          $dllFiles = Get-ChildItem -Path $nugetPackageInstallPath -Recurse -Filter *.dll
-          $badDlls = @()
-          foreach ($file in $dllFiles)
-          {
-            # Run sn.exe to verify the strong name on each dll
-            $result = & $snPath -vf $file.FullName
-            Write-OutPut $result
+              $dllFiles = Get-ChildItem -Path $nugetPackageInstallPath -Recurse -Filter *.dll
+              $badDlls = @()
+              foreach ($file in $dllFiles)
+              {
+                # Run sn.exe to verify the strong name on each dll
+                $result = & $snPath -vf $file.FullName
+                Write-OutPut $result
 
-            # if the dll is not valid, it would be delay signed or test-signed which is not meant for production
-            if($result[$result.Length-1] -notlike "* is valid")
-            {
-              $badDlls += $result[$result.Length-1]
-            }
-          }
-          if($badDlls.Count -gt 0)
-          {
-            Write-OutPut "Error: Invalid dlls are detected. Check the list below:"
-            foreach($dll in $badDlls)
-            {
-              Write-Output $dll
-            }
-            Exit -1
-          }
-          Write-Host "Strong name has been verified for all dlls"
-        displayName: "Verify assembly strong names"
+                # if the dll is not valid, it would be delay signed or test-signed which is not meant for production
+                if($result[$result.Length-1] -notlike "* is valid")
+                {
+                  $badDlls += $result[$result.Length-1]
+                }
+              }
+              if($badDlls.Count -gt 0)
+              {
+                Write-OutPut "Error: Invalid dlls are detected. Check the list below:"
+                foreach($dll in $badDlls)
+                {
+                  Write-Output $dll
+                }
+                Exit -1
+              }
+              Write-Host "Strong name has been verified for all dlls"
+            displayName: "Verify assembly strong names"
 
       # Validate that the folders in the nuget are expected
       # @TODO: This does not verify we are not missing any folders, only that the folders that

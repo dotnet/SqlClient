@@ -35,15 +35,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
-
-    <!--
-      GOTCHA: This property must appear in the last <PropertyGroup> in this file
-      due to hardcoded XML processing in:
-
-      eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
-
-      See the 'Modify TestMicrosoftDataSqlClientVersion' step.
-    -->
-    <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
+    <MdsPackageVersion Condition="'$(MdsPackageVersion)' == ''">$(NugetPackageVersion)</MdsPackageVersion>
   </PropertyGroup>
 </Project>

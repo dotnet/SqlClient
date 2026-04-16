@@ -45,7 +45,7 @@
 
   <!-- MDS Package Dependency -->
   <ItemGroup Condition="$(ReferenceType) == 'Package'">
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(MdsPackageVersion)" />
   </ItemGroup>
 
   <!-- Explicit Dependencies to avoid Transitive Vulnerabilities -->

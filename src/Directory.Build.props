@@ -13,7 +13,7 @@
       "ReferenceType" property supports below options:
 
       "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
-      "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+      "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "MdsPackageVersion" in "Versions.props" file.
 
       ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
       CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
@@ -68,6 +68,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <!-- NuGet Audit Settings -->
