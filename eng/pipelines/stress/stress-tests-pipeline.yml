@@ -73,6 +73,13 @@ parameters:
     type: boolean
     default: false
 
+  # True to fail the pipeline when stress tests fail.  When false (default), test failures produce
+  # warnings but do not fail the overall pipeline run.
+  - name: failOnTestFailure
+    displayName: Fail pipeline on test failure
+    type: boolean
+    default: false
+
   # Dotnet CLI verbosity level.
   - name: dotnetVerbosity
     displayName: dotnet CLI Verbosity
@@ -98,4 +105,5 @@ stages:
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
+      failOnTestFailure: ${{ parameters.failOnTestFailure }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

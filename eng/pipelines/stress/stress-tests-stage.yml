@@ -32,6 +32,10 @@ parameters:
     type: boolean
     default: false
 
+  # True to fail the job when stress tests fail.  When false, test failures produce warnings.
+  - name: failOnTestFailure
+    type: boolean
+
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
@@ -76,6 +80,7 @@ stages:
         debug: ${{ parameters.debug }}
         displayNamePrefix: Linux
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        failOnTestFailure: ${{ parameters.failOnTestFailure }}
         jobNameSuffix: linux
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         poolName: ADO-CI-1ES-Pool
@@ -95,6 +100,7 @@ stages:
         debug: ${{ parameters.debug }}
         displayNamePrefix: Win
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        failOnTestFailure: ${{ parameters.failOnTestFailure }}
         jobNameSuffix: windows
         # Note that we include the .NET Framework runtimes for test runs on Windows.
         netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
@@ -118,6 +124,7 @@ stages:
         debug: ${{ parameters.debug }}
         displayNamePrefix: macOS
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        failOnTestFailure: ${{ parameters.failOnTestFailure }}
         jobNameSuffix: macos
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         # We don't have any 1ES Hosted Pool images for macOS, so we use a generic one from Azure

@@ -48,6 +48,11 @@ parameters:
   - name: jobNameSuffix
     type: string
 
+  # True to fail the job when stress tests fail.  When false, test failures produce warnings
+  # (SucceededWithIssues) but do not fail the job.
+  - name: failOnTestFailure
+    type: boolean
+
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
     type: object
@@ -174,10 +179,26 @@ jobs:
         displayName: Set build success flag
 
       # Run the stress tests for each .NET runtime.
+      #
+      # The condition and continueOnError work together to achieve the following behavior:
+      #
+      #   condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
+      #     - succeededOrFailed() allows the step to run even if a *previous test* step failed,
+      #       ensuring all runtimes are exercised regardless of earlier failures.
+      #     - eq(variables['buildSucceeded'], 'true') gates on the flag set above, so tests are
+      #       skipped entirely if the build or any setup step failed (since there's nothing to run).
+      #
+      #   continueOnError: ${{ not(parameters.failOnTestFailure) }}
+      #     - When failOnTestFailure is false, continueOnError is true: a test failure marks the
+      #       step and job as SucceededWithIssues (orange warning) rather than Failed.
+      #     - When failOnTestFailure is true, continueOnError is false: a test failure fails the
+      #       job (red), though subsequent runtimes still run due to the condition above.
+      #
       - ${{ each runtime in parameters.netTestRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
+          continueOnError: ${{ not(parameters.failOnTestFailure) }}
           inputs:
             command: run
             projects: $(project)
@@ -188,6 +209,7 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
+          continueOnError: ${{ not(parameters.failOnTestFailure) }}
           inputs:
             command: run
             projects: $(project)
