@@ -51,7 +51,7 @@
 
   <ItemGroup>
     <PackageVersion Include="Azure.Core" Version="1.53.0" />
-    <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.1" />
+    <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.3" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
