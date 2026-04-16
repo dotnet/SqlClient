@@ -24,7 +24,7 @@
 
   <!-- References for netfx -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -33,7 +33,7 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="xunit" />
