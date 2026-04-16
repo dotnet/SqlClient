@@ -68,8 +68,6 @@
 
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
-                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -99,8 +97,6 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime"
-                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
