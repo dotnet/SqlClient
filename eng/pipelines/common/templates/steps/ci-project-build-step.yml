@@ -56,7 +56,6 @@ steps:
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.configuration }}'
           msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
-          clean: true
 
     - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
       - task: MSBuild@1
@@ -68,7 +67,6 @@ steps:
           platform: '${{ parameters.platform }}'
           configuration: '${{ parameters.configuration }}'
           msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
-          clean: true
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1

@@ -30,9 +30,9 @@
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
-    <!-- 
+    <!--
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
-      This property is empty by default to use the default path of the system's path variable. 
+      This property is empty by default to use the default path of the system's path variable.
       The provided path should be ended to a `\` character without white spaces: Ex. C:\x86\
     -->
     <DotnetPath></DotnetPath>
@@ -76,7 +76,7 @@
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
-    
+
     <ManualTests Include="**/Common/Common.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -165,7 +165,7 @@
     <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
   </Target>
-  
+
   <Target Name="BuildFunctionalTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
     <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
@@ -188,7 +188,7 @@
     <Message Text=">>> Building UnitTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
   </Target>
-  
+
   <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))" />
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
@@ -214,7 +214,7 @@
 
   <!-- Run all unit tests applicable to the host OS. -->
   <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix" Condition="$(ReferenceType.Contains('Project'))"/>
-  
+
   <!-- Run all unit tests applicable to Windows. -->
   <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
@@ -360,7 +360,13 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","artifacts", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
+    <!-- Clean NuGet packages from packages/ but preserve the directory and .gitkeep -->
+    <ItemGroup>
+      <PackageFiles Include="packages\**\*.*" Exclude="packages\.gitkeep" />
+      <PackageDirs Include="$([System.IO.Directory]::GetDirectories('packages'))" />
+    </ItemGroup>
+    <Delete Files="@(PackageFiles)" />
+    <RemoveDir Directories="@(PackageDirs)" />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
