@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    This file sets the standard MSBuild versioning properties for
+    Microsoft.Data.SqlClient projects.  It should be imported by all SqlClient
+    .csproj files to override the global defaults set by Versions.props.
+
+    It relies on properties computed in SqlClientVersions.props (imported via
+    Versions.props): MdsPackageVersion, AssemblyFileVersion.
+  -->
+
+  <PropertyGroup>
+    <!--
+      This sets the version of the Microsoft.Data.SqlClient assembly.  It
+      should only be updated when the major version of the MDS package changes
+      and introduces breaking changes.  Only ever update the major version
+      number.  All other version parts must be set to 0.
+    -->
+    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+
+    <AssemblyFileVersion>$(MdsAssemblyFileVersion)</AssemblyFileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
+
+</Project>

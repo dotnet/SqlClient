@@ -3,6 +3,12 @@
     <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
     <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
     <AddOnName>AzureKeyVaultProvider</AddOnName>
+
+    <!-- Set the SDK version properties based on our computed values. -->
+    <AssemblyVersion>$(AkvDefaultMajorVersion).0.0.0</AssemblyVersion>
+    <AssemblyFileVersion>$(AkvAssemblyFileVersion)</AssemblyFileVersion>
+    <Version>$(AkvPackageVersion)</Version>
+
     <ProjectGuid>{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}</ProjectGuid>
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'!='.NETFramework'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">netfx</TargetGroup>

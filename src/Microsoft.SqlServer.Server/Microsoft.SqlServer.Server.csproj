@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
+    <AssemblyVersion>$(SqlServerAssemblyVersion)</AssemblyVersion>
+    <AssemblyFileVersion>$(SqlServerAssemblyFileVersion)</AssemblyFileVersion>
+    <Version>$(SqlServerPackageVersion)</Version>
     <Description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.</Description>
     <BaseProduct>Microsoft SqlServer Server</BaseProduct>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>

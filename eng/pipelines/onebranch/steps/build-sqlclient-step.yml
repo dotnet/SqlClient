@@ -28,7 +28,7 @@ steps:
       msbuildArguments: >-
         -t:BuildAllConfigurations
         -p:GenerateNuget=false
-        -p:AssemblyFileVersion="${{ parameters.sqlClientAssemblyFileVersion }}"
+        -p:MdsAssemblyFileVersion="${{ parameters.sqlClientAssemblyFileVersion }}"
         -p:MdsPackageVersion="${{ parameters.sqlClientPackageVersion }}"
         -p:ReferenceType=Package
         -p:SigningKeyPath="$(keyFile.secureFilePath)"

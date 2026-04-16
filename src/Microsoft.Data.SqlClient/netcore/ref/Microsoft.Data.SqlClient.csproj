@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../src/SqlClientAssemblyVersions.props" />
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetFrameworks>net8.0;net9.0;netstandard2.0</TargetFrameworks>
