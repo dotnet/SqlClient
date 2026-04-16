@@ -68,7 +68,7 @@ When adding a new csproj-based package:
 - Each package's PDBs are published separately with unique artifact names and version information
 - Build jobs copy PDBs into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published artifact
 - The `publish-symbols-step.yml` accepts a `symbolsFolder` parameter to point at the downloaded PDB location
-- The publish step calls an extracted `Publish-Symbols.ps1` script with structured error handling and diagnostic logging
+- The publish step calls an extracted `publish-symbols.ps1` script with structured error handling and diagnostic logging
 - Symbols publishing credentials come from the `Symbols Publishing` variable group
 
 ## Release Stage

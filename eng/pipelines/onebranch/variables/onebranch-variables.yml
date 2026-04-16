@@ -25,8 +25,8 @@ variables:
   #
   # SymbolsAzureSubscription
   # SymbolsPublishProjectNameSqlClient
-  # SymbolsPublishServer
-  # SymbolsPublishTokenUri
+  # SymbolsPublishServerProd / SymbolsPublishServerPPE
+  # SymbolsPublishTokenUriProd / SymbolsPublishTokenUriPPE
   # SymbolsUploadAccount
   - group: 'Symbols Publishing'
 
