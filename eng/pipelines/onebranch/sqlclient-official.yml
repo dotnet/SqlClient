@@ -254,6 +254,7 @@ extends:
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
+          # Official pipelines must publish to the Production symbol server.
           symbolsPublishServer: '$(SymbolsPublishServerProd)'
           symbolsPublishTokenUri: '$(SymbolsPublishTokenUriProd)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'

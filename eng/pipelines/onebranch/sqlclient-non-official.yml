@@ -226,6 +226,7 @@ extends:
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
+          # Non-Official pipelines must publish to the PPE symbol server.
           symbolsPublishServer: '$(SymbolsPublishServerPPE)'
           symbolsPublishTokenUri: '$(SymbolsPublishTokenUriPPE)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'
