@@ -5,8 +5,8 @@
     <!-- Explicitly include Azure.Identity. -->
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <!-- Reference SqlClient package versions that support our needs. -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0-preview4.26064.3" />
-    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="7.0.0-preview1.26064.3" />
-    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0-preview1.26064.3" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0" />
   </ItemGroup>
 </Project>
