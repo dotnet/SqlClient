@@ -8,11 +8,11 @@
     <!-- Get the current commit id and store it in CommitId property to be used in nuget pack command -->
     <Exec Command="git rev-parse HEAD" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
-    </Exec>	
+    </Exec>
     <Message Text="Commit Id = $(CommitId)" />
     <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
       -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
-    <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration)&quot;" />
+    <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)&quot;" />
   </Target>
   <Target Name="GenerateSqlServerPackage" Condition="'$(GenerateNuget)' == 'true'">
     <PropertyGroup>
@@ -22,8 +22,8 @@
     <!-- Get the current commit id and store it in CommitId property to be used in nuget pack command -->
     <Exec Command="git rev-parse HEAD" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
-    </Exec>	
-    <Message Text="Commit Id = $(CommitId)" />	
+    </Exec>
+    <Message Text="Commit Id = $(CommitId)" />
     <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
       -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
     <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.SqlServer.Server.nuspec -Version $(SqlServerPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration)&quot;" />
