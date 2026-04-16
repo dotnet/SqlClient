@@ -8,14 +8,14 @@ variables:
   - group: 'ADO Build properties'
   - group: 'ADO CI Packaging'
   - group: 'ADO Test Configuration Properties'
-  
+
   - name: buildNumber
     value: '$(Build.BuildNumber)'
   - name: TFNetCore
     value: 'net8.0'
   - name: SQLTarget
     value: 'localhost'
-  - name: NugetPackageVersion
+  - name: MdsPackageVersion
     value: $(Major).$(Minor)$(Patch)-pull.1$(buildnumber)
   - name: skipComponentGovernanceDetection
     value: true

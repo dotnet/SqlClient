@@ -33,7 +33,7 @@ steps:
         -t:BuildAllConfigurations
         -p:Configuration=Release
         -p:GenerateNuget=false
-        -p:NugetPackageVersion=${{ parameters.sqlClientPackageVersion }}
+        -p:MdsPackageVersion=${{ parameters.sqlClientPackageVersion }}
         -p:ReferenceType=Package
         -p:SigningKeyPath="$(analyzerKeyFile.secureFilePath)"
       msBuildVersion: 17.0

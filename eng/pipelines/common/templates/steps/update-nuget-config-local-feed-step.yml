@@ -11,9 +11,9 @@ parameters:
   - name: downloadedNugetPath # path to the downloaded nuget files
     type: string
 
-  - name: nugetPackageVersion
+  - name: mdsPackageVersion
     type: string
-    default: $(NugetPackageVersion)
+    default: $(MdsPackageVersion)
 
 steps:
 - powershell: |
@@ -66,7 +66,7 @@ steps:
 
     $parent_xpath = '/Project/ItemGroup/PackageReference[@Include="Microsoft.Data.SqlClient"]'
     $node = $Doc.SelectSingleNode($parent_xpath)
-    
+
     if($node -eq $null){
         $packagerefnode = $doc.createelement("packagereference")
         $value = $doc.selectsinglenode('/project/itemgroup/projectreference')

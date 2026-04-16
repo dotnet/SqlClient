@@ -8,9 +8,9 @@ parameters:
     type: string
     default: '$(nuspecPath)'
 
-  - name: NugetPackageVersion
+  - name: MdsPackageVersion
     type: string
-    default: '$(NugetPackageVersion)'
+    default: '$(MdsPackageVersion)'
 
   - name: OutputDirectory
     type: string
@@ -49,12 +49,12 @@ steps:
     $Commit=git rev-parse HEAD
     Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
   displayName: CommitHead
- 
+
 - task: NuGetCommand@2
   displayName: ${{parameters.displayName }}
   inputs:
     command: custom
     ${{ if parameters.generateSymbolsPackage }}:
-      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.MdsPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
     ${{else }}:
-      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.MdsPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'

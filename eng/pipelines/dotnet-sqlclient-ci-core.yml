@@ -120,7 +120,7 @@ stages:
         additionalDependsOn:
           - build_nugets
         pipelineArtifactName: $(artifactName)
-        mdsPackageVersion: $(NugetPackageVersion)
+        mdsPackageVersion: $(MdsPackageVersion)
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
 
