@@ -50,8 +50,8 @@
   <!-- Dependencies shared by multiple projects -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Core" Version="1.51.1" />
-    <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.0" />
+    <PackageVersion Include="Azure.Core" Version="1.53.0" />
+    <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
@@ -81,9 +81,7 @@
   <!-- ===================================================================== -->
   <!-- Azure Dependencies -->
 
-  <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.18.0" />
-  </ItemGroup>
+  <!-- None -->
 
   <!-- ===================================================================== -->
   <!-- SqlClient Dependencies -->
