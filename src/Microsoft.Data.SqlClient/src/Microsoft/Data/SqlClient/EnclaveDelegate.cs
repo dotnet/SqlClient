@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient
     // @TODO: This isn't a delegate... it's a utility class
     internal sealed partial class EnclaveDelegate
     {
-        private static readonly AeadAes256CbcHmac256Factory s_aeadAes256CbcHmac256Factory = new AeadAes256CbcHmac256Factory();
         private static readonly EnclaveDelegate s_enclaveDelegate = new EnclaveDelegate();
 
         private readonly object _lock;
@@ -153,7 +152,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 SqlClientSymmetricKey symmetricKey = new SqlClientSymmetricKey(sessionKey);
-                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = s_aeadAes256CbcHmac256Factory.Create(
+                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(
                     symmetricKey,
                     SqlClientEncryptionType.Randomized,
                     SqlAeadAes256CbcHmac256Algorithm.AlgorithmName

@@ -12,8 +12,13 @@ using System.Text;
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 {
     /// <summary>
-    /// This is a factory class for AEAD_AES_256_CBC_HMAC_SHA256.
+    /// This is a factory class for the AEAD_AES_256_CBC_HMAC_SHA256 encryption algorithm.
     /// </summary>
+    /// <remarks>
+    /// Access this factory directly via its <see cref="Instance" /> property or by passing
+    /// the algorithm name defined in <see cref="SqlAeadAes256CbcHmac256Algorithm.AlgorithmName" />
+    /// to the <see cref="EncryptionAlgorithmFactoryList.GetAlgorithm" /> method.
+    /// </remarks>
     internal sealed class AeadAes256CbcHmac256Factory : EncryptionAlgorithmFactory
     {
         /// <summary>
@@ -22,6 +27,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         private readonly ConcurrentDictionary<string, SqlAeadAes256CbcHmac256Algorithm> _encryptionAlgorithms =
             new(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary */, capacity: 2);
 
+        private AeadAes256CbcHmac256Factory() { }
+
+        /// <summary>
+        /// Access the instance of the factory class for the AEAD_AES_256_CBC_HMAC_SHA256 encryption algorithm.
+        /// </summary>
         public static AeadAes256CbcHmac256Factory Instance => field ??= new();
 
         /// <summary>

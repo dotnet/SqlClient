@@ -112,7 +112,7 @@ public class NativeAeadBaseline
     public void Known_Plaintext_Encrypts_To_Known_FinalCell(byte[] plainText, byte[] rootKey, byte[] expectedFinalCell)
     {
         SqlClientSymmetricKey cek = new(rootKey);
-        AeadAes256CbcHmac256Factory aeadFactory = new();
+        AeadAes256CbcHmac256Factory aeadFactory = AeadAes256CbcHmac256Factory.Instance;
         SqlClientEncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, SqlClientEncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         byte[] encryptedData = aeadAlgorithm.EncryptData(plainText);
@@ -131,7 +131,7 @@ public class NativeAeadBaseline
     public void Known_FinalCell_Decrypts_To_Known_Plaintext(byte[] expectedPlaintext, byte[] rootKey, byte[] finalCell)
     {
         SqlClientSymmetricKey cek = new(rootKey);
-        AeadAes256CbcHmac256Factory aeadFactory = new();
+        AeadAes256CbcHmac256Factory aeadFactory = AeadAes256CbcHmac256Factory.Instance;
         SqlClientEncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, SqlClientEncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         byte[] decryptedData = aeadAlgorithm.DecryptData(finalCell);

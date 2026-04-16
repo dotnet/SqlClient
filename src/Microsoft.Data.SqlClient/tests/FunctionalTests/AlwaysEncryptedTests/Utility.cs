@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
         public static Type sqlClientSymmetricKey = systemData.GetType("Microsoft.Data.SqlClient.SqlClientSymmetricKey");
         public static Type aeadAes256CbcHmac256Factory = systemData.GetType("Microsoft.Data.SqlClient.AlwaysEncrypted.AeadAes256CbcHmac256Factory");
+        public static PropertyInfo aeadAes256CbcHmac256FactoryInstance = aeadAes256CbcHmac256Factory.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
         public static ConstructorInfo sqlColumnEncryptionKeyConstructor = sqlClientSymmetricKey.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
         public static MethodInfo aeadAes256CbcHmac256FactoryCreate = aeadAes256CbcHmac256Factory.GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type sqlClientEncryptionAlgorithm = systemData.GetType("Microsoft.Data.SqlClient.SqlClientEncryptionAlgorithm");
@@ -191,7 +192,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Object columnEncryptionKey = sqlColumnEncryptionKeyConstructor.Invoke(new object[] { key });
             Assert.True(columnEncryptionKey != null);
 
-            Object aesFactory = Activator.CreateInstance(aeadAes256CbcHmac256Factory);
+            Object aesFactory = aeadAes256CbcHmac256FactoryInstance.GetValue(null);
             Assert.True(aesFactory != null);
 
             object[] parameters = new object[] { columnEncryptionKey, encryptionType, ColumnEncryptionAlgorithmName };
@@ -259,7 +260,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Object columnEncryptionKey = sqlColumnEncryptionKeyConstructor.Invoke(new object[] { key });
             Assert.True(columnEncryptionKey != null);
 
-            Object aesFactory = Activator.CreateInstance(aeadAes256CbcHmac256Factory);
+            Object aesFactory = aeadAes256CbcHmac256FactoryInstance.GetValue(null);
             Assert.True(aesFactory != null);
 
             object[] parameters = new object[] { columnEncryptionKey, encryptionType, ColumnEncryptionAlgorithmName };
