@@ -29,6 +29,7 @@ steps:
         -t:BuildAllConfigurations
         -p:GenerateNuget=false
         -p:AssemblyFileVersion="${{ parameters.sqlClientAssemblyFileVersion }}"
+        -p:NugetPackageVersion="${{ parameters.sqlClientPackageVersion }}"
         -p:ReferenceType=Package
         -p:SigningKeyPath="$(keyFile.secureFilePath)"
 

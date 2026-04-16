@@ -208,14 +208,15 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlCl
 Tests can be built and run with custom "Reference Type" property that enables different styles of testing:
 
 - "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
-- "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+- "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference.
 
-> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
-> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
->
-> ```bash
->  msbuild -p:configuration=Release
-> ```
+To build with `Package` reference type, first build and pack the components so
+their NuGet packages are placed into the `packages/` directory (which is
+configured as a local NuGet source in `NuGet.config`):
+
+```bash
+msbuild -p:Configuration=Release
+```
 
 A non-AnyCPU platform reference can only be used with package reference type. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
 

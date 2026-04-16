@@ -117,7 +117,7 @@ jobs:
               pattern: 'Microsoft.Data.SqlClient*.dll'
 
       # Package the build output into a NuGet package
-      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml
+      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml@self
         parameters:
           sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
