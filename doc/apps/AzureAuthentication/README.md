@@ -105,7 +105,7 @@ Azure Authentication Tester
 
 Packages used:
   SqlClient:     7.0.0
-  AKV Provider:  6.1.2
+  AKV Provider:  7.0.0
   Azure:         1.0.0
 
 Connection details:
