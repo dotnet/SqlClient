@@ -8,7 +8,7 @@ using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Win32.SafeHandles;
 
-#if !NETFRAMEWORK && _WINDOWS
+#if NET
 using Interop.Windows.Handles;
 #endif
 
@@ -18,11 +18,6 @@ namespace Interop.Windows.Kernel32
     {
         internal const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
         internal const uint SEM_FAILCRITICALERRORS = 1;
-
-        #if _WINDOWS && !NETFRAMEWORK
-        internal const int LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
-        internal const int LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800;
-        #endif
 
         private const string DllName = "kernel32.dll";
 
@@ -54,7 +49,7 @@ namespace Interop.Windows.Kernel32
             out uint cbBytesReturned,
             IntPtr overlapped);
 
-        #if NET && _WINDOWS
+        #if NET
         [DllImport(DllName, ExactSpelling = true, SetLastError = true)]
         public static extern bool FreeLibrary([In] IntPtr hModule);
         #endif
@@ -71,7 +66,7 @@ namespace Interop.Windows.Kernel32
             IntPtr lpFilePartOrNull);
         #endif
 
-        #if NET && _WINDOWS
+        #if NET
         [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
 
