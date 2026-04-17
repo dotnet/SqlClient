@@ -361,7 +361,7 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
     <!-- Clean NuGet packages from packages/ but preserve the directory and .gitkeep -->
-    <ItemGroup>
+    <ItemGroup Condition="Exists('packages')">
       <PackageFiles Include="packages\**\*.*" Exclude="packages\.gitkeep" />
       <PackageDirs Include="$([System.IO.Directory]::GetDirectories('packages'))" />
     </ItemGroup>
