@@ -31,9 +31,7 @@ using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
-#if _WINDOWS
 using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.SqlTypes;
 #endif
 
