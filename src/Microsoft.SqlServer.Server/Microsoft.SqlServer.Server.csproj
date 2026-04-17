@@ -1,6 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
+    <!--
+      SDK version properties — set here so SqlServer assemblies get their own
+      version metadata instead of inheriting SqlClient's values.
+
+      AssemblyVersion     → [AssemblyVersion] attribute (runtime binding).
+      AssemblyFileVersion → GenerateThisAssemblyCs.targets ThisAssembly.InformationalVersion.
+      FileVersion         → [AssemblyFileVersion] attribute + Win32 file-version resource.
+                            SDK defaults to AssemblyVersion if omitted.
+      Version             → [AssemblyInformationalVersion] + NuGet package version.
+    -->
     <AssemblyVersion>$(SqlServerAssemblyVersion)</AssemblyVersion>
     <AssemblyFileVersion>$(SqlServerAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(SqlServerAssemblyFileVersion)</FileVersion>

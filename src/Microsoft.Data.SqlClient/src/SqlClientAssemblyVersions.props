@@ -7,7 +7,7 @@
     .csproj files to override the global defaults set by Versions.props.
 
     It relies on properties computed in SqlClientVersions.props (imported via
-    Versions.props): MdsPackageVersion, AssemblyFileVersion.
+    Versions.props): MdsPackageVersion, MdsAssemblyFileVersion.
   -->
 
   <PropertyGroup>
@@ -17,10 +17,34 @@
       and introduces breaking changes.  Only ever update the major version
       number.  All other version parts must be set to 0.
     -->
+    <!--
+      AssemblyVersion → [AssemblyVersion] attribute.  Used at runtime for
+      binding and type identity.  Only bump the major component on breaking
+      changes; keep all other parts as 0.
+    -->
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
 
+    <!--
+      AssemblyFileVersion → consumed by GenerateThisAssemblyCs.targets to
+      emit ThisAssembly.InformationalVersion (the constant baked into the
+      assembly source).
+    -->
     <AssemblyFileVersion>$(MdsAssemblyFileVersion)</AssemblyFileVersion>
+
+    <!--
+      FileVersion → the standard SDK property that drives the
+      [AssemblyFileVersion] attribute and the Win32 file-version resource.
+      If omitted the SDK defaults it to AssemblyVersion, not
+      AssemblyFileVersion.
+    -->
     <FileVersion>$(MdsAssemblyFileVersion)</FileVersion>
+
+    <!--
+      Version → the standard SDK property that drives the
+      [AssemblyInformationalVersion] attribute and NuGet package version.
+      Also consumed by GenerateThisAssemblyCs.targets as
+      ThisAssembly.NuGetPackageVersion.
+    -->
     <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 

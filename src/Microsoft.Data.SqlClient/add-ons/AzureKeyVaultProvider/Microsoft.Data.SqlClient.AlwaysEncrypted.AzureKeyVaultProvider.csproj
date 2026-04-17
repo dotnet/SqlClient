@@ -4,7 +4,17 @@
     <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
     <AddOnName>AzureKeyVaultProvider</AddOnName>
 
-    <!-- Set the SDK version properties based on our computed values. -->
+    <!--
+      SDK version properties — set here so AKV assemblies get their own
+      version metadata instead of inheriting SqlClient's values.
+
+      AssemblyVersion     → [AssemblyVersion] attribute (runtime binding).
+      AssemblyFileVersion → GenerateThisAssemblyCs.targets ThisAssembly.InformationalVersion.
+      FileVersion         → [AssemblyFileVersion] attribute + Win32 file-version resource.
+                            SDK defaults to AssemblyVersion if omitted.
+      Version             → [AssemblyInformationalVersion] + NuGet package version +
+                            ThisAssembly.NuGetPackageVersion.
+    -->
     <AssemblyVersion>$(AkvDefaultMajorVersion).0.0.0</AssemblyVersion>
     <AssemblyFileVersion>$(AkvAssemblyFileVersion)</AssemblyFileVersion>
     <FileVersion>$(AkvAssemblyFileVersion)</FileVersion>
