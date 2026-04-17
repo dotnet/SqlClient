@@ -1,224 +1,318 @@
-# Guidelines for Building Microsoft.Data.SqlClient
+# Build Guide for Microsoft.Data.SqlClient and Related Packages
 
-This document provides all the necessary details to build the driver and run tests present in the repository.
+This document provides details on how to build the Microsoft.Data.SqlClient package and the other related packages
+contained within this repository.
 
 ## Prerequisites
 
 ### .NET SDK
+Projects in this repository require the .NET SDK to be installed in order to build. For the exact version required for
+building the current version, see [global.json](global.json). Downloads for .NET SDK can be found at:
+https://dotnet.microsoft.com/en-us/download/dotnet
 
-The projects in this repo require the .NET 10.0 SDK to build.  Please ensure you
-have the latest version of that SDK installed.
+The .NET SDK contains support for building for previous versions of .NET, including support for building .NET Framework
+on operating systems that do not support .NET Framework. As such, it is not necessary to install any version of the
+.NET SDK aside from the version specified in [global.json](global.json).
 
-Tests and tools may require different .NET Runtimes that may be installed
-independently.  For example, tests targeting .NET 8.0 will need that runtime
-installed.
+### Miscellaneous
 
-### Visual Studio
+**Powershell** is required to run several miscellaneous tasks as part of building and packaging. On Windows systems,
+no action is required. On Linux and MacOS systems, the `pwsh` command is required to be in the `$PATH` environment
+variable. For specific instructions see: [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell)
 
-This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
+The **NuGet** binary is required to package the Microsoft.Data.SqlClient project. For convenience, this can be be done
+via the PowerShell script [tools/scripts/downloadLatestNuget.ps1](tools/scripts/downloadLatestNuget.ps1), however, any
+`nuget.exe` binary can be used.
 
-- **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
+## Developer Workflow
 
-- **Powershell**: To build SqlClient on Linux, powershell is needed as well. Follow the distro specific instructions at [Install Powershell on Linux](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux?view=powershell-7.4)
+Once you've cloned the repository and made your changes to the codebase, it is time to build, test, and optionally
+package the project. The `build2.proj` file provides convenient targets to accomplish these tasks.
 
-Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
+> [!NOTE]
+> Although every effort has been made to make building and testing work in your IDE of choice, some quirks in behavior
+> may be noticed, possibly severe. All official build and test infrastructure uses the `build2.proj` entrypoint, and it
+> is recommended that `build2.proj` is used for local development, as well.
 
-### Manual Test Prerequisites
+> [!TIP]
+> `build2.proj` was written with the intention of being called from `msbuild`. As such, the following examples below
+> use `msbuild`. On systems where `msbuild` is not available, simply replace `msbuild` with `dotnet msbuild` to get the
+> same behavior.
 
-Manual Tests require the below setup to run:
+> [!TIP]
+> This section is not exhaustive of all targets or parameters to `build2.proj`. Complete documentation is avilable in
+> [`build2.proj`](build2.proj).
 
-- SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
-- Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql) and [createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql). To setup an Azure Database with "NORTHWIND" tables, use SQL Script: [createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql).
-- Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
+### Building Projects
 
-  |Property|Description|Value|
-  |------|--------|-------------------|
-  |TCPConnectionString | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
-  |NPConnectionString | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
-  |TCPConnectionStringHGSVBS | (Optional) Connection String for a TCP enabled SQL Server with Host Guardian Service (HGS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = HGS; Enclave Attestation Url = {AttestationURL};`|
-  |TCPConnectionStringNoneVBS | (Optional) Connection String for a TCP enabled SQL Server with a VBS Enclave and using None Attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = NONE;`|
-  |TCPConnectionStringAASSGX | (Optional) Connection String for a TCP enabled SQL Server with a SGX Enclave and using Microsoft Azure Attestation (AAS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = AAS; Enclave Attestation Url = {AttestationURL};`|
-  |EnclaveEnabled | Enables tests requiring an enclave-configured server.|
-  |TracingEnabled | Enables EventSource related tests |
-  |AADAuthorityURL | (Optional) Identifies the OAuth2 authority resource for `Server` specified in `AADPasswordConnectionString` | `https://login.windows.net/<tenant>`, where `<tenant>` is the tenant ID of the Entra ID (Azure AD) tenant |
-  |AADPasswordConnectionString | (Optional) Connection String for testing Entra ID Password Authentication. | `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};Authentication=Active Directory Password; User ID={AAD_User}; Password={AAD_User_Password};`|
-  |AADSecurePrincipalId | (Optional) The Application Id of a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Application ID} |
-  |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
-  |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
-  |AzureKeyVaultTenantId | (Optional) The Entra ID tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
-  |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
-  |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
-  |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
-  |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
-  |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
-  |DNSCachingConnString | Connection string for a server that supports DNS Caching|
-  |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
-  |ManagedIdentitySupported | (Optional) When set to `false` **Managed Identity** related tests won't run. The default value is `true`. |
-  |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use non-Azure bsl files to compare test results. This is needed when testing against Azure Managed Instances; otherwise TVP Tests will fail on TestSet 3. The default value is `false`. |
-  |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
-
-## MSBuild Reference
-
-### Targets
-
-The following build targets are defined in `build.proj`:
-
-|Target|Description|
-|-|-|
-|`BuildAbstractions`|Restore and build the Abstractions package.|
-|`BuildAkvProvider`|Builds the Azure Key Vault Provider package for all supported platforms.|
-|`BuildAllConfigurations`|Default target. Builds the .NET Framework and .NET drivers for all target frameworks and operating systems.|
-|`BuildAzure`|Restore and build the Azure package.|
-|`BuildLogging`|Restore and build the Logging package.|
-|`BuildNetCore`|Builds the .NET driver for all target frameworks.|
-|`BuildNetCoreAllOS`|Builds the .NET driver for all target frameworks and operating systems.|
-|`BuildNetFx`|Builds the .NET Framework driver for all target frameworks.|
-|`BuildSqlClient`|Build the driver for all target frameworks.|
-|`Clean`|Cleans all generated files.|
-|`PackAbstractions`|Pack the Abstractions NuGet package into `packages/`. Requires `BuildAbstractions` first.|
-|`PackAkvProvider`|Pack the Azure Key Vault Provider NuGet package (requires a prior build).|
-|`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
-|`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
-|`Restore`|Restores NuGet packages.|
-|`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
-|`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
-|`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
-|`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
-
-### Parameters
-
-The following parameters may be defined as MSBuild properties to configure the
-build:
-
-|Name|Supported Values|Default|Description|
-|-|-|-|-|
-|`Configuration`|`Debug`, `Release`|`Debug`|Sets the release configuration.|
-|`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using `BuildAllConfigurations` or an `AnyOS` specific target|The operating system to target.|
-|`Platform`|`AnyCPU`, `x86`, `x64`, `ARM`, `ARM64`|`AnyCPU`|May only be set when using package reference type or running tests.|
-|`TestSet`|`1`, `2`, `3`, `AE`, or any combination thereof|`''`|Build or run a subset of the manual tests. Omit (default) to run all tests.|
-|`DotnetPath`|Absolute file path to an installed `dotnet` version.|The system default specified by the path variable|Set to run tests using a specific dotnet version (e.g. C:\net6-win-x86\)|
-|`TF`|`net8.0`, `net462`, `net47`, `net471`, `net472`, `net48`, `net481`|`net9.0` in netcore, `net462` in netfx|Sets the target framework when building or running tests. Not applicable when building the drivers.|
-|`ResultsDirectory`|An absolute file path|./TestResults relative to current directory|Specifies where to write test results.|
-
-## Example Commands to Run Tests Using MSBuild (Recommended)
-
-Using the default configuration and running all tests:
+From the root of your repository, run `msbuild` against `build2.proj` with a build target, following this pattern:
 
 ```bash
-msbuild -t:RunTests
+msbuild build2.proj -t:<build_target> [optional_parameters]
 ```
 
-Using the Release configuration:
+The following build targets can be used to build the following projects. All targets will implicitly build any other
+projects they depend on.
+
+| `<build_target>`            | Description                                                                     |
+|:----------------------------|:--------------------------------------------------------------------------------|
+| `Build`                     | Builds all projects for all platforms                                           |
+| `BuildAbstractions`         | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
+| `BuildAkvProvider`          | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
+| `BuildAzure`                | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
+| `BuildLogging`              | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
+| `BuildSqlClient`            | Builds all variants of Microsoft.Data.SqlClient, for all platforms              |
+| `BuildSqlClientRef`         | Builds the reference assemblies for Microsoft.Data.SqlClient                    |
+| `BuildSqlClientUnsupported` | Builds the "unsupported platform" assemblies for Microsoft.Data.SqlClient       |
+| `BuildSqlClientUnix`        | Builds the Unix-specific implementation binaries of Microsoft.Data.SqlClient    |
+| `BuildSqlClientWindows`     | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
+| `BuildSqlServer`            | Builds Microsoft.SqlServer.Server                                               |
+
+A selection of parameters for build targets in `build2.proj` can be found below:
+
+| `[optional_parameter]`            | Allowed Values                   | Default   | Description                                                                                                                                   |
+|-----------------------------------|----------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `-p:Configuration=`               | `Debug`, `Release`               | `Debug`   | Build configuration                                                                                                                           |
+| `-p:PackageVersion<TargetPackage> | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the target package. Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
+
+For most projects, build output is placed in `artifacts/<package_name>/Project-<configuration>/<tfm>`. `<package_name>`
+is the full name of the package, `<configuration>` is the build configuration, and `<tfm>` is the target framework
+moniker. SqlClient deviates slightly from this convention, since it consists of multiple projects and the
+implementation project is OS-specific. Implementation project output is placed in
+`artifacts/Microsoft.Data.SqlClient/Project-<configuration>/<os>/<tfm>`. The unsupported platform assemblies are placed
+in `artifacts/Microsoft.Data.SqlClient.unsupported/Project-<configuration>/<tfm>`, and the reference assemblies are
+placed in `artifacts/Microsoft.Data.SqlClient.ref/Project-<configuration>/<tfm>`.
+
+#### Examples
+
+Build all projects:
+```bash
+msbuild build2.proj -t:Build
+```
+
+Build Microsoft.Data.SqlClient in Release configuration:
+```bash
+msbuild build2.proj -t:BuildSqlClient -p:Configuration=Release
+```
+
+Build v1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
+```bash
+msbuild build2.proj -t:BuildAbstractions -p:PackageVersion=1.2.3
+```
+
+### Testing Projects
+
+This section provides a summary and brief example of how to execute tests for projects in this repository. **For more
+information about test procedures, including config file setup, see [TESTGUIDE.md](TESTGUIDE.md).**
+
+From the root of your repository, run `msbuild` against `build2.proj` with a test target, following this pattern:
 
 ```bash
-msbuild -t:RunTests -p:Configuration=Release
+msbuild build2.proj -t:<test_target> [optional_parameters]
 ```
 
-Running only the unit tests:
+| `<test_target>`            | Description                                                                                                                                         |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Test`                     | Runs all tests in the repository for all platforms supported by the host OS. _This will take a considerable amount of time and is not recommended_. |
+| `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
+| `TestSqlClient`            | Runs all tests for Microsoft.Data.SqlClient.                                                                                                        |
+| `TestSqlClientFunctional`  | Runs the "functional" test project for Microsoft.Data.SqlClient. These are a mix of unit and integration tests against live servers.                |
+| `TestSqlClientManual`      | Runs the "manual" test project for Microsoft.Data.SqlClient. These are generally integration tests against live servers.                            |
+| `TestSqlClientUnit`        | Runs the unit test project for Microsoft.Data.SqlClient. These are a mix of unit tests and integration tests against simulated servers.             |
+
+> [!TIP]
+> Test targets will automatically build the projects they depend on. Therefore, it is not necessary to explicitly build
+> (eg) SqlClient before executing the (eg) functional tests target.
+
+A selection of parameters for test targets in `build2.proj` relevant to common developer workflows can be found below:
+
+| `[optional_parameter]` | Default Value                                            | Description                                                                                                                                                                                         |
+|------------------------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-p:Configuration=`    | `Debug`                                                  | Build configuration. Can be `Debug` or `Release`.                                                                                                                                                   |
+| `-p:DotnetPath=`       | `[blank]`                                                | Path to `dotnet` binary to run the test project. This is useful for running tests against x86 platform on a x86_64 machine. Path must end with `\` or `/`.                                          |
+| `-p:TestBlameTimeout=` | `10m`                                                    | How long to wait on a test before timing it out. Use `0` to disable hang timeouts.                                                                                                                  |
+| `-p:TestFilters=`      | `category!=failing&category!=flaky&category!=interactive` | Filters to use to select the xUnit tests to execute. Use `none` to run all possible tests.                                                                                                          |
+| `-p:TestFramework=`    | `[blank]`                                                | Target framework moniker for the version of .NET to use to execute tests.                                                                                                                           |
+| `-p:TestSet=`          | `[blank]`                                                | The `TestSqlClientManual` project is very large and is split into multiple sets that can be executed individually. This parameter allows selecting between test sets: `1`, `2`, `3`, and `AE`. |
+
+#### Examples
+
+Run Microsoft.Data.SqlClient unit tests:
 
 ```bash
-msbuild -t:RunUnitTests
+msbuild build2.proj -t:TestSqlClientUnit
 ```
 
-Using a specific .NET runtime to run tests:
+Run Microsoft.Data.SqlClient manual test set 2:
+```bash
+msbuild build2.proj -t:TestSqlClientManual -p:TestSet=2
+```
+
+Run Microsoft.Data.SqlClient functional tests against x86 dotnet:
+```bash
+msbuild build2.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+```
+
+Run all Microsoft.Data.SqlClient.Extensions.Azure unit tests, including interactive, but excluding failing tests:
+```bash
+msbuild build2.proj -t:TestAzure -p:TestFilters=category!=failing
+```
+
+Run Microsoft.Data.SqlClient functional tests against net8.0 runtime:
+```bash
+msbuild build2.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
+```
+
+### Packaging Projects
+
+Just like bulding and testing the various projects in this repository, packaging the projects into NuGet packages is
+also handle by `build2.proj`. From the root of your repository, run `msbuild` against `build2.proj` with a test target,
+following this pattern:
 
 ```bash
-msbuild -t:RunTests -p:DotnetPath=C:\net8-win-x86\
+msbuild build2.proj -t:<pack_target> [optional_parameters]
 ```
 
-To run tests against a specific version of .NET/.NET Framework, set the `-p:TF` parameter.
+| `<build_target>`   | Desription                                                                          |
+|--------------------|-------------------------------------------------------------------------------------|
+| `Pack`             | Packages all projects in the repository.                                            |
+| `PackAbstractions` | Packages the Microsoft.Data.SqlClient.Extensions.Abstractions package               |
+| `PackAkvProvider`  | Packages the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package |
+| `PackAzure`        | Packages the Microsoft.Data.SqlClient.Extensions.Azure package                      |
+| `PackLogging`      | Packages the Microsoft.Data.SqlClient.Internal.Logging package                      |
+| `PackSqlClient`    | Packages the Microsoft.Data.SqlClient package                                       |
+| `PackSqlServer`    | Packages the Microsoft.SqlServer.Server package                                     |
+
+> [!TIP]
+> For convenience, the Pack targets will automatically build the target project and any dependencies.
+
+A selection of parameters for pack targets in `build2.proj` relevant to common developer workflows can be found below:
+
+| `[optional_parameter]`             | Default Value | Allowed Values        | Description                                                                                                                                                    |
+|------------------------------------|---------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-p:Configuration=`                | `Debug`       | `Debug`, `Release`    | Build configuration. Only applies if project and dependencies are being built.                                                                                 |
+| `-p:NugetPath=`                    | `[blank]`     | eg. `C:\my\nuget.exe` | _Only applies to `PackSqlClient`._ Path to `nuget.exe` that to use. If not provided, defaults to `nuget.exe` in the PATH.                                      |
+| `-p:PackBuild=`                    | `true`        | `true`, `false`       | Whether or not to build the project before packing. If `false`, project must be built using the same parameters.                                               |
+| `-p:PackageVersion<TargetProject>` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
+
+#### Examples
+
+Package Microsoft.Data.SqlClient.Internal.Logging into a NuGet package:
+```bash
+msbuild build2.proj -t:PackLogging
+```
+
+Package Microsoft.Data.SqlClient if `nuget.exe` is not in the `$PATH` environment variable:
+```bash
+msbuild build2.proj -t:PackSqlClient -p:NugetPath="C:\my\nuget.exe"
+```
+
+Package version 1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
+```bash
+msbuild build2.proj -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
+```
+
+Package version Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand:
+```bash
+msbuild build2.proj -t:PackAzure -p:PackBuild=false
+```
+
+## Versioning
+
+Versioning can be accomplished by using a mix of different parameters to the `build2.proj` targets:
+`PackageVersion<TargetProject>`, `BuildNumber`, `and `BuildSuffix`. Using these in different combinations, can generate
+appropriate package, assembly, and file versions for different scenarios. For most developer workflows, it is not
+necessary to specify any of these parameters - appropriate versions based on the latest release will be generated
+automatically. This section primarily exists to document the various parameters, their effects, and the scenarios they
+can be useful for.
+
+`PackageVersion<TargetProject>` applies to whatever package is being built. For example, if you are building the
+Microsoft.Data.SqlClient package, the appropriate parameter is `-p:PackageVersionSqlClient`.
+
+Each package has a `Versions.props` file in its root directory that defines a "default" version. This should be defined
+as the latest released version of the package. For the table below, we assume this is "1.2.3".
+
+| `PackageVersion` | `BuildNumber` | `BuildSuffix` | Package Version  | Assembly Version | File Version  | Scenario                                                   |
+|------------------|---------------|---------------|------------------|------------------|---------------|------------------------------------------------------------|
+| N/A              | N/A           | N/A           | `1.2.3-dev`      | `1.0.0`          | `1.2.3.0`     | Standard developer scenario                                |
+| `9.8.7`          | N/A           | N/A           | `9.8.7`          | `9.0.0`          | `9.8.7.0`     | Developer is building a specific version of the package    |
+| `9.8.7-preview1` | N/A           | N/A           | `9.8.7-preview1` | `9.0.0`          | `9.8.7.0`     | Developer is buildins a pre-release version of the package |
+| N/A              | `1234`        | N/A           | `1.2.3`          | `1.0.0`          | `1.2.3.1234`  | Automated pipelines building GA releases                   |
+| N/A              | `1234`        | `ci`          | `1.2.3-ci1234`   | `1.0.0`          | `1.2.3.1234`  | Automated pipelines building non-prod releases             |
+
+---
+
+## Package Mode Builds
+
+The above documentation is the default mode of operation, and is the recommended mode for most developers. However,
+`build2.proj` supports "package mode" builds. In this mode, instead of projects depending on other projects, they
+depend on NuGet packages. This mode is useful for verifying that packages work witheach other, especially in automated
+build scenarios. For completeness, and debugging of autoamted builds, this section documents behavior of "package mode".
+
+To switch to "package mode", set the `ReferenceType` parameter in `build2.proj` to `Package`. And, optionally, include
+one or more of the following parameters:
+
+* `PackageVersionAbstractions`
+* `PackageVersionAkvProvider`
+* `PackageVersionAzure`
+* `PackageVersionLogging`
+* `PackageVersionSqlClient`
+* `PackageVersionSqlServer`
+
+These parameters pull double duty. In targets where the package is being built, the parameter sets the version of the
+package. In targets where the package is being referenced, the parameter sets the version of the package that is being
+referenced.
+
+If these parameters are not specified, the latest version, as defined in the `Versions.props` file, will be used.
+
+The `nuget.config` for this repository defines a local feed that points to the `packages` directory. This allows
+developers that need to test against development packages to drop their development packages into this directory, and
+run subsequent `build2.proj` targets against them.
+
+### Examples
+
+Build Microsoft.Data.SqlClient version 7.1.1 that references Microsoft.Data.SqlClient.Extensions.Abstractions v1.0.1
+and Microsoft.Data.SqlClient.Internal.Logging v2.2.2.
 
 ```bash
-msbuild -t:RunTests -p:TF=net8.0
-msbuild -t:RunTests -p:TF=net462
+# Build v2.2.2 of Logging and copy to packages
+msbuild build2.proj -t:PackLogging \
+  -p:ReferenceType=Package \
+  -p:PackageVersionLogging=2.2.2
+cp artifacts/Microsoft.Data.SqlClient.Internal.Logging/Debug/*.*pkg packages/
+
+# Build v1.0.1 of Abstractions that depends on v2.2.2 of Logging
+msbuild build2.proj -t:PackAbstractions \
+  -p:ReferenceType=Package \
+  -p:PackageVersionAbstractions=1.0.1 \
+  -p:PackageVersionLogging=2.2.2 \
+cp artifacts/Microsoft.Data.SqlClient.Extensions.Abstractions/Package-Debug/*.*pkg packages/
+
+# Build SqlClient
+msbuild -t:PackSqlClient \
+  -p:ReferenceType=Package \
+  -p:PackageVersionSqlClient=7.1.1 \
+  -p:PackageVersionAbstractions=1.0.1 \
+  -p:PackageVersionLogging=2.2.2
+cp artifacts/Microsoft.Data.SqlClient/Package-Debug/*.*pkg packages/
 ```
 
-## Example Commands to Run Tests using `dotnet`
-
-Under the hood, the MSBuild commands to run tests use `dotnet` commands. But, if you wish to run
-them without the overhead of wrapping/unwrapping in MSBuild, you can run them directly.
-
-To change the processor architecture that runs the test (where possible, ie, x86 on x64), use the
-appropriate `dotnet` executable.
-
-By default, the tests will be executed on all supported .NET/.NET framework versions. To run on a
-specific version, pass the `-f` parameter with the desired version (eg `net9.0`).
-
-The `--filter` parameter is used to select which tests run. The default `category!=failing&
-category!=flaky&category!=interactive` prevents tests that are known to be failing or flaky from
-running. To run a specific test, use `FullyQualifiedName=[fully qualified name of the test method]`
-as the filter parameter. To run all possible tests, even known failing and flaky ones, simply omit
-the filter parameter. Please note, however, that this will still omit tests that cannot run on the
-current platform or with the current test configuration (eg, Windows tests on Linux, or SQL DB tests
-when Azure Synapse is configured).
-
-### Run Functional Tests
-
+Run Microsoft.Data.SqlClient functional tests against the versions build above:
 ```bash
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
-  -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky&category!=interactive"
-
+msbuild build2.proj -t:TestSqlClientFunctional \
+  -p:ReferenceType=Package \
+  -p:PackageVersionSqlClient=7.1.1 \
+  -p:PackageVersionAbstractions=1.0.1 \
+  -p:PackageVersionLogging=2.2.2
 ```
 
-### Run Manual Tests
+----
 
-```bash
-dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" \
-  -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky&category!=interactive"
-```
 
-### Run Unit Tests
-```bash
-dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" \
-  -p:Configuration=Release \
-  --filter "category!=failing&category!=flaky&category!=interactive"
-```
+Manual test prerequisites and configuration are covered in [TESTGUIDE.md](TESTGUIDE.md#manual-test-prerequisites).
 
-## Testing with Package References
 
-The MDS driver consists of several components, each of which produces its own
-NuGet package.  During development, components reference each other via
-`<ProjectReference>` properties by default.  This means that building
-and testing one component will implicitly build its project referenced
-dependencies.
-
-Alternatively, the `ReferenceType` build property may be specified with a value
-of `Package`.  This will change inter-component dependencies to use
-`<PackageReference>` dependencies, and require that dependent components be
-built and packaged before building the depending component.  This will generate NuGet
-packages in the root packages/ directory, and will be automatically searched by NuGet
-(see our root `NuGet.config`).
-
-Then, you can specify `Package` references be used, for example:
-
-```bash
-dotnet build -t:BuildLogging,PackLogging
-dotnet build -t:BuildSqlServer,PackSqlServer
-dotnet build -t:BuildAbstractions,PackAbstractions -p:ReferenceType=Package
-dotnet build -t:BuildAzure,PackAzure -p:ReferenceType=Package
-dotnet build -t:BuildSqlClient -p:ReferenceType=Package
-dotnet build -t:GenerateMdsPackage
-dotnet build -t:BuildAKVNetCore -p:ReferenceType=Package
-dotnet build -t:GenerateAkvPackage
-```
-
-The above will build the MDS and AKV components, place their NuGet packages into
-the `packages/` directory.
-
-A non-AnyCPU platform reference can only be used with package reference type.
-Otherwise, the specified platform will be replaced with AnyCPU in the build
-process.
-
-### Running Tests with Reference Type
-
-Provide property to `dotnet test` commands for testing desired reference type.
-
-```bash
-dotnet test -p:ReferenceType=Project ...
-```
-
+---
 
 ## Using Managed SNI on Windows
 
