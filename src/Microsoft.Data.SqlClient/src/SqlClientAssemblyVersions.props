@@ -20,6 +20,7 @@
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
 
     <AssemblyFileVersion>$(MdsAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(MdsAssemblyFileVersion)</FileVersion>
     <Version>$(MdsPackageVersion)</Version>
   </PropertyGroup>
 
