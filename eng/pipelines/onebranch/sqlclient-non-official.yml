@@ -240,6 +240,8 @@ extends:
           isOfficial: false
           stageNameSuffix: test
 
+          publishSymbols: ${{ parameters.publishSymbols }}
+
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'

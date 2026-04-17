@@ -89,6 +89,14 @@ parameters:
   - name: sqlServerPackageVersion
     type: string
 
+  # ── Symbols publishing parameter ───────────────────────────────────────
+  # When true, the release stage will depend on publish_symbols so that
+  # symbol publishing completes before packages are released.
+
+  - name: publishSymbols
+    type: boolean
+    default: false
+
   # ── Release parameters ─────────────────────────────────────────────────
 
   - name: releaseSqlServerServer
@@ -139,6 +147,8 @@ stages:
           - sqlclient_package_validation
         - ${{ if parameters.releaseAkvProvider }}:
           - build_addons
+        - ${{ if parameters.publishSymbols }}:
+          - publish_symbols
 
       variables:
         - name: onebranchReleaseEnvironment

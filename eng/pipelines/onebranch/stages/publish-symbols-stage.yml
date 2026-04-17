@@ -94,9 +94,10 @@ parameters:
     type: string
 
 stages:
-  # Stage is only emitted when publishSymbols is true AND at least one package was built.
-  # Without the build guard, the stage would contain zero jobs and fail ADO validation.
-  - ${{ if and(eq(parameters.publishSymbols, true), or(parameters.buildSqlServerServer, parameters.buildSqlClient, parameters.buildAkvProvider)) }}:
+  # Stage is emitted whenever publishSymbols is true.  If no packages were
+  # built, only the no-op placeholder job runs and the stage succeeds
+  # immediately — keeping the dependency graph simple for downstream stages.
+  - ${{ if eq(parameters.publishSymbols, true) }}:
     - stage: publish_symbols
       displayName: "Publish Symbols"
 
@@ -111,6 +112,18 @@ stages:
           - build_addons
 
       jobs:
+        # ── No-op placeholder ──────────────────────────────────────────
+        # When no packages were built, this job keeps the stage valid
+        # (ADO requires at least one job per stage) and succeeds instantly.
+        - ${{ if not(or(parameters.buildSqlServerServer, parameters.buildSqlClient, parameters.buildAkvProvider)) }}:
+          - job: publish_symbols_noop
+            displayName: "No symbols to publish"
+            pool:
+              type: linux
+            steps:
+              - script: echo "No packages were built — nothing to publish."
+                displayName: Skip
+
         # ── Logging ────────────────────────────────────────────────────
         - ${{ if or(parameters.buildAkvProvider, parameters.buildSqlClient) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
