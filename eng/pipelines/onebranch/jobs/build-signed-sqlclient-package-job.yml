@@ -113,10 +113,15 @@ jobs:
               authSignCertName: '${{ parameters.signingAuthSignCertName }}'
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              # Matches: Microsoft.Data.SqlClient.dll (main assembly)
-              #          Microsoft.Data.SqlClient.resources.dll (localized satellite assemblies)
-              # Excludes: Microsoft.Data.SqlClient.SNI*.dll (native SNI — signed in its own package)
-              pattern: 'Microsoft.Data.SqlClient{,.resources}.dll'
+              # Minimatch pattern (multi-line, one pattern per line).
+              # **/ matches any nested directory (e.g. net8.0/, net462/fr/).
+              #
+              # Matches:  net8.0/Microsoft.Data.SqlClient.dll
+              #           net462/fr/Microsoft.Data.SqlClient.resources.dll
+              # Excludes: net8.0/Microsoft.Data.SqlClient.SNI.dll (no ** path matches)
+              pattern: |
+                **/Microsoft.Data.SqlClient.dll
+                **/Microsoft.Data.SqlClient.resources.dll
 
       # Copy DLLs to the assemblies/ subdirectory for APIScan.
       - task: CopyFiles@2
@@ -164,6 +169,12 @@ jobs:
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
               searchPath: '$(JOB_OUTPUT)/packages'
-              # Matches: Microsoft.Data.SqlClient.nupkg and Microsoft.Data.SqlClient.snupkg (symbols package).
-              # Note: Only these two files exist in the packages/ output directory.
-              searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
+              # Minimatch pattern with extglob.
+              # [0-9] matches a single digit, anchoring to the version segment so
+              # names like Microsoft.Data.SqlClient.SNI are not matched.
+              # ?(s) is an extglob that optionally matches 's'.
+              #
+              # Matches:  Microsoft.Data.SqlClient.6.1.0.nupkg
+              #           Microsoft.Data.SqlClient.6.1.0.snupkg
+              # Excludes: Microsoft.Data.SqlClient.SNI.6.0.0.nupkg
+              searchPattern: 'Microsoft.Data.SqlClient.[0-9]*.?(s)nupkg'

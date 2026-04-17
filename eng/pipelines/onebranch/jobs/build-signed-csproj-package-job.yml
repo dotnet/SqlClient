@@ -150,9 +150,14 @@ jobs:
               authSignCertName: '${{ parameters.signingAuthSignCertName }}'
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              # Matches: <packageFullName>.dll (main assembly)
-              #          <packageFullName>.resources.dll (localized satellite assemblies, if any)
-              pattern: '${{ parameters.packageFullName }}{,.resources}.dll'
+              # Minimatch pattern (multi-line, one pattern per line).
+              # **/ matches any nested directory (e.g. net8.0/, netstandard2.0/fr/).
+              #
+              # Matches:  net8.0/<packageFullName>.dll
+              #           netstandard2.0/fr/<packageFullName>.resources.dll
+              pattern: |
+                **/${{ parameters.packageFullName }}.dll
+                **/${{ parameters.packageFullName }}.resources.dll
 
       # Copy DLLs to the assemblies/ subdirectory for APIScan.
       - task: CopyFiles@2
@@ -200,5 +205,12 @@ jobs:
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
               searchPath: $(JOB_OUTPUT)/packages
-              # Matches: <packageFullName>.nupkg and <packageFullName>.snupkg (symbols package).
-              searchPattern: '${{ parameters.packageFullName}}.*nupkg'
+              # Minimatch pattern with extglob.
+              # [0-9] matches a single digit, anchoring to the version segment so
+              # similarly-prefixed package names are not matched.
+              # ?(s) is an extglob that optionally matches 's'.
+              #
+              # Matches:  <packageFullName>.1.0.0.nupkg
+              #           <packageFullName>.1.0.0-preview.1.snupkg
+              # Excludes: <packageFullName>.SomeOther.1.0.0.nupkg
+              searchPattern: '${{ parameters.packageFullName }}.[0-9]*.?(s)nupkg'
