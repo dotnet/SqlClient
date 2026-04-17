@@ -83,6 +83,42 @@ steps:
     - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
       displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
+    # Log the PDB files that match the search pattern so we can verify no
+    # unexpected files are included in the upload.
+    - pwsh: |
+        $folder = '${{ parameters.symbolsFolder }}'
+        $glob   = '${{ parameters.searchPattern }}'
+        Write-Host "Symbols folder : $folder"
+        Write-Host "Search pattern : $glob"
+
+        # Convert the glob to a regex that can match against relative paths.
+        #   **  → match any number of path segments (.*?)
+        #   *   → match within a single segment ([^/\\]*)
+        #   ?   → match a single non-separator char ([^/\\])
+        #   .   → literal dot
+        $regex = [regex]::Escape($glob)
+        $regex = $regex -replace '\\\*\\\*[/\\]?', '.*?'   # ** or **/
+        $regex = $regex -replace '\\\*', '[^/\\]*'          # single *
+        $regex = $regex -replace '\\\?', '[^/\\]'           # single ?
+        $regex = '^' + $regex + '$'
+        Write-Host "Regex          : $regex"
+        Write-Host ""
+
+        $allFiles = Get-ChildItem -Path $folder -Recurse -File
+        $matched = $allFiles | Where-Object {
+            $rel = $_.FullName.Substring($folder.Length).TrimStart('/\')
+            $rel -match $regex
+        }
+
+        if (-not $matched) {
+            Write-Host "##vso[task.logissue type=warning]No PDB files matched pattern '$glob' under '$folder'"
+        } else {
+            $count = @($matched).Count
+            Write-Host "Matched $count PDB file(s):"
+            $matched | ForEach-Object { Write-Host "  $($_.FullName)" }
+        }
+      displayName: 'Log PDBs matching ${{ parameters.searchPattern }}'
+
     # Step 1 - Upload: Push PDB files to the Azure DevOps symbol store.
     # The SymbolsArtifactName set here is the key that links this upload to Step 2.
     - task: PublishSymbols@2

@@ -15,6 +15,9 @@
 # each build artifact, with target framework subdirectories preserved by the build
 # job's CopyFiles step. The publish-symbols job consumes that 'symbols' folder directly.
 #
+# Note that none of the resource DLLs we build produce PDBs, so there are no patterns below that
+# match them.
+#
 # The stage is excluded at compile time when publishSymbols is false.
 
 parameters:
@@ -116,7 +119,8 @@ stages:
               packageName: Logging
               packageFullName: Microsoft.Data.SqlClient.Internal.Logging
               packageVersion: '${{ parameters.loggingPackageVersion }}'
-              searchPattern: '**/Microsoft.Data.SqlClient.Internal.Logging*.pdb'
+              # Matches: Microsoft.Data.SqlClient.Internal.Logging.pdb across all TFM subdirs.
+              searchPattern: '**/Microsoft.Data.SqlClient.Internal.Logging.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -131,7 +135,8 @@ stages:
               packageName: SqlServer
               packageFullName: Microsoft.SqlServer.Server
               packageVersion: '${{ parameters.sqlServerPackageVersion }}'
-              searchPattern: '**/Microsoft.SqlServer.Server*.pdb'
+              # Matches: Microsoft.SqlServer.Server.pdb across all TFM subdirs.
+              searchPattern: '**/Microsoft.SqlServer.Server.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -146,7 +151,8 @@ stages:
               packageName: Abstractions
               packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
               packageVersion: '${{ parameters.abstractionsPackageVersion }}'
-              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Abstractions*.pdb'
+              # Matches: Microsoft.Data.SqlClient.Extensions.Abstractions.pdb across all TFM subdirs.
+              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Abstractions.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -161,7 +167,9 @@ stages:
               packageName: SqlClient
               packageFullName: Microsoft.Data.SqlClient
               packageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              searchPattern: '**/Microsoft.Data.SqlClient*.pdb'
+              # Matches: Microsoft.Data.SqlClient.pdb across all OS/TFM subdirs.
+              # Excludes: Microsoft.Data.SqlClient.SNI*.pdb (native SNI — symbols published separately).
+              searchPattern: '**/Microsoft.Data.SqlClient.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -176,7 +184,8 @@ stages:
               packageName: Azure
               packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
               packageVersion: '${{ parameters.azurePackageVersion }}'
-              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Azure*.pdb'
+              # Matches: Microsoft.Data.SqlClient.Extensions.Azure.pdb across all TFM subdirs.
+              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Azure.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -191,7 +200,8 @@ stages:
               packageName: AkvProvider
               packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               packageVersion: '${{ parameters.akvProviderPackageVersion }}'
-              searchPattern: '**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.pdb'
+              # Matches: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb across all TFM subdirs.
+              searchPattern: '**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'

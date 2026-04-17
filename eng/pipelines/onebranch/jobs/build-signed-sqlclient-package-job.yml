@@ -113,14 +113,22 @@ jobs:
               authSignCertName: '${{ parameters.signingAuthSignCertName }}'
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              pattern: 'Microsoft.Data.SqlClient*.dll'
+              # Matches: Microsoft.Data.SqlClient.dll (main assembly)
+              #          Microsoft.Data.SqlClient.resources.dll (localized satellite assemblies)
+              # Excludes: Microsoft.Data.SqlClient.SNI*.dll (native SNI — signed in its own package)
+              pattern: 'Microsoft.Data.SqlClient{,.resources}.dll'
 
       # Copy DLLs to the assemblies/ subdirectory for APIScan.
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
         inputs:
           SourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/Package-Release'
-          Contents: '**/Microsoft.Data.SqlClient.dll'
+          # Matches: Microsoft.Data.SqlClient.dll (main assembly)
+          #          Microsoft.Data.SqlClient.resources.dll (localized satellite assemblies in locale subdirs)
+          # Excludes: Microsoft.Data.SqlClient.SNI*.dll (native SNI — not part of this package)
+          Contents: |
+            **/Microsoft.Data.SqlClient.dll
+            **/Microsoft.Data.SqlClient.resources.dll
           TargetFolder: '$(JOB_OUTPUT)/assemblies'
           flattenFolders: false
 
@@ -131,7 +139,10 @@ jobs:
         displayName: Copy PDBs for APIScan and Symbols Publishing
         inputs:
           SourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/Package-Release'
-          Contents: '**/Microsoft.Data.SqlClient*.pdb'
+          # Matches: Microsoft.Data.SqlClient.pdb (main assembly symbols)
+          # Excludes: Microsoft.Data.SqlClient.SNI*.pdb (native SNI — symbols published separately)
+          # Note: Resource DLLs are resource-only satellite assemblies and do not produce PDBs.
+          Contents: '**/Microsoft.Data.SqlClient.pdb'
           TargetFolder: '$(JOB_OUTPUT)/symbols'
           flattenFolders: false
 
@@ -153,4 +164,6 @@ jobs:
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
               searchPath: '$(JOB_OUTPUT)/packages'
+              # Matches: Microsoft.Data.SqlClient.nupkg and Microsoft.Data.SqlClient.snupkg (symbols package).
+              # Note: Only these two files exist in the packages/ output directory.
               searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
