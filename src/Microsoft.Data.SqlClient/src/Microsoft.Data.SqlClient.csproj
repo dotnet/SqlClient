@@ -150,7 +150,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
@@ -175,6 +174,17 @@
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+  </ItemGroup>
+
+  <!--
+    Refer to the SqlServer package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project' and '$(TargetFramework)' != 'net462'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package' and '$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.SqlServer.Server" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
