@@ -297,7 +297,7 @@
                       "interactive". Use "none" to disable filtering and run all tests in the
                       target. For more information see:
                       https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
-      Default value:  category!=failing&category!=flaky
+      Default value:  category!=failing&category!=flaky&category!=interactive
       Allowed values: (category_expression|none)
     -->
     <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
@@ -341,6 +341,40 @@
     <TestSet Condition="'$(TestSet)' == ''" />
     <TestSetArgument Condition="'$(TestSet)' != ''">-p:TestSet="$(TestSet)"</TestSetArgument>
   </PropertyGroup>
+
+  <!-- ================================================================= -->
+  <!-- Top Level/Miscellaneous Targets -->
+
+  <!--
+    Build: Builds all packages
+    Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
+  -->
+  <Target Name="Build" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
+
+  <!-- Clean: Convenience target to remove build/test output -->
+  <Target Name="Clean">
+    <!-- Remove known build output paths -->
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'artifacts', SearchOption.AllDirectories))" />
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'test_results', SearchOption.AllDirectories))" />
+
+    <!-- Remove remaining bin/intermediate paths, eg test binaries -->
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'bin', SearchOption.AllDirectories))" />
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'obj', SearchOption.AllDirectories))" />
+  </Target>
+
+  <!--
+    Pack: Packages all packages
+    Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
+  -->
+  <Target Name="Pack" DependsOnTargets="PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider;PackSqlServer" />
+
+  <!--
+    Test: Run all test targets for all packages.
+    Note: This will run for a *very* long time and it is not recommended, even in automated test
+      environments. Please consider running project specific test targets or specific test sets
+      within the project.
+  -->
+  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
