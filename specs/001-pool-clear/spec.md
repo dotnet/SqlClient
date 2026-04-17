@@ -63,6 +63,8 @@ As an application developer, I want multiple/concurrent calls to `ClearPool` to 
 - What happens if `ClearPool` is called on an empty pool? The generation counter increments but no connections are closed. Subsequent connections are fresh.
 - What happens if `ClearPool` is called during pool shutdown? The clear should be a no-op or complete harmlessly — shutdown already destroys all connections.
 - What happens with many clears causing generation counter overflow? With `int` counter, overflow at 2^31. Even at 1 clear/second, this is 68 years. Overflow is not a practical concern. If it wraps, the worst case is one stale connection survives a single retrieval cycle.
+- What happens if `ClearPool` is called during pool startup? `ClearPool` can be called at any time after the pool is instantiated. If connections are being added to the pool while clearing, they are closed subject to the conditions of the clear operation.
+- What happens if ClearPool is called while a SqlConnection is waiting to receive a connection from the pool? If a SqlConnection is waiting for a connection, then there are no idle connections in the pool, so `ClearPool` will not have any effect.
 
 ## Requirements
 

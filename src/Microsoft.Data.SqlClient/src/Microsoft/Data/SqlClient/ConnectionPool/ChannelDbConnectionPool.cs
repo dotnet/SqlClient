@@ -82,6 +82,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// The current generation of the pool. Incremented atomically on each <see cref="Clear"/> call.
         /// Connections stamped with a generation that does not match are considered stale and are destroyed
         /// rather than returned to the idle channel.
+        /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
         private volatile int _clearCounter;
 
@@ -89,6 +90,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Guard to prevent concurrent <see cref="Clear"/> operations from draining the idle channel
         /// simultaneously. The generation counter is still incremented by every caller so stale connections
         /// are always caught lazily, but only one thread performs the actual drain.
+        /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
         private volatile int _isClearing;
         #endregion
@@ -193,6 +195,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Drain idle connections from the channel and destroy them. Limit iterations to
                 // the current idle count to prevent an unbounded loop if connections are
                 // concurrently returned to the channel during the drain.
+                // Any connections from a previous generation that are returned to the pool
+                // after we start draining will fail the _clearCounter comparison and will be closed.
                 int numToDrain = IdleCount;
                 while (numToDrain > 0 && _idleChannel.TryRead(out DbConnectionInternal? connection))
                 {
@@ -205,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             finally
             {
-                _isClearing = 0;
+                Interlocked.Exchange(ref _isClearing, 0);
             }
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
