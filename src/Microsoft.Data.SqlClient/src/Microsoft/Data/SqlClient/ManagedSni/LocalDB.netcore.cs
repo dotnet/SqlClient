@@ -1,8 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET && _WINDOWS
+#if NET
 
 using System;
 using System.Runtime.InteropServices;
@@ -11,6 +11,7 @@ using Interop.Windows.Handles;
 using Interop.Windows.Kernel32;
 using Microsoft.Win32;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -44,8 +45,16 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private LocalDB() { }
 
-        internal static string GetLocalDBConnectionString(string localDbInstance) =>
-            Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
+        internal static string GetLocalDBConnectionString(string localDbInstance)
+        {
+            // LocalDB is not available for Unix and hence it cannot be supported.
+            if (!ADP.IsWindows)
+            {
+                throw new PlatformNotSupportedException(Strings.LocalDBNotSupported);
+            }
+
+            return Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
+        }
 
         internal static IntPtr GetProcAddress(string functionName) =>
             Instance.LoadUserInstanceDll() ? Kernel32.GetProcAddress(LocalDB.Instance._sqlUserInstanceLibraryHandle, functionName) : IntPtr.Zero;
