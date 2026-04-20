@@ -24,11 +24,11 @@ variables:
   # make it clear that these variables are used for symbols (as opposed to other msc tasks).
   #
   # SymbolsAzureSubscription
-  # SymbolsPublishProjectName
-  # SymbolsPublishServer
-  # SymbolsPublishTokenUri
+  # SymbolsPublishProjectNameSqlClient
+  # SymbolsPublishServerProd / SymbolsPublishServerPPE
+  # SymbolsPublishTokenUriProd / SymbolsPublishTokenUriPPE
   # SymbolsUploadAccount
-  - group: 'symbols-variables-v2'
+  - group: 'Symbols Publishing'
 
   # OneBranch Template Variables ###########################################
 
