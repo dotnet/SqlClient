@@ -152,7 +152,7 @@ jobs:
           flattenFolders: false
 
       # Package the build output into a NuGet package
-      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml
+      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml@self
         parameters:
           abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
           loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
