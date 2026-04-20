@@ -1,119 +1,154 @@
-####################################################################################
-# Licensed to the .NET Foundation under one or more agreements.                    #
-# The .NET Foundation licenses this file to you under the MIT license.             #
-# See the LICENSE file in the project root for more information.                   #
-#                                                                                  #
-# doc: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL #
-####################################################################################
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Symbols Publishing Pipeline
+# ===========================
+# Canonical docs: https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
+#
+# Publishing symbols to SymWeb (internal) and MSDL (public) is a two-step process:
+#
+#   Step 1 - Upload:  The PublishSymbols@2 task uploads PDB files to the Azure DevOps
+#            symbol store under an artifact name (SymbolsArtifactName). This stores the
+#            symbols but does NOT make them available on SymWeb or MSDL.
+#
+#   Step 2 - Publish: The publish-symbols.ps1 script calls the Symbols Publishing Pipeline
+#            REST API to request that the previously uploaded symbols be published to the
+#            internal (SymWeb) and/or public (MSDL) symbol servers.
+#
+# IMPORTANT: Step 2 depends on Step 1. The ArtifactName parameter passed to the publish
+# script MUST match the SymbolsArtifactName used by PublishSymbols@2 so that both steps
+# reference the same uploaded artifact.
+
 parameters:
+    # Name of the symbols artifact that will be published
+    - name: artifactName
+      type: string
 
-  # The full name of the package whose symbols are being published.
-  - name: packageFullName
-    type: string
+    # Azure subscription where the publishing task will execute
+    - name: azureSubscription
+      type: string
 
-  # The version of the package whose symbols are being published.
-  - name: packageVersion
-    type: string
+    # Package name, typically the name of the nuget package being built
+    - name: packageName
+      type: string
 
-  # Our symbols account name.
-  - name: symbolsAccount
-    type: string
-    default: SqlClientDrivers
+    # Project that symbols will belong to (decided during symbols onboarding)
+    - name: publishProjectName
+      type: string
 
-  # The symbols server to publish to.
-  - name: symbolServer
-    type: string
-    default: $(SymbolServer)
+    # Where symbols publishing service is hosted, will be prepended to trafficmanager.net
+    - name: publishServer
+      type: string
 
-  # The token URI for the symbol publishing service.
-  - name: symbolTokenUri
-    type: string
-    default: $(SymbolTokenUri)
+    # Whether to publish the uploaded symbols to the internal symbols servers
+    - name: publishToInternal
+      type: boolean
 
-  # A pair of flags indicating whether to publish to the internal and public symbol servers.  Both
-  # default to true.
-  - name: publishToServers
-    type: object
-    default:
-      internal: true
-      public: true
+    # Whether to publish the uploaded symbols to the public symbols servers
+    - name: publishToPublic
+      type: boolean
+
+    # URI to use for requesting a bearer-token for publishing the symbols
+    - name: publishTokenUri
+      type: string
+
+    # Pattern to use to search for pdb symbols files to upload/publish
+    - name: searchPattern
+      type: string
+
+    # Root folder to search for PDB files. When called from a build job this is typically
+    # $(BUILD_OUTPUT); when called from the dedicated symbols stage it points at the
+    # downloaded artifact path containing the PDBs.
+    - name: symbolsFolder
+      type: string
+      default: '$(BUILD_OUTPUT)'
+
+    # Account/org where the symbols will be uploaded
+    - name: uploadAccount
+      type: string
+
+    # Version of the symbols to publish, typically the same as the NuGet package version
+    - name: version
+      type: string
 
 steps:
-- pwsh: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.symbolsAccount}}"'
-  displayName: 'Set ArtifactServices.Symbol.AccountName to ${{parameters.symbolsAccount}}'
+    # Set variable for downstream tasks (allegedly).
+    #
+    # Note: Because variables cannot be set in top-level of template, this has to be done during
+    # runtime.
+    #
+    - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
+      displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
-- pwsh: 'Write-Host "##vso[task.setvariable variable=symbolsArtifactName;]${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)"'
-  displayName: 'Set symbolsArtifactName variable'
+    # Log the PDB files that match the search pattern so we can verify no
+    # unexpected files are included in the upload.
+    - pwsh: |
+        $folder = '${{ parameters.symbolsFolder }}'
+        $glob   = '${{ parameters.searchPattern }}'
+        Write-Host "Symbols folder : $folder"
+        Write-Host "Search pattern : $glob"
 
-- task: PublishSymbols@2
-  displayName: 'Upload symbols to ${{parameters.symbolsAccount }} org'
-  inputs:
-    SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\Package\bin'
-    SearchPattern: '**/*.pdb'
-    IndexSources: false
-    SymbolServerType: TeamServices
-    SymbolsMaximumWaitTime: 60
-    SymbolExpirationInDays: 1825 # 5 years
-    SymbolsProduct: ${{ parameters.packageFullName }}
-    SymbolsVersion: ${{ parameters.packageVersion }}
-    SymbolsArtifactName: $(symbolsArtifactName)
-    Pat: $(System.AccessToken)
+        # Convert the glob to a regex that can match against relative paths.
+        #   **  → match any number of path segments (.*?)
+        #   *   → match within a single segment ([^/\\]*)
+        #   ?   → match a single non-separator char ([^/\\])
+        #   .   → literal dot
+        $regex = [regex]::Escape($glob)
+        $regex = $regex -replace '\\\*\\\*[/\\]?', '.*?'   # ** or **/
+        $regex = $regex -replace '\\\*', '[^/\\]*'          # single *
+        $regex = $regex -replace '\\\?', '[^/\\]'           # single ?
+        $regex = '^' + $regex + '$'
+        Write-Host "Regex          : $regex"
+        Write-Host ""
 
-- task: AzureCLI@2
-  displayName: 'Publish symbols'
-  inputs:
-    azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
-    scriptType: ps
-    scriptLocation: inlineScript
-    inlineScript: |
-      $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
-      $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
+        $allFiles = Get-ChildItem -Path $folder -Recurse -File
+        $matched = $allFiles | Where-Object {
+            $rel = $_.FullName.Substring($folder.Length).TrimStart('/\')
+            $rel -match $regex
+        }
 
-      echo "Publishing request name: $(symbolsArtifactName)"
-      echo "Publish to internal server: $publishToInternalServer"
-      echo "Publish to public server: $publishToPublicServer"
+        if (-not $matched) {
+            Write-Host "##vso[task.logissue type=warning]No PDB files matched pattern '$glob' under '$folder'"
+        } else {
+            $count = @($matched).Count
+            Write-Host "Matched $count PDB file(s):"
+            $matched | ForEach-Object { Write-Host "  $($_.FullName)" }
+        }
+      displayName: 'Log PDBs matching ${{ parameters.searchPattern }}'
 
-      $symbolServer = "${{parameters.symbolServer }}"
-      $tokenUri = "${{parameters.symbolTokenUri }}"
-      # Registered project name in the symbol publishing pipeline: https://portal.microsofticm.com/imp/v3/incidents/incident/520844254/summary
-      $projectName = "Microsoft.Data.SqlClient.SNI"
+    # Step 1 - Upload: Push PDB files to the Azure DevOps symbol store.
+    # The SymbolsArtifactName set here is the key that links this upload to Step 2.
+    - task: PublishSymbols@2
+      displayName: 'Step 1: Upload symbols to ${{ parameters.uploadAccount }} org'
+      inputs:
+          IndexSources: false
+          Pat: '$(System.AccessToken)'
+          SearchPattern: '${{ parameters.searchPattern }}'
+          SymbolExpirationInDays: 1825 # 5 years
+          SymbolServerType: 'TeamServices'
+          SymbolsArtifactName: '${{ parameters.artifactName }}'
+          SymbolsFolder: '${{ parameters.symbolsFolder }}'
+          SymbolsMaximumWaitTime: 60
+          SymbolsProduct: '${{ parameters.packageName }}'
+          SymbolsVersion: '${{ parameters.version }}'
 
-      # Get the access token for the symbol publishing service
-      $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
-
-      echo ">  1.Symbol publishing token acquired."
-
-      echo "Registering the request name ..."
-      $requestName = "$(symbolsArtifactName)"
-      $requestNameRegistrationBody = "{'requestName': '$requestName'}"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
-
-      echo ">  2.Registration of request name succeeded."
-
-      echo "Publishing the symbols ..."
-      $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
-      echo "Publishing symbols request body: $publishSymbolsBody"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $publishSymbolsBody
-
-      echo ">  3.Request to publish symbols succeeded."
-
-      # The following REST calls are used to check publishing status.
-      echo ">  4.Checking the status of the request ..."
-
-      Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
-
-      echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-
-      echo "PublishingStatus"
-      echo "-----------------"
-      echo "0	NotRequested; The request has not been requested to publish."
-      echo "1	Submitted; The request is submitted to be published"
-      echo "2	Processing; The request is still being processed"
-      echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-
-      echo "PublishingResult"
-      echo "-----------------"
-      echo "0	Pending; The request has not completed or has not been requested."
-      echo "1	Succeeded; The request has published successfully"
-      echo "2	Failed; The request has failed to publish"
-      echo "3	Cancelled; The request was cancelled"
+    # Step 2 - Publish: Request the Symbols Publishing Pipeline to publish the uploaded
+    # symbols to SymWeb and/or MSDL. The -ArtifactName argument must match the
+    # SymbolsArtifactName from Step 1.
+    - task: AzureCLI@2
+      displayName: 'Step 2: Publish symbols to SymWeb/MSDL'
+      inputs:
+        azureSubscription: '${{ parameters.azureSubscription }}'
+        scriptType: pscore
+        scriptLocation: scriptPath
+        scriptPath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/publish-symbols.ps1'
+        arguments: >-
+          -PublishServer "${{ parameters.publishServer }}"
+          -PublishTokenUri "${{ parameters.publishTokenUri }}"
+          -PublishProjectName "${{ parameters.publishProjectName }}"
+          -ArtifactName "${{ parameters.artifactName }}"
+          -PublishToInternal $${{ parameters.publishToInternal }}
+          -PublishToPublic $${{ parameters.publishToPublic }}

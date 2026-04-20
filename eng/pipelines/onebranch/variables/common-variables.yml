@@ -41,10 +41,23 @@ variables:
   - name: BUILD_OUTPUT
     value: $(REPO_ROOT)/artifacts
 
-  # This is where our C# projects place their NuGet package outputs.  This is intentionally
-  # separate from packages/ (where downloaded pipeline artifacts go) so that ESRP signing and
-  # OneBranch artifact publishing only operate on packages built by the current job.
-  - name: PACK_OUTPUT
+  # Directory where downloaded pipeline artifacts (NuGet packages from earlier
+  # stages) are placed. Build jobs use this as a local NuGet package source so
+  # that downstream packages can resolve dependencies on packages built by
+  # upstream stages.
+  - name: JOB_INPUT
+    value: $(REPO_ROOT)/packages
+
+  # Root directory for all job output artifacts (NuGet packages, symbols, etc.).
+  # OneBranch auto-publishes everything under this directory. It is intentionally
+  # separated from packages/ (where downloaded pipeline artifacts go) so that ESRP
+  # signing and OneBranch artifact publishing only operate on the current job's output.
+  #
+  # Sub-directory layout:
+  #   assemblies/ - DLL assemblies for APIScan (preserving TFM folder structure)
+  #   packages/   - NuGet packages (.nupkg, .snupkg)
+  #   symbols/    - PDB symbol files (preserving TFM folder structure)
+  - name: JOB_OUTPUT
     value: $(REPO_ROOT)/output
 
   # C# assembly versions must be in the format: Major.Minor.Build.Revision, but

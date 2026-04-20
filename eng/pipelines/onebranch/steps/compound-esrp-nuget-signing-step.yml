@@ -30,8 +30,13 @@ parameters:
   - name: esrpClientId
     type: string
 
-  # Glob pattern to match NuGet packages for scanning and signing.
-  - name: pattern
+  # Folder path to search for NuGet packages to sign
+  - name: searchPath
+    type: string
+
+  # Minimatch pattern(s) to search for NuGet packages. Supports multi-line
+  # patterns and negation (!pattern). Defaults to '*.*nupkg'.
+  - name: searchPattern
     type: string
     default: '*.*nupkg'
 
@@ -45,23 +50,9 @@ steps:
       CleanupTempStorage: 1
       ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
       EsrpClientId: '${{ parameters.esrpClientId }}'
-      FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
-      UseMSIAuthentication: true
-      VerboseLogin: 1
-
-  # See: https://aka.ms/esrp.signtask
-  - task: EsrpCodeSigning@6
-    displayName: 'ESRP Signing NuGet Package'
-    inputs:
-      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
-      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
-      EsrpClientId: '${{ parameters.esrpClientId }}'
-      AuthAKVName: '${{ parameters.authAkvName }}'
-      AuthSignCertName: '${{ parameters.authSignCertName }}'
-      FolderPath: '$(PACK_OUTPUT)'
-      Pattern: '${{ parameters.pattern }}'
+      FolderPath: '${{ parameters.searchPath }}'
+      Pattern: '${{ parameters.searchPattern }}'
+      UseMinimatch: true
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |

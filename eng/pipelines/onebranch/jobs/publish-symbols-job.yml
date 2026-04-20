@@ -1,0 +1,95 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Reusable job template for publishing symbols for a single package. Downloads the pipeline
+# artifact produced by a build job, then invokes publish-symbols-step.yml to upload and publish
+# the PDB files to the internal and public symbol servers.
+#
+# Each package's PDBs are published separately to maintain unique naming and versioning.
+# PDBs are expected to be located under the 'symbols/' directory within the downloaded
+# artifact.
+
+parameters:
+  # The pipeline artifact name to download (OneBranch naming: drop_<stage>_<job>).
+  - name: artifactName
+    type: string
+
+  # Short package name used in the job name (e.g. Logging, SqlServer, SqlClient).
+  - name: packageName
+    type: string
+
+  # The full NuGet package name (e.g. Microsoft.Data.SqlClient.Internal.Logging).
+  - name: packageFullName
+    type: string
+
+  # The package version, used for symbol versioning.
+  - name: packageVersion
+    type: string
+
+  # Pattern to use to search for PDB files to upload/publish, relative to the symbols folder.
+  - name: searchPattern
+    type: string
+
+  # Symbols Publishing Parameters ------------------------------------------
+
+  - name: symbolsAzureSubscription
+    type: string
+
+  - name: symbolsPublishProjectName
+    type: string
+
+  - name: symbolsPublishServer
+    type: string
+
+  - name: symbolsPublishTokenUri
+    type: string
+
+  - name: symbolsUploadAccount
+    type: string
+
+jobs:
+  - job: publish_symbols_${{ parameters.packageName }}
+    displayName: 'Publish Symbols: ${{ parameters.packageFullName }}'
+    pool:
+      type: windows
+
+    variables:
+      # OneBranch requires ob_outputDirectory to be set, even if this job produces no artifacts.
+      ob_outputDirectory: $(JOB_OUTPUT)
+
+      # Disable SDL scanning — this job only uploads/publishes PDBs and produces no
+      # assemblies to scan. APIScan and BinSkim are handled by the build jobs.
+      ob_sdl_apiscan_enabled: false
+      ob_sdl_binskim_break: false
+      ob_sdl_binskim_enabled: false
+
+      # Path where the downloaded artifact will be placed.
+      artifactPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}
+
+      # Path to the PDB files within the downloaded artifact.
+      symbolsPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}/symbols
+
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download ${{ parameters.packageFullName }} Artifact'
+        inputs:
+          artifactName: '${{ parameters.artifactName }}'
+          targetPath: '$(artifactPath)'
+
+      - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
+        parameters:
+          artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)_$(System.JobAttempt)'
+          azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+          packageName: '${{ parameters.packageFullName }}'
+          publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+          publishServer: '${{ parameters.symbolsPublishServer }}'
+          publishToInternal: true
+          publishToPublic: true
+          publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+          searchPattern: '${{ parameters.searchPattern }}'
+          symbolsFolder: '$(symbolsPath)'
+          uploadAccount: '${{ parameters.symbolsUploadAccount }}'
+          version: '${{ parameters.packageVersion }}'

@@ -33,10 +33,10 @@ steps:
       solution: $(REPO_ROOT)/build.proj
       configuration: ${{ parameters.buildConfiguration }}
       msbuildArguments: >-
-          -t:${{ parameters.packTarget }}
-          -p:ReferenceType=Package
-          -p:PackagesDir=$(PACK_OUTPUT)/
-          ${{ parameters.versionProperties }}
+        -t:${{ parameters.packTarget }}
+        -p:ReferenceType=Package
+        -p:PackagesDir=$(JOB_OUTPUT)/packages/
+        ${{ parameters.versionProperties }}
 
-  - script: tree /a /f $(PACK_OUTPUT)
+  - script: tree /a /f $(JOB_OUTPUT)/packages
     displayName: List Pack Output Tree After Pack

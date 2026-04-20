@@ -30,8 +30,9 @@ parameters:
   - name: esrpClientId
     type: string
 
-  # Globbing pattern for the files to sign. All files in $(BUILD_OUTPUT)/Package/bin
-  # that match this pattern will be scanned and signed. This should end with ".dll".
+  # Minimatch pattern(s) for the files to sign. All files in $(BUILD_OUTPUT)
+  # that match will be scanned and signed. Supports multi-line patterns and
+  # negation (!pattern). See https://aka.ms/esrp.signtask for details.
   - name: pattern
     type: string
 
@@ -43,10 +44,11 @@ steps:
       AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
       AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
       CleanupTempStorage: 1
-      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-      EsrpClientId: ${{ parameters.esrpClientId }}
-      FolderPath: $(BUILD_OUTPUT)/Package/bin
-      Pattern: ${{ parameters.pattern }}
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      FolderPath: '$(BUILD_OUTPUT)'
+      Pattern: '${{ parameters.pattern }}'
+      UseMinimatch: true
       UseMSIAuthentication: true
       VerboseLogin: 1
 
@@ -54,14 +56,15 @@ steps:
   - task: EsrpCodeSigning@6
     displayName: ESRP DLL Signing
     inputs:
-      AppRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-      AppRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-      AuthAKVName: ${{ parameters.authAkvName }}
-      AuthSignCertName: ${{ parameters.authSignCertName }}
-      ConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-      EsrpClientId: ${{ parameters.esrpClientId }}
-      FolderPath: $(BUILD_OUTPUT)/Package/bin
-      Pattern: ${{ parameters.pattern }}
+      AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+      AuthAKVName: '${{ parameters.authAkvName }}'
+      AuthSignCertName: '${{ parameters.authSignCertName }}'
+      ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+      EsrpClientId: '${{ parameters.esrpClientId }}'
+      FolderPath: '$(BUILD_OUTPUT)'
+      Pattern: '${{ parameters.pattern }}'
+      UseMinimatch: true
       signConfigType: inlineSignParams
       UseMSIAuthentication: true
       inlineOperation: |
