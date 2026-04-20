@@ -14,13 +14,6 @@ parameters:
   - name: packTarget
     type: string
 
-  # Build Configuration.
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-
   # Additional MSBuild arguments for version properties.
   - name: versionProperties
     type: string
@@ -28,10 +21,10 @@ parameters:
 
 steps:
   - task: MSBuild@1
-    displayName: Build.proj - ${{ parameters.packTarget }}
+    displayName: 'Build.proj - ${{ parameters.packTarget }}'
     inputs:
-      solution: $(REPO_ROOT)/build.proj
-      configuration: ${{ parameters.buildConfiguration }}
+      solution: '$(REPO_ROOT)/build.proj'
+      configuration: 'Release'
       msbuildArguments: >-
         -t:${{ parameters.packTarget }}
         -p:ReferenceType=Package
