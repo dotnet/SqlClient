@@ -220,7 +220,7 @@ msbuild build2.proj -t:PackAzure -p:PackBuild=false
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build2.proj` targets:
-`PackageVersion<TargetProject>`, `BuildNumber`, `and `BuildSuffix`. Using these in different combinations, can generate
+`PackageVersion<TargetProject>`, `BuildNumber`, and `BuildSuffix`. Using these in different combinations, can generate
 appropriate package, assembly, and file versions for different scenarios. For most developer workflows, it is not
 necessary to specify any of these parameters - appropriate versions based on the latest release will be generated
 automatically. This section primarily exists to document the various parameters, their effects, and the scenarios they
@@ -246,7 +246,7 @@ as the latest released version of the package. For the table below, we assume th
 
 The above documentation is the default mode of operation, and is the recommended mode for most developers. However,
 `build2.proj` supports "package mode" builds. In this mode, instead of projects depending on other projects, they
-depend on NuGet packages. This mode is useful for verifying that packages work witheach other, especially in automated
+depend on NuGet packages. This mode is useful for verifying that packages work with each other, especially in automated
 build scenarios. For completeness, and debugging of autoamted builds, this section documents behavior of "package mode".
 
 To switch to "package mode", set the `ReferenceType` parameter in `build2.proj` to `Package`. And, optionally, include

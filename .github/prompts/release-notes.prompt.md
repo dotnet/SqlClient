@@ -28,7 +28,7 @@ Each package has its own versioning and dependency sources. Use these to determi
 | Package | Version Source | Dependency Source |
 |---------|---------------|-------------------|
 | `Microsoft.Data.SqlClient` | [tools/props/Versions.props](tools/props/Versions.props) (`MdsVersionDefault`) | [Directory.Packages.props](Directory.Packages.props) and the [project file](src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj) |
-| `AzureKeyVaultProvider` | [tools/props/Versions.props](tools/props/Versions.props) (`AkvVersionDefault`) | [AKV project file](src/Microsoft.Data.SqlClient.AlwaysEncrpypted.AzureKeyVaultProvider/src//Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj) and [Directory.Packages.props](Directory.Packages.props) |
+| `AzureKeyVaultProvider` | [tools/props/Versions.props](tools/props/Versions.props) (`AkvVersionDefault`) | [AKV project file](src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj) and [Directory.Packages.props](Directory.Packages.props) |
 | `Microsoft.SqlServer.Server` | [tools/props/Versions.props](tools/props/Versions.props) (`SqlServerPackageVersion`) | [SqlServer project file](src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj) |
 | `Extensions.Abstractions` | [AbstractionsVersions.props](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/AbstractionsVersions.props) | [Abstractions.csproj](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj) |
 | `Extensions.Azure` | [AzureVersions.props](src/Microsoft.Data.SqlClient.Extensions/Azure/src/AzureVersions.props) | [Azure.csproj](src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj) |

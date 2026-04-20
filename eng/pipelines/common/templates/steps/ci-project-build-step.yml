@@ -107,5 +107,5 @@ steps:
           -p:AkvProviderPackageVersion=${{ parameters.akvPackageVersion }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
 

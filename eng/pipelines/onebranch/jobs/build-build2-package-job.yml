@@ -4,15 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Generic job template for building and signing simple build2.proj packages, currently:
-#  - Abstractions
-#  - Azure
-#  - Logging
-#  - SqlClient
-#  - SqlServer
+# Generic job template for building and signing simple build2.proj packages.
 #
-# The job builds DLLs via build2.proj, ESRP signs the DLLs, then creates NuGet packages from the
-# signed DLLs, and finally ESRP signs the NuGet packages.
+# The job builds DLLs via build2.proj, ESRP signs the DLLs, creates NuGet packages from the signed
+# DLLs, ESRP signs the NuGet packages, and finally copies all the build output to the job output.
 
 parameters:
   # Common Build Job Properties ############################################
@@ -51,9 +46,9 @@ parameters:
 
   # Package Properties #####################################################
 
-  # List of packages that the package being built with this job depends on. Each entry in the
+  # A list of packages that the package being built with this job depends on. Each entry in the
   # object should have the fields:
-  # * artifactName - Name of the artifact to published in a previous job that contains the desired
+  # * artifactName - Name of the artifact published in a previous job that contains the desired
   #   version of the dependency.
   # * shortName - Short name of the dependency. This name should correspond to the short name used
   #   when building the package via build2.proj
