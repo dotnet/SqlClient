@@ -54,11 +54,13 @@ jobs:
   - job: publish_symbols_${{ parameters.packageName }}
     displayName: 'Publish Symbols: ${{ parameters.packageFullName }}'
     pool:
-      type: windows
+      type: linux
 
     variables:
-      # OneBranch requires ob_outputDirectory to be set, even if this job produces no artifacts.
-      ob_outputDirectory: $(JOB_OUTPUT)
+      # OneBranch requires ob_outputDirectory to be set. Pipeline Artifacts are always on and
+      # cannot be disabled. To prevent this job from publishing artifacts, a .artifactignore
+      # that excludes all files is written into ob_outputDirectory before the auto-publish step.
+      ob_outputDirectory: $(Build.SourcesDirectory)/no_publish
 
       # Disable SDL scanning — this job only uploads/publishes PDBs and produces no
       # assemblies to scan. APIScan and BinSkim are handled by the build jobs.
@@ -73,6 +75,13 @@ jobs:
       symbolsPath: $(Pipeline.Workspace)/${{ parameters.artifactName }}/symbols
 
     steps:
+      # Create ob_outputDirectory with a .artifactignore that excludes everything,
+      # so OneBranch's auto-publish uploads an empty artifact.
+      - pwsh: |
+          New-Item -Path "$(ob_outputDirectory)" -ItemType Directory -Force
+          "**" | Out-File -FilePath "$(ob_outputDirectory)/.artifactignore" -Encoding ascii
+        displayName: 'Suppress artifact publishing'
+
       - task: DownloadPipelineArtifact@2
         displayName: 'Download ${{ parameters.packageFullName }} Artifact'
         inputs:

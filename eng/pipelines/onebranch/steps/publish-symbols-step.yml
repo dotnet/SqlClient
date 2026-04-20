@@ -75,16 +75,19 @@ parameters:
       type: string
 
 steps:
-    # Set variable for downstream tasks (allegedly).
+    # Set the ARTIFACTSERVICES_SYMBOL_ACCOUNTNAME environment variable required by the publishing
+    # tasks, as documented here:
     #
-    # Note: Because variables cannot be set in top-level of template, this has to be done during
-    # runtime.
+    # https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL#Option_B:_OneBranch
+    #
+    # Note that Azure Pipelines converts variable names with dots to all-caps with underscores when
+    # setting environment variables.
     #
     - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
       displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
-    # Log the PDB files that match the search pattern so we can verify no
-    # unexpected files are included in the upload.
+    # Log the PDB files that match the search pattern so we can verify no unexpected files are
+    # included in the upload.
     - pwsh: |
         $folder = '${{ parameters.symbolsFolder }}'
         $glob   = '${{ parameters.searchPattern }}'
