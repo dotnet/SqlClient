@@ -75,16 +75,13 @@ parameters:
       type: string
 
 steps:
-    # Set the ARTIFACTSERVICES_SYMBOL_ACCOUNTNAME environment variable required by the publishing
-    # tasks, as documented here:
+    # NOTE: ArtifactServices.Symbol.AccountName is set as a job-level variable in
+    # publish-symbols-job.yml. On OneBranch Linux agents, PublishSymbols@2 runs on the host (outside
+    # the build container) due to 1ES PT credential isolation. A ##vso[task.setvariable] inside the
+    # container is not visible to host-level tasks, so the variable must be declared at job scope.
     #
+    # Reference:
     # https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL#Option_B:_OneBranch
-    #
-    # Note that Azure Pipelines converts variable names with dots to all-caps with underscores when
-    # setting environment variables.
-    #
-    - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
-      displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
     # Log the PDB files that match the search pattern so we can verify no unexpected files are
     # included in the upload.
