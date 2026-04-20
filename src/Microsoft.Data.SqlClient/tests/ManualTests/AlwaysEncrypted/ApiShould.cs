@@ -3042,7 +3042,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <summary>
         /// Generates the definition of a table with the number of bit columns specified.
         /// </summary>
-        /// <param name="tableName">The name of the table</param>
         /// <param name="columnsCount">The number of columns for the table</param>
         /// <returns></returns>
         private static string GenerateBitTableDefinition(int columnsCount)

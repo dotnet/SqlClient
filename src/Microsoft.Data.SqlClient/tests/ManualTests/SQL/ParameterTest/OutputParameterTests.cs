@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <param name="collation">Name of a SQL Server collation which encodes text in the given code page.</param>
         /// <param name="codePage">ID of the codepage which should be used by SQL Server and the driver to encode and decode text.</param>
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(OutputParameterCodePages))]
         public void CollatedStringInOutputParameter_DecodesSuccessfully(string collation, int codePage)
         {
@@ -78,13 +78,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             { Direction = ParameterDirection.Output };
             SqlParameter outputVarbinaryParameter = new("@Output_Varbinary", SqlDbType.VarBinary, 8000)
             { Direction = ParameterDirection.Output };
-            Encoding codePageEncoding = Encoding.GetEncoding(codePage);
 
             roundtripCollationCommand.Parameters.Add(outputVarcharParameter);
             roundtripCollationCommand.Parameters.Add(outputVarbinaryParameter);
 
             sqlConnection.Open();
             roundtripCollationCommand.ExecuteNonQuery();
+
+            // Resolve the encoding after Open() so that SqlClient's internal registration of
+            // CodePagesEncodingProvider has occurred. Without this, GetEncoding can throw on
+            // .NET for non-ASCII code pages (e.g. 936) if this test runs first in the process.
+            Encoding codePageEncoding = Encoding.GetEncoding(codePage);
 
             string clientSideDecodedString = codePageEncoding.GetString((byte[])outputVarbinaryParameter.Value);
             byte[] clientSideStringBytes = codePageEncoding.GetBytes(outputVarcharParameter.Value.ToString());
