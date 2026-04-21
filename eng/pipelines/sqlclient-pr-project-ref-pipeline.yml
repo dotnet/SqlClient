@@ -11,8 +11,9 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It is triggered by pushes to PRs that target dev/ and feature/ branches, and
-# the main branch in GitHub.
+# It is triggered by pushes to PRs that target the main, dev/*, feat/*, and
+# release/* branches in GitHub.  The dev/* pattern includes dev/automation/*
+# branches created by AI agents.
 #
 # It maps to the "PR-SqlClient-Project" pipeline in the Public project:
 #
@@ -29,22 +30,30 @@ name: $(DayOfYear)$(Rev:rr)
 pr:
   branches:
     include:
-    # GitHub repo branch targets that will trigger PR validation builds.
-    - dev/*
-    - feat/*
-    - main
+      # GitHub repo branch targets that will trigger PR validation builds.
+      - dev/*
+      - feat/*
+      - main
+      - release/*
 
   paths:
     include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng/pipelines
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
+      - .azuredevops/*
+      - .config/*
+      - doc/*
+      - eng/pipelines/*
+      - src/*
+      - tools/*
+      - azurepipelines-coverage.yml
+      - build.proj
+      - build2.proj
+      - Directory.Packages.props
+      - dotnet-tools.json
+      - global.json
+      - NuGet.config
+    exclude:
+      - eng/pipelines/onebranch/*
+      - eng/pipelines/stress/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none
@@ -52,7 +61,7 @@ trigger: none
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use; defaults to Debug.
+  # The C# build configuration to use; defaults to Debug.
   - name: buildConfiguration
     displayName: Build Configuration
     type: string
@@ -66,18 +75,9 @@ parameters:
     type: object
     default: [AnyCPU]
 
-  - name: codeCovTargetFrameworks
-    displayName: Code Coverage Target Frameworks
-    type: object
-    default: [net462, net8.0, net9.0]
-
+  # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
-    type: boolean
-    default: false
-
-  - name: enableStressTests
-    displayName: Enable Stress Tests
     type: boolean
     default: false
 
@@ -109,7 +109,7 @@ parameters:
   - name: testJobTimeout
     displayName: Test job timeout (in minutes)
     type: number
-    default: 60
+    default: 90
 
   - name: testSets
     displayName: Test Sets
@@ -124,19 +124,19 @@ parameters:
     default: [false, true]
 
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildType: Project
-    codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
+    referenceType: Project
     debug: ${{ parameters.debug }}
-    enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    # Legacy SQL Server tests (2016/2017) run in CI only, not on PRs.
+    runLegacySqlTests: false
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
       runAlwaysEncryptedTests: false

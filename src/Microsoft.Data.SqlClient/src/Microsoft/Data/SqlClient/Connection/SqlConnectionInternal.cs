@@ -8,7 +8,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Net.Http.Headers;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -20,8 +19,8 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Utilities;
-using Microsoft.Identity.Client;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -34,13 +33,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         // @TODO: Can be private?
         internal const int MaxNumberOfRedirectRoute = 10;
-
-        /// <summary>
-        /// Status code that indicates MSAL request should be retried.
-        /// https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
-        /// </summary>
-        // @TODO: Can be private?
-        internal const int MsalHttpRetryStatusCode = 429;
 
         /// <summary>
         /// The timespan defining the amount of time the authentication context needs to be valid
@@ -134,20 +126,6 @@ namespace Microsoft.Data.SqlClient.Connection
         #region Debug/Test Behavior Overrides
         #if DEBUG
         /// <summary>
-        /// This is a test hook to enable testing of the retry paths for MSAL get access token.
-        /// </summary>
-        /// <example>
-        /// Type type = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.SQLInternalConnectionTds");
-        /// FieldInfo field = type.GetField("_forceMsalRetry", BindingFlags.NonPublic | BindingFlags.Static);
-        /// if (field != null)
-        /// {
-        ///     field.SetValue(null, true);
-        /// }
-        /// </example>
-        /// @TODO: For unit tests, it should not be necessary to do this via reflection.
-        internal static bool _forceMsalRetry = false;
-
-        /// <summary>
         /// This is a test hook to simulate a token expiring within the next 45 minutes.
         /// </summary>
         private static bool _forceExpiryLocked = false;
@@ -212,6 +190,12 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Should be private and accessed via internal property
         internal bool IsVectorSupportEnabled = false;
 
+        /// <summary>
+        /// Flag indicating whether enhanced routing is supported by the server.
+        /// </summary>
+        // @TODO: Should be private and accessed via internal property
+        internal bool IsEnhancedRoutingSupportEnabled = false;
+
         // @TODO: This should be private
         internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
 
@@ -241,7 +225,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private string _currentLanguage;
 
-        private int _currentPacketSize;
+
 
         /// <summary>
         /// Pool this connection is associated with, if any.
@@ -280,7 +264,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         private DbConnectionPoolAuthenticationContext _newDbConnectionPoolAuthenticationContext;
 
-        private Guid _originalClientConnectionId = Guid.Empty;
+
 
         private string _originalDatabase;
 
@@ -298,7 +282,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to match naming conventions (remove f prefix)
         private readonly bool _fResetConnection;
 
-        private string _routingDestination = null;
+
 
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
@@ -620,7 +604,7 @@ namespace Microsoft.Data.SqlClient.Connection
         internal override bool IsAccessTokenExpired
         {
             get => _federatedAuthenticationInfoRequested &&
-                   DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
+                   DateTime.FromFileTimeUtc(_fedAuthToken.ExpirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
         }
 
         /// <summary>
@@ -687,17 +671,9 @@ namespace Microsoft.Data.SqlClient.Connection
             get => DelegatedTransaction?.IsActive == true;
         }
 
-        // @TODO: Make auto-property
-        internal Guid OriginalClientConnectionId
-        {
-            get => _originalClientConnectionId;
-        }
+        internal Guid OriginalClientConnectionId { get; private set; } = Guid.Empty;
 
-        // @TODO: Make auto-property
-        internal int PacketSize
-        {
-            get => _currentPacketSize;
-        }
+        internal int PacketSize { get; private set; }
 
         // @TODO: Make auto-property
         internal TdsParser Parser
@@ -724,11 +700,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         internal byte[] PromotedDtcToken { get; private set; }
 
-        // @TODO: Make auto-property
-        internal string RoutingDestination
-        {
-            get => _routingDestination;
-        }
+        internal string RoutingDestination { get; private set; }
 
         internal RoutingInfo RoutingInfo { get; private set; } = null;
 
@@ -1205,7 +1177,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_PACKETSIZE:
-                    _currentPacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
+                    PacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
                     break;
 
                 case TdsEnums.ENV_COLLATION:
@@ -1285,6 +1257,23 @@ namespace Microsoft.Data.SqlClient.Connection
                     RoutingInfo = rec._newRoutingInfo;
                     break;
 
+                case TdsEnums.ENV_ENHANCEDROUTING:
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnEnvChange | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received enhanced routing info");
+
+                    if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) ||
+                        string.IsNullOrEmpty(rec._newRoutingInfo.DatabaseName) ||
+                        rec._newRoutingInfo.Protocol != 0 ||
+                        rec._newRoutingInfo.Port == 0)
+                    {
+                        throw SQL.ROR_InvalidEnhancedRoutingInfo(this);
+                    }
+
+                    RoutingInfo = rec._newRoutingInfo;
+                    break;
+
                 default:
                     Debug.Fail("Missed token in EnvChange!");
                     break;
@@ -1321,7 +1310,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: This class should not do low-level parsing of data from the server.
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
+            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING && featureId != TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT)
             {
                 return;
             }
@@ -1698,7 +1687,7 @@ namespace Microsoft.Data.SqlClient.Connection
                             $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                             $"Object ID {ObjectID}, " +
                             $"Unknown token for JSONSUPPORT");
-                        
+
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
@@ -1747,6 +1736,28 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     IsVectorSupportEnabled = true;
 
+                    break;
+                }
+                case TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT:
+                {
+                    if (data.Length != 1)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
+                            $"Object ID {ObjectID}, " +
+                            $"Unknown token for ENHANCEDROUTINGSUPPORT");
+
+                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                    }
+
+                    // A value of 1 indicates that the server supports the feature.
+                    IsEnhancedRoutingSupportEnabled = data[0] == 1;
+
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
+                        $"Object ID {ObjectID}, " +
+                        $"Received feature extension acknowledgement for " +
+                        $"ENHANCEDROUTINGSUPPORT = {IsEnhancedRoutingSupportEnabled}");
                     break;
                 }
                 case TdsEnums.FEATUREEXT_USERAGENT:
@@ -1807,8 +1818,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Construct the dbAuthenticationContextKey with information from FedAuthInfo and
                 // store for later use, when inserting in to the token cache.
                 _dbConnectionPoolAuthenticationContextKey = new DbConnectionPoolAuthenticationContextKey(
-                    fedAuthInfo.stsurl,
-                    fedAuthInfo.spn);
+                    fedAuthInfo.StsUrl,
+                    fedAuthInfo.Spn);
 
                 // Try to retrieve the authentication context from the pool, if one does exist for
                 // this key.
@@ -1929,14 +1940,12 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 // If the code flow is here, then we are re-using the context from the cache for
                 // this connection attempt and not generating a new access token on this thread.
-                _fedAuthToken = new SqlFedAuthToken
-                {
-                    accessToken = dbConnectionPoolAuthenticationContext.AccessToken,
-                    expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime()
-                };
+                _fedAuthToken = new(
+                    dbConnectionPoolAuthenticationContext.AccessToken,
+                    dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime());
             }
 
-            Debug.Assert(_fedAuthToken?.accessToken != null,
+            Debug.Assert(_fedAuthToken?.AccessToken != null,
                 "_fedAuthToken and _fedAuthToken.accessToken cannot be null.");
 
             _parser.SendFedAuthToken(_fedAuthToken);
@@ -2704,57 +2713,44 @@ namespace Microsoft.Data.SqlClient.Connection
             PoolGroupProviderInfo?.FailoverPermissionDemand();
         #endif
 
+        #nullable enable
+
         /// <summary>
         /// Get the Federated Authentication Token.
         /// </summary>
         /// <param name="fedAuthInfo">Information obtained from server as Federated Authentication Info.</param>
         private SqlFedAuthToken GetFedAuthToken(SqlFedAuthInfo fedAuthInfo)
         {
-            Debug.Assert(fedAuthInfo != null, "fedAuthInfo should not be null.");
+            // Number of milliseconds to sleep for the initial back off, if a
+            // retry period is not specified by the provider.
+            const int defaultRetryPeriod = 100;
 
-            // Number of milliseconds to sleep for the initial back off.
-            int sleepInterval = 100;
-
-            // Number of attempts, for tracing purposes, if we underwent retries.
-            int numberOfAttempts = 0;
-
-            // Object that will be returned to the caller, containing all required data about the token.
-            _fedAuthToken = new SqlFedAuthToken();
+            // Number of attempts we are willing to perform.
+            const int maxAttempts = 2;
 
             // Username to use in error messages.
-            string username = null;
+            string? username = null;
 
-            SqlAuthenticationProvider authProvider =
-                SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
-
+            SqlAuthenticationProvider? authProvider = SqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
-                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
+                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication);
             }
 
-            // Retry getting access token once if MsalException.error_code is unknown_error.
-            // extra logic to deal with HTTP 429 (Retry after).
-            // @TODO: Can we pick one or the other?
-            // @TODO: Wait ... are we counting up but only looping while the number of attempts is <=1 ? Huh?
-            // @TODO: Can we consider using a for loop here since there's a fixed number of times to loop
-
-            #if NET
-            while (numberOfAttempts <= 1)
-            #else
-            while (numberOfAttempts <= 1 && sleepInterval <= _timeout.MillisecondsRemaining)
-            #endif
+            // We will perform retries if the provider indicates an error that
+            // is retryable.
+            for (int attempt = 1; attempt <= maxAttempts; ++attempt)
             {
-                numberOfAttempts++;
                 try
                 {
-                    var authParamsBuilder = new SqlAuthenticationParameters.Builder(
-                        authenticationMethod: ConnectionOptions.Authentication,
-                        resource: fedAuthInfo.spn,
-                        authority: fedAuthInfo.stsurl,
-                        serverName: ConnectionOptions.DataSource,
-                        databaseName: ConnectionOptions.InitialCatalog)
+                    var authParamsBuilder = new SqlAuthenticationParametersBuilder(
+                            authenticationMethod: ConnectionOptions.Authentication,
+                            resource: fedAuthInfo.Spn,
+                            authority: fedAuthInfo.StsUrl,
+                            serverName: ConnectionOptions.DataSource,
+                            databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
-                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
+                        .WithAuthenticationTimeout(ConnectionOptions.ConnectTimeout);
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
@@ -2780,20 +2776,13 @@ namespace Microsoft.Data.SqlClient.Connection
                             }
                             else
                             {
-                                // We use Task.Run here in all places to execute task synchronously
-                                // in the same context. Fixes block-over-async deadlock possibilities
-                                // https://github.com/dotnet/SqlClient/issues/1209
-                                // @TODO: Verify that the wrapping/unwrapping is necessary.
-                                _fedAuthToken = Task.Run(async () =>
-                                        await authProvider.AcquireTokenAsync(authParamsBuilder))
-                                            .GetAwaiter()
-                                            .GetResult()
-                                            .ToSqlFedAuthToken();
+                                // We use Task.Run here in all places to execute task synchronously in the same context.
+                                // Fixes block-over-async deadlock possibilities https://github.com/dotnet/SqlClient/issues/1209
+                                _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
+
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
-
                             break;
-
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                         case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                         case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
@@ -2807,16 +2796,13 @@ namespace Microsoft.Data.SqlClient.Connection
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
+                                _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
-
                             break;
-
                         #pragma warning disable 0618 // Type or member is obsolete
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
                         #pragma warning restore 0618 // Type or member is obsolete
-
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
@@ -2824,32 +2810,21 @@ namespace Microsoft.Data.SqlClient.Connection
                             }
                             else
                             {
-                                // @TODO: _fedAuthToken assignment is identical in both cases - move outside
                                 if (_credential != null)
                                 {
                                     username = _credential.UserId;
                                     authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    _fedAuthToken = Task.Run(async () =>
-                                        await authProvider.AcquireTokenAsync(authParamsBuilder))
-                                            .GetAwaiter()
-                                            .GetResult()
-                                            .ToSqlFedAuthToken();
+                                    _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
                                 }
                                 else
                                 {
                                     username = ConnectionOptions.UserID;
                                     authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    _fedAuthToken = Task.Run(async () =>
-                                        await authProvider.AcquireTokenAsync(authParamsBuilder))
-                                            .GetAwaiter()
-                                            .GetResult()
-                                            .ToSqlFedAuthToken();
+                                    _fedAuthToken = new(Task.Run(async () => await authProvider!.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult());
                                 }
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
-
                             break;
-
                         default:
                             if (_accessTokenCallback == null)
                             {
@@ -2872,149 +2847,120 @@ namespace Microsoft.Data.SqlClient.Connection
                                     authParamsBuilder.WithUserId(ConnectionOptions.UserID);
                                     authParamsBuilder.WithPassword(ConnectionOptions.Password);
                                 }
-
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
                                 using CancellationTokenSource cts = new();
-
-                                // Use Connection timeout value to cancel token acquire request
-                                // after certain period of time.(int)
-                                if (_timeout.MillisecondsRemaining < int.MaxValue)
+                                // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
+                                if (_timeout.MillisecondsRemaining < Int32.MaxValue)
                                 {
                                     cts.CancelAfter((int)_timeout.MillisecondsRemaining);
                                 }
-
-                                _fedAuthToken = Task.Run(async () =>
-                                    await _accessTokenCallback(parameters, cts.Token))
-                                        .GetAwaiter()
-                                        .GetResult()
-                                        .ToSqlFedAuthToken();
+                                _fedAuthToken = new(Task.Run(async () => await _accessTokenCallback(parameters, cts.Token)).GetAwaiter().GetResult());
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
                     }
 
-                    Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
-
-                    #if DEBUG
-                    if (_forceMsalRetry)
-                    {
-                        // 3399614468 is 0xCAA20004L just for testing.
-                        throw new MsalServiceException(MsalError.UnknownError, "Force retry in GetFedAuthToken");
-                    }
-                    #endif
+                    Debug.Assert(_fedAuthToken.AccessToken != null, "AccessToken should not be null.");
 
                     // Break out of the retry loop in successful case.
                     break;
                 }
-                catch (MsalServiceException serviceException)
+                catch (SqlAuthenticationProviderException ex)
                 {
-                    // Deal with Msal service exceptions first, retry if 429 received.
-                    if (serviceException.StatusCode == MsalHttpRetryStatusCode)
+                    // Is the error fatal or retryable?
+                    if (!ex.ShouldRetry)
                     {
-                        RetryConditionHeaderValue retryAfter = serviceException.Headers.RetryAfter;
-                        if (retryAfter.Delta.HasValue)
-                        {
-                            sleepInterval = retryAfter.Delta.Value.Milliseconds;
-                        }
-                        else if (retryAfter.Date.HasValue)
-                        {
-                            sleepInterval = Convert.ToInt32(retryAfter.Date.Value.Offset.TotalMilliseconds);
-                        }
-
-                        // if there's enough time to retry before timeout, then retry, otherwise
-                        // break out the retry loop.
-                        if (sleepInterval < _timeout.MillisecondsRemaining)
-                        {
-                            Thread.Sleep(sleepInterval);
-                        }
-                        else
-                        {
-                            SqlClientEventSource.Log.TryTraceEvent(
-                                $"SqlInternalConnectionTds.GetFedAuthToken.MsalServiceException | ERR | " +
-                                $"Timeout: {serviceException.ErrorCode}");
-
-                            throw SQL.ActiveDirectoryTokenRetrievingTimeout(
-                                Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication),
-                                serviceException.ErrorCode,
-                                serviceException);
-                        }
+                        // It's fatal, so translate into a SqlException.
+                        throw ADP.CreateSqlException(ex, ConnectionOptions, this, username);
                     }
-                    else
+
+                    // We should retry.
+
+                    // Could we retry if we wanted to?
+                    if (_timeout.IsExpired || _timeout.MillisecondsRemaining <= 0)
                     {
+                        // No, so we throw.
                         SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.GetFedAuthToken.MsalServiceException | ERR | " +
-                            $"{serviceException.ErrorCode}");
-
-                        throw ADP.CreateSqlException(serviceException, ConnectionOptions, this, username);
+                            "<sc.SqlInternalConnectionTds.GetFedAuthToken error:> Attempt: {0}, FailureCode: {1}",
+                            attempt,
+                            ex.FailureCode);
+                        throw SQL.ActiveDirectoryTokenRetrievingTimeout(Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication), ex.FailureCode, ex);
                     }
+
+                    // We use a linear backoff if the provider didn't provide
+                    // a retry period.
+                    int retryPeriod =
+                      ex.RetryPeriod > 0
+                      ? ex.RetryPeriod
+                      : defaultRetryPeriod * attempt;
+
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Attempt: {1}, sleeping {2}[Milliseconds]", ObjectID, attempt, retryPeriod);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, Attempt: {1}, remaining {2}[Milliseconds]", ObjectID, attempt, _timeout.MillisecondsRemaining);
+
+                    // Sleep for the desired period.
+                    Thread.Sleep(retryPeriod);
+
+                    // Fall through to retry...
                 }
-                catch (MsalException msalException)
+                // If the provider throws anything else, it's an API violation, which we must
+                // consume to avoid breaking our API promise.
+                catch (Exception ex)
                 {
-                    // Deal with normal MsalExceptions.
-                    if (MsalError.UnknownError != msalException.ErrorCode ||
-                        _timeout.IsExpired ||
-                        _timeout.MillisecondsRemaining <= sleepInterval)
+                    // Some exceptions should escape as-is.
+                    if (! ADP.IsCatchableExceptionType(ex))
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            $"SqlInternalConnectionTds.GetFedAuthToken.MSALException | ERR | " +
-                            $"{msalException.ErrorCode}");
-
-                        throw ADP.CreateSqlException(msalException, ConnectionOptions, this, username);
+                        throw;
                     }
 
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.GetFedAuthToken | ADV | " +
-                        $"Object ID: {ObjectID}, " +
-                        $"sleeping {sleepInterval}ms");
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"SqlInternalConnectionTds.GetFedAuthToken | ADV | " +
-                        $"Object ID: {ObjectID}, " +
-                        $"remaining {_timeout.MillisecondsRemaining}ms");
-
-                    Thread.Sleep(sleepInterval);
-
-                    sleepInterval *= 2;
-                }
-                // All other exceptions from MSAL/Azure Identity APIs
-                catch (Exception e)
-                {
-                    SqlError error = new(
-                        infoNumber: 0,
-                        errorState: 0x00,
-                        errorClass: TdsEnums.FATAL_ERROR_CLASS,
-                        server: ConnectionOptions.DataSource,
-                        errorMessage: e.Message,
-                        procedure: ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName,
-                        lineNumber: 0);
-
-                    throw SqlException.CreateException(
-                        error,
-                        serverVersion: string.Empty,
-                        internalConnection: this,
-                        innerException: e);
+                    // Wrap the exception in a SqlAuthenticationProviderException to maintain our
+                    // API promise.
+                    throw ADP.CreateSqlException(
+                        new ProviderApiViolationException(
+                            message:
+                                "API violation; provider threw unexpected exception " +
+                                ex.GetType().FullName + ": " + ex.Message,
+                            causedBy: ex),
+                        ConnectionOptions,
+                        this,
+                        username);
                 }
             }
 
-            Debug.Assert(_fedAuthToken != null, "fedAuthToken should not be null.");
-            Debug.Assert(_fedAuthToken.accessToken?.Length > 0,
-                "fedAuthToken.accessToken should not be null or empty.");
+            // Nullable context has exposed that _fedAuthToken may be null here,
+            // which the existing code didn't handle.
+            if (_fedAuthToken is null)
+            {
+                // We failed to acquire a token, so use a default one.
+                //
+                // TODO: The old code actually allowed the AccessToken byte
+                // array to be null, and then had Debug.Assert()s to verify it
+                // wasn't null.  We never test in debug, so those were never
+                // firing, and we were happily using a _fedAuthToken with a null
+                // AccessToken.  Now that SqlFedAuthToken doesn't allow a null
+                // AccessToken, we just create an empty one instead.
+                _fedAuthToken = new SqlFedAuthToken([], 0);
+            }
 
             // Store the newly generated token in _newDbConnectionPoolAuthenticationContext, only if using pooling.
             if (_dbConnectionPool != null)
             {
-                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime);
-                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(
-                    _fedAuthToken.accessToken,
-                    expirationTime);
+                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.ExpirationFileTime);
+                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(_fedAuthToken.AccessToken, expirationTime);
             }
-
-            SqlClientEventSource.Log.TryTraceEvent(
-                $"SqlInternalConnectionTds.GetFedAuthToken | " +
-                $"Object ID {ObjectID}, " +
-                $"Finished generating federated authentication token.");
-
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
             return _fedAuthToken;
         }
+
+        // Thrown when an authentication provider violates the expected API contract.
+        private class ProviderApiViolationException : SqlAuthenticationProviderException
+        {
+            public ProviderApiViolationException(string message, Exception causedBy)
+                : base(message, causedBy)
+            {
+            }
+        }
+
+        #nullable disable
 
         private void Login(
             ServerInfo server,
@@ -3029,7 +2975,7 @@ namespace Microsoft.Data.SqlClient.Connection
             // Gather all the settings the user set in the connection string or properties and do
             // the login
             CurrentDatabase = server.ResolvedDatabaseName;
-            _currentPacketSize = ConnectionOptions.PacketSize;
+            PacketSize = ConnectionOptions.PacketSize;
             _currentLanguage = ConnectionOptions.CurrentLanguage;
 
             int timeoutInSeconds = 0;
@@ -3080,7 +3026,7 @@ namespace Microsoft.Data.SqlClient.Connection
             // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
             login.useSSPI = ConnectionOptions.IntegratedSecurity || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
 
-            login.packetSize = _currentPacketSize;
+            login.packetSize = PacketSize;
             login.newPassword = newPassword;
             login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
             login.credential = _credential;
@@ -3160,6 +3106,7 @@ namespace Microsoft.Data.SqlClient.Connection
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.EnhancedRoutingSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
@@ -3343,6 +3290,17 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginNoFailover | " +
+                                $"Ignoring enhanced routing info because the server did not acknowledge the feature.");
+                            RoutingInfo = null;
+                            break;
+                        }
+
                         SqlClientEventSource.Log.TryTraceEvent(
                             $"SqlInternalConnectionTds.LoginNoFailover | " +
                             $"Routed to {serverInfo.ExtendedServerName}");
@@ -3363,11 +3321,11 @@ namespace Microsoft.Data.SqlClient.Connection
                             serverInfo.ResolvedServerName,
                             serverInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        _originalClientConnectionId = _clientConnectionId;
-                        _routingDestination = serverInfo.UserServerName;
+                        OriginalClientConnectionId = _clientConnectionId;
+                        RoutingDestination = serverInfo.UserServerName;
 
                         // Restore properties that could be changed by the environment tokens
-                        _currentPacketSize = ConnectionOptions.PacketSize;
+                        PacketSize = ConnectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
@@ -3644,6 +3602,17 @@ namespace Microsoft.Data.SqlClient.Connection
                     int routingAttempts = 0;
                     while (RoutingInfo != null)
                     {
+                        // Check if we received enhanced routing info, but not the ack for the feature.
+                        // In this case, we should ignore the routing info and connect to the current server.
+                        if (!string.IsNullOrEmpty(RoutingInfo.DatabaseName) && !IsEnhancedRoutingSupportEnabled)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                $"SqlInternalConnectionTds.LoginWithFailover | " +
+                                $"Ignoring enhanced routing info because the server did not acknowledge the feature.");
+                            RoutingInfo = null;
+                            continue;
+                        }
+
                         if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
@@ -3666,11 +3635,11 @@ namespace Microsoft.Data.SqlClient.Connection
                             currentServerInfo.ResolvedServerName,
                             currentServerInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
-                        _originalClientConnectionId = _clientConnectionId;
-                        _routingDestination = currentServerInfo.UserServerName;
+                        OriginalClientConnectionId = _clientConnectionId;
+                        RoutingDestination = currentServerInfo.UserServerName;
 
                         // Restore properties that could be changed by the environment tokens
-                        _currentPacketSize = connectionOptions.PacketSize;
+                        PacketSize = connectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;

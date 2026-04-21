@@ -21,18 +21,14 @@ using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
-using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
+using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Security.Permissions;
-#endif
-
-#if _WINDOWS
-using System.Runtime.Versioning;
-using Microsoft.Win32;
 #endif
 
 namespace Microsoft.Data.Common
@@ -68,6 +64,22 @@ namespace Microsoft.Data.Common
         /// Max duration for buffer in seconds
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
+
+        /// <summary>
+        /// This member returns true if the current OS platform is Windows.
+        /// </summary>
+        /// <remarks>
+        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
+        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
+        /// code when published to non-Windows platforms.
+        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
+        /// rather than in a throw helper.
+        /// </remarks>
+        #if NETFRAMEWORK
+        public const bool IsWindows = true;
+        #else
+        public static bool IsWindows => OperatingSystem.IsWindows();
+        #endif
 
         #region UDT
 
@@ -379,6 +391,9 @@ namespace Microsoft.Data.Common
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
 
+        internal static ArgumentOutOfRangeException InvalidArraySize(string parameterName) =>
+            ArgumentOutOfRange(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage), parameterName);
+
         internal static void CheckArgumentNull(object value, string parameterName)
         {
             if (value is null)
@@ -433,19 +448,16 @@ namespace Microsoft.Data.Common
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
 
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            #if NET
+            if (!IsWindows)
+            {
+                // No registry in non-Windows environments
+                return null;
+            }
+            #endif
 
-        #if _UNIX
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        {
-            // No registry in non-Windows environments
-            return null;
-        }
-        #endif
-        #if _WINDOWS
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        {
             #if NETFRAMEWORK
             new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
             #endif
@@ -471,7 +483,6 @@ namespace Microsoft.Data.Common
             }
             #endif
         }
-        #endif
 
         internal static void ValidateCommandBehavior(CommandBehavior value)
         {
@@ -502,7 +513,7 @@ namespace Microsoft.Data.Common
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
         internal static Exception CreateSqlException(
-            MsalException msalException,
+            SqlAuthenticationProviderException authException,
             SqlConnectionString connectionOptions,
             SqlConnectionInternal sender,
             string username)
@@ -513,20 +524,20 @@ namespace Microsoft.Data.Common
             sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
                                     connectionOptions.DataSource,
                                     StringsHelper.GetString(Strings.SQL_MSALFailure, username, connectionOptions.Authentication.ToString("G")),
-                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                    authException.Method.ToString(), 0));
 
             // Error[1]
-            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
+            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, authException.FailureCode);
             sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
-                                    connectionOptions.DataSource, errorMessage1, 
-                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                    connectionOptions.DataSource, errorMessage1,
+                                    authException.Method.ToString(), 0));
 
             // Error[2]
-            if (!string.IsNullOrEmpty(msalException.Message))
+            if (!string.IsNullOrEmpty(authException.Message))
             {
                 sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
-                                        connectionOptions.DataSource, msalException.Message,
-                                        ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                        connectionOptions.DataSource, authException.Message,
+                                        authException.Method.ToString(), 0));
             }
             return SqlException.CreateException(sqlErs, "", sender, innerException: null, batchCommand: null);
         }

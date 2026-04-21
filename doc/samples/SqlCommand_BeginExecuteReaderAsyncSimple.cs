@@ -1,3 +1,5 @@
+namespace SqlCommand_BeginExecuteReaderAsyncSimple;
+
 // <Snippet1>
 using System;
 using System.Data;

@@ -9,11 +9,13 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
+
+#if _WINDOWS
 using Interop.Windows.Kernel32;
+#endif
 
 namespace Microsoft.Data.Common
 {
@@ -30,10 +32,6 @@ namespace Microsoft.Data.Common
         /// The first login attempt in Transparent network IP Resolution.
         /// </summary>
         internal const int MinimumTimeoutForTnirMs = 500;
-
-        // @TODO: Use naming rules
-        // @TODO: All values but Unix and Windows32NT are used today, for netfx this should always be Win32NT. We can likely hard code this to true for netfx.
-        internal static readonly bool s_isWindowsNT = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
         #endregion
 

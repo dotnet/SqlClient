@@ -29,7 +29,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             using TdsServer server = new(new TdsServerArguments() { });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
@@ -43,7 +44,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             using TdsServer server = new(new TdsServerArguments() { });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
             }.ConnectionString;
@@ -61,9 +63,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Fact]
         public async Task RequestEncryption_ServerDoesNotSupportEncryption_ShouldFail()
         {
-            using TdsServer server = new(new TdsServerArguments() {Encryption = TDSPreLoginTokenEncryptionType.None });
+            using TdsServer server = new(new TdsServerArguments() { Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}"
             }.ConnectionString;
 
@@ -72,7 +75,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -80,26 +82,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
-                new TransientTdsErrorTdsServerArguments() 
+                new TransientTdsErrorTdsServerArguments()
                 {
-                  IsEnabledTransientError = true,
-                  Number = errorCode,
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
                 });
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                Encrypt = SqlConnectionEncryptOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false
+#endif
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -123,10 +127,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -151,10 +154,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
-            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -179,10 +181,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
             Assert.Equal((int)errorCode, e.Number);
             Assert.Equal(ConnectionState.Closed, connection.State);
-            Assert.Equal(1, server.PreLoginCount);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -200,6 +201,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 ConnectTimeout = 5,
+                Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
@@ -216,11 +218,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else
             {
-                Assert.Equal(1, server.PreLoginCount);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             }
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -261,11 +262,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else
             {
-                Assert.Equal(1, server.PreLoginCount);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             }
         }
 
-        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -306,7 +306,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else
             {
-                Assert.Equal(1, server.PreLoginCount);
+                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             }
         }
 
@@ -467,7 +467,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             //TODO: do we even need a server for this test?
             using TdsServer server = new();
             server.Start();
-            var connStr = new SqlConnectionStringBuilder() {
+            var connStr = new SqlConnectionStringBuilder()
+            {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 ConnectTimeout = timeout,
                 Encrypt = SqlConnectionEncryptOption.Optional
@@ -840,10 +841,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(false)]
         public void TestConnWithUserAgentFeatureExtension(bool sendAck)
         {
-            // Enable sending the UserAgent if desired.
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.EnableUserAgent = true;
-
             // Start the test server.
             using TdsServer server = new();
             server.Start();
@@ -903,56 +900,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(UserAgent.Ucs2Bytes.ToArray(), observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
-        }
-
-        /// <summary>
-        /// Test to verify no UserAgent relevant information is sent when EnableUserAgentField switch is disabled.
-        /// </summary>
-        [Fact]
-        public void TestConnWithoutUserAgentFeatureExtension()
-        {
-            // Disable the client-side UserAgent field entirely
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.EnableUserAgent = false;
-
-            using var server = new TdsServer();
-            server.Start();
-
-            // Do not advertise or force the UserAgent feature on the server
-            server.ServerSupportedUserAgentFeatureExtVersion = 0x00; // no support
-            server.EnableUserAgentFeatureExt = false;                // no forced ACK
-
-            bool loginValidated = false;
-            bool userAgentFeatureSeen = false;
-
-            // Inspect the LOGIN7 packet captured by the test server
-            server.OnLogin7Validated = loginToken =>
-            {
-                var featureExtTokens = loginToken.FeatureExt
-                    .OfType<TDSLogin7GenericOptionToken>()
-                    .ToArray();
-
-                // Ensure there is no UserAgentSupport token at all
-                var uaToken = featureExtTokens.FirstOrDefault(t => t.FeatureID == TDSFeatureID.UserAgentSupport);
-                userAgentFeatureSeen = uaToken is not null;
-
-                loginValidated = true;
-            };
-
-            // Connect to the test TDS server with a basic connection string
-            var connStr = new SqlConnectionStringBuilder
-            {
-                DataSource = $"localhost,{server.EndPoint.Port}",
-                Encrypt = SqlConnectionEncryptOption.Optional,
-            }.ConnectionString;
-
-            using var connection = new SqlConnection(connStr);
-            connection.Open();
-
-            // Verify that the connection succeeded and no UserAgent data was sent
-            Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.True(loginValidated, "Expected LOGIN7 to be validated by the test server");
-            Assert.False(userAgentFeatureSeen, "Did not expect a UserAgentSupport feature token in LOGIN7");
         }
     }
 }

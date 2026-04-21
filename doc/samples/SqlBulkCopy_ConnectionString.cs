@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ConnectionString;
+
 using System;
 using System.Data;
 // <Snippet1>

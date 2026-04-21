@@ -1,0 +1,43 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Common variables shared across all OneBranch Official pipelines.
+
+variables:
+  - name: CommitHead
+    value: '' # the value will be extracted from the repo's head
+
+  ##########################################################################
+  # "Well-Known" Variables that are ok to use directly, anywhere in the pipeline.
+
+  # The root of our repo.
+  - name: REPO_ROOT
+    value: $(Build.SourcesDirectory)
+
+  # This is where our C# projects place their build outputs (see Directory.Build.props
+  # <ArtifactsPath>). We exclude the reference type here since Official pipelines always use
+  # Package mode.
+  - name: BUILD_OUTPUT
+    value: $(REPO_ROOT)/artifacts
+
+  # Directory where downloaded pipeline artifacts (NuGet packages from earlier
+  # stages) are placed. Build jobs use this as a local NuGet package source so
+  # that downstream packages can resolve dependencies on packages built by
+  # upstream stages.
+  - name: JOB_INPUT
+    value: $(REPO_ROOT)/packages
+
+  # Root directory for all job output artifacts (NuGet packages, symbols, etc.).
+  # OneBranch auto-publishes everything under this directory. It is intentionally
+  # separated from packages/ (where downloaded pipeline artifacts go) so that ESRP
+  # signing and OneBranch artifact publishing only operate on the current job's output.
+  #
+  # Sub-directory layout:
+  #   assemblies/ - DLL assemblies for APIScan (preserving TFM folder structure)
+  #   packages/   - NuGet packages (.nupkg, .snupkg)
+  #   symbols/    - PDB symbol files (preserving TFM folder structure)
+  - name: JOB_OUTPUT
+    value: $(REPO_ROOT)/output

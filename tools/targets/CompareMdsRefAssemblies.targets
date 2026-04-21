@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CompareMdsRefAssemblies.targets
+
+  Build target that compares locally-built ref assemblies against those published
+  in a specified NuGet package version of Microsoft.Data.SqlClient. Uses
+  Microsoft.DotNet.ApiCompat.Tool in strict mode to detect any API surface
+  differences (additions or removals).
+
+  Usage:
+    dotnet build build.proj /t:CompareMdsRefAssemblies /p:BaselinePackageVersion=6.1.4
+
+  BaselinePackageVersion is required. The consolidated ref project (ref/) is
+  built and compared against the published package's ref assemblies.
+
+  Depends on src/Directory.Build.props for path properties and build configuration.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- ================================================================== -->
+  <!-- _SetApiCompatProperties                                            -->
+  <!--                                                                    -->
+  <!-- All path properties are set inside a target so that they are       -->
+  <!-- evaluated at execution time, after $(Configuration) and other      -->
+  <!-- properties from build.proj have been resolved.                     -->
+  <!-- ================================================================== -->
+  <Target Name="_SetApiCompatProperties">
+    <PropertyGroup>
+      <!-- BaselinePackageVersion: must be supplied by the user. -->
+      <BaselinePackageDir>$([MSBuild]::NormalizePath('$(Artifacts)', 'apicompat'))\</BaselinePackageDir>
+      <BaselineNupkgPath>$(BaselinePackageDir)microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg</BaselineNupkgPath>
+      <BaselinePackageUrl>https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/$(BaselinePackageVersion)/microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg</BaselinePackageUrl>
+      <BaselineExtractDir>$([MSBuild]::NormalizePath('$(BaselinePackageDir)', 'extracted', '$(BaselinePackageVersion)'))\</BaselineExtractDir>
+
+      <!-- Consolidated ref project -->
+      <RefProjectPath>$([MSBuild]::NormalizePath('$(RepoRoot)', 'src', 'Microsoft.Data.SqlClient', 'ref', 'Microsoft.Data.SqlClient.csproj'))</RefProjectPath>
+      <RefOutputDir>$([MSBuild]::NormalizePath('$(RepoRoot)', 'artifacts', 'Microsoft.Data.SqlClient.ref', '$(ReferenceType)-$(Configuration)'))\</RefOutputDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_RefTfm Include="net462" />
+      <_RefTfm Include="net8.0" />
+      <_RefTfm Include="net9.0" />
+      <_RefTfm Include="netstandard2.0" />
+    </ItemGroup>
+
+    <Message Importance="high" Text="Configuration:      $(Configuration)" />
+    <Message Importance="high" Text="BaselineExtractDir: $(BaselineExtractDir)" />
+    <Message Importance="high" Text="RefProjectPath:     $(RefProjectPath)" />
+    <Message Importance="high" Text="RefOutputDir:       $(RefOutputDir)" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _ValidateBaselineVersion                                           -->
+  <!-- ================================================================== -->
+  <Target Name="_ValidateBaselineVersion">
+    <Error
+      Condition="'$(BaselinePackageVersion)' == ''"
+      Text="BaselinePackageVersion is required. Specify the published MDS NuGet package version to compare against, e.g.: /p:BaselinePackageVersion=6.1.4" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _DownloadBaselinePackage                                           -->
+  <!-- ================================================================== -->
+  <Target Name="_DownloadBaselinePackage" DependsOnTargets="_ValidateBaselineVersion;_SetApiCompatProperties">
+    <!-- Skip download if already extracted -->
+    <Message
+      Condition="Exists('$(BaselineExtractDir)')"
+      Importance="high"
+      Text="Baseline package already extracted. Skipping download." />
+
+    <MakeDir
+      Condition="!Exists('$(BaselineExtractDir)')"
+      Directories="$(BaselinePackageDir)" />
+
+    <DownloadFile
+      Condition="!Exists('$(BaselineExtractDir)')"
+      SourceUrl="$(BaselinePackageUrl)"
+      DestinationFolder="$(BaselinePackageDir)"
+      DestinationFileName="microsoft.data.sqlclient.$(BaselinePackageVersion).nupkg" />
+
+    <Unzip
+      Condition="!Exists('$(BaselineExtractDir)')"
+      SourceFiles="$(BaselineNupkgPath)"
+      DestinationFolder="$(BaselineExtractDir)"
+      OverwriteReadOnlyFiles="true" />
+
+    <Message
+      Importance="high"
+      Text="Baseline ref assemblies available at $(BaselineExtractDir)ref\" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _RestoreTools                                                      -->
+  <!-- ================================================================== -->
+  <Target Name="_RestoreTools" DependsOnTargets="_SetApiCompatProperties">
+    <Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _BuildRefProject                                                   -->
+  <!-- ================================================================== -->
+  <Target Name="_BuildRefProject" DependsOnTargets="_SetApiCompatProperties">
+    <Message Importance="high" Text="Building consolidated ref project (all TFMs)..." />
+    <MSBuild 
+      Targets="Restore;Build" 
+      Projects="$(RefProjectPath)"/>
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- _RunRefApiCompat                                                   -->
+  <!-- ================================================================== -->
+  <Target Name="_RunRefApiCompat"
+          DependsOnTargets="_DownloadBaselinePackage;_RestoreTools;_BuildRefProject">
+
+    <!--
+      For each TFM, compare the consolidated ref output against the baseline
+      ref assembly from the published NuGet package. Using strict mode flags
+      any difference (additions or removals). ContinueOnError ensures all
+      comparisons run even if some fail.
+
+      Output from each comparison is written to a file under
+      $(ApiCompatResultsDir) so the user can review results after the run.
+    -->
+
+    <PropertyGroup>
+      <ApiCompatResultsDir>$(BaselinePackageDir)results\</ApiCompatResultsDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(ApiCompatResultsDir)" />
+
+    <Message
+      Importance="high"
+      Text="--- Comparing %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) ---" />
+
+    <Exec
+      Command="dotnet apicompat -l &quot;$(BaselineExtractDir)ref\%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      WorkingDirectory="$(RepoRoot)"
+      ContinueOnError="ErrorAndContinue" />
+
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- CompareMdsRefAssemblies (public entry point)                          -->
+  <!-- ================================================================== -->
+  <Target Name="CompareMdsRefAssemblies" DependsOnTargets="_RunRefApiCompat">
+    <ItemGroup>
+      <_ApiCompatResultFiles Include="$(ApiCompatResultsDir)*.txt" />
+    </ItemGroup>
+    <Message Importance="high" Text="=== Ref assembly API comparison complete. ===" />
+    <Message Importance="high" Text="Results written to: $(ApiCompatResultsDir)" />
+    <Message Importance="high" Text="  %(_ApiCompatResultFiles.Filename)%(_ApiCompatResultFiles.Extension)" />
+  </Target>
+
+</Project>

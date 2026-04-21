@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Utilities;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -266,7 +267,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
         }
 
         /// <summary>
@@ -796,11 +797,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SspiContextProvider SspiContextProvider
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+        public SspiContextProvider SspiContextProvider
         {
             get { return _sspiContextProvider; }
             set
             {
+                // If a connection is connecting or is ever opened, SspiContextProvider cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
+                }
+
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
@@ -1270,7 +1278,7 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            using (TryEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
+            using (SqlClientEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
             {
                 DbTransaction transaction = BeginTransaction(isolationLevel);
 
@@ -1289,7 +1297,7 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginTransaction | API | Object Id {0}, Iso {1}, Transaction Name '{2}'", ObjectID, (int)iso, transactionName)))
+            using (SqlClientEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginTransaction | API | Object Id {0}, Iso {1}, Transaction Name '{2}'", ObjectID, (int)iso, transactionName)))
             {
                 try
                 {
@@ -1325,7 +1333,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
-            
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1376,7 +1384,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         public override void Close()
         {
-            using (TryEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Close | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, ClientConnectionId);
 
@@ -1401,7 +1409,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlStatistics statistics = null;
                 Exception e = null;
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1472,7 +1480,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         protected override DbCommand CreateDbCommand()
         {
-            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
+            using (SqlClientEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
                 DbCommand command = SqlClientFactory.Instance.CreateCommand();
                 command.Connection = this;
@@ -1598,7 +1606,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
-            using (TryEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
+            using (SqlClientEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
 
@@ -1894,7 +1902,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken) 
+        public override Task OpenAsync(CancellationToken cancellationToken)
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
@@ -1930,8 +1938,10 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
                     {
                         result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete,
+                            continuationAction: static (task, state) => s_openAsyncComplete(task, state),
                             state: operationId, // connection is passed in TaskCompletionSource async state
+                            cancellationToken: CancellationToken.None, // we want the continuation task to run even if the original operation was cancelled
+                            continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
                             scheduler: TaskScheduler.Default
                         );
                     }
@@ -2591,7 +2601,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
+            using (SqlClientEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2632,7 +2642,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
+            using (SqlClientEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2917,7 +2927,7 @@ namespace Microsoft.Data.SqlClient
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {
-                throw new InvalidOperationException(o.GetType() + ": invalid Size");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_InvalidUdtSize, o.GetType().FullName));
             }
 
             byte[] retval;

@@ -1,3 +1,5 @@
+namespace SqlConnection_ConnectionTimeout;
+
 using System;
 using System.Data;
 // <Snippet1>

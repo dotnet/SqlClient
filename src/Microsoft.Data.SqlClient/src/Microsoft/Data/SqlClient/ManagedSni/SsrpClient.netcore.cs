@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -40,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            using (TrySNIEventScope.Create(nameof(SsrpClient)))
+            using (SqlClientSNIEventScope.Create(nameof(SsrpClient)))
             {
                 byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
                 byte[] responsePacket = null;
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private static byte[] CreateInstanceInfoRequest(string instanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            using (TrySNIEventScope.Create(nameof(SsrpClient)))
+            using (SqlClientSNIEventScope.Create(nameof(SsrpClient)))
             {
                 const byte ClntUcastInst = 0x04;
                 instanceName += char.MinValue;
@@ -172,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>response packet from UDP server</returns>
         private static byte[] SendUDPRequest(string browserHostname, int port, byte[] requestPacket, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
         {
-            using (TrySNIEventScope.Create(nameof(SsrpClient)))
+            using (SqlClientSNIEventScope.Create(nameof(SsrpClient)))
             {
                 Debug.Assert(!string.IsNullOrWhiteSpace(browserHostname), "browserhostname should not be null, empty, or whitespace");
                 Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
@@ -406,7 +407,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             // https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3
             int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX;
 
-            using (TrySNIEventScope.Create(nameof(SsrpClient)))
+            using (SqlClientSNIEventScope.Create(nameof(SsrpClient)))
             {
                 using (UdpClient clientListener = new UdpClient())
                 {
@@ -420,7 +421,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= ReceiveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
                         {
                             currentTimeOut = ReceiveTimeoutsForCLNT_BCAST_EX;
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Received instnace info from UDP Client.");
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Received instance info from UDP Client.");
                             if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
                             {
                                 response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)

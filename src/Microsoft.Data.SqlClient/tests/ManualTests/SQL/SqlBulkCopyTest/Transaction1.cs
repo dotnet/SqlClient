@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                             try
                             {
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader));
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader));
                             }
                             finally
                             {

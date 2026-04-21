@@ -1,22 +1,23 @@
 <Project>
   <Import Project="..\..\..\Directory.Packages.props" />
 
-  <!-- Test Project Dependencies for all targets. -->
+  <!-- Dependencies shared with SqlClient tests and Extensions/Internal tests. -->
   <ItemGroup>
-    <!--
-      Transitive dependencies with vulnerabilities, so we explicitly ask for
-      non-vulnerable versions.
-    -->
-    <PackageVersion Include="System.Formats.Asn1" Version="6.0.1" />
+    <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="11.0.0-beta.25476.3" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
   </ItemGroup>
-
-  <!-- Test Project Dependencies for NetFx only. -->
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
-  </ItemGroup>
-
-  <!-- MDS Package Dependency -->
-  <ItemGroup Condition="$(ReferenceType) == 'Package'">
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+  <!-- SqlClient test dependencies. -->
+  <ItemGroup>
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.13" />
+    <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="181.15.0" />
+    <PackageVersion Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
+    <PackageVersion Include="System.Formats.Asn1" Version="10.0.3" />
+    <PackageVersion Include="System.Data.Odbc" Version="10.0.3" />
+    <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
+    <PackageVersion Include="System.ServiceProcess.ServiceController" Version="10.0.3" />
   </ItemGroup>
 </Project>

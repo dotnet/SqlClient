@@ -15,7 +15,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes;
 
-/// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/SqlVector/*' />
 public readonly struct SqlVector<T> : INullable, ISqlVector
 where T : unmanaged
 {
@@ -41,7 +41,7 @@ where T : unmanaged
     {
         if (length < 0)
         {
-            throw ADP.ArgumentOutOfRange(nameof(length), SQLResource.InvalidArraySizeMessage);
+            throw ADP.InvalidArraySize(nameof(length));
         }
 
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
@@ -55,10 +55,10 @@ where T : unmanaged
         Memory = new();
     }
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
     public static SqlVector<T> CreateNull(int length) => new(length);
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
     public SqlVector(ReadOnlyMemory<T> memory)
     {
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
@@ -92,7 +92,7 @@ where T : unmanaged
     {
         if (IsNull)
         {
-            return SQLResource.NullString;
+            return SQLMessage.NullString();
         }
         return JsonSerializer.Serialize(Memory);
     }
@@ -101,16 +101,16 @@ where T : unmanaged
 
     #region Properties
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
     public bool IsNull { get; }
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
     public static SqlVector<T>? Null => null;
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Length/*' />
     public int Length { get; }
-    
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
+
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
     public ReadOnlyMemory<T> Memory { get; }
 
     #endregion
@@ -206,7 +206,7 @@ where T : unmanaged
 
         // The vector length is an unsigned 16-bit integer, little-endian.
         int length = BinaryPrimitives.ReadUInt16LittleEndian(rawBytes.AsSpan(2));
-        
+
         // The vector size is the number of bytes required to represent the vector in TDS.
         int size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * length);
 
@@ -237,6 +237,6 @@ where T : unmanaged
         return MemoryMarshal.Cast<byte, T>(dataSpan).ToArray();
 #endif
     }
-    
+
     #endregion
 }
