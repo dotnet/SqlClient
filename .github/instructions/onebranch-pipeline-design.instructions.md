@@ -70,6 +70,8 @@ When adding a new csproj-based package:
 - The `publish-symbols-step.yml` accepts a `symbolsFolder` parameter to point at the downloaded PDB location
 - The publish step calls an extracted `publish-symbols.ps1` script with structured error handling and diagnostic logging
 - Symbols publishing credentials come from the `Symbols Publishing` variable group
+- In the official pipeline, symbol server destination follows `releaseToProduction`: Production when true, PPE when false
+- Non-official pipeline always targets the PPE symbol server
 
 ## Release Stage
 
@@ -99,7 +101,9 @@ Release parameters (all boolean, default `false`):
 - `releaseSqlServerServer`, `releaseLogging`, `releaseAbstractions`, `releaseSqlClient`, `releaseAzure`, `releaseAKVProvider`
 
 Official-only parameter:
-- `releaseToProduction` — push to NuGet Production feed (default `false`)
+- `releaseToProduction` — controls both NuGet target feed and symbol server destination (default `false`):
+  - `true` → NuGet Production feed + Production symbol server
+  - `false` → NuGet Test feed + PPE symbol server
 
 When `isPreview` is true, pipeline resolves `effective*Version` variables to preview versions; otherwise GA versions. All versions defined in `variables/common-variables.yml`.
 

@@ -39,6 +39,12 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
 
-  # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  # OneBranch supplies a variety of container images we must use for our jobs.
+  #
+  # Windows jobs use this image.
   - name: WindowsContainerImage
-    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest"
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+
+  # Linux jobs use this image.
+  - name: LinuxContainerImage
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0
