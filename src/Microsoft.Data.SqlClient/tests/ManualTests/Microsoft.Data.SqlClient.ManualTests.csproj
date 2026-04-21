@@ -191,7 +191,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
-    <Compile Include="SQL\Batch\BatchTests.netcore.cs" />
+    <Compile Include="SQL\Batch\BatchTests.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
@@ -382,11 +382,11 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
 
   <!-- References for netcore -->
@@ -415,11 +415,11 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
   
 </Project>
