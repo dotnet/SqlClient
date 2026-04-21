@@ -54,17 +54,24 @@ variables:
   - name: loggingPackageVersion
     value: 1.0.0.$(Build.BuildNumber)-ci
 
-  # MDS library assembly file version
-  - name: mdsAssemblyFileVersion
-    value: 7.0.0.$(assemblyBuildNumber)
-
   # MDS library NuGet package version
+  # NOTE: This differs from the other structures! MdsVersions.props will deconstruct a provided
+  #    package version and build an assembly version from it. If the build number is included
+  #    before the "-" the build number will be appended again, generating an invalid file version.
+  # @TODO: This is a band-aid to ensure that CI builds until we can centralize versioning.
   - name: mdsPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.0-ci$(AssemblyBuildNumber)
 
-  # Output path for built NuGet packages
-  - name: packagePath
+  # Local NuGet feed directory where downloaded pipeline artifacts are placed.
+  # NuGet.config references this as a local package source for restore.
+  - name: localFeedPath
     value: $(Build.SourcesDirectory)/packages
+
+  # Output path for built NuGet packages.  This is intentionally separate from
+  # localFeedPath (where downloaded pipeline artifacts go) so that artifact
+  # publishing only uploads packages built by the current job.
+  - name: packagePath
+    value: $(Build.SourcesDirectory)/output
 
   # Disable codesign validation injection for CI builds
   - name: runCodesignValidationInjection

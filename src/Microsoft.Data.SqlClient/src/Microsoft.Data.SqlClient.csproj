@@ -1,11 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<!-- General Properties ============================================== -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <Configurations>Debug;Release;</Configurations>
     <RootNamespace />
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	</PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../MdsVersions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(MdsFileVersion)</FileVersion>
+    <Version>$(MdsPackageVersion)</Version>
+  </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
   <ItemGroup>
@@ -14,36 +24,26 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- When we're not signing, we are permitted to expose our internals to tests. -->
+  <!-- Strong name signing ============================================= -->
+  <!-- Strong naming is being done in Directory.Build.props -->
+  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- Target Frameworks =============================================== -->
-  <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
-  </PropertyGroup>
-
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
-    <!-- @TODO: Move to directory.build.props? -->
-    <!--
-      If a target OS was not specified, we must choose a reasonable default.
-
-      For .NET Framework targets, we can assume a target OS of Windows, since
-      we don't support .NET Framework on any other OS.
-
-      For .NET targets, we will use the host OS, since that is where the
-      resulting artifacts are likely to be executed (i.e. tests).
-
-      Official builds should always explicitly specify a target OS.
-    -->
-    <TargetOs Condition="'$(TargetOs)' == '' AND '$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">Windows_NT</TargetOs>
+    <!-- If the TargetOs was not specified (as is the case during IDE development), the build     -->
+    <!-- should target the host OS.                                                               -->
     <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
 
-    <!-- Uncomment the following line to override the OS you are developing for -->
+    <!-- The following lines are provided for developer convenience. Many IDEs will automatically -->
+    <!-- hide code that is excluded via pre-compiler directives, making it difficult to edit in   -->
+    <!-- the IDE when on the wrong OS. To ease this, uncomment one of the following lines to      -->
+    <!-- force one OS or another. This is only for development usage. Do not commit these lines   -->
+    <!-- uncommented. -->
     <!--<TargetOs>Unix</TargetOs>-->
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
@@ -55,6 +55,15 @@
     <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
   </PropertyGroup>
 
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+
+    <!-- We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if -->
+    <!-- we are building for Windows.                                                              -->
+    <TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
+
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
     <!-- @TODO: Move to directory.build.props? -->
@@ -63,7 +72,7 @@
     <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
     <!-- to is possible but requires also specifying the IntermediateOutputPath. So while it      -->
     <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
-    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
   <!-- Embedded resources ============================================== -->
@@ -118,6 +127,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -125,7 +135,7 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="System.ValueTuple" />
-	</ItemGroup>
+  </ItemGroup>
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
@@ -134,7 +144,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
@@ -155,10 +164,21 @@
     depending on our build parameters.
   -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj" />
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+  </ItemGroup>
+
+  <!--
+    Refer to the SqlServer package via project or package reference
+    depending on our build parameters.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project' and '$(TargetFramework)' != 'net462'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package' and '$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.SqlServer.Server" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

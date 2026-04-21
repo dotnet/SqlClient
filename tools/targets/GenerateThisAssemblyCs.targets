@@ -8,6 +8,9 @@
 
     <PropertyGroup>
 
+      <!-- If an AssemblyFileVersion was provided, use that. Otherwise, use the FileVersion -->
+      <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(FileVersion)</AssemblyFileVersion>
+
       <!-- Put the ThisAssembly class in the System namespace by default. -->
       <ThisAssemblyNamespace Condition="'$(ThisAssemblyNamespace)' == ''">System</ThisAssemblyNamespace>
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- @TODO: Use full assembly name here -->
     <AssemblyName>ManualTests</AssemblyName>
@@ -7,6 +7,17 @@
 
     <!-- This is only required today because of the separate test sets -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if we
+      are building for Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Test Set ======================================================== -->
@@ -57,6 +68,15 @@
           CopyToOutputDirectory="PreserveNewest" />
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1"
           CopyToOutputDirectory="Always" />
+
+    <None Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>xunit.runner.json</Link>
+    </None>
+    <None Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>CodeCoverage.runsettings</Link>
+    </None>
   </ItemGroup>
 
   <!-- Items to include in test set 1 -->
@@ -193,7 +213,6 @@
     <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
     <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
-    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
     <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
     <Compile Include="SQL\ParameterTest\SteParam.cs" />
     <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
@@ -244,86 +263,26 @@
     <Content Include="DDDataTypesTest_Data.xml"
              CopyToOutputDirectory="PreserveNewest" />
 
-    <!-- Split baseline files for individual test groups -->
+    <!-- Baseline files for individual test groups -->
+    <Content Include="SQL\ParameterTest\DateTimeVariant.bsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>DateTimeVariant.bsl</Link>
+    </Content>
     <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>StreamInputParameter_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>StreamInputParameter_DebugMode_Azure.bsl</Link>
     </Content>
     <Content Include="SQL\ParameterTest\StreamInputParameter_ReleaseMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>StreamInputParameter_ReleaseMode.bsl</Link>
     </Content>
-    <Content Include="SQL\ParameterTest\StreamInputParameter_ReleaseMode_Azure.bsl">
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>StreamInputParameter_ReleaseMode_Azure.bsl</Link>
+      <Link>TvpColumnBoundaries.bsl</Link>
     </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_DebugMode.bsl">
+    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_Azure.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpColumnBoundaries_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpColumnBoundaries_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\TvpQueryHints_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TvpQueryHints_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\SqlVariantParameter_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>SqlVariantParameter_ReleaseMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_DebugMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_DebugMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_DebugMode_Azure.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_ReleaseMode.bsl</Link>
-    </Content>
-    <Content Include="SQL\ParameterTest\DateTimeVariant_ReleaseMode_Azure.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant_ReleaseMode_Azure.bsl</Link>
+      <Link>TvpColumnBoundaries_Azure.bsl</Link>
     </Content>
   </ItemGroup>
 
@@ -383,11 +342,12 @@
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'"  />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-
+                      Condition="'$(ReferenceType)' != 'Package'"
+                      Private="true" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
+
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <!-- @TODO: Should there be a package mode test for AKV? -->
   </ItemGroup>
 
@@ -397,14 +357,12 @@
 
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -422,12 +380,13 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
 
   <!-- References for netcore -->
@@ -436,7 +395,6 @@
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime"
                       Condition="'$(ReferenceType)' != 'Package'" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -455,11 +413,13 @@
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS/TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
+  
 </Project>

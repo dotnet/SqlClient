@@ -12,6 +12,7 @@ using System.Security;
 using System.Text;
 using Interop.Windows.Kernel32;
 using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
 
         private const string LocalDbPrefix = @"(localdb)\";
         private const string LocalDbPrefixNamedPipe = @"np:\\.\pipe\LOCALDB#";
-        
+
         // Flag for LocalDbFormatMessage that indicates that message can be truncated if it does
         // not fit in the buffer.
         private const uint LocalDbTruncateErrorMessage = 1;
@@ -35,9 +36,9 @@ namespace Microsoft.Data.SqlClient.LocalDb
         #if NETFRAMEWORK
         private const string PartialTrustFlagKey = "ALLOW_LOCALDB_IN_PARTIAL_TRUST";
         #endif
-        
+
         private static readonly object s_dllLock = new object();
-        
+
         #if NETFRAMEWORK
         private static readonly object s_configLock = new object();
         #endif
@@ -46,7 +47,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
         // This is copy of handle that SNI maintains, so we are responsible for freeing it -
         // therefore there we are not using SafeHandle
         private static IntPtr s_userInstanceDllHandle = IntPtr.Zero;
-        
+
         #if NETFRAMEWORK
         private static Dictionary<string, InstanceInfo> s_configurableInstances;
         private static PermissionSet s_fullTrust;
@@ -63,7 +64,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             [MarshalAs(UnmanagedType.LPWStr)] string instance,
             uint flags);
         #endif
-        
+
         [SuppressUnmanagedCodeSecurity]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private delegate int LocalDbFormatMessageDelegate(
@@ -72,7 +73,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             uint dwLanguageId,
             StringBuilder buffer,
             ref uint bufferLength);
-        
+
         #if NETFRAMEWORK
         private static LocalDbCreateInstanceDelegate LocalDbCreateInstance
         {
@@ -91,7 +92,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{0}", hResult);
                                 throw CreateLocalDbException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
                             }
-                            
+
                             s_localDbCreateInstance = (LocalDbCreateInstanceDelegate)Marshal.GetDelegateForFunctionPointer(functionAddr, typeof(LocalDbCreateInstanceDelegate));
                         }
                     }
@@ -101,7 +102,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             }
         }
         #endif
-        
+
         private static LocalDbFormatMessageDelegate LocalDbFormatMessage
         {
             get
@@ -120,7 +121,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                                 SqlClientEventSource.Log.TryTraceEvent("LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{0}", hResult);
                                 throw CreateLocalDbException(errorMessage: Strings.LocalDB_MethodNotFound);
                             }
-                            
+
                             s_localDbFormatMessage = Marshal.GetDelegateForFunctionPointer<LocalDbFormatMessageDelegate>(functionAddr);
                         }
                     }
@@ -129,7 +130,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                 return s_localDbFormatMessage;
             }
         }
-        
+
         private static IntPtr UserInstanceDllHandle
         {
             get
@@ -169,7 +170,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             s_partialTrustAllowed = true;
         }
         #endif
-        
+
         #if NETFRAMEWORK
         internal static void CreateLocalDbInstance(string instance)
         {
@@ -244,7 +245,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             instanceInfo.created = true;
         }
         #endif
-        
+
         #if NETFRAMEWORK
         internal static void DemandLocalDbPermissions()
         {
@@ -270,7 +271,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             }
         }
         #endif
-        
+
         // Check if name is in format (localdb)\<InstanceName - not empty> and return instance name if it is
         // localDB can also have a format of np:\\.\pipe\LOCALDB#<some number>\tsql\query
         internal static string GetLocalDbInstanceNameFromServerName(string serverName)
@@ -296,7 +297,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
             }
             return null;
         }
-        
+
         internal static string GetLocalDbMessage(int hrCode)
         {
             Debug.Assert(hrCode < 0, "HRCode does not indicate error");
@@ -340,17 +341,17 @@ namespace Microsoft.Data.SqlClient.LocalDb
                 return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", Strings.LocalDB_UnobtainableMessage, exc.Message);
             }
         }
-        
+
         internal static void ReleaseDllHandles()
         {
             s_userInstanceDllHandle = IntPtr.Zero;
             s_localDbFormatMessage = null;
-            
+
             #if NETFRAMEWORK
             s_localDbCreateInstance = null;
             #endif
         }
-        
+
         private static SqlException CreateLocalDbException(
             string errorMessage,
             string instance = null,
@@ -398,7 +399,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
 
             return exc;
         }
-        
+
         private static IntPtr LoadProcAddress(string funcName) =>
             #if NETFRAMEWORK
             Kernel32Safe.GetProcAddress(UserInstanceDllHandle, funcName);

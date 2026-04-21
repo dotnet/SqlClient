@@ -33,6 +33,12 @@ parameters:
     type: boolean
     default: false
 
+  # Push packages to NuGet Production (otherwise pushes to NuGet Test).
+  - name: releaseToProduction
+    displayName: Release to NuGet Production
+    type: boolean
+    default: false
+
   # True if this is a preview build.
   - name: isPreview
     displayName: Is this a preview build?
@@ -44,12 +50,6 @@ parameters:
     displayName: Publish symbols
     type: boolean
     default: false
-
-  # Release Dry Run (do not push to NuGet)
-  - name: releaseDryRun
-    displayName: Release Dry Run (do not push to NuGet)
-    type: boolean
-    default: true
 
   # Build parameters — select which packages to build.
 
@@ -66,7 +66,7 @@ parameters:
     default: true
 
   # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: buildAKVProvider
+  - name: buildAkvProvider
     displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     type: boolean
     default: true
@@ -80,9 +80,9 @@ parameters:
     type: boolean
     default: false
 
-  # Release the Microsoft.Data.SqlClient.Extensions.Logging package.
+  # Release the Microsoft.Data.SqlClient.Internal.Logging package.
   - name: releaseLogging
-    displayName: Release Microsoft.Data.SqlClient.Extensions.Logging
+    displayName: Release Microsoft.Data.SqlClient.Internal.Logging
     type: boolean
     default: false
 
@@ -105,41 +105,17 @@ parameters:
     default: false
 
   # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: releaseAKVProvider
+  - name: releaseAkvProvider
     displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     type: boolean
     default: false
 
 variables:
+  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
-
-  # Define the effective versions for all of the packages we build and release.
-  - ${{ if parameters.isPreview }}:
-    - name: effectiveSqlServerVersion
-      value: $(sqlServerPackagePreviewVersion)
-    - name: effectiveLoggingVersion
-      value: $(loggingPackagePreviewVersion)
-    - name: effectiveAbstractionsVersion
-      value: $(abstractionsPackagePreviewVersion)
-    - name: effectiveSqlClientVersion
-      value: $(mdsPackagePreviewVersion)
-    - name: effectiveAzureVersion
-      value: $(azurePackagePreviewVersion)
-    - name: effectiveAkvProviderVersion
-      value: $(akvPackagePreviewVersion)
-  - ${{ else }}:
-    - name: effectiveSqlServerVersion
-      value: $(sqlServerPackageVersion)
-    - name: effectiveLoggingVersion
-      value: $(loggingPackageVersion)
-    - name: effectiveAbstractionsVersion
-      value: $(abstractionsPackageVersion)
-    - name: effectiveSqlClientVersion
-      value: $(mdsPackageVersion)
-    - name: effectiveAzureVersion
-      value: $(azurePackageVersion)
-    - name: effectiveAkvProviderVersion
-      value: $(akvPackageVersion)
+  - template: /eng/pipelines/onebranch/variables/package-variables.yml@self
+    parameters:
+      isPreview: ${{ parameters.isPreview }}
 
 resources:
   repositories:
@@ -150,83 +126,165 @@ resources:
 
 extends:
   # See: https://aka.ms/obpipelines/templates
-  template: /v2/OneBranch.Official.CrossPlat.yml@templates
+  template: '/v2/OneBranch.Official.CrossPlat.yml@templates'
+
   parameters:
-    release:
-       # This indicates the pipeline category to deploy Box products.  See:
-       # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
-      category: NonAzure
     featureFlags:
       EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
+
+    release:
+      # This indicates the pipeline category to deploy Box products.  See:
+      # https://eng.ms/docs/products/onebranch/release/yamlreleasepipelines/deployboxproducts
+      category: NonAzure
+
     # See: https://aka.ms/obpipelines/sdl
     globalSdl:
-      tsa:
-        # The OneBranch template will set 'break' to false for the other SDL tools when TSA is
-        # enabled.  This allows TSA to gather the results and publish them for downstream analysis.
-        enabled: true
       apiscan:
+        # APIScan "software name" and version parameters are set on a per-job basis with via
+        # ob_sdl_apiscan_* variables.
         enabled: true
         # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42858):
         # We have temporarily disabled breaking the build on ApiScan results until we can:
         #   - Register our new packages with API Scan, and/or
         #   - Publish MSDN/Learn/etc documentation for the new packages.
         break: false
-        # Other ApiScan options are set by the jobs via ob_sdl_apiscan_* variables.
+
+      armory:
+        enabled: true
+        break: true
+
+      asyncSdl:
+        # Disabling this as it complicates the build process with minimal gain
+        enabled: false
+
+      binskim:
+        enabled: true
+        break: true
+
       codeql:
+        enabled: true
         compiled:
+
+      credscan:
         enabled: true
-      sbom:
-        enabled: true
-        packageName: Microsoft.Data.SqlClient
-        packageVersion: $(mdsPackageVersion)
+        suppressionsFile: '$(REPO_ROOT)/.config/CredScanSuppressions.json'
+
+      eslint:
+        # Only useful for repos with ECMAscript - which we do not have.
+        enabled: false
+
       policheck:
         enabled: true
         break: true
-        exclusionsFile: $(REPO_ROOT)\.config\PolicheckExclusions.xml
-      asyncSdl:
-        enabled: false
-        credscan:
-          enabled: true
-          suppressionsFile: $(REPO_ROOT)/.config/CredScanSuppressions.json
-        binskim:
-          enabled: true
-        armory:
-          enabled: true
-          break: true
-        eslint:
-          enabled: false
-        roslyn:
-          enabled: true
-          break: true
-        publishLogs:
-          enabled: true
-        tsaOptionsPath: $(REPO_ROOT)\.config\tsaoptions.json
-        disableLegacyManifest: true
+        exclusionsFile: '$(REPO_ROOT)\.config\PolicheckExclusions.xml'
+
+      roslyn:
+        # Note, requires RoslynAnalyzers task to be added as a separate step
+        enabled: true
+        break: true
+
+      publishLogs:
+        enabled: true
+
+      sbom:
+        enabled: true
+        packageName: 'Microsoft.Data.SqlClient'
+        packageVersion: '$(Build.BuildNumber)'
+
+      tsa:
+        # OneBranch publishes all sdl results to TSA. If TSA is disabled, all SDL tools will be
+        # forced into 'break' build mode.
+        enabled: true
+        configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
+
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
-          isPreview: ${{ parameters.isPreview }}
+          isOfficial: true # This is an official pipeline.
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+
+          abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
+          abstractionsFileVersion: '${{ variables.abstractionsFileVersion }}'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
+          akvProviderFileVersion: '${{ variables.akvProviderFileVersion }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azureArtifactsName: '${{ variables.azureArtifactsName }}'
+          azureFileVersion: '${{ variables.azureFileVersion }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
+          loggingFileVersion: '${{ variables.loggingFileVersion }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
+          sqlClientFileVersion: '${{ variables.sqlClientFileVersion }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
+          sqlServerFileVersion: '${{ variables.sqlServerFileVersion }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
+
+          signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
+          signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
+          signingAuthAkvName: '$(SigningAuthAkvName)'
+          signingAuthSignCertName: '$(SigningAuthSignCertName)'
+          signingEsrpClientId: '$(SigningEsrpClientId)'
+          signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
+
+      - template: /eng/pipelines/onebranch/stages/publish-symbols-stage.yml@self
+        parameters:
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+
+          abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azureArtifactsName: '${{ variables.azureArtifactsName }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
+
+          symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
+          symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
+          # Official pipelines must publish to the Production symbol server.
+          symbolsPublishServer: '$(SymbolsPublishServerProd)'
+          symbolsPublishTokenUri: '$(SymbolsPublishTokenUriProd)'
+          symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          isDryRun: ${{ parameters.releaseDryRun }}
+          releaseToProduction: ${{ parameters.releaseToProduction }}
           # This is an official pipeline.
           isOfficial: true
           stageNameSuffix: production
-          ${{ if eq(parameters.releaseDryRun, true) }}:
-            stageDisplayName: Release Production (Dry Run)
-          ${{ else }}:
-            stageDisplayName: Release Production
+
+          publishSymbols: ${{ parameters.publishSymbols }}
+
+          abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azureArtifactsName: '${{ variables.azureArtifactsName }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
+
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}
           releaseAbstractions: ${{ parameters.releaseAbstractions }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
           releaseAzure: ${{ parameters.releaseAzure }}
-          releaseAKVProvider: ${{ parameters.releaseAKVProvider }}
+          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}

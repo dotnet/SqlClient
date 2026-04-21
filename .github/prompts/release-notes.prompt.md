@@ -19,7 +19,7 @@ This repository ships multiple packages. Only generate release notes for package
 | `Microsoft.SqlServer.Server` | `release-notes/MSqlServerServer/<Major.Minor>/` | PR titles/bodies/files referencing `Microsoft.SqlServer.Server` or `src/Microsoft.SqlServer.Server/` |
 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `release-notes/Extensions/Abstractions/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Abstractions` |
 | `Microsoft.Data.SqlClient.Extensions.Azure` | `release-notes/Extensions/Azure/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Azure` |
-| `Microsoft.Data.SqlClient.Extensions.Logging` | `release-notes/Extensions/Logging/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Logging` |
+| `Microsoft.Data.SqlClient.Internal.Logging` | `release-notes/Internal/Logging/<Major.Minor>/` | PR titles/bodies/files referencing `Internal.Logging` |
 
 ## Version and Dependency Lookup
 
@@ -32,7 +32,7 @@ Each package has its own versioning and dependency sources. Use these to determi
 | `Microsoft.SqlServer.Server` | [tools/props/Versions.props](tools/props/Versions.props) (`SqlServerPackageVersion`) | [SqlServer project file](src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj) |
 | `Extensions.Abstractions` | [AbstractionsVersions.props](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/AbstractionsVersions.props) | [Abstractions.csproj](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj) |
 | `Extensions.Azure` | [AzureVersions.props](src/Microsoft.Data.SqlClient.Extensions/Azure/src/AzureVersions.props) | [Azure.csproj](src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj) |
-| `Extensions.Logging` | [LoggingVersions.props](src/Microsoft.Data.SqlClient.Extensions/Logging/src/LoggingVersions.props) | [Logging.csproj](src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj) |
+| `Internal.Logging` | [LoggingVersions.props](src/Microsoft.Data.SqlClient.Internal/Logging/src/LoggingVersions.props) | [Logging.csproj](src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj) |
 
 Concrete dependency versions (e.g., `Azure.Core 1.49.0`) are centrally managed in [Directory.Packages.props](Directory.Packages.props). Framework-conditional versions (e.g., `net9.0` vs everything else) are handled by `Condition` attributes in the same file.
 
@@ -86,6 +86,10 @@ For each package that has relevant PRs in the milestone:
    - Look up dependencies using the Dependency Sources from the lookup table above. Resolve concrete versions from [Directory.Packages.props](Directory.Packages.props).
    - List dependencies per target framework. Use the project file's `<TargetFrameworks>` to determine which frameworks to list.
    - Omit the Contributors section for packages with no public contributors.
+   - **GA releases (all packages):** When the release is a stable (non-preview) version, structure the notes with two sections:
+     1. **"Changes Since [last preview]"** — only the delta since the most recent preview of this package.
+     2. **"Cumulative Changes Since [last stable]"** — all changes since the last stable release of this package, synthesized from all preview release notes plus the GA milestone. This applies to every package (MDS, AKV, Extensions.Azure, Abstractions, Internal.Logging, etc.), not just the core driver. Apply the cross-referencing from Step 3 to eliminate items already shipped in prior stable patch releases.
+   - **Preview releases:** Only include the delta since the previous release (preview or stable). No cumulative section is needed.
 
 3. **Create or update the version README** at `<Directory>/README.md`. Follow the existing format — see [release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md](release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md) for reference:
 

@@ -34,7 +34,7 @@ src/Microsoft.Data.SqlClient/tests/
 - Full integration tests with SQL Server
 - Require `config.json` setup
 - Test real database operations
-- Include Always Encrypted, Azure AD tests
+- Include Always Encrypted, Entra ID tests
 
 ## Test Configuration
 
@@ -58,7 +58,7 @@ Copy `config.default.json` to `config.json` and configure:
 |----------|-------------|
 | `TCPConnectionString` | Primary TCP connection |
 | `NPConnectionString` | Named Pipes connection |
-| `AADPasswordConnectionString` | Azure AD password auth |
+| `AADPasswordConnectionString` | Entra ID password auth |
 | `AzureKeyVaultURL` | AKV for encryption tests |
 | `EnclaveEnabled` | Enable enclave tests |
 | `FileStreamDirectory` | FileStream test path |
@@ -310,7 +310,7 @@ Common test helper class:
 ```csharp
 DataTestUtility.TCPConnectionString  // Get TCP connection
 DataTestUtility.AreConnStringsSetup  // Check if config exists
-DataTestUtility.IsAADPasswordConnStrSetup  // Check AAD config
+DataTestUtility.IsAADPasswordConnStrSetup  // Check Entra ID config
 ```
 
 ### AssertExtensions

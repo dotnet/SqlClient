@@ -7,7 +7,7 @@
 
 This library provides an **Always Encrypted Azure Key Vault Provider** for [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient). It enables .NET applications to use [Microsoft Azure Key Vault](https://azure.microsoft.com/services/key-vault/) with [Always Encrypted](https://aka.ms/AlwaysEncrypted) in Microsoft Azure SQL Database and Microsoft SQL Server.
 
-Always Encrypted allows clients to encrypt sensitive data inside client applications and never reveal the encryption keys to SQL Server. This provider enables storing column master keys (CMKs) in Azure Key Vault, providing centralized key management, secure key storage, and integration with Azure AD authentication.
+Always Encrypted allows clients to encrypt sensitive data inside client applications and never reveal the encryption keys to SQL Server. This provider enables storing column master keys (CMKs) in Azure Key Vault, providing centralized key management, secure key storage, and integration with Entra ID authentication.
 
 ## Supportability
 
@@ -72,7 +72,7 @@ var ssn = await command.ExecuteScalarAsync();
 ## Key Features
 
 - **Azure Key Vault Integration**: Store and manage column master keys (CMKs) in Azure Key Vault
-- **Azure AD Authentication**: Supports Azure.Identity credentials for seamless Azure AD authentication
+- **Entra ID Authentication**: Supports Azure.Identity credentials for seamless Entra ID authentication
 - **Key Caching**: Built-in caching of column encryption keys (CEKs) for improved performance
 - **Multiple Authentication Methods**: Supports DefaultAzureCredential, ClientSecretCredential, ManagedIdentityCredential, and more
 
@@ -94,5 +94,5 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 ## Related Packages
 
 - [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) - The main SqlClient driver
-- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) - Azure AD authentication library
+- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) - Entra ID authentication library
 - [Azure.Security.KeyVault.Keys](https://www.nuget.org/packages/Azure.Security.KeyVault.Keys) - Azure Key Vault Keys client library

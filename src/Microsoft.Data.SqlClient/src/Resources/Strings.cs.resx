@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Pro {0} nelze najít zprostředkovatele ověřování. Nainstalujte balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), abyste mohli používat metody ověřování Active Directory (Entra ID).</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Nepodařilo se přečíst konfigurační oddíl zprostředkovatelů ověřování.</value>
   </data>
@@ -4685,5 +4688,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0}: Neplatný řetězec JSON pro vektor.</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>Ve fondu připojení se nepovedlo najít prázdný slot.</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>Fond připojení byl vypnut.</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>Nelze získat RequiredLength, pokud HasDataLength je false.</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>Částečný paket nemůže být null při nastavování na jinou hodnotu než null.</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets nemůže vrátit současně consumePartialPacket i consumeInputDirectly.</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>Došlo k pokusu o uvedení operace čtení do čekajícího stavu, když bylo povoleno testovací volání pro selhání asynchronních čekajících operací.</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>Byla zjištěna úprava paketu. Hodnota hash je null, ale paket obsahuje vyrovnávací paměť, která není null.</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>Byla zjištěna úprava paketu. Hodnota hash z vytvoření paketu neodpovídá hodnotě hash z kontroly paketů.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>Nelze přejít ze stavu {0} do stavu {1}.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>Nepodporovaný stav: {0}</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>Nepodařilo se vytvořit objekt SqlRetryLogicBaseProvider, protože hodnota retryMethod je null nebo prázdná.</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>Při spuštění metody {0}.{1}() došlo k výjimce.</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>Nepodařilo se přeložit metodu {0} z typu {1}.</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>Neplatný návratový typ; návratový typ musí být typu {0}.</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>Nepodařilo se vytvořit objekt SqlRetryLogicBaseProvider kvůli neplatným parametrům {0}.{1}Funkce musí mít parametr typu SqlRetryLogicOption.</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>Objekt SqlRetryLogicBaseProvider se nepodařilo vytvořit kvůli neplatným parametrům retryMethod.{0}Parametr {1} {2} nemá výchozí hodnotu.</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>Posloupnost obsahuje více než jeden odpovídající prvek.</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>Posloupnost neobsahuje žádný odpovídající prvek.</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>Z fondu si můžete vypůjčit pouze v případě, že je k dispozici delegát onCreate.</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>Typ {0} má neplatnou velikost.</value>
   </data>
 </root>
