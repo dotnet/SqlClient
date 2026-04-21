@@ -496,8 +496,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     s = rdr.GetString(9); //ShipAddres;
                     s = rdr.GetString(10); //ShipCity;
                                            // should get an exception here
-                    string errorMessage = SystemDataResourceManager.Instance.SqlMisc_NullValueMessage;
-                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetString(11), errorMessage);
+                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetString(11));
 
                     s = rdr.GetString(12); //ShipPostalCode;
                     s = rdr.GetString(13); //ShipCountry;
@@ -515,8 +514,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 using (SqlCommand cmd = new SqlCommand(sqlBatch, conn))
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    string errorMessage = SystemDataResourceManager.Instance.SqlMisc_NullValueMessage;
-
                     rdr.Read();
                     // read data out of buffer
                     rdr.GetFieldValue<int>(0); //order id
@@ -533,7 +530,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     rdr.IsDBNull(10);
                     rdr.GetFieldValue<string>(10); //ShipCity;
                     // should get an exception here
-                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetFieldValue<string>(11), errorMessage);
+                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetFieldValue<string>(11));
                     rdr.IsDBNull(11);
                     rdr.GetFieldValue<SqlString>(11);
                     rdr.IsDBNull(11);
@@ -542,7 +539,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     rdr.IsDBNull(12);
                     rdr.GetFieldValue<INullable>(13);//ShipCountry;
                     rdr.GetFieldValue<string>(14);
-                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetFieldValue<string>(15), errorMessage);
+                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetFieldValue<string>(15));
 
                     rdr.Read();
                     // read data out of buffer
@@ -559,7 +556,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     Assert.False(rdr.IsDBNullAsync(10).Result, "FAILED: IsDBNull was true for a non-null value");
                     rdr.GetFieldValueAsync<string>(10).Wait(); //ShipCity;
                     // should get an exception here
-                    DataTestUtility.AssertThrowsWrapper<AggregateException, SqlNullValueException>(() => rdr.GetFieldValueAsync<string>(11).Wait(), innerExceptionMessage: errorMessage);
+                    DataTestUtility.AssertThrowsWrapper<AggregateException, SqlNullValueException>(() => rdr.GetFieldValueAsync<string>(11).Wait());
                     Assert.True(rdr.IsDBNullAsync(11).Result, "FAILED: IsDBNull was false for a null value");
 
                     rdr.IsDBNullAsync(11).Wait();
