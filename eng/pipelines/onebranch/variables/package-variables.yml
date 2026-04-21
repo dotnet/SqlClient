@@ -53,13 +53,13 @@ variables:
     value: 'drop_build_abstractions_build_package_Abstractions'
 
   - name: abstractionsFileVersion
-    value: '1.0.0.$(_assemblyBuildNumber)'
+    value: '1.0.1.$(_assemblyBuildNumber)'
 
   - name: abstractionsPackageVersion
     ${{ if parameters.isPreview }}:
-      value: '1.0.0-preview1.$(Build.BuildNumber)'
+      value: '1.0.1-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '1.0.0'
+      value: '1.0.1'
 
   # ------------------------------------------------------------------------
   # AKV Provider Package
@@ -68,13 +68,13 @@ variables:
     value: 'drop_build_addons_build_package_AkvProvider'
 
   - name: akvProviderFileVersion
-    value: '7.0.0.$(_assemblyBuildNumber)'
+    value: '7.0.1.$(_assemblyBuildNumber)'
 
   - name: akvProviderPackageVersion
     ${{ if parameters.isPreview }}:
-      value: '7.0.0-preview1.$(Build.BuildNumber)'
+      value: '7.0.1-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '7.0.0'
+      value: '7.0.1'
 
   # ------------------------------------------------------------------------
   # Azure Package
@@ -83,13 +83,13 @@ variables:
     value: 'drop_build_dependent_build_package_Azure'
 
   - name: azureFileVersion
-    value: '1.0.0.$(_assemblyBuildNumber)'
+    value: '1.0.1.$(_assemblyBuildNumber)'
 
   - name: azurePackageVersion
     ${{ if parameters.isPreview }}:
-      value: '1.0.0-preview1.$(Build.BuildNumber)'
+      value: '1.0.1-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '1.0.0'
+      value: '1.0.1'
 
   # ------------------------------------------------------------------------
   # Logging Package
@@ -98,13 +98,13 @@ variables:
     value: 'drop_build_independent_build_package_Logging'
 
   - name: loggingFileVersion
-    value: '1.0.0.$(_assemblyBuildNumber)'
+    value: '1.0.1.$(_assemblyBuildNumber)'
 
   - name: loggingPackageVersion
     ${{ if parameters.isPreview }}:
-      value: '1.0.0-preview1.$(Build.BuildNumber)'
+      value: '1.0.1-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '1.0.0'
+      value: '1.0.1'
 
   # ------------------------------------------------------------------------
   # SqlClient Package
@@ -113,13 +113,13 @@ variables:
     value: 'drop_build_dependent_build_package_SqlClient'
 
   - name: sqlClientFileVersion
-    value: '7.0.0.$(_assemblyBuildNumber)'
+    value: '7.0.1.$(_assemblyBuildNumber)'
 
   - name: sqlClientPackageVersion
     ${{ if parameters.isPreview }}:
-      value: '7.0.0-preview4.$(Build.BuildNumber)'
+      value: '7.0.1-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '7.0.0'
+      value: '7.0.1'
 
   # ------------------------------------------------------------------------
   # SqlServer Package
@@ -128,10 +128,10 @@ variables:
     value: 'drop_build_independent_build_package_SqlServer'
 
   - name: sqlServerFileVersion
-    value: '1.0.0.$(_assemblyBuildNumber)'
+    value: '1.0.1.$(_assemblyBuildNumber)'
 
   - name: sqlServerPackageVersion
     ${{ if parameters.isPreview }}:
-      value: '1.0.0-preview1.$(Build.BuildNumber)'
+      value: '1.0.1-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '1.0.0'
+      value: '1.0.1'

@@ -44,7 +44,7 @@
 
     <!-- Determine the package version. -->
     <_OurPackageVersion Condition="'$(AzurePackageVersion)' != ''">$(AzurePackageVersion)</_OurPackageVersion>
-    <_OurPackageVersion Condition="'$(AzurePackageVersion)' == ''">$(AzureDefaultMajorVersion).0.0.$(AssemblyBuildNumber)-dev</_OurPackageVersion>
+    <_OurPackageVersion Condition="'$(AzurePackageVersion)' == ''">$(AzureDefaultMajorVersion).0.1.$(AssemblyBuildNumber)-dev</_OurPackageVersion>
 
     <!--Determine the assembly file version. -->
     <!-- If AzureAssemblyFileVersion is set, use its value as-is. -->
@@ -52,7 +52,7 @@
     <!-- If AzurePackageVersion is set, use its trimmed value. -->
     <_OurAssemblyFileVersion Condition="'$(AzureAssemblyFileVersion)' == '' and '$(AzurePackageVersion)' != ''">$(AzurePackageVersion.Split('-')[0])</_OurAssemblyFileVersion>
     <!-- If neither property is set, use the default value.-->
-    <_OurAssemblyFileVersion Condition="'$(AzureAssemblyFileVersion)' == '' and '$(AzurePackageVersion)' == ''">$(AzureDefaultMajorVersion).0.0.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
+    <_OurAssemblyFileVersion Condition="'$(AzureAssemblyFileVersion)' == '' and '$(AzurePackageVersion)' == ''">$(AzureDefaultMajorVersion).0.1.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
 
     <!--
       Assign the public properties.  This has no effect if they were

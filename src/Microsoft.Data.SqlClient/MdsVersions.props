@@ -17,7 +17,7 @@
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!-- This is the *next* version to release of MDS. Update this after a version is released -->
-    <MdsVersionDefault>7.0.0</MdsVersionDefault>
+    <MdsVersionDefault>7.0.1</MdsVersionDefault>
 
     <!--
       Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.

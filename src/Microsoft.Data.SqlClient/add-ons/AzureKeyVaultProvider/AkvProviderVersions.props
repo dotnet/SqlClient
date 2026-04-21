@@ -44,7 +44,7 @@
 
     <!-- Determine the package version. -->
     <_AkvPackageVersion Condition="'$(AkvPackageVersion)' != ''">$(AkvPackageVersion)</_AkvPackageVersion>
-    <_AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvDefaultMajorVersion).0.0.$(AssemblyBuildNumber)-dev</_AkvPackageVersion>
+    <_AkvPackageVersion Condition="'$(AkvPackageVersion)' == ''">$(AkvDefaultMajorVersion).0.1.$(AssemblyBuildNumber)-dev</_AkvPackageVersion>
 
     <!-- Determine the assembly file version. -->
     <!-- If AkvAssemblyFileVersion is set, use its value as-is. -->
@@ -52,7 +52,7 @@
     <!-- If AkvPackageVersion is set, use its trimmed value. -->
     <_AkvAssemblyFileVersion Condition="'$(AkvAssemblyFileVersion)' == '' and '$(AkvPackageVersion)' != ''">$(AkvPackageVersion.Split('-')[0])</_AkvAssemblyFileVersion>
     <!-- If neither property is set, use the default value. -->
-    <_AkvAssemblyFileVersion Condition="'$(AkvAssemblyFileVersion)' == '' and '$(AkvPackageVersion)' == ''">$(AkvDefaultMajorVersion).0.0.$(AssemblyBuildNumber)</_AkvAssemblyFileVersion>
+    <_AkvAssemblyFileVersion Condition="'$(AkvAssemblyFileVersion)' == '' and '$(AkvPackageVersion)' == ''">$(AkvDefaultMajorVersion).0.1.$(AssemblyBuildNumber)</_AkvAssemblyFileVersion>
 
     <!--
       Assign the public properties.  This has no effect if they were

@@ -45,7 +45,7 @@
 
     <!-- Determine the package version. -->
     <_OurPackageVersion Condition="'$(LoggingPackageVersion)' != ''">$(LoggingPackageVersion)</_OurPackageVersion>
-    <_OurPackageVersion Condition="'$(LoggingPackageVersion)' == ''">$(LoggingDefaultMajorVersion).0.0.$(AssemblyBuildNumber)-dev</_OurPackageVersion>
+    <_OurPackageVersion Condition="'$(LoggingPackageVersion)' == ''">$(LoggingDefaultMajorVersion).0.1.$(AssemblyBuildNumber)-dev</_OurPackageVersion>
 
     <!--Determine the assembly file version. -->
     <!-- If LoggingAssemblyFileVersion is set, use its value as-is. -->
@@ -53,7 +53,7 @@
     <!-- If LoggingPackageVersion is set, use its trimmed value. -->
     <_OurAssemblyFileVersion Condition="'$(LoggingAssemblyFileVersion)' == '' and '$(LoggingPackageVersion)' != ''">$(LoggingPackageVersion.Split('-')[0])</_OurAssemblyFileVersion>
     <!-- If neither property is set, use the default value.-->
-    <_OurAssemblyFileVersion Condition="'$(LoggingAssemblyFileVersion)' == '' and '$(LoggingPackageVersion)' == ''">$(LoggingDefaultMajorVersion).0.0.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
+    <_OurAssemblyFileVersion Condition="'$(LoggingAssemblyFileVersion)' == '' and '$(LoggingPackageVersion)' == ''">$(LoggingDefaultMajorVersion).0.1.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
 
     <!--
       Assign the public properties.  This has no effect if they were

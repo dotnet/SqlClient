@@ -45,7 +45,7 @@
 
     <!-- Determine the package version. -->
     <_OurPackageVersion Condition="'$(AbstractionsPackageVersion)' != ''">$(AbstractionsPackageVersion)</_OurPackageVersion>
-    <_OurPackageVersion Condition="'$(AbstractionsPackageVersion)' == ''">$(AbstractionsDefaultMajorVersion).0.0.$(AssemblyBuildNumber)-dev</_OurPackageVersion>
+    <_OurPackageVersion Condition="'$(AbstractionsPackageVersion)' == ''">$(AbstractionsDefaultMajorVersion).0.1.$(AssemblyBuildNumber)-dev</_OurPackageVersion>
 
     <!--Determine the assembly file version. -->
     <!-- If AbstractionsAssemblyFileVersion is set, use its value as-is. -->
@@ -53,7 +53,7 @@
     <!-- If AbstractionsPackageVersion is set, use its trimmed value. -->
     <_OurAssemblyFileVersion Condition="'$(AbstractionsAssemblyFileVersion)' == '' and '$(AbstractionsPackageVersion)' != ''">$(AbstractionsPackageVersion.Split('-')[0])</_OurAssemblyFileVersion>
     <!-- If neither property is set, use the default value.-->
-    <_OurAssemblyFileVersion Condition="'$(AbstractionsAssemblyFileVersion)' == '' and '$(AbstractionsPackageVersion)' == ''">$(AbstractionsDefaultMajorVersion).0.0.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
+    <_OurAssemblyFileVersion Condition="'$(AbstractionsAssemblyFileVersion)' == '' and '$(AbstractionsPackageVersion)' == ''">$(AbstractionsDefaultMajorVersion).0.1.$(AssemblyBuildNumber)</_OurAssemblyFileVersion>
 
     <!--
       Assign the public properties.  This has no effect if they were
