@@ -3119,19 +3119,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
                         AsyncHelper.SetTimeoutExceptionWithState(
-<<<<<<< HEAD
                             taskCompletionSource: cancellableReconnectTS,
                             timeoutInSeconds: BulkCopyTimeout,
                             state: _destinationTableName,
                             onTimeout: static state =>
                                 SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()),
-=======
-                            completion: cancellableReconnectTS,
-                            timeout: BulkCopyTimeout,
-                            state: _destinationTableName,
-                            onFailure: static state =>
-                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()),
->>>>>>> main
                             cancellationToken: CancellationToken.None
                         );
 
