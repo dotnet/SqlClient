@@ -4,142 +4,179 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in MDS OneBranch Official pipelines.
+# Job that performs a build of Microsoft.Data.SqlClient using the build2.proj file.
 
 parameters:
-  # True to publish symbols to public and private feeds after the build completes.
-  - name: publishSymbols
-    type: boolean
+  - name: apiScanDllPath
+    type: string
 
-  # True if this is a preview build, which uses the preview version numbers from
-  # common-variables.yml.
-  - name: isPreview
-    type: boolean
+  - name: apiScanPdbPath
+    type: string
 
-  # True to enable ESRP malware scanning and code signing steps, which should not
-  # be run on non-official pipelines as they access production resources.
+  # Whether this build is for an "official" OneBranch pipeline. This is used to enable ESRP signing
+  # on the artifacts of this job.
   - name: isOfficial
     type: boolean
 
+  - name: publishSymbols
+    type: boolean
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+
+  - name: symbolsAzureSubscription
+    type: string
+
+  - name: symbolsPublishProjectName
+    type: string
+
+  - name: symbolsPublishServer
+    type: string
+
+  - name: symbolsPublishTokenUri
+    type: string
+
+  - name: symbolsUploadAccount
+    type: string
+
+  # Package Parameters
+  - name: abstractionsArtifactName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingArtifactName
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: sqlClientAssemblyFileVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
 jobs:
   - job: build_package_SqlClient
-    displayName: "Build Microsoft.Data.SqlClient"
+    displayName: 'Build Microsoft.Data.SqlClient'
     pool:
-      type: windows # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+      type: windows
 
     variables:
-      ob_outputDirectory: $(PACK_OUTPUT)
-      # APIScan configuration for this Extension package
-      ob_sdl_apiscan_enabled: true
-      ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/dlls
-      ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/pdbs
-      ob_sdl_apiscan_softwarename: Microsoft.Data.SqlClient
-      ob_sdl_apiscan_versionNumber: $(assemblyBuildNumber)
-
-      ${{ if parameters.isPreview }}:
-        abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)
-        loggingPackageVersion: $(loggingPackagePreviewVersion)
-        mdsPackageVersion: $(mdsPackagePreviewVersion)
+      ob_outputDirectory: '$(PACK_OUTPUT)'
+      ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
+      ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwarename: 'Microsoft.Data.SqlClient'
+      ob_sdl_apiscan_versionNumber: ${{ parameters.sqlClientAssemblyFileVersion }}
 
     steps:
-      - script: SET
-        displayName: "Print Environment Variables"
+      # Dump environment and parameters
+      - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
-      # Download the Abstractions and Logging packages from the previous stage into
-      # packages/ so that they're available via the local NuGet feed when restoring MDS.
-      # MDS depends on both Extensions.Abstractions and Internal.Logging.
+      - powershell: |
+          $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
+          $jsonParams | ConvertFrom-Json | Format-List
+        displayName: 'Output Job Parameters'
+
+      # Download Abstractions and Logging packages from previous stages into /packages/ so they
+      # are available via the local NuGet feed when restoring.
+      # @TODO: With the new build2.proj pack targets, this technically is not necessary.
       - task: DownloadPipelineArtifact@2
-        displayName: Download Abstractions Package
+        displayName: Download Microsoft.Data.SqlClient.Extensions.Abstractions Artifact
         inputs:
-          artifactName: $(abstractionsArtifactsName)
-          targetPath: $(Build.SourcesDirectory)/packages
+          artifactName: '${{ parameters.abstractionsArtifactName }}'
+          targetPath: '$(REPO_ROOT)/packages'
 
       - task: DownloadPipelineArtifact@2
-        displayName: Download Logging Package
+        displayName: Download Microsoft.Data.SqlClient.Extensions.Logging Artifact
         inputs:
-          artifactName: $(loggingArtifactsName)
-          targetPath: $(Build.SourcesDirectory)/packages
+          artifactName: '${{ parameters.loggingArtifactName }}'
+          targetPath: '$(REPO_ROOT)/packages'
 
-      # Install the .NET SDK.
+      # Install the .NET SDK
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
-      # Build our tooling, which is required by the analysis step below, but
-      # shouldn't be analyzed itself.
-      - task: MSBuild@1
-        displayName: "Build Tooling"
-        inputs:
-          solution: "**/build.proj"
-          configuration: Release
-          msbuildArguments: -t:BuildTools
-
-      # Perform analysis before building, since this step will clobber build output.
-      - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
-
-      # Build MDS, producing signed DLLs.
-      - template: /eng/pipelines/onebranch/steps/build-all-configurations-signed-dlls-step.yml@self
+      # Perform analysis before building, since this step will clobber build output
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-sqlclient-step.yml@self
         parameters:
-          # These variables are sourced from common-variables.yml.
-          abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
-          abstractionsPackageVersion: $(abstractionsPackageVersion)
-          loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
-          loggingPackageVersion: $(loggingPackageVersion)
-          mdsAssemblyFileVersion: $(mdsAssemblyFileVersion)
-          mdsPackageVersion: $(mdsPackageVersion)
+          abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
+          loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
-      - ${{ if eq(parameters.isOfficial, true) }}:
-          - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
-            parameters:
-              artifactType: dll
-              sourceRoot: $(BUILD_OUTPUT)
-              dllPattern: "Microsoft.Data.SqlClient.dll"
-
-          - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
-            parameters:
-              artifactType: dll
-              sourceRoot: $(BUILD_OUTPUT)
-              dllPattern: "Microsoft.Data.SqlClient.resources.dll"
-
-      - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
+      # Perform the actual build
+      - template: /eng/pipelines/onebranch/steps/build-sqlclient-step.yml@self
         parameters:
-          buildConfiguration: Release
-          displayName: "Create MDS NuGet Package"
-          generateSymbolsPackage: true
-          installNuget: false
-          nuspecPath: $(nuspecPath)
-          outputDirectory: $(PACK_OUTPUT)
-          packageVersion: $(mdsPackageVersion)
-          properties: "AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)"
-          referenceType: Package
+          abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
+          loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
-      - ${{ if eq(parameters.isOfficial, true) }}:
-          - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+      # Copy the built DLLs and PDBs to the APIScan output folder for APIScanning post-build
+      - template: /eng/pipelines/onebranch/steps/copy-apiscan-files-sqlclient-step.yml@self
+        parameters:
+          dllPath: '${{ parameters.apiScanDllPath }}'
+          pdbPath: '${{ parameters.apiScanPdbPath }}'
+          referenceType: 'Package'
+
+      # Sign the DLLs
+      - ${{ if parameters.isOfficial }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
             parameters:
-              artifactType: pkg
-              nupkgPattern: "Microsoft.Data.SqlClient.$(mdsPackageVersion).*nupkg"
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              pattern: 'Microsoft.Data.SqlClient*.dll'
 
-      # Copy signed DLLs and PDBs to APIScan folders.
-      - task: CopyFiles@2
-        displayName: Copy DLLs for APIScan
-        inputs:
-          SourceFolder: $(BUILD_OUTPUT)/Package/bin
-          Contents: "**/Microsoft.Data.SqlClient.dll"
-          TargetFolder: $(ob_sdl_apiscan_softwareFolder)
-          # We must preserve the folder structure since our C# projects may produce multiple
-          # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
-          # etc.), and we need to keep those separate for APIScan to work correctly.
-          flattenFolders: false
+      # Package the build output into a NuGet package
+      - template: /eng/pipelines/onebranch/steps/pack-sqlclient-step.yml
+        parameters:
+          abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
+          loggingPackageVersion: '${{ parameters.loggingPackageVersion }}'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
-      - task: CopyFiles@2
-        displayName: Copy PDBs for APIScan
-        inputs:
-          SourceFolder: $(BUILD_OUTPUT)/Package/bin
-          Contents: "**/Microsoft.Data.SqlClient.pdb"
-          TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
-          flattenFolders: false
+      # Sign the NuGet packages
+      - ${{ if parameters.isOfficial }}:
+          - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
+            parameters:
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              searchPath: '$(PACK_OUTPUT)'
+              searchPattern: 'Microsoft.Data.SqlClient.*nupkg'
 
-      # Publish symbols to servers
-      - ${{ if eq(parameters.publishSymbols, true) }}:
+      - ${{ if parameters.publishSymbols }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
-              packageFullName: Microsoft.Data.SqlClient
-              packageVersion: $(mdsPackageVersion)
+              artifactName: 'Microsoft.Data.SqlClient_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.sqlClientPackageVersion }}_$(System.TimelineId)'
+              azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+              packageName: 'Microsoft.Data.SqlClient'
+              publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+              publishServer: '${{ parameters.symbolsPublishServer }}'
+              publishToInternal: true
+              publishToPublic: true
+              publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+              searchPattern: '**/Microsoft.Data.SqlClient*.pdb' # @TODO: This seems very heavy
+              uploadAccount: '${{ parameters.symbolsUploadAccount }}'
+              version: '${{ parameters.sqlClientPackageVersion }}'

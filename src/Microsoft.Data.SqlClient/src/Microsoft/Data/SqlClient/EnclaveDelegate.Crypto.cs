@@ -92,21 +92,18 @@ namespace Microsoft.Data.SqlClient
                 switch (attestationProtocol)
                 {
                     case SqlConnectionAttestationProtocol.AAS:
-                        AzureAttestationEnclaveProvider azureAttestationEnclaveProvider = new AzureAttestationEnclaveProvider();
-                        s_enclaveProviders[attestationProtocol] = azureAttestationEnclaveProvider;
-                        sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
+                        sqlColumnEncryptionEnclaveProvider = new AzureAttestationEnclaveProvider();
+                        s_enclaveProviders[attestationProtocol] = sqlColumnEncryptionEnclaveProvider;
                         break;
 
                     case SqlConnectionAttestationProtocol.HGS:
-                        HostGuardianServiceEnclaveProvider hostGuardianServiceEnclaveProvider = new HostGuardianServiceEnclaveProvider();
-                        s_enclaveProviders[attestationProtocol] = hostGuardianServiceEnclaveProvider;
-                        sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
+                        sqlColumnEncryptionEnclaveProvider = new HostGuardianServiceEnclaveProvider();
+                        s_enclaveProviders[attestationProtocol] = sqlColumnEncryptionEnclaveProvider;
                         break;
 
                     case SqlConnectionAttestationProtocol.None:
-                        NoneAttestationEnclaveProvider noneAttestationEnclaveProvider = new NoneAttestationEnclaveProvider();
-                        s_enclaveProviders[attestationProtocol] = noneAttestationEnclaveProvider;
-                        sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
+                        sqlColumnEncryptionEnclaveProvider = new NoneAttestationEnclaveProvider();
+                        s_enclaveProviders[attestationProtocol] = sqlColumnEncryptionEnclaveProvider;
                         break;
 
                     default:

@@ -129,6 +129,10 @@ When a new issue is created, follow these steps:
 - Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
 
+## 🌿 Branch Naming
+- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
+- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
 - Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.

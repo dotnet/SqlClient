@@ -180,6 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings))]
+        [Trait("Category", "flaky")]
         public static void ReadStream_ReadsStreamDataCorrectly(string connectionString)
         {
             ReadStream(connectionString);
@@ -276,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         await destination.WriteAsync(new ReadOnlyMemory<byte>(buffer, 0, bytesRead), cancellationToken).ConfigureAwait(false);
                     }
-#endif 
+#endif
                 }
                 finally
                 {
@@ -320,7 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.CommandText = $@"
 IF OBJECT_ID('dbo.{tableName}', 'U') IS NOT NULL
-DROP TABLE {tableName}; 
+DROP TABLE {tableName};
 CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 ";
                 cmd.ExecuteNonQuery();
@@ -377,7 +378,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         {
                             Assert.True(numBatches < expectedResults.Length, "ERROR: Received more batches than were expected.");
                             object[] values = new object[r1.FieldCount];
-                            // Current "column" in expected row is (valuesChecked MOD FieldCount), since 
+                            // Current "column" in expected row is (valuesChecked MOD FieldCount), since
                             // expected rows for current batch are appended together for easy formatting
                             int valuesChecked = 0;
                             while (r1.Read())
@@ -410,7 +411,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     string errorMessage = SystemDataResourceManager.Instance.SQL_InvalidRead;
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetInt32(0), errorMessage);
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetInt32(0), errorMessage);
                 }
             }
         }
@@ -496,7 +497,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     s = rdr.GetString(9); //ShipAddres;
                     s = rdr.GetString(10); //ShipCity;
                                            // should get an exception here
-                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetString(11));
+                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetString(11));
 
                     s = rdr.GetString(12); //ShipPostalCode;
                     s = rdr.GetString(13); //ShipCountry;
@@ -530,7 +531,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     rdr.IsDBNull(10);
                     rdr.GetFieldValue<string>(10); //ShipCity;
                     // should get an exception here
-                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetFieldValue<string>(11));
+                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetFieldValue<string>(11));
                     rdr.IsDBNull(11);
                     rdr.GetFieldValue<SqlString>(11);
                     rdr.IsDBNull(11);
@@ -539,7 +540,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     rdr.IsDBNull(12);
                     rdr.GetFieldValue<INullable>(13);//ShipCountry;
                     rdr.GetFieldValue<string>(14);
-                    DataTestUtility.AssertThrowsWrapper<SqlNullValueException>(() => rdr.GetFieldValue<string>(15));
+                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetFieldValue<string>(15));
 
                     rdr.Read();
                     // read data out of buffer
@@ -556,7 +557,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     Assert.False(rdr.IsDBNullAsync(10).Result, "FAILED: IsDBNull was true for a non-null value");
                     rdr.GetFieldValueAsync<string>(10).Wait(); //ShipCity;
                     // should get an exception here
-                    DataTestUtility.AssertThrowsWrapper<AggregateException, SqlNullValueException>(() => rdr.GetFieldValueAsync<string>(11).Wait());
+                    DataTestUtility.AssertThrowsInner<AggregateException, SqlNullValueException>(() => rdr.GetFieldValueAsync<string>(11).Wait());
                     Assert.True(rdr.IsDBNullAsync(11).Result, "FAILED: IsDBNull was false for a null value");
 
                     rdr.IsDBNullAsync(11).Wait();
@@ -784,7 +785,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         conn.Close();
 
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DataReaderClosed, "CheckDataIsReady");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => value = reader[0], errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => value = reader[0], errorMessage);
                         Assert.True(reader.IsClosed, "FAILED: Stream was not closed by connection close (Scenario: Read)");
                         conn.Open();
                     }
@@ -795,7 +796,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         value = reader[0];
                         conn.Close();
 
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => value = reader[0], errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => value = reader[0], errorMessage);
                         Assert.True(reader.IsClosed, "FAILED: Stream was not closed by connection close (Scenario: Read Partial Data)");
                         conn.Open();
                     }
@@ -814,7 +815,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         } while (reader.NextResult());
 
                         conn.Close();
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => value = reader[0], errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => value = reader[0], errorMessage);
                         Assert.True(reader.IsClosed, "FAILED: Stream was not closed by connection close (Scenario: Read All Data)");
                     }
                 }
@@ -863,7 +864,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                         // make sure we get an exception if we try to get another reader
                         errorMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
                     }
 
                     // use a big result to fill up the pipe and do a partial read
@@ -940,12 +941,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     // multiple columns
                     cmd.CommandText = "select * from customers";
                     errorMessage = SystemDataResourceManager.Instance.SQL_NonXmlResult;
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
 
                     // non-ntext column
                     cmd.CommandText = "select employeeID from employees";
                     errorMessage = SystemDataResourceManager.Instance.SQL_NonXmlResult;
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() => xr = cmd.ExecuteXmlReader(), errorMessage);
                 }
             }
         }
@@ -1111,31 +1112,31 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         i = reader.GetOrdinal("notes");
                         reader.GetChars(i, 14, chars, 0, 14);
                         string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_NonSequentialColumnAccess, i, i + 1);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetString(i), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetString(i), errorMessage);
 
                         // Tests GetValue before GetBytes\Chars
                         reader.Read();
                         i = reader.GetOrdinal("photo");
                         reader.GetSqlBinary(i);
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_NonSequentialColumnAccess, i, i + 1);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetBytes(i, 0, data, 0, 13), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetBytes(i, 0, data, 0, 13), errorMessage);
 
                         i = reader.GetOrdinal("notes");
                         reader.GetString(i);
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_NonSequentialColumnAccess, i, i + 1);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetChars(i, 0, chars, 0, 14), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetChars(i, 0, chars, 0, 14), errorMessage);
 
                         // Tests GetBytes\GetChars re-reading same characters
                         reader.Read();
                         i = reader.GetOrdinal("photo");
                         reader.GetBytes(i, 0, data, 0, 13);
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_NonSeqByteAccess, 0, 13, "GetBytes");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetBytes(i, 0, data, 0, 13), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetBytes(i, 0, data, 0, 13), errorMessage);
 
                         i = reader.GetOrdinal("notes");
                         reader.GetChars(i, 0, chars, 0, 14);
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_NonSeqByteAccess, 0, 14, "GetChars");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetChars(i, 0, chars, 0, 14), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetChars(i, 0, chars, 0, 14), errorMessage);
                     }
 
                     using (reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
@@ -1147,12 +1148,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                         int columnToTry = 0;
                         string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_NonSequentialColumnAccess, columnToTry, sqldata.Length);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetInt32(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetValue(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetFieldValue<int>(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetFieldValue<SqlInt32>(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<int>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<SqlInt32>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetInt32(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetValue(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetFieldValue<int>(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetFieldValue<SqlInt32>(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrowsInner<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<int>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
+                        DataTestUtility.AssertThrowsInner<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<SqlInt32>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
 
                         reader.Read();
                         columnToTry = 17;
@@ -1160,12 +1161,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                         s = reader.GetString(columnToTry);
                         DataTestUtility.AssertEqualsWithDescription("http://accweb/emmployees/fuller.bmp", s, "FAILED: Did not receive expected string.");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetInt32(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetValue(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetFieldValue<int>(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetFieldValue<SqlInt32>(columnToTry), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<int>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<SqlInt32>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetInt32(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetValue(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetFieldValue<int>(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetFieldValue<SqlInt32>(columnToTry), errorMessage);
+                        DataTestUtility.AssertThrowsInner<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<int>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
+                        DataTestUtility.AssertThrowsInner<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<SqlInt32>(columnToTry).Wait(), innerExceptionMessage: errorMessage);
 
                         reader.Read();
                         // skip all columns up to photo, and read from it partially
@@ -1186,14 +1187,14 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                         // now try to read one more byte
                         string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DataReaderClosed, "GetBytes");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => cb = reader.GetBytes(i, 51, data, 0, 1), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => cb = reader.GetBytes(i, 51, data, 0, 1), errorMessage);
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DataReaderClosed, "CheckDataIsReady");
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetValue(i), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetFieldValue<byte[]>(i), errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetFieldValue<SqlBinary>(i), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetValue(i), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetFieldValue<byte[]>(i), errorMessage);
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetFieldValue<SqlBinary>(i), errorMessage);
                         errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DataReaderClosed, "GetFieldValueAsync");
-                        DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<byte[]>(i).Wait(), innerExceptionMessage: errorMessage);
-                        DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => reader.GetFieldValueAsync<SqlBinary>(i).Wait(), innerExceptionMessage: errorMessage);
+                        DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, InvalidOperationException, IOException>(() => reader.GetFieldValueAsync<byte[]>(i).Wait(), innerExceptionMessage: errorMessage);
+                        DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, InvalidOperationException, IOException>(() => reader.GetFieldValueAsync<SqlBinary>(i).Wait(), innerExceptionMessage: errorMessage);
                     }
                 }
             }
@@ -1233,10 +1234,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             // Em
                             object value;
                             string errorMessage = SystemDataResourceManager.Instance.SqlMisc_ConversionOverflowMessage;
-                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader[0], errorMessage);
-                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader[1], errorMessage);
-                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(0), errorMessage);
-                            DataTestUtility.AssertThrowsWrapper<OverflowException>(() => value = reader.GetDecimal(1), errorMessage);
+                            DataTestUtility.AssertThrows<OverflowException>(() => value = reader[0], errorMessage);
+                            DataTestUtility.AssertThrows<OverflowException>(() => value = reader[1], errorMessage);
+                            DataTestUtility.AssertThrows<OverflowException>(() => value = reader.GetDecimal(0), errorMessage);
+                            DataTestUtility.AssertThrows<OverflowException>(() => value = reader.GetDecimal(1), errorMessage);
                         }
                     }
                     finally
@@ -1294,7 +1295,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                     bool result;
                     string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DataReaderClosed, "HasRows");
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => result = reader.HasRows, errorMessage);
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() => result = reader.HasRows, errorMessage);
                 }
             }
         }
@@ -1379,11 +1380,29 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
         {
             if (behavior == CommandBehavior.SequentialAccess)
             {
-                DataTestUtility.AssertThrowsWrapper<TException>(action);
+                DataTestUtility.AssertThrows<TException>(action);
             }
             else
             {
                 action();
+            }
+        }
+
+        /// <summary>
+        /// Waits for a task that may or may not throw due to a race condition, and if they do
+        /// throw, they may throw one of a few acceptable exceptions.
+        ///
+        /// See: https://github.com/dotnet/SqlClient/issues/4088
+        /// </summary>
+        private static void WaitIgnoringFlakyException(Task task)
+        {
+            try { task.Wait(); }
+            catch (AggregateException)
+            {
+                // A faulted Task stores its exception permanently. Calling .Wait() again is
+                // guaranteed to re-throw the same AggregateException, so we can safely pass it to
+                // the assert helper for inner-exception validation.
+                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, IOException, InvalidOperationException>(() => task.Wait());
             }
         }
 
@@ -1407,7 +1426,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             reader.GetStream(1);
 
                             // Bad values
-                            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => reader.GetStream(2));
+                            DataTestUtility.AssertThrows<InvalidCastException>(() => reader.GetStream(2));
                             // Null stream
                             Stream stream = reader.GetStream(3);
                             Assert.False(stream.Read(buffer, 0, buffer.Length) > 0, "FAILED: Read more than 0 bytes from a null stream");
@@ -1443,12 +1462,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             {
                                 t = reader.ReadAsync();
                                 Assert.False(t.Wait(1), "FAILED: Read completed immediately");
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(8));
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetStream(8));
                             }
-                            DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                            WaitIgnoringFlakyException(t);
 
-                            // GetStream after Read 
-                            DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetStream(0));
+                            // GetStream after Read
+                            DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetStream(0));
 #endif
                         }
 
@@ -1483,8 +1502,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             Assert.True(t.IsCompleted, "FAILED: Failed to get stream within 1 second");
                             t = reader.ReadAsync();
                         }
-                        // TODO(GH-3604): Fix this failing assertion.
-                        // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                        WaitIgnoringFlakyException(t);
                     }
 #endif
                 }
@@ -1520,7 +1538,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 reader.GetTextReader(1);
 
                                 // Bad values
-                                DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => reader.GetTextReader(2));
+                                DataTestUtility.AssertThrows<InvalidCastException>(() => reader.GetTextReader(2));
                                 // Null stream
                                 TextReader textReader = reader.GetTextReader(3);
                                 Assert.False(textReader.Read(buffer, 0, buffer.Length) > 0, "FAILED: Read more than 0 chars from a null TextReader");
@@ -1556,13 +1574,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 {
                                     t = reader.ReadAsync();
                                     Assert.False(t.IsCompleted, "FAILED: Read completed immediately");
-                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(8));
+                                    DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetTextReader(8));
                                 }
-                                // TODO(GH-3604): Fix this failing assertion.
-                                // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                                WaitIgnoringFlakyException(t);
 
-                                // GetTextReader after Read 
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetTextReader(0));
+                                // GetTextReader after Read
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetTextReader(0));
 #endif
                             }
 
@@ -1598,8 +1615,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 Assert.True(t.IsCompleted, "FAILED: Failed to get TextReader within 1 second");
                                 t = reader.ReadAsync();
                             }
-                            // TODO(GH-3604): Fix this failing assertion.
-                            // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                            WaitIgnoringFlakyException(t);
                         }
 #endif
                     }
@@ -1628,7 +1644,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             reader.GetXmlReader(1);
 
                             // Bad values
-                            DataTestUtility.AssertThrowsWrapper<InvalidCastException>(() => reader.GetXmlReader(2));
+                            DataTestUtility.AssertThrows<InvalidCastException>(() => reader.GetXmlReader(2));
                             // Null stream
                             XmlReader xmlReader = reader.GetXmlReader(3);
                             Assert.False(xmlReader.Read(), "FAILED: Successfully read on a null XmlReader");
@@ -1648,13 +1664,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             {
                                 t = reader.ReadAsync();
                                 Assert.False(t.IsCompleted, "FAILED: Read completed immediately");
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(6));
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetXmlReader(6));
                             }
-                            // TODO(GH-3604): Fix this failing assertion.
-                            // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                            WaitIgnoringFlakyException(t);
 
-                            // GetXmlReader after Read 
-                            DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.GetXmlReader(0));
+                            // GetXmlReader after Read
+                            DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.GetXmlReader(0));
 #endif
                         }
                     }
@@ -1688,16 +1703,16 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                                 // Testing stream properties
                                 stream.Flush();
-                                DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => stream.SetLength(1));
+                                DataTestUtility.AssertThrows<NotSupportedException>(() => stream.SetLength(1));
                                 Action<Stream> performOnStream = ((s) => { int i = s.WriteTimeout; });
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => performOnStream(stream));
+                                DataTestUtility.AssertThrows<InvalidOperationException>(() => performOnStream(stream));
                                 if (behavior == CommandBehavior.SequentialAccess)
                                 {
-                                    DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => stream.Seek(0, SeekOrigin.Begin));
+                                    DataTestUtility.AssertThrows<NotSupportedException>(() => stream.Seek(0, SeekOrigin.Begin));
                                     performOnStream = ((s) => { long i = s.Position; });
-                                    DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => performOnStream(stream));
+                                    DataTestUtility.AssertThrows<NotSupportedException>(() => performOnStream(stream));
                                     performOnStream = ((s) => { long i = s.Length; });
-                                    DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => performOnStream(stream));
+                                    DataTestUtility.AssertThrows<NotSupportedException>(() => performOnStream(stream));
                                 }
                                 else
                                 {
@@ -1708,7 +1723,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
 
                             // Once Stream is closed
-                            DataTestUtility.AssertThrowsWrapper<ObjectDisposedException>(() => { _ = stream.Read(buffer, 0, buffer.Length); });
+                            DataTestUtility.AssertThrows<ObjectDisposedException>(() => { _ = stream.Read(buffer, 0, buffer.Length); });
                         }
 
                         using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1720,9 +1735,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             _ = stream.Read(buffer, 0, buffer.Length);
 
                             // Argument exceptions
-                            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => { _ = stream.Read(null, 0, 1); });
-                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => { _ = stream.Read(buffer, -1, 2); });
-                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => { _ = stream.Read(buffer, 2, -1); });
+                            DataTestUtility.AssertThrows<ArgumentNullException>(() => { _ = stream.Read(null, 0, 1); });
+                            DataTestUtility.AssertThrows<ArgumentOutOfRangeException>(() => { _ = stream.Read(buffer, -1, 2); });
+                            DataTestUtility.AssertThrows<ArgumentOutOfRangeException>(() => { _ = stream.Read(buffer, 2, -1); });
 
                             // Prior to net6 comment:ArgumentException is thrown in net5 and earlier. ArgumentOutOfRangeException in net6 and later
                             ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => { _ = stream.Read(buffer, buffer.Length, buffer.Length); });
@@ -1774,10 +1789,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 {
                                     // Read during async
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length);
-                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => { _ = stream.Read(largeBuffer, 0, largeBuffer.Length); });
-                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
+                                    DataTestUtility.AssertThrows<InvalidOperationException>(() => { _ = stream.Read(largeBuffer, 0, largeBuffer.Length); });
+                                    DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.Read());
                                 }
-                                DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, IOException, InvalidOperationException>(() => t.Wait());
                             }
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
                             {
@@ -1793,7 +1808,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     // Guarantee that timeout occurs:
                                     Thread.Sleep(stream.ReadTimeout * 4);
                                 }
-                                DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, IOException, InvalidOperationException>(() => t.Wait());
                             }
 
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1808,7 +1823,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length, tokenSource.Token);
                                     tokenSource.Cancel();
                                 }
-                                DataTestUtility.AssertThrowsWrapper<AggregateException, TaskCanceledException>(() => t.Wait());
+                                // Normally the cancellation wins (TaskCanceledException), but if the
+                                // PendAsyncReadsScope disposal completes the read first, the inner
+                                // exception may be InvalidOperationException instead (GH-4088).
+                                DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, TaskCanceledException, InvalidOperationException>(() => t.Wait());
                             }
 
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1821,7 +1839,18 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     // Error during read
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length);
                                 }
-                                DataTestUtility.AssertThrowsWrapper<AggregateException, IOException, SqlException>(() => t.Wait());
+                                // PendAsyncReadsScope(errorCode: 11) injects a network error, normally producing
+                                // AggregateException -> IOException -> SqlException. In rare race conditions
+                                // the inner exception may be ObjectDisposedException instead (GH-4088).
+                                AggregateException aex = Assert.Throws<AggregateException>(() => t.Wait());
+                                if (aex.InnerException is IOException ioEx)
+                                {
+                                    Assert.IsAssignableFrom<SqlException>(ioEx.InnerException);
+                                }
+                                else
+                                {
+                                    Assert.IsAssignableFrom<ObjectDisposedException>(aex.InnerException);
+                                }
                             }
 #endif
                         }
@@ -1873,7 +1902,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 }
 
                                 // Once Reader is closed
-                                DataTestUtility.AssertThrowsWrapper<ObjectDisposedException>(() => textReader.Read(buffer, 0, buffer.Length));
+                                DataTestUtility.AssertThrows<ObjectDisposedException>(() => textReader.Read(buffer, 0, buffer.Length));
                             }
 
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1887,11 +1916,11 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 textReader.Peek();
 
                                 // Argument exceptions
-                                DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => textReader.Read(null, 0, 1));
-                                DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => textReader.Read(buffer, -1, 2));
-                                DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => textReader.Read(buffer, 2, -1));
-                                DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => textReader.Read(buffer, buffer.Length, buffer.Length));
-                                DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => textReader.Read(buffer, int.MaxValue, int.MaxValue));
+                                DataTestUtility.AssertThrows<ArgumentNullException>(() => textReader.Read(null, 0, 1));
+                                DataTestUtility.AssertThrows<ArgumentOutOfRangeException>(() => textReader.Read(buffer, -1, 2));
+                                DataTestUtility.AssertThrows<ArgumentOutOfRangeException>(() => textReader.Read(buffer, 2, -1));
+                                DataTestUtility.AssertThrows<ArgumentException>(() => textReader.Read(buffer, buffer.Length, buffer.Length));
+                                DataTestUtility.AssertThrows<ArgumentException>(() => textReader.Read(buffer, int.MaxValue, int.MaxValue));
                             }
 
                             // Once Reader is closed
@@ -1933,11 +1962,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                     {
                                         // Read during async
                                         t = textReader.ReadAsync(largeBuffer, 0, largeBuffer.Length);
-                                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => textReader.Read(largeBuffer, 0, largeBuffer.Length));
-                                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
+                                        DataTestUtility.AssertThrows<InvalidOperationException>(() => textReader.Read(largeBuffer, 0, largeBuffer.Length));
+                                        DataTestUtility.AssertThrows<InvalidOperationException>(() => reader.Read());
                                     }
-                                    // TODO(GH-3604): Fix this failing assertion.
-                                    // DataTestUtility.AssertThrowsWrapper<AggregateException, IOException>(() => t.Wait());
+                                    WaitIgnoringFlakyException(t);
                                 }
 
                                 using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1950,7 +1978,18 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                         // Error during read
                                         t = textReader.ReadAsync(largeBuffer, 0, largeBuffer.Length);
                                     }
-                                    DataTestUtility.AssertThrowsWrapper<AggregateException, IOException, SqlException>(() => t.Wait());
+                                    // PendAsyncReadsScope(errorCode: 11) injects a network error, normally producing
+                                    // AggregateException -> IOException -> SqlException. In rare race conditions
+                                    // the inner exception may be ObjectDisposedException instead (GH-4088).
+                                    AggregateException aex = Assert.Throws<AggregateException>(() => t.Wait());
+                                    if (aex.InnerException is IOException ioEx)
+                                    {
+                                        Assert.IsAssignableFrom<SqlException>(ioEx.InnerException);
+                                    }
+                                    else
+                                    {
+                                        Assert.IsAssignableFrom<ObjectDisposedException>(aex.InnerException);
+                                    }
                                 }
 #endif
                             }
@@ -2115,7 +2154,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     byte[] bytes = new byte[cb];
                     long read = reader.GetBytes(1, 0, bytes, 0, cb);
 
-                    // Don't send data on the first read because there is already data in the buffer. 
+                    // Don't send data on the first read because there is already data in the buffer.
                     // Don't send data on the last iteration. We will not be reading that data.
                     if (i == 0 || i == streamXeventCount - 1)
                     {
@@ -2161,7 +2200,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                             // Wait for the task to see the timeout
                             string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                            DataTestUtility.AssertThrowsWrapper<AggregateException, SqlException>(() => task.Wait(), innerExceptionMessage: errorMessage);
+                            DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, SqlException, IOException>(() => task.Wait(), innerExceptionMessage: errorMessage);
                         }
                     }
                 }

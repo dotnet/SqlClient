@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadNonMatchingColumnName;
                             errorMsg = string.Format(errorMsg, "col2");
 
-                            DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: errorMsg);
+                            DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: errorMsg);
                         }
                     }
                 }
