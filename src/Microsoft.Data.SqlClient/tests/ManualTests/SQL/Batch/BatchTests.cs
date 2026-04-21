@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class BatchTests
     {
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingCommandTextThrows()
         {
@@ -128,14 +129,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (var batch = new SqlBatch
-            {
-                Connection = connection,
-                BatchCommands =
+                   {
+                       Connection = connection,
+                       BatchCommands =
                        {
                            new SqlBatchCommand("select @@SPID", CommandType.Text),
                            new SqlBatchCommand("sp_help", CommandType.StoredProcedure, new List<SqlParameter> { new("@objname", "sys.indexes") })
                        }
-            })
+                   })
             {
                 connection.RetryLogicProvider = prov;
                 connection.Open();
@@ -673,6 +674,7 @@ END";
             Assert.True(schema[0].IsKey);
         }
 
+#if NET
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReaderCommandBehaviorCloseConnection()
         {
@@ -705,6 +707,40 @@ END";
             Assert.Equal(2, resultSetCount);
             Assert.Equal(2, resultRowCount);
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteReaderAsyncCommandBehaviorCloseConnection()
+        {
+            int resultSetCount = 0;
+            int resultRowCount = 0;
+
+            await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            await using (SqlBatch batch = new SqlBatch(conn))
+            {
+                await conn.OpenAsync();
+
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1"));
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2"));
+
+                using (var reader = await batch.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                {
+                    do
+                    {
+                        resultSetCount += 1;
+                        while (await reader.ReadAsync())
+                        {
+                            resultRowCount += 1;
+                        }
+                    } while (await reader.NextResultAsync());
+                }
+
+                Assert.Equal(ConnectionState.Closed, conn.State);
+            }
+
+            Assert.Equal(2, resultSetCount);
+            Assert.Equal(2, resultRowCount);
+        }
+#endif
 
         private static SqlParameter CreateParameter<T>(string name, SqlDbType type, T value, ParameterDirection direction = ParameterDirection.Input)
         {
