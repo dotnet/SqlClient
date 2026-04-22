@@ -5,6 +5,6 @@
 #################################################################################
 
 variables:
-  - group: Release Variables
-    # SymbolServer
-    # SymbolTokenUri
+  # All symbols publishing variables are now provided by the akv-variables-v2
+  # group which is included in common-variables.yml
+

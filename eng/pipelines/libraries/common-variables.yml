@@ -13,6 +13,13 @@ variables:
     # AuthAKVName
     # AuthSignCertName
 
+  - group: akv-variables-v2
+    # SymbolsAzureSubscription
+    # SymbolsPublishProjectName
+    # SymbolsPublishServer
+    # SymbolsPublishTokenUri
+    # SymbolsUploadAccount
+
   - name: Configuration
     value: Release
   - name: CommitHead
@@ -51,3 +58,10 @@ variables:
     value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
   - name: nuspecPath
     value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
+
+  # Symbols Publishing Aliases
+  # Map the akv-variables-v2 group names to the shorter names used by publish-symbols-step.yml
+  - name: SymbolServer
+    value: $(SymbolsPublishServer)
+  - name: SymbolTokenUri
+    value: $(SymbolsPublishTokenUri)
