@@ -28,7 +28,7 @@ variables:
 
   # Abstractions library NuGet package version
   - name: abstractionsPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 1.0.0-ci$(Build.BuildNumber)
 
   # AKV provider assembly file version
   - name: akvAssemblyFileVersion
@@ -36,7 +36,7 @@ variables:
 
   # AKV provider NuGet package version
   - name: akvPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.0-ci$(Build.BuildNumber)
 
   # Azure library assembly file version
   - name: azureAssemblyFileVersion
@@ -44,7 +44,7 @@ variables:
 
   # Azure library NuGet package version
   - name: azurePackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 1.0.0-ci$(Build.BuildNumber)
 
   # Logging library assembly file version
   - name: loggingAssemblyFileVersion
@@ -52,13 +52,12 @@ variables:
 
   # Logging library NuGet package version
   - name: loggingPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 1.0.0-ci$(Build.BuildNumber)
 
   # MDS library NuGet package version
   # NOTE: This differs from the other structures! MdsVersions.props will deconstruct a provided
   #    package version and build an assembly version from it. If the build number is included
   #    before the "-" the build number will be appended again, generating an invalid file version.
-  # @TODO: This is a band-aid to ensure that CI builds until we can centralize versioning.
   - name: mdsPackageVersion
     value: 7.0.0-ci$(AssemblyBuildNumber)
 
