@@ -413,7 +413,8 @@ namespace Microsoft.Data.Common
 
             return ((type != typeof(ThreadAbortException)) &&
                     (type != typeof(NullReferenceException)) &&
-                    (type != typeof(AccessViolationException)));
+                    (type != typeof(AccessViolationException)) &&
+                    (type != typeof(OutOfMemoryException)));
         }
 
         // Invalid Enumeration
