@@ -54,7 +54,7 @@ As an application developer, I want multiple/concurrent calls to `ClearPool` to 
 
 **Acceptance Scenarios**:
 
-1. **Given** a pool with connections, **When** `ClearPool` is called twice rapidly, **Then** both calls complete without error, and only connections predating both clears are invalidated.
+1. **Given** a pool with connections, **When** `ClearPool` is called twice rapidly, **Then** both calls complete without error, and connections predating either clear are invalidated.
 
 ---
 
@@ -70,7 +70,6 @@ As an application developer, I want multiple/concurrent calls to `ClearPool` to 
 
 ### Functional Requirements
 
-- **FR-001**: System MUST implement a generation counter that increments atomically on each `Clear()` call.
 - **FR-002**: System MUST stamp each new connection with the current pool generation at creation time.
 - **FR-003**: System MUST reject connections whose generation does not match the current pool generation when they are retrieved from the idle channel or returned to the pool.
 - **FR-004**: System MUST drain all idle connections from the channel on `Clear()`, closing each one.

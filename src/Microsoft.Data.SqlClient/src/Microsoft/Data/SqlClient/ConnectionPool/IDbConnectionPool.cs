@@ -105,6 +105,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Clears the connection pool, releasing all connections and resetting the state.
         /// </summary>
+        /// <remarks>
+        /// Clearing the pool is an expensive operation and should only be used if required.
+        /// This operation may negatively interfere with pool warmup and generate high connection
+        /// churn as the warmup operation continually opens new connections to attempt 
+        /// to reach min pool size. This situation is especially likely if clear is called in a 
+        /// tight loop.
+        /// </remarks>
         void Clear();
 
         /// <summary>

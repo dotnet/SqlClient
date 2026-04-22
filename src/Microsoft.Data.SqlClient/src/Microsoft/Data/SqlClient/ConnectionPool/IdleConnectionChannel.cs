@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             var channel = Channel.CreateUnbounded<DbConnectionInternal?>();
             _reader = channel.Reader;
+            //TODO: the channel should be completed on pool shutdown
             _writer = channel.Writer;
         }
 
@@ -40,12 +41,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns><see langword="true"/> if the value was written; otherwise <see langword="false"/>.</returns>
         internal bool TryWrite(DbConnectionInternal? connection)
         {
-            if (connection is not null)
+            if (_writer.TryWrite(connection))
             {
-                Interlocked.Increment(ref _count);
+                if (connection is not null)
+                {
+                    Interlocked.Increment(ref _count);
+                }
+                return true;
             }
-
-            return _writer.TryWrite(connection);
+            
+            return false;
         }
 
         /// <summary>
@@ -71,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Asynchronously reads a value from the channel.
         /// Decrements the idle count when a non-null connection is read.
         /// </summary>
-        internal async System.Threading.Tasks.ValueTask<DbConnectionInternal?> ReadAsync(CancellationToken cancellationToken)
+        internal async ValueTask<DbConnectionInternal?> ReadAsync(CancellationToken cancellationToken)
         {
             var connection = await _reader.ReadAsync(cancellationToken).ConfigureAwait(false);
 

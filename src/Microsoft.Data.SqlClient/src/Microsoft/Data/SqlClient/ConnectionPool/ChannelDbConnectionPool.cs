@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// rather than returned to the idle channel.
         /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
-        private volatile int _clearCounter;
+        private volatile int _clearGeneration;
 
         /// <summary>
         /// Guard to prevent concurrent <see cref="Clear"/> operations from draining the idle channel
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Clearing.", Id);
 
-            Interlocked.Increment(ref _clearCounter);
+            Interlocked.Increment(ref _clearGeneration);
 
             // If another thread is already draining, skip the drain. The generation counter has
             // already been incremented, so stale connections will still be caught lazily by
@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     if (connection is not null)
                     {
-                        connection.ClearGeneration = _clearCounter;
+                        connection.ClearGeneration = _clearGeneration;
                     }
 
                     return connection;
@@ -445,7 +445,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             // Connection was created before the last Clear, so it's stale.
-            if (connection.ClearGeneration != _clearCounter)
+            if (connection.ClearGeneration != _clearGeneration)
             {
                 return false;
             }

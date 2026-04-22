@@ -751,7 +751,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        public void Clear_BusyConnections_NotDestroyedImmediately()
+        public void Clear_BusyConnection_NotDestroyedImmediately()
         {
             // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
