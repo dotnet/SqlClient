@@ -268,24 +268,25 @@ jobs:
         }
       }
     displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
-  - powershell: |
-      # Verify all dlls status are Valid
-      
-      $dlls = Get-ChildItem -Path $(extractedNugetPath) -Recurse -Include *.dll
-      foreach ($status in $dlls | Get-AuthenticodeSignature)
-      {
-          if ($status.Status -eq "Valid")
-          {
-              Write-Host $status.Status $status.Path
-          }
-          else
-          {
-              Write-Host "dll status of '$status.Path' is not valid!" -ForegroundColor Red
-              $status
-              Exit -1
-          }
-      }
-    displayName: 'Verify all dlls status are Valid'
+  - ${{ if eq(parameters.isOfficialBuild, true) }}:
+    - powershell: |
+        # Verify all dlls are signed
+        
+        $dlls = Get-ChildItem -Path $(extractedNugetPath) -Recurse -Include *.dll
+        foreach ($status in $dlls | Get-AuthenticodeSignature)
+        {
+            if ($status.Status -eq "Valid")
+            {
+                Write-Host $status.Status $status.Path
+            }
+            else
+            {
+                Write-Host "dll status of '$status.Path' is not valid!" -ForegroundColor Red
+                $status
+                Exit -1
+            }
+        }
+      displayName: 'Verify all dlls are signed and signatures are valid'
 
   - powershell: |
       # This will check for ProductVersion and FileVersion.
