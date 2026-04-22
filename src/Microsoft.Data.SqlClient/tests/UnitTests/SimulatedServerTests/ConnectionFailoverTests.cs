@@ -11,11 +11,12 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Collection("SimulatedServerTests")]
     [Trait("Category", "flaky")]
+    [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -75,6 +76,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
@@ -243,6 +245,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
+        [Trait("Category", "flaky")]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -294,6 +297,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
+        [Trait("Category", "flaky")]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -433,6 +437,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("Category", "flaky")]
         public void TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary(uint errorCode)
         {
             // Arrange

@@ -3,6 +3,9 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
+
+# This stage depends on the secrets_stage.
+
 parameters:
   - name: debug
     type: boolean
@@ -11,9 +14,9 @@ parameters:
   - name: testConfigurations
     type: object
 
-  - name: dependsOn
-    type: string
-    default: ''
+  - name: additionalDependsOn
+    type: object
+    default: []
 
   - name: buildType
     displayName: 'Build Type'
@@ -39,10 +42,16 @@ stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
-      ${{ if ne(parameters.dependsOn, '') }}:
-        dependsOn: ${{ parameters.dependsOn }}
-      ${{ else }}:
-        dependsOn: []
+      dependsOn:
+        - secrets_stage
+        - ${{ each dep in parameters.additionalDependsOn }}:
+          - ${{ dep }}
+
+      variables:
+        # Bring the SA password from the secrets_stage into scope here.
+        - name: saPassword
+          value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
+
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:
@@ -68,6 +77,7 @@ stages:
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                  saPassword: $(saPassword)
                   ${{if ne(config.value.configProperties, '{}') }}:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
@@ -99,6 +109,7 @@ stages:
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     isArm64: ${{ eq(config.value.isArm64, 'true') }}
+                    saPassword: $(saPassword)
                     ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:

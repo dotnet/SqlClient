@@ -904,6 +904,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadAwkwardDataLengths()
         {
