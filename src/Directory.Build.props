@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
-    <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
-    <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
-    <TargetsUnix Condition="'$(OS)' == 'Unix' AND '$(OSGroup)' == ''">true</TargetsUnix>
-    <TargetsUnix Condition="'$(OS)' != 'Unix' AND '$(OSGroup)' == ''">false</TargetsUnix>
-    <TargetsUnix Condition="'$(OSGroup)' == 'Unix'">true</TargetsUnix>
-    <TargetsAnyOS Condition="'$(OSGroup)' == 'AnyOS'">true</TargetsAnyOS>
-    <IsSourceProject Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($(MSBuildProjectDirectory), 'src%24'))">true</IsSourceProject>
     <!--
       "ReferenceType" property supports below options:
 
@@ -19,13 +11,17 @@
     -->
     <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
   </PropertyGroup>
+
+  <!-- @TODO: What is this? -->
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
+
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
+
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
@@ -33,40 +29,14 @@
     <ProjectDir>$(MSBuildThisFileDirectory)</ProjectDir>
     <RepoRoot>$(ProjectDir)..\</RepoRoot>
     <Artifacts>$(RepoRoot)artifacts\$(ReferenceType)\</Artifacts>
-    <ToolsArtifactsDir Condition="'$(ToolsArtifactsDir)'==''">$(Artifacts)tools\</ToolsArtifactsDir>
-    <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
-    <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
-    <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
-    <NetCoreResources>$(ManagedSourceCode)src\Resources\</NetCoreResources>
-    <ResxFileName>Strings</ResxFileName>
-    <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
-    <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
-    <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
-    <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
-    <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
-    <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
-    <CommonsourceRoot>$(RepoRoot)src\Microsoft.Data.SqlClient\src\</CommonsourceRoot>
-    <ObjFolder>$(Artifacts)obj\</ObjFolder>
-    <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
-    <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
-    <TestsPath>$(ProjectDir)Microsoft.Data.SqlClient/tests/</TestsPath>
-    <BinFolder Condition="'$(TargetsWindows)' == 'true'">$(Artifacts)bin\Windows_NT\</BinFolder>
-    <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(Artifacts)bin\AnyOS\</BinFolder>
-    <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(Artifacts)bin\Unix\</BinFolder>
+
     <ToolsDir Condition="'$(ToolsDir)'==''">$(RepoRoot)tools\</ToolsDir>
-    <GenAPISrcDir Condition="'$(GenAPISrcDir)'==''">$(ToolsDir)GenAPI\</GenAPISrcDir>
     <PackagesDir Condition="'$(PackagesDir)'==''">$(RepoRoot)packages\</PackagesDir>
-    <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
-    <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
 
-  <!-- Add user-supplied define constants. -->
-  <PropertyGroup Condition="'$(UserDefinedConstants)' != ''">
-    <DefineConstants>$(DefineConstants);$(UserDefinedConstants)</DefineConstants>
-  </PropertyGroup>
-
+  <!-- @TODO: This isn't being set anywhere -->
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
@@ -98,18 +68,15 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <!--
-      There may be a few specific warnings that should _not_ be considered an
-      error.  This list should be used sparingly to avoid important warnings
-      being ignored.
+      There may be a few specific warnings that should _not_ be considered an error. This list
+      should be used sparingly to avoid important warnings being ignored.
     -->
-    <WarningsNotAsErrors></WarningsNotAsErrors>
+    <WarningsNotAsErrors />
 
     <!--
-      If a build is failing due to vulnerable dependencies, you may temporarily
-      uncomment the following line to treat the audit warnings as non-errors.
-      This should only be done as a temporary measure while addressing the
-      vulnerable dependencies.  See:
-
+      If a build is failing due to vulnerable dependencies, you may temporarily uncomment the
+      following line to treat the audit warnings as non-errors. This should only be done as a
+      temporary measure while addressing the vulnerable dependencies. See:
       https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu1901-nu1904
     -->
     <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
@@ -126,7 +93,7 @@
     <DefineConstants>$(DefineConstants);STRONG_NAME_SIGNING</DefineConstants>
   </PropertyGroup>
 
-  <!-- Packaging  for source link-->
+  <!-- Packaging for source link-->
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -135,14 +102,10 @@
     <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
     <DisableSourceLinkTranslation Condition="'$(DisableSourceLinkTranslation)' == ''">false</DisableSourceLinkTranslation>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
-  <!-- Provides Tool properties -->
-  <Import Project="$(ToolsDir)props\Tools.props" />
+
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" />
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />
@@ -154,20 +117,15 @@
   </PropertyGroup>
 
   <!--
-    We want to use the latest C# language regardless of target framework,
-    so we explicitly set LangVersion for all targets.
-
-    We will roll this version forward as new C# language versions are released
-    and associated with the newest .NET SDK we support.
+    We want to use the latest C# language regardless of target framework, so we explicitly set
+    LangVersion for all targets. We will roll this version forward as new C# language versions are
+    released and associated with the newest .NET SDK we support.
 
     Details here:
-
     https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning
-
     https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
   -->
   <PropertyGroup>
-    <!-- The newest .NET SDK we support is .NET 10.0, which uses C# 14 -->
     <LangVersion>14</LangVersion>
   </PropertyGroup>
 </Project>

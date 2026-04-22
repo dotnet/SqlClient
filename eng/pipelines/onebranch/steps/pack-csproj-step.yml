@@ -28,8 +28,8 @@ steps:
       msbuildArguments: >-
         -t:${{ parameters.packTarget }}
         -p:ReferenceType=Package
-        -p:PackagesDir=$(PACK_OUTPUT)/
+        -p:PackagesDir=$(JOB_OUTPUT)/packages/
         ${{ parameters.versionProperties }}
 
-  - script: tree /a /f $(PACK_OUTPUT)
+  - script: tree /a /f $(JOB_OUTPUT)/packages
     displayName: List Pack Output Tree After Pack

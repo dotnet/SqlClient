@@ -36,10 +36,6 @@ parameters:
   - name: isOfficial
     type: boolean
 
-  # True if this build is a preview.
-  - name: isPreview
-    type: boolean
-
 jobs:
   - job: validate_nuget_package
     displayName: "Validate NuGet package"
@@ -52,13 +48,14 @@ jobs:
 
     variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
 
-      - name: artifactPath
-        value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}'
+      # Path within the downloaded artifact where NuGet packages are located.
+      - name: packagesPath
+        value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}\packages'
 
       # Path to the SqlClient NuGet package after installation. This path will only exist once the package
       # been installed.
       - name: nugetPackageInstallPath
-        value: '$(Pipeline.Workspace)\nugetPackageInstalls\Microsoft.Data.SqlClient\${{ parameters.expectedPackageVersion }}'
+        value: '$(Pipeline.Workspace)\nugetPackageInstalls\Microsoft.Data.SqlClient.${{ parameters.expectedPackageVersion }}'
 
       # Root folder where NuGet package will be installed locally
       - name: nugetPackageInstallRoot
@@ -89,22 +86,22 @@ jobs:
       - ${{ if eq(parameters.isOfficial, true) }}:
           - powershell: |
               # Propagate parameters to PS variables #######################
-              $artifactPath = "${{ variables.artifactPath }}"
-              echo "artifactPath= $artifactPath"
+              $packagesPath = "${{ variables.packagesPath }}"
+              echo "packagesPath= $packagesPath"
 
               # Verify package signatures ##################################
               echo "> 1. Verify signature of source package(s)"
-              nuget verify -All $artifactPath\*.nupkg
+              nuget verify -All $packagesPath\*.nupkg
 
               echo "> 2. Verify signature of symbols package(s)"
-              nuget verify -All $artifactPath\*.snupkg
+              nuget verify -All $packagesPath\*.snupkg
             displayName: "Verify nuget signature"
 
       # Install NuGet package to the temporary directory
       - powershell: |
           # Propagate pipeline to PS variables #############################
-          $artifactPath = "${{ variables.artifactPath }}"
-          echo "artifactPath= $artifactPath"
+          $packagesPath = "${{ variables.packagesPath }}"
+          echo "packagesPath= $packagesPath"
 
           $nugetPackageInstallRoot = "${{ variables.nugetPackageInstallRoot }}"
           echo "nugetPackageInstallRoot= $nugetPackageInstallRoot"
@@ -113,14 +110,16 @@ jobs:
           echo "> 1. Installing Microsoft.Data.SqlClient NuGet package..."
           Install-Package `
             -Name "Microsoft.Data.SqlClient" `
-            -Source $artifactPath `
+            -Source "$packagesPath" `
             -Destination $nugetPackageInstallRoot `
             -Force `
             -SkipDependencies
 
           echo "> 2. Listing contents of installed Microsoft.Data.SqlClient NuGet package:"
-          Write-Host $artifactPath
-          Get-ChildItem $artifactPath
+          Write-Host $nugetPackageInstallRoot
+          Get-ChildItem $nugetPackageInstallRoot
+          Write-Host "$packagesPath"
+          Get-ChildItem "$packagesPath"
         displayName: "Install NuGet Package"
 
       # Find all DLL files in the installed NuGet package, verify each is signed with a strong name

@@ -22,15 +22,6 @@ parameters:
   - name: isOfficial
     type: boolean
 
-  # True if this is a preview build, which uses the preview version numbers from
-  # common-variables.yml.
-  - name: isPreview
-    type: boolean
-
-  # True to publish symbols to public and private servers.
-  - name: publishSymbols
-    type: boolean
-
   # ── Build parameters ───────────────────────────────────────────────────
 
   - name: buildSqlServerServer
@@ -118,23 +109,6 @@ parameters:
   - name: signingEsrpConnectedServiceName
     type: string
 
-  # Symbols Publishing Parameters ------------------------------------------
-
-  - name: symbolsAzureSubscription
-    type: string
-
-  - name: symbolsPublishProjectName
-    type: string
-
-  - name: symbolsPublishServer
-    type: string
-
-  - name: symbolsPublishTokenUri
-    type: string
-
-  - name: symbolsUploadAccount
-    type: string
-
 stages:
   # ====================================================================
   # Stage 1: Independent packages (no cross-package dependencies)
@@ -153,21 +127,14 @@ stages:
             signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
             signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
             signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-            symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-            symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
-            symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
-            symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-            symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
             isOfficial: ${{ parameters.isOfficial }}
             packageName: Logging
             packageFullName: Microsoft.Data.SqlClient.Internal.Logging
-            packageVersion: '${{ parameters.loggingPackageVersion }}'
             versionProperties: >-
               -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               -p:LoggingAssemblyFileVersion=${{ parameters.loggingFileVersion }}
             assemblyFileVersion: '${{ parameters.loggingFileVersion }}'
-            publishSymbols: ${{ parameters.publishSymbols }}
 
 
       - ${{ if eq(parameters.buildSqlServerServer, true) }}:
@@ -179,21 +146,14 @@ stages:
             signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
             signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
             signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-            symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-            symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
-            symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
-            symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-            symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
             isOfficial: ${{ parameters.isOfficial }}
             packageName: SqlServer
             packageFullName: Microsoft.SqlServer.Server
-            packageVersion: '${{ parameters.sqlServerPackageVersion }}'
             versionProperties: >-
               -p:SqlServerAssemblyFileVersion=${{ parameters.sqlServerFileVersion }}
               -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
             assemblyFileVersion: '${{ parameters.sqlServerFileVersion }}'
-            publishSymbols: ${{ parameters.publishSymbols }}
 
   # ====================================================================
   # Stage 2: Abstractions package (depends on Logging from Stage 1)
@@ -214,22 +174,15 @@ stages:
               signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
-              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
-              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               isOfficial: ${{ parameters.isOfficial }}
               packageName: Abstractions
               packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              packageVersion: '${{ parameters.abstractionsPackageVersion }}'
               versionProperties: >-
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
                 -p:AbstractionsAssemblyFileVersion=${{ parameters.abstractionsFileVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               assemblyFileVersion: '${{ parameters.abstractionsFileVersion }}'
-              publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.loggingArtifactsName }}'
                   displayName: 'Logging Package'
@@ -247,21 +200,13 @@ stages:
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
             parameters:
-              apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
-              apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
               isOfficial: ${{ parameters.isOfficial }}
-              publishSymbols: ${{ parameters.publishSymbols }}
               signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
               signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
               signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
               signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
-              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
-              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               abstractionsArtifactName: '${{ parameters.abstractionsArtifactsName }}'
               abstractionsPackageVersion: '${{ parameters.abstractionsPackageVersion }}'
@@ -278,23 +223,16 @@ stages:
               signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
-              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
-              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               isOfficial: ${{ parameters.isOfficial }}
               packageName: Azure
               packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
-              packageVersion: '${{ parameters.azurePackageVersion }}'
               versionProperties: >-
                 -p:AzurePackageVersion=${{ parameters.azurePackageVersion }}
                 -p:AzureAssemblyFileVersion=${{ parameters.azureFileVersion }}
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
               assemblyFileVersion: '${{ parameters.azureFileVersion }}'
-              publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.abstractionsArtifactsName }}'
                   displayName: Abstractions Package
@@ -319,16 +257,10 @@ stages:
               signingAuthSignCertName: '${{ parameters.signingAuthSignCertName }}'
               signingEsrpClientId: '${{ parameters.signingEsrpClientId }}'
               signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-              symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
-              symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
-              symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-              symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
 
               isOfficial: ${{ parameters.isOfficial }}
               packageName: AkvProvider
               packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              packageVersion: '${{ parameters.akvProviderPackageVersion }}'
               versionProperties: >-
                 -p:AkvPackageVersion=${{ parameters.akvProviderPackageVersion }}
                 -p:AkvAssemblyFileVersion=${{ parameters.akvProviderFileVersion }}
@@ -336,7 +268,6 @@ stages:
                 -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
                 -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
               assemblyFileVersion: '${{ parameters.akvProviderFileVersion }}'
-              publishSymbols: ${{ parameters.publishSymbols }}
               downloadArtifacts:
                 - artifactName: '${{ parameters.sqlClientArtifactsName }}'
                   displayName: SqlClient Package
@@ -358,5 +289,4 @@ stages:
               artifactName: '${{ parameters.sqlClientArtifactsName }}'
               expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
               expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              isPreview: ${{ parameters.isPreview }}
               isOfficial: ${{ parameters.isOfficial }}

@@ -85,5 +85,4 @@
     <MdsAssemblyVersion>$(MdsFileVersion.Split('.')[0]).0.0.0</MdsAssemblyVersion>
   </PropertyGroup>
 
-
 </Project>
