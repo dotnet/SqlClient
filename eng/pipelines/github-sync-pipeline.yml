@@ -8,7 +8,7 @@
 # branch into the internal ADO repository by:
 #
 #   1. Fetching the latest commits from GitHub main.
-#   2. Pushing them to a sync/github-main branch in ADO.
+#   2. Pushing them to a dev/autosync/github-main branch in ADO.
 #   3. Creating (or updating) a pull request targeting internal/main.
 #
 # It runs on a daily schedule at 02:00 UTC and can also be triggered manually.
