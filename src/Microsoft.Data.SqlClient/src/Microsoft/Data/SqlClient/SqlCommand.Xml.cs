@@ -9,7 +9,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -86,11 +89,9 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
             
-            #if NET
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
-            #endif
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteXmlReader | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -116,9 +117,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception ex)
             {
-                #if NET
                 diagnosticScope.SetException(ex);
-                #endif
 
                 if (ex is SqlException sqlException)
                 {
@@ -130,7 +129,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
             }
         }
 
@@ -365,25 +364,19 @@ namespace Microsoft.Data.SqlClient
             {
                 Exception e = task.Exception?.InnerException;
                 
-                #if NET
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                #endif
                 
                 source.SetException(e);
             }
             else if (task.IsCanceled)
             {
-                #if NET
                 s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                #endif
                 
                 source.SetCanceled();
             }
             else
             {
-                #if NET
                 s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                #endif
                 
                 source.SetResult(task.Result);
             }
@@ -458,7 +451,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: false);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: false);
             }
         }
         
@@ -475,11 +468,7 @@ namespace Microsoft.Data.SqlClient
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
             
-            #if NET
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-            #else
-            Guid operationId = Guid.Empty;
-            #endif
             
             // Connection can be used as state in RegisterForConnectionCloseNotification continuation
             // to avoid an allocation so use it as the state value if possible but it can be changed if
@@ -500,11 +489,9 @@ namespace Microsoft.Data.SqlClient
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection 
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
-                context = Interlocked.Exchange(
-                    ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
-                    null);
+                context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
             }
 
             context ??= new ExecuteXmlReaderAsyncCallContext();
@@ -547,9 +534,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e) 
             {
-                #if NET
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                #endif
                 
                 source.SetException(e);
             }
@@ -562,18 +547,6 @@ namespace Microsoft.Data.SqlClient
                 sender: this,
                 () => InternalExecuteXmlReaderAsync(cancellationToken),
                 cancellationToken);
-
-        private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
-        {
-            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-            {
-                // @TODO: Move this compare exchange into the SqlInternalConnection class (or better yet, do away with this context)
-                Interlocked.CompareExchange(
-                    ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext,
-                    instance,
-                    comparand: null);
-            }
-        }
         
         #endregion
 
@@ -598,7 +571,11 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-                owner?.SetCachedCommandExecuteXmlReaderContext(this);
+                DbConnectionInternal internalConnection = owner?._activeConnection?.InnerConnection;
+                if (internalConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    sqlInternalConnection.CachedContexts.TrySetCommandExecuteXmlReaderAsyncContext(this);
+                }
             }
 
             protected override void Clear()

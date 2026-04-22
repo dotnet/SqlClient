@@ -14,7 +14,9 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NET
 using System.Runtime.Loader;
@@ -49,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         
         #region Constructors
         
-        private SqlConnectionFactory()
+        protected SqlConnectionFactory()
         {
             _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
             _poolsToRelease = new List<IDbConnectionPool>();
@@ -79,7 +81,7 @@ namespace Microsoft.Data.SqlClient
         
         internal void ClearAllPools()
         {
-            using TryEventScope scope = TryEventScope.Create(nameof(SqlConnectionFactory));
+            using SqlClientEventScope scope = SqlClientEventScope.Create(nameof(SqlConnectionFactory));
             foreach (DbConnectionPoolGroup group in _connectionPoolGroups.Values)
             {
                 group?.Clear();
@@ -90,7 +92,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
             
-            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
+            using SqlClientEventScope scope = SqlClientEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
             DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
             poolGroup?.Clear();
         }
@@ -99,7 +101,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(key.ConnectionString, $"{nameof(key)}.{nameof(key.ConnectionString)}");
             
-            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
+            using SqlClientEventScope scope = SqlClientEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
             if (_connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
             {
                 poolGroup?.Clear();
@@ -111,7 +113,7 @@ namespace Microsoft.Data.SqlClient
                 ? new SqlConnectionPoolProviderInfo()
                 : null;
         
-        internal SqlInternalConnectionTds CreateNonPooledConnection(
+        internal DbConnectionInternal CreateNonPooledConnection(
             DbConnection owningConnection,
             DbConnectionPoolGroup poolGroup,
             DbConnectionOptions userOptions)
@@ -119,7 +121,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(owningConnection is not null, "null owningConnection?");
             Debug.Assert(poolGroup is not null, "null poolGroup?");
 
-            SqlInternalConnectionTds newConnection = CreateConnection(
+            DbConnectionInternal newConnection = CreateConnection(
                 poolGroup.ConnectionOptions,
                 poolGroup.PoolKey,
                 poolGroup.ProviderInfo,
@@ -128,7 +130,7 @@ namespace Microsoft.Data.SqlClient
                 userOptions);
             if (newConnection is not null)
             {
-                SqlClientEventSource.Metrics.HardConnectRequest();
+                SqlClientDiagnostics.Metrics.HardConnectRequest();
                 newConnection.MakeNonPooledObject(owningConnection);
             }
             
@@ -136,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             return newConnection;
         }
 
-        internal SqlInternalConnectionTds CreatePooledConnection(
+        internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
             IDbConnectionPool pool,
             DbConnectionPoolKey poolKey,
@@ -145,20 +147,31 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(pool != null, "null pool?");
 
-            SqlInternalConnectionTds newConnection = CreateConnection(
+            DbConnectionInternal newConnection = CreateConnection(
                 options,
                 poolKey, // @TODO: is pool.PoolGroup.Key the same thing?
                 pool.PoolGroup.ProviderInfo,
                 pool,
                 owningConnection,
                 userOptions);
-            if (newConnection is not null)
+
+            if (newConnection is null)
             {
-                SqlClientEventSource.Metrics.HardConnectRequest();
-                newConnection.MakePooledConnection(pool);
+                throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
             }
-            
+
+            if (!newConnection.CanBePooled)
+            {
+                throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
+            }
+
+            SqlClientDiagnostics.Metrics.HardConnectRequest();
+            newConnection.MakePooledConnection(pool);
+
             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);
+
+            newConnection.PrePush(null);
+
             return newConnection;
         }
 
@@ -232,7 +245,7 @@ namespace Microsoft.Data.SqlClient
                         // lock prevents race condition with PruneConnectionPoolGroups
                         newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
 
-                        SqlClientEventSource.Metrics.EnterActiveConnectionPoolGroup();
+                        SqlClientDiagnostics.Metrics.EnterActiveConnectionPoolGroup();
                         connectionPoolGroup = newConnectionPoolGroup;
                         _connectionPoolGroups = newConnectionPoolGroups;
                     }
@@ -253,28 +266,15 @@ namespace Microsoft.Data.SqlClient
             return connectionPoolGroup;
         }
 
-        internal DbMetaDataFactory GetMetaDataFactory(
+        internal SqlMetaDataFactory GetMetaDataFactory(
             DbConnectionPoolGroup poolGroup,
             DbConnectionInternal internalConnection)
         {
             Debug.Assert(poolGroup is not null, "connectionPoolGroup may not be null.");
 
-            // Get the matadatafactory from the pool entry. If it does not already have one
+            // Get the metadata factory from the pool entry. If it does not already have one
             // create one and save it on the pool entry
-            DbMetaDataFactory metaDataFactory = poolGroup.MetaDataFactory;
-
-            // CONSIDER: serializing this so we don't construct multiple metadata factories
-            // if two threads happen to hit this at the same time. One will be GC'd
-            if (metaDataFactory is null)
-            {
-                metaDataFactory = CreateMetaDataFactory(internalConnection, out bool allowCache);
-                if (allowCache)
-                {
-                    poolGroup.MetaDataFactory = metaDataFactory;
-                }
-            }
-            
-            return metaDataFactory;
+            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory(internalConnection);
         }
         
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
@@ -297,8 +297,8 @@ namespace Microsoft.Data.SqlClient
                 _poolsToRelease.Add(pool);
             }
             
-            SqlClientEventSource.Metrics.EnterInactiveConnectionPool();
-            SqlClientEventSource.Metrics.ExitActiveConnectionPool();
+            SqlClientDiagnostics.Metrics.EnterInactiveConnectionPool();
+            SqlClientDiagnostics.Metrics.ExitActiveConnectionPool();
         }
 
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
@@ -311,8 +311,8 @@ namespace Microsoft.Data.SqlClient
                 _poolGroupsToRelease.Add(poolGroup);
             }
 
-            SqlClientEventSource.Metrics.EnterInactiveConnectionPoolGroup();
-            SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
+            SqlClientDiagnostics.Metrics.EnterInactiveConnectionPoolGroup();
+            SqlClientDiagnostics.Metrics.ExitActiveConnectionPoolGroup();
         }
 
         internal bool TryGetConnection(
@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlClient
 
                     connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
 
-                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
+                    SqlClientDiagnostics.Metrics.EnterNonPooledConnection();
                 }
                 else
                 {
@@ -576,7 +576,7 @@ namespace Microsoft.Data.SqlClient
         #region Private Methods
         
         // @TODO: I think this could be broken down into methods more specific to use cases above
-        private static SqlInternalConnectionTds CreateConnection(
+        protected virtual DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
@@ -631,46 +631,58 @@ namespace Microsoft.Data.SqlClient
                 redirectedUserInstance = true;
                 string instanceName;
 
-                if (pool == null || (pool != null && pool.Count <= 0))
-                { // Non-pooled or pooled and no connections in the pool.
-                    SqlInternalConnectionTds sseConnection = null;
-                    try
+                if (pool == null || pool.Count <= 0)
+                {
+                    // Non-pooled or pooled and no connections in the pool.
+
+                    // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
+                    //       This first connection is established to SqlExpress to get the instance name
+                    //       of the UserInstance.
+                    SqlConnectionString sseopt = new SqlConnectionString(
+                        opt,
+                        opt.DataSource,
+                        userInstance: true,
+                        setEnlistValue: false);
+
+                    SqlConnectionInternal sseConnection = new SqlConnectionInternal(
+                        identity,
+                        sseopt,
+                        key.Credential,
+                        providerInfo: null,
+                        newPassword: string.Empty,
+                        newSecurePassword: null,
+                        redirectedUserInstance: false,
+                        applyTransientFaultHandling: applyTransientFaultHandling,
+                        sspiContextProvider: key.SspiContextProvider);
+                    using (sseConnection)
                     {
-                        // We throw an exception in case of a failure
-                        // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
-                        //       This first connection is established to SqlExpress to get the instance name
-                        //       of the UserInstance.
-                        SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, userInstance: true, setEnlistValue: false);
-                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling, sspiContextProvider: key.SspiContextProvider);
-                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
+                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be
+                        //     used below to connect to the SQL Express User Instance.
                         instanceName = sseConnection.InstanceName;
 
                         // Set future transient fault handling based on connection options
                         sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
 
-                        if (!instanceName.StartsWith("\\\\.\\", StringComparison.Ordinal))
+                        if (!instanceName.StartsWith(@"\\.\", StringComparison.Ordinal))
                         {
                             throw SQL.NonLocalSSEInstance();
                         }
 
                         if (pool != null)
-                        { // Pooled connection - cache result
+                        {
+                            // Pooled connection - cache result
                             SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+
                             // No lock since we are already in creation mutex
                             providerInfo.InstanceName = instanceName;
                         }
                     }
-                    finally
-                    {
-                        if (sseConnection != null)
-                        {
-                            sseConnection.Dispose();
-                        }
-                    }
                 }
                 else
-                { // Cached info from pool.
+                {
+                    // Cached info from pool.
                     SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+
                     // No lock since we are already in creation mutex
                     instanceName = providerInfo.InstanceName;
                 }
@@ -682,7 +694,7 @@ namespace Microsoft.Data.SqlClient
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
 
-            return new SqlInternalConnectionTds(
+            return new SqlConnectionInternal(
                 identity,
                 opt,
                 key.Credential,
@@ -744,19 +756,14 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        private static DbMetaDataFactory CreateMetaDataFactory(
-            DbConnectionInternal internalConnection,
-            out bool cacheMetaDataFactory)
+        private static SqlMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection)
         {
             Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
 
             Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
             
-            cacheMetaDataFactory = true;
-            return new SqlMetaDataFactory(xmlStream,
-                internalConnection.ServerVersion,
-                internalConnection.ServerVersion);
+            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
@@ -857,7 +864,7 @@ namespace Microsoft.Data.SqlClient
                                 _poolsToRelease.Remove(pool);
                                 
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectId, pool.Id);
-                                SqlClientEventSource.Metrics.ExitInactiveConnectionPool();
+                                SqlClientDiagnostics.Metrics.ExitInactiveConnectionPool();
                             }
                         }
                     }
@@ -883,7 +890,7 @@ namespace Microsoft.Data.SqlClient
                                 _poolGroupsToRelease.Remove(poolGroup);
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectId, poolGroup.ObjectID);
 
-                                SqlClientEventSource.Metrics.ExitInactiveConnectionPoolGroup();
+                                SqlClientDiagnostics.Metrics.ExitInactiveConnectionPoolGroup();
                             }
                         }
                     }
@@ -949,7 +956,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
+                    SqlClientDiagnostics.Metrics.EnterNonPooledConnection();
                 }
             }
         }

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+
 namespace Interop.Windows.Sni
 {
     internal enum SniSslProtocols : uint
@@ -30,3 +32,5 @@ namespace Interop.Windows.Sni
         SP_PROT_TLS1_3 = SP_PROT_TLS1_3_SERVER | SP_PROT_TLS1_3_CLIENT,
     }
 }
+
+#endif

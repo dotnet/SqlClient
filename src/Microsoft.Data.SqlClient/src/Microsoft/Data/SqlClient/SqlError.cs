@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -11,7 +13,7 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlError
     {
         // bug fix - MDAC 48965 - missing source of exception
-        private readonly string _source = TdsEnums.SQL_PROVIDER_NAME;
+        private readonly string _source = DbConnectionStringDefaults.ApplicationName;
         private readonly int _number;
         private readonly byte _state;
         private readonly byte _errorClass;

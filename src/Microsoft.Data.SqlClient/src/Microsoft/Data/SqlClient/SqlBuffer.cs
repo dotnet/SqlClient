@@ -271,11 +271,11 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 catch (OverflowException)
                                 {
-                                    throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                                    throw SQL.ConversionOverflow();
                                 }
                             }
                         }
-                        throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                        throw SQL.ConversionOverflow();
                     }
                     return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
                 }
@@ -1352,7 +1352,7 @@ namespace Microsoft.Data.SqlClient
         }
 #endif
 
-        internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
+        internal void SetToDecimal(byte precision, byte scale, bool positive, ReadOnlySpan<int> bits)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._numericInfo._precision = precision;

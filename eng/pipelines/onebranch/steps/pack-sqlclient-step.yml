@@ -1,0 +1,42 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # Package version parameters ----
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+steps:
+  - task: MSBuild@1
+    displayName: 'Build2.proj - Pack SqlClient'
+    inputs:
+      solution: '$(REPO_ROOT)/build2.proj'
+      configuration: 'Release'
+      msbuildArguments: >-
+        -t:PackMds
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:PackBuild=false
+        -p:PackageVersionAbstractions="${{ parameters.abstractionsPackageVersion }}"
+        -p:PackageVersionLogging="${{ parameters.loggingPackageVersion }}"
+        -p:PackageVersionMds="${{ parameters.sqlClientPackageVersion }}"
+        -p:ReferenceType=Package
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree
+
+  - task: CopyFiles@2
+    displayName: 'Copy NuGet Packages to JOB_OUTPUT'
+    inputs:
+      contents: '**/Microsoft.Data.SqlClient*.*nupkg'
+      flattenFolders: true
+      sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/'
+      targetFolder: '$(JOB_OUTPUT)/packages'

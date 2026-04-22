@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
@@ -65,8 +66,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_DeleteCommand)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
+        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_DeleteCommand))]
         new public SqlCommand DeleteCommand
         {
             get { return _deleteCommand; }
@@ -82,8 +83,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_InsertCommand)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
+        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_InsertCommand))]
         new public SqlCommand InsertCommand
         {
             get { return _insertCommand; }
@@ -99,8 +100,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Fill)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_SelectCommand)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Fill))]
+        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_SelectCommand))]
         new public SqlCommand SelectCommand
         {
             get { return _selectCommand; }
@@ -116,8 +117,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_UpdateCommand)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
+        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_UpdateCommand))]
         new public SqlCommand UpdateCommand
         {
             get { return _updateCommand; }
@@ -242,8 +243,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdated/*' />
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_RowUpdated)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
+        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_RowUpdated))]
         public event SqlRowUpdatedEventHandler RowUpdated
         {
             add
@@ -257,8 +258,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*' />
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_RowUpdating)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
+        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_RowUpdating))]
         public event SqlRowUpdatingEventHandler RowUpdating
         {
             add

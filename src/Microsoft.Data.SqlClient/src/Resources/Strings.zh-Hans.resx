@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>找不到“{0}”的身份验证提供程序。</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>找不到 ‘{0}’ 的身份验证提供程序。安装 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 包(https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)以使用 Active Directory (Entra ID)身份验证方法。</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>未能读取身份验证提供程序的配置节。</value>
   </data>
@@ -4077,20 +4080,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{3}”中的列主密钥({2})时的已加密文本长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>指定的已加密列加密密钥的已加密文本长度 {0} 与使用“{2}”中的列主密钥(证书)时的已加密文本长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{3}”中的列主密钥({2})时的签名长度 {1} 不一致。已加密列加密密钥可能已损坏，或者指定的 {4} 路径可能不正确。</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>指定的已加密列加密密钥的签名长度 {0} 与使用“{2}”中的列主密钥(证书)时的签名长度 {1} 不一致。可能是因为已加密列加密密钥已损坏，或指定的证书路径有误。</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>指定的已加密列加密密钥签名与使用“{1}”中的列主密钥({0})计算得出的签名不一致。已加密列加密密钥可能已损坏，或者指定的路径可能不正确。</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>指定的加密列的加密密钥签名与“{0}”中使用的列的主密钥(证书)计算的签名不匹配。加密列的加密密钥可能已损坏，或指定的证书路径可能不正确。</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>密钥路径“{0}”中指定的证书没有用于加密列加密密钥的私钥。验证证书是否正确导入。</value>
@@ -4343,6 +4337,9 @@
   </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>收到了无效的路由信息。</value>
+  </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>收到的增强型路由信息无效。</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>服务器提供了路由信息，但超时时间已到。</value>
@@ -4691,5 +4688,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0} 矢量的 JSON 字符串无效。</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>在连接池中找不到空槽。</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>连接池已关闭。</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>当 HasDataLength 为 false 时，无法获取 RequiredLength。</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>当设置为非 null 时，部分数据包不能为非 null。</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets 无法同时返回 consumePartialPacket 和 consumeInputDirectly。</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>已在启用失败的异步挂起测试挂钩时尝试挂起读取。</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>检测到数据包修改。哈希为 null，但数据包中包含非 null 缓冲区。</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>检测到数据包修改。数据包创建中的哈希与数据包检查中的哈希不匹配。</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>无法从状态 ‘{0}’ 转换为 ‘{1}’。</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>不支持的状态: ‘{0}’。</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>未能创建 SqlRetryLogicBaseProvider 对象，因为 retryMethod 值为 null 或为空。</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>运行 ‘{0}.{1}()’ 方法时发生异常。</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>无法从 ‘{1}’ 类型解析 ‘{0}’ 方法。</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>返回类型无效;返回类型必须为 ‘{0}’ 类型。</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>由于参数 ‘{0}’ 无效，未能创建 SqlRetryLogicBaseProvider 对象。{1}该函数必须具有 ‘SqlRetryLogicOption’ 类型的参数。</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>由于 retryMethod 参数无效，未能创建 SqlRetryLogicBaseProvider 对象。{0}参数 ‘{1} {2}’ 没有默认值。</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>序列包含多个匹配元素。</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>序列不包含任何匹配元素。</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>仅当 onCreate 委托可用时，才能从池中租用。</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>类型 ‘{0}’ 的大小无效。</value>
   </data>
 </root>

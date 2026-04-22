@@ -3,10 +3,10 @@
 # that govern how PRs are approved in general.  The settings here dictate how
 # the validator behaves, and it can also prevent PRs from completing.
 #
-# Suggested by Merlinbot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4982)
+#  https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-docs/policy-service/policy-as-code/approver-count-policy-overview
 
 name: approver_count
-description: Approver count policy for dotnet-sqlclient
+description: Approver count policy for dotnet-sqlclient [internal/main]
 resource: repository
 where: 
 configuration:
@@ -22,8 +22,5 @@ configuration:
       resetRejectionsOnSourcePush: false
     blockLastPusherVote: true
     branchNames:
-    - refs/heads/internal/main
-    - refs/heads/internal/release/6.0
-    - refs/heads/internal/release/5.2
-    - refs/heads/internal/release/5.1
-    displayName: dotnet-sqlclient Approver Count Policy
+    - internal/main
+    displayName: dotnet-sqlclient Approver Count Policy [internal/main]

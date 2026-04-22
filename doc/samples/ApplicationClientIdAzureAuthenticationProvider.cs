@@ -2,7 +2,7 @@
 using System;
 using Microsoft.Data.SqlClient;
 
-namespace CustomAuthenticationProviderExamples
+namespace ApplicationClientIdAzureAuthenticationProvider
 {
     public class Program
     {

@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Não é possível localizar um provedor de autenticação para '{0}'.</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Não é possível localizar um provedor de autenticação para '{0}'. Instale o pacote NuGet 'Microsoft.Data.SqlClient.Extensions.Azure' (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) para usar métodos de autenticação do Active Directory (Entra ID).</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Falha ao ler a seção de configuração para os provedores de autenticação.</value>
   </data>
@@ -4077,20 +4080,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>O comprimento do texto cifrado da chave de criptografia de coluna criptografada especificado: {0} não corresponde ao comprimento do texto cifrado: {1} ao usar a chave mestra de coluna ({2}) em "{3}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho {4} especificado pode estar incorreto.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>O tamanho especificado do texto cifrado da chave de criptografia da coluna criptografada: {0} não corresponde ao tamanho do texto cifrado: {1} ao usar a chave mestra da coluna (certificado) em "{2}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho de certificado especificado pode estar incorreto.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>O comprimento da assinatura da chave de criptografia de coluna criptografada especificada: {0} não corresponde ao comprimento da assinatura: {1} ao usar a chave mestra de coluna ({2}) em "{3}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho {4} especificado pode estar incorreto.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>O comprimento da assinatura da chave de criptografia da coluna criptografada especificada: {0} não corresponde ao comprimento da assinatura: {1} ao usar a chave mestra de coluna (certificado) em "{2}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho de certificado especificado pode estar incorreto.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>A assinatura de chave de criptografia de coluna criptografada especificada não corresponde à assinatura computada com a chave mestra de coluna ({0}) em "{1}". A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho especificado pode estar incorreto.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>A assinatura da chave de criptografia especificada na coluna criptografada não corresponde à assinatura calculada pela chave mestra da coluna (certificado) em '{0}'. A chave de criptografia da coluna criptografada pode estar corrompida ou o caminho especificado pode estar errado.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>O certificado especificado no caminho da chave '{0}' não tem uma chave privada para criptografar uma chave de criptografia de coluna. Verifique se que o certificado for importado corretamente.</value>
@@ -4343,6 +4337,9 @@
   </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Informações de roteamento inválidas recebidas.</value>
+  </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Informações de roteamento aprimoradas inválidas recebidas.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>O servidor forneceu informações de roteamento, mas já o tempo limite expirou.</value>
@@ -4691,5 +4688,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0} Cadeia de caracteres JSON inválida para vetor.</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>Não foi possível localizar um slot vazio no pool de conexões.</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>O pool de conexões foi desligado.</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>Não é possível obter RequiredLength quando HasDataLength é falso.</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>O pacote parcial não pode ser nulo ao definir como não nulo.</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets não pode retornar consumePartialPacket e consumeInputDirectly.</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>Tentativa de suspensão de uma leitura quando o gancho de teste suspender em caso de falha assíncrona estava ativado.</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>Modificação de pacote detectada. O hash está nulo, mas o pacote contém um buffer não nulo.</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>Modificação de pacote detectada. O hash da criação do pacote não corresponde ao hash da verificação de pacote.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>Não é possível fazer a transição do estado '{0}' para '{1}'.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>Estado sem suporte: '{0}'.</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>Falha ao criar o objeto SqlRetryLogicBaseProvider porque o valor retryMethod está nulo ou vazio.</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>Ocorreu uma exceção ao executar o '{0}.{1}Método ()'.</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>Falha ao resolver o método '{0}' do tipo '{1}'.</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>Tipo de retorno inválido; o tipo de retorno deve ser do tipo '{0}'.</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>Falha ao criar o objeto SqlRetryLogicBaseProvider devido a parâmetros '{0}' inválidos.{1}A função deve ter um parâmetro do tipo 'SqlRetryLogicOption'.</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>Falha ao criar o objeto SqlRetryLogicBaseProvider devido a parâmetros retryMethod inválidos.{0}O parâmetro '{1} {2}' não tem um valor padrão.</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>A sequência contém mais de um elemento correspondente.</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>A sequência não contém nenhum elemento correspondente.</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>Só é possível alugar de um pool se um delegado onCreate estiver disponível.</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>O tipo '{0}' tem um tamanho inválido.</value>
   </data>
 </root>

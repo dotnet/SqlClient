@@ -132,7 +132,9 @@ namespace Stress.Data.SqlClient
             }
             else if (_source.EntraIdUser.Length != 0)
             {
+                #pragma warning disable 0618 // Type or member is obsolete
                 builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                #pragma warning restore 0618 // Type or member is obsolete
                 builder.UserID = _source.EntraIdUser;
                 builder.Password = _source.EntraIdPassword;
             }

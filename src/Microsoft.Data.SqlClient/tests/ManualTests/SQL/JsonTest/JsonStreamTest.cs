@@ -1,4 +1,8 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Data;
@@ -9,6 +13,7 @@ using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 using Newtonsoft.Json.Linq;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -65,10 +70,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void PrintJsonDataToFile(SqlConnection connection)
+        private void PrintJsonDataToFile(SqlConnection connection, string tableName)
         {
             DeleteFile(_outputFile);
-            using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTab]", connection))
+            using (SqlCommand command = new SqlCommand($"SELECT [data] FROM {tableName}", connection))
             {
                 using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
@@ -95,10 +100,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private async Task PrintJsonDataToFileAsync(SqlConnection connection)
+        private async Task PrintJsonDataToFileAsync(SqlConnection connection, string tableName)
         {
             DeleteFile(_outputFile);
-            using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTab]", connection))
+            using (SqlCommand command = new SqlCommand($"SELECT [data] FROM {tableName}", connection))
             {
                 using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess))
                 {
@@ -125,9 +130,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void StreamJsonFileToServer(SqlConnection connection)
+        private void StreamJsonFileToServer(SqlConnection connection, string tableName)
         {
-            using (SqlCommand cmd = new SqlCommand("INSERT INTO [jsonTab] (data) VALUES (@jsondata)", connection))
+            using (SqlCommand cmd = new SqlCommand($"INSERT INTO {tableName} (data) VALUES (@jsondata)", connection))
             {
                 using (StreamReader jsonFile = File.OpenText(_jsonFile))
                 {
@@ -137,9 +142,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private async Task StreamJsonFileToServerAsync(SqlConnection connection)
+        private async Task StreamJsonFileToServerAsync(SqlConnection connection, string tableName)
         {
-            using (SqlCommand cmd = new SqlCommand("INSERT INTO [jsonTab] (data) VALUES (@jsondata)", connection))
+            using (SqlCommand cmd = new SqlCommand($"INSERT INTO {tableName} (data) VALUES (@jsondata)", connection))
             {
                 using (StreamReader jsonFile = File.OpenText(_jsonFile))
                 {
@@ -157,33 +162,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
         public void TestJsonStreaming()
         {
-            GenerateJsonFile(1000, _jsonFile);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            try
             {
+                GenerateJsonFile(1000, _jsonFile);
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
                 connection.Open();
-                DataTestUtility.CreateTable(connection, "jsonTab", "(data json)");
-                StreamJsonFileToServer(connection);
-                PrintJsonDataToFile(connection);
+
+                using Table jsonTable = new(connection, "jsonTab", "(data json)");
+
+                StreamJsonFileToServer(connection, jsonTable.Name);
+                PrintJsonDataToFile(connection, jsonTable.Name);
                 CompareJsonFiles();
+            }
+            finally
+            {
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
         public async Task TestJsonStreamingAsync()
         {
-            GenerateJsonFile(1000, _jsonFile);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            try
             {
+                GenerateJsonFile(1000, _jsonFile);
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
                 await connection.OpenAsync();
-                DataTestUtility.CreateTable(connection, "jsonTab", "(data json)");
-                await StreamJsonFileToServerAsync(connection);
-                await PrintJsonDataToFileAsync(connection);
+
+                using Table jsonTable = new(connection, "jsonTab", "(data json)");
+
+                await StreamJsonFileToServerAsync(connection, jsonTable.Name);
+                await PrintJsonDataToFileAsync(connection, jsonTable.Name);
                 CompareJsonFiles();
+            }
+            finally
+            {
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
             }

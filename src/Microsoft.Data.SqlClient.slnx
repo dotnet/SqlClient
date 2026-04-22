@@ -1,0 +1,218 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/doc/">
+    <Project Path="../doc/samples/Microsoft.Data.SqlClient.Samples.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+  </Folder>
+  <Folder Name="/doc/apps/">
+    <Project Path="../doc/apps/AzureAuthentication/AzureAuthentication.csproj" />
+  </Folder>
+  <Folder Name="/doc/snippets/" />
+  <Folder Name="/doc/snippets/Microsoft.Data.Sql/">
+    <File Path="../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml" />
+  </Folder>
+  <Folder Name="/doc/snippets/Microsoft.Data.SqlClient.DataClassification/">
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml" />
+  </Folder>
+  <Folder Name="/doc/snippets/Microsoft.Data.SqlClient.Server/">
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient.Server/TriggerAction.xml" />
+  </Folder>
+  <Folder Name="/doc/snippets/Microsoft.Data.SqlClient/">
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/OnChangeEventHandler.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionEnclaveProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveAttestationParameters.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventHandler.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventHandler.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventHandler.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventHandler.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml" />
+  </Folder>
+  <Folder Name="/doc/snippets/Microsoft.Data.SqlTypes/">
+    <File Path="../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml" />
+    <File Path="../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml" />
+  </Folder>
+  <Folder Name="/doc/snippets/Microsoft.Data/">
+    <File Path="../doc/snippets/Microsoft.Data/OperationAbortedException.xml" />
+    <File Path="../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml" />
+  </Folder>
+  <Folder Name="/doc/snippets/Microsoft.SqlServer.Server/">
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/DataAccessKind.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/Format.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/IBinarySerialize.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/InvalidUdtException.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/SqlFunctionAttribute.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/SqlMethodAttribute.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/SqlUserDefinedAggregateAttribute.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/SqlUserDefinedTypeAttribute.xml" />
+    <File Path="../doc/snippets/Microsoft.SqlServer.Server/SystemDataAccessKind.xml" />
+  </Folder>
+  <Folder Name="/eng/">
+    <File Path="../build.proj" />
+    <File Path="../build2.proj" />
+    <Project Path="../eng/pipelines/Pipelines.csproj">
+      <Build Project="false" />
+    </Project>
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/">
+    <Project Path="Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient.Extensions.Abstractions/">
+    <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+    <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient.Extensions.Azure/">
+    <Project Path="Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+    <Project Path="Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient.Internal.Logging/">
+    <Project Path="Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient/">
+    <File Path="Microsoft.Data.SqlClient/MdsVersions.props" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient/notsupported/">
+    <Project Path="../tools/GenAPI/Microsoft.Cci.Extensions/Microsoft.Cci.Extensions.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="../tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="Microsoft.Data.SqlClient/notsupported/Microsoft.Data.SqlClient.csproj">
+      <Build Project="false" />
+    </Project>
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient/ref/">
+    <Project Path="Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient/src/">
+    <Project Path="Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  </Folder>
+  <Folder Name="/src/Microsoft.Data.SqlClient/tests/" />
+  <Folder Name="/src/Microsoft.SqlServer.Server/">
+    <Project Path="Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities/Microsoft.Data.SqlClient.ExtUtilities.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+  </Folder>
+  <Folder Name="/test/Stress/">
+    <Project Path="Microsoft.Data.SqlClient/tests/StressTests/IMonitorLoader/IMonitorLoader.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Common/SqlClient.Stress.Common.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Framework/SqlClient.Stress.Framework.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Tests/SqlClient.Stress.Tests.csproj" />
+  </Folder>
+  <Folder Name="/test/TestClr/">
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+  </Folder>
+</Solution>

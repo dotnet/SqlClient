@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
 
-namespace CustomAuthenticationProviderExamples
+namespace CustomDeviceCodeFlowAzureAuthenticationProviderExample
 {
     /// <summary>
     /// Example demonstrating creating a custom device code flow authentication provider and attaching it to the driver.

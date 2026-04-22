@@ -9,7 +9,6 @@ using System.Globalization;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
-using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.Common;
@@ -205,9 +204,6 @@ namespace Microsoft.Data.SqlClient
             #endif
         }
         
-        // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal SqlConnectionString(string connectionString): base(connectionString, s_keywordMap)
         {
 #if !NETFRAMEWORK

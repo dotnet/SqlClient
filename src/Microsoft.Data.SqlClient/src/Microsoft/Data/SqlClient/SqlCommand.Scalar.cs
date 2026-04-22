@@ -7,6 +7,7 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -28,11 +29,9 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
             
-            #if NET
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
-            #endif
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteScalar | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -60,9 +59,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception ex)
             {
-                #if NET
                 diagnosticScope.SetException(ex);
-                #endif
 
                 if (ex is SqlException sqlException)
                 {
@@ -74,7 +71,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
             }
         }
 
@@ -85,7 +82,6 @@ namespace Microsoft.Data.SqlClient
             return ExecuteScalarAsyncInternal(cancellationToken);
         }
         
-        #if NET
         internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
         {
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
@@ -170,7 +166,6 @@ namespace Microsoft.Data.SqlClient
             },
             TaskScheduler.Default).Unwrap();
         }
-        #endif
         
         #endregion
         
@@ -188,6 +183,11 @@ namespace Microsoft.Data.SqlClient
                         result = reader.GetValue(0);
                     }
                 } while (returnLastResult && reader.NextResult());
+
+                // Drain remaining results to ensure all error tokens are processed
+                // before returning the result (fix for GH issue #3736).
+                while (reader.NextResult())
+                { }
             }
             finally
             {
@@ -233,10 +233,8 @@ namespace Microsoft.Data.SqlClient
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
-            #if NET
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             _parentOperationStarted = true;
-            #endif
 
             // @TODO: Use continue with state? This would be a good candidate for rewriting async/await
             return ExecuteReaderAsync(cancellationToken).ContinueWith(executeTask =>
@@ -249,13 +247,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (executeTask.IsFaulted)
                 {
-                    #if NET
                     s_diagnosticListener.WriteCommandError(
                         operationId,
                         this,
                         _transaction,
                         executeTask.Exception.InnerException);
-                    #endif
                     
                     source.SetException(executeTask.Exception.InnerException);
                 }
@@ -264,7 +260,7 @@ namespace Microsoft.Data.SqlClient
                     SqlDataReader reader = executeTask.Result;
                     
                     // @TODO: Use continue with state?
-                    reader.ReadAsync(cancellationToken).ContinueWith(readTask =>
+                    reader.ReadAsync(cancellationToken).ContinueWith(async readTask =>
                     {
                         // @TODO: This seems a bit confusing with unnecessary extra dispose calls and try/finally blocks
                         try
@@ -279,13 +275,11 @@ namespace Microsoft.Data.SqlClient
                             {
                                 reader.Dispose();
                                 
-                                #if NET
                                 s_diagnosticListener.WriteCommandError(
                                     operationId,
                                     this,
                                     _transaction,
                                     readTask.Exception.InnerException);
-                                #endif
                                 
                                 source.SetException(readTask.Exception.InnerException);
                             }
@@ -308,6 +302,11 @@ namespace Microsoft.Data.SqlClient
                                             exception = e;
                                         }
                                     }
+
+                                    // Drain remaining results to ensure all error tokens are processed
+                                    // before returning the result (fix for GH issue #3736).
+                                    while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
+                                    { }
                                 }
                                 finally
                                 {
@@ -316,17 +315,13 @@ namespace Microsoft.Data.SqlClient
 
                                 if (exception is not null)
                                 {
-                                    #if NET
                                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
-                                    #endif
                                     
                                     source.SetException(exception);
                                 }
                                 else
                                 {
-                                    #if NET
                                     s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                                    #endif
                                     
                                     source.SetResult(result);
                                 }
@@ -341,9 +336,7 @@ namespace Microsoft.Data.SqlClient
                     TaskScheduler.Default);
                 }
 
-                #if NET
                 _parentOperationStarted = false;
-                #endif
                 
                 return source.Task;
             },

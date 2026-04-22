@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security.Authentication;
 using System.Threading;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -74,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns></returns>
         public uint StartReceive()
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 SniPacket packet = null;
 
@@ -95,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>SNI error code</returns>
         public uint Send(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 lock (DemuxerSync)
                 {
@@ -111,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>SNI error code</returns>
         public uint SendAsync(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 lock (DemuxerSync)
                 {
@@ -127,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>SNI error code</returns>
         public uint ReceiveAsync(ref SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 if (packet != null)
                 {
@@ -155,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>SNI error status</returns>
         public uint CheckConnection()
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 lock (DemuxerSync)
                 {
@@ -205,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleReceiveComplete(SniPacket packet, uint sniErrorCode)
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 SniSmuxHeader currentHeader = null;
                 SniPacket currentPacket = null;
@@ -291,7 +292,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                         if (!_sessions.ContainsKey(_currentHeader.sessionId))
                         {
-                            SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.SMUX_PROV, 0, SniCommon.InvalidParameterError, Strings.SNI_ERROR_5);
+                            SniLoadHandle.LastError = new SniError(SniProviders.SMUX_PROV, 0, SniCommon.InvalidParameterError, Strings.SNI_ERROR_5);
                             HandleReceiveError(packet);
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _currentHeader?.sessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
                             _lowerHandle.Dispose();
@@ -363,7 +364,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public uint EnableSsl(uint options)
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 return _lowerHandle.EnableSsl(options);
             }
@@ -374,7 +375,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public void DisableSsl()
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 _lowerHandle.DisableSsl();
             }
@@ -396,7 +397,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public void KillConnection()
         {
-            using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
+            using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 _lowerHandle.KillConnection();
             }

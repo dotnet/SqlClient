@@ -125,49 +125,88 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // Synapse: Statement 'Drop Database' is not supported in this version of SQL Server.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [InlineData("KAZAKH_90_CI_AI")]
-        [InlineData("Georgian_Modern_Sort_CI_AS")]
-        public static void CollatedDataReaderTest(string collation)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void CollatedDataReaderTest()
         {
-            string dbName = DataTestUtility.GetShortName("CollationTest", false);
+            const string SampleText = "Text with an accented é varies by encoding";
+            const string CollatedStringCommandText = $@"declare c cursor for
+	select name
+	from fn_helpcollations()
+declare @collation nvarchar(max)
 
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+open c
+fetch next from c into @collation
+
+while @@FETCH_STATUS = 0
+begin
+	declare @sql nvarchar(max) = N'select @collation as [Collation],
+		convert(int, COLLATIONPROPERTY(@collation, ''LCID'')) & 0xFFFF as [LanguageId],
+		convert(int, COLLATIONPROPERTY(@collation, ''LCID'')) as [LCID],
+		convert(int, COLLATIONPROPERTY(@collation, ''CodePage'')) as [CodePage],
+		@Text collate ' + @collation + ' as [Text],
+		convert(varbinary(max), @Text collate ' + @collation + ')'
+
+	begin try
+		exec sp_executesql @sql, N'@collation nvarchar(max), @Text varchar(max)', @Text='{SampleText}', @collation=@collation
+	end try
+	begin catch
+        -- Error 459: Collation '%.*ls' is supported on Unicode data types only and cannot be applied to char, varchar or text data types.
+		if error_number() != 459
+		begin
+			throw
+		end
+	end catch
+
+	fetch next from c into @collation
+end
+
+close c
+deallocate c";
+
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlCommand collatedStringCommand = new(CollatedStringCommandText, conn);
+
+            conn.Open();
+            using SqlDataReader reader = collatedStringCommand.ExecuteReader();
+
+            // We receive one result set per collation, with identical columns:
+            // 1. Collation name
+            // 2. Language ID (the LCID without any flags)
+            // 3. LCID (with flags)
+            // 4. ID of the code page used to decode the byte array
+            // 5. The collated string itself
+            // 6. The collated string, converted to a byte array within SQL Server
+            do
             {
-                InitialCatalog = dbName,
-                Pooling = false
-            };
+                reader.Read();
 
-            using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-            using SqlCommand cmd = con.CreateCommand();
-            try
-            {
-                con.Open();
+                string collationName = reader.GetString(0);
+                int languageId = reader.GetInt32(1);
+                int lcid = reader.GetInt32(2);
+                int codePageId = reader.GetInt32(3);
+                string collatedString = reader.GetString(4);
+                byte[] collatedStringBytes = reader.GetSqlBinary(5).Value;
 
-                // Create collated database
-                cmd.CommandText = $"CREATE DATABASE [{dbName}] COLLATE {collation}";
-                cmd.ExecuteNonQuery();
+                // The code page's encoding must exist. We must then be able to round-trip the string
+                // to and from a byte array.
+                Encoding codePageEncoding = Encoding.GetEncoding(codePageId);
 
-                //Create connection without pooling in order to delete database later.
-                using (SqlConnection dbCon = new(builder.ConnectionString))
-                using (SqlCommand dbCmd = dbCon.CreateCommand())
-                {
-                    string data = Guid.NewGuid().ToString();
+                Assert.True(codePageEncoding is not null,
+                    $@"Collation ""{collationName}"", LCID {lcid}, code page {codePageId} is not identifiable as a client-side encoding.");
 
-                    dbCon.Open();
-                    dbCmd.CommandText = $"SELECT '{data}'";
-                    using SqlDataReader reader = dbCmd.ExecuteReader();
-                    reader.Read();
-                    Assert.Equal(data, reader.GetString(0));
-                }
+                string clientSideDecodedString = codePageEncoding.GetString(collatedStringBytes);
+                byte[] clientSideStringBytes = codePageEncoding.GetBytes(collatedString);
+
+                Assert.True(collatedString == clientSideDecodedString,
+                    $@"Collation ""{collationName}"", LCID {lcid}, code page {codePageId}: server-supplied string does not match client-side decoded bytes.");
+
+                Assert.True(collatedStringBytes.AsSpan().SequenceEqual(clientSideStringBytes),
+                    $@"Collation ""{collationName}"", LCID {lcid}, code page {codePageId}: server-supplied byte array does not match client-side encoded bytes.");
+
+                // The character é does not exist in the Cyrillic character set, so do not compare the
+                // collated string with the original input text.
             }
-            finally
-            {
-                // Let connection close safely before dropping database for slow servers.
-                Thread.Sleep(500);
-                DataTestUtility.DropDatabase(con, dbName);
-            }
+            while (reader.NextResult());
         }
 
         private static bool IsColumnBitSet(SqlConnection con, string selectQuery, int indexOfColumnSet)
@@ -268,7 +307,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             lock (s_rowVersionLock)
             {
                 using SwitchesHelper helper = new();
-                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.False;
+                helper.LegacyRowVersionNullBehavior = false;
 
                 using SqlConnection con = new(DataTestUtility.TCPConnectionString);
                 con.Open();
@@ -703,6 +742,22 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task GetCharsSequentialAccess_NullBufferNegativeBufferIndex_ThrowsArgumentOutOfRange()
+        {
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT CONVERT(NVARCHAR(MAX), 'test')";
+
+            using var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+            Assert.True(await reader.ReadAsync());
+
+            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => reader.GetChars(0, 0, null, -1, 0));
+            Assert.Equal("bufferIndex", ex.ParamName);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanGetCharsSequentially()
         {
             const CommandBehavior commandBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleResult;
@@ -869,7 +924,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             lock (s_rowVersionLock)
             {
                 using SwitchesHelper helper = new();
-                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.True;
+                helper.LegacyRowVersionNullBehavior = true;
 
                 using SqlConnection con = new(DataTestUtility.TCPConnectionString);
                 con.Open();
@@ -905,6 +960,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadAwkwardDataLengths()
         {

@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2583,6 +2583,9 @@
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' için kimlik doğrulama sağlayıcısı bulunamıyor.</value>
   </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. Active Directory (Entra ID) kimlik doğrulaması yöntemlerini kullanmak için ‘Microsoft.Data.SqlClient.Extensions.Azure’ NuGet paketini (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) yükleyin.</value>
+  </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Kimlik doğrulama sağlayıcıları için yapılandırma bölümü okunamadı.</value>
   </data>
@@ -4077,20 +4080,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{3}' konumundaki sütun ana anahtarı ({2}) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen {4} yol hatalı olabilir.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{3}' konumundaki sütun ana anahtarı ({2}) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen {4} yol hatalı olabilir.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{1}' konumundaki sütun ana anahtarı ({0}) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (sertifika) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>'{0}' anahtar yolunda belirtilen sertifika, bir sütun şifreleme anahtarını şifreleyecek özel anahtara sahip değil. Sertifikanın doğru şekilde içe aktarıldığını doğrulayın.</value>
@@ -4343,6 +4337,9 @@
   </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Geçersiz yönlendirme bilgisi alındı.</value>
+  </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Geçersiz gelişmiş yönlendirme bilgisi alındı.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Sunucu yönlendirme bilgisi sağladı ancak zaman aşımı gerçekleşmişti.</value>
@@ -4691,5 +4688,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>Vektör JSON dizesi {0} geçersiz.</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>Bağlantı havuzunda boş bir yuva bulunamadı.</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>Bağlantı havuzu kapatıldı.</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>HasDataLength değeri false olduğunda RequiredLength elde edilemiyor.</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>Kısmi paket, null olmayan bir değere ayarlandığında null olamaz.</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets, hem consumePartialPacket hem de consumeInputDirectly yöntemini döndüremez.</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>“Asenkron işlem başarısız olduğunda askıya alma” test kancası etkin durumdayken okuma işlemi askıya alınmaya çalışıldı.</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>Paket değişikliği algılandı. Karma değeri boş, ancak paket boş olmayan bir arabellek içeriyor.</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>Paket değişikliği algılandı. Paket oluşturulurken hesaplanan karma değeri, paket kontrolü sırasında hesaplanan karma değeriyle eşleşmiyor.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>‘{0}’ durumundan ‘{1}’ durumuna geçilemiyor.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>Desteklenmeyen durum: ‘{0}’.</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>retryMethod değeri null veya boş olduğu için SqlRetryLogicBaseProvider nesnesi oluşturulamadı.</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>'{0}.{1}()' yöntemi çalıştırılırken bir hata oluştu.</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>‘{1}’ türündeki ‘{0}’ yöntemi çözümlenemedi.</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>Geçersiz dönüş türü; dönüş türü ‘{0}’ türünde olmalıdır.</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>Geçersiz ‘{0}’ parametreleri nedeniyle SqlRetryLogicBaseProvider nesnesi oluşturulamadı.{1}İşlevin ‘SqlRetryLogicOption’ türünde bir parametresi olmalıdır.</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>Geçersiz retryMethod parametreleri nedeniyle SqlRetryLogicBaseProvider nesnesi oluşturulamadı.{0}'{1} {2}' parametresinin varsayılan değeri yok.</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>Sıra birden çok eşleşen öğe içeriyor.</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>Sıra eşleşen öğe içermiyor.</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>Yalnızca onCreate delegesi mevcutsa havuzdan kiralama yapılabilir.</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>‘{0}’ türü geçersiz bir boyuta sahiptir.</value>
   </data>
 </root>

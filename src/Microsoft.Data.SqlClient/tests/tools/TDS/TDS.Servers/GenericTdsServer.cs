@@ -51,9 +51,39 @@ namespace Microsoft.SqlServer.TDS.Servers
         public const byte DefaultSupportedVectorFeatureExtVersion = 0x01;
 
         /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public bool EnableVectorFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server flag for user agent feature extension.
+        /// </summary>
+        public bool EnableUserAgentFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server enhanced routing enablement state.
+        /// </summary>
+        public FeatureExtensionBehavior EnhancedRoutingBehavior { get; set; } = FeatureExtensionBehavior.Disabled;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+
+        /// <summary>
+        /// Property for setting server version for user agent feature extension.
+        /// </summary>
+        public byte ServerSupportedUserAgentFeatureExtVersion { get; set; } = DefaultSupportedUserAgentFeatureExtVersion;
+
+        /// <summary>
         /// Client version for vector FeatureExtension.
         /// </summary>
         private byte _clientSupportedVectorFeatureExtVersion = 0;
+
+        /// <summary>
+        /// Default feature extension version supported on the server for user agent.
+        /// </summary>
+        public const byte DefaultSupportedUserAgentFeatureExtVersion = 0x01;
 
         /// <summary>
         /// Session counter
@@ -64,6 +94,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Counts pre-login requests to the server.
         /// </summary>
         private int _preLoginCount = 0;
+
+        /// <summary>
+        /// Counts Login7 requests to the server.
+        /// </summary>
+        protected int _login7Count = 0;
 
         private TDSServerEndPoint _endpoint;
 
@@ -108,14 +143,16 @@ namespace Microsoft.SqlServer.TDS.Servers
         public int PreLoginCount => _preLoginCount;
 
         /// <summary>
-        /// Property for setting server version for vector feature extension.
+        /// Counts Login7 requests to the server.
         /// </summary>
-        public bool EnableVectorFeatureExt { get; set; } = false;
+        public int Login7Count => _login7Count;
 
         /// <summary>
-        /// Property for setting server version for vector feature extension.
+        /// Counts pre-login requests that did not result in a Login7 request,
+        /// which indicates the client abandoned the connection (e.g. interval
+        /// timer timeout during TNIR or failover).
         /// </summary>
-        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+        public int AbandonedPreLoginCount => _preLoginCount - _login7Count;
 
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
@@ -128,9 +165,12 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 throw new InvalidOperationException("Server is already started");
             }
-            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            _endpoint.EndpointName = methodName;
-            _endpoint.EventLog = Arguments.Log;
+            _endpoint = new TDSServerEndPoint(this)
+            {
+                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
+                EndpointName = methodName,
+                EventLog = Arguments.Log
+            };
             _endpoint.Start();
         }
 
@@ -225,6 +265,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
+            Interlocked.Increment(ref _login7Count);
+
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
@@ -314,6 +356,21 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 }
                                 break;
                             }
+                        case TDSFeatureID.UserAgentSupport:
+                            {
+                                if (EnableUserAgentFeatureExt)
+                                {
+                                    // Enable User Agent Support
+                                    session.IsUserAgentSupportEnabled = true;
+                                }
+                                break;
+                            }
+
+                        case TDSFeatureID.EnhancedRoutingSupport:
+                            {
+                                session.IsEnhancedRoutingSupportRequested = true;
+                                break;
+                            }
 
                         default:
                             {
@@ -324,6 +381,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
+            // Pass the packet to our delegate if we have one.
             OnLogin7Validated?.Invoke(loginRequest);
 
             // Check if SSPI authentication is requested
@@ -616,70 +674,11 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Serialize the login token into the response packet
             responseMessage.Add(loginResponseToken);
 
-            // Check if session recovery is enabled
-            if (session.IsSessionRecoveryEnabled)
-            {
-                // Create Feature extension Ack token
-                TDSFeatureExtAckToken featureExtActToken = new TDSFeatureExtAckToken(new TDSFeatureExtAckSessionStateOption((session as GenericTdsServerSession).Deflate()));
-
-                // Log response
-                TDSUtilities.Log(Arguments.Log, "Response", featureExtActToken);
-
-                // Serialize feature extnesion token into the response
-                responseMessage.Add(featureExtActToken);
-            }
-
-            // Check if Json is supported
-            if (session.IsJsonSupportEnabled)
-            {
-                // Create ack data (1 byte: Version number)
-                byte[] data = new byte[1];
-                data[0] = (byte)1;
-
-                // Create Json support as a generic feature extension option
-                TDSFeatureExtAckGenericOption jsonSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.JsonSupport, (uint)data.Length, data);
-
-                // Look for feature extension token
-                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
-
-                if (featureExtAckToken == null)
-                {
-                    // Create feature extension ack token
-                    featureExtAckToken = new TDSFeatureExtAckToken(jsonSupportOption);
-                    responseMessage.Add(featureExtAckToken);
-                }
-                else
-                {
-                    // Update the existing token
-                    featureExtAckToken.Options.Add(jsonSupportOption);
-                }
-            }
-
-            // Check if Vector is supported
-            if (session.IsVectorSupportEnabled)
-            {
-                // Create ack data (1 byte: Version number)
-                byte[] data = new byte[1];
-                data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
-
-                // Create vector support as a generic feature extension option
-                TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
-
-                // Look for feature extension token
-                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
-
-                if (featureExtAckToken == null)
-                {
-                    // Create feature extension ack token
-                    featureExtAckToken = new TDSFeatureExtAckToken(vectorSupportOption);
-                    responseMessage.Add(featureExtAckToken);
-                }
-                else
-                {
-                    // Update the existing token
-                    featureExtAckToken.Options.Add(vectorSupportOption);
-                }
-            }
+            CheckSessionRecovery(session, responseMessage);
+            CheckJsonSupported(session, responseMessage);
+            CheckVectorSupport(session, responseMessage);
+            CheckUserAgentSupport(session, responseMessage);
+            CheckEnhancedRoutingSupport(session, responseMessage);
 
             if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
             {
@@ -705,6 +704,167 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Wrap a single message in a collection
             return new TDSMessageCollection(responseMessage);
+        }
+
+
+        /// <summary>
+        /// Check if session recovery is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void  CheckSessionRecovery(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // Check if session recovery is enabled
+            if (session.IsSessionRecoveryEnabled)
+            {
+                // Create Feature extension Ack token
+                TDSFeatureExtAckToken featureExtActToken = new TDSFeatureExtAckToken(new TDSFeatureExtAckSessionStateOption((session as GenericTdsServerSession).Deflate()));
+
+                // Log response
+                TDSUtilities.Log(Arguments.Log, "Response", featureExtActToken);
+
+                // Serialize feature extension token into the response
+                responseMessage.Add(featureExtActToken);
+            }
+        }
+
+
+        /// <summary>
+        /// Check if Json is supported
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckJsonSupported(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // Check if Json is supported
+            if (session.IsJsonSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = (byte)1;
+
+                // Create Json support as a generic feature extension option
+                TDSFeatureExtAckGenericOption jsonSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.JsonSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(jsonSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(jsonSupportOption);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if Vector is supported
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckVectorSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // Check if Vector is supported
+            if (session.IsVectorSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
+
+                // Create vector support as a generic feature extension option
+                TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(vectorSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(vectorSupportOption);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if UserAgent support is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckUserAgentSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            // If tests request it, force an ACK for UserAgentSupport with no negotiation
+            if (session.IsUserAgentSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = ServerSupportedUserAgentFeatureExtVersion;
+
+                // Create user agent support as a generic feature extension option
+                TDSFeatureExtAckGenericOption userAgentSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.UserAgentSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(userAgentSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(userAgentSupportOption);
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Check if Enhanced Routing support is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckEnhancedRoutingSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            if (session.IsEnhancedRoutingSupportRequested &&
+                EnhancedRoutingBehavior != FeatureExtensionBehavior.DoNotAcknowledge)
+            {
+                // Create ack data (1 byte: IsEnabled)
+                byte[] data = EnhancedRoutingBehavior == FeatureExtensionBehavior.Enabled
+                    ? [1]
+                    : [0];
+
+                // Create enhanced routing support as a generic feature extension option
+                TDSFeatureExtAckGenericOption enhancedRoutingSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.EnhancedRoutingSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(enhancedRoutingSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(enhancedRoutingSupportOption);
+                }
+            }
         }
 
         /// <summary>

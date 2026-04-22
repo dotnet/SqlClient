@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -2350,7 +2350,7 @@
     <value>Interner Microsoft.Data.OleDb.OleDbDataAdapter-Fehler: ungültiger Parameteraccessor: {0} {1}.</value>
   </data>
   <data name="OleDb_UninitializedParameters" xml:space="preserve">
-    <value>Parameter {0}: die Eigenschaft OleDbType ist nicht initialisiert: OleDbType.{1}.</value>
+    <value>Parameter[{0}]: die Eigenschaft OleDbType ist nicht initialisiert: OleDbType.{1}.</value>
   </data>
   <data name="OleDb_NoProviderSupportForParameters" xml:space="preserve">
     <value>Die ICommandWithParameters-Schnittstelle wird vom '{0}'-Provider nicht unterstützt. Befehlsparameter werden vom aktuellen Provider nicht unterstützt.</value>
@@ -2582,6 +2582,9 @@
   </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Für "{0}" wurde kein Authentifizierungsanbieter gefunden.</value>
+  </data>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Für „{0}“ wurde kein Authentifizierungsanbieter gefunden. Installieren Sie das NuGet-Paket „Microsoft.Data.SqlClient.Extensions.Azure“ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), um Active Directory (Entra ID)-Authentifizierungsmethoden zu verwenden.</value>
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Fehler beim Lesen des Konfigurationsabschnitts für Authentifizierungsanbieter.</value>
@@ -2854,7 +2857,7 @@
     <value>Die Länge von '{0}' muss mit der Länge von '{1}' übereinstimmen.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>Der 'SqlDbType' '{0}' ist für {1} unzulässig. Unterstützt wird nur {2}.</value>
+    <value>Der SqlDbType '{0}' ist für {1} unzulässig. Unterstützt wird nur {2}.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
     <value>Zu viele Werte.</value>
@@ -3466,7 +3469,7 @@
     <value>Der angegebene TypeName für Parameter '{0}'. TypeName darf nur für Structured-Parameter festgelegt werden.</value>
   </data>
   <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
-    <value>Der SqlDbType.Structured-Typ wird nur für Typen mit mehreren Werten unterstützt.</value>
+    <value>Der Typ SqlDbType.Structured wird nur für Typen mit mehreren Werten unterstützt.</value>
   </data>
   <data name="NullSchemaTableDataTypeNotSupported" xml:space="preserve">
     <value>Die 'DateType'-Spalte für das Feld '{0}' in der Schematabelle ist NULL. 'DataType' darf nicht 'null' sein.</value>
@@ -3634,7 +3637,7 @@
     <value>GetMetaData ist für diesen SqlDbType nicht gültig.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
-    <value>Der 'dbType' {0} ist für diesen Konstruktor ungültig.</value>
+    <value>Der dbType {0} ist für diesen Konstruktor ungültig.</value>
   </data>
   <data name="SqlMetaData_NameTooLong" xml:space="preserve">
     <value>Der Name ist zu lang.</value>
@@ -4077,20 +4080,11 @@
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
     <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel ({2}) in „{3}“ verwendet wird. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher {4}-Pfad angegeben.</value>
   </data>
-  <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Die angegebene Chiffretextlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Chiffretextlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in „{2}“ verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
-  </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
     <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel ({2}) in „{3}“ verwendet wird. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher {4}-Pfad angegeben.</value>
   </data>
-  <data name="TCE_InvalidSignatureInEncryptedCEKCertificate" xml:space="preserve">
-    <value>Die angegebene Signaturlänge {0} des Verschlüsselungsschlüssels der verschlüsselten Spalte entspricht nicht der Signaturlänge {1}, wenn der Spaltenhauptschlüssel (Zertifikat) in „{2}“ verwendet wird. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Zertifikatpfad ist falsch.</value>
-  </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
     <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel ({0}) in „{1}“ berechnet wurde. Der verschlüsselte Spaltenverschlüsselungsschlüssel ist vielleicht beschädigt, oder es wurde möglicherweise ein falscher Pfad angegeben.</value>
-  </data>
-  <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>Die angegebene Verschlüsselungsschlüsselsignatur der verschlüsselten Spalte entspricht nicht der Signatur, die mit dem Spaltenhauptschlüssel (Zertifikat) in '{0}' berechnet wurde. Der Verschlüsselungsschlüssel der verschlüsselten Spalte ist möglicherweise beschädigt, oder der angegebene Pfad ist falsch.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
     <value>Unter dem Schlüsselpfad '{0}' festgelegtes Zertifikat verfügt nicht über einen privaten Schlüssel zur Verschlüsselung eines Spaltenverschlüsselungsschlüssels. Stellen Sie sicher, dass das Zertifikat korrekt importiert wurde.</value>
@@ -4343,6 +4337,9 @@
   </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Ungültige Routinginformationen empfangen.</value>
+  </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Ungültige erweiterte Routinginformationen empfangen.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Es wurden Routinginformationen vom Server empfangen, aber das Timeout ist bereits abgelaufen.</value>
@@ -4684,12 +4681,72 @@
     <value>Nicht unterstützter Vektortyp „{0}“.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>Der Nullwert wird für den Ausgabeparameter „{0}“ des SqlDbtype-Vektors nicht unterstützt.</value>
+    <value>Der Nullwert wird für den Ausgabeparameter '{0}' des SqlDbtype-Vektors nicht unterstützt.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
     <value>Ungültiger Vektorheader empfangen.</value>
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0} Ungültige JSON-Zeichenfolge für Vektor.</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>Im Verbindungspool wurde kein freier Slot gefunden.</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>Der Verbindungspool wurde heruntergefahren.</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>RequiredLength kann nicht abgerufen werden, wenn HasDataLength auf FALSE gesetzt ist.</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>Ein Teilpaket darf nicht ungleich NULL sein, wenn es auf nicht-null gesetzt wird.</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets können nicht gleichzeitig consumePartialPacket und consumeInputDirectly zurückgeben.</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>Es wurde versucht, eine Leseoperation anzusetzen, während der Fail-Async-Pends-Testhook aktiviert war.</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>Paketänderung erkannt. Hash ist NULL, aber das Paket enthält einen nicht-null-Puffer.</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>Paketänderung erkannt. Der Hash bei der Paketerstellung stimmt nicht mit dem Hash bei der Paketprüfung überein.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>Ein Übergang vom Zustand „{0}“ zu „{1}“ ist nicht möglich.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>Nicht unterstützter Status: „{0}“.</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>Fehler beim Erstellen des SqlRetryLogicBaseProvider-Objekts, da der retryMethod-Wert NULL oder leer ist.</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>Ausnahme beim Ausführen der Methode „{0}.{1}()“.</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>Fehler beim Auflösen der Methode „{0}“ vom Typ „{1}“.</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>Ungültiger Rückgabetyp; der Rückgabetyp muss vom Typ „{0}“ sein.</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>Fehler beim Erstellen des SqlRetryLogicBaseProvider-Objekts aufgrund ungültiger „{0}“-Parameter.{1}Die Funktion muss einen Parameter vom Typ „SqlRetryLogicOption“ enthalten.</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>Fehler beim Erstellen des SqlRetryLogicBaseProvider-Objekts aufgrund ungültiger retryMethod-Parameter.{0}Parameter „{1} {2}“ hat keinen Standardwert.</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>Die Sequenz enthält mehr als ein übereinstimmendes Element.</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>Die Sequenz enthält kein übereinstimmendes Element.</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>Aus einem Pool kann nur ausgeliehen werden, wenn ein onCreate-Delegat verfügbar ist.</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>Der Typ „{0}“ hat eine ungültige Größe.</value>
   </data>
 </root>

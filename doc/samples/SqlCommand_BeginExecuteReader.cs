@@ -1,3 +1,5 @@
+namespace SqlCommand_BeginExecuteReader;
+
 // <Snippet1>
 using System;
 using Microsoft.Data.SqlClient;

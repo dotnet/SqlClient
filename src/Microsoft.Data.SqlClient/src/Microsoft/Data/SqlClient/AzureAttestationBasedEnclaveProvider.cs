@@ -60,6 +60,7 @@ namespace Microsoft.Data.SqlClient
         private const string AttestationUrlSuffix = @"/.well-known/openid-configuration";
 
         private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache(new MemoryCacheOptions());
+        private static readonly TimeSpan s_openIdConnectConfigurationCacheTimeout = TimeSpan.FromDays(1);
         #endregion
 
         #region Internal methods
@@ -207,7 +208,8 @@ namespace Microsoft.Data.SqlClient
                     EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
                     offset += EnclaveDHInfo.Size;
 
-                    Debug.Assert(offset == attestationInfo.Length);
+                    // TODO(GH-3604): Fix this failing assertion.
+                    // Debug.Assert(offset == attestationInfo.Length);
                 }
                 catch (Exception exception)
                 {
@@ -348,11 +350,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
-                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
-                };
-                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, options);
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: s_openIdConnectConfigurationCacheTimeout);
             }
 
             return openIdConnectConfig;

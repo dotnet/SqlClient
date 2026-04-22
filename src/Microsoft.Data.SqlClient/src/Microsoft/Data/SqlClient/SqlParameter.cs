@@ -95,9 +95,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentNull(nameof(destinationType));
                 }
-                if ((typeof(InstanceDescriptor) == destinationType) && (value is SqlParameter))
+                if (destinationType == typeof(InstanceDescriptor) && value is SqlParameter parameter)
                 {
-                    return ConvertToInstanceDescriptor(value as SqlParameter);
+                    return ConvertToInstanceDescriptor(parameter);
                 }
                 return base.ConvertTo(context, culture, value, destinationType);
             }
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionDatabase
         {
             get => _xmlSchemaCollection?.Database ?? string.Empty;
@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionOwningSchema
         {
             get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
+        [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionName
         {
             get => _xmlSchemaCollection?.Name ?? string.Empty;
@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
         [
         DefaultValue(false),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public bool ForceColumnEncryption
         {
@@ -479,7 +479,7 @@ namespace Microsoft.Data.SqlClient
         public override void ResetDbType() => ResetSqlDbType();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override string ParameterName
         {
             get => _parameterName ?? string.Empty;
@@ -540,7 +540,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
         [
         DefaultValue((byte)0),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public new byte Precision
         {
@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
         [
         DefaultValue((byte)0),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
+        ResCategory(nameof(Strings.DataCategory_Data))
         ]
         public new byte Scale
         {
@@ -600,7 +600,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         DbProviderSpecificTypeProperty(true)
         ]
         public SqlDbType SqlDbType
@@ -720,7 +720,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         TypeConverter(typeof(StringConverter)),
         ]
         public override object Value
@@ -790,7 +790,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
+        ResCategory(nameof(Strings.DataCategory_Data)),
         ]
         public override ParameterDirection Direction
         {
@@ -837,7 +837,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override int Size
         {
             get
@@ -880,7 +880,7 @@ namespace Microsoft.Data.SqlClient
         private bool ShouldSerializeSize() => _size != 0;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
         public override string SourceColumn
         {
             get => _sourceColumn ?? string.Empty;
@@ -888,9 +888,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
-        [ResCategory("DataCategory_Update")]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
 #if NET
-        [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
+        [ResDescription(nameof(Strings.SqlParameter_SourceColumnNullMapping))]
 #endif
         public override bool SourceColumnNullMapping
         {
@@ -899,11 +899,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
-        [ResCategory("Data")]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         public override string ToString() => ParameterName;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
         public override DataRowVersion SourceVersion
         {
             get
@@ -1050,6 +1050,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="rawParameterName"></param>
+        // @TODO: This is only used in SqlCommand, and literally just adds a '@' at the beginning. This belongs in SqlCommand, without the append logic.
         internal static void AppendPrefixedParameterName(StringBuilder builder, string rawParameterName)
         {
             if (!string.IsNullOrEmpty(rawParameterName))
@@ -1260,7 +1261,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey.Length > 0)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {
@@ -1950,9 +1951,9 @@ namespace Microsoft.Data.SqlClient
                     _value = _value.ToString();
                     valueType = typeof(string);
                 }
-                else if (valueType == typeof(char[]))
+                else if (_value is char[] chars)
                 {
-                    _value = new string((char[])_value);
+                    _value = new string(chars);
                     valueType = typeof(string);
                 }
                 return MetaType.GetMetaTypeFromType(valueType);
@@ -2250,7 +2251,13 @@ namespace Microsoft.Data.SqlClient
         {
             if (value is decimal decimalValue)
             {
-                return (byte)((decimal.GetBits(decimalValue)[3] & 0x00ff0000) >> 0x10);
+#if NET
+                Span<int> decimalBits = stackalloc int[4];
+                decimal.GetBits(decimalValue, decimalBits);
+#else
+                int[] decimalBits = decimal.GetBits(decimalValue);
+#endif
+                return (byte)((decimalBits[3] & 0x00ff0000) >> 0x10);
             }
             return 0;
         }
@@ -2383,11 +2390,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {
-                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                            throw ADP.InvalidJsonStringForVector((string)value, ex);
                         }
                     }
                     else if (
@@ -2507,7 +2514,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 string errorMsg = isUdtTypeName ? Strings.SQL_UDTTypeName : Strings.SQL_TypeName;
-                return MultipartIdentifier.ParseMultipartIdentifier(typeName, "[\"", "]\"", '.', 3, true, errorMsg, true);
+                return MultipartIdentifier.ParseMultipartIdentifier(typeName, errorMsg, true, limit: 3);
             }
             catch (ArgumentException)
             {

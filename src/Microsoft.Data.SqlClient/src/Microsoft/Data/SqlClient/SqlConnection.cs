@@ -20,9 +20,11 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Internal;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
@@ -161,20 +163,20 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl))]
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled))]
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.TCE_SqlConnection_TrustedColumnMasterKeyPaths))]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
@@ -509,8 +511,8 @@ namespace Microsoft.Data.SqlClient
         //  connect the parser to the object.
         //  if there is no parser at this time we need to connect it after creation.
         [DefaultValue(false)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_StatisticsEnabled)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_StatisticsEnabled))]
         public bool StatisticsEnabled
         {
             get
@@ -645,8 +647,8 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore 618
         [SettingsBindableAttribute(true)]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionString)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_ConnectionString))]
         public override string ConnectionString
         {
             get
@@ -713,8 +715,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResDescription(nameof(Strings.SqlConnection_ConnectionTimeout))]
+        [ResCategory(nameof(Strings.SqlConnection_DataSource))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override int ConnectionTimeout
         {
@@ -727,7 +729,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
+        [ResDescription(nameof(Strings.SqlConnection_ConnectionTimeout))]
         public int CommandTimeout
         {
             get
@@ -741,7 +743,7 @@ namespace Microsoft.Data.SqlClient
         // AccessToken: To be used for token based authentication
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_AccessToken)]
+        [ResDescription(nameof(Strings.SqlConnection_AccessToken))]
         public string AccessToken
         {
             get
@@ -794,19 +796,26 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SspiContextProvider SspiContextProvider
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SspiContextProvider/*' />
+        public SspiContextProvider SspiContextProvider
         {
             get { return _sspiContextProvider; }
             set
             {
+                // If a connection is connecting or is ever opened, SspiContextProvider cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
+                }
+
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
-        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResDescription(nameof(Strings.SqlConnection_Database))]
+        [ResCategory(nameof(Strings.SqlConnection_DataSource))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override string Database
         {
@@ -815,10 +824,8 @@ namespace Microsoft.Data.SqlClient
             // just return what the connection string had.
             get
             {
-                SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
-
-                if (innerConnection != null)
+                if (InnerConnection is SqlConnectionInternal innerConnection)
                 {
                     result = innerConnection.CurrentDatabase;
                 }
@@ -827,6 +834,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                     result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
+
                 return result;
             }
         }
@@ -839,7 +847,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                SqlConnectionInternal innerConnection = InnerConnection as SqlConnectionInternal;
                 string result;
 
                 if (innerConnection != null)
@@ -863,7 +871,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                SqlConnectionInternal innerConnection = InnerConnection as SqlConnectionInternal;
                 string result;
 
                 if (innerConnection != null)
@@ -882,16 +890,14 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*' />
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_DataSource)]
-        [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [ResDescription(nameof(Strings.SqlConnection_DataSource))]
+        [ResCategory(nameof(Strings.SqlConnection_DataSource))]
         public override string DataSource
         {
             get
             {
-                SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
-
-                if (innerConnection != null)
+                if (InnerConnection is SqlConnectionInternal innerConnection)
                 {
                     result = innerConnection.CurrentDataSource;
                 }
@@ -900,13 +906,14 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                     result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
+
                 return result;
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/PacketSize/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_PacketSize)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_PacketSize))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int PacketSize
         {
@@ -917,7 +924,7 @@ namespace Microsoft.Data.SqlClient
             {
                 int result;
 
-                if (InnerConnection is SqlInternalConnectionTds innerConnection)
+                if (InnerConnection is SqlConnectionInternal innerConnection)
                 {
                     result = innerConnection.PacketSize;
                 }
@@ -932,14 +939,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientConnectionId/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ClientConnectionId)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_ClientConnectionId))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Guid ClientConnectionId
         {
             get
             {
-                SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                SqlConnectionInternal innerConnection = InnerConnection as SqlConnectionInternal;
 
                 if (innerConnection != null)
                 {
@@ -962,7 +969,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerVersion)]
+        [ResDescription(nameof(Strings.SqlConnection_ServerVersion))]
         public override string ServerVersion
         {
             get => GetOpenTdsConnection().ServerVersion;
@@ -970,7 +977,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
         [Browsable(false)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ServerProcessId)]
+        [ResDescription(nameof(Strings.SqlConnection_ServerProcessId))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ServerProcessId
         {
@@ -986,7 +993,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
         [Browsable(false)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnection_State)]
+        [ResDescription(nameof(Strings.DbConnection_State))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override ConnectionState State
         {
@@ -1008,8 +1015,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/WorkstationId/*' />
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_WorkstationId)]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
+        [ResDescription(nameof(Strings.SqlConnection_WorkstationId))]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string WorkstationId
         {
@@ -1030,7 +1037,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Credential/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_Credential)]
+        [ResDescription(nameof(Strings.SqlConnection_Credential))]
         public SqlCredential Credential
         {
             get
@@ -1195,8 +1202,8 @@ namespace Microsoft.Data.SqlClient
         //
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_InfoMessage)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnection_InfoMessage)]
+        [ResCategoryAttribute(nameof(Strings.DataCategory_InfoMessage))]
+        [ResDescription(nameof(Strings.DbConnection_InfoMessage))]
 #if NET
         public event SqlInfoMessageEventHandler InfoMessage;
 #else
@@ -1270,7 +1277,7 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            using (TryEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
+            using (SqlClientEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
             {
                 DbTransaction transaction = BeginTransaction(isolationLevel);
 
@@ -1289,7 +1296,7 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginTransaction | API | Object Id {0}, Iso {1}, Transaction Name '{2}'", ObjectID, (int)iso, transactionName)))
+            using (SqlClientEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginTransaction | API | Object Id {0}, Iso {1}, Transaction Name '{2}'", ObjectID, (int)iso, transactionName)))
             {
                 try
                 {
@@ -1376,7 +1383,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         public override void Close()
         {
-            using (TryEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Close | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, ClientConnectionId);
 
@@ -1472,7 +1479,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         protected override DbCommand CreateDbCommand()
         {
-            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
+            using (SqlClientEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
                 DbCommand command = SqlClientFactory.Instance.CreateCommand();
                 command.Connection = this;
@@ -1503,7 +1510,7 @@ namespace Microsoft.Data.SqlClient
                 // For non-pooled connections we need to make sure that if the SqlConnection was not closed,
                 // then we release the GCHandle on the stateObject to allow it to be GCed
                 // For pooled connections, we will rely on the pool reclaiming the connection
-                var innerConnection = (InnerConnection as SqlInternalConnectionTds);
+                var innerConnection = (InnerConnection as SqlConnectionInternal);
                 if ((innerConnection != null) && (!innerConnection.ConnectionOptions.Pooling))
                 {
                     var parser = innerConnection.Parser;
@@ -1598,7 +1605,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
-            using (TryEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
+            using (SqlClientEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
 
@@ -1743,7 +1750,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_connectRetryCount > 0)
                 {
-                    SqlInternalConnectionTds tdsConn = GetOpenTdsConnection();
+                    SqlConnectionInternal tdsConn = GetOpenTdsConnection();
                     if (tdsConn._sessionRecoveryAcknowledged)
                     {
                         TdsParserStateObject stateObj = tdsConn.Parser._physicalStateObj;
@@ -1844,7 +1851,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return;
             }
-            SqlInternalConnectionTds tdsConn = InnerConnection as SqlInternalConnectionTds;
+            SqlConnectionInternal tdsConn = InnerConnection as SqlConnectionInternal;
             if (tdsConn != null)
             {
                 tdsConn.ValidateConnectionForExecute(null);
@@ -1930,8 +1937,10 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
                     {
                         result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete,
+                            continuationAction: static (task, state) => s_openAsyncComplete(task, state),
                             state: operationId, // connection is passed in TaskCompletionSource async state
+                            cancellationToken: CancellationToken.None, // we want the continuation task to run even if the original operation was cancelled
+                            continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
                             scheduler: TaskScheduler.Default
                         );
                     }
@@ -2150,7 +2159,9 @@ namespace Microsoft.Data.SqlClient
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                #pragma warning disable 0618 // Use of obsolete member 'SqlAuthenticationMethod.ActiveDirectoryPassword'
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                #pragma warning restore 0618 // Use of obsolete member 'SqlAuthenticationMethod.ActiveDirectoryPassword'
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
@@ -2213,7 +2224,7 @@ namespace Microsoft.Data.SqlClient
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
+            var tdsInnerConnection = (SqlConnectionInternal)InnerConnection;
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
 
@@ -2325,7 +2336,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnectionTds tdsConnection = GetOpenTdsConnection();
+                SqlConnectionInternal tdsConnection = GetOpenTdsConnection();
                 return tdsConnection.Parser;
             }
         }
@@ -2426,7 +2437,7 @@ namespace Microsoft.Data.SqlClient
                     return; // execution will wait for this task later
                 }
             }
-            SqlInternalConnectionTds innerConnection = GetOpenTdsConnection(method);
+            SqlConnectionInternal innerConnection = GetOpenTdsConnection(method);
             innerConnection.ValidateConnectionForExecute(command);
         }
 
@@ -2528,9 +2539,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlInternalConnectionTds GetOpenTdsConnection()
+        internal SqlConnectionInternal GetOpenTdsConnection()
         {
-            SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+            SqlConnectionInternal innerConnection = InnerConnection as SqlConnectionInternal;
             if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
@@ -2538,9 +2549,9 @@ namespace Microsoft.Data.SqlClient
             return innerConnection;
         }
 
-        internal SqlInternalConnectionTds GetOpenTdsConnection(string method)
+        internal SqlConnectionInternal GetOpenTdsConnection(string method)
         {
-            SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
+            SqlConnectionInternal innerConnection = InnerConnection as SqlConnectionInternal;
             if (innerConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, InnerConnection.State);
@@ -2589,7 +2600,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
+            using (SqlClientEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2630,7 +2641,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
+            using (SqlClientEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2694,10 +2705,17 @@ namespace Microsoft.Data.SqlClient
             // note: This is the only case where we directly construct the internal connection, passing in the new password.
             // Normally we would simply create a regular connection and open it, but there is no other way to pass the
             // new password down to the constructor. This would have an unwanted impact on the connection pool.
-            SqlInternalConnectionTds con = null;
+            SqlConnectionInternal con = null;
             try
             {
-                con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false);
+                con = new SqlConnectionInternal(
+                    identity: null,
+                    connectionOptions,
+                    credential,
+                    providerInfo: null,
+                    newPassword,
+                    newSecurePassword,
+                    redirectedUserInstance: false);
             }
             finally
             {
@@ -2908,7 +2926,7 @@ namespace Microsoft.Data.SqlClient
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {
-                throw new InvalidOperationException(o.GetType() + ": invalid Size");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_InvalidUdtSize, o.GetType().FullName));
             }
 
             byte[] retval;

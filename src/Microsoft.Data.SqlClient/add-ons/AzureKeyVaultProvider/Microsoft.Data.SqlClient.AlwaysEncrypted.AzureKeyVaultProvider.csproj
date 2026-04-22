@@ -1,47 +1,110 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+
+    AKV Provider versioning information found in our sibling file AkvProviderVersions.props
+    is imported via tools/props/Versions.props.
+  -->
+
+  <!-- Target Config -->
   <PropertyGroup>
-    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
-    <AddOnName>AzureKeyVaultProvider</AddOnName>
-    <ProjectGuid>{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}</ProjectGuid>
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'!='.NETFramework'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">netfx</TargetGroup>
-    <Configurations>Debug;Release;</Configurations>
-    <Platforms>AnyCPU;x86;x64</Platforms>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AddOnName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AddOnName)</OutputPath>
-    <DocumentationFile>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName).xml</DocumentationFile>
-    <!--BuildProjectReferences should be kept false to avoid test issues-->
-    <BuildProjectReferences>false</BuildProjectReferences>
+    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
+
+    <!--
+      We pin the AssemblyVersion of our package to the default major version
+      number, with all remaining parts set to 0.
+    -->
+    <AssemblyVersion>$(AkvDefaultMajorVersion).0.0.0</AssemblyVersion>
+
+    <AssemblyFileVersion>$(AkvAssemblyFileVersion)</AssemblyFileVersion>
+    <FileVersion>$(AkvAssemblyFileVersion)</FileVersion>
+    <Version>$(AkvPackageVersion)</Version>
+  </PropertyGroup>
+
+  <!-- Build Output Config -->
+  <PropertyGroup>
+    <!-- Use a shorter directory name to avoid exceeding the Windows MAX_PATH (260 char) limit.
+         The full AssemblyName is 63 chars and appears in both the directory and generated filenames. -->
+    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/AzureKeyVaultProvider</IntermediateOutputPath>
+    <OutputPath>$(Artifacts)/bin/$(Configuration)/AzureKeyVaultProvider</OutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageVersion>$(AkvPackageVersion)</PackageVersion>
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Title>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</Title>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>
+      Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
+
+      This library enables .NET applications to use Microsoft Azure Key Vault with Always Encrypted
+      in Microsoft Azure SQL Database and Microsoft SQL Server. The library includes the column
+      master key store provider that allows client applications to access data when a column master
+      key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please
+      refer to: https://aka.ms/AlwaysEncrypted.
+
+      Use this library only with the Microsoft.Data.SqlClient
+      (https://www.nuget.org/packages/Microsoft.Data.SqlClient) client driver.
+    </Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</PackageTags>
+    <PackageReleaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <IsTrimmable Condition="'$(TargetGroup)'=='netcoreapp'">true</IsTrimmable>
-    <IsAotCompatible Condition="'$(TargetGroup)'=='netcoreapp'">true</IsAotCompatible>
-  </PropertyGroup>
-  <!--Generating Strong Name-->
-  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)'=='Official'">
-    <SignAssembly>true</SignAssembly>
-    <KeyFile>$(SigningKeyPath)</KeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
-    <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
+
+  <!-- References ====================================================== -->
+
+  <!-- SqlClient Reference -->
   <ItemGroup>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND !$(ReferenceType.Contains('Package'))" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND !$(ReferenceType.Contains('Package'))" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
+
+  <!-- Logging Reference -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+  </ItemGroup>
+
+  <!-- Other dependencies -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
-    <PackageReference Include="System.Text.Encodings.Web" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
+
 </Project>

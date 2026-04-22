@@ -40,6 +40,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (DbDataReader reader = srcCmd.ExecuteReader())
                         {
                             IDictionary stats;
+                            long expectedIduCount = DataTestUtility.IsAzureSynapse || DataTestUtility.IsAtLeastSQL2017() ? 1 : 0;
+                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 12;
+                            long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 14;
+                            long expectedTransactions = DataTestUtility.IsAzureSynapse || DataTestUtility.IsAtLeastSQL2017() ? 1 : 0;
                             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                             {
                                 bulkcopy.DestinationTableName = dstTable;
@@ -60,12 +64,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersReceived"], "Unexpected BuffersReceived value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersSent"], "Unexpected BuffersSent value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)1, stats["IduCount"], "Unexpected IduCount value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)7, stats["SelectCount"], "Unexpected SelectCount value.");
+                            DataTestUtility.AssertEqualsWithDescription(expectedIduCount, stats["IduCount"], "Unexpected IduCount value.");
+                            DataTestUtility.AssertEqualsWithDescription(expectedSelectCount, stats["SelectCount"], "Unexpected SelectCount value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["ServerRoundtrips"], "Unexpected ServerRoundtrips value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)9, stats["SelectRows"], "Unexpected SelectRows value.");
+                            DataTestUtility.AssertEqualsWithDescription(expectedSelectRows, stats["SelectRows"], "Unexpected SelectRows value.");
                             DataTestUtility.AssertEqualsWithDescription((long)2, stats["SumResultSets"], "Unexpected SumResultSets value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)1, stats["Transactions"], "Unexpected Transactions value.");
+                            DataTestUtility.AssertEqualsWithDescription(expectedTransactions, stats["Transactions"], "Unexpected Transactions value.");
                         }
                     }
                 }

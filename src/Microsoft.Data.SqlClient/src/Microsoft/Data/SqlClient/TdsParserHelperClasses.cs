@@ -9,7 +9,6 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
 using System.Text;
@@ -90,11 +89,18 @@ namespace Microsoft.Data.SqlClient
         internal ushort Port { get; private set; }
         internal string ServerName { get; private set; }
 
-        internal RoutingInfo(byte protocol, ushort port, string servername)
+        /// <summary>
+        /// The DatabaseName property is only used when routing via an EnhancedRouting ENVCHANGE token.
+        /// It is not used when routing via the normal Routing ENVCHANGE token.
+        /// </summary>
+        internal string DatabaseName { get; private set; }
+
+        internal RoutingInfo(byte protocol, ushort port, string serverName, string databaseName = null)
         {
             Protocol = protocol;
             Port = port;
-            ServerName = servername;
+            ServerName = serverName;
+            DatabaseName = databaseName;
         }
     }
 
@@ -128,22 +134,52 @@ namespace Microsoft.Data.SqlClient
         internal uint tdsVersion;
     }
 
+    #nullable enable
+
     internal sealed class SqlFedAuthInfo
     {
-        internal string spn;
-        internal string stsurl;
+        internal SqlFedAuthInfo(string spn, string stsurl)
+        {
+            Spn = spn;
+            StsUrl = stsurl;
+        }
+
+        internal string Spn { get; }
+        internal string StsUrl { get; }
+
         public override string ToString()
         {
-            return $"STSURL: {stsurl}, SPN: {spn}";
+            return $"SPN: {Spn}, STSURL: {StsUrl}";
         }
     }
 
     internal sealed class SqlFedAuthToken
     {
-        internal uint dataLen;
-        internal byte[] accessToken;
-        internal long expirationFileTime;
+        internal SqlFedAuthToken(
+            byte[] accessToken,
+            long expirationFileTime)
+        {
+            AccessToken = accessToken;
+            DataLen = (uint)AccessToken.Length;
+            ExpirationFileTime = expirationFileTime;
+        }
+
+        /// <summary>
+        /// Convert from a SqlAuthenticationToken.
+        /// </summary>
+        internal SqlFedAuthToken(SqlAuthenticationToken token)
+        {
+            AccessToken = Encoding.Unicode.GetBytes(token.AccessToken);
+            DataLen = (uint)AccessToken.Length;
+            ExpirationFileTime = token.ExpiresOn.ToFileTime();
+        }
+
+        internal byte[] AccessToken { get; }
+        internal uint DataLen { get; }
+        internal long ExpirationFileTime { get; }
     }
+
+    #nullable disable
 
     internal sealed class _SqlMetaData : SqlMetaDataPriv
     {
@@ -323,6 +359,7 @@ namespace Microsoft.Data.SqlClient
             _visibleColumnMap = original._visibleColumnMap;
             dbColumnSchema = original.dbColumnSchema;
             schemaTable = original.schemaTable;
+            cekTable = original.cekTable;
 
             if (original._metaDataArray == null)
             {
@@ -465,7 +502,7 @@ namespace Microsoft.Data.SqlClient
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
-            
+
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
                 result._altMetaDataSetArray.Add(set.Clone());
@@ -548,6 +585,10 @@ namespace Microsoft.Data.SqlClient
                 xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
                 xmlSchemaCollection.CopyFrom(original.xmlSchemaCollection);
             }
+
+            this.isEncrypted = original.isEncrypted;
+            this.baseTI = original.baseTI;
+            this.cipherMD = original.cipherMD;
         }
     }
 
@@ -656,6 +697,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlReturnValue : SqlMetaDataPriv
     {
+        // @TODO: Make auto properties (and rename to match)
         internal string parameter;
         internal readonly SqlBuffer value;
 #if NETFRAMEWORK
@@ -735,7 +777,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_multipartName != null)
             {
-                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
+                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];
                 _catalogName = parts[1];
                 _schemaName = parts[2];

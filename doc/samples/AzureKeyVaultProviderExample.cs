@@ -1,3 +1,8 @@
+/**
+ * TODO: This sample file should be deleted as the AKV Provider Ctor API is no longer supported with supported versions of AKV provider and MDS.
+ * Depends on: Delete documentation and sample reference in MS Docs first: https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/azure-key-vault-example?view=sql-server-ver17#legacy-callback-implementation-design-example-with-v20
+ *
+
 using System;
 //<Snippet1>
 using System.Collections.Generic;
@@ -23,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Samples
         public static void Main(string[] args)
         {
             // Initialize AKV provider
-            SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AzureActiveDirectoryAuthenticationCallback);
+            SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider = new(AzureActiveDirectoryAuthenticationCallback);
 
             // Register AKV provider
             SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
@@ -258,3 +263,4 @@ namespace Microsoft.Data.SqlClient.Samples
     }
 }
 //</Snippet1>
+*/

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+ #if _WINDOWS
+
 using System;
 using System.Buffers;
 using System.Diagnostics;
@@ -12,9 +14,6 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
-using System.Security;
 using Interop.Windows;
 #endif
 
@@ -64,8 +63,6 @@ namespace Microsoft.Data.SqlClient
             s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
         
         #if NETFRAMEWORK
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal static uint SniAddProvider(SNIHandle pConn,
             Provider providerEnum,
             AuthProviderInfo authInfo)
@@ -455,3 +452,5 @@ namespace Microsoft.Data.SqlClient
         #endregion
     }
 }
+
+#endif

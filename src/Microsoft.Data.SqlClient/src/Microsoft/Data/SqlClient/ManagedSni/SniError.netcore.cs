@@ -27,6 +27,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public readonly uint lineNumber;
         public readonly Exception exception;
 
+        public static SniError Success { get; } = new(SniProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty);
+
         public SniError(SniProviders provider, int nativeError, uint sniErrorCode, string errorMessage)
         {
             lineNumber = 0;

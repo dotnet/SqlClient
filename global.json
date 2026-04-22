@@ -1,0 +1,21 @@
+{
+  "sdk":
+  {
+    // We currently require the .NET 10 SDK to build and test the project.
+    //
+    // GOTCHA: Our CI infrastructure for Windows uses VS 2022 which comes with MSBuild 17.x.  The
+    // .NET 10 SDK versions in the 10.0.2xx series require MSBuild 18.x, so we specify the most
+    // recent 10.0.1xx series release which is compatible with MSBuild 17.x.
+    //
+    "version": "10.0.106",
+
+    // We cannot allow any roll forward due to the above MSBuild compatibility issues.
+    "rollForward": "disable",
+
+    // Do not allow pre-release versions.
+    //
+    // Set this to true if you are testing the viability of pre-release SDK
+    // versions in your local workspace.
+    "allowPrerelease": false
+  }
+}

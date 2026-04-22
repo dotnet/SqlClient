@@ -42,22 +42,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Computes SHA256 hash of a given input
-        /// </summary>
-        /// <param name="input">input byte array which needs to be hashed</param>
-        /// <returns>Returns SHA256 hash in a string form</returns>
-        internal static string GetSHA256Hash(byte[] input)
-        {
-            Debug.Assert(input != null);
-
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] hashValue = sha256.ComputeHash(input);
-                return GetHexString(hashValue);
-            }
-        }
-
-        /// <summary>
         /// Generates cryptographically random bytes
         /// </summary>
         /// <param name="randomBytes">No of cryptographically random bytes to be generated</param>
@@ -100,34 +84,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Gets hex representation of byte array.
-        /// <param name="input">input byte array</param>
-        /// </summary>
-        internal static string GetHexString(byte[] input)
-        {
-            Debug.Assert(input != null);
-
-            StringBuilder str = new();
-            foreach (byte b in input)
-            {
-                str.AppendFormat(b.ToString(@"X2"));
-            }
-
-            return str.ToString();
-        }
-
-        /// <summary>
-        /// Returns the caller's function name in the format of [ClassName].[FunctionName]
-        /// </summary>
-        internal static string GetCurrentFunctionName()
-        {
-            StackTrace stackTrace = new StackTrace();
-            StackFrame stackFrame = stackTrace.GetFrame(1);
-            MethodBase methodBase = stackFrame.GetMethod();
-            return string.Format(@"{0}.{1}", methodBase.DeclaringType.Name, methodBase.Name);
         }
 
         /// <summary>
@@ -262,6 +218,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection, SqlCommand command)
         {
+            Debug.Assert(connection is not null, "Connection should not be null.");
             Debug.Assert(sqlTceCipherInfoEntry is not null, "sqlTceCipherInfoEntry should not be null in DecryptSymmetricKey.");
             Debug.Assert(sqlTceCipherInfoEntry.ColumnEncryptionKeyValues is not null,
                     "sqlTceCipherInfoEntry.ColumnEncryptionKeyValues should not be null in DecryptSymmetricKey.");
