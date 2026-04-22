@@ -6,4 +6,3 @@
 
 variables:
   - template: common-variables.yml@self
-  - template: mds-variables.yml@self
