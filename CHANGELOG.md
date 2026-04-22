@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Stable Release 7.0.1] - 2026-04-14
+## [Stable Release 7.0.1] - 2026-04-23
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.
 See the [full release notes](release-notes/7.0/7.0.1.md) for detailed descriptions.
