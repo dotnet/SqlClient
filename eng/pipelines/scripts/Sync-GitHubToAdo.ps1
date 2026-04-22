@@ -34,6 +34,10 @@
 .PARAMETER AccessToken
     The access token for ADO REST API and git push operations.
     Defaults to the SYSTEM_ACCESSTOKEN environment variable.
+
+.NOTES
+    This pipeline is intended to be run only in the internal ADO.Net project.
+    It must never be run in the Public project or triggered by changes in GitHub.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -71,8 +75,7 @@ $ErrorActionPreference = 'Stop'
 
 #region Validation
 if ([string]::IsNullOrWhiteSpace($AccessToken)) {
-    Write-Error "Access token is required. Set SYSTEM_ACCESSTOKEN or pass -AccessToken."
-    exit 1
+    throw "Access token is required. Set SYSTEM_ACCESSTOKEN or pass -AccessToken."
 }
 #endregion
 
@@ -104,7 +107,7 @@ function Invoke-AdoApi {
         $params['Body'] = ($Body | ConvertTo-Json -Depth 10)
     }
 
-    $response = Invoke-RestMethod @params -StatusCodeVariable 'statusCode' -ErrorAction Stop
+    $response = Invoke-RestMethod @params -ErrorAction Stop
     return $response
 }
 
@@ -164,7 +167,7 @@ if ($remoteExists) {
     git remote add github $GitHubRepoUrl
 }
 
-git fetch github $GitHubBranch --quiet
+git fetch github $GitHubBranch --verbose
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to fetch '$GitHubBranch' from GitHub."
     exit 1
@@ -172,6 +175,10 @@ if ($LASTEXITCODE -ne 0) {
 
 # Resolve the SHA of the fetched GitHub branch.
 $githubSha = git rev-parse "github/$GitHubBranch"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to resolve SHA for 'github/$GitHubBranch'."
+    exit 1
+}
 Write-Host "GitHub HEAD : $githubSha"
 
 # Check if the target branch exists and compare SHAs.
@@ -219,7 +226,7 @@ $commitSummary = if ($targetExists) {
     "_(target branch does not exist yet — initial sync)_"
 }
 
-# Normalize the ADO org URL (ensure trailing slash).
+# Normalize the ADO org URL (remove trailing slash for consistent URI construction).
 $AdoOrgUrl = $AdoOrgUrl.TrimEnd('/')
 
 # URL-encode the project name for REST API calls.
@@ -231,8 +238,10 @@ $apiBase = "$AdoOrgUrl/$encodedProject/_apis/git/repositories/$encodedRepo"
 Write-Host ""
 Write-Host "Checking for existing pull requests..."
 
-$searchUri = "$apiBase/pullrequests?searchCriteria.sourceRefName=refs/heads/$SyncBranchName" +
-             "&searchCriteria.targetRefName=refs/heads/$TargetBranch" +
+$encodedSyncBranch = [Uri]::EscapeDataString($SyncBranchName)
+$encodedTargetBranch = [Uri]::EscapeDataString($TargetBranch)
+$searchUri = "$apiBase/pullrequests?searchCriteria.sourceRefName=refs/heads/$encodedSyncBranch" +
+             "&searchCriteria.targetRefName=refs/heads/$encodedTargetBranch" +
              "&searchCriteria.status=active" +
              "&api-version=7.1"
 
@@ -258,7 +267,7 @@ if ($activePr) {
         comments = @(
             @{
                 parentCommentId = 0
-                content         = "## Sync Update`n`nPR updated by the GitHub sync pipeline on $(Get-Date -Format 'yyyy-MM-dd HH:mm UTC').`n`nNew commits from GitHub ``$GitHubBranch``:`n`n$commitSummary"
+                content         = "## Sync Update`n`nPR updated by the GitHub sync pipeline on $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')) UTC.`n`nNew commits from GitHub ``$GitHubBranch``:`n`n$commitSummary"
                 commentType     = 1  # Text
             }
         )
