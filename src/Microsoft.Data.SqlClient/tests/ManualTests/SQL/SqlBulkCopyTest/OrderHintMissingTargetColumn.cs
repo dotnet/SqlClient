@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                 string expectedErrorMsg = string.Format(
                                     SystemDataResourceManager.Instance.SQL_BulkLoadOrderHintInvalidColumn, nonexistentColumn);
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(
+                                DataTestUtility.AssertThrows<InvalidOperationException>(
                                     () => bulkcopy.WriteToServer(reader),
                                     exceptionMessage: expectedErrorMsg);
 
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                 expectedErrorMsg = string.Format(
                                     SystemDataResourceManager.Instance.SQL_BulkLoadOrderHintInvalidColumn, sourceColumn);
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(
+                                DataTestUtility.AssertThrows<InvalidOperationException>(
                                     () => bulkcopy.WriteToServer(reader),
                                     exceptionMessage: expectedErrorMsg);
                             }

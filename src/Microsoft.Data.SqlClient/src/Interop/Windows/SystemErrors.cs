@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if _WINDOWS
-
 namespace Interop.Windows
 {
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382.aspx
@@ -22,5 +20,3 @@ namespace Interop.Windows
         internal const int ERROR_MR_MID_NOT_FOUND = 317;
     }
 }
-
-#endif

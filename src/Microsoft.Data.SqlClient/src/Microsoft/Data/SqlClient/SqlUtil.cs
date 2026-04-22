@@ -830,9 +830,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception ConversionOverflow()
+        {
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_ConversionOverflowMessage));
+        }
+
         internal static Exception DateTimeOverflow()
         {
-            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_DateTimeOverflowMessage));
         }
 
         //
@@ -1926,9 +1931,8 @@ namespace Microsoft.Data.SqlClient
             Exception exceptionToInclude = e.InnerException != null ? e.InnerException : e;
             sqlErs.Add(new SqlError(infoNumber: 0, errorState: (byte)0x00, errorClass: (byte)TdsEnums.MIN_ERROR_CLASS, server: serverName, errorMessage: errorMessage, procedure: null, lineNumber: 0));
 
-            if (e is SqlException)
+            if (e is SqlException exThrown)
             {
-                SqlException exThrown = (SqlException)e;
                 SqlErrorCollection errorList = exThrown.Errors;
                 for (int i = 0; i < exThrown.Errors.Count; i++)
                 {
@@ -2284,6 +2288,10 @@ namespace Microsoft.Data.SqlClient
         internal static string ExRoutingDestination()
         {
             return StringsHelper.GetString(Strings.SQL_ExRoutingDestination);
+        }
+        internal static string NullString()
+        {
+            return StringsHelper.GetString(Strings.SqlMisc_NullString);
         }
     }
 
