@@ -732,13 +732,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentNull(nameof(destinationType));
                 }
-                if (typeof(InstanceDescriptor) == destinationType)
+                if (destinationType == typeof(InstanceDescriptor) && value is SqlConnectionStringBuilder obj)
                 {
-                    SqlConnectionStringBuilder obj = (value as SqlConnectionStringBuilder);
-                    if (obj is not null)
-                    {
-                        return ConvertToInstanceDescriptor(obj);
-                    }
+                    return ConvertToInstanceDescriptor(obj);
                 }
                 return base.ConvertTo(context, culture, value, destinationType);
             }

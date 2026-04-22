@@ -8651,36 +8651,18 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
-#if NETFRAMEWORK
-            char[] charData;
-            byte[] byteData = null;
-
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
-            if (encoding == null)
-            {
-                encoding = _defaultEncoding;
-            }
+            encoding ??= _defaultEncoding;
 
-            charData = s.ToCharArray(offset, numChars);
-
-            byteData = new byte[encoding.GetByteCount(charData, 0, charData.Length)];
-            encoding.GetBytes(charData, 0, charData.Length, byteData, 0);
-
-            return byteData;
-#else
             return encoding.GetBytes(s, offset, numChars);
-#endif
         }
 
         private Task WriteEncodingChar(string s, int numChars, int offset, Encoding encoding, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
-            if (encoding == null)
-            {
-                encoding = _defaultEncoding;
-            }
+            encoding ??= _defaultEncoding;
 
             // Optimization: if the entire string fits in the current buffer, then copy it directly
             int bytesLeft = stateObj._outBuff.Length - stateObj._outBytesUsed;
@@ -8692,23 +8674,14 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-#if NETFRAMEWORK
-                char[] charData = s.ToCharArray(offset, numChars);
-                byte[] byteData = encoding.GetBytes(charData, 0, numChars);
-                Debug.Assert(byteData != null, "no data from encoding");
-                return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
-#else
                 byte[] byteData = encoding.GetBytes(s, offset, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
-#endif
             }
         }
 
         internal int GetEncodingCharLength(string value, int numChars, int charOffset, Encoding encoding)
         {
-            // UNDONE: (PERF) this is an expensive way to get the length.  Also, aren't we
-            // UNDONE: (PERF) going through these steps twice when we write out a value?
             if (string.IsNullOrEmpty(value))
             {
                 return 0;
@@ -8726,9 +8699,7 @@ namespace Microsoft.Data.SqlClient
                 encoding = _defaultEncoding;
             }
 
-            char[] charData = value.ToCharArray(charOffset, numChars);
-
-            return encoding.GetByteCount(charData, 0, numChars);
+            return encoding.GetByteCount(value, charOffset, numChars);
         }
 
         //
@@ -9657,7 +9628,7 @@ namespace Microsoft.Data.SqlClient
                 checked
                 {
                     // NOTE: As part of TDS spec UserAgent feature extension should be the first feature extension in the list.
-                    if (LocalAppContextSwitches.EnableUserAgent && ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0))
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
                     {
                         length += WriteUserAgentFeatureRequest(userAgent, write);
                     }
@@ -10654,9 +10625,9 @@ namespace Microsoft.Data.SqlClient
 
                     if (isSqlVal)
                     {
-                        if (value is SqlString)
+                        if (value is SqlString sqlString)
                         {
-                            s = ((SqlString)value).Value;
+                            s = sqlString.Value;
                         }
                         else
                         {
@@ -11984,9 +11955,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case TdsEnums.SQLXMLTYPE:
                             // Value here could be string or XmlReader
-                            if (value is XmlReader)
+                            if (value is XmlReader xmlReader)
                             {
-                                value = MetaType.GetStringFromXml((XmlReader)value);
+                                value = MetaType.GetStringFromXml(xmlReader);
                             }
                             ccb = ((isSqlType) ? ((SqlString)value).Value.Length : ((string)value).Length) * 2;
                             break;
@@ -12458,9 +12429,9 @@ namespace Microsoft.Data.SqlClient
                             WriteInt(actualLength, stateObj);               // chunk length
                         }
 
-                        if (value is SqlBinary)
+                        if (value is SqlBinary sqlBinary)
                         {
-                            return stateObj.WriteByteArray(((SqlBinary)value).Value, actualLength, offset, canAccumulate: false);
+                            return stateObj.WriteByteArray(sqlBinary.Value, actualLength, offset, canAccumulate: false);
                         }
                         else
                         {
@@ -12527,9 +12498,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteInt(codePageByteSize, stateObj);               // chunk length
                     }
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlCharsEnc)
                     {
-                        string sch = new string(((SqlChars)value).Value);
+                        string sch = new string(sqlCharsEnc.Value);
 
                         return WriteEncodingChar(sch, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                     }
@@ -12573,9 +12544,9 @@ namespace Microsoft.Data.SqlClient
                         actualLength >>= 1;
                     }
 
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlCharsArr)
                     {
-                        return WriteCharArray(((SqlChars)value).Value, actualLength, offset, stateObj, canAccumulate: false);
+                        return WriteCharArray(sqlCharsArr.Value, actualLength, offset, stateObj, canAccumulate: false);
                     }
                     else
                     {
@@ -13623,9 +13594,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         byte[] b = new byte[actualLength];
 
-                        if (value is SqlBinary)
+                        if (value is SqlBinary sqlBin)
                         {
-                            Buffer.BlockCopy(((SqlBinary)value).Value, offset, b, 0, actualLength);
+                            Buffer.BlockCopy(sqlBin.Value, offset, b, 0, actualLength);
                         }
                         else
                         {
@@ -13676,9 +13647,9 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlChSer)
                     {
-                        String sch = new String(((SqlChars)value).Value);
+                        String sch = new String(sqlChSer.Value);
                         return SerializeEncodingChar(sch, actualLength, offset, _defaultEncoding);
                     }
                     else
@@ -13699,9 +13670,9 @@ namespace Microsoft.Data.SqlClient
                         actualLength >>= 1;
                     }
 
-                    if (value is SqlChars)
+                    if (value is SqlChars sqlChArr)
                     {
-                        return SerializeCharArray(((SqlChars)value).Value, actualLength, offset);
+                        return SerializeCharArray(sqlChArr.Value, actualLength, offset);
                     }
                     else
                     {

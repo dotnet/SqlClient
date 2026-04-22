@@ -796,9 +796,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     // If null, then this was called from SqlDependencyProcessDispatcher, we ignore appDomainKeyHash.
                     lock (_appDomainKeyHash)
                     {
-                        if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                        if (_appDomainKeyHash.TryGetValue(appDomainKey, out int value))
                         { // Do nothing if AppDomain did not call Start!
-                            int value = _appDomainKeyHash[appDomainKey];
 
                             Debug.Assert(value > 0, "Unexpected count for appDomainKey");
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer.Stop|DEP> _appDomainKeyHash contained AppDomainKey: '{0}', pre-decrement Count: '{1}'.", appDomainKey, value);

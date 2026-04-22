@@ -26,6 +26,25 @@
     </BuildNumberArgument>
 
     <!--
+      BuildSuffix
+      Aplies to:      BuildMds*, PackMds
+      Description:    Suffix to add at the end of the package version to indicate the generated
+                      version is a pre-release.
+                      For local developer builds, this does not need to be set. If a specific
+                      package version is needed, specify PackageVersionMds. Otherwise, the
+                      generated package version will eg, 1.2.3.dev.
+                      For automated builds, this should only be specified on pre-release builds, ie
+                      PR/CI pipeline runs. For official, production-ready builds, omit this field
+                      and include a BuildNumber.
+      Default value:  [blank]
+      Example:        prbuild
+    -->
+    <BuildSuffix Condition="'$(BuildSuffix)' == ''" />
+    <BuildSuffixArgument Condition="'$(BuildSuffix)' != ''">
+      -p:BuildSuffix=$(BuildSuffix)
+    </BuildSuffixArgument>
+
+    <!--
       Configuration
       Applies to:     All targets
       Description:    Which build configuration to build
@@ -55,6 +74,27 @@
       Example:        C:\nuget\nuget.exe
     -->
     <NugetPath Condition="'$(NugetPath)' == ''">nuget</NugetPath>
+
+    <!--
+      PackBuild
+      Applies to:     PackMds
+      Description:    Whether the PackMds target should run BuildMds before packing. If true,
+                      BuildMds will be called as a dependency of PackMds. If false, it will not.
+                      For most developers, building immediately before packing is the norm, and
+                      this functionality is added for convenience. However, for official builds,
+                      binaries are signed between building and packing, so building immediately
+                      before packing would clobber the signed binaries.
+      Default value:  true
+      Allowed values: (true|false)
+    -->
+    <!--
+      @TODO: This is kinda hacky, ideally we can pack via dotnet pack, which will handle building,
+        and can thus be switched off by passing -no-build. However, we're not there because we need
+        to build multiple projects before packaging, and thus need to use nuget. So, until then we
+        will switch off dependency building dynamically building the target dependencies
+    -->
+    <PackBuild Condition="'$(PackBuild)' == ''">true</PackBuild>
+    <PackMdsDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildMds</PackMdsDependsOn>
 
     <!--
       PackageVersionAbstractions
@@ -291,7 +331,8 @@
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
-        $(PacakgeVersionMdsArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionMdsArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -316,7 +357,8 @@
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
-        $(PacakgeVersionMdsArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionMdsArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -341,6 +383,7 @@
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
+        $(BuildSuffixArgument)
         $(PackageVersionMdsArgument)
 
         <!-- Reference Type Arguments -->
@@ -367,6 +410,7 @@
 
         <!-- Versioning Arguments -->
         $(BuildNumberArgument)
+        $(BuildSuffixArgument)
         $(PackageVersionMdsArgument)
 
         <!-- Reference Type Arguments -->
@@ -388,13 +432,11 @@
     automatically build before packaging. Instead, we rely on target dependency to handle building
     the same binaries that will be packaged.
   -->
-  <Target Name="PackMds" DependsOnTargets="BuildMds">
+  <Target Name="PackMds" DependsOnTargets="$(PackMdsDependsOn)">
     <Error Text="PackageVersionAbstractions must be set!"
            Condition="'$(PackageVersionAbstractions)' == ''" />
     <Error Text="PackageVersionLogging must be set!"
            Condition="'$(PackageVersionLogging)' == ''" />
-    <Error Text="PackageVersionMds must be set !"
-           Condition="'$(PackageVersionMds)' == ''" />
 
     <PropertyGroup>
       <GitCommand>
@@ -408,13 +450,37 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
     </Exec>
 
+    <!-- This is a bit hacky, and can be (@TODO:) removed once packaging is done w/o a nuspec from dotnet -->
     <PropertyGroup>
+      <GetMdsPackageVersionCommand>
+        "$(DotnetPath)dotnet" msbuild "$(MdsProjectPath)"
+        -nologo
+        -verbosity:quiet
+        -getProperty:MdsPackageVersion
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionMdsArgument)
+      </GetMdsPackageVersionCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <GetMdsPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetMdsPackageVersionCommand), "\s+", " "))</GetMdsPackageVersionCommand>
+    </PropertyGroup>
+    <Message Text=">>> Evaluating MDS package version via command: $(GetMdsPackageVersionCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(GetMdsPackageVersionCommand)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_EvaluatedMdsPackageVersion" />
+    </Exec>
+    <Error Text="Failed to evaluate MdsPackageVersion for PackMds."
+           Condition="'$(_EvaluatedMdsPackageVersion)' == ''" />
+
+    <PropertyGroup>
+      <_EvaluatedMdsPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(_EvaluatedMdsPackageVersion), "\s", ""))</_EvaluatedMdsPackageVersion>
       <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
       <NuGetCommand>
         "$(NugetPath)" pack "$(MdsNuspecPath)"
         -Symbols
         -SymbolPackageFormat snupkg
-        -Version "$(PackageVersionMds)"
+        -Version "$(_EvaluatedMdsPackageVersion)"
         -OutputDirectory "$(MdsArtifactRoot)/$(ReferenceType)-$(Configuration)"
         -properties "COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(PackageVersionAbstractions);LoggingPackageVersion=$(PackageVersionLogging)"
       </NuGetCommand>

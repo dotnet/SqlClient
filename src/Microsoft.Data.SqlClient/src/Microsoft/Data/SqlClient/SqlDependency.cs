@@ -539,7 +539,7 @@ namespace Microsoft.Data.SqlClient
         private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer serializer, MemoryStream stream)
         {
             object refResult = serializer.ReadObject(stream);
-            var result = RemotingServices.Unmarshal((refResult as SqlClientObjRef).GetObjRef());
+            var result = RemotingServices.Unmarshal(((SqlClientObjRef)refResult).GetObjRef());
             return result as SqlDependencyProcessDispatcher;
         }
 #endif // NETFRAMEWORK

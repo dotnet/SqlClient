@@ -15,6 +15,29 @@
 # signed DLLs, and finally ESRP signs the NuGet packages.
 
 parameters:
+
+  # Signing Parameters -----------------------------------------------------
+
+  - name: signingAppRegistrationClientId
+    type: string
+
+  - name: signingAppRegistrationTenantId
+    type: string
+
+  - name: signingAuthAkvName
+    type: string
+
+  - name: signingAuthSignCertName
+    type: string
+
+  - name: signingEsrpClientId
+    type: string
+
+  - name: signingEsrpConnectedServiceName
+    type: string
+
+  # OTHERS +=====================================
+
   # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
   # the default Build and Pack targets if those aren't specified.
   - name: packageName
@@ -31,30 +54,22 @@ parameters:
   - name: packageFullName
     type: string
 
-  # The version of the package.  This is used for symbol publishing.  It is not used for the DLL or
-  # NuGet package versions since those are supplied via the versionProperties parameter.
-  - name: packageVersion
-    type: string
-
   # The MSBuild build target in build.proj (e.g. BuildLogging).  If not specified, defaults to
   # Build<packageName>.
   - name: buildTarget
     type: string
     default: ""
 
+  # True to enable ESRP malware scanning and code signing steps, which should not be
+  # run on non-official pipelines as they access production resources.
+  - name: isOfficial
+    type: boolean
+
   # The MSBuild pack target in build.proj (e.g. PackLogging).  If not specified, defaults to
   # Pack<packageName>.
   - name: packTarget
     type: string
     default: ""
-
-  # The C# build configuration to build (e.g. Debug or Release).
-  - name: buildConfiguration
-    type: string
-    values:
-      - Debug
-      - Release
-    default: Release
 
   # Additional MSBuild -p: arguments for version properties.  These may include versions of
   # packages this package depends on, or versions for this package itself.
@@ -64,34 +79,6 @@ parameters:
 
   # Assembly file version for APIScan (e.g. 1.0.0.12345).
   - name: assemblyFileVersion
-    type: string
-
-  # True to publish symbols to private and public servers.
-  - name: publishSymbols
-    type: boolean
-
-  # True to enable ESRP malware scanning and code signing steps, which should not be
-  # run on non-official pipelines as they access production resources.
-  - name: isOfficial
-    type: boolean
-
-  # Values required by ESRP tasks.
-  - name: esrpConnectedServiceName
-    type: string
-
-  - name: esrpClientId
-    type: string
-
-  - name: appRegistrationClientId
-    type: string
-
-  - name: appRegistrationTenantId
-    type: string
-
-  - name: authAkvName
-    type: string
-
-  - name: authSignCertName
     type: string
 
   # Optional list of pipeline artifacts to download before building.  Each entry is an object
@@ -108,15 +95,20 @@ jobs:
       type: windows
 
     variables:
-      ob_outputDirectory: $(PACK_OUTPUT)
+      # Inform OneBranch that files put in this directory should be uploaded as artifacts.
+      ob_outputDirectory: $(JOB_OUTPUT)
+
       # APIScan configuration for this Extension package
       ob_sdl_apiscan_enabled: true
-      ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
-      ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
+      ob_sdl_apiscan_softwareFolder: $(JOB_OUTPUT)/assemblies
+      ob_sdl_apiscan_symbolsFolder: $(JOB_OUTPUT)/symbols
       ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
       ob_sdl_apiscan_versionNumber: ${{ parameters.assemblyFileVersion }}
 
+      # If parameters.buildTarget is not provided, default to "Build{parameters.packageName}"
       buildTarget: ${{ coalesce(parameters.buildTarget, format('Build{0}', parameters.packageName)) }}
+
+      # If parameters.packTarget is not provided, default to "Pack{parameters.packageName}"
       packTarget: ${{ coalesce(parameters.packTarget, format('Pack{0}', parameters.packageName)) }}
 
     steps:
@@ -128,81 +120,97 @@ jobs:
             displayName: Download ${{ artifact.displayName }}
             inputs:
               artifactName: ${{ artifact.artifactName }}
-              targetPath: $(Build.SourcesDirectory)/packages
+              targetPath: $(JOB_INPUT)
 
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
       # Perform Roslyn analysis before building, since this step will clobber build output.
-      - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-csproj-step.yml@self
         parameters:
+          buildTarget: '${{ variables.buildTarget }}'
           msBuildArguments: >-
-            -t:$(buildTarget)
-            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:Configuration=Release
             -p:ReferenceType=Package
             ${{ parameters.versionProperties }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
-      - template: /eng/pipelines/onebranch/steps/compound-build-csproj-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/build-csproj-step.yml@self
         parameters:
-          buildTarget: $(buildTarget)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
+          buildTarget: '${{ variables.buildTarget }}'
           versionProperties: ${{ parameters.versionProperties }}
 
       - ${{ if eq(parameters.isOfficial, true) }}:
           # ESRP sign the DLLs.
-          - template: /eng/pipelines/onebranch/steps/compound-esrp-dll-signing-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
             parameters:
-              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-              authAkvName: ${{ parameters.authAkvName }}
-              authSignCertName: ${{ parameters.authSignCertName }}
-              esrpClientId: ${{ parameters.esrpClientId }}
-              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-              pattern: ${{ parameters.packageFullName }}.dll
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              # Minimatch pattern (multi-line, one pattern per line).
+              # **/ matches any nested directory (e.g. net8.0/, netstandard2.0/fr/).
+              #
+              # Matches:  net8.0/<packageFullName>.dll
+              #           netstandard2.0/fr/<packageFullName>.resources.dll
+              pattern: |
+                **/${{ parameters.packageFullName }}.dll
+                **/${{ parameters.packageFullName }}.resources.dll
 
-      # Copy signed/unsigned DLLs and PDBs to APIScan folders.
+      # Copy DLLs to the assemblies/ subdirectory for APIScan.
       - task: CopyFiles@2
         displayName: Copy DLLs for APIScan
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
-          Contents: "**/${{ parameters.packageFullName }}.dll"
-          TargetFolder: $(ob_sdl_apiscan_softwareFolder)
+          # Matches: <packageFullName>.dll (main assembly) across all TFM subdirs
+          #          <packageFullName>.resources.dll (localized satellite assemblies in locale subdirs, if any)
+          Contents: |
+            **/${{ parameters.packageFullName }}.dll
+            **/${{ parameters.packageFullName }}.resources.dll
+          TargetFolder: $(JOB_OUTPUT)/assemblies
           # We must preserve the folder structure since our C# projects may produce multiple
           # identically named DLLs for different target frameworks (e.g. netstandard2.0, net5.0,
           # etc.), and we need to keep those separate for APIScan to work correctly.
           flattenFolders: false
 
+      # Copy PDBs into the output directory so they are included in the published pipeline
+      # artifact. The symbols publishing stage will download this artifact and publish PDBs
+      # for this package using the files under symbols/.
       - task: CopyFiles@2
-        displayName: Copy PDBs for APIScan
+        displayName: Copy PDBs for APIScan and Symbols Publishing
         inputs:
           SourceFolder: $(BUILD_OUTPUT)/Package/bin
-          Contents: "**/${{ parameters.packageFullName }}.pdb"
-          TargetFolder: $(ob_sdl_apiscan_symbolsFolder)
+          # Matches: <packageFullName>.pdb across all TFM subdirs.
+          # Note: Resource DLLs are resource-only satellite assemblies and do not produce PDBs.
+          Contents: '**/${{ parameters.packageFullName }}.pdb'
+          TargetFolder: $(JOB_OUTPUT)/symbols
           flattenFolders: false
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).
-      - template: /eng/pipelines/onebranch/steps/compound-pack-csproj-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/pack-csproj-step.yml@self
         parameters:
-          packTarget: $(packTarget)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
+          packTarget: ${{ variables.packTarget }}
           versionProperties: ${{ parameters.versionProperties }}
 
       - ${{ if eq(parameters.isOfficial, true) }}:
           # ESRP sign the NuGet package.
-          - template: /eng/pipelines/onebranch/steps/compound-esrp-nuget-signing-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/esrp-nuget-signing-step.yml@self
             parameters:
-              appRegistrationClientId: ${{ parameters.appRegistrationClientId }}
-              appRegistrationTenantId: ${{ parameters.appRegistrationTenantId }}
-              authAkvName: ${{ parameters.authAkvName }}
-              authSignCertName: ${{ parameters.authSignCertName }}
-              esrpClientId: ${{ parameters.esrpClientId }}
-              esrpConnectedServiceName: ${{ parameters.esrpConnectedServiceName }}
-              pattern: ${{ parameters.packageFullName }}.*nupkg
-
-      # Publish symbols to servers
-      - ${{ if eq(parameters.publishSymbols, true) }}:
-          - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
-            parameters:
-              packageFullName: ${{ parameters.packageFullName }}
-              packageVersion: ${{ parameters.packageVersion }}
+              appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
+              appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
+              authAkvName: '${{ parameters.signingAuthAkvName }}'
+              authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+              esrpClientId: '${{ parameters.signingEsrpClientId }}'
+              esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+              searchPath: $(JOB_OUTPUT)/packages
+              # Minimatch pattern with extglob.
+              # [0-9] matches a single digit, anchoring to the version segment so
+              # similarly-prefixed package names are not matched.
+              # ?(s) is an extglob that optionally matches 's'.
+              #
+              # Matches:  <packageFullName>.1.0.0.nupkg
+              #           <packageFullName>.1.0.0-preview.1.snupkg
+              # Excludes: <packageFullName>.SomeOther.1.0.0.nupkg
+              searchPattern: '${{ parameters.packageFullName }}.[0-9]*.?(s)nupkg'

@@ -1307,6 +1307,10 @@ namespace Microsoft.Data.SqlClient
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    fieldType = GetVectorFieldType(metaData.scale);
+                }
                 else
                 { // For all other types, including Xml - use data in MetaType.
                     if (metaData.cipherMD != null)
@@ -1327,6 +1331,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             return fieldType;
+        }
+
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetVectorFieldType(byte vectorElementType)
+        {
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
+            return elementType switch
+            {
+                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
         }
 
         virtual internal int GetLocaleId(int i)
@@ -1421,6 +1438,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
+                }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    providerSpecificFieldType = GetVectorFieldType(metaData.scale);
                 }
                 else
                 {
@@ -2112,7 +2133,7 @@ namespace Microsoft.Data.SqlClient
                     // if bad buffer index, throw
                     if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
                     {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                        throw ADP.InvalidDestinationBufferIndex(buffer?.Length ?? 0, bufferIndex, nameof(bufferIndex));
                     }
 
                     // if there is not enough room in the buffer for data
@@ -3089,7 +3110,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.JsonDocumentNotSupportedOnColumnType(metaData.column);
                 }
-                JsonDocument document = JsonDocument.Parse(data.Value as string);
+                JsonDocument document = JsonDocument.Parse(data.String);
                 return (T)(object)document;
             }
             else
