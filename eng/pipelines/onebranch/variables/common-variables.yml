@@ -98,11 +98,14 @@ variables:
   # Symbols Publishing
   #
   # Credentials for publishing symbols to symbol servers.
-  - group: 'akv-variables-v2'
-    # SymbolsAzureSubscription
-    # SymbolsPublishProjectName
-    # SymbolsPublishServer
-    # SymbolsPublishTokenUri
+  - group: 'symbols-variables-v3'
+    # SymbolsAzureSubscription 
+    # SymbolsPublishProjectNameSqlClient
+    # SymbolsPublishProjectNameSni
+    # SymbolsPublishServerProd
+    # SymbolsPublishServerPpe
+    # SymbolsPublishTokenUriProd
+    # SymbolsPublishTokenUriPpe
     # SymbolsUploadAccount
 
   # ----------------------------------------------------------------------------

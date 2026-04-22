@@ -168,6 +168,8 @@ extends:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
           publishSymbols: ${{ parameters['publishSymbols'] }}
+          symbolServer: $(SymbolsPublishServerProd)
+          symbolTokenUri: $(SymbolsPublishTokenUriProd)
           isPreview: ${{ parameters['isPreview'] }}
           isOfficialBuild: true
 

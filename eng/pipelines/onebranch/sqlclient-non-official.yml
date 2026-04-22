@@ -161,6 +161,8 @@ extends:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
           publishSymbols: ${{ parameters['publishSymbols'] }}
+          symbolServer: $(SymbolsPublishServerPpe)
+          symbolTokenUri: $(SymbolsPublishTokenUriPpe)
           isPreview: ${{ parameters['isPreview'] }}
           isOfficialBuild: false
 

@@ -64,7 +64,7 @@ steps:
       SymbolServerType: TeamServices
       SymbolsMaximumWaitTime: 60
       SymbolExpirationInDays: 1825 # 5 years
-      SymbolsProduct: Microsoft.Data.SqlClient
+      SymbolsProduct: $(SymbolsPublishProjectNameSqlClient)
       SymbolsVersion: ${{parameters.symbolsVersion }}
       SymbolsArtifactName: ${{parameters.symbolsArtifactName }}
       Pat: $(System.AccessToken)
@@ -74,7 +74,7 @@ steps:
   displayName: 'Publish symbols'
   condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
   inputs:
-    azureSubscription: 'Symbols publishing Workload Identity federation service-ADO.Net'
+    azureSubscription: '$(SymbolsAzureSubscription)'
     scriptType: ps
     scriptLocation: inlineScript
     inlineScript: |
@@ -87,8 +87,7 @@ steps:
 
       $symbolServer = "${{parameters.symbolServer }}"
       $tokenUri = "${{parameters.symbolTokenUri }}"
-      # Registered project name in the symbol publishing pipeline: https://portal.microsofticm.com/imp/v3/incidents/incident/520844254/summary
-      $projectName = "Microsoft.Data.SqlClient.SNI"
+      $projectName = "$(SymbolsPublishProjectNameSqlClient)"
 
       # Get the access token for the symbol publishing service
       $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
