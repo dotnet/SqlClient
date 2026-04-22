@@ -24,7 +24,7 @@
 #
 # - GitHub Sync in the ADO.Net project:
 #
-#   https://sqlclientdrivers.visualstudio.com/ADO.Net/_build?definitionId=TBD
+#   https://sqlclientdrivers.visualstudio.com/ADO.Net/_build?definitionId=2263
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: Sync-$(Date:yyyyMMdd)$(Rev:.r)
