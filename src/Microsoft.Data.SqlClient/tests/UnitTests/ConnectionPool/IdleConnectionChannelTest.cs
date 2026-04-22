@@ -15,7 +15,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
-    public class IdleChannelTest
+    public class IdleConnectionChannelTest
     {
         #region TryWrite
 
@@ -189,6 +189,36 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Channel is empty
             Assert.False(channel.TryRead(out _));
+            Assert.Equal(0, channel.Count);
+        }
+
+        #endregion
+
+        #region Multi-threaded Tests
+
+        [Fact]
+        public async Task ConcurrentWriteAndRead_CountReturnsToZero()
+        {
+            var channel = new IdleConnectionChannel();
+            var barrier = new Barrier(3);
+            const int iterations = 1000;
+
+            async Task WriteAndRead()
+            {
+                barrier.SignalAndWait();
+
+                for (int i = 0; i < iterations; i++)
+                {
+                    channel.TryWrite(new StubDbConnectionInternal());
+                    await channel.ReadAsync(CancellationToken.None);
+                }
+            }
+
+            await Task.WhenAll(
+                Task.Run(WriteAndRead),
+                Task.Run(WriteAndRead),
+                Task.Run(WriteAndRead));
+
             Assert.Equal(0, channel.Count);
         }
 
