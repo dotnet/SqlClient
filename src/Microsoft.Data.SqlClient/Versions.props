@@ -20,11 +20,6 @@
       @TODO: Determine how versions should be updated in release branches vs main
     -->
     <SqlClientVersionDefault>7.0.0</SqlClientVersionDefault>
-
-    <!--
-      Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.
-      It is stored as: AssemblyBuildNumber
-    -->
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
