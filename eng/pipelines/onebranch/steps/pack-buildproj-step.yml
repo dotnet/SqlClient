@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Generic pack step for build2.proj packages. This step runs the Pack* target to generate a NuGet
+# Generic pack step for build.proj packages. This step runs the Pack* target to generate a NuGet
 # package of the target package. The generated NuGet packages will then be copied to $(PACK_OUTPUT).
 #
 # Note: This step assumes that the package has been built previously using a Build* target.
@@ -38,7 +38,7 @@ parameters:
       - Microsoft.SqlServer.Server
 
   # Project to build. This short name will be appended to "Pack" to generate the appropriate
-  # target to package via build2.proj.
+  # target to package via build.proj.
   - name: packageShortName
     type: string
     values:
@@ -57,9 +57,9 @@ parameters:
 
 steps:
   - task: MSBuild@1
-    displayName: 'Build2.proj - Pack${{ parameters.packageShortName }}'
+    displayName: 'build.proj - Pack${{ parameters.packageShortName }}'
     inputs:
-      solution: '$(REPO_ROOT)/build2.proj'
+      solution: '$(REPO_ROOT)/build.proj'
       configuration: '${{ parameters.buildConfiguration }}'
       msbuildArguments: >-
         -t:Pack${{ parameters.packageShortName }}

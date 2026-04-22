@@ -120,7 +120,7 @@ stages:
     jobs:
       - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
         # Build Microsoft.Data.SqlClient.Internal.Logging
-        - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
+        - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
           parameters:
             apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/dlls'
             apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/pdbs'
@@ -141,7 +141,7 @@ stages:
 
       - ${{ if eq(parameters.buildSqlServerServer, true) }}:
         # Build Microsoft.SqlServer.Server
-        - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
+        - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
           parameters:
             apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.SqlServer.Server/dlls'
             apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.SqlServer.Server/pdbs'
@@ -171,7 +171,7 @@ stages:
 
         jobs:
           # Build Microsoft.Data.SqlClient.Extensions.Abstractions
-          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
             parameters:
               apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/dlls'
               apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/pdbs'
@@ -203,7 +203,7 @@ stages:
         dependsOn: build_abstractions
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
             parameters:
               apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
               apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
@@ -228,7 +228,7 @@ stages:
               packageVersion: '${{ parameters.sqlClientPackageVersion }}'
 
           # Build Microsoft.Data.SqlClient.Extensions.Azure
-          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
             parameters:
               apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/dlls'
               apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/pdbs'
@@ -262,7 +262,7 @@ stages:
         dependsOn: build_dependent
 
         jobs:
-          - template: /eng/pipelines/onebranch/jobs/build-build2-package-job.yml@self
+          - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
             parameters:
               apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/dlls'
               apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/pdbs'

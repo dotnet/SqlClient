@@ -81,7 +81,7 @@ steps:
       displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
       condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
-        solution: build2.proj
+        solution: build.proj
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
@@ -103,7 +103,7 @@ steps:
       displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
       condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
-        solution: build2.proj
+        solution: build.proj
         msbuildArchitecture: ${{parameters.msbuildArchitecture }}
         platform: '${{parameters.platform }}'
         configuration: '${{parameters.buildConfiguration }}'
@@ -130,7 +130,7 @@ steps:
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
-      solution: build2.proj
+      solution: build.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
@@ -158,7 +158,7 @@ steps:
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
     inputs:
-      solution: build2.proj
+      solution: build.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
@@ -191,7 +191,7 @@ steps:
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
     inputs:
-      solution: build2.proj
+      solution: build.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
@@ -222,7 +222,7 @@ steps:
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     displayName: 'Run Flaky Manual Tests ${{parameters.msbuildArchitecture }}'
     inputs:
-      solution: build2.proj
+      solution: build.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.buildConfiguration }}'
@@ -260,7 +260,7 @@ steps:
       condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
         command: custom
-        projects: build2.proj
+        projects: build.proj
         custom: msbuild
         arguments: >-
           -t:TestSqlClientUnit
@@ -279,7 +279,7 @@ steps:
       condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
       inputs:
         command: custom
-        projects: build2.proj
+        projects: build.proj
         custom: msbuild
         arguments: >-
           -t:TestSqlClientUnit
@@ -301,7 +301,7 @@ steps:
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       command: custom
-      projects: build2.proj
+      projects: build.proj
       custom: msbuild
       arguments: >-
         -t:TestSqlClientFunctional
@@ -320,7 +320,7 @@ steps:
     displayName: 'Run Flaky Functional Tests'
     inputs:
       command: custom
-      projects: build2.proj
+      projects: build.proj
       custom: msbuild
       arguments: >-
         -t:TestSqlClientFunctional
@@ -341,7 +341,7 @@ steps:
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       command: custom
-      projects: build2.proj
+      projects: build.proj
       custom: msbuild
       arguments: >-
         -t:TestSqlClientManual
@@ -362,7 +362,7 @@ steps:
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     inputs:
       command: custom
-      projects: build2.proj
+      projects: build.proj
       custom: msbuild
       arguments: >-
         -t:TestSqlClientManual

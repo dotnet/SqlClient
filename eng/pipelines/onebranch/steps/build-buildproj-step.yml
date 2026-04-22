@@ -4,28 +4,31 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template defines a step to run Roslyn Analyzers on the SqlClient build. It uses the
-# RoslynAnalyzers@3 task from the Secure Development Team's SDL extension:
-#
-# https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
-#
-# GOTCHA: This step will clobber any existing build output. It should be run _before_ any build
-# steps that perform versioning or signing.
+# This collection of steps to build a project via the build.proj. This will execute the "Build*"
+# target in build.proj, where * is the packageShortName provided in the parameters.
 
 parameters:
+  # Build configuration - Release or Debug.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
   # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  # They should be in the form of "-p:PackageVersionFooBar=1.2.3 ..."
   - name: dependencyArguments
     type: string
     default: ''
 
   # Project to build. This short name will be appended to "Build" to generate the appropriate
-  # target to build from build2.proj.
+  # target to build from build.proj.
   - name: packageShortName
     type: string
     values:
-      - Abstractions
-      - AkvProvider
       - Azure
+      - AkvProvider
+      - Abstractions
       - Logging
       - SqlClient
       - SqlServer
@@ -37,20 +40,25 @@ parameters:
     type: string
 
 steps:
-  # GOTCHA: If there are any blank lines in msbuildCommandLine, it will consider it "multiple
-  #         arguments" and fail. So, don't split msBuildCommandLine into multiple blocks.
-  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
-    displayName: 'Roslyn Analyzers - build2.proj Build${{ parameters.packageShortName }}'
+  # Download the strong name signing key from secure file storage
+  - task: DownloadSecureFile@1
+    displayName: 'Download Signing Key'
     inputs:
-      msBuildArchitecture: x64
-      msBuildCommandLine: >-
-        msbuild
-        $(REPO_ROOT)/build2.proj
+      secureFile: 'netfxKeypair.snk'
+    name: keyFile
+
+  - task: MSBuild@1
+    displayName: 'build.proj - Build${{ parameters.packageShortName }}'
+    inputs:
+      solution: '$(REPO_ROOT)/build.proj'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArguments: >-
         -t:Build${{ parameters.packageShortName }}
-        -p:Configuration=Release
         -p:ReferenceType=Package
+        -p:SigningKeyPath="$(keyFile.secureFilePath)"
         -p:BuildNumber="$(Build.BuildNumber)"
         -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
         ${{ parameters.dependencyArguments }}
-      msBuildVersion: 17.0
-      setupCommandLinePicker: vs2022
+
+  - script: tree /a /f $(BUILD_OUTPUT)
+    displayName: Output Build Output Tree

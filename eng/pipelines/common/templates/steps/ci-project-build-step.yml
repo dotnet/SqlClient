@@ -79,7 +79,7 @@ steps:
       displayName: 'Build Driver'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
-        solution: build2.proj
+        solution: build.proj
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.buildConfiguration }}'

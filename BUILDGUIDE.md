@@ -27,28 +27,28 @@ via the PowerShell script [tools/scripts/downloadLatestNuget.ps1](tools/scripts/
 ## Developer Workflow
 
 Once you've cloned the repository and made your changes to the codebase, it is time to build, test, and optionally
-package the project. The `build2.proj` file provides convenient targets to accomplish these tasks.
+package the project. The `build.proj` file provides convenient targets to accomplish these tasks.
 
 > [!NOTE]
 > Although every effort has been made to make building and testing work in your IDE of choice, some quirks in behavior
-> may be noticed, possibly severe. All official build and test infrastructure uses the `build2.proj` entrypoint, and it
-> is recommended that `build2.proj` is used for local development, as well.
+> may be noticed, possibly severe. All official build and test infrastructure uses the `build.proj` entrypoint, and it
+> is recommended that `build.proj` is used for local development, as well.
 
 > [!TIP]
-> `build2.proj` was written with the intention of being called from `msbuild`. As such, the following examples below
+> `build.proj` was written with the intention of being called from `msbuild`. As such, the following examples below
 > use `msbuild`. On systems where `msbuild` is not available, simply replace `msbuild` with `dotnet msbuild` to get the
 > same behavior.
 
 > [!TIP]
-> This section is not exhaustive of all targets or parameters to `build2.proj`. Complete documentation is avilable in
-> [`build2.proj`](build2.proj).
+> This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is avilable in
+> [`build.proj`](build.proj).
 
 ### Building Projects
 
-From the root of your repository, run `msbuild` against `build2.proj` with a build target, following this pattern:
+From the root of your repository, run `msbuild` against `build.proj` with a build target, following this pattern:
 
 ```bash
-msbuild build2.proj -t:<build_target> [optional_parameters]
+msbuild build.proj -t:<build_target> [optional_parameters]
 ```
 
 The following build targets can be used to build the following projects. All targets will implicitly build any other
@@ -68,7 +68,7 @@ projects they depend on.
 | `BuildSqlClientWindows`     | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
 | `BuildSqlServer`            | Builds Microsoft.SqlServer.Server                                               |
 
-A selection of parameters for build targets in `build2.proj` can be found below:
+A selection of parameters for build targets in `build.proj` can be found below:
 
 | `[optional_parameter]`            | Allowed Values                   | Default   | Description                                                                                                                                   |
 |-----------------------------------|----------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -87,17 +87,17 @@ placed in `artifacts/Microsoft.Data.SqlClient.ref/Project-<configuration>/<tfm>`
 
 Build all projects:
 ```bash
-msbuild build2.proj -t:Build
+msbuild build.proj -t:Build
 ```
 
 Build Microsoft.Data.SqlClient in Release configuration:
 ```bash
-msbuild build2.proj -t:BuildSqlClient -p:Configuration=Release
+msbuild build.proj -t:BuildSqlClient -p:Configuration=Release
 ```
 
 Build v1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
 ```bash
-msbuild build2.proj -t:BuildAbstractions -p:PackageVersion=1.2.3
+msbuild build.proj -t:BuildAbstractions -p:PackageVersion=1.2.3
 ```
 
 ### Testing Projects
@@ -105,10 +105,10 @@ msbuild build2.proj -t:BuildAbstractions -p:PackageVersion=1.2.3
 This section provides a summary and brief example of how to execute tests for projects in this repository. **For more
 information about test procedures, including config file setup, see [TESTGUIDE.md](TESTGUIDE.md).**
 
-From the root of your repository, run `msbuild` against `build2.proj` with a test target, following this pattern:
+From the root of your repository, run `msbuild` against `build.proj` with a test target, following this pattern:
 
 ```bash
-msbuild build2.proj -t:<test_target> [optional_parameters]
+msbuild build.proj -t:<test_target> [optional_parameters]
 ```
 
 | `<test_target>`            | Description                                                                                                                                         |
@@ -124,7 +124,7 @@ msbuild build2.proj -t:<test_target> [optional_parameters]
 > Test targets will automatically build the projects they depend on. Therefore, it is not necessary to explicitly build
 > (eg) SqlClient before executing the (eg) functional tests target.
 
-A selection of parameters for test targets in `build2.proj` relevant to common developer workflows can be found below:
+A selection of parameters for test targets in `build.proj` relevant to common developer workflows can be found below:
 
 | `[optional_parameter]` | Default Value                                            | Description                                                                                                                                                                                         |
 |------------------------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -140,37 +140,37 @@ A selection of parameters for test targets in `build2.proj` relevant to common d
 Run Microsoft.Data.SqlClient unit tests:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientUnit
+msbuild build.proj -t:TestSqlClientUnit
 ```
 
 Run Microsoft.Data.SqlClient manual test set 2:
 ```bash
-msbuild build2.proj -t:TestSqlClientManual -p:TestSet=2
+msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run Microsoft.Data.SqlClient functional tests against x86 dotnet:
 ```bash
-msbuild build2.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+msbuild build.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Microsoft.Data.SqlClient.Extensions.Azure unit tests, including interactive, but excluding failing tests:
 ```bash
-msbuild build2.proj -t:TestAzure -p:TestFilters=category!=failing
+msbuild build.proj -t:TestAzure -p:TestFilters=category!=failing
 ```
 
 Run Microsoft.Data.SqlClient functional tests against net8.0 runtime:
 ```bash
-msbuild build2.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
+msbuild build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ```
 
 ### Packaging Projects
 
 Just like bulding and testing the various projects in this repository, packaging the projects into NuGet packages is
-also handle by `build2.proj`. From the root of your repository, run `msbuild` against `build2.proj` with a test target,
+also handle by `build.proj`. From the root of your repository, run `msbuild` against `build.proj` with a test target,
 following this pattern:
 
 ```bash
-msbuild build2.proj -t:<pack_target> [optional_parameters]
+msbuild build.proj -t:<pack_target> [optional_parameters]
 ```
 
 | `<build_target>`   | Desription                                                                          |
@@ -186,7 +186,7 @@ msbuild build2.proj -t:<pack_target> [optional_parameters]
 > [!TIP]
 > For convenience, the Pack targets will automatically build the target project and any dependencies.
 
-A selection of parameters for pack targets in `build2.proj` relevant to common developer workflows can be found below:
+A selection of parameters for pack targets in `build.proj` relevant to common developer workflows can be found below:
 
 | `[optional_parameter]`             | Default Value | Allowed Values        | Description                                                                                                                                                    |
 |------------------------------------|---------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -199,27 +199,27 @@ A selection of parameters for pack targets in `build2.proj` relevant to common d
 
 Package Microsoft.Data.SqlClient.Internal.Logging into a NuGet package:
 ```bash
-msbuild build2.proj -t:PackLogging
+msbuild build.proj -t:PackLogging
 ```
 
 Package Microsoft.Data.SqlClient if `nuget.exe` is not in the `$PATH` environment variable:
 ```bash
-msbuild build2.proj -t:PackSqlClient -p:NugetPath="C:\my\nuget.exe"
+msbuild build.proj -t:PackSqlClient -p:NugetPath="C:\my\nuget.exe"
 ```
 
 Package version 1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
 ```bash
-msbuild build2.proj -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
+msbuild build.proj -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
 ```
 
 Package version Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand:
 ```bash
-msbuild build2.proj -t:PackAzure -p:PackBuild=false
+msbuild build.proj -t:PackAzure -p:PackBuild=false
 ```
 
 ## Versioning
 
-Versioning can be accomplished by using a mix of different parameters to the `build2.proj` targets:
+Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:
 `PackageVersion<TargetProject>`, `BuildNumber`, and `BuildSuffix`. Using these in different combinations, can generate
 appropriate package, assembly, and file versions for different scenarios. For most developer workflows, it is not
 necessary to specify any of these parameters - appropriate versions based on the latest release will be generated
@@ -245,11 +245,11 @@ as the latest released version of the package. For the table below, we assume th
 ## Package Mode Builds
 
 The above documentation is the default mode of operation, and is the recommended mode for most developers. However,
-`build2.proj` supports "package mode" builds. In this mode, instead of projects depending on other projects, they
+`build.proj` supports "package mode" builds. In this mode, instead of projects depending on other projects, they
 depend on NuGet packages. This mode is useful for verifying that packages work with each other, especially in automated
 build scenarios. For completeness, and debugging of autoamted builds, this section documents behavior of "package mode".
 
-To switch to "package mode", set the `ReferenceType` parameter in `build2.proj` to `Package`. And, optionally, include
+To switch to "package mode", set the `ReferenceType` parameter in `build.proj` to `Package`. And, optionally, include
 one or more of the following parameters:
 
 * `PackageVersionAbstractions`
@@ -267,7 +267,7 @@ If these parameters are not specified, the latest version, as defined in the `Ve
 
 The `nuget.config` for this repository defines a local feed that points to the `packages` directory. This allows
 developers that need to test against development packages to drop their development packages into this directory, and
-run subsequent `build2.proj` targets against them.
+run subsequent `build.proj` targets against them.
 
 ### Examples
 
@@ -276,13 +276,13 @@ and Microsoft.Data.SqlClient.Internal.Logging v2.2.2.
 
 ```bash
 # Build v2.2.2 of Logging and copy to packages
-msbuild build2.proj -t:PackLogging \
+msbuild build.proj -t:PackLogging \
   -p:ReferenceType=Package \
   -p:PackageVersionLogging=2.2.2
 cp artifacts/Microsoft.Data.SqlClient.Internal.Logging/Debug/*.*pkg packages/
 
 # Build v1.0.1 of Abstractions that depends on v2.2.2 of Logging
-msbuild build2.proj -t:PackAbstractions \
+msbuild build.proj -t:PackAbstractions \
   -p:ReferenceType=Package \
   -p:PackageVersionAbstractions=1.0.1 \
   -p:PackageVersionLogging=2.2.2 \
@@ -299,7 +299,7 @@ cp artifacts/Microsoft.Data.SqlClient/Package-Debug/*.*pkg packages/
 
 Run Microsoft.Data.SqlClient functional tests against the versions build above:
 ```bash
-msbuild build2.proj -t:TestSqlClientFunctional \
+msbuild build.proj -t:TestSqlClientFunctional \
   -p:ReferenceType=Package \
   -p:PackageVersionSqlClient=7.1.1 \
   -p:PackageVersionAbstractions=1.0.1 \

@@ -46,7 +46,6 @@ pr:
       - tools/*
       - azurepipelines-coverage.yml
       - build.proj
-      - build2.proj
       - Directory.Packages.props
       - dotnet-tools.json
       - global.json

@@ -38,9 +38,9 @@
     adding a reference from this project to the GenAPI project. Although this is possible, it is
     not a clean solution (due to reasons related to target frameworks). Thus, building this project
     assumes the GenAPI project has already been built in a previous step. Instead, use the
-    following command in build2.proj to build the "not supported" binaries:
+    following command in build.proj to build the "not supported" binaries:
 
-    > msbuild build2.proj /t:BuildSqlClientNotSupported
+    > msbuild build.proj /t:BuildSqlClientNotSupported
 
     @TODO: Remove this project
     The primary prerequisite for removing this project is making the "common" MDS project OS-

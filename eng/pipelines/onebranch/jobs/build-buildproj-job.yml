@@ -4,9 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Generic job template for building and signing simple build2.proj packages.
+# Generic job template for building and signing simple build.proj packages.
 #
-# The job builds DLLs via build2.proj, ESRP signs the DLLs, creates NuGet packages from the signed
+# The job builds DLLs via build.proj, ESRP signs the DLLs, creates NuGet packages from the signed
 # DLLs, ESRP signs the NuGet packages, and finally copies all the build output to the job output.
 
 parameters:
@@ -51,7 +51,7 @@ parameters:
   # * artifactName - Name of the artifact published in a previous job that contains the desired
   #   version of the dependency.
   # * shortName - Short name of the dependency. This name should correspond to the short name used
-  #   when building the package via build2.proj
+  #   when building the package via build.proj
   # * version - the version of the dependency that this package depends on
   - name: dependencies
     type: object
@@ -131,14 +131,14 @@ jobs:
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
       # Perform Roslyn analysis before building, since this step will clobber build output.
-      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-build2-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:
           dependencyArguments: $(dependencyPackageArguments)
           packageShortName: ${{ parameters.packageShortName }}
           packageVersion: ${{ parameters.packageVersion }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
-      - template: /eng/pipelines/onebranch/steps/build-build2-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/build-buildproj-step.yml@self
         parameters:
           buildConfiguration: Release
           dependencyArguments: $(dependencyPackageArguments)
@@ -181,7 +181,7 @@ jobs:
           flattenFolders: false
 
       # Pack the signed DLLs into NuGet package (NoBuild=true).
-      - template: /eng/pipelines/onebranch/steps/pack-build2-step.yml@self
+      - template: /eng/pipelines/onebranch/steps/pack-buildproj-step.yml@self
         parameters:
           buildConfiguration: Release
           dependencyArguments: $(dependencyPackageArguments)

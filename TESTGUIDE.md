@@ -3,7 +3,7 @@
 This guide describes how to run the test projects in this repository and how to configure the SQL Server-backed manual
 tests.
 
-For build prerequisites and general `build2.proj` usage, see [BUILDGUIDE.md](BUILDGUIDE.md).
+For build prerequisites and general `build.proj` usage, see [BUILDGUIDE.md](BUILDGUIDE.md).
 
 ## Test Projects
 
@@ -20,16 +20,16 @@ These projects target `net8.0`, `net9.0`, and `net10.0` on all platforms. On Win
 
 ## Recommended Entry Point
 
-Use [build2.proj](build2.proj) from the repository root:
+Use [build.proj](build.proj) from the repository root:
 
 ```bash
-msbuild build2.proj -t:<test_target> [optional_parameters]
+msbuild build.proj -t:<test_target> [optional_parameters]
 ```
 
 If `msbuild` is not available, use `dotnet msbuild`:
 
 ```bash
-dotnet msbuild build2.proj -t:<test_target> [optional_parameters]
+dotnet msbuild build.proj -t:<test_target> [optional_parameters]
 ```
 
 Test targets build the projects they depend on, so a separate build step is not required for normal test runs.
@@ -51,55 +51,55 @@ Test targets build the projects they depend on, so a separate build step is not 
 Run the SqlClient unit tests:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientUnit
+msbuild build.proj -t:TestSqlClientUnit
 ```
 
 Run the SqlClient functional tests:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientFunctional
+msbuild build.proj -t:TestSqlClientFunctional
 ```
 
 Run the SqlClient manual tests:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientManual
+msbuild build.proj -t:TestSqlClientManual
 ```
 
 Run only manual test set 2:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientManual -p:TestSet=2
+msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run manual test sets 1 and 3:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientManual -p:TestSet=13
+msbuild build.proj -t:TestSqlClientManual -p:TestSet=13
 ```
 
 Run Always Encrypted manual tests:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientManual -p:TestSet=AE
+msbuild build.proj -t:TestSqlClientManual -p:TestSet=AE
 ```
 
 Run a specific target framework:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
+msbuild build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ```
 
 Run functional tests against an x86 `dotnet` installation:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+msbuild build.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Azure extension tests, including `interactive` tests, while still excluding tests marked `failing` or `flaky`:
 
 ```bash
-msbuild build2.proj -t:TestAzure -p:TestFilters=category!=failing
+msbuild build.proj -t:TestAzure -p:TestFilters=category!=failing
 ```
 
 ## Test Parameters
@@ -120,7 +120,7 @@ The most commonly used test parameters are:
 
 ## Test Filters
 
-`build2.proj` passes `TestFilters` to `dotnet test --filter`. By default, tests marked with these categories are excluded:
+`build.proj` passes `TestFilters` to `dotnet test --filter`. By default, tests marked with these categories are excluded:
 
 | Category      | Why it is excluded by default                                                       |
 |---------------|-------------------------------------------------------------------------------------|
@@ -132,13 +132,13 @@ Examples:
 
 ```bash
 # Run a single test by fully-qualified name.
-msbuild build2.proj -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+msbuild build.proj -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
 
 # Run only flaky tests while investigating quarantine failures.
-msbuild build2.proj -t:TestSqlClientManual -p:TestFilters=category=flaky
+msbuild build.proj -t:TestSqlClientManual -p:TestFilters=category=flaky
 
 # Disable the default filter.
-msbuild build2.proj -t:TestSqlClientFunctional -p:TestFilters=none
+msbuild build.proj -t:TestSqlClientFunctional -p:TestFilters=none
 ```
 
 When passing filter expressions that contain shell-sensitive characters such as `&`, quote or escape the value as
@@ -146,7 +146,7 @@ required by your shell.
 
 ## Running Test Projects Directly
 
-`build2.proj` is the recommended entry point because it keeps logging, code coverage, package-reference mode, and
+`build.proj` is the recommended entry point because it keeps logging, code coverage, package-reference mode, and
 common parameters consistent. For quick local investigation, you can run a test project directly:
 
 ```bash
@@ -222,14 +222,14 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 You can override the config file path with the `MDS_TEST_CONFIG` environment variable:
 
 ```bash
-MDS_TEST_CONFIG=/path/to/config.json msbuild build2.proj -t:TestSqlClientManual -p:TestSet=2
+MDS_TEST_CONFIG=/path/to/config.json msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
 $env:MDS_TEST_CONFIG = "C:\path\to\config.json"
-msbuild build2.proj -t:TestSqlClientManual -p:TestSet=2
+msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
 ```
 
 ## Configuration Properties
@@ -289,23 +289,23 @@ If `TestSet` is omitted, all sets are compiled and run. You can combine sets by 
 Test results are written to `test_results` by default. Override the location with `TestResultsFolderPath`:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
+msbuild build.proj -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
 ```
 
 Hang blame collection is enabled by default with a `10m` timeout. To increase the timeout:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientManual -p:TestBlameTimeout=30m
+msbuild build.proj -t:TestSqlClientManual -p:TestBlameTimeout=30m
 ```
 
 To disable hang blame collection:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientManual -p:TestBlameTimeout=0
+msbuild build.proj -t:TestSqlClientManual -p:TestBlameTimeout=0
 ```
 
 Code coverage is enabled by default. To disable it for a faster local run:
 
 ```bash
-msbuild build2.proj -t:TestSqlClientUnit -p:TestCodeCoverage=false
+msbuild build.proj -t:TestSqlClientUnit -p:TestCodeCoverage=false
 ```
