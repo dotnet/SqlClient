@@ -75,16 +75,16 @@ parameters:
       type: string
 
 steps:
-    # Set variable for downstream tasks (allegedly).
+    # NOTE: ArtifactServices.Symbol.AccountName is set as a job-level variable in
+    # publish-symbols-job.yml. On OneBranch Linux agents, PublishSymbols@2 runs on the host (outside
+    # the build container) due to 1ES PT credential isolation. A ##vso[task.setvariable] inside the
+    # container is not visible to host-level tasks, so the variable must be declared at job scope.
     #
-    # Note: Because variables cannot be set in top-level of template, this has to be done during
-    # runtime.
-    #
-    - script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
-      displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
+    # Reference:
+    # https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL#Option_B:_OneBranch
 
-    # Log the PDB files that match the search pattern so we can verify no
-    # unexpected files are included in the upload.
+    # Log the PDB files that match the search pattern so we can verify no unexpected files are
+    # included in the upload.
     - pwsh: |
         $folder = '${{ parameters.symbolsFolder }}'
         $glob   = '${{ parameters.searchPattern }}'

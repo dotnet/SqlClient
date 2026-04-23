@@ -10,12 +10,15 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string Address = "address";
         internal const string App = "app";
         internal const string ApplicationIntent = "applicationintent";
+        internal const string ColumnEncryption = "columnEncryption";
         internal const string ConnectionLifetime = "connection lifetime";
         internal const string ConnectionTimeout = "connection timeout";
         internal const string ConnectRetryCount = "connectretrycount";
         internal const string ConnectRetryInterval = "connectretryinterval";
+        internal const string ConnectTimeout = "connecttimeout";
         internal const string Database = "database";
         internal const string ExtendedProperties = "extended properties";
+        internal const string FailoverPartner = "failoverpartner";
         internal const string FailoverPartnerSpn = "FailoverPartnerSPN";
         internal const string HostNameInCertificate = "hostnameincertificate";
         internal const string InitialFileName = "initial file name";
@@ -26,6 +29,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string Net = "net";
         internal const string Network = "network";
         internal const string NetworkAddress = "network address";
+        internal const string PacketSize = "packetsize";
         internal const string PersistSecurityInfo = "persistsecurityinfo";
         internal const string PoolBlockingPeriod = "poolblockingperiod";
         internal const string Pwd = "pwd";
@@ -38,6 +42,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string TrustServerCertificate = "trustservercertificate";
         internal const string Uid = "uid";
         internal const string User = "user";
+        internal const string WorkstationId = "workstationid";
         internal const string WsId = "wsid";
     }
 }

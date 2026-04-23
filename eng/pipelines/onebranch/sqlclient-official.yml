@@ -33,9 +33,10 @@ parameters:
     type: boolean
     default: false
 
-  # Push packages to NuGet Production (otherwise pushes to NuGet Test).
+  # When true, publish symbols and push NuGet packages to Production environments.  When false,
+  # symbols use PPE and NuGet packages use QA/Test.
   - name: releaseToProduction
-    displayName: Release to NuGet Production
+    displayName: Publish Symbols and NuGet Packages to Production
     type: boolean
     default: false
 
@@ -254,9 +255,14 @@ extends:
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
-          # Official pipelines must publish to the Production symbol server.
-          symbolsPublishServer: '$(SymbolsPublishServerProd)'
-          symbolsPublishTokenUri: '$(SymbolsPublishTokenUriProd)'
+          # Symbol server target follows releaseToProduction: Production for
+          # real releases, PPE for test/QA releases.
+          ${{ if eq(parameters.releaseToProduction, true) }}:
+            symbolsPublishServer: '$(SymbolsPublishServerProd)'
+            symbolsPublishTokenUri: '$(SymbolsPublishTokenUriProd)'
+          ${{ else }}:
+            symbolsPublishServer: '$(SymbolsPublishServerPPE)'
+            symbolsPublishTokenUri: '$(SymbolsPublishTokenUriPPE)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
