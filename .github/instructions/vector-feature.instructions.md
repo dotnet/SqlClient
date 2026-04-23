@@ -9,13 +9,13 @@ SQL Server 2025+ introduces the `vector` data type for storing float32 vector da
 
 ## Implementation History (PRs)
 
-| PR | Title | Key Changes |
-|----|-------|-------------|
-| [#3433](https://github.com/dotnet/SqlClient/pull/3433) | Initial `SqlVectorFloat32` type | Added `SqlVectorFloat32` sealed class, `ISqlVector` interface, `SqlDbTypeExtensions.Vector`, TDS protocol support (SQLVECTOR=0xF5, FEATUREEXT_VECTORSUPPORT=0x0E), `SqlBuffer.StorageType.Vector`, MetaType for Vector, feature negotiation, backward compatibility + native test suites |
-| [#3443](https://github.com/dotnet/SqlClient/pull/3443) | Refactor to generic `SqlVector<T>` | Replaced `SqlVectorFloat32` with generic `SqlVector<T> where T : unmanaged`, renamed APIs (`GetSqlVectorFloat32` → `GetSqlVector<T>`), `Values` → `Memory`, removed `ToString`/`ToArray` from public API |
-| [#3468](https://github.com/dotnet/SqlClient/pull/3468) | API enhancements | Removed `Size` property (inferred from value), changed `ctor(length)` → `CreateNull(length)`, changed from `sealed class` → `readonly struct` |
-| [#3559](https://github.com/dotnet/SqlClient/pull/3559) | Enable tests + ref assembly validation | Enabled vector tests against Azure SQL DB, added `VectorAPIValidationTest`, null fix improvements |
-| [#4105](https://github.com/dotnet/SqlClient/pull/4105) | Fix `GetFieldType`/`GetProviderSpecificFieldType` | Both now return `typeof(SqlVector<float>)` for vector columns instead of the underlying `byte[]` type |
+| PR | Milestone | Title | Key Changes |
+|----|-----------|-------|-------------|
+| [#3433](https://github.com/dotnet/SqlClient/pull/3433) | 6.1-preview2 | Initial `SqlVectorFloat32` type (closes [#3317](https://github.com/dotnet/SqlClient/issues/3317)) | Added `SqlVectorFloat32` sealed class, `ISqlVector` interface, `SqlDbTypeExtensions.Vector`, TDS protocol support (SQLVECTOR=0xF5, FEATUREEXT_VECTORSUPPORT=0x0E, VECTOR_HEADER_SIZE=8, MAX_SUPPORTED_VECTOR_VERSION=0x01), `SqlBuffer.StorageType.Vector`, MetaType for Vector, feature negotiation, BulkCopy support, backward compatibility + native test suites. 38 files, +2578/-25 |
+| [#3443](https://github.com/dotnet/SqlClient/pull/3443) | 6.1-preview2 | Refactor to generic `SqlVector<T>` | Replaced `SqlVectorFloat32` with generic `SqlVector<T> where T : unmanaged`, renamed APIs (`GetSqlVectorFloat32` → `GetSqlVector<T>`), `Values` → `Memory`, removed `ToString`/`ToArray` from public API. 24 files, +722/-522 |
+| [#3468](https://github.com/dotnet/SqlClient/pull/3468) | 6.1-preview2 | API enhancements | Removed `Size` property (inferred from `SqlParameter.Value`; if specified it is ignored), changed `ctor(length)` → static factory `CreateNull(length)`, changed from `sealed class` → `readonly struct`. 10 files, +110/-117 |
+| [#3559](https://github.com/dotnet/SqlClient/pull/3559) | 6.1 GA | Enable tests + ref assembly validation | Enabled vector tests against Azure SQL DB, added `VectorAPIValidationTest`, replaced static `IsJsonSupported`/`IsVectorSupported` flags with `IsAzureServer` helper, fixed XML doc include path for `ctor1`. 11 files, +163/-73 |
+| [#4105](https://github.com/dotnet/SqlClient/pull/4105) | 7.1.0-preview1 (Hotfix 7.0.1, 6.1.5) | Fix `GetFieldType`/`GetProviderSpecificFieldType` (fixes [#4104](https://github.com/dotnet/SqlClient/issues/4104)) | Both now return `typeof(SqlVector<float>)` for vector columns instead of the underlying `byte[]` type. Adds private static `GetVectorFieldType(byte vectorElementType)` helper in `SqlDataReader`, switching on `MetaType.SqlVectorElementType`. 2 files, +59/-3 |
 
 ## Architecture
 
@@ -94,10 +94,14 @@ MetaType s_MetaVector:
 
 ### SqlDbType Extension
 
+Defined in `src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlDbTypeExtensions.cs`:
+
 ```csharp
-// On .NET 10+: uses native SqlDbType.Vector
-// On older frameworks: (SqlDbType)36
-public const SqlDbType Vector = (SqlDbType)36;
+#if NET10_0_OR_GREATER
+public const SqlDbType Vector = SqlDbType.Vector;   // Uses BCL value on .NET 10+
+#else
+public const SqlDbType Vector = (SqlDbType)36;      // Cast for older TFMs (net462, net8.0, net9.0)
+#endif
 ```
 
 ## Backward Compatibility (varchar(max) path)
@@ -112,14 +116,12 @@ When the driver or SQL Server doesn't support the native vector TDS type, vector
 
 ### Test Coverage: `VectorTypeBackwardCompatibilityTests.cs`
 
-This test suite validates the varchar(max) path with these test methods:
+This test suite validates the varchar(max) path with these test methods (all gated on `IsSqlVectorSupported`):
 
 | Test Method | Sync/Async | What it tests |
 |-------------|-----------|---------------|
-| `TestVectorDataInsertionAsVarchar` | Sync | 4 SqlParameter construction patterns × (non-null + null) |
-| `TestVectorParameterInitializationAsync` | Async | Same 4 patterns × (non-null + null) |
-| `TestVectorDataReadsAsVarchar` | Sync | GetString, GetSqlString, GetFieldValue\<string\> for non-null + null |
-| `TestVectorDataReadsAsVarcharAsync` | Async | Same read methods async |
+| `TestVectorDataInsertionAsVarchar` | Sync | 4 SqlParameter construction patterns × (non-null + null) — also covers reads via `GetString`/`GetSqlString`/`GetFieldValue<string>` |
+| `TestVectorDataInsertionAsVarcharAsync` | Async | Same 4 patterns × (non-null + null) async |
 | `TestStoredProcParamsForVectorAsVarchar` | Sync | SP with VARCHAR(MAX) input/output params |
 | `TestStoredProcParamsForVectorAsVarcharAsync` | Async | Same SP test async |
 | `TestSqlBulkCopyForVectorAsVarchar` | Sync | BulkCopy from varchar(max) source to vector dest |
@@ -135,7 +137,20 @@ This test suite validates the varchar(max) path with these test methods:
 
 ## Native Vector Support Test Suite: `NativeVectorFloat32Tests.cs`
 
-Uses `[ConditionalTheory]` + `[MemberData]` for parameterized tests.
+Uses `[ConditionalTheory]`/`[ConditionalFact]` + `[MemberData]` for parameterized tests, all gated on `DataTestUtility.IsSqlVectorSupported`.
+
+### Test methods
+
+| Test Method | Kind | Coverage |
+|-------------|------|----------|
+| `TestSqlVectorFloat32ParameterInsertionAndReads` | Theory | Insert + read using 4 SqlParameter patterns × 4 value types |
+| `TestSqlVectorFloat32ParameterInsertionAndReadsAsync` | Theory (async) | Async variant |
+| `TestStoredProcParamsForVectorFloat32` | Theory | Stored procedure input/output params |
+| `TestStoredProcParamsForVectorFloat32Async` | Theory (async) | Async SP variant |
+| `TestBulkCopyFromSqlTable` | Theory | `SqlBulkCopy` from a vector source table |
+| `TestBulkCopyFromSqlTableAsync` | Theory (async) | Async bulk copy |
+| `TestGetFieldTypeReturnsSqlVectorForVectorColumn` | Fact | Added in PR #4105 — verifies `GetFieldType`/`GetProviderSpecificFieldType`/`GetValue`/`GetFieldValue<SqlVector<float>>` |
+| `TestInsertVectorsFloat32WithPrepare` | Fact | Prepared statement with native vector param |
 
 ### Test data generator: `VectorFloat32TestData.GetVectorFloat32TestData()`
 
@@ -154,20 +169,24 @@ Generates 4 parameter patterns × 4 value types:
 
 ## Key Source Files
 
+All implementation lives in the unified project under `src/Microsoft.Data.SqlClient/src/`. (PR #3433 originally modified the legacy `netcore/src/` and `netfx/src/` trees; subsequent unification consolidated everything here.)
+
 | File | Purpose |
 |------|---------|
-| `src/.../SqlTypes/SqlVector.cs` | `SqlVector<T>` struct definition |
-| `src/.../SqlClient/ISqlVector.cs` | Internal `ISqlVector` interface |
-| `src/.../SqlClient/SqlBuffer.cs` | Vector storage in result buffers |
-| `src/.../SqlClient/SqlEnums.cs` | `MetaType` for vector, `SqlVectorElementType` enum |
-| `src/.../SqlClient/TdsEnums.cs` | TDS constants (SQLVECTOR, FEATUREEXT_VECTORSUPPORT) |
-| `src/.../SqlDbTypeExtensions.cs` | `SqlDbTypeExtensions.Vector` |
-| `src/.../SqlClient/TdsParser.cs` | TDS read/write for vector data |
-| `src/.../SqlClient/SqlDataReader.cs` | `GetSqlVector<T>()`, `GetFieldType` fix |
-| `src/.../SqlClient/SqlCommand.cs` | BuildParamList vector handling |
-| `src/.../SqlClient/SqlInternalConnectionTds.cs` | Feature negotiation |
-| `netcore/ref/Microsoft.Data.SqlClient.cs` | Public API surface (.NET Core) |
-| `netfx/ref/Microsoft.Data.SqlClient.cs` | Public API surface (.NET Framework) |
+| `src/Microsoft/Data/SqlTypes/SqlVector.cs` | `SqlVector<T>` readonly struct definition |
+| `src/Microsoft/Data/SqlClient/ISqlVector.cs` | Internal `ISqlVector` interface (`Length`, `ElementType`, `ElementSize`, `VectorPayload`, `Size`) |
+| `src/Microsoft/Data/SqlClient/SqlBuffer.cs` | Vector storage in result buffers (`StorageType.Vector`, `_vectorInfo`) |
+| `src/Microsoft/Data/SqlClient/SqlEnums.cs` | `MetaType` for vector, `MetaType.SqlVectorElementType` enum (`Float32 = 0x00`) |
+| `src/Microsoft/Data/SqlClient/TdsEnums.cs` | TDS constants: `SQLVECTOR = 0xF5`, `FEATUREEXT_VECTORSUPPORT = 0x0E`, `VECTOR_HEADER_SIZE = 8`, `MAX_SUPPORTED_VECTOR_VERSION = 0x01`, `FeatureExtension.VectorSupport = 1 << (FEATUREEXT_VECTORSUPPORT - 1)` |
+| `src/Microsoft/Data/SqlDbTypeExtensions.cs` | `SqlDbTypeExtensions.Vector` |
+| `src/Microsoft/Data/SqlClient/TdsParser.cs` | TDS read/write for vector data |
+| `src/Microsoft/Data/SqlClient/SqlDataReader.cs` | `GetSqlVector<T>()`, `GetFieldType`/`GetProviderSpecificFieldType` (PR #4105), `GetVectorFieldType` private helper |
+| `src/Microsoft/Data/SqlClient/SqlCommand.cs` | `BuildParamList` vector handling |
+| `src/Microsoft/Data/SqlClient/Connection/SqlConnectionInternal.cs` | Feature negotiation (handles `FEATUREEXT_VECTORSUPPORT` ack; rejects versions `0` or `> MAX_SUPPORTED_VECTOR_VERSION`) |
+| `netcore/ref/Microsoft.Data.SqlClient.cs` | Public API surface for .NET (still active) |
+| `netfx/ref/Microsoft.Data.SqlClient.cs` | Public API surface for .NET Framework (still active) |
+| `doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml` | Public XML doc snippets (`SqlVector`, `ctor1`, `CreateNull`, `IsNull`, `Null`, `Length`, `Memory`) |
+| `doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml` | Doc snippets for `SqlDbTypeExtensions.Vector` |
 
 ## Test Files
 
@@ -175,5 +194,6 @@ Generates 4 parameter patterns × 4 value types:
 |------|---------|
 | `tests/ManualTests/SQL/VectorTest/NativeVectorFloat32Tests.cs` | Native vector type integration tests |
 | `tests/ManualTests/SQL/VectorTest/VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests |
-| `tests/ManualTests/SQL/VectorTest/VectorAPIValidationTest.cs` | Ref assembly API validation (no DB) |
-| `tests/FunctionalTests/SqlVectorTest.cs` | Unit tests for SqlVector<T> |
+| `tests/ManualTests/SQL/VectorTest/VectorAPIValidationTest.cs` | Ref assembly API validation (no DB): `ValidateVectorSqlDbType`, `TestSqlVectorCreationAPIWithFloatArr`, `TestSqlVectorCreationAPIWithROM`, `TestSqlVectorCreationAPICreateNull`, `TestIsNullProperty`, `TestNullProperty`, `TestLengthProperty`, `TestMemoryProperty` |
+| `tests/UnitTests/Microsoft/Data/SqlTypes/SqlVectorTest.cs` | Unit tests for `SqlVector<T>` (originally `tests/FunctionalTests/SqlVectorFloat32Test.cs` in PR #3433, later renamed and moved to UnitTests) |
+| `doc/samples/SqlVectorExample.cs` | Public usage sample |
