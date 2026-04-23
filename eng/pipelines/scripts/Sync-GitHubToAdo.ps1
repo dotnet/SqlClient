@@ -128,7 +128,7 @@ function Get-CommitSummary {
         return "_(commit log unavailable)_"
     }
 
-    $lines = $logOutput -split "`n" | Where-Object { $_ -match '\S' }
+    $lines = @($logOutput -split "`n" | Where-Object { $_ -match '\S' })
     if ($lines.Count -eq 0) {
         return "_(no commits)_"
     }
