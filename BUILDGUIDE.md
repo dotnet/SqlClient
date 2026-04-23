@@ -57,6 +57,53 @@ Manual Tests require the below setup to run:
   |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use non-Azure bsl files to compare test results. This is needed when testing against Azure Managed Instances; otherwise TVP Tests will fail on TestSet 3. The default value is `false`. |
   |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
 
+## Test Configuration Environment Variables
+
+Environment variables can be used to override test configuration without modifying `config.json`
+files directly. This is useful when running tests via the command line, in CI/CD pipelines,
+containerized environments, or when switching between configurations frequently.
+
+### Main Test Suite (`Microsoft.Data.SqlClient.TestUtilities`)
+
+These variables apply to unit, functional, and manual tests. The configuration is defined in
+[`Config.cs`](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Config.cs).
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TEST_MDS_CONFIG` | Override the path to the `config.json` file used by the test runner. | `config.json` (in the working directory) |
+| `MDS_TCPConnectionString` | Override the TCP connection string. Takes precedence over the value in `config.json`. | Value from `config.json` |
+
+Example:
+
+```bash
+export TEST_MDS_CONFIG=~/my-test-config.json
+export MDS_TCPConnectionString="Server=myserver;Database=mydb;Trusted_Connection=True;"
+dotnet test src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj
+```
+
+### Performance Tests
+
+These variables apply to performance benchmarks. The configuration is defined in
+[`Config.cs`](src/Microsoft.Data.SqlClient/tests/PerformanceTests/Config/Config.cs).
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RUNNER_CONFIG` | Override the path to the `runnerconfig.json` file used by performance benchmarks. | `runnerconfig.json` (in the DLL output directory) |
+
+See [Run Performance Tests](#run-performance-tests) for more details.
+
+### Azure Extension Tests
+
+These variables apply to the Azure extension test suite. The configuration is defined in
+[`Config.cs`](src/Microsoft.Data.SqlClient.Extensions/Azure/test/Config.cs).
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TEST_MDS_CONFIG` | Override the path to the `config.json` file used by Azure extension tests. | `config.json` |
+| `ADO_POOL` | Set to any value to indicate tests are running in an Azure DevOps CI pool. | _(unset)_ |
+| `SYSTEM_ACCESSTOKEN` | Azure Pipelines system access token, used for workload identity federation tests. | _(unset)_ |
+| `TEST_DEBUG_EMIT` | Set to any value to enable debug output of configuration values during test startup. Sensitive values are Base64-encoded. | _(unset)_ |
+
 ## MSBuild Reference
 
 ### Targets

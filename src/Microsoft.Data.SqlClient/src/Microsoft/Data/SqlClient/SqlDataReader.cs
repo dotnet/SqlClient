@@ -3942,8 +3942,16 @@ namespace Microsoft.Data.SqlClient
             // Check if we've already read the header already
             if (i < _sharedState._nextColumnHeaderToRead)
             {
-                // Read the header, but we need to read the data
-                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly))
+                // The column header has been read (e.g. by IsDBNull) but data hasn't
+                // been consumed yet.  Consume it now unless:
+                //  - readHeaderOnly: caller only wants the header (e.g. IsDBNull itself).
+                //  - forStreaming + SequentialAccess: a streaming type (Stream, TextReader,
+                //    XmlReader) was requested in sequential mode.  The data must stay on the
+                //    wire so that SqlSequentialStream / SqlSequentialTextReader can read it
+                //    incrementally.  In non-sequential mode we still need to materialize the
+                //    data into _data[i] for the MemoryStream / StringReader path.
+                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly) &&
+                    !(forStreaming && IsCommandBehavior(CommandBehavior.SequentialAccess)))
                 {
                     return TryReadColumnData();
                 }
