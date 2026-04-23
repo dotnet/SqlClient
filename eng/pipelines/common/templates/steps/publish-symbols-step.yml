@@ -52,6 +52,34 @@ steps:
   displayName: 'Update Symbol.AccountName with ${{parameters.SymAccount}}'
   condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
 
+- powershell: |
+    Write-Host "Symbols publishing task variables:"
+    Write-Host "  SymAccount=${{ parameters.SymAccount }}"
+    Write-Host "  publishSymbols=${{ parameters.publishSymbols }}"
+    Write-Host "  symbolsVersion=${{ parameters.symbolsVersion }}"
+    Write-Host "  symbolServer=${{ parameters.symbolServer }}"
+    Write-Host "  symbolTokenUri=${{ parameters.symbolTokenUri }}"
+    Write-Host "  symbolsArtifactName=${{ parameters.symbolsArtifactName }}"
+    Write-Host "  publishToServers.internal=${{ parameters.publishToServers.internal }}"
+    Write-Host "  publishToServers.public=${{ parameters.publishToServers.public }}"
+    Write-Host "  referenceType=${{ parameters.referenceType }}"
+    Write-Host "  product=${{ parameters.product }}"
+    Write-Host "  Build.SourcesDirectory=$(Build.SourcesDirectory)"
+    Write-Host "  Configuration=$(Configuration)"
+    Write-Host "  NuGetPackageVersion=$(NuGetPackageVersion)"
+    Write-Host "  PublishSymbols=$(PublishSymbols)"
+    Write-Host "  SymbolServer=$(SymbolServer)"
+    Write-Host "  SymbolTokenUri=$(SymbolTokenUri)"
+    Write-Host "PublishSymbols@2 inputs:"
+    Write-Host "  SymbolsFolder=$(Build.SourcesDirectory)\\artifacts\\${{ parameters.referenceType }}\\bin"
+    Write-Host "  SearchPattern line 1=Windows_NT/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb"
+    Write-Host "  SearchPattern line 2=Unix/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb"
+    Write-Host "  SymbolsProduct=Microsoft.Data.SqlClient"
+    Write-Host "  SymbolsVersion=${{ parameters.symbolsVersion }}"
+    Write-Host "  SymbolsArtifactName=${{ parameters.symbolsArtifactName }}"
+  displayName: 'Log symbols publishing variables'
+  condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
+
 - ${{ if eq(parameters.product, 'MDS') }}:
   - task: PublishSymbols@2
     displayName: 'Upload symbols to ${{parameters.SymAccount }} org'
@@ -78,17 +106,38 @@ steps:
     scriptType: ps
     scriptLocation: inlineScript
     inlineScript: |
+      $azureSubscription = "Symbols publishing Workload Identity federation service-ADO.Net"
       $publishToInternalServer = "${{parameters.publishToServers.internal }}".ToLower()
       $publishToPublicServer = "${{parameters.publishToServers.public }}".ToLower()
-
-      echo "Publishing request name: ${{parameters.symbolsArtifactName }}"
-      echo "Publish to internal server: $publishToInternalServer"
-      echo "Publish to public server: $publishToPublicServer"      
+      $requestName = "${{parameters.symbolsArtifactName }}"
 
       $symbolServer = "${{parameters.symbolServer }}"
       $tokenUri = "${{parameters.symbolTokenUri }}"
       # Registered project name in the symbol publishing pipeline: https://portal.microsofticm.com/imp/v3/incidents/incident/520844254/summary
       $projectName = "Microsoft.Data.SqlClient.SNI"
+      $registerRequestUri = "https://$symbolServer.trafficmanager.net/projects/$projectName/requests"
+      $publishRequestUri = "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName"
+      $statusRequestUri = "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName"
+      $requestNameRegistrationBody = "{'requestName': '$requestName'}"
+      $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
+
+      echo "Symbols publishing API variables:"
+      echo "  azureSubscription=$azureSubscription"
+      echo "  symbolServer=$symbolServer"
+      echo "  tokenUri=$tokenUri"
+      echo "  projectName=$projectName"
+      echo "  requestName=$requestName"
+      echo "  publishToInternalServer=$publishToInternalServer"
+      echo "  publishToPublicServer=$publishToPublicServer"
+
+      echo "Symbols publishing URLs:"
+      echo "  registerRequestUri=$registerRequestUri"
+      echo "  publishRequestUri=$publishRequestUri"
+      echo "  statusRequestUri=$statusRequestUri"
+
+      echo "Symbols publishing HTTP bodies:"
+      echo "  requestNameRegistrationBody=$requestNameRegistrationBody"
+      echo "  publishSymbolsBody=$publishSymbolsBody"
 
       # Get the access token for the symbol publishing service
       $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
@@ -96,23 +145,20 @@ steps:
       echo ">  1.Symbol publishing token acquired."
 
       echo "Registering the request name ..."
-      $requestName = "${{parameters.symbolsArtifactName }}"
-      $requestNameRegistrationBody = "{'requestName': '$requestName'}"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
+      Invoke-RestMethod -Method POST -Uri $registerRequestUri -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $requestNameRegistrationBody
 
       echo ">  2.Registration of request name succeeded."
 
       echo "Publishing the symbols ..."
-      $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
       echo "Publishing symbols request body: $publishSymbolsBody"
-      Invoke-RestMethod -Method POST -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $publishSymbolsBody
+      Invoke-RestMethod -Method POST -Uri $publishRequestUri -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json" -Body $publishSymbolsBody
 
       echo ">  3.Request to publish symbols succeeded."
 
       # The following REST calls are used to check publishing status.
       echo ">  4.Checking the status of the request ..."
 
-      Invoke-RestMethod -Method GET -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
+      Invoke-RestMethod -Method GET -Uri $statusRequestUri -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
       
       echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
       
