@@ -200,6 +200,7 @@ extends:
               nugetPackageVersion: $(effectiveAkvPackageVersion)
               mdsPackageVersion: $(akvMdsPackageVersion)
               publishSymbols: ${{ parameters['publishSymbols'] }}
+              isOfficialBuild: true
               signingAppRegistrationClientId: $(SigningAppRegistrationClientId)
               signingAppRegistrationTenantId: $(SigningAppRegistrationTenantId)
               signingAuthAkvName: $(SigningAuthAkvName)

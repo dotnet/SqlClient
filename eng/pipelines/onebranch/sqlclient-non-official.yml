@@ -171,6 +171,7 @@ extends:
         parameters:
           packageFolderName: $(packageFolderName)
           isPreview: ${{ parameters['isPreview'] }}
+          isOfficialBuild: false
           downloadPackageStep:
             download: current
             artifact: $(packageFolderName)
