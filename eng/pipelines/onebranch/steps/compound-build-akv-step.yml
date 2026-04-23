@@ -36,7 +36,7 @@ steps:
   - task: MSBuild@1
     displayName: 'Build.proj - BuildAkv'
     inputs:
-        solution: '$(REPO_ROOT)/build.proj'
+        solution: '$(REPOROOT)/build.proj'
         configuration: '${{ parameters.buildConfiguration }}'
         msbuildArguments: >-
             -t:BuildAkv

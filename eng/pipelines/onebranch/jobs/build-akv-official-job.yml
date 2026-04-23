@@ -133,7 +133,7 @@ jobs:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.nugetPackageVersion }}'
-                nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
+                nuspecPath: '$(REPOROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'Package'
 
