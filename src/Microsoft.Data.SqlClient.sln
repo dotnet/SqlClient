@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -218,6 +218,76 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestClr", "TestClr", "{CDE508A5-F5D0-4A59-A4EF-978833830727}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj", "{9A8996A8-6484-4AA7-B50F-F861430EDE2F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eng", "eng", "{D7516AF3-B224-47AA-A417-DCF447F75431}"
+	ProjectSection(SolutionItems) = preProject
+		..\build.proj = ..\build.proj
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{7F590CEA-0041-48FA-BE40-CD275A7A27D8}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\dotnet-sqlclient-ci-core.yml = ..\eng\pipelines\dotnet-sqlclient-ci-core.yml
+		..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml
+		..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml
+		..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{2362FAE5-8065-425B-9E90-77C0D74FB418}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{5669BA6F-E931-41E3-8C84-08F6A4E36ED3}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\libraries\akv-variables.yml = ..\eng\pipelines\libraries\akv-variables.yml
+		..\eng\pipelines\libraries\build-variables.yml = ..\eng\pipelines\libraries\build-variables.yml
+		..\eng\pipelines\libraries\ci-build-variables.yml = ..\eng\pipelines\libraries\ci-build-variables.yml
+		..\eng\pipelines\libraries\common-variables.yml = ..\eng\pipelines\libraries\common-variables.yml
+		..\eng\pipelines\libraries\mds-validation-variables.yml = ..\eng\pipelines\libraries\mds-validation-variables.yml
+		..\eng\pipelines\libraries\mds-variables.yml = ..\eng\pipelines\libraries\mds-variables.yml
+		..\eng\pipelines\libraries\variables.yml = ..\eng\pipelines\libraries\variables.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{CF093423-5E6A-4E57-B4B3-C461D6A59F24}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{52EF8E3D-65F2-48B2-9E8B-A4452CADB417}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\common\templates\jobs\build-signed-akv-package-job.yml = ..\eng\pipelines\common\templates\jobs\build-signed-akv-package-job.yml
+		..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml
+		..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml = ..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml
+		..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml = ..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml
+		..\eng\pipelines\common\templates\jobs\ci-run-tests-job.yml = ..\eng\pipelines\common\templates\jobs\ci-run-tests-job.yml
+		..\eng\pipelines\common\templates\jobs\run-tests-package-reference-job.yml = ..\eng\pipelines\common\templates\jobs\run-tests-package-reference-job.yml
+		..\eng\pipelines\common\templates\jobs\validate-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\validate-signed-package-job.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{96F39B2B-94D4-4EC5-B638-B7B54AC25FA5}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\common\templates\stages\ci-run-tests-stage.yml = ..\eng\pipelines\common\templates\stages\ci-run-tests-stage.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{92794590-3888-4E58-B595-C892B93B4D28}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml
+		..\eng\pipelines\common\templates\steps\build-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\build-all-tests-step.yml
+		..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml
+		..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml
+		..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml = ..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml
+		..\eng\pipelines\common\templates\steps\ci-project-build-step.yml = ..\eng\pipelines\common\templates\steps\ci-project-build-step.yml
+		..\eng\pipelines\common\templates\steps\code-analyze-step.yml = ..\eng\pipelines\common\templates\steps\code-analyze-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml
+		..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml = ..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml
+		..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml = ..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml
+		..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml = ..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml
+		..\eng\pipelines\common\templates\steps\install-dotnet.yml = ..\eng\pipelines\common\templates\steps\install-dotnet.yml
+		..\eng\pipelines\common\templates\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\common\templates\steps\install-dotnet-arm64.ps1
+		..\eng\pipelines\common\templates\steps\pre-build-step.yml = ..\eng\pipelines\common\templates\steps\pre-build-step.yml
+		..\eng\pipelines\common\templates\steps\prepare-test-db-step.yml = ..\eng\pipelines\common\templates\steps\prepare-test-db-step.yml
+		..\eng\pipelines\common\templates\steps\publish-symbols-step.yml = ..\eng\pipelines\common\templates\steps\publish-symbols-step.yml
+		..\eng\pipelines\common\templates\steps\publish-test-results-step.yml = ..\eng\pipelines\common\templates\steps\publish-test-results-step.yml
+		..\eng\pipelines\common\templates\steps\run-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\run-all-tests-step.yml
+		..\eng\pipelines\common\templates\steps\update-config-file-step.yml = ..\eng\pipelines\common\templates\steps\update-config-file-step.yml
+		..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml = ..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -522,6 +592,13 @@ Global
 		{869A9BCC-D303-4365-9BF7-958CD6387916} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
 		{CDE508A5-F5D0-4A59-A4EF-978833830727} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{9A8996A8-6484-4AA7-B50F-F861430EDE2F} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
+		{7F590CEA-0041-48FA-BE40-CD275A7A27D8} = {D7516AF3-B224-47AA-A417-DCF447F75431}
+		{2362FAE5-8065-425B-9E90-77C0D74FB418} = {7F590CEA-0041-48FA-BE40-CD275A7A27D8}
+		{5669BA6F-E931-41E3-8C84-08F6A4E36ED3} = {7F590CEA-0041-48FA-BE40-CD275A7A27D8}
+		{CF093423-5E6A-4E57-B4B3-C461D6A59F24} = {2362FAE5-8065-425B-9E90-77C0D74FB418}
+		{52EF8E3D-65F2-48B2-9E8B-A4452CADB417} = {CF093423-5E6A-4E57-B4B3-C461D6A59F24}
+		{96F39B2B-94D4-4EC5-B638-B7B54AC25FA5} = {CF093423-5E6A-4E57-B4B3-C461D6A59F24}
+		{92794590-3888-4E58-B595-C892B93B4D28} = {CF093423-5E6A-4E57-B4B3-C461D6A59F24}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

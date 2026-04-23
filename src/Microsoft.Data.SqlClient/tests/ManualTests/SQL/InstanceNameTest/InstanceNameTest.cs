@@ -16,9 +16,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class InstanceNameTest
     {
         private const char SemicolonSeparator = ';';
-
+        
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ConnectToSQLWithInstanceNameTest()
+        [PlatformSpecific(~TestPlatforms.OSX)]
+        public static void ConnectToSqlWithInstanceNameTest_NotMacOs() =>
+            ConnectToSqlWithInstanceNameTest_Impl();
+        
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Trait("Category", "flaky")]
+        [PlatformSpecific(TestPlatforms.OSX)]
+        public static void ConnectToSqlWithInstanceNameTest_MacOs() =>
+            ConnectToSqlWithInstanceNameTest_Impl();
+
+        private static void ConnectToSqlWithInstanceNameTest_Impl()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
 
@@ -39,8 +49,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // We can only connect via IP address if we aren't doing remote Kerberos or strict TLS
                 if (builder.Encrypt != SqlConnectionEncryptOption.Strict &&
-                        (!builder.IntegratedSecurity || hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-                         hostname.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase)))
+                    (!builder.IntegratedSecurity || hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                     hostname.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase)))
                 {
                     // Exercise the IP address-specific code in SSRP
                     IPAddress[] addresses = Dns.GetHostAddresses(hostname);

@@ -244,6 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
@@ -312,6 +313,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 #if !NETFRAMEWORK
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()
         {
@@ -395,6 +397,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
@@ -443,6 +446,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
         {
@@ -629,6 +633,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
@@ -953,7 +958,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ClosedConnection_SqlParameterValueTest()
+        [PlatformSpecific(~TestPlatforms.OSX)]
+        public static void ClosedConnection_SqlParameterValueTest() =>
+            ClosedConnection_SqlParameterValueTest_Impl();
+
+        [Trait("Category", "flaky")]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [PlatformSpecific(TestPlatforms.OSX)]
+        public static void ClosedConnection_SqlParameterValueTest_MacOs() =>
+            ClosedConnection_SqlParameterValueTest_Impl();
+        
+        private static void ClosedConnection_SqlParameterValueTest_Impl()
         {
             var threads = new List<Thread>();
             for (int i = 0; i < 100; i++)

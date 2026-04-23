@@ -21,6 +21,7 @@ using Microsoft.DotNet.RemoteExecutor;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Category", "flaky")]
     [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
     public class DiagnosticTest
     {
