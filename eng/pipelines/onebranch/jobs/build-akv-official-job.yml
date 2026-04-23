@@ -61,15 +61,15 @@ parameters:
 
     - name: symbolsPublishProjectName
       type: string
-      default: $(SymbolsPublishProjectName)
+      default: $(SymbolsPublishProjectNameSqlClient)
 
     - name: symbolsPublishServer
       type: string
-      default: $(SymbolsPublishServer)
+      default: $(SymbolsPublishServerPpe)
 
     - name: symbolsPublishTokenUri
       type: string
-      default: $(SymbolsPublishTokenUri)
+      default: $(SymbolsPublishTokenUriPpe)
 
     - name: symbolsUploadAccount
       type: string

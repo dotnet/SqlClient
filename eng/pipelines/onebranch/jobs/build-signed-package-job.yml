@@ -15,11 +15,11 @@ parameters:
   - name: publishSymbols
     type: boolean
 
-  - name: SymbolServer
+  - name: symbolServer
     type: string
     default: '$(SymbolsPublishServerProd)'
 
-  - name: SymbolTokenUri
+  - name: symbolTokenUri
     type: string
     default: '$(SymbolsPublishTokenUriProd)'
 
@@ -80,6 +80,6 @@ jobs:
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       publishSymbols: ${{ parameters['publishSymbols'] }}
-      symbolServer: ${{ parameters['SymbolServer'] }}
-      symbolTokenUri: ${{ parameters['SymbolTokenUri'] }}
+      symbolServer: ${{ parameters['symbolServer'] }}
+      symbolTokenUri: ${{ parameters['symbolTokenUri'] }}
       symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NugetPackageVersion)_$(System.TimelineId)

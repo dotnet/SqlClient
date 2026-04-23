@@ -181,6 +181,7 @@ extends:
         parameters:
           packageFolderName: $(packageFolderName)
           isPreview: ${{ parameters['isPreview'] }}
+          isOfficialBuild: true
           downloadPackageStep:
             download: current
             artifact: $(packageFolderName)
@@ -217,9 +218,11 @@ extends:
               signingEsrpClientId: $(SigningEsrpClientId)
               signingEsrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
               symbolsAzureSubscription: $(SymbolsAzureSubscription)
-              symbolsPublishProjectName: $(SymbolsPublishProjectName)
-              symbolsPublishServer: $(SymbolsPublishServer)
-              symbolsPublishTokenUri: $(SymbolsPublishTokenUri)
+              # @TODO: Should there be a project name registered for AKV provider project, 
+              # or should they go under the same project as SQL Client?
+              symbolsPublishProjectName: $(SymbolsPublishProjectNameSqlClient)
+              symbolsPublishServer: $(SymbolsPublishServerProd)
+              symbolsPublishTokenUri: $(SymbolsPublishTokenUriProd)
               symbolsUploadAccount: $(SymbolsUploadAccount)
 
     # ==================================================================
