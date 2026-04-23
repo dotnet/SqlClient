@@ -180,17 +180,6 @@ extends:
             patterns: '**/*.*nupkg'
             displayName: 'Download NuGet Package'
 
-      - template: /eng/pipelines/onebranch/jobs/run-tests-package-reference-job.yml@self
-        parameters:
-          packageFolderName: $(packageFolderName)
-          isPreview: ${{ parameters['isPreview'] }}
-          timeout: ${{ parameters.testsTimeout }}
-          downloadPackageStep:
-            download: current
-            artifact: $(packageFolderName)
-            patterns: '**/*.nupkg'
-            displayName: 'Download NuGet Package'
-
     # ==================================================================
     # Build Add-on Packages (AKV Provider)
     # Depends on MDS build completing first.
