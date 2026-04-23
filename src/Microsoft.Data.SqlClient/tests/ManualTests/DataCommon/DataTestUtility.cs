@@ -161,10 +161,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Determines whether the SQL Server supports the 'float16' base type for the 'vector' data type.
         /// </summary>
         /// <remarks>
-        /// Probes the server by executing
+        /// Probes the server by first executing
+        /// <c>ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;</c> and then executing
         /// <c>DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;</c>.
-        /// On servers that do not recognize 'float16' as a vector base type, the server returns a parse error
-        /// (Msg 195: <c>'float16' is not a recognized vector base type.</c>) and this method returns
+        /// As a side effect, this enables preview features for the current database. If the server does not
+        /// recognize <c>float16</c> as a vector base type, if the server does not support the required syntax,
+        /// if the current principal lacks permission to change the database scoped configuration, or if another
+        /// server-side error occurs while running the probe, this method returns
         /// <see langword="false"/>. Implies <see cref="IsSqlVectorSupported"/>.
         /// </remarks>
         /// <returns><see langword="true"/> if the 'float16' vector base type is supported; otherwise, <see langword="false"/>.</returns>
