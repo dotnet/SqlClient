@@ -72,7 +72,7 @@ variables:
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
@@ -85,6 +85,11 @@ extends:
       # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
       EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
+    settings:
+      # The ADO.Net pipeline that uses this file (sqlclient-6.1-official) seems to have inherited
+      # a restrictive network isolation policy that is causing symbol publishing to fail.  Force
+      # the most permissive policy to work around this issue.
+      networkIsolationPolicy: Permissive
     globalSdl: # https://aka.ms/obpipelines/sdl
       tsa:
         # The OneBranch template will set 'break' to false for the other SDL
@@ -114,7 +119,7 @@ extends:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json

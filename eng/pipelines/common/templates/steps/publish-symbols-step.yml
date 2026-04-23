@@ -21,17 +21,17 @@ parameters:
   - name: symbolServer
     type: string
     default: '$(SymbolServer)'
-  
+
   - name: symbolTokenUri
     type: string
     default: '$(SymbolTokenUri)'
-  
+
   - name: symbolsArtifactName
     type: string
-  
+
   - name: publishToServers
     type: object
-    default: 
+    default:
       internal: true
       public: true
 
@@ -159,16 +159,16 @@ steps:
       echo ">  4.Checking the status of the request ..."
 
       Invoke-RestMethod -Method GET -Uri $statusRequestUri -Headers @{ Authorization = "Bearer $symbolPublishingToken" } -ContentType "application/json"
-      
+
       echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
-      
+
       echo "PublishingStatus"
       echo "-----------------"
       echo "0	NotRequested; The request has not been requested to publish."
       echo "1	Submitted; The request is submitted to be published"
       echo "2	Processing; The request is still being processed"
       echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
-      
+
       echo "PublishingResult"
       echo "-----------------"
       echo "0	Pending; The request has not completed or has not been requested."
