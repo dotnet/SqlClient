@@ -191,7 +191,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
-    <Compile Include="SQL\Batch\BatchTests.netcore.cs" />
+    <Compile Include="SQL\Batch\BatchTests.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />

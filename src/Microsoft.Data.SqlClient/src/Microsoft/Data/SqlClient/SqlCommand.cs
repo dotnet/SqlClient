@@ -1350,7 +1350,7 @@ namespace Microsoft.Data.SqlClient
                 useManagedDataType = false;
             }
 
-            SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
+            using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -2273,7 +2273,7 @@ namespace Microsoft.Data.SqlClient
                             s = val as string;
                             if (s is null)
                             {
-                                SqlString sval = val is SqlString ? (SqlString)val : SqlString.Null;
+                                SqlString sval = val is SqlString sqlVal ? sqlVal : SqlString.Null;
                                 if (!sval.IsNull)
                                 {
                                     s = sval.Value;

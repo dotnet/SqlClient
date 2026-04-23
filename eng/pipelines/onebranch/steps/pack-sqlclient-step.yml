@@ -34,9 +34,9 @@ steps:
     displayName: Output Build Output Tree
 
   - task: CopyFiles@2
-    displayName: 'Copy NuGet Packages to PACK_OUTPUT'
+    displayName: 'Copy NuGet Packages to JOB_OUTPUT'
     inputs:
       contents: '**/Microsoft.Data.SqlClient*.*nupkg'
       flattenFolders: true
       sourceFolder: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient/'
-      targetFolder: '$(PACK_OUTPUT)'
+      targetFolder: '$(JOB_OUTPUT)/packages'
