@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <remarks>
         /// Probes the server by executing
-        /// <c>DECLARE @v AS VECTOR(5, float16) = '[0.3, 0.3, 0.3, 0.3, 0.3]'; SELECT @v;</c>.
+        /// <c>DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;</c>.
         /// On servers that do not recognize 'float16' as a vector base type, the server returns a parse error
         /// (Msg 195: <c>'float16' is not a recognized vector base type.</c>) and this method returns
         /// <see langword="false"/>. Implies <see cref="IsSqlVectorSupported"/>.

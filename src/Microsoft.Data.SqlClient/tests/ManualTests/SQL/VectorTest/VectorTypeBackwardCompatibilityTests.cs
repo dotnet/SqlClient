@@ -465,9 +465,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
         public void TestInsertVectorsAsVarcharWithPrepare()
         {
-            SqlConnection conn = new SqlConnection(s_connectionString);
+            using SqlConnection conn = new SqlConnection(s_connectionString);
             conn.Open();
-            SqlCommand command = new SqlCommand(s_insertCmdString, conn);
+            using SqlCommand command = new SqlCommand(s_insertCmdString, conn);
             SqlParameter vectorParam = new SqlParameter("@VectorData", SqlDbType.VarChar, -1);
             command.Parameters.Add(vectorParam);
             command.Prepare();
@@ -476,7 +476,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 vectorParam.Value = JsonSerializer.Serialize<float[]>(new float[] { i + 0.1f, i + 0.2f, i + 0.3f });
                 command.ExecuteNonQuery();
             }
-            SqlCommand validateCommand = new SqlCommand($"SELECT VectorData FROM {s_tableName}", conn);
+            using SqlCommand validateCommand = new SqlCommand($"SELECT VectorData FROM {s_tableName}", conn);
             using SqlDataReader reader = validateCommand.ExecuteReader();
             int rowcnt = 0;
             while (reader.Read())

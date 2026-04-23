@@ -5,7 +5,16 @@ applyTo: "**/VectorTest/**,**/SqlVector*,**/Vector*"
 
 ## Overview
 
-SQL Server 2025+ introduces the `vector` data type for storing float32 vector data, useful for AI/ML workloads (embeddings, similarity search). Microsoft.Data.SqlClient supports this via the `SqlVector<T>` type and `SqlDbTypeExtensions.Vector`.
+SQL Server 2025+ introduces the `vector` data type for storing vector data, useful for AI/ML workloads (embeddings, similarity search). Microsoft.Data.SqlClient supports this via the `SqlVector<T>` type and `SqlDbTypeExtensions.Vector`.
+
+### Supported Vector Base Types
+
+| Base Type | SQL Declaration | Element Type Byte | Client Support |
+|-----------|----------------|-------------------|----------------|
+| `float32` (default) | `VECTOR(N)` or `VECTOR(N, float32)` | `0x00` | Native TDS + varchar(max) backward compat |
+| `float16` (preview) | `VECTOR(N, float16)` | TBD | varchar(max) backward compat only (no native TDS feature extension yet) |
+
+> **Note**: `float16` requires `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;` on the server while it remains a preview feature.
 
 ## Implementation History (PRs)
 
@@ -135,6 +144,28 @@ This test suite validates the varchar(max) path with these test methods (all gat
 3. **Name + SqlDbType ctor**: `new SqlParameter("@p", SqlDbType.VarChar) { Value = json }`
 4. **Name + SqlDbType + Size ctor**: `new SqlParameter("@p", SqlDbType.VarChar, -1) { Value = json }`
 
+### Test Coverage: `Float16VectorTypeBackwardCompatibilityTests.cs` (new)
+
+Mirrors `VectorTypeBackwardCompatibilityTests` but targets `vector(3, float16)` columns via the varchar(max) JSON path. All tests gated on `IsSqlVectorFloat16Supported` (which implies `IsSqlVectorSupported`).
+
+| Test Method | Sync/Async | What it tests |
+|-------------|-----------|---------------|
+| `TestVectorDataInsertionAsVarchar` | Sync | 4 SqlParameter patterns × (non-null + null) — reads via `GetString`/`GetSqlString`/`GetFieldValue<string>` |
+| `TestVectorDataInsertionAsVarcharAsync` | Async | Same 4 patterns × (non-null + null) async |
+| `TestStoredProcParamsForVectorAsVarchar` | Sync | SP with VARCHAR(MAX) input/output params |
+| `TestStoredProcParamsForVectorAsVarcharAsync` | Async | Same SP test async |
+| `TestSqlBulkCopyForVectorAsVarchar` | Sync | BulkCopy from varchar(max) source to vector(float16) dest |
+| `TestSqlBulkCopyForVectorAsVarcharAsync` | Async | Same bulk copy async |
+| `TestInsertVectorsAsVarcharWithPrepare` | Sync | Prepared statement with varchar vector param |
+
+#### Key Differences from Float32 Backward Compat Tests
+
+- **Column DDL**: `vector(3, float16)` instead of `vector(3)` (implicit float32)
+- **Test data**: Uses `{ 1.0f, 2.0f, 3.0f }` — values exactly representable in IEEE-754 binary16 (no precision loss on round-trip)
+- **Predicate**: `IsSqlVectorFloat16Supported` instead of `IsSqlVectorSupported`
+- **Object names**: Prefixed with `VectorF16` to avoid collision (`VectorF16TestTable`, `VectorF16BulkCopyTestTable`, `VectorF16AsVarcharSp`)
+- **Test data class**: `Float16VarcharVectorTestData` (mirrors `VarcharVectorTestData`)
+
 ## Native Vector Support Test Suite: `NativeVectorFloat32Tests.cs`
 
 Uses `[ConditionalTheory]`/`[ConditionalFact]` + `[MemberData]` for parameterized tests, all gated on `DataTestUtility.IsSqlVectorSupported`.
@@ -193,7 +224,17 @@ All implementation lives in the unified project under `src/Microsoft.Data.SqlCli
 | File | Purpose |
 |------|---------|
 | `tests/ManualTests/SQL/VectorTest/NativeVectorFloat32Tests.cs` | Native vector type integration tests |
-| `tests/ManualTests/SQL/VectorTest/VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests |
+| `tests/ManualTests/SQL/VectorTest/VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests (float32) |
+| `tests/ManualTests/SQL/VectorTest/Float16VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests (float16) — **new on this branch** |
 | `tests/ManualTests/SQL/VectorTest/VectorAPIValidationTest.cs` | Ref assembly API validation (no DB): `ValidateVectorSqlDbType`, `TestSqlVectorCreationAPIWithFloatArr`, `TestSqlVectorCreationAPIWithROM`, `TestSqlVectorCreationAPICreateNull`, `TestIsNullProperty`, `TestNullProperty`, `TestLengthProperty`, `TestMemoryProperty` |
 | `tests/UnitTests/Microsoft/Data/SqlTypes/SqlVectorTest.cs` | Unit tests for `SqlVector<T>` (originally `tests/FunctionalTests/SqlVectorFloat32Test.cs` in PR #3433, later renamed and moved to UnitTests) |
 | `doc/samples/SqlVectorExample.cs` | Public usage sample |
+
+## DataTestUtility Predicates
+
+| Predicate | Cache Field | Detection Method |
+|-----------|-------------|------------------|
+| `IsSqlVectorSupported` | `s_isVectorSupported` | `IsTypePresent("vector")` — checks `SYS.TYPES` for the `vector` type |
+| `IsSqlVectorFloat16Supported` | `s_isVectorFloat16Supported` | Implies `IsSqlVectorSupported`. Probes with `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON; DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;`. Reads result via `GetString(0)`, deserializes JSON to `float[]`, and verifies it matches `{ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f }`. Catches `SqlException` (server errors) and `JsonException` (unexpected payload). **New on this branch**. |
+
+> **Design note**: The float16 probe uses values exactly representable in binary16 (`1.0f`) so the round-trip comparison is bit-exact. The probe does **not** use `ExecuteScalar()` because we want to validate the full `GetString` read path. The catch is narrowed to `SqlException` + `JsonException` rather than a blanket `catch (Exception)` so genuine driver bugs surface instead of being silently swallowed.
