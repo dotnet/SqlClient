@@ -60,7 +60,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
             new DbConnectionOptions("DataSource=localhost;", null),
-            new DbConnectionPoolKey("TestDataSource"),
+            new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
             poolGroupOptions
         );
 
@@ -901,7 +901,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
     {
         protected override DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
+            ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
             DbConnection owningConnection,
