@@ -96,7 +96,7 @@ Proceed with all remaining triage steps regardless of missing environment detail
 ## Actions (execute in this order)
 
 **First**: Call `add_labels` with at most 5 labels total (safe-outputs limit):
-- `:new: Triage Needed` (always)
+- `Triage Needed :new:` (always)
 - Exactly **one** `Area\*` label from the table above (pick the single best match)
 - `Needs More Info :information_source:` if critical environment details are missing (bugs only)
 - `Repro Available :heavy_check_mark:` if repro steps are provided
