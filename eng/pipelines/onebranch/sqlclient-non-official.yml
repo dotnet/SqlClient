@@ -5,20 +5,17 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
-trigger:
+
+trigger: none
+pr: none
+
+schedules:
+- cron: '0 4 * * Mon'
+  displayName: Weekly Sunday 09:00 PM (UTC - 7) Build
   branches:
     include:
-    - internal/release/6.1
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+      - internal/release/6.1
+  always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
@@ -92,7 +89,7 @@ variables:
       value: $(akvPackageVersion)
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
@@ -134,7 +131,7 @@ extends:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json

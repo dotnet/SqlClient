@@ -26,16 +26,8 @@ variables:
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
 
-  # Update this after every release. This is used to generate the MDS NuGet package version.
-  - name: Major
-    value: '6'
-  - name: Minor
-    value: '1'
-  - name: Patch
-    value: '5'
-
   - name: NugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)
+    value: '6.1.5'
 
   # Since we're on the release/6.1 branch, there will never be another legitimate preview release.
   # However, we routinely want to run preview builds to test other changes, so we continue to
@@ -99,7 +91,7 @@ variables:
   #
   # Credentials for publishing symbols to symbol servers.
   - group: 'symbols-variables-v3'
-    # SymbolsAzureSubscription 
+    # SymbolsAzureSubscription
     # SymbolsPublishProjectNameSqlClient
     # SymbolsPublishProjectNameSni
     # SymbolsPublishServerProd

@@ -38,7 +38,7 @@ jobs:
     - msbuild
 
   variables:
-    - template: ../../../libraries/ci-build-variables.yml@self
+    - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
   steps:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
@@ -52,21 +52,21 @@ jobs:
   # compilation errors.  We won't use the Release artifacts for anything else
   # though.
   - ${{ if eq(parameters.configuration, 'Debug') }}:
-    - template: ../steps/ci-project-build-step.yml@self
+    - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
       parameters:
         platform: ${{ parameters.platform }}
         configuration: Release
         operatingSystem: Windows
         build: all
 
-  - template: ../steps/ci-project-build-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       configuration: ${{ parameters.configuration }}
       operatingSystem: Windows
       build: all
 
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
       configuration: $(Configuration)
@@ -75,7 +75,7 @@ jobs:
       generateSymbolsPackage: false
       displayName: 'Generate NuGet package M.D.SqlClient'
 
-  - template: ../steps/generate-nuget-package-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
       configuration: $(Configuration)

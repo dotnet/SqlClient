@@ -87,7 +87,7 @@ parameters:
   default: 90
 
 variables:
-  - template: libraries/ci-build-variables.yml@self
+  - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
   - name: artifactName
     value: Artifacts
@@ -102,19 +102,19 @@ stages:
   - stage: build_nugets
     displayName: 'Build NuGet Packages'
     jobs:
-    - template: common/templates/jobs/ci-build-nugets-job.yml@self
+    - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         configuration: ${{ parameters.buildConfiguration }}
         artifactName: $(artifactName)
         ${{if ne(parameters.SNIVersion, '')}}:
           prebuildSteps:
-            - template: common/templates/steps/override-sni-version.yml@self
+            - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
               parameters:
                 SNIVersion: ${{parameters.SNIVersion}}
                 SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
   - ${{ if eq(parameters.enableStressTests, true) }}:
-    - template: stages/stress-tests-ci-stage.yml@self
+    - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         additionalDependsOn:
@@ -124,7 +124,7 @@ stages:
         ${{ if eq(parameters.debug, 'true') }}:
           verbosity: 'detailed'
 
-  - template: common/templates/stages/ci-run-tests-stage.yml@self
+  - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
@@ -135,18 +135,18 @@ stages:
 
       ${{if ne(parameters.SNIVersion, '')}}:
         prebuildSteps: # steps to run prior to building and running tests on each job
-          - template: common/templates/steps/override-sni-version.yml@self
+          - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
             parameters:
               SNIVersion: ${{parameters.SNIVersion}}
               SNIValidationFeed: ${{parameters.SNIValidationFeed}}
-          - template: common/templates/steps/ci-prebuild-step.yml@self
+          - template: /eng/pipelines/common/templates/steps/ci-prebuild-step.yml@self
             parameters:
               debug: ${{ parameters.debug }}
               artifactName: $(artifactName)
               buildType: ${{ parameters.buildType }}
       ${{else}}:
         prebuildSteps: # steps to run prior to building and running tests on each job
-          - template: common/templates/steps/ci-prebuild-step.yml@self
+          - template: /eng/pipelines/common/templates/steps/ci-prebuild-step.yml@self
             parameters:
               debug: ${{ parameters.debug }}
               artifactName: $(artifactName)
@@ -154,7 +154,7 @@ stages:
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done
-        - template: common/templates/jobs/ci-code-coverage-job.yml@self
+        - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
           parameters:
             debug: ${{ parameters.debug }}
             image: ADO-MMS22-CodeCov

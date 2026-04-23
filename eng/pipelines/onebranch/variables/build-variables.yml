@@ -5,5 +5,5 @@
 #################################################################################
 
 variables:
-  - template: common-variables.yml@self
-  - template: mds-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
+  - template: /eng/pipelines/onebranch/variables/mds-variables.yml@self

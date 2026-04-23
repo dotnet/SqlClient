@@ -5,27 +5,16 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
-trigger:
-  branches:
-    include:
-    - internal/release/6.1
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+
+trigger: none
+pr: none
 
 schedules:
 - cron: '0 5 * * Mon'
   displayName: Weekly Sunday 10:00 PM (UTC - 7) Build
   branches:
     include:
-    - internal/release/6.1
+      - internal/release/6.1
   always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
@@ -100,7 +89,7 @@ variables:
       value: $(akvPackageVersion)
 
 resources:
-  repositories: 
+  repositories:
     - repository: templates
       type: git
       name: OneBranch.Pipelines/GovernedTemplates
@@ -141,7 +130,7 @@ extends:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
-        enabled: false        
+        enabled: false
         credscan:
           enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
@@ -218,7 +207,7 @@ extends:
               signingEsrpClientId: $(SigningEsrpClientId)
               signingEsrpConnectedServiceName: $(SigningEsrpConnectedServiceName)
               symbolsAzureSubscription: $(SymbolsAzureSubscription)
-              # @TODO: Should there be a project name registered for AKV provider project, 
+              # @TODO: Should there be a project name registered for AKV provider project,
               # or should they go under the same project as SQL Client?
               symbolsPublishProjectName: $(SymbolsPublishProjectNameSqlClient)
               symbolsPublishServer: $(SymbolsPublishServerProd)
