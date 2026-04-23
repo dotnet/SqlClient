@@ -5,20 +5,8 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
-trigger:
-  branches:
-    include:
-    - internal/release/6.0
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
+
+# The 6.0 Official pipeline has been retired.
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
