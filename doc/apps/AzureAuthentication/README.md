@@ -33,8 +33,10 @@ Package versions are controlled through build properties. Pass them on the comma
 
 | Property | Default | Description |
 | --- | --- | --- |
-| `SqlClientVersion` | `7.0.0-preview4.26064.3` | Version of `Microsoft.Data.SqlClient` to reference. |
-| `AkvProviderVersion` | `7.0.0-preview1.26064.3` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
+| `LoggingVersion` | `1.0.0` | Version of `Microsoft.Data.SqlClient.Internal.Logging` to reference. |
+| `AbstractionsVersion` | `1.0.0` | Version of `Microsoft.Data.SqlClient.Extensions.Abstractions` to reference. |
+| `SqlClientVersion` | `7.0.0` | Version of `Microsoft.Data.SqlClient` to reference. |
+| `AkvProviderVersion` | `7.0.0` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
 | `AzureVersion` | None | Version of `Microsoft.Data.SqlClient.Extensions.Azure` to reference.  When omitted, the `Azure` package will not be referenced. |
 
 ## Local Package Source
@@ -68,9 +70,11 @@ Description:
 
   Supply specific package versions when building to test different versions of the SqlClient suite, for example:
 
-    -p:SqlClientVersion=7.0.0.preview4
-    -p:AkvProviderVersion=7.0.1-preview2
-    -p:AzureVersion=1.0.0-preview1
+    -p:LoggingVersion=1.0.1
+    -p:AbstractionsVersion=1.0.1
+    -p:SqlClientVersion=7.1.0.preview1
+    -p:AkvProviderVersion=7.0.0
+    -p:AzureVersion=1.1.0-preview1
 
 Usage:
   AzureAuthentication [options]
@@ -104,9 +108,11 @@ Azure Authentication Tester
 ---------------------------
 
 Packages used:
-  SqlClient:     7.0.0-preview4.26055.1
-  AKV Provider:  6.1.2
-  Azure:         1.0.0-preview1.26055.1
+  Logging:       1.0.1
+  Abstractions:  1.0.1
+  SqlClient:     7.1.0.preview1
+  AKV Provider:  7.0.0
+  Azure:         1.1.0-preview1
 
 Connection details:
   Data Source:      adotest.database.windows.net
@@ -151,10 +157,16 @@ Run including the `Azure` extensions package:
 dotnet run -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
 ```
 
-Override all three versions at once:
+Override all five package versions at once:
 
 ```bash
-dotnet run -p:SqlClientVersion=7.0.0-preview1 -p:AkvProviderVersion=7.0.0-preview1 -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
+dotnet run \
+  -p:LoggingVersion=1.0.1 \
+  -p:AbstractionsVersion=1.0.1 \
+  -p:SqlClientVersion=7.1.0-preview1 \
+  -p:AkvProviderVersion=7.1.0-preview1 \
+  -p:AzureVersion=1.0.0 \
+  -- -c "<connection string>"
 ```
 
 ## Prerequisites

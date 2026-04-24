@@ -11,6 +11,8 @@
 
   <!-- SqlClient Packages -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <!--
       We include the AKV Provider to ensure there are no transitive dependency conflicts.  It is
