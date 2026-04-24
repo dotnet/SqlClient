@@ -4,11 +4,11 @@
   <!-- We purposely do not include any parent Directory.Packages.props files. -->
 
   <PropertyGroup>
-    <!-- Use SqlClient 7.0.0 Preview 4 if no version was specified. -->
-    <SqlClientVersion>7.0.0-preview4.26064.3</SqlClientVersion>
+    <!-- Use SqlClient 7.0.0 if no version was specified. -->
+    <SqlClientVersion>7.0.0</SqlClientVersion>
 
-    <!-- Use AKV Provider 7.0.0 Preview 1 if no version was specified. -->
-    <AkvProviderVersion>7.0.0-preview1.26064.3</AkvProviderVersion>
+    <!-- Use AKV Provider 7.0.0 if no version was specified. -->
+    <AkvProviderVersion>7.0.0</AkvProviderVersion>
   </PropertyGroup>
 
   <!-- SqlClient Packages -->
@@ -25,8 +25,8 @@
 
   <!-- Other Packages -->
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.17.1" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.3" />
+    <PackageVersion Include="Azure.Core" Version="1.53.0" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.6" />
   </ItemGroup>
 
 </Project>
