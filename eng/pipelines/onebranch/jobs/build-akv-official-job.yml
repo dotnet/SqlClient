@@ -16,6 +16,7 @@ parameters:
 
     - name: buildConfiguration
       type: string
+      default: Release
 
     - name: nugetPackageVersion
       type: string
@@ -26,38 +27,53 @@ parameters:
     - name: publishSymbols
       type: boolean
 
+    - name: isOfficialBuild
+      type: boolean
+      default: false
+
     - name: signingAppRegistrationClientId
       type: string
+      default: $(SigningAppRegistrationClientId)
 
     - name: signingAppRegistrationTenantId
       type: string
+      default: $(SigningAppRegistrationTenantId)
 
     - name: signingAuthAkvName
       type: string
+      default: $(SigningAuthAkvName)
 
     - name: signingAuthSignCertName
       type: string
+      default: $(SigningAuthSignCertName)
 
     - name: signingEsrpClientId
       type: string
+      default: $(SigningEsrpClientId)
 
     - name: signingEsrpConnectedServiceName
       type: string
+      default: $(SigningEsrpConnectedServiceName)
 
     - name: symbolsAzureSubscription
       type: string
+      default: $(SymbolsAzureSubscription)
 
     - name: symbolsPublishProjectName
       type: string
+      default: $(SymbolsPublishProjectNameSqlClient)
 
     - name: symbolsPublishServer
       type: string
+      default: $(SymbolsPublishServerPpe)
 
     - name: symbolsPublishTokenUri
       type: string
+      default: $(SymbolsPublishTokenUriPpe)
 
     - name: symbolsUploadAccount
       type: string
+      default: $(SymbolsUploadAccount)
       
     # @TODO: This should be determined from build output, or at a higher level
     - # Note: not intended to be passed in, is only used for copying files for ApiScan.
@@ -79,22 +95,21 @@ jobs:
           ob_outputDirectory: '$(ARTIFACT_PATH)'
 
       steps:
-          - template: ../steps/script-output-environment-variables-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
-          - template: ../steps/compound-build-akv-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/compound-build-akv-step.yml@self
             parameters:
                 assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
-                signingKeyPath: '$(Agent.TempDirectory)/netfxKeypair.snk'
                 
           - ${{ each targetFramework in parameters.targetFrameworks }}:  
-              - template: ../steps/compound-extract-akv-apiscan-files-step.yml
+              - template: /eng/pipelines/onebranch/steps/compound-extract-akv-apiscan-files-step.yml
                 parameters:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
                     dllPath: '${{ parameters.apiScanDllPath }}'
@@ -102,43 +117,33 @@ jobs:
                     referenceType: Package
                     targetFramework: '${{ targetFramework }}'
 
-          - template: ../steps/roslyn-analyzers-akv-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-akv-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
                 signingKeyPath: '$(Agent.TempDirectory)/netfxKeypair.snk'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
-            parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'dll'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+          - ${{ if eq(parameters.isOfficialBuild, true) }}:
+            - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+              parameters:
+                  artifactType: 'dll'
 
-          - template: ../steps/compound-nuget-pack-step.yml@self
+          - template: /eng/pipelines/onebranch/steps/compound-nuget-pack-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.nugetPackageVersion }}'
-                nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
+                nuspecPath: '$(REPOROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'Package'
 
-          - template: ../steps/compound-esrp-code-signing-step.yml@self
-            parameters:
-                appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
-                appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
-                artifactType: 'pkg'
-                authAkvName: '${{ parameters.signingAuthAkvName }}'
-                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
-                esrpClientId: '${{ parameters.signingEsrpClientId }}'
-                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
+          - ${{ if eq(parameters.isOfficialBuild, true) }}:
+            - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+              parameters:
+                artifactType: pkg
 
           - ${{ if parameters.publishSymbols }}:
-            - template: ../steps/compound-publish-symbols-step.yml@self
+            - template: /eng/pipelines/onebranch/steps/compound-publish-symbols-step.yml@self
               parameters:
                   artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'

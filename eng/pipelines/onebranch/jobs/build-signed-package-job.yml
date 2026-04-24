@@ -1,0 +1,85 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: symbolsFolder
+    type: string
+    default: symbols
+
+  - name: softwareFolder
+    type: string
+    default: software
+
+  - name: publishSymbols
+    type: boolean
+
+  - name: symbolServer
+    type: string
+    default: '$(SymbolsPublishServerProd)'
+
+  - name: symbolTokenUri
+    type: string
+    default: '$(SymbolsPublishTokenUriProd)'
+
+  - name: isPreview
+    type: boolean
+
+  - name: isOfficialBuild
+    type: boolean
+    default: false
+
+jobs:
+- job: build_signed_package
+  displayName: 'Build Signed MDS Package'
+  pool:
+    type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    
+  variables:
+  - template: /eng/pipelines/onebranch/variables/variables.yml@self
+  - ${{ if parameters.isPreview }}:
+    - name: NugetPackageVersion
+      value: $(PreviewNugetPackageVersion)
+
+  steps:
+  - script: SET
+    displayName: 'Print Environment Variables'
+
+  - powershell: |
+      Write-Host "##vso[task.setvariable variable=CDP_BUILD_TYPE_COPY;isOutput=true]$($env:CDP_BUILD_TYPE)"
+    name: GetBuildType
+  
+  - template: /eng/pipelines/onebranch/steps/build-all-configurations-signed-dlls-step.yml@self
+  
+  - template: /eng/pipelines/onebranch/steps/code-analyze-step.yml@self
+    parameters:
+      analyzeType: all
+  
+  - ${{ if eq(parameters['isOfficialBuild'], true) }}:
+    - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+      parameters:
+        artifactType: dll
+  
+  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
+    parameters:
+      OutputDirectory: $(artifactDirectory)
+  
+  - ${{ if eq(parameters['isOfficialBuild'], true) }}:
+    - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
+      parameters:
+        artifactType: pkg
+  
+  - template: /eng/pipelines/onebranch/steps/copy-dlls-for-test-step.yml@self
+    parameters:
+      product: MDS
+      symbolsFolder: ${{ parameters['symbolsFolder'] }}
+      softwareFolder: ${{ parameters['softwareFolder'] }}
+
+  # Publish symbols to servers
+  - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
+    parameters:
+      publishSymbols: ${{ parameters['publishSymbols'] }}
+      symbolServer: ${{ parameters['symbolServer'] }}
+      symbolTokenUri: ${{ parameters['symbolTokenUri'] }}
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NugetPackageVersion)_$(System.TimelineId)

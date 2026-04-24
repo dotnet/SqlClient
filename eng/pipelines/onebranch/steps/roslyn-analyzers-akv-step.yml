@@ -29,7 +29,7 @@ steps:
           msBuildArchitecture: x64
           msBuildCommandLine: >-
               msbuild
-              $(REPO_ROOT)/build.proj
+              $(REPOROOT)/build.proj
               -t:BuildAkv
               -p:Configuration=${{ parameters.buildConfiguration }}
               -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}

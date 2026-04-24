@@ -14,19 +14,21 @@ name: $(DayOfYear)$(Rev:rr)
 pr:
   branches:
     include:
-    - release/6.1
+      - release/6.1
 
   paths:
     include:
-    - .azuredevops
-    - .config
-    - doc
-    - eng
-    - src
-    - tools
-    - azurepipelines-coverage.yml
-    - build.proj
-    - NuGet.config
+      - .azuredevops
+      - .config
+      - doc
+      - eng
+      - src
+      - tools
+      - azurepipelines-coverage.yml
+      - build.proj
+      - NuGet.config
+    exclude:
+      - eng/pipelines/onebranch/*
 
 # Commit triggers for CI runs on specified branches.
 #
@@ -37,8 +39,8 @@ trigger:
   batch: true
   branches:
     include:
-    - release/6.1
-    - internal/release/6.1
+      - release/6.1
+      - internal/release/6.1
 
 # Scheduled runs.
 schedules:
@@ -48,7 +50,7 @@ schedules:
     displayName: Sunday Run
     branches:
       include:
-      - release/6.1
+        - release/6.1
     always: true
 
   # ADO on Sundays 05:30 UTC.
@@ -56,7 +58,7 @@ schedules:
     displayName: Sunday Run
     branches:
       include:
-      - internal/release/6.1
+        - internal/release/6.1
     always: true
 
 parameters: # parameters are shown up in ADO UI in a build queue time
@@ -123,7 +125,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   default: 90
 
 extends:
-  template: dotnet-sqlclient-ci-core.yml@self
+  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
   parameters:
     debug: ${{ parameters.debug }}
     targetFrameworks: ${{ parameters.targetFrameworks }}

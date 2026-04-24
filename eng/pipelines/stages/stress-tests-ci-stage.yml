@@ -139,7 +139,7 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on Linux.
 
-    - template: ../jobs/stress-tests-ci-job.yml@self
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml@self
       parameters:
         jobNameSuffix: linux
         displayNamePrefix: Linux
@@ -160,7 +160,7 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on Windows
 
-    - template: ../jobs/stress-tests-ci-job.yml
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml
       parameters:
         jobNameSuffix: windows
         displayNamePrefix: Win
@@ -186,7 +186,7 @@ stages:
     # --------------------------------------------------------------------------
     # Build and test on macOS.
 
-    - template: ../jobs/stress-tests-ci-job.yml
+    - template: /eng/pipelines/jobs/stress-tests-ci-job.yml
       parameters:
         jobNameSuffix: macos
         displayNamePrefix: macOS
