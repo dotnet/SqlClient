@@ -47,6 +47,24 @@ namespace Microsoft.Data.SqlClient
         private static readonly object EventInfoMessage = new object();
 
         internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
+
+        // Testability hooks: overriding these in unit tests allows verification of CAS permission
+        // demands without needing a partial-trust AppDomain (which is unavailable in modern test
+        // runners). In production the delegates simply call the real Demand() methods.
+        //
+        // [ThreadStatic] fields provide per-thread isolation, which is sufficient for both static
+        // and instance method demand sites. A null value means "use the real demand".
+        [System.ThreadStatic]
+        internal static Action<System.Security.PermissionSet>? s_staticDemandPermissionSet;
+
+        [System.ThreadStatic]
+        internal static Action<System.Security.CodeAccessPermission>? s_staticDemandCodeAccessPermission;
+
+        private static void DemandPermissionSetStatic(System.Security.PermissionSet ps) =>
+            (s_staticDemandPermissionSet ?? static (ps2) => ps2.Demand())(ps);
+
+        private static void DemandCodeAccessPermissionStatic(System.Security.CodeAccessPermission cap) =>
+            (s_staticDemandCodeAccessPermission ?? static (cap2) => cap2.Demand())(cap);
 #endif
         private static readonly SqlConnectionFactory s_connectionFactory = SqlConnectionFactory.Instance;
         private static int _objectTypeCount; // EventSource Counter
@@ -1349,7 +1367,7 @@ namespace Microsoft.Data.SqlClient
         public static void ClearAllPools()
         {
 #if NETFRAMEWORK
-            (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
+            DemandCodeAccessPermissionStatic(new SqlClientPermission(PermissionState.Unrestricted));
 #endif
             SqlConnectionFactory.Instance.ClearAllPools();
         }
@@ -1363,7 +1381,7 @@ namespace Microsoft.Data.SqlClient
             if (connectionOptions != null)
             {
 #if NETFRAMEWORK
-                connectionOptions.DemandPermission();
+                DemandPermissionSetStatic(connectionOptions.CreatePermissionSet());
 #endif
                 SqlConnectionFactory.Instance.ClearPool(connection);
             }
@@ -1529,7 +1547,7 @@ namespace Microsoft.Data.SqlClient
             PermissionSet permissionSet = new PermissionSet(PermissionState.None);
             permissionSet.AddPermission(SqlConnection.ExecutePermission); // MDAC 81476
             permissionSet.AddPermission(new SecurityPermission(SecurityPermissionFlag.UnmanagedCode));
-            permissionSet.Demand();
+            DemandPermissionSetStatic(permissionSet);
 
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
             System.Transactions.Transaction indigoTransaction = null;
@@ -1557,7 +1575,7 @@ namespace Microsoft.Data.SqlClient
         public override void EnlistTransaction(System.Transactions.Transaction transaction)
         {
 #if NETFRAMEWORK
-            SqlConnection.ExecutePermission.Demand();
+            DemandCodeAccessPermissionStatic(SqlConnection.ExecutePermission);
 #endif
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
 
@@ -2037,7 +2055,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.GetSchema | Info | Object Id {0}, Collection Name '{1}'", ObjectID, collectionName);
 #if NETFRAMEWORK
-            SqlConnection.ExecutePermission.Demand();
+            DemandCodeAccessPermissionStatic(SqlConnection.ExecutePermission);
 #endif
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
@@ -2267,7 +2285,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
 
 #if NETFRAMEWORK
-            userConnectionOptions.DemandPermission();
+            DemandPermissionSetStatic(userConnectionOptions.CreatePermissionSet());
 #endif
         }
 
@@ -2630,8 +2648,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
 #if NETFRAMEWORK
-                PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
-                permissionSet.Demand();
+                DemandPermissionSetStatic(connectionOptions.CreatePermissionSet());
 #endif
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
@@ -2692,8 +2709,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
 #if NETFRAMEWORK
-                PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
-                permissionSet.Demand();
+                DemandPermissionSetStatic(connectionOptions.CreatePermissionSet());
 #endif
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);

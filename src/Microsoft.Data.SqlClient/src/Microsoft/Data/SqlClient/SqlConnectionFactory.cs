@@ -589,15 +589,6 @@ namespace Microsoft.Data.SqlClient
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
             bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
 
-            SqlConnectionString userOpt = null;
-            if (userOptions != null)
-            {
-                userOpt = (SqlConnectionString)userOptions;
-            }
-            else if (sqlOwningConnection != null)
-            {
-                userOpt = (SqlConnectionString)(sqlOwningConnection.UserConnectionOptions);
-            }
 
             if (sqlOwningConnection != null)
             {
@@ -700,7 +691,6 @@ namespace Microsoft.Data.SqlClient
                 newPassword: string.Empty,
                 newSecurePassword: null,
                 redirectedUserInstance,
-                userOpt,
                 recoverySessionData,
                 applyTransientFaultHandling,
                 key.AccessToken,
