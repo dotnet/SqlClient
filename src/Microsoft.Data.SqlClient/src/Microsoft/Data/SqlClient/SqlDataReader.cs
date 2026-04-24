@@ -2334,7 +2334,7 @@ namespace Microsoft.Data.SqlClient
                     // if bad buffer index, throw
                     if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
                     {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                        throw ADP.InvalidDestinationBufferIndex(buffer?.Length ?? 0, bufferIndex, nameof(bufferIndex));
                     }
 
                     // if there is not enough room in the buffer for data
