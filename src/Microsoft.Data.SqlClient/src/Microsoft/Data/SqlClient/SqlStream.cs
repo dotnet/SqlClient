@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
                 // Read and buffer the first two bytes
                 _bufferedData = new byte[2];
                 cBufferedData = ReadBytes(_bufferedData, 0, 2);
-                // Check to se if we should add the byte order mark
+                // Check to see if we should add the byte order mark
                 if ((cBufferedData < 2) || ((_bufferedData[0] == 0xDF) && (_bufferedData[1] == 0xFF)))
                 {
                     _bom = 0;
@@ -224,9 +224,9 @@ namespace Microsoft.Data.SqlClient
 
                         // we are guaranteed that cb is < Int32.Max since we always pass in count which is of type Int32 to
                         // our getbytes interface
-                        count -= (int)cb;
-                        offset += (int)cb;
-                        intCount += (int)cb;
+                        count -= cb;
+                        offset += cb;
+                        intCount += cb;
                     }
                     else
                     {
@@ -387,9 +387,9 @@ namespace Microsoft.Data.SqlClient
 
                 Buffer.BlockCopy(_cachedBytes[_currentArrayIndex], _currentPosition, buffer, offset, cb);
                 _currentPosition += cb;
-                count -= (int)cb;
-                offset += (int)cb;
-                intCount += (int)cb;
+                count -= cb;
+                offset += cb;
+                intCount += cb;
             }
 
             return intCount;
@@ -477,179 +477,346 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlStreamingXml
     {
-        private static readonly XmlWriterSettings s_writerSettings = new() { CloseOutput = true, ConformanceLevel = ConformanceLevel.Fragment };
+        private readonly int _columnOrdinal;   // changing this is only done through the ctor, so it is safe to be readonly
+        private SqlDataReader _reader;         // reader we will stream off, becomes null when closed
+        private XmlReader _xmlReader;          // XmlReader over the current column, becomes null when closed
 
-        private readonly int _columnOrdinal;
-        private SqlDataReader _reader;
-        private XmlReader _xmlReader;
-        private XmlWriter _xmlWriter;
-        private StringWriter _strWriter;
-        private long _charsRemoved;
+        private string _currentTextNode;       // rolling buffer of text to deliver
+        private int _textNodeIndex;            // index in _currentTextNode
+        private char? _pendingHighSurrogate;   // pending high surrogate for split surrogate pairs
+        private long _charsReturned;           // total chars returned
+        private bool _canReadChunk;            // XmlReader.CanReadValueChunk
 
-        public SqlStreamingXml(int i, SqlDataReader reader)
+        public SqlStreamingXml(int columnOrdinal, SqlDataReader reader)
         {
-            _columnOrdinal = i;
+            _columnOrdinal = columnOrdinal;
             _reader = reader;
-        }
-
-        public void Close()
-        {
-            ((IDisposable)_xmlWriter).Dispose();
-            ((IDisposable)_xmlReader).Dispose();
-            _reader = null;
-            _xmlReader = null;
-            _xmlWriter = null;
-            _strWriter = null;
         }
 
         public int ColumnOrdinal => _columnOrdinal;
 
+        public void Close()
+        {
+            _xmlReader?.Dispose();
+            _xmlReader = null;
+            _reader = null;
+
+            _currentTextNode = null;
+            _textNodeIndex = 0;
+            _pendingHighSurrogate = null;
+            _charsReturned = 0;
+            _canReadChunk = false;
+        }
+
         public long GetChars(long dataIndex, char[] buffer, int bufferIndex, int length)
         {
-            if (_xmlReader == null)
+            if (_reader == null)
             {
-                SqlStream sqlStream = new(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows:false, advanceReader:false);
-                _xmlReader = sqlStream.ToXmlReader();
-                _strWriter = new StringWriter((System.IFormatProvider)null);
-                _xmlWriter = XmlWriter.Create(_strWriter, s_writerSettings);
+                throw new ObjectDisposedException(nameof(SqlStreamingXml));
             }
 
-            int charsToSkip = 0;
-            int cnt = 0;
-            if (dataIndex < _charsRemoved)
-            {
-                throw ADP.NonSeqByteAccess(dataIndex, _charsRemoved, nameof(GetChars));
-            }
-            else if (dataIndex > _charsRemoved)
-            {
-                charsToSkip = (int)(dataIndex - _charsRemoved);
-            }
-
-            // If buffer parameter is null, we have to return -1 since there is no way for us to know the
-            // total size up front without reading and converting the XML.
             if (buffer == null)
             {
-                return (long)(-1);
+                return -1;
             }
 
-            StringBuilder strBldr = _strWriter.GetStringBuilder();
-            while (!_xmlReader.EOF)
-            {
-                if (strBldr.Length >= (length + charsToSkip))
-                {
-                    break;
-                }
-                // Can't call _xmlWriter.WriteNode here, since it reads all of the data in before returning the first char.
-                // Do own implementation of WriteNode instead that reads just enough data to return the required number of chars
-                //_xmlWriter.WriteNode(_xmlReader, true);
-                //  _xmlWriter.Flush();
-                WriteXmlElement();
-                if (charsToSkip > 0)
-                {
-                    // Aggressively remove the characters we want to skip to avoid growing StringBuilder size too much
-                    cnt = strBldr.Length < charsToSkip ? strBldr.Length : charsToSkip;
-                    strBldr.Remove(0, cnt);
-                    charsToSkip -= cnt;
-                    _charsRemoved += (long)cnt;
-                }
-            }
-
-            if (charsToSkip > 0)
-            {
-                cnt = strBldr.Length < charsToSkip ? strBldr.Length : charsToSkip;
-                strBldr.Remove(0, cnt);
-                charsToSkip -= cnt;
-                _charsRemoved += (long)cnt;
-            }
-
-            if (strBldr.Length == 0)
+            if (length == 0)
             {
                 return 0;
             }
-            // At this point charsToSkip must be 0
-            Debug.Assert(charsToSkip == 0);
 
-            cnt = strBldr.Length < length ? strBldr.Length : length;
-            for (int i = 0; i < cnt; i++)
+            if (dataIndex < _charsReturned)
             {
-                buffer[bufferIndex + i] = strBldr[i];
+                throw new InvalidOperationException($"Non-sequential read: requested {dataIndex}, already returned {_charsReturned}");
             }
-            // Remove the characters we have already returned
-            strBldr.Remove(0, cnt);
-            _charsRemoved += (long)cnt;
-            return (long)cnt;
+
+            EnsureReaderInitialized();
+
+            // Skip to requested dataIndex
+            long skip = dataIndex - _charsReturned;
+            while (skip > 0)
+            {
+                char discard;
+                if (!TryReadNextChar(out discard))
+                {
+                    return 0; // EOF
+                }
+
+                skip--;
+                _charsReturned++;
+            }
+
+            // Read chars into buffer
+            int copied = 0;
+            while (copied < length)
+            {
+                char c;
+                if (!TryReadNextChar(out c))
+                {
+                    break;
+                }
+
+                buffer[bufferIndex + copied] = c;
+                copied++;
+                _charsReturned++;
+            }
+
+            return copied;
         }
 
-        // This method duplicates the work of XmlWriter.WriteNode except that it reads one element at a time 
-        // instead of reading the entire node like XmlWriter.
-        private void WriteXmlElement()
+        /// <summary>
+        /// Initializes the XML reader if it has not already been initialized, ensuring it is ready for reading
+        /// operations.
+        /// </summary>
+        /// <remarks>
+        /// This method prepares the XML reader for use by creating and assigning a new instance
+        /// if necessary. It should be called before attempting to read XML data to guarantee that the reader is
+        /// available and properly configured.
+        /// </remarks>
+        private void EnsureReaderInitialized()
         {
-            if (_xmlReader.EOF)
+            if (_xmlReader != null)
             {
                 return;
             }
 
-            bool canReadChunk = _xmlReader.CanReadValueChunk;
-            char[] writeNodeBuffer = null;
+            var sqlStream = new SqlStream(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows: false, advanceReader: false);
+            _xmlReader = sqlStream.ToXmlReader();
+            _canReadChunk = _xmlReader.CanReadValueChunk;
+        }
 
-            // Constants
-            const int WriteNodeBufferSize = 1024;
-
-            _xmlReader.Read();
-            switch (_xmlReader.NodeType)
+        /// <summary>
+        /// Progressively fetches the next char from the XmlReader, filling the current text node buffer as necessary.
+        /// Handles surrogate pairs that may be split across text nodes.
+        /// </summary>
+        private bool TryReadNextChar(out char c)
+        {
+            // Deliver pending high surrogate first
+            if (_pendingHighSurrogate.HasValue)
             {
-                case XmlNodeType.Element:
-                    _xmlWriter.WriteStartElement(_xmlReader.Prefix, _xmlReader.LocalName, _xmlReader.NamespaceURI);
-                    _xmlWriter.WriteAttributes(_xmlReader, true);
-                    if (_xmlReader.IsEmptyElement)
-                    {
-                        _xmlWriter.WriteEndElement();
-                        break;
-                    }
-                    break;
-                case XmlNodeType.Text:
-                    if (canReadChunk)
-                    {
-                        if (writeNodeBuffer == null)
-                        {
-                            writeNodeBuffer = new char[WriteNodeBufferSize];
-                        }
-                        int read;
-                        while ((read = _xmlReader.ReadValueChunk(writeNodeBuffer, 0, WriteNodeBufferSize)) > 0)
-                        {
-                            _xmlWriter.WriteChars(writeNodeBuffer, 0, read);
-                        }
-                    }
-                    else
-                    {
-                        _xmlWriter.WriteString(_xmlReader.Value);
-                    }
-                    break;
-                case XmlNodeType.Whitespace:
-                case XmlNodeType.SignificantWhitespace:
-                    _xmlWriter.WriteWhitespace(_xmlReader.Value);
-                    break;
-                case XmlNodeType.CDATA:
-                    _xmlWriter.WriteCData(_xmlReader.Value);
-                    break;
-                case XmlNodeType.EntityReference:
-                    _xmlWriter.WriteEntityRef(_xmlReader.Name);
-                    break;
-                case XmlNodeType.XmlDeclaration:
-                case XmlNodeType.ProcessingInstruction:
-                    _xmlWriter.WriteProcessingInstruction(_xmlReader.Name, _xmlReader.Value);
-                    break;
-                case XmlNodeType.DocumentType:
-                    _xmlWriter.WriteDocType(_xmlReader.Name, _xmlReader.GetAttribute("PUBLIC"), _xmlReader.GetAttribute("SYSTEM"), _xmlReader.Value);
-                    break;
-                case XmlNodeType.Comment:
-                    _xmlWriter.WriteComment(_xmlReader.Value);
-                    break;
-                case XmlNodeType.EndElement:
-                    _xmlWriter.WriteFullEndElement();
-                    break;
+                c = _pendingHighSurrogate.Value;
+                _pendingHighSurrogate = null;
+                return true;
             }
-            _xmlWriter.Flush();
+
+            // Deliver from current text node
+            if (_currentTextNode != null && _textNodeIndex < _currentTextNode.Length)
+            {
+                char next = _currentTextNode[_textNodeIndex++];
+                if (char.IsHighSurrogate(next))
+                {
+                    // Surrogate Pairs could not be split across text nodes
+                    c = next;
+                    _pendingHighSurrogate = _currentTextNode[_textNodeIndex++];
+                    return true;
+                }
+                else
+                {
+                    c = next;
+                    return true;
+                }
+            }
+
+            // Fill/Refill current text node, then recurse to deliver the next char from one single node at a time;
+            // will not read entire xml column if requested substring is met.
+            while (_xmlReader.Read())
+            {
+                // Not using XmlWriter since this maintains better control of allocations and prevents an intermediate buffer copy.
+                switch (_xmlReader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        _currentTextNode = BuildStartOrEmptyTag();
+                        _textNodeIndex = 0;
+                        return TryReadNextChar(out c);
+
+                    case XmlNodeType.Text:
+                    case XmlNodeType.CDATA:
+                    case XmlNodeType.Whitespace:
+                    case XmlNodeType.SignificantWhitespace:
+                        _currentTextNode = ReadAllText();
+                        _textNodeIndex = 0;
+                        return TryReadNextChar(out c);
+
+                    case XmlNodeType.ProcessingInstruction:
+                        _currentTextNode = $"<?{_xmlReader.Name} {_xmlReader.Value}?>";
+                        _textNodeIndex = 0;
+                        return TryReadNextChar(out c);
+
+                    case XmlNodeType.Comment:
+                        _currentTextNode = $"<!--{_xmlReader.Value}-->";
+                        _textNodeIndex = 0;
+                        return TryReadNextChar(out c);
+
+                    case XmlNodeType.EndElement:
+                        _currentTextNode = BuildEndTag();
+                        _textNodeIndex = 0;
+                        return TryReadNextChar(out c);
+
+                    default:
+                        // Skip EntityReference, DocumentType, XmlDeclaration which are normalized out by SQL Server
+                        continue;
+                }
+            }
+
+            // Ensure we don't return any stale chars after EOF
+            c = '\0';
+            return false; // EOF
+        }
+
+        /// <summary>
+        /// Reads all text content from the current node of the underlying XML reader and returns it as a string.
+        /// </summary>
+        /// <remarks>
+        /// If the XML reader supports reading in chunks, this method reads the text in segments
+        /// to improve performance. Otherwise, it retrieves the value directly from the XML reader.
+        /// </remarks>
+        /// <returns>A string containing all text read from the XML reader. Returns an empty string if no text is available.</returns>
+        private string ReadAllText()
+        {
+            if (_canReadChunk)
+            {
+                char[] buffer = new char[8192];
+                int read;
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((read = _xmlReader.ReadValueChunk(buffer, 0, buffer.Length)) > 0)
+                {
+                    stringBuilder.Append(buffer, 0, read); // only valid chars
+                }
+                return stringBuilder.ToString();
+            }
+            else
+            {
+                return _xmlReader.Value ?? string.Empty; // never null -> avoids trailing \0
+            }
+        }
+
+        /// <summary>
+        /// Constructs an XML start tag or an empty element tag for the current node of the underlying XML reader,
+        /// including the namespace prefix and any attributes if present.
+        /// </summary>
+        /// <remarks>
+        /// If the current XML node contains attributes, they are included in the generated tag.
+        /// If the node is an empty element, a self-closing tag is returned; otherwise, a standard opening tag is
+        /// produced. The method does not advance the position of the XML reader.
+        /// </remarks>
+        /// <returns>A string that represents the XML start tag or a self-closing empty element tag, including all attributes of
+        /// the current node.</returns>
+        private string BuildStartOrEmptyTag()
+        {
+            string prefix = _xmlReader.Prefix;
+            string tagName = string.IsNullOrEmpty(prefix) ? _xmlReader.LocalName : $"{prefix}:{_xmlReader.LocalName}";
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append('<').Append(tagName);
+
+            if (_xmlReader.HasAttributes)
+            {
+                for (int i = 0; i < _xmlReader.AttributeCount; i++)
+                {
+                    _xmlReader.MoveToAttribute(i);
+                    string attrPrefix = _xmlReader.Prefix;
+                    string attrName = string.IsNullOrEmpty(attrPrefix) ? _xmlReader.LocalName : $"{attrPrefix}:{_xmlReader.LocalName}";
+                    stringBuilder.Append(' ').Append(attrName).Append("=\"").Append(EscapeAttribute(_xmlReader.Value)).Append('"');
+                }
+                _xmlReader.MoveToElement();
+            }
+
+            if (_xmlReader.IsEmptyElement)
+            {
+                stringBuilder.Append(" />");
+            }
+            else
+            {
+                stringBuilder.Append('>');
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Builds the closing XML tag for the current element, including the namespace prefix if present.
+        /// </summary>
+        /// <remarks>
+        /// The returned tag is constructed using the prefix and local name from the underlying
+        /// XML reader. If the element has no namespace prefix, only the local name is used in the tag.
+        /// </remarks>
+        /// <returns>A string that represents the closing tag of the current XML element, formatted with the appropriate
+        /// namespace prefix if one exists.</returns>
+        private string BuildEndTag()
+        {
+            string prefix = _xmlReader.Prefix;
+            string tagName = string.IsNullOrEmpty(prefix) ? _xmlReader.LocalName : $"{prefix}:{_xmlReader.LocalName}";
+            return $"</{tagName}>";
+        }
+
+        /// <summary>
+        /// Escapes special characters in the provided string to ensure it is safe for use in XML attributes.
+        /// </summary>
+        /// <remarks><![CDATA[
+        /// This method specifically escapes the characters '&', '<', '>', and '"'. It does not
+        /// escape single quotes as they are not required for SQL Server attributes. The method uses a StringBuilder for
+        /// efficient string manipulation.
+        /// ]]></remarks>
+        /// <param name="value">The string to be escaped. This string may contain special XML characters that need to be replaced with their
+        /// corresponding entity references.</param>
+        /// <returns>A string with special XML characters replaced by their corresponding entity references. If the input string
+        /// is null or empty, an empty string is returned.</returns>
+        private string EscapeAttribute(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            // Only create a StringBuilder if we find a character that needs escaping, to avoid unnecessary allocations
+            StringBuilder sb = null;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                string replacement = c switch
+                {
+                    '&' => "&amp;",
+                    '<' => "&lt;",
+                    '>' => "&gt;",
+                    '"' => "&quot;",
+                    //'\'' => "&apos;", SQL Server does not escape single quotes in attributes
+                    _ => null
+                };
+
+                if (replacement != null)
+                {
+                    sb ??= new StringBuilder(value.Length + 8);
+                    sb.Append(value, 0, i);
+                    sb.Append(replacement);
+
+                    for (i = i + 1; i < value.Length; i++)
+                    {
+                        c = value[i];
+                        replacement = c switch
+                        {
+                            '&' => "&amp;",
+                            '<' => "&lt;",
+                            '>' => "&gt;",
+                            '"' => "&quot;",
+                            //'\'' => "&apos;", SQL Server does not escape single quotes in attributes
+                            _ => null
+                        };
+
+                        if (replacement != null)
+                        {
+                            sb.Append(replacement);
+                        }
+                        else
+                        {
+                            sb.Append(c);
+                        }
+                    }
+
+                    return sb.ToString();
+                }
+            }
+
+            return value;
         }
     }
 }
