@@ -1,4 +1,4 @@
-# AzureAuthentication Sample App
+# PackageCompatibility Tool
 
 A minimal console application that verifies **SqlClient** can connect to a SQL Server using Entra ID
 authentication (formerly Azure Active Directory authentication) via the **Azure** package. It also
@@ -62,8 +62,8 @@ The app has built-in help:
 dotnet run -- --help
 
 Description:
-  Azure Authentication Tester
-  ---------------------------
+  Package Compatibility Tester
+  ----------------------------
 
   Validates SqlClient connectivity using EntraID (formerly Azure Active Directory) authentication.
   Connects to SQL Server using the supplied connection string, which must specify the authentication method.
@@ -77,7 +77,7 @@ Description:
     -p:AzureVersion=1.1.0-preview1
 
 Usage:
-  AzureAuthentication [options]
+  PackageCompatibility [options]
 
 Options:
   -c, --connection-string <connection-string> (REQUIRED)  The ADO.NET connection string used to connect to SQL Server.
@@ -104,8 +104,8 @@ dotnet run -- -c "Server=myserver.database.windows.net;Database=mydb;Authenticat
 On success the app emits to standard out:
 
 ```bash
-Azure Authentication Tester
----------------------------
+Package Compatibility Tester
+----------------------------
 
 Packages used:
   Logging:       1.0.1

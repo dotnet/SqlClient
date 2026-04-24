@@ -1,4 +1,4 @@
-namespace Microsoft.Data.SqlClient.Samples.AzureAuthentication;
+namespace Microsoft.Data.SqlClient.Tools.PackageCompatibility;
 
 /// <summary>
 /// Hand-written companion to the auto-generated <c>PackageVersions.g.cs</c> file
