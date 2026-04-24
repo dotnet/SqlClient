@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace Microsoft.Data.SqlClient.Samples.AzureAuthentication;
+namespace Microsoft.Data.SqlClient.Tools.PackageCompatibility;
 
 /// <summary>
 /// Contains the application entry point responsible for parsing command-line arguments and

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
-namespace Microsoft.Data.SqlClient.Samples.AzureAuthentication;
+namespace Microsoft.Data.SqlClient.Tools.PackageCompatibility;
 
 /// <summary>
 /// Console application that validates SqlClient connectivity using Entra ID (formerly Azure Active
@@ -194,7 +194,7 @@ public class App : IDisposable
     /// <summary>
     /// The display name of the application.
     /// </summary>
-    internal const string AppName = "Azure Authentication Tester";
+    internal const string AppName = "Package Compatibility Tester";
 
     /// <summary>
     /// The optional event listener used to capture SqlClient diagnostic events.
