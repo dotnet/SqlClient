@@ -18,6 +18,10 @@ using DBDataPermission = System.Data.Common.DBDataPermission;
 
 namespace Microsoft.Data.SqlClient
 {
+    // Note: This class implements Code Access Security (CAS) permission for SQL Server connections. CAS is deprecated
+    // in all modern versions of .NET and .NET Framework, but it will not be removed from .NET Framework. This class
+    // should be maintained to ensure that existing CAS-based security checks continue to work correctly on .NET Framework.
+
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*' />
     [Serializable]
     public sealed class SqlClientPermission : DBDataPermission

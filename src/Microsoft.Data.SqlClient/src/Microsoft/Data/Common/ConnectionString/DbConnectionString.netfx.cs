@@ -15,7 +15,9 @@ using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Common
 {
-    // @TODO: Theoretically this class could be replaced with SqlConnectionOptions.
+    // Note: This class exists exclusively for use in SqlClientPermission. It provides a stable serialization format when the permission set is serialized
+    // by Code Access Security (CAS). CAS itself is deprecated in all versions of .NET and .NET Framework, but it won't be dropped from .NET Framework.
+    // We should maintain this class and SqlClientPermission to ensure that existing CAS-based security checks continue to work correctly on .NET Framework.
     
     [Serializable] // MDAC 83147
     internal sealed class DbConnectionString
