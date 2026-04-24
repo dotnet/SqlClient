@@ -166,6 +166,17 @@ Mirrors `VectorTypeBackwardCompatibilityTests` but targets `vector(3, float16)` 
 - **Object names**: Prefixed with `VectorF16` to avoid collision (`VectorF16TestTable`, `VectorF16BulkCopyTestTable`, `VectorF16AsVarcharSp`)
 - **Test data class**: `Float16VarcharVectorTestData` (mirrors `VarcharVectorTestData`)
 
+### Backward Compat Test Base Class: `VectorBackwardCompatTestBase`
+
+Both `VectorTypeBackwardCompatibilityTests` (float32) and `Float16VectorTypeBackwardCompatibilityTests` (float16) derive from `VectorBackwardCompatTestBase`, which provides all shared test logic and RAII-based DB resource management.
+
+#### Design
+- **Constructor** accepts `(ITestOutputHelper output, string columnDefinition, string namePrefix)` — e.g., `"vector(3)"` / `"Vector"` for float32, `"vector(3, float16)"` / `"VectorF16"` for float16.
+- **RAII cleanup**: Uses `Table` and `StoredProcedure` RAII classes from `Microsoft.Data.SqlClient.TestCommon.Fixtures.DatabaseObjects` (PR #4050). Resources are created in constructor and automatically dropped via `Dispose()` in reverse order.
+- **Abstract method**: `GetPrepareTestValues(int i)` — returns the per-iteration test values for `PreparedInsertRoundTrip`. Float32 uses `{ i+0.1f, i+0.2f, i+0.3f }` (fractional), float16 uses `{ i+1, i+2, i+3 }` (whole numbers representable in binary16).
+- **Protected test methods**: `InsertAndValidateAsVarchar`, `InsertAndValidateAsVarcharAsync`, `StoredProcRoundTrip`, `StoredProcRoundTripAsync`, `BulkCopyRoundTrip`, `BulkCopyRoundTripAsync`, `PreparedInsertRoundTrip`.
+- Derived classes are thin wrappers: constructor, one override, and test methods that delegate to the base class.
+
 ## Native Vector Support Test Suite: `NativeVectorFloat32Tests.cs`
 
 Uses `[ConditionalTheory]`/`[ConditionalFact]` + `[MemberData]` for parameterized tests, all gated on `DataTestUtility.IsSqlVectorSupported`.
@@ -224,8 +235,9 @@ All implementation lives in the unified project under `src/Microsoft.Data.SqlCli
 | File | Purpose |
 |------|---------|
 | `tests/ManualTests/SQL/VectorTest/NativeVectorFloat32Tests.cs` | Native vector type integration tests |
-| `tests/ManualTests/SQL/VectorTest/VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests (float32) |
-| `tests/ManualTests/SQL/VectorTest/Float16VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests (float16) — **new on this branch** |
+| `tests/ManualTests/SQL/VectorTest/VectorBackwardCompatTestBase.cs` | Abstract base class for backward compat tests (shared logic for float32/float16) |
+| `tests/ManualTests/SQL/VectorTest/VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests (float32) — thin wrapper over `VectorBackwardCompatTestBase` |
+| `tests/ManualTests/SQL/VectorTest/Float16VectorTypeBackwardCompatibilityTests.cs` | varchar(max) backward compat tests (float16) — thin wrapper over `VectorBackwardCompatTestBase` |
 | `tests/ManualTests/SQL/VectorTest/VectorAPIValidationTest.cs` | Ref assembly API validation (no DB): `ValidateVectorSqlDbType`, `TestSqlVectorCreationAPIWithFloatArr`, `TestSqlVectorCreationAPIWithROM`, `TestSqlVectorCreationAPICreateNull`, `TestIsNullProperty`, `TestNullProperty`, `TestLengthProperty`, `TestMemoryProperty` |
 | `tests/UnitTests/Microsoft/Data/SqlTypes/SqlVectorTest.cs` | Unit tests for `SqlVector<T>` (originally `tests/FunctionalTests/SqlVectorFloat32Test.cs` in PR #3433, later renamed and moved to UnitTests) |
 | `doc/samples/SqlVectorExample.cs` | Public usage sample |
