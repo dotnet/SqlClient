@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             // @TODO: Ok, I think we should consider centralizing all these keywords into a single
             //    place. We have DbConnectionString*, Keywords, etc.
             //    Can we consider something DbConnectionOptions as backing store for the values
-            //    and both SqlConnectionStringBuilder and SqlConnectionString use it to store?
+            //    and both SqlConnectionStringBuilder and SqlConnectionOptions use it to store?
             Dictionary<string, Keywords> pairs = new(StringComparer.OrdinalIgnoreCase)
             {
                 { DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent },
