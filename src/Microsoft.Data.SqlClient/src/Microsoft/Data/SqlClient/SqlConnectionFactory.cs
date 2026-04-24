@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions) =>
-            ((SqlConnectionString)connectionOptions).UserInstance
+            ((SqlConnectionOptions)connectionOptions).UserInstance
                 ? new SqlConnectionPoolProviderInfo()
                 : null;
         
@@ -190,7 +190,7 @@ namespace Microsoft.Data.SqlClient
                 // our collection of pool entries, then we need to create a
                 // new pool entry and add it to our collection.
 
-                SqlConnectionString connectionOptions = new SqlConnectionString(key.ConnectionString);
+                SqlConnectionOptions connectionOptions = new SqlConnectionOptions(key.ConnectionString);
 
                 if (userConnectionOptions is null)
                 {
@@ -467,9 +467,9 @@ namespace Microsoft.Data.SqlClient
 
         internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
             DbConnectionOptions connectionOptions) =>
-            new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
+            new SqlConnectionPoolGroupProviderInfo((SqlConnectionOptions)connectionOptions);
 
-        internal SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
+        internal SqlConnectionOptions FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
             Debug.Assert(key is not null, "Key cannot be null");
 
@@ -483,7 +483,7 @@ namespace Microsoft.Data.SqlClient
             
             if (connectionOptions is null)
             {
-                connectionOptions = new SqlConnectionString(key.ConnectionString);
+                connectionOptions = new SqlConnectionOptions(key.ConnectionString);
             }
             
             if (connectionOptions.IsEmpty)
@@ -491,7 +491,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.NoConnectionString();
             }
             
-            return (SqlConnectionString)connectionOptions;
+            return (SqlConnectionOptions)connectionOptions;
         }
 
         // @TODO: All these methods seem redundant ... shouldn't we always have a SqlConnection?
@@ -582,21 +582,21 @@ namespace Microsoft.Data.SqlClient
             DbConnection owningConnection,
             DbConnectionOptions userOptions)
         {
-            SqlConnectionString opt = (SqlConnectionString)options;
+            SqlConnectionOptions opt = (SqlConnectionOptions)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
             SessionData recoverySessionData = null;
 
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
             bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
 
-            SqlConnectionString userOpt = null;
+            SqlConnectionOptions userOpt = null;
             if (userOptions != null)
             {
-                userOpt = (SqlConnectionString)userOptions;
+                userOpt = (SqlConnectionOptions)userOptions;
             }
             else if (sqlOwningConnection != null)
             {
-                userOpt = (SqlConnectionString)(sqlOwningConnection.UserConnectionOptions);
+                userOpt = (SqlConnectionOptions)(sqlOwningConnection.UserConnectionOptions);
             }
 
             if (sqlOwningConnection != null)
@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
                     //       This first connection is established to SqlExpress to get the instance name
                     //       of the UserInstance.
-                    SqlConnectionString sseopt = new SqlConnectionString(
+                    SqlConnectionOptions sseopt = new SqlConnectionOptions(
                         opt,
                         opt.DataSource,
                         userInstance: true,
@@ -688,7 +688,7 @@ namespace Microsoft.Data.SqlClient
                 // NOTE: Here connection option opt is cloned to set 'instanceName=<UserInstanceName>' that was
                 //       retrieved from the previous SSE connection. For this UserInstance connection 'Enlist=True'.
                 // options immutable - stored in global hash - don't modify
-                opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
+                opt = new SqlConnectionOptions(opt, instanceName, userInstance: false, setEnlistValue: null);
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
 
@@ -709,9 +709,9 @@ namespace Microsoft.Data.SqlClient
                 key.SspiContextProvider);
         }
 
-        private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionString connectionOptions)
+        private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)
         {
-            SqlConnectionString opt = (SqlConnectionString)connectionOptions;
+            SqlConnectionOptions opt = (SqlConnectionOptions)connectionOptions;
 
             DbConnectionPoolGroupOptions poolingOptions = null;
 

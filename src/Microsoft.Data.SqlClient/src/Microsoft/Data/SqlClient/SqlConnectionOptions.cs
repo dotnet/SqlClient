@@ -17,7 +17,7 @@ using Microsoft.Data.SqlClient.LocalDb;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlConnectionString : DbConnectionOptions
+    internal sealed class SqlConnectionOptions : DbConnectionOptions
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Static constructor to do things that we can't do in a single line initialization.
         /// </summary>
-        static SqlConnectionString()
+        static SqlConnectionOptions()
         {
             // Add keywords and synonyms to the keyword map.
             // @TODO: About half of these synonyms are just the same as the keyword but with spaces
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient
             #endif
         }
 
-        internal SqlConnectionString(string connectionString): base(connectionString, s_keywordMap)
+        internal SqlConnectionOptions(string connectionString): base(connectionString, s_keywordMap)
         {
 #if !NETFRAMEWORK
             ThrowUnsupportedIfKeywordSet(DbConnectionStringKeywords.ConnectionReset);
@@ -512,7 +512,7 @@ namespace Microsoft.Data.SqlClient
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
         // BUG (VSTFDevDiv) 479687: Using TransactionScope with Linq2SQL against user instances fails with "connection has been broken" message
-        internal SqlConnectionString(SqlConnectionString connectionOptions, string dataSource, bool userInstance, bool? setEnlistValue) : base(connectionOptions)
+        internal SqlConnectionOptions(SqlConnectionOptions connectionOptions, string dataSource, bool userInstance, bool? setEnlistValue) : base(connectionOptions)
         {
             _integratedSecurity = connectionOptions._integratedSecurity;
             _encrypt = connectionOptions._encrypt;

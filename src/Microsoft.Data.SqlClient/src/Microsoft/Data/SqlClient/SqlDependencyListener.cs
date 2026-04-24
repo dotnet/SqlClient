@@ -85,7 +85,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     _queue = _hashHelper.Queue;
                 }
 #if DEBUG
-                SqlConnectionString connectionStringOptions = new(_hashHelper.ConnectionStringBuilder.ConnectionString);
+                SqlConnectionOptions connectionStringOptions = new(_hashHelper.ConnectionStringBuilder.ConnectionString);
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
@@ -95,7 +95,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
                 // Assert permission for this particular connection string since it differs from the user passed string
                 // which we have already demanded upon.  
-                SqlConnectionString connStringObj = (SqlConnectionString)_con.ConnectionOptions;
+                SqlConnectionOptions connStringObj = (SqlConnectionOptions)_con.ConnectionOptions;
 #if NETFRAMEWORK
                 connStringObj.CreatePermissionSet().Assert();
                 if (connStringObj.LocalDBInstance != null)
@@ -1627,7 +1627,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                                 out user,
                                                                     queueService);
 #if DEBUG
-            SqlConnectionString connectionStringOptions = new(connectionStringBuilder.ConnectionString);
+            SqlConnectionOptions connectionStringOptions = new(connectionStringBuilder.ConnectionString);
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
@@ -1703,7 +1703,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                               out user,
                                                                   queueService);
 #if DEBUG
-            SqlConnectionString connectionStringOptions = new(connectionStringBuilder.ConnectionString);
+            SqlConnectionOptions connectionStringOptions = new(connectionStringBuilder.ConnectionString);
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 

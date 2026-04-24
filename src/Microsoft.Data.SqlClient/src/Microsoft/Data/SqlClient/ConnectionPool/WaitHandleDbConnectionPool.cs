@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private bool IsBlockingPeriodEnabled()
         {
-            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions as SqlConnectionString;
+            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions as SqlConnectionOptions;
             if (poolGroupConnectionOptions == null)
             {
                 return true;

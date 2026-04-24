@@ -828,19 +828,19 @@ namespace Microsoft.Data.SqlClient
                     svalue = svalue.Trim();
                     if (StringComparer.OrdinalIgnoreCase.Equals(svalue, NamedPipes))
                     {
-                        return SqlConnectionString.NETLIB.NamedPipes;
+                        return SqlConnectionOptions.NETLIB.NamedPipes;
                     }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, SharedMemory))
                     {
-                        return SqlConnectionString.NETLIB.SharedMemory;
+                        return SqlConnectionOptions.NETLIB.SharedMemory;
                     }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, TCPIP))
                     {
-                        return SqlConnectionString.NETLIB.TCPIP;
+                        return SqlConnectionOptions.NETLIB.TCPIP;
                     }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, VIA))
                     {
-                        return SqlConnectionString.NETLIB.VIA;
+                        return SqlConnectionOptions.NETLIB.VIA;
                     }
                     else
                     {
@@ -859,10 +859,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     return svalue.Trim().ToLower(CultureInfo.InvariantCulture) switch
                     {
-                        SqlConnectionString.NETLIB.NamedPipes => NamedPipes,
-                        SqlConnectionString.NETLIB.SharedMemory => SharedMemory,
-                        SqlConnectionString.NETLIB.TCPIP => TCPIP,
-                        SqlConnectionString.NETLIB.VIA => VIA,
+                        SqlConnectionOptions.NETLIB.NamedPipes => NamedPipes,
+                        SqlConnectionOptions.NETLIB.SharedMemory => SharedMemory,
+                        SqlConnectionOptions.NETLIB.TCPIP => TCPIP,
+                        SqlConnectionOptions.NETLIB.VIA => VIA,
                         _ => svalue,
                     };
                 }

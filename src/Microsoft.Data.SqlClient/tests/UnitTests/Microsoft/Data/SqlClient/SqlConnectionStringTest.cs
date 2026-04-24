@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             {
                 builder.MultiSubnetFailover = msfInConnString.Value;
             }
-            SqlConnectionString connectionString = new(builder.ConnectionString);
+            SqlConnectionOptions connectionString = new(builder.ConnectionString);
 
             Assert.Equal(expectedValue, connectionString.MultiSubnetFailover);
         }
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
                 InitialCatalog = "database"
             };
 
-            Assert.Throws<ArgumentException>(() => new SqlConnectionString(builder.ConnectionString));
+            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
         }
     }
 }

@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient
         private ALTROWSTATUS _altRowStatus;
         private int _recordsAffected = -1;
         private long _defaultTimeoutMilliseconds;
-        private SqlConnectionString.TypeSystem _typeSystem;
+        private SqlConnectionOptions.TypeSystem _typeSystem;
 
         // SQLStatistics support
         private SqlStatistics _statistics;
@@ -572,7 +572,7 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[providerType] = SqlDbType.NVarChar;
                     switch (col.type)
@@ -594,9 +594,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                     }
                 }
-                else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsLargeUdt)
+                else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.IsLargeUdt)
                 {
-                    if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                    if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                     {
                         schemaRow[providerType] = SqlDbType.VarBinary;
                     }
@@ -606,7 +606,7 @@ namespace Microsoft.Data.SqlClient
                         schemaRow[providerType] = SqlDbType.Image;
                     }
                 }
-                else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+                else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
                 {
                     // TypeSystem.SQLServer2005 and above
 
@@ -654,7 +654,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[precision] = col.metaType.Precision;
                 }
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
@@ -1194,13 +1194,13 @@ namespace Microsoft.Data.SqlClient
         {
             string dataTypeName = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                 {
                     dataTypeName = MetaType.MetaMaxVarBinary.TypeName;
                 }
@@ -1210,7 +1210,7 @@ namespace Microsoft.Data.SqlClient
                     dataTypeName = MetaType.MetaImage.TypeName;
                 }
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -1282,14 +1282,14 @@ namespace Microsoft.Data.SqlClient
         {
             Type fieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 // Return 2008 types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                 {
                     fieldType = MetaType.MetaMaxVarBinary.ClassType;
                 }
@@ -1299,7 +1299,7 @@ namespace Microsoft.Data.SqlClient
                     fieldType = MetaType.MetaImage.ClassType;
                 }
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
@@ -1415,13 +1415,13 @@ namespace Microsoft.Data.SqlClient
         {
             Type providerSpecificFieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                 {
                     providerSpecificFieldType = MetaType.MetaMaxVarBinary.SqlType;
                 }
@@ -1431,7 +1431,7 @@ namespace Microsoft.Data.SqlClient
                     providerSpecificFieldType = MetaType.MetaImage.SqlType;
                 }
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
@@ -2402,7 +2402,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTime dt = _data[i].DateTime;
             // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2501,7 +2501,7 @@ namespace Microsoft.Data.SqlClient
             ReadColumn(i);
             SqlString data;
             // Convert 2008 types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 data = _data[i].Sql2008DateTimeSqlString;
             }
@@ -2580,7 +2580,7 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 return _data[i].Sql2008DateTimeSqlString;
             }
@@ -2594,7 +2594,7 @@ namespace Microsoft.Data.SqlClient
             ReadColumn(i);
             SqlXml sx = null;
 
-            if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005
 
@@ -2680,15 +2680,15 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             // Convert 2008 types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return data.Sql2008DateTimeSqlString;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
                 return data.SqlValue;
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -2759,7 +2759,7 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             // Convert 2008 value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 return _data[i].Sql2008DateTimeString;
             }
@@ -2808,7 +2808,7 @@ namespace Microsoft.Data.SqlClient
 
             TimeSpan t = _data[i].Time;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2830,7 +2830,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTimeOffset dto = _data[i].DateTimeOffset;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2868,7 +2868,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 if (data.IsNull)
                 {
@@ -2879,11 +2879,11 @@ namespace Microsoft.Data.SqlClient
                     return data.Sql2008DateTimeString;
                 }
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
                 return data.Value;
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -2990,20 +2990,20 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.Decimal;
             }
-            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return (T)(object)data.DateTimeOffset;
             }
-            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return (T)(object)data.DateTime;
             }
 #if !NETFRAMEWORK
-            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
+            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.DateOnly;
             }
-            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
+            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.TimeOnly;
             }
@@ -3244,7 +3244,7 @@ namespace Microsoft.Data.SqlClient
 
         private MetaType GetVersionedMetaType(MetaType actualMetaType)
         {
-            Debug.Assert(_typeSystem == SqlConnectionString.TypeSystem.SQLServer2000, "Should not be in this function under anything else but SQLServer2000");
+            Debug.Assert(_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2000, "Should not be in this function under anything else but SQLServer2000");
 
             MetaType metaType = null;
 
@@ -5996,7 +5996,7 @@ namespace Microsoft.Data.SqlClient
                 _SqlMetaData col = md[i];
                 SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
                 }
