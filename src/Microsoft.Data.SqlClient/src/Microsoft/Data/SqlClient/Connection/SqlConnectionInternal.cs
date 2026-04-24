@@ -1971,7 +1971,7 @@ namespace Microsoft.Data.SqlClient.Connection
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
         {
             return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }

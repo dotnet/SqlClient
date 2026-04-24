@@ -7,7 +7,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
@@ -54,7 +53,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
+            SqlConnectionOptions userOptions) =>
             TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
 
         /// <inheritdoc/>
@@ -71,7 +70,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
             => throw ADP.ConnectionAlreadyOpen(State);
     }
 
@@ -113,14 +112,14 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
+            SqlConnectionOptions userOptions) =>
             TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
 
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
         {
             if (retry == null || !retry.Task.IsCompleted)
             {
@@ -169,7 +168,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
+            SqlConnectionOptions userOptions) =>
             TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
     }
 }

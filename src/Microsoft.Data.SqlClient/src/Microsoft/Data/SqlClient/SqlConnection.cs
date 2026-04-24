@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly SqlConnectionFactory s_connectionFactory = SqlConnectionFactory.Instance;
         private static int _objectTypeCount; // EventSource Counter
 
-        private DbConnectionOptions _userConnectionOptions;
+        private SqlConnectionOptions _userConnectionOptions;
         private DbConnectionPoolGroup _poolGroup;
         private DbConnectionInternal _innerConnection;
         private int _closeCount;
@@ -433,9 +433,9 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionFactory ConnectionFactory => s_connectionFactory;
 
-        internal DbConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
+        internal SqlConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
 
-        internal DbConnectionOptions UserConnectionOptions => _userConnectionOptions;
+        internal SqlConnectionOptions UserConnectionOptions => _userConnectionOptions;
 
         internal DbConnectionInternal InnerConnection => _innerConnection;
 
@@ -1359,7 +1359,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
 
-            DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
+            SqlConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
             {
 #if NETFRAMEWORK
@@ -2257,13 +2257,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
 
             DbConnectionPoolGroup poolGroup = PoolGroup;
-            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
+            SqlConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
             if (connectionOptions == null || connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
             }
 
-            DbConnectionOptions userConnectionOptions = UserConnectionOptions;
+            SqlConnectionOptions userConnectionOptions = UserConnectionOptions;
             Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
 
 #if NETFRAMEWORK
@@ -2507,13 +2507,13 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
-            DbConnectionOptions connectionOptions = UserConnectionOptions;
+            SqlConnectionOptions connectionOptions = UserConnectionOptions;
             return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
         private void ConnectionString_Set(DbConnectionPoolKey key)
         {
-            DbConnectionOptions connectionOptions = null;
+            SqlConnectionOptions connectionOptions = null;
             DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
             DbConnectionInternal connectionInternal = InnerConnection;
             bool flag = connectionInternal.AllowSetConnectionString;

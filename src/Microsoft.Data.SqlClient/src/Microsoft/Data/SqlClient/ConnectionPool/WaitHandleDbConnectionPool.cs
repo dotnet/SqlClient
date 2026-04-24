@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
@@ -62,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, DbConnectionOptions userOptions)
+            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, SqlConnectionOptions userOptions)
             {
                 DueTime = dueTime;
                 Owner = owner;
@@ -72,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             public long DueTime { get; private set; }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
-            public DbConnectionOptions UserOptions { get; private set; }
+            public SqlConnectionOptions UserOptions { get; private set; }
         }
 
         private sealed class PoolWaitHandles
@@ -492,7 +491,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private bool IsBlockingPeriodEnabled()
         {
-            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions as SqlConnectionOptions;
+            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions;
             if (poolGroupConnectionOptions == null)
             {
                 return true;
@@ -523,7 +522,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        private DbConnectionInternal CreateObject(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             DbConnectionInternal newObj = null;
 
@@ -876,7 +875,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } while (_pendingOpens.TryPeek(out next));
         }
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, SqlConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
@@ -935,7 +934,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 #if NETFRAMEWORK
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")] // copied from Triaged.cs
 #endif
-        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, SqlConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             DbConnectionInternal obj = null;
             Transaction transaction = null;
@@ -1135,7 +1134,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">Options used to create the new connection</param>
         /// <param name="oldConnection">Inner connection that will be replaced</param>
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
-        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
             DbConnectionInternal newConnection = UserCreateRequest(owningObject, userOptions, oldConnection);
@@ -1523,7 +1522,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private DbConnectionInternal UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection = null)
+        private DbConnectionInternal UserCreateRequest(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection = null)
         {
             // called by user when they were not able to obtain a free object but
             // instead obtained creation mutex
