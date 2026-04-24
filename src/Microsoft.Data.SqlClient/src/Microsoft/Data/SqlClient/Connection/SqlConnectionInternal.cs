@@ -3958,7 +3958,7 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         #if NETFRAMEWORK
-        private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
+        private bool ShouldDisableTnir(SqlConnectionOptions connectionOptions)
         {
             bool isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 

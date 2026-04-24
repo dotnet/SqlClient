@@ -1018,7 +1018,7 @@ namespace Microsoft.Data.SqlClient
         private static Dictionary<string, string> s_netlibMapping;
 
 #if NETFRAMEWORK
-        protected internal PermissionSet CreatePermissionSet()
+        internal PermissionSet CreatePermissionSet()
         {
             PermissionSet permissionSet = new(PermissionState.None);
             permissionSet.AddPermission(new SqlClientPermission(this));
