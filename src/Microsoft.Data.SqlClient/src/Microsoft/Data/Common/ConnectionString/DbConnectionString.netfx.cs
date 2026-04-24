@@ -15,7 +15,7 @@ using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Common
 {
-    // @TODO: Theoretically this class could be replaced with SqlConnectionString.
+    // @TODO: Theoretically this class could be replaced with SqlConnectionOptions.
     
     [Serializable] // MDAC 83147
     internal sealed class DbConnectionString

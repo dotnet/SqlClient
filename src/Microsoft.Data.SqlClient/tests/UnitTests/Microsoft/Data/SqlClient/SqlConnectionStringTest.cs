@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // Note: TNIR is disabled by default for Azure SQL Database servers (i.e. *.database.windows.net)
             // and when using federated auth unless explicitly set in the connection string.
             // However, this evaluation only happens at login time so TNIR behavior may not match
-            // the value of TransparentNetworkIPResolution property in SqlConnectionString.
+            // the value of TransparentNetworkIPResolution property in SqlConnectionOptions.
 
             // Arrange
             _appContextSwitchHelper.DisableTnirByDefault = tnirDisabledAppContext;

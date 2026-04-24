@@ -1877,14 +1877,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     value = value.Trim().ToLower(CultureInfo.InvariantCulture) switch
                     {
-                        SqlConnectionString.NETLIB.AppleTalk => SqlConnectionString.NETLIB.AppleTalk,
-                        SqlConnectionString.NETLIB.BanyanVines => SqlConnectionString.NETLIB.BanyanVines,
-                        SqlConnectionString.NETLIB.IPXSPX => SqlConnectionString.NETLIB.IPXSPX,
-                        SqlConnectionString.NETLIB.Multiprotocol => SqlConnectionString.NETLIB.Multiprotocol,
-                        SqlConnectionString.NETLIB.NamedPipes => SqlConnectionString.NETLIB.NamedPipes,
-                        SqlConnectionString.NETLIB.SharedMemory => SqlConnectionString.NETLIB.SharedMemory,
-                        SqlConnectionString.NETLIB.TCPIP => SqlConnectionString.NETLIB.TCPIP,
-                        SqlConnectionString.NETLIB.VIA => SqlConnectionString.NETLIB.VIA,
+                        SqlConnectionOptions.NETLIB.AppleTalk => SqlConnectionOptions.NETLIB.AppleTalk,
+                        SqlConnectionOptions.NETLIB.BanyanVines => SqlConnectionOptions.NETLIB.BanyanVines,
+                        SqlConnectionOptions.NETLIB.IPXSPX => SqlConnectionOptions.NETLIB.IPXSPX,
+                        SqlConnectionOptions.NETLIB.Multiprotocol => SqlConnectionOptions.NETLIB.Multiprotocol,
+                        SqlConnectionOptions.NETLIB.NamedPipes => SqlConnectionOptions.NETLIB.NamedPipes,
+                        SqlConnectionOptions.NETLIB.SharedMemory => SqlConnectionOptions.NETLIB.SharedMemory,
+                        SqlConnectionOptions.NETLIB.TCPIP => SqlConnectionOptions.NETLIB.TCPIP,
+                        SqlConnectionOptions.NETLIB.VIA => SqlConnectionOptions.NETLIB.VIA,
                         _ => throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.NetworkLibrary),
                     };
                 }

@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
 #if NETFRAMEWORK
-        private PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        private PermissionSet CreateFailoverPermission(SqlConnectionOptions userConnectionOptions, string actualFailoverPartner)
         {
             string keywordToReplace;
 
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             string failoverConnectionString = userConnectionOptions.ExpandKeyword(keywordToReplace, actualFailoverPartner);
-            return (new SqlConnectionString(failoverConnectionString)).CreatePermissionSet();
+            return (new SqlConnectionOptions(failoverConnectionString)).CreatePermissionSet();
         }
 
         internal void FailoverPermissionDemand()

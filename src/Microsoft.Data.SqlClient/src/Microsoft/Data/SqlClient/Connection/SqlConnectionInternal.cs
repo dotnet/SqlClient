@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient.Connection
         ///   new Login7 packet will always write out the new password (or a length of zero and no
         ///   bytes if not present).
         /// - userConnectionOptions may be different to connectionOptions if the connection string
-        ///   has been expanded (see SqlConnectionString.Expand)
+        ///   has been expanded (see SqlConnectionOptions.Expand)
         /// </remarks>
         // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
         internal SqlConnectionInternal(
