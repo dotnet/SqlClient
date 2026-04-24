@@ -2176,7 +2176,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (this.UsesIntegratedSecurity(connectionOptions) || this.UsesActiveDirectoryIntegrated(connectionOptions))
+                if (this.UsesIntegratedSecurity(ConnectionOptions) || this.UsesActiveDirectoryIntegrated(ConnectionOptions))
                 {
                     _lastIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
                 }
