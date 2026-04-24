@@ -13,28 +13,44 @@
 # steps that perform versioning or signing.
 
 parameters:
-  - name: abstractionsPackageVersion
+  # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  - name: dependencyArguments
     type: string
+    default: ''
 
-  - name: loggingPackageVersion
+  # Project to build. This short name will be appended to "Build" to generate the appropriate
+  # target to build from build.proj.
+  - name: packageShortName
     type: string
+    values:
+      - Abstractions
+      - AkvProvider
+      - Azure
+      - Logging
+      - SqlClient
+      - SqlServer
 
-  - name: sqlClientPackageVersion
+  #  Version to assign to the project to build. This will be passed into msbuild as
+  #  "-p:PackageVersion(packageShortName)".
+  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  - name: packageVersion
     type: string
 
 steps:
+  # GOTCHA: If there are any blank lines in msbuildCommandLine, it will consider it "multiple
+  #         arguments" and fail. So, don't split msBuildCommandLine into multiple blocks.
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
-    displayName: 'Roslyn Analyzers: build2.proj Build SqlClient'
+    displayName: 'Roslyn Analyzers - build.proj Build${{ parameters.packageShortName }}'
     inputs:
       msBuildArchitecture: x64
       msBuildCommandLine: >-
         msbuild
-        $(REPO_ROOT)/build2.proj
-        -t:BuildMds
+        $(REPO_ROOT)/build.proj
+        -t:Build${{ parameters.packageShortName }}
         -p:Configuration=Release
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionMds=${{ parameters.sqlClientPackageVersion }}
         -p:ReferenceType=Package
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
+        ${{ parameters.dependencyArguments }}
       msBuildVersion: 17.0
       setupCommandLinePicker: vs2022

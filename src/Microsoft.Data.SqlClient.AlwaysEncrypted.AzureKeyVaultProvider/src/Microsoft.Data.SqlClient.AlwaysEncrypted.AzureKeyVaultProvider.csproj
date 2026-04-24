@@ -1,53 +1,37 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <!--
-    Additional project config is imported from parent Directory.Build.props
-    files.
-
-    AKV Provider versioning information found in our sibling file AkvProviderVersions.props
-    is imported via tools/props/Versions.props.
-  -->
-
-  <!-- Target Config -->
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <!-- Build Config -->
+  <!-- Compiler Options ================================================ -->
   <PropertyGroup>
-    <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
-    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
-
-    <!--
-      We pin the AssemblyVersion of our package to the default major version
-      number, with all remaining parts set to 0.
-    -->
-    <AssemblyVersion>$(AkvDefaultMajorVersion).0.0.0</AssemblyVersion>
-
-    <AssemblyFileVersion>$(AkvAssemblyFileVersion)</AssemblyFileVersion>
-    <FileVersion>$(AkvAssemblyFileVersion)</FileVersion>
-    <Version>$(AkvPackageVersion)</Version>
-  </PropertyGroup>
-
-  <!-- Build Output Config -->
-  <PropertyGroup>
-    <!-- Use a shorter directory name to avoid exceeding the Windows MAX_PATH (260 char) limit.
-         The full AssemblyName is 63 chars and appears in both the directory and generated filenames. -->
-    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/AzureKeyVaultProvider</IntermediateOutputPath>
-    <OutputPath>$(Artifacts)/bin/$(Configuration)/AzureKeyVaultProvider</OutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
   </PropertyGroup>
 
-  <!--
-    NuGet Package Config
+  <!-- Versioning ====================================================== -->
+  <Import Project="Versions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(AkvProviderAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(AkvProviderFileVersion)</FileVersion>
+    <Version>$(AkvProviderPackageVersion)</Version>
+  </PropertyGroup>
 
-    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
-  -->
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)</OutputPath>
+  </PropertyGroup>
+
+  <!-- NuGet Package Config ============================================ -->
+  <!-- See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
   <PropertyGroup>
     <PackageId>$(AssemblyName)</PackageId>
-    <PackageVersion>$(AkvPackageVersion)</PackageVersion>
-    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
@@ -83,7 +67,6 @@
   </ItemGroup>
 
   <!-- References ====================================================== -->
-
   <!-- SqlClient Reference -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj"
@@ -93,11 +76,11 @@
   </ItemGroup>
 
   <!-- Logging Reference -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <!-- Other dependencies -->
@@ -106,5 +89,4 @@
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
-
 </Project>

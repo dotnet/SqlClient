@@ -1,33 +1,30 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--
-    This file contains versioning information for the Microsoft.Data.SqlClient package.
+    This file contains versioning information for the Microsoft.Data.SqlClient.Extensions.Azure package.
     We will calculate three different version variables, used for different purposes:
 
-    * MdsPackageVersion - this will be used as the <Version> property, the version of the NuGet
-      package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
-    * MdsFileVersion - this will be used as the <FileVersion> property. It should be in the form:
-      (Major).(Minor).(Patch).(BuildNumber)
-    * MdsAssemblyVersion - this will be used as the <AssemblyVersion> property. This is the version
-      reported to user if they open the assembly properties. It *must not* change within major
-      versions in order for minor versions to be considered backwards compatible via strong naming.
-      It must be in the form: (Major).0.0.0
+    * AzureAssemblyVersion - this will be used as the <AssemblyVersion> property. This is the
+      version reported to user if they open the assembly properties. It *must not* change within
+      major versions in order for minor versions to be considered backwards compatible via strong
+      naming. It must be in the form: (Major).0.0.0
+    * AzurePackageVersion - this will be used as the <Version> property, the version of the
+      NuGet package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
+    * AzureFileVersion - this will be used as the <FileVersion> property. It should be in the
+      form: (Major).(Minor).(Patch).(BuildNumber)
   -->
-
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
-    <!-- This is the *next* version to release of MDS. Update this after a version is released -->
-    <MdsVersionDefault>7.0.0</MdsVersionDefault>
-
     <!--
-      Build number is being coalesced to 0 and adjusted for overflow in /tools/props/Versions.props.
-      It is stored as: AssemblyBuildNumber
+      This is the *next* version to release of Azure. Update this when the next version is decided.
+      @TODO: Determine how versions should be updated in release branches vs main
     -->
+    <AzureVersionDefault>1.0.0</AzureVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
   <Choose>
-    <When Condition="'$(MdsPackageVersion)' != ''">
+    <When Condition="'$(AzurePackageVersion)' != ''">
       <!--
         When a package version is provided, it supercedes all other choices. It will be used as the
         package version and the file version will be based on it. This situation is used for
@@ -35,7 +32,7 @@
         information in the pipeline yaml.
       -->
       <PropertyGroup>
-        <MdsFileVersion>$(MdsPackageVersion.Split('-')[0]).$(AssemblyBuildNumber)</MdsFileVersion>
+        <AzureFileVersion>$(AzurePackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </When>
 
@@ -54,10 +51,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <MdsPackageVersion Condition="'$(BuildSuffix)' != ''">$(MdsVersionDefault)-$(BuildSuffix)$(AssemblyBuildNumber)</MdsPackageVersion>
-        <MdsPackageVersion Condition="'$(BuildSuffix)' == ''">$(MdsVersionDefault)</MdsPackageVersion>
+        <AzurePackageVersion Condition="'$(BuildSuffix)' != ''">$(AzureVersionDefault)-$(BuildSuffix)$(BuildNumber)</AzurePackageVersion>
+        <AzurePackageVersion Condition="'$(BuildSuffix)' == ''">$(AzureVersionDefault)</AzurePackageVersion>
 
-        <MdsFileVersion>$(MdsVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</MdsFileVersion>
+        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </When>
 
@@ -71,8 +68,8 @@
       <PropertyGroup>
         <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
 
-        <MdsPackageVersion>$(MdsVersionDefault)-$(BuildSuffix)</MdsPackageVersion>
-        <MdsFileVersion>$(MdsVersionDefault.Split('-')[0]).$(AssemblyBuildNumber)</MdsFileVersion>
+        <AzurePackageVersion>$(AzureVersionDefault)-$(BuildSuffix)</AzurePackageVersion>
+        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
@@ -80,9 +77,10 @@
   <!--
     Finally, we take the file version and break off the major version to determine the assembly
     version.
+
+    IMPORTANT: This must always be major.0.0.0 for assembly-level backwards compatibility.
   -->
   <PropertyGroup>
-    <MdsAssemblyVersion>$(MdsFileVersion.Split('.')[0]).0.0.0</MdsAssemblyVersion>
+    <AzureAssemblyVersion>$(AzureFileVersion.Split('.')[0]).0.0.0</AzureAssemblyVersion>
   </PropertyGroup>
-
 </Project>
