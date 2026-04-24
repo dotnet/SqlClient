@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     hasTransactionAffinity: true
             );
             dbConnectionPoolGroup ??= new DbConnectionPoolGroup(
-                new SqlConnectionOptions("DataSource=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;"),
                 new DbConnectionPoolKey("TestDataSource"),
                 poolGroupOptions
             );
@@ -614,7 +614,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TestPoolGroup()
         {
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("DataSource=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;"),
                 new DbConnectionPoolKey("TestDataSource"),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1006,7 +1006,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("DataSource=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;"),
                 new DbConnectionPoolKey("TestDataSource"),
                 poolGroupOptions
             );
@@ -1037,7 +1037,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("DataSource=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;"),
                 new DbConnectionPoolKey("TestDataSource"),
                 poolGroupOptions
             );
@@ -1078,7 +1078,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("DataSource=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;"),
                 new DbConnectionPoolKey("TestDataSource"),
                 poolGroupOptions1
             );
@@ -1104,7 +1104,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("DataSource=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;"),
                 new DbConnectionPoolKey("TestDataSource"),
                 poolGroupOptions2
             );
