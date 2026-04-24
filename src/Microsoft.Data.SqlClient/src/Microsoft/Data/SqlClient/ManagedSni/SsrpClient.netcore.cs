@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (allIPsInParallel) // Used for MultiSubnetFailover
             {
                 List<Task<SsrpResult>> tasks = new(ipAddresses.Length);
-                CancellationTokenSource cts = new CancellationTokenSource();
+                using CancellationTokenSource cts = new CancellationTokenSource();
                 for (int i = 0; i < ipAddresses.Length; i++)
                 {
                     IPEndPoint endPoint = new IPEndPoint(ipAddresses[i], port);
