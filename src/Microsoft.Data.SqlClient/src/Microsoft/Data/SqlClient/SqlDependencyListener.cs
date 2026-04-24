@@ -93,10 +93,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 // connection string used in the hashHelper.
                 _con = new SqlConnection(_hashHelper.ConnectionStringBuilder.ConnectionString); // Create connection and open.
 
+#if NETFRAMEWORK
                 // Assert permission for this particular connection string since it differs from the user passed string
                 // which we have already demanded upon.  
-                SqlConnectionOptions connStringObj = (SqlConnectionOptions)_con.ConnectionOptions;
-#if NETFRAMEWORK
+                SqlConnectionOptions connStringObj = _con.ConnectionOptions;
                 connStringObj.CreatePermissionSet().Assert();
                 if (connStringObj.LocalDBInstance != null)
                 {

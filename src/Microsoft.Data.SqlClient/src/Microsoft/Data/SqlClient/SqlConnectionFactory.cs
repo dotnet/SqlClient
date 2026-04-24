@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(SqlConnectionOptions connectionOptions) =>
-            ((SqlConnectionOptions)connectionOptions).UserInstance
+            connectionOptions.UserInstance
                 ? new SqlConnectionPoolProviderInfo()
                 : null;
         
@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient
 
         internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
             SqlConnectionOptions connectionOptions) =>
-            new SqlConnectionPoolGroupProviderInfo((SqlConnectionOptions)connectionOptions);
+            new SqlConnectionPoolGroupProviderInfo(connectionOptions);
 
         internal SqlConnectionOptions FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
@@ -491,7 +491,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.NoConnectionString();
             }
             
-            return (SqlConnectionOptions)connectionOptions;
+            return connectionOptions;
         }
 
         // @TODO: All these methods seem redundant ... shouldn't we always have a SqlConnection?
@@ -582,7 +582,7 @@ namespace Microsoft.Data.SqlClient
             DbConnection owningConnection,
             SqlConnectionOptions userOptions)
         {
-            SqlConnectionOptions opt = (SqlConnectionOptions)options;
+            SqlConnectionOptions opt = options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
             SessionData recoverySessionData = null;
 
@@ -592,11 +592,11 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionOptions userOpt = null;
             if (userOptions != null)
             {
-                userOpt = (SqlConnectionOptions)userOptions;
+                userOpt = userOptions;
             }
             else if (sqlOwningConnection != null)
             {
-                userOpt = (SqlConnectionOptions)(sqlOwningConnection.UserConnectionOptions);
+                userOpt = sqlOwningConnection.UserConnectionOptions;
             }
 
             if (sqlOwningConnection != null)
@@ -711,7 +711,7 @@ namespace Microsoft.Data.SqlClient
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)
         {
-            SqlConnectionOptions opt = (SqlConnectionOptions)connectionOptions;
+            SqlConnectionOptions opt = connectionOptions;
 
             DbConnectionPoolGroupOptions poolingOptions = null;
 
