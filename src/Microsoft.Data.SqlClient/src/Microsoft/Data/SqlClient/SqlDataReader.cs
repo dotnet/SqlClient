@@ -1875,12 +1875,8 @@ namespace Microsoft.Data.SqlClient
 
                 Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
                 cbytes = data.Length;
 
                 if (length < 0)
@@ -2152,17 +2148,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
                         }
-                        catch (Exception ex)
+                        catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                         {
                             // We need to wrap all exceptions inside a TargetInvocationException to simulate calling CreateSqlReader via MethodInfo.Invoke
-                            if (ADP.IsCatchableExceptionType(ex))
-                            {
-                                throw new TargetInvocationException(ex);
-                            }
-                            else
-                            {
-                                throw;
-                            }
+                            throw new TargetInvocationException(ex);
                         }
                         charsRead = GetStreamingXmlChars(i, dataIndex, buffer, bufferIndex, length);
                     }
@@ -2232,12 +2221,8 @@ namespace Microsoft.Data.SqlClient
                     Array.Copy(_columnDataChars, ndataIndex, buffer, bufferIndex, cchars);
                     _columnDataCharsRead += cchars;
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
                     cchars = _columnDataChars.Length;
 
                     if (length < 0)
@@ -5044,12 +5029,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                 {
-                    if (!ADP.IsCatchableExceptionType(ex))
-                    {
-                        throw;
-                    }
                     return Task.FromException<bool>(ex);
                 }
 
@@ -5146,12 +5127,8 @@ namespace Microsoft.Data.SqlClient
             {
                 CheckHeaderIsReady(columnIndex: i);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (!ADP.IsCatchableExceptionType(ex))
-                {
-                    throw;
-                }
                 return Task.FromException<bool>(ex);
             }
 
@@ -5204,12 +5181,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                 {
-                    if (!ADP.IsCatchableExceptionType(ex))
-                    {
-                        throw;
-                    }
                     return Task.FromException<bool>(ex);
                 }
 
@@ -5305,12 +5278,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (!ADP.IsCatchableExceptionType(ex))
-                {
-                    throw;
-                }
                 return Task.FromException<T>(ex);
             }
 
@@ -5346,12 +5315,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (!ADP.IsCatchableExceptionType(ex))
-                {
-                    throw;
-                }
                 return Task.FromException<T>(ex);
             }
 

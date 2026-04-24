@@ -291,14 +291,9 @@ namespace Microsoft.Data.SqlClient
                         nameof(BeginExecuteReader));
                 }
                 catch (Exception e)
+                    // If not catchable - the connection has already been caught and doomed in RunExecuteReader.
+                    when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        // If not catchable - the connection has already been caught and doomed in
-                        // RunExecuteReader.
-                        throw;
-                    }
-
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
@@ -848,28 +843,25 @@ namespace Microsoft.Data.SqlClient
                     // @TODO: Why does the command set whether the reader is initialized??
                     ds.IsInitialized = true;
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
+                    if (_inPrepare)
                     {
-                        if (_inPrepare)
-                        {
-                            // The flag is expected to be reset by OnReturnValue. We should receive
-                            // the handle unless command execution failed. If it fails, move back
-                            // to pending state.
-                            _inPrepare = false;                  // reset the flag
-                            IsDirty = true;                      // mark command as dirty so it will be prepared next time we're coming through
-                            _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
-                        }
+                        // The flag is expected to be reset by OnReturnValue. We should receive
+                        // the handle unless command execution failed. If it fails, move back
+                        // to pending state.
+                        _inPrepare = false;                  // reset the flag
+                        IsDirty = true;                      // mark command as dirty so it will be prepared next time we're coming through
+                        _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
+                    }
 
-                        try
-                        {
-                            ds.Close();
-                        }
-                        catch (Exception eClose)
-                        {
-                            Debug.WriteLine($"Received this exception from SqlDataReader.Close() while in another catch block: {eClose}");
-                        }
+                    try
+                    {
+                        ds.Close();
+                    }
+                    catch (Exception eClose)
+                    {
+                        Debug.WriteLine($"Received this exception from SqlDataReader.Close() while in another catch block: {eClose}");
                     }
 
                     throw;

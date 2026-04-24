@@ -8875,13 +8875,9 @@ namespace Microsoft.Data.SqlClient
                 Run(RunBehavior.Attention, null, null, null, stateObj);
             }
             catch (Exception e)
-            {
                 // UNDONE - should not be catching all exceptions!!!
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
+                when (ADP.IsCatchableExceptionType(e))
+            {
                 // If an exception occurs - break the connection.
                 // Attention error will not be thrown in this case by Run(), but other failures may.
                 ADP.TraceExceptionWithoutRethrow(e);
@@ -9608,14 +9604,12 @@ namespace Microsoft.Data.SqlClient
                     );
             }
             catch (Exception e)
-            {
                 // UNDONE - should not be catching all exceptions!!!
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    // be sure to wipe out our buffer if we started sending stuff
-                    _physicalStateObj.ResetPacketCounters();
-                    _physicalStateObj.ResetBuffer();
-                }
+                when (ADP.IsCatchableExceptionType(e))
+            {
+                // be sure to wipe out our buffer if we started sending stuff
+                _physicalStateObj.ResetPacketCounters();
+                _physicalStateObj.ResetBuffer();
 
                 throw;
             }
@@ -9970,13 +9964,8 @@ namespace Microsoft.Data.SqlClient
 
                 return dtcReader;
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 FailureCleanup(stateObj, e);
 
                 throw;

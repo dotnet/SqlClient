@@ -181,12 +181,8 @@ namespace Microsoft.Data.SqlClient
                     Zombie();
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
 #if NETFRAMEWORK
                 ADP.TraceExceptionWithoutRethrow(e);
 #endif
@@ -243,13 +239,9 @@ namespace Microsoft.Data.SqlClient
                     _innerConnection.ExecuteTransaction(TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
                     ZombieParent();
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
-                    }
-
+                    CheckTransactionLevelAndZombie();
                     throw;
                 }
             }
@@ -350,18 +342,11 @@ namespace Microsoft.Data.SqlClient
                     // server transaction level.  This transaction has been completed.
                     Zombie();
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
+                    CheckTransactionLevelAndZombie();
 
-                        if (!_disposing)
-                        {
-                            throw;
-                        }
-                    }
-                    else
+                    if (!_disposing)
                     {
                         throw;
                     }
@@ -394,12 +379,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     _innerConnection.ExecuteTransaction(TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
-                    }
+                    CheckTransactionLevelAndZombie();
                     throw;
                 }
             }
@@ -426,13 +408,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     _innerConnection.ExecuteTransaction(TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
-                    }
-
+                    CheckTransactionLevelAndZombie();
                     throw;
                 }
             }

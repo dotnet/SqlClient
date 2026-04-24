@@ -2581,13 +2581,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     handler(this, imevent);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        throw;
-                    }
-
                     ADP.TraceExceptionWithoutRethrow(e);
                 }
             }

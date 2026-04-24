@@ -412,12 +412,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     reader = command.ExecuteReader();
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
                     throw ADP.QueryFailed(collectionName, e);
                 }
 
