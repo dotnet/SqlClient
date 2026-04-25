@@ -5367,6 +5367,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Parses the TDS message to read single CIPHER_INFO entry.</para>
         /// </summary>
+        /// <remarks>
+        /// The CIPHER_INFO structure is represented as an EK_INFO structure in the TDS protocol.
+        /// </remarks>
+        /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/b0f2c914-c5ee-4714-802a-f118edf1b33d"/>.
         internal TdsOperationStatus TryReadCipherInfoEntry(TdsParserStateObject stateObj, out SqlTceCipherInfoEntry entry)
         {
             byte cekValueCount = 0;
@@ -5397,8 +5401,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Read the key MD Version
-            byte[] keyMDVersion = new byte[8];
-            result = stateObj.TryReadByteArray(keyMDVersion, 8);
+            result = stateObj.TryReadInt64(out long keyMDVersion);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -5493,7 +5496,7 @@ namespace Microsoft.Data.SqlClient
                     databaseId: dbId,
                     cekId: keyId,
                     cekVersion: keyVersion,
-                    cekMdVersion: keyMDVersion,
+                    cekMdVersion: unchecked((ulong)keyMDVersion),
                     keyPath: keyPath,
                     keyStoreName: keyStoreName,
                     algorithmName: algorithmName);
@@ -11525,8 +11528,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(cekTable[i].CekVersion, stateObj);
 
                 // Write 8 bytes of key MD Version
-                Debug.Assert(8 == cekTable[i].CekMdVersion.Length);
-                stateObj.WriteByteArray(cekTable[i].CekMdVersion, 8, 0);
+                WriteUnsignedLong(cekTable[i].CekMdVersion, stateObj);
 
                 // We don't really need to send the keys
                 stateObj.WriteByte(0x00);
