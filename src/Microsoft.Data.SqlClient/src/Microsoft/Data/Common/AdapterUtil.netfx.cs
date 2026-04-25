@@ -63,10 +63,6 @@ namespace Microsoft.Data.Common
 
         #endregion
 
-        // DbDataAdapter
-        internal static InvalidOperationException ComputerNameEx(int lastError) =>
-            InvalidOperation(StringsHelper.GetString(Strings.ADP_ComputerNameEx, lastError));
-
         // DBDataPermissionAttribute.KeyRestrictionBehavior
         internal static ArgumentOutOfRangeException InvalidKeyRestrictionBehavior(KeyRestrictionBehavior value)
         {

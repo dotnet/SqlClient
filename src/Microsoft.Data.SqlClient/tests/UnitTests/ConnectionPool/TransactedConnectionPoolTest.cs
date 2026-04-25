@@ -661,6 +661,7 @@ public class TransactedConnectionPoolTest
         public int Count => throw new NotImplementedException();
         public bool ErrorOccurred => throw new NotImplementedException();
         public int Id { get; } = 1;
+        public int IdleCount => throw new NotImplementedException();
         public DbConnectionPoolIdentity Identity => throw new NotImplementedException();
         public bool IsRunning => throw new NotImplementedException();
         public TimeSpan LoadBalanceTimeout => throw new NotImplementedException();

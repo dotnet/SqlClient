@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ADP_Ascending" xml:space="preserve">
-    <value>Rosnąco</value>
-  </data>
   <data name="ADP_CollectionIndexInt32" xml:space="preserve">
     <value>Nieprawidłowy indeks {0} dla tego elementu {1}: Count={2}.</value>
   </data>
@@ -132,17 +129,11 @@
   <data name="ADP_CollectionIsNotParent" xml:space="preserve">
     <value>Element {0} jest już zawarty w innym elemencie {1}.</value>
   </data>
-  <data name="ADP_CollectionIsParent" xml:space="preserve">
-    <value>Element {0} jest już zawarty w tym elemencie {1}.</value>
-  </data>
   <data name="ADP_CollectionNullValue" xml:space="preserve">
     <value>Element {0} akceptuje tylko obiekty typu {1} o wartości innej niż null.</value>
   </data>
   <data name="ADP_CollectionRemoveInvalidObject" xml:space="preserve">
     <value>Próbowano usunąć element {0}, który nie jest zawarty w tym elemencie {1}.</value>
-  </data>
-  <data name="ADP_CollectionUniqueValue" xml:space="preserve">
-    <value>Element {0}.{1} musi być unikatowy, element „{2}” już istnieje w kolekcji.</value>
   </data>
   <data name="ADP_ConnectionAlreadyOpen" xml:space="preserve">
     <value>Połączenie nie zostało zamknięte. {0}</value>
@@ -171,12 +162,6 @@
   <data name="ADP_DataReaderClosed" xml:space="preserve">
     <value>Nieprawidłowa próba wywołania {0}, gdy czytnik jest zamknięty.</value>
   </data>
-  <data name="ADP_DelegatedTransactionPresent" xml:space="preserve">
-    <value>Nie można zarejestrować transakcji, ponieważ połączenie jest połączeniem podstawowym dla transakcji delegowanej lub z podwyższonym poziomem.</value>
-  </data>
-  <data name="ADP_Descending" xml:space="preserve">
-    <value>Malejąco</value>
-  </data>
   <data name="ADP_EmptyString" xml:space="preserve">
     <value>Oczekiwany jest niepusty ciąg dla parametru {0}.</value>
   </data>
@@ -203,9 +188,6 @@
   </data>
   <data name="ADP_NoConnectionString" xml:space="preserve">
     <value>Nie zainicjowano właściwości ConnectionString.</value>
-  </data>
-  <data name="ADP_NonCLSException" xml:space="preserve">
-    <value>Przechwycono wyjątek Exception niezgodny ze specyfikacją CLS.</value>
   </data>
   <data name="ADP_NotAPermissionElement" xml:space="preserve">
     <value>Dany element zabezpieczeń nie jest elementem uprawnień.</value>
@@ -252,9 +234,6 @@
   <data name="DataCategory_Data" xml:space="preserve">
     <value>Dane</value>
   </data>
-  <data name="DataCategory_StateChange" xml:space="preserve">
-    <value>StateChange</value>
-  </data>
   <data name="DataCategory_Update" xml:space="preserve">
     <value>Aktualizuj</value>
   </data>
@@ -264,47 +243,11 @@
   <data name="DbConnection_State" xml:space="preserve">
     <value>Element ConnectionState wskazujący, czy połączenie jest otwarte, czy zamknięte.</value>
   </data>
-  <data name="DbConnection_StateChange" xml:space="preserve">
-    <value>Zdarzenie wyzwalane po zmianie stanu połączenia.</value>
-  </data>
-  <data name="DbParameter_DbType" xml:space="preserve">
-    <value>Ogólny typ parametru.</value>
-  </data>
-  <data name="DbParameter_Direction" xml:space="preserve">
-    <value>Parametr wejściowy, wyjściowy lub dwukierunkowy.</value>
-  </data>
-  <data name="DbParameter_IsNullable" xml:space="preserve">
-    <value>właściwość czasu projektowania używana do generowania kodu o jednoznacznie określonych typach.</value>
-  </data>
-  <data name="DbParameter_Offset" xml:space="preserve">
-    <value>Przesunięcie w typach danych o zmiennej długości.</value>
-  </data>
-  <data name="DbParameter_ParameterName" xml:space="preserve">
-    <value>Nazwa parametru.</value>
-  </data>
-  <data name="DbParameter_Size" xml:space="preserve">
-    <value>Rozmiar typów danych o zmiennej długości (ciąg i tablice).</value>
-  </data>
-  <data name="DbParameter_SourceColumn" xml:space="preserve">
-    <value>Gdy nazwa kolumny źródłowej jest używana przez metodę DataAdapter.Update, służy do znajdowania nazwy DataSetColumn we właściwości ColumnMappings. Ma to na celu kopiowanie wartości między parametrem a wierszem danych.</value>
-  </data>
-  <data name="DbParameter_SourceVersion" xml:space="preserve">
-    <value>Gdy wersja wartości DataRow jest używana przez metodę DataAdapter.Update (tylko właściwość UpdateCommand), służy do aktualizowania źródła danych.</value>
-  </data>
-  <data name="DbParameter_SourceColumnNullMapping" xml:space="preserve">
-    <value>Gdy jest używana przez element DataAdapter.Update, wartość parametru jest zmieniana z DBNull.Value na (Int32)1 lub (Int32)0, jeśli jest niezerowa.</value>
-  </data>
-  <data name="DbParameter_Value" xml:space="preserve">
-    <value>Wartość parametru.</value>
-  </data>
   <data name="MDF_QueryFailed" xml:space="preserve">
     <value>Nie można skompilować kolekcji {0}, ponieważ wykonanie zapytania SQL nie powiodło się. Zobacz wewnętrzny wyjątek, aby poznać szczegóły.</value>
   </data>
   <data name="MDF_TooManyRestrictions" xml:space="preserve">
     <value>Określono więcej ograniczeń, niż żądany schemat ({0}) może obsłużyć.</value>
-  </data>
-  <data name="MDF_InvalidRestrictionValue" xml:space="preserve">
-    <value>Wartość {2} nie jest prawidłową wartością ograniczenia {1} kolekcji schematów {0}.</value>
   </data>
   <data name="MDF_UndefinedCollection" xml:space="preserve">
     <value>Żądana kolekcja ({0}) nie została zdefiniowana.</value>
@@ -314,15 +257,6 @@
   </data>
   <data name="MDF_UnsupportedVersion" xml:space="preserve">
     <value>Żądana kolekcja ({0}) nie jest obsługiwana przez tę wersję dostawcy.</value>
-  </data>
-  <data name="MDF_MissingDataSourceInformationColumn" xml:space="preserve">
-    <value>Brak jednej z wymaganych kolumn tabel DataSourceInformation.</value>
-  </data>
-  <data name="MDF_IncorrectNumberOfDataSourceInformationRows" xml:space="preserve">
-    <value>Tabela DataSourceInformation musi zawierać dokładnie jeden wiersz.</value>
-  </data>
-  <data name="MDF_MissingRestrictionColumn" xml:space="preserve">
-    <value>Brak co najmniej jednej z wymaganych kolumn kolekcji ograniczeń.</value>
   </data>
   <data name="MDF_MissingRestrictionRow" xml:space="preserve">
     <value>Istnieje ograniczenie, dla którego nie ma pasującego wiersza w kolekcji ograniczeń.</value>
@@ -342,20 +276,8 @@
   <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
     <value>Brak kolekcji {0} w elemencie XML metadanych.</value>
   </data>
-  <data name="MDF_InvalidXml" xml:space="preserve">
-    <value>Nieprawidłowy element XML metadanych.</value>
-  </data>
-  <data name="MDF_InvalidXmlMissingColumn" xml:space="preserve">
-    <value>Nieprawidłowy element XML metadanych. Kolekcja {0} musi zawierać kolumnę {1} i musi być kolumną ciągu.</value>
-  </data>
   <data name="MDF_InvalidXmlInvalidValue" xml:space="preserve">
     <value>Nieprawidłowy element XML metadanych. Kolumna {1} kolekcji {0} musi zawierać niepusty ciąg.</value>
-  </data>
-  <data name="DataCategory_Action" xml:space="preserve">
-    <value>Akcja</value>
-  </data>
-  <data name="DataCategory_Behavior" xml:space="preserve">
-    <value>Zachowanie</value>
   </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>Wypełnij</value>
@@ -363,20 +285,11 @@
   <data name="DataCategory_InfoMessage" xml:space="preserve">
     <value>InfoMessage</value>
   </data>
-  <data name="DataCategory_Mapping" xml:space="preserve">
-    <value>Mapowanie</value>
-  </data>
   <data name="DataCategory_StatementCompleted" xml:space="preserve">
     <value>StatementCompleted</value>
   </data>
-  <data name="DataCategory_Udt" xml:space="preserve">
-    <value>UDT</value>
-  </data>
   <data name="DataCategory_Notification" xml:space="preserve">
     <value>Powiadomienie</value>
-  </data>
-  <data name="DataCategory_Schema" xml:space="preserve">
-    <value>Schemat</value>
   </data>
   <data name="DataCategory_Xml" xml:space="preserve">
     <value>XML</value>
@@ -393,9 +306,6 @@
   <data name="DataCategory_Pooling" xml:space="preserve">
     <value>Buforowanie</value>
   </data>
-  <data name="DataCategory_NamedConnectionString" xml:space="preserve">
-    <value>Nazwane parametry połączenia</value>
-  </data>
   <data name="DataCategory_Security" xml:space="preserve">
     <value>Zabezpieczenia</value>
   </data>
@@ -408,1352 +318,11 @@
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Elastyczność połączenia</value>
   </data>
-  <data name="ExtendedPropertiesDescr" xml:space="preserve">
-    <value>Kolekcja, która przechowuje niestandardowe informacje użytkownika.</value>
-  </data>
-  <data name="DataSetCaseSensitiveDescr" xml:space="preserve">
-    <value>Wskazuje, czy porównywanie ciągów wewnątrz elementu DataSet odbywa się z uwzględnieniem wielkości liter.</value>
-  </data>
-  <data name="DataSetDataSetNameDescr" xml:space="preserve">
-    <value>Nazwa tego elementu DataSet.</value>
-  </data>
-  <data name="DataSetDefaultViewDescr" xml:space="preserve">
-    <value>Wskazuje na niestandardowy „widok” danych zawartych w zestawie danych. Ten widok umożliwia filtrowanie, wyszukiwanie i nawigowanie po niestandardowym widoku danych.</value>
-  </data>
-  <data name="DataSetEnforceConstraintsDescr" xml:space="preserve">
-    <value>Wskazuje, czy należy stosować reguły ograniczeń.</value>
-  </data>
-  <data name="DataSetHasErrorsDescr" xml:space="preserve">
-    <value>Wskazuje, że element DataSet zawiera błędy.</value>
-  </data>
-  <data name="DataSetLocaleDescr" xml:space="preserve">
-    <value>Wskazuje ustawienia regionalne, przy użyciu których należy porównywać ciągi wewnątrz elementu DataSet.</value>
-  </data>
-  <data name="DataSetNamespaceDescr" xml:space="preserve">
-    <value>Wskazuje przestrzeń nazw identyfikatora XML URI dla elementu głównego wskazywanego przez ten element DataSet.</value>
-  </data>
-  <data name="DataSetPrefixDescr" xml:space="preserve">
-    <value>Wskazuje prefiks przestrzeni nazw używany dla tego elementu DataSet.</value>
-  </data>
-  <data name="DataSetRelationsDescr" xml:space="preserve">
-    <value>Kolekcja, która przechowuje relacje dla tego elementu DataSet.</value>
-  </data>
-  <data name="DataSetTablesDescr" xml:space="preserve">
-    <value>Kolekcja, która przechowuje tabele dla tego elementu DataSet.</value>
-  </data>
-  <data name="DataSetMergeFailedDescr" xml:space="preserve">
-    <value>Występuje, gdy nie można scalić schematów dla dwóch tabel z tą samą nazwą.</value>
-  </data>
-  <data name="DataSetInitializedDescr" xml:space="preserve">
-    <value>Występuje po zakończeniu inicjalizacji Initialization.</value>
-  </data>
-  <data name="DataSetDescr" xml:space="preserve">
-    <value>Reprezentuje pamięć podręczną danych.</value>
-  </data>
-  <data name="DataTableCaseSensitiveDescr" xml:space="preserve">
-    <value>Wskazuje, czy porównywanie ciągów wewnątrz tabeli odbywa się z uwzględnieniem wielkości liter.</value>
-  </data>
-  <data name="DataTableChildRelationsDescr" xml:space="preserve">
-    <value>Zwraca relacje podrzędne dla tej tabeli.</value>
-  </data>
-  <data name="DataTableColumnsDescr" xml:space="preserve">
-    <value>Kolekcja, która przechowuje kolumny dla tej tabeli.</value>
-  </data>
-  <data name="DataTableConstraintsDescr" xml:space="preserve">
-    <value>Kolekcja, która przechowuje ograniczenia dla tej tabeli.</value>
-  </data>
-  <data name="DataTableDataSetDescr" xml:space="preserve">
-    <value>Wskazuje element DataSet, do którego należy ta tabela.</value>
-  </data>
-  <data name="DataTableDefaultViewDescr" xml:space="preserve">
-    <value>To jest domyślny element DataView dla tabeli.</value>
-  </data>
-  <data name="DataTableDisplayExpressionDescr" xml:space="preserve">
-    <value>Wyrażenie używane do obliczenia wartości związanej z danymi w tym wierszu.</value>
-  </data>
-  <data name="DataTableHasErrorsDescr" xml:space="preserve">
-    <value>Zwraca informację, czy tablica zawiera błędy.</value>
-  </data>
-  <data name="DataTableLocaleDescr" xml:space="preserve">
-    <value>Wskazuje ustawienia regionalne, przy użyciu których należy porównywać ciągi wewnątrz tabeli.</value>
-  </data>
-  <data name="DataTableMinimumCapacityDescr" xml:space="preserve">
-    <value>Wskazuje początkowy rozmiar tej tabeli.</value>
-  </data>
-  <data name="DataTableNamespaceDescr" xml:space="preserve">
-    <value>Wskazuje przestrzeń nazw identyfikatora XML URI dla elementów zawartych w tej tabeli.</value>
-  </data>
-  <data name="DataTablePrefixDescr" xml:space="preserve">
-    <value>Wskazuje element Prefix przestrzeni nazw używany dla tej tabeli w reprezentacji XML.</value>
-  </data>
-  <data name="DataTableParentRelationsDescr" xml:space="preserve">
-    <value>Zwraca relacje nadrzędne dla tej tabeli.</value>
-  </data>
-  <data name="DataTablePrimaryKeyDescr" xml:space="preserve">
-    <value>Wskazuje kolumny reprezentujące klucz podstawowy dla tej tabeli.</value>
-  </data>
-  <data name="DataTableRowsDescr" xml:space="preserve">
-    <value>Wskazuje kolekcję, która przechowuje wiersze danych dla tej tabeli.</value>
-  </data>
-  <data name="DataTableTableNameDescr" xml:space="preserve">
-    <value>Wskazuje nazwę używaną do odszukania tej tabeli w kolekcji Tables elementu DataSet.</value>
-  </data>
-  <data name="DataTableRowChangedDescr" xml:space="preserve">
-    <value>Występuje po pomyślnej edycji wiersza w tabeli.</value>
-  </data>
-  <data name="DataTableRowChangingDescr" xml:space="preserve">
-    <value>Występuje, gdy wiersz jest zmieniany, aby program obsługi zdarzeń mógł zmodyfikować lub anulować zmianę. Użytkownik może modyfikować wartości w wierszu i powinien zgłosić wyjątek, aby anulować edytowanie.</value>
-  </data>
-  <data name="DataTableRowDeletedDescr" xml:space="preserve">
-    <value>Występuje po pomyślnym usunięciu wiersza z tabeli.</value>
-  </data>
-  <data name="DataTableRowDeletingDescr" xml:space="preserve">
-    <value>Występuje, gdy wiersz w tabeli jest oznaczony do usunięcia.  Zgłoś wyjątek, aby anulować usunięcie.</value>
-  </data>
-  <data name="DataTableColumnChangingDescr" xml:space="preserve">
-    <value>Występuje, gdy wartość dla tej kolumny zostanie przesłana.  Użytkownik może zmodyfikować proponowaną wartość i zgłosić wyjątek, aby anulować edytowanie.</value>
-  </data>
-  <data name="DataTableColumnChangedDescr" xml:space="preserve">
-    <value>Występuje, gdy wartość dla tej kolumny zostanie zmieniona.</value>
-  </data>
-  <data name="DataTableRowsClearingDescr" xml:space="preserve">
-    <value>Występuje przed wyczyszczeniem wszystkich wierszy z tabeli.</value>
-  </data>
-  <data name="DataTableRowsClearedDescr" xml:space="preserve">
-    <value>Występuje po pomyślnym wyczyszczeniu wszystkich wierszy z tabeli.</value>
-  </data>
-  <data name="DataTableRowsNewRowDescr" xml:space="preserve">
-    <value>Występuje po utworzeniu nowego wystąpienia elementu DataRow.</value>
-  </data>
-  <data name="DataRelationRelationNameDescr" xml:space="preserve">
-    <value>Nazwa używana do odszukania tej relacji w kolekcji Relations elementu DataSet.</value>
-  </data>
-  <data name="DataRelationChildColumnsDescr" xml:space="preserve">
-    <value>Wskazuje kolumny podrzędne tej relacji.</value>
-  </data>
-  <data name="DataRelationParentColumnsDescr" xml:space="preserve">
-    <value>Wskazuje kolumny nadrzędne tej relacji.</value>
-  </data>
-  <data name="DataRelationNested" xml:space="preserve">
-    <value>Wskazuje, czy relacje są zagnieżdżone.</value>
-  </data>
-  <data name="ForeignKeyConstraintDeleteRuleDescr" xml:space="preserve">
-    <value>Wskazuje, jaki rodzaj operacji kaskadowej ma zostać wykonany dla tej relacji przy usuwaniu.</value>
-  </data>
-  <data name="ForeignKeyConstraintUpdateRuleDescr" xml:space="preserve">
-    <value>Wskazuje, jaki rodzaj operacji kaskadowej ma zostać wykonany dla tej relacji przy aktualizacji.</value>
-  </data>
-  <data name="ForeignKeyConstraintAcceptRejectRuleDescr" xml:space="preserve">
-    <value>Wskazuje, jaki rodzaj operacji kaskadowej ma zostać wykonany dla tej relacji przy akceptowaniu i odrzucaniu zmian.</value>
-  </data>
-  <data name="ForeignKeyConstraintChildColumnsDescr" xml:space="preserve">
-    <value>Wskazuje kolumny podrzędne tego ograniczenia.</value>
-  </data>
-  <data name="ForeignKeyConstraintParentColumnsDescr" xml:space="preserve">
-    <value>Wskazuje kolumny nadrzędne tego ograniczenia.</value>
-  </data>
-  <data name="ForeignKeyRelatedTableDescr" xml:space="preserve">
-    <value>Wskazuje tabelę podrzędną tego ograniczenia.</value>
-  </data>
-  <data name="KeyConstraintColumnsDescr" xml:space="preserve">
-    <value>Wskazuje kolumny tego ograniczenia.</value>
-  </data>
-  <data name="KeyConstraintIsPrimaryKeyDescr" xml:space="preserve">
-    <value>Wskazuje, czy to ograniczenie jest kluczem podstawowym.</value>
-  </data>
-  <data name="ConstraintNameDescr" xml:space="preserve">
-    <value>Wskazuje nazwę tego ograniczenia.</value>
-  </data>
-  <data name="ConstraintTableDescr" xml:space="preserve">
-    <value>Wskazuje tabelę tego ograniczenia.</value>
-  </data>
-  <data name="DataColumnAllowNullDescr" xml:space="preserve">
-    <value>Wskazuje, czy w tej kolumnie są dozwolone wartości null.</value>
-  </data>
-  <data name="DataColumnAutoIncrementDescr" xml:space="preserve">
-    <value>Wskazuje, czy kolumna automatycznie się zwiększa dla nowych wierszy dodawanych do tabeli.  Kolumna musi być typu Int16, Int32 lub Int64.</value>
-  </data>
-  <data name="DataColumnAutoIncrementSeedDescr" xml:space="preserve">
-    <value>Wskazuje początkową wartość dla kolumny typu AutoIncrement.</value>
-  </data>
-  <data name="DataColumnAutoIncrementStepDescr" xml:space="preserve">
-    <value>Wskazuje przyrost używany w kolumnie typu AutoIncrement.</value>
-  </data>
-  <data name="DataColumnCaptionDescr" xml:space="preserve">
-    <value>Wskazuje domyślny podpis interfejsu użytkownika dla tej kolumny.</value>
-  </data>
-  <data name="DataColumnColumnNameDescr" xml:space="preserve">
-    <value>Wskazuje nazwę używaną do odszukania tej kolumny w kolekcji Columns elementu DataTable.</value>
-  </data>
-  <data name="DataColumnDataTableDescr" xml:space="preserve">
-    <value>Zwraca element DataTable, do którego należy ta kolumna.</value>
-  </data>
-  <data name="DataColumnDataTypeDescr" xml:space="preserve">
-    <value>Wskazuje typ danych przechowywanych w tej kolumnie.</value>
-  </data>
-  <data name="DataColumnDefaultValueDescr" xml:space="preserve">
-    <value>Wskazuje domyślną wartość kolumny używaną przy dodawaniu nowych wierszy do tabeli.</value>
-  </data>
-  <data name="DataColumnExpressionDescr" xml:space="preserve">
-    <value>Wskazuje wartość, która jest obliczana dla każdego wiersza w tej kolumnie na podstawie wartości znajdujących się w innych kolumnach, zamiast przyjmowania danych od użytkownika.</value>
-  </data>
-  <data name="DataColumnMappingDescr" xml:space="preserve">
-    <value>Wskazuje, w jaki sposób ta kolumna jest utrwalona w kodzie XML: jako atrybut, element, prosty węzeł zawartości czy wcale.</value>
-  </data>
-  <data name="DataColumnNamespaceDescr" xml:space="preserve">
-    <value>Wskazuje identyfikator XML URI dla elementów lub atrybutów przechowywanych w tej kolumnie.</value>
-  </data>
-  <data name="DataColumnPrefixDescr" xml:space="preserve">
-    <value>Wskazuje element Prefix używany dla tego elementu DataColumn w reprezentacji xml.</value>
-  </data>
-  <data name="DataColumnOrdinalDescr" xml:space="preserve">
-    <value>Wskazuje indeks tej kolumny w kolekcji Columns.</value>
-  </data>
-  <data name="DataColumnReadOnlyDescr" xml:space="preserve">
-    <value>Wskazuje, czy ta kolumna zezwala na zmiany po tym, jak wiersz zostanie dodany do tabeli.</value>
-  </data>
-  <data name="DataColumnUniqueDescr" xml:space="preserve">
-    <value>Wskazuje, czy ta kolumna powinna nałożyć ograniczenie na swoje wartości w wierszach tabeli tak, aby były one unikatowe.</value>
-  </data>
-  <data name="DataColumnMaxLengthDescr" xml:space="preserve">
-    <value>Wskazuje maksymalną długość wartości dozwoloną w tej kolumnie.</value>
-  </data>
-  <data name="DataColumnDateTimeModeDescr" xml:space="preserve">
-    <value>Wskazuje element DateTimeMode tego elementu DataColumn.</value>
-  </data>
-  <data name="DataViewAllowDeleteDescr" xml:space="preserve">
-    <value>Wskazuje, czy ten element DataView oraz skojarzony z nim interfejs użytkownika zezwalają na usuwanie.</value>
-  </data>
-  <data name="DataViewAllowEditDescr" xml:space="preserve">
-    <value>Wskazuje, czy ten element DataView oraz skojarzony z nim interfejs użytkownika zezwalają na edycję.</value>
-  </data>
-  <data name="DataViewAllowNewDescr" xml:space="preserve">
-    <value>Wskazuje, czy ten element DataView oraz skojarzony z nim interfejs użytkownika zezwalają na dodawanie nowych wierszy.</value>
-  </data>
-  <data name="DataViewCountDescr" xml:space="preserve">
-    <value>Zwraca liczbę elementów aktualnie znajdujących się w tym widoku.</value>
-  </data>
-  <data name="DataViewDataViewManagerDescr" xml:space="preserve">
-    <value>Zwraca wskaźnik powrotny do elementu DataViewManager, który jest właścicielem tego elementu DataSet (jeśli taki istnieje).</value>
-  </data>
-  <data name="DataViewIsOpenDescr" xml:space="preserve">
-    <value>Wskazuje, czy widok jest otwarty.</value>
-  </data>
-  <data name="DataViewRowFilterDescr" xml:space="preserve">
-    <value>Wskazuje wyrażenie używane do filtrowania danych zwróconych przez ten element DataView.</value>
-  </data>
-  <data name="DataViewRowStateFilterDescr" xml:space="preserve">
-    <value>Wskazuje wersje danych zwróconych przez ten element DataView.</value>
-  </data>
-  <data name="DataViewSortDescr" xml:space="preserve">
-    <value>Wskazuje nazwy kolumn i kolejność, w której dane są zwracane przez ten element DataView.</value>
-  </data>
-  <data name="DataViewApplyDefaultSortDescr" xml:space="preserve">
-    <value>Wskazuje, czy używać sortowania domyślnego, jeśli właściwość Sort nie została ustawiona.</value>
-  </data>
-  <data name="DataViewTableDescr" xml:space="preserve">
-    <value>Wskazuje tabelę, która jest używana przez ten element DataView do pobierania danych.</value>
-  </data>
-  <data name="DataViewListChangedDescr" xml:space="preserve">
-    <value>Wskazuje, że dane zwrócone przez ten element DataView zostały zmienione w dowolny sposób.</value>
-  </data>
-  <data name="DataViewManagerDataSetDescr" xml:space="preserve">
-    <value>Wskazuje źródło danych dla tego elementu DataViewManager.</value>
-  </data>
-  <data name="DataViewManagerTableSettingsDescr" xml:space="preserve">
-    <value>Wskazuje ustawienia sortowania/filtrowania/stanu dla dowolnej tabeli w odpowiadającym elemencie DataSet.</value>
-  </data>
-  <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
-    <value>Element DataSet nie obsługuje elementu „union” lub „list” jako elementu simpleType.</value>
-  </data>
-  <data name="Xml_MissingAttribute" xml:space="preserve">
-    <value>Nieprawidłowa składnia {0}: brak wymaganego atrybutu „{1}”.</value>
-  </data>
-  <data name="Xml_ValueOutOfRange" xml:space="preserve">
-    <value>Wartość „{1}” jest nieprawidłowa dla atrybutu „{0}”.</value>
-  </data>
-  <data name="Xml_AttributeValues" xml:space="preserve">
-    <value>Atrybut „{0}” powinien mieć wartość „{1}” lub „{2}”.</value>
-  </data>
-  <data name="Xml_ElementTypeNotFound" xml:space="preserve">
-    <value>Nie można odnaleźć elementu ElementType name=„{0}”.</value>
-  </data>
-  <data name="Xml_RelationParentNameMissing" xml:space="preserve">
-    <value>Brak nazwy tabeli nadrzędnej w relacji „{0}”.</value>
-  </data>
-  <data name="Xml_RelationChildNameMissing" xml:space="preserve">
-    <value>Brak nazwy tabeli podrzędnej w relacji „{0}”.</value>
-  </data>
-  <data name="Xml_RelationTableKeyMissing" xml:space="preserve">
-    <value>Brak klucza tabeli nadrzędnej w relacji „{0}”.</value>
-  </data>
-  <data name="Xml_RelationChildKeyMissing" xml:space="preserve">
-    <value>Brak klucza tabeli podrzędnej w relacji „{0}”.</value>
-  </data>
-  <data name="Xml_UndefinedDatatype" xml:space="preserve">
-    <value>Niezdefiniowany typ danych: „{0}”.</value>
-  </data>
-  <data name="Xml_DatatypeNotDefined" xml:space="preserve">
-    <value>Typ danych nie jest zdefiniowany.</value>
-  </data>
-  <data name="Xml_InvalidField" xml:space="preserve">
-    <value>Nieprawidłowy wybór elementu XPath wewnątrz węzła pola. Nie można odnaleźć: {0}.</value>
-  </data>
-  <data name="Xml_InvalidSelector" xml:space="preserve">
-    <value>Nieprawidłowy składnik elementu XPath wewnątrz węzła selektora: {0}.</value>
-  </data>
-  <data name="Xml_InvalidKey" xml:space="preserve">
-    <value>Nieprawidłowy węzeł 'Key' wewnątrz ograniczenia o nazwie: {0}.</value>
-  </data>
-  <data name="Xml_DuplicateConstraint" xml:space="preserve">
-    <value>Nazwa ograniczenia {0} jest już używana w schemacie.</value>
-  </data>
-  <data name="Xml_CannotConvert" xml:space="preserve">
-    <value>Nie można przekonwertować elementu „{0}” na typ „{1}”.</value>
-  </data>
-  <data name="Xml_MissingRefer" xml:space="preserve">
-    <value>Brak elementu „{0}” w ograniczeniu „{1}” o nazwie „{2}”.</value>
-  </data>
-  <data name="Xml_MismatchKeyLength" xml:space="preserve">
-    <value>Nieprawidłowa definicja relacji (Relation): różne długości klucza.</value>
-  </data>
-  <data name="Xml_CircularComplexType" xml:space="preserve">
-    <value>Element DataSet nie zezwala na odwołania cykliczne w elemencie ComplexType o nazwie „{0}”.</value>
-  </data>
-  <data name="Xml_CannotInstantiateAbstract" xml:space="preserve">
-    <value>Obiekt DataSet nie może utworzyć wystąpienia abstrakcyjnego obiektu ComplexType dla węzła {0}.</value>
-  </data>
-  <data name="Xml_MultipleTargetConverterError" xml:space="preserve">
-    <value>Wystąpił błąd z konwerterem wielu elementów docelowych podczas zapisywania schematu XML.  Zobacz wewnętrzny wyjątek, aby poznać szczegóły.</value>
-  </data>
-  <data name="Xml_MultipleTargetConverterEmpty" xml:space="preserve">
-    <value>Wystąpił błąd z konwerterem wielu elementów docelowych podczas zapisywania schematu XML.  Zwrócono ciąg o wartości null lub pusty.</value>
-  </data>
-  <data name="Xml_MergeDuplicateDeclaration" xml:space="preserve">
-    <value>Zduplikowana deklaracja „{0}”.</value>
-  </data>
-  <data name="Xml_MissingTable" xml:space="preserve">
-    <value>Nie można załadować elementu diffGram. Brak tabeli „{0}” w docelowym zestawie danych.</value>
-  </data>
-  <data name="Xml_MissingSQL" xml:space="preserve">
-    <value>Nie można załadować elementu diffGram. Brak węzła „sql”.</value>
-  </data>
-  <data name="Xml_ColumnConflict" xml:space="preserve">
-    <value>Nazwa kolumny „{0}” jest zdefiniowana dla różnych typów mapowania.</value>
-  </data>
-  <data name="Xml_InvalidPrefix" xml:space="preserve">
-    <value>Prefiks „{0}” jest nieprawidłowy, ponieważ zawiera znaki specjalne.</value>
-  </data>
-  <data name="Xml_NestedCircular" xml:space="preserve">
-    <value>Cykliczne odwołanie w tabeli „{0}”, która jest zagnieżdżona w samej sobie.</value>
-  </data>
-  <data name="Xml_FoundEntity" xml:space="preserve">
-    <value>Element DataSet nie może rozszerzać jednostek. Użyj elementu XmlValidatingReader i odpowiednio ustaw właściwość EntityHandling.</value>
-  </data>
-  <data name="Xml_PolymorphismNotSupported" xml:space="preserve">
-    <value>Typ „{0}” nie implementuje interfejsu IXmlSerializable, dlatego nie można kontynuować serializacji.</value>
-  </data>
-  <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Nie można kontynuować deserializacji. Dane nie implementują interfejsu IXMLSerializable, dlatego polimorfizm nie jest obsługiwany.</value>
-  </data>
-  <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
-    <value>Element DataTable nie obsługuje wnioskowania schematu na podstawie danych Xml.</value>
-  </data>
-  <data name="Xml_MultipleParentRows" xml:space="preserve">
-    <value>Nie można kontynuować serializowania DataTable „{0}”. Zawiera element DataRow, który ma wiele wierszy nadrzędnych w tym samym kluczu obcym.</value>
-  </data>
-  <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
-    <value>Brak atrybutu IsDataSet w schemacie wejściowym (Schema).</value>
-  </data>
-  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
-    <value>Nie można określić elementu DataSet. Atrybut IsDataSet istnieje więcej niż raz.</value>
-  </data>
-  <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>Obiekt DataSet nie będzie serializował typów, które implementują interfejs IDynamicMetaObjectProvider, ale nie implementują interfejsu IXmlSerializable.</value>
-  </data>
-  <data name="Expr_NYI" xml:space="preserve">
-    <value>Funkcja nie jest zaimplementowana. {0}.</value>
-  </data>
-  <data name="Expr_MissingOperand" xml:space="preserve">
-    <value>Błąd składni: brak operandu po operatorze {0}.</value>
-  </data>
-  <data name="Expr_TypeMismatch" xml:space="preserve">
-    <value>Niezgodność typów w wyrażeniu {0}.</value>
-  </data>
-  <data name="Expr_ExpressionTooComplex" xml:space="preserve">
-    <value>Wyrażenie jest zbyt złożone.</value>
-  </data>
-  <data name="Expr_UnboundName" xml:space="preserve">
-    <value>Nie można odnaleźć kolumny [{0}].</value>
-  </data>
-  <data name="Expr_InvalidString" xml:space="preserve">
-    <value>Wyrażenie zawiera nieprawidłową stałą typu string: {0}.</value>
-  </data>
-  <data name="Expr_UndefinedFunction" xml:space="preserve">
-    <value>Wyrażenie zawiera niezdefiniowane wywołanie funkcji {0}().</value>
-  </data>
-  <data name="Expr_Syntax" xml:space="preserve">
-    <value>Błąd składni w wyrażeniu.</value>
-  </data>
-  <data name="Expr_FunctionArgumentCount" xml:space="preserve">
-    <value>Niewłaściwa liczba argumentów: funkcja {0}().</value>
-  </data>
-  <data name="Expr_MissingRightParen" xml:space="preserve">
-    <value>W wyrażeniu brak nawiasu zamykającego.</value>
-  </data>
-  <data name="Expr_UnknownToken" xml:space="preserve">
-    <value>Nie można zinterpretować tokenu {0}' w pozycji {1}.</value>
-  </data>
-  <data name="Expr_UnknownToken1" xml:space="preserve">
-    <value>Oczekiwano {0}, ale rzeczywistym tokenem w pozycji {2} jest {1}.</value>
-  </data>
-  <data name="Expr_DatatypeConversion" xml:space="preserve">
-    <value>Nie można przekonwertować elementu {0} na {1}.</value>
-  </data>
-  <data name="Expr_DatavalueConversion" xml:space="preserve">
-    <value>Nie można przekonwertować wartości „{0}” na typ {1}.</value>
-  </data>
-  <data name="Expr_InvalidName" xml:space="preserve">
-    <value>Nieprawidłowa nazwa kolumny: [{0}].</value>
-  </data>
-  <data name="Expr_InvalidDate" xml:space="preserve">
-    <value>Wyrażenie zawiera nieprawidłową stałą daty {0}.</value>
-  </data>
-  <data name="Expr_NonConstantArgument" xml:space="preserve">
-    <value>Na liście wyrażeń dla operatora IN mogą występować tylko wyrażenia stałe.</value>
-  </data>
-  <data name="Expr_InvalidPattern" xml:space="preserve">
-    <value>Błąd w operatorze Like: wzorzec ciągu {0} jest nieprawidłowy.</value>
-  </data>
-  <data name="Expr_InWithoutParentheses" xml:space="preserve">
-    <value>Błąd składni: elementy występujące po słowie kluczowym IN muszą być oddzielone przecinkami i ujęte w zwykłe nawiasy.</value>
-  </data>
-  <data name="Expr_ArgumentType" xml:space="preserve">
-    <value>Niezgodność typów w argumencie funkcji: {0}(), argument {1}, oczekiwano {2}.</value>
-  </data>
-  <data name="Expr_ArgumentTypeInteger" xml:space="preserve">
-    <value>Niezgodność typów w argumencie funkcji: {0}(), argument {1}, oczekiwano jednego z typów całkowitych.</value>
-  </data>
-  <data name="Expr_TypeMismatchInBinop" xml:space="preserve">
-    <value>Nie można wykonać operacji {0} na {1} i {2}.</value>
-  </data>
-  <data name="Expr_AmbiguousBinop" xml:space="preserve">
-    <value>Operator {0} jest niejednoznaczny dla operandów typu {1} i {2}. Nie można mieszać typów podpisanych i niepodpisanych. Użyj jawnej funkcji Convert().</value>
-  </data>
-  <data name="Expr_InWithoutList" xml:space="preserve">
-    <value>Błąd składni: po słowie kluczowym IN musi nastąpić ujęta w nawiasy niepusta lista wyrażeń oddzielonych przecinkami.</value>
-  </data>
-  <data name="Expr_UnsupportedOperator" xml:space="preserve">
-    <value>Wyrażenie zawiera nieobsługiwany operator {0}.</value>
-  </data>
-  <data name="Expr_InvalidNameBracketing" xml:space="preserve">
-    <value>Wyrażenie zawiera nieprawidłową nazwę: {0}.</value>
-  </data>
-  <data name="Expr_MissingOperandBefore" xml:space="preserve">
-    <value>Błąd składni: brak operandu przed operatorem {0}.</value>
-  </data>
-  <data name="Expr_TooManyRightParentheses" xml:space="preserve">
-    <value>Wyrażenie ma za dużo nawiasów zamykających.</value>
-  </data>
-  <data name="Expr_UnresolvedRelation" xml:space="preserve">
-    <value>Tabela [{0}] jest związana z więcej niż jedną relacją. Musisz wyraźnie wskazać nazwę relacji w wyrażeniu {1}.</value>
-  </data>
-  <data name="Expr_AggregateArgument" xml:space="preserve">
-    <value>Błąd składni w argumencie funkcji agregującej: oczekiwano argumentu oznaczającego pojedynczą kolumnę z ewentualnym kwalifikatorem „Child”.</value>
-  </data>
-  <data name="Expr_AggregateUnbound" xml:space="preserve">
-    <value>Niepowiązane odwołanie w wyrażeniu agregującym {0}.</value>
-  </data>
-  <data name="Expr_EvalNoContext" xml:space="preserve">
-    <value>Nie można obliczyć wartości wyrażenia niestałego bez bieżącego wiersza.</value>
-  </data>
-  <data name="Expr_ExpressionUnbound" xml:space="preserve">
-    <value>Niepowiązane odwołania w wyrażeniu {0}.</value>
-  </data>
-  <data name="Expr_ComputeNotAggregate" xml:space="preserve">
-    <value>Nie można obliczyć. Wyrażenie {0} nie jest wartością agregującą.</value>
-  </data>
-  <data name="Expr_FilterConversion" xml:space="preserve">
-    <value>Wyrażenie filtru „{0}” nie zwraca terminu wartości logicznej Boolean.</value>
-  </data>
-  <data name="Expr_InvalidType" xml:space="preserve">
-    <value>Nieprawidłowa nazwa typu {0}.</value>
-  </data>
-  <data name="Expr_LookupArgument" xml:space="preserve">
-    <value>Błąd składni w wyrażeniu wyszukiwania: oczekiwano słowa kluczowego „Parent”, a następnie argumentu w postaci pojedynczej kolumny z ewentualnym kwalifikatorem relacji: Parent[(&lt;nazwa_relacji&gt;)].&lt;nazwa_kolumny&gt;.</value>
-  </data>
-  <data name="Expr_InvokeArgument" xml:space="preserve">
-    <value>Do wywołania elementu DataFilter niezbędny jest wiersz lub tabela.</value>
-  </data>
-  <data name="Expr_ArgumentOutofRange" xml:space="preserve">
-    <value>Argument {0}() jest poza zakresem.</value>
-  </data>
-  <data name="Expr_IsSyntax" xml:space="preserve">
-    <value>Błąd składni: nieprawidłowe użycie operatora „Is”. Poprawna składnia: &lt;wyrażenia&gt; [Nie] ma wartość null.</value>
-  </data>
-  <data name="Expr_Overflow" xml:space="preserve">
-    <value>Wartość jest za mała albo za duża dla typu {0}.</value>
-  </data>
-  <data name="Expr_DivideByZero" xml:space="preserve">
-    <value>Wystąpił błąd dzielenia przez zero.</value>
-  </data>
-  <data name="Expr_BindFailure" xml:space="preserve">
-    <value>Nie można odnaleźć relacji nadrzędnej {0}.</value>
-  </data>
-  <data name="Expr_InvalidHoursArgument" xml:space="preserve">
-    <value>Argument hours znajduje się poza zakresem. Wartość musi należeć do zakresu od 14 do 14.</value>
-  </data>
-  <data name="Expr_InvalidMinutesArgument" xml:space="preserve">
-    <value>Argument minutes znajduje się poza zakresem. Wartość musi należeć do zakresu od 59 do 59.</value>
-  </data>
-  <data name="Expr_InvalidTimeZoneRange" xml:space="preserve">
-    <value>Dany zakres pierwszego czasu przekracza 14 godzin.</value>
-  </data>
-  <data name="Expr_MismatchKindandTimeSpan" xml:space="preserve">
-    <value>Właściwość Kind danego argumentu DateTime jest niezgodna z argumentami „hours” i „minutes”.</value>
-  </data>
-  <data name="Expr_UnsupportedType" xml:space="preserve">
-    <value>Element DataColumn typu {0} nie obsługuje wyrażeń.</value>
-  </data>
-  <data name="Data_EnforceConstraints" xml:space="preserve">
-    <value>Nie można włączyć ograniczeń. Co najmniej jeden wiersz zawiera wartości naruszające ograniczenia inne niż null, unikatowe lub obce.</value>
-  </data>
-  <data name="Data_CannotModifyCollection" xml:space="preserve">
-    <value>Nie można modyfikować kolekcji jako takiej.</value>
-  </data>
-  <data name="Data_CaseInsensitiveNameConflict" xml:space="preserve">
-    <value>Podana nazwa {0} pasuje do co najmniej dwóch nazw w obiekcie kolekcji, jeśli wielkość liter nie jest uwzględniana; jeśli wielkość liter jest uwzględniana, nazwa nie pasuje do żadnej z nich.</value>
-  </data>
-  <data name="Data_NamespaceNameConflict" xml:space="preserve">
-    <value>Podana nazwa {0} pasuje do co najmniej dwóch nazw w obiekcie kolekcji z różnymi przestrzeniami nazw.</value>
-  </data>
   <data name="Data_InvalidOffsetLength" xml:space="preserve">
     <value>Wartości przesunięcia i długości są spoza zakresu tablicy lub liczba przekracza liczbę elementów znajdujących się między indeksem a końcem kolekcji źródłowej.</value>
   </data>
-  <data name="Data_ArgumentOutOfRange" xml:space="preserve">
-    <value>Argument {0} jest poza zakresem.</value>
-  </data>
-  <data name="Data_ArgumentNull" xml:space="preserve">
-    <value>Argument {0} nie może mieć wartości null.</value>
-  </data>
-  <data name="Data_ArgumentContainsNull" xml:space="preserve">
-    <value>Argument {0} zawiera wartość zerową.</value>
-  </data>
-  <data name="DataColumns_OutOfRange" xml:space="preserve">
-    <value>Nie można odnaleźć kolumny {0}.</value>
-  </data>
-  <data name="DataColumns_Add1" xml:space="preserve">
-    <value>Kolumna {0} już należy do tego elementu DataTable.</value>
-  </data>
-  <data name="DataColumns_Add2" xml:space="preserve">
-    <value>Kolumna {0} już należy do innego elementu DataTable.</value>
-  </data>
-  <data name="DataColumns_Add3" xml:space="preserve">
-    <value>W elemencie DataTable nie może być więcej niż jedna kolumna typu SimpleContent.</value>
-  </data>
-  <data name="DataColumns_Add4" xml:space="preserve">
-    <value>Nie można dodać kolumny typu SimpleContent do tabeli zawierającej kolumny typu Element lub relacje zagnieżdżone.</value>
-  </data>
-  <data name="DataColumns_AddDuplicate" xml:space="preserve">
-    <value>Kolumna o nazwie {0} należy już do tego elementu DataTable.</value>
-  </data>
-  <data name="DataColumns_AddDuplicate2" xml:space="preserve">
-    <value>Nie można dodać kolumny o nazwie {0}: tabela zagnieżdżona o takiej samej nazwie należy już do tego elementu DataTable.</value>
-  </data>
-  <data name="DataColumns_AddDuplicate3" xml:space="preserve">
-    <value>Kolumna o nazwie {0} należy już do tego elementu DataTable: nazwa ta nie może zostać użyta jako nazwa tabeli zagnieżdżonej.</value>
-  </data>
-  <data name="DataColumns_Remove" xml:space="preserve">
-    <value>Nie można usunąć kolumny, która nie należy do tej tabeli.</value>
-  </data>
-  <data name="DataColumns_RemovePrimaryKey" xml:space="preserve">
-    <value>Nie można usunąć tej kolumny, ponieważ jest ona częścią klucza podstawowego.</value>
-  </data>
-  <data name="DataColumns_RemoveChildKey" xml:space="preserve">
-    <value>Nie można usunąć tej kolumny, ponieważ jest ona częścią klucza nadrzędnego dla relacji {0}.</value>
-  </data>
-  <data name="DataColumns_RemoveConstraint" xml:space="preserve">
-    <value>Nie można usunąć tej kolumny, ponieważ jest ona częścią ograniczenia {0} na tabeli {1}.</value>
-  </data>
-  <data name="DataColumns_RemoveExpression" xml:space="preserve">
-    <value>Nie można usunąć tej kolumny, ponieważ jest ona częścią wyrażenia: {0} = {1}.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementAndExpression" xml:space="preserve">
-    <value>Nie można ustawić właściwości AutoIncrement dla kolumny obliczanej.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementAndDefaultValue" xml:space="preserve">
-    <value>Nie można ustawić właściwości AutoIncrement dla kolumny z ustawionym elementem DefaultValue.</value>
-  </data>
-  <data name="DataColumn_DefaultValueAndAutoIncrement" xml:space="preserve">
-    <value>Nie można ustawić elementu DefaultValue dla kolumny typu AutoIncrement.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementSeed" xml:space="preserve">
-    <value>Wartość elementu AutoIncrementStep musi być niezerowa.</value>
-  </data>
-  <data name="DataColumn_NameRequired" xml:space="preserve">
-    <value>Element ColumnName jest wymagany, jeśli jest on częścią elementu DataTable.</value>
-  </data>
-  <data name="DataColumn_ChangeDataType" xml:space="preserve">
-    <value>Nie można zmienić elementu DataType kolumny, gdy kolumna zawiera już dane.</value>
-  </data>
-  <data name="DataColumn_NullDataType" xml:space="preserve">
-    <value>Kolumna wymaga prawidłowego elementu DataType.</value>
-  </data>
-  <data name="DataColumn_DefaultValueDataType" xml:space="preserve">
-    <value>Wartość DefaultValue dla kolumny {0} jest typu {1} i nie może być konwertowana na {2}.</value>
-  </data>
-  <data name="DataColumn_DefaultValueDataType1" xml:space="preserve">
-    <value>Wartość DefaultValue dla kolumny jest typu {0} i nie może być konwertowana na {1}.</value>
-  </data>
-  <data name="DataColumn_DefaultValueColumnDataType" xml:space="preserve">
-    <value>Wartość DefaultValue dla kolumny {0} jest typu {1}, ale kolumna jest typu {2}.</value>
-  </data>
-  <data name="DataColumn_ReadOnlyAndExpression" xml:space="preserve">
-    <value>Nie można zmienić właściwości ReadOnly dla kolumny wyrażenia.</value>
-  </data>
-  <data name="DataColumn_UniqueAndExpression" xml:space="preserve">
-    <value>Nie można zmienić właściwości Unique dla kolumny wyrażenia.</value>
-  </data>
-  <data name="DataColumn_ExpressionAndUnique" xml:space="preserve">
-    <value>Nie można utworzyć wyrażenia w kolumnie, która ma typ AutoIncrement lub Unique.</value>
-  </data>
-  <data name="DataColumn_ExpressionAndReadOnly" xml:space="preserve">
-    <value>Nie można ustawić wyrażenia, ponieważ kolumna nie może być elementem ReadOnly.</value>
-  </data>
-  <data name="DataColumn_ExpressionAndConstraint" xml:space="preserve">
-    <value>Nie można ustawić właściwości Expression dla kolumny {0}, ponieważ jest ona częścią ograniczeń.</value>
-  </data>
-  <data name="DataColumn_ExpressionInConstraint" xml:space="preserve">
-    <value>Nie można utworzyć ograniczenia opartego na kolumnie Expression {0}.</value>
-  </data>
-  <data name="DataColumn_ExpressionCircular" xml:space="preserve">
-    <value>Nie można ustawić właściwości Expression z powodu cyklicznego odwołania w wyrażeniu.</value>
-  </data>
-  <data name="DataColumn_NullKeyValues" xml:space="preserve">
-    <value>Element Column {0} zawiera wartości null.</value>
-  </data>
-  <data name="DataColumn_NullValues" xml:space="preserve">
-    <value>Kolumna {0} nie zezwala na wartości nulls.</value>
-  </data>
-  <data name="DataColumn_ReadOnly" xml:space="preserve">
-    <value>Kolumna {0} jest tylko do odczytu.</value>
-  </data>
-  <data name="DataColumn_NonUniqueValues" xml:space="preserve">
-    <value>Kolumna {0} zawiera nieunikatowe wartości.</value>
-  </data>
-  <data name="DataColumn_NotInTheTable" xml:space="preserve">
-    <value>Kolumna {0} nie należy do tabeli {1}.</value>
-  </data>
-  <data name="DataColumn_NotInAnyTable" xml:space="preserve">
-    <value>Kolumna musi należeć do tabeli.</value>
-  </data>
-  <data name="DataColumn_SetFailed" xml:space="preserve">
-    <value>Nie można zapisać wartości &lt;{0}&gt; w kolumnie {1}.  Oczekiwany typ to {2}.</value>
-  </data>
-  <data name="DataColumn_CannotSetToNull" xml:space="preserve">
-    <value>Nie można ustawić wartości null dla właściwości Column {0}. Zamiast tego użyj biblioteki DBNull.</value>
-  </data>
-  <data name="DataColumn_LongerThanMaxLength" xml:space="preserve">
-    <value>Nie można ustawić kolumny {0}. Wartość narusza limit MaxLength tej kolumny.</value>
-  </data>
-  <data name="DataColumn_HasToBeStringType" xml:space="preserve">
-    <value>Parametr MaxLength ma zastosowanie tylko do ciągowego typu danych. Właściwość Column {0} parametru MaxLength nie może być liczbą nieujemną.</value>
-  </data>
-  <data name="DataColumn_CannotSetMaxLength" xml:space="preserve">
-    <value>Nie można ustawić właściwości Column {0} parametru MaxLength na {1}. Tabela zawiera co najmniej jeden ciąg dłuższy niż nowy limit.</value>
-  </data>
-  <data name="DataColumn_CannotSetMaxLength2" xml:space="preserve">
-    <value>Nie można ustawić właściwości Column {0} parametru MaxLength. Kolumna to SimpleContent.</value>
-  </data>
-  <data name="DataColumn_CannotSimpleContentType" xml:space="preserve">
-    <value>Nie można ustawić właściwości Column {0} parametru DataType na {1}. Kolumna to SimpleContent.</value>
-  </data>
-  <data name="DataColumn_CannotSimpleContent" xml:space="preserve">
-    <value>Nie można ustawić właściwości Column {0} parametru MappingType na SimpleContent. Typ danych kolumny to {1}.</value>
-  </data>
-  <data name="DataColumn_ExceedMaxLength" xml:space="preserve">
-    <value>Element Column {0} przekracza limit MaxLength.</value>
-  </data>
-  <data name="DataColumn_NotAllowDBNull" xml:space="preserve">
-    <value>Kolumna „{0}” nie zezwala na wartości typu DBNull.Value.</value>
-  </data>
-  <data name="DataColumn_CannotChangeNamespace" xml:space="preserve">
-    <value>Nie można zmienić przestrzeni nazw właściwości Column {0}. Kolumna to SimpleContent.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementCannotSetIfHasData" xml:space="preserve">
-    <value>Nie można zmienić właściwości AutoIncrement elementu DataColumn z typem {0}, gdy kolumna zawiera już dane.</value>
-  </data>
-  <data name="DataColumn_NotInTheUnderlyingTable" xml:space="preserve">
-    <value>Kolumna {0} nie należy do tabeli podstawowej {1}.</value>
-  </data>
-  <data name="DataColumn_InvalidDataColumnMapping" xml:space="preserve">
-    <value>Element DataColumn o typie {0} jest typem complexType. Nie można serializować wartości typu złożonego jako atrybutu</value>
-  </data>
-  <data name="DataColumn_CannotSetDateTimeModeForNonDateTimeColumns" xml:space="preserve">
-    <value>Właściwość DateTimeMode można ustawić tylko w elementach DataColumns typu DateTime.</value>
-  </data>
-  <data name="DataColumn_InvalidDateTimeMode" xml:space="preserve">
-    <value>{0} jest nieprawidłową wartością elementu DataSetDateTime.</value>
-  </data>
-  <data name="DataColumn_DateTimeMode" xml:space="preserve">
-    <value>Nie można zmienić wartości właściwości DateTimeMode z {0} na {1}, gdy tabela zawiera już dane.</value>
-  </data>
-  <data name="DataColumn_INullableUDTwithoutStaticNull" xml:space="preserve">
-    <value>Type {0} nie zawiera statycznej właściwości Null lub statycznego pola static Null.</value>
-  </data>
-  <data name="DataColumn_UDTImplementsIChangeTrackingButnotIRevertible" xml:space="preserve">
-    <value>Typ {0} nie implementuje interfejsu IRevertibleChangeTracking, dlatego nie można kontynuować wykonywania funkcji RejectChanges().</value>
-  </data>
-  <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
-    <value>Elementy SetAdded i SetModified mogą być wywoływane tylko dla elementów DataRows z niezmienioną właściwością DataRowState.</value>
-  </data>
-  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
-    <value>Liczba porządkowa „{0}” przekracza maksymalną liczbę.</value>
-  </data>
-  <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
-    <value>Element DataSet nie obsługuje elementu System.Nullable&lt;&gt;.</value>
-  </data>
-  <data name="DataConstraint_NoName" xml:space="preserve">
-    <value>Nie można zmienić nazwy ograniczenia na pusty ciąg, kiedy ograniczenie znajduje się w elemencie ConstraintCollection.</value>
-  </data>
-  <data name="DataConstraint_Violation" xml:space="preserve">
-    <value>Nie można wymusić ograniczeń na ograniczeniu {0}.</value>
-  </data>
-  <data name="DataConstraint_ViolationValue" xml:space="preserve">
-    <value>Kolumna {0} jest musi być unikatowa.  Klucz {1} już istnieje.</value>
-  </data>
-  <data name="DataConstraint_NotInTheTable" xml:space="preserve">
-    <value>Ograniczenie {0} nie należy do tego elementu DataTable.</value>
-  </data>
-  <data name="DataConstraint_OutOfRange" xml:space="preserve">
-    <value>Nie można odnaleźć ograniczenia {0}.</value>
-  </data>
-  <data name="DataConstraint_Duplicate" xml:space="preserve">
-    <value>Ograniczenie pasuje do znajdującego się już w kolekcji ograniczenia o nazwie {0}.</value>
-  </data>
-  <data name="DataConstraint_DuplicateName" xml:space="preserve">
-    <value>Ograniczenie Constraint o nazwie {0} już należy do tego elementu DataTable.</value>
-  </data>
-  <data name="DataConstraint_UniqueViolation" xml:space="preserve">
-    <value>Te kolumny nie mają obecnie unikatowych wartości.</value>
-  </data>
-  <data name="DataConstraint_ForeignTable" xml:space="preserve">
-    <value>Te kolumny nie wskazują na tę tabelę.</value>
-  </data>
-  <data name="DataConstraint_ParentValues" xml:space="preserve">
-    <value>To ograniczenie nie może być włączone, ponieważ nie wszystkim wartościom odpowiadają wartości nadrzędne.</value>
-  </data>
-  <data name="DataConstraint_AddFailed" xml:space="preserve">
-    <value>To ograniczenie nie może być dodane, ponieważ element ForeignKey nie należy do tabeli {0}.</value>
-  </data>
-  <data name="DataConstraint_RemoveFailed" xml:space="preserve">
-    <value>Nie można usunąć ograniczenia, które nie należy to tej tabeli.</value>
-  </data>
-  <data name="DataConstraint_NeededForForeignKeyConstraint" xml:space="preserve">
-    <value>Nie można usunąć unikatowego ograniczenia '{0}'. Usuń najpierw ograniczenie klucza obcego '{1}'.</value>
-  </data>
-  <data name="DataConstraint_CascadeDelete" xml:space="preserve">
-    <value>Nie można usunąć tego wiersza, ponieważ na relacji {0} wymuszone są ograniczenia i usunięcie tego wiersza spowoduje porzucenie wierszy podrzędnych.</value>
-  </data>
-  <data name="DataConstraint_CascadeUpdate" xml:space="preserve">
-    <value>Nie można wprowadzić tej zmiany, ponieważ na relacji {0} wymuszone są ograniczenia i zmiana tej wartości spowoduje porzucenie wierszy podrzędnych.</value>
-  </data>
-  <data name="DataConstraint_ClearParentTable" xml:space="preserve">
-    <value>Nie można wyczyścić tabeli {0}, ponieważ element ForeignKeyConstraint {1} wymusza ograniczenia oraz w elemencie {2} istnieją wiersze podrzędne.</value>
-  </data>
-  <data name="DataConstraint_ForeignKeyViolation" xml:space="preserve">
-    <value>Element ForeignKeyConstraint {0} wymaga, aby wartości klucza podrzędnego ({1}) istniały w tabeli nadrzędnej.</value>
-  </data>
-  <data name="DataConstraint_BadObjectPropertyAccess" xml:space="preserve">
-    <value>Właściwość nie dostępna, ponieważ {0}.</value>
-  </data>
-  <data name="DataConstraint_RemoveParentRow" xml:space="preserve">
-    <value>Nie można usunąć tego wiersza, ponieważ ma on wiersze podrzędne a na relacji {0} wymuszone są ograniczenia.</value>
-  </data>
-  <data name="DataConstraint_AddPrimaryKeyConstraint" xml:space="preserve">
-    <value>Nie można dodać ograniczenia klucza podstawowego, ponieważ klucz podstawowy został już ustawiony dla tabeli.</value>
-  </data>
-  <data name="DataConstraint_CantAddConstraintToMultipleNestedTable" xml:space="preserve">
-    <value>Nie można dodać ograniczenia do elementu DataTable {0}, który jest tabelą podrzędną w dwóch relacjach zagnieżdżonych.</value>
-  </data>
-  <data name="DataKey_TableMismatch" xml:space="preserve">
-    <value>Nie można utworzyć klucza z kolumn, które należą do różnych tabel.</value>
-  </data>
-  <data name="DataKey_NoColumns" xml:space="preserve">
-    <value>Nie może być 0 kolumn.</value>
-  </data>
-  <data name="DataKey_TooManyColumns" xml:space="preserve">
-    <value>Nie może być więcej niż {0} kolumn.</value>
-  </data>
-  <data name="DataKey_DuplicateColumns" xml:space="preserve">
-    <value>Nie można utworzyć klucza, gdy ta sama kolumna jest wymieniona więcej niż raz: {0}</value>
-  </data>
-  <data name="DataKey_RemovePrimaryKey" xml:space="preserve">
-    <value>Nie można usunąć ograniczenia unikatowości, ponieważ jest to klucz podstawowy tabeli.</value>
-  </data>
-  <data name="DataKey_RemovePrimaryKey1" xml:space="preserve">
-    <value>Nie można usunąć ograniczenia unikatowości, ponieważ jest to klucz podstawowy tabeli {0}.</value>
-  </data>
-  <data name="DataRelation_ColumnsTypeMismatch" xml:space="preserve">
-    <value>Kolumny nadrzędne i podrzędne mają niezgodne typy.</value>
-  </data>
-  <data name="DataRelation_KeyColumnsIdentical" xml:space="preserve">
-    <value>Elementy ParentKey i ChildKey są identyczne.</value>
-  </data>
-  <data name="DataRelation_KeyLengthMismatch" xml:space="preserve">
-    <value>Elementy ParentColumns i ChildColumns powinny mieć taką samą długość.</value>
-  </data>
-  <data name="DataRelation_KeyZeroLength" xml:space="preserve">
-    <value>Elementy ParentColumns i ChildColumns muszą mieć niezerową długość.</value>
-  </data>
-  <data name="DataRelation_ForeignRow" xml:space="preserve">
-    <value>Wiersz nie należy do tego samego elementu DataSet co ta relacja.</value>
-  </data>
-  <data name="DataRelation_NoName" xml:space="preserve">
-    <value>Element RelationName jest wymagany, jeśli jest częścią elementu DataSet.</value>
-  </data>
-  <data name="DataRelation_ForeignTable" xml:space="preserve">
-    <value>Element GetChildRows wymaga wiersza, którego właściwością Table jest {0}, a właściwością Table zaznaczonego wiersza jest {1}.</value>
-  </data>
-  <data name="DataRelation_ForeignDataSet" xml:space="preserve">
-    <value>Ta relacja powinna łączyć dwie tabele w tym elemencie DataSet, aby można ją było dodać do tego elementu.</value>
-  </data>
-  <data name="DataRelation_GetParentRowTableMismatch" xml:space="preserve">
-    <value>Element GetParentRow wymaga wiersza, którego tabelą jest {0}, a tabelą zaznaczonego wiersza jest {1}.</value>
-  </data>
-  <data name="DataRelation_SetParentRowTableMismatch" xml:space="preserve">
-    <value>Element SetParentRow wymaga wiersza podrzędnego, którego tabelą jest {0}, a tabelą określonego wiersza jest {1}.</value>
-  </data>
-  <data name="DataRelation_DataSetMismatch" xml:space="preserve">
-    <value>Nie można tworzyć relacji między tabelami w różnych elementach DataSet.</value>
-  </data>
-  <data name="DataRelation_TablesInDifferentSets" xml:space="preserve">
-    <value>Nie można utworzyć relacji między tabelami w różnych elementach DataSet.</value>
-  </data>
-  <data name="DataRelation_AlreadyExists" xml:space="preserve">
-    <value>Dla tych kolumn podrzędnych już istnieje relacja.</value>
-  </data>
-  <data name="DataRelation_DoesNotExist" xml:space="preserve">
-    <value>Ta relacja nie należy do tej kolekcji relacji.</value>
-  </data>
-  <data name="DataRelation_AlreadyInOtherDataSet" xml:space="preserve">
-    <value>Ta relacja należy już do innego elementu DataSet.</value>
-  </data>
-  <data name="DataRelation_AlreadyInTheDataSet" xml:space="preserve">
-    <value>Ta relacja należy już do tego elementu DataSet.</value>
-  </data>
-  <data name="DataRelation_DuplicateName" xml:space="preserve">
-    <value>Relacja Relation o nazwie {0} już należy do tego elementu DataSet.</value>
-  </data>
-  <data name="DataRelation_NotInTheDataSet" xml:space="preserve">
-    <value>Relacja Relation {0} nie należy do tego elementu DataSet.</value>
-  </data>
-  <data name="DataRelation_OutOfRange" xml:space="preserve">
-    <value>Nie można odnaleźć relacji {0}.</value>
-  </data>
-  <data name="DataRelation_TableNull" xml:space="preserve">
-    <value>Nie można utworzyć kolekcji dla tabeli null.</value>
-  </data>
-  <data name="DataRelation_TableWasRemoved" xml:space="preserve">
-    <value>Tabela, dla której relacje wyświetla ta kolekcja, została usunięta ze swojego elementu DataSet.</value>
-  </data>
-  <data name="DataRelation_ChildTableMismatch" xml:space="preserve">
-    <value>Nie można dodać relacji do kolekcji tej tabeli ParentRelation, jeśli ta tabela nie jest tabelą podrzędną.</value>
-  </data>
-  <data name="DataRelation_ParentTableMismatch" xml:space="preserve">
-    <value>Do kolekcji ChildRelation tej tabeli nie można dodać relacji, w której ta tabela nie jest tabelą nadrzędną.</value>
-  </data>
-  <data name="DataRelation_RelationNestedReadOnly" xml:space="preserve">
-    <value>Nie można ustawić właściwości Nested na false dla tej relacji.</value>
-  </data>
-  <data name="DataRelation_TableCantBeNestedInTwoTables" xml:space="preserve">
-    <value>Ta sama tabela {0} nie może być tabelą podrzędną w dwóch relacjach zagnieżdżonych.</value>
-  </data>
-  <data name="DataRelation_LoopInNestedRelations" xml:space="preserve">
-    <value>Tabela ({0}) nie może być tabelą podrzędną dla samej siebie w relacjach zagnieżdżonych.</value>
-  </data>
-  <data name="DataRelation_CaseLocaleMismatch" xml:space="preserve">
-    <value>Nie można dodać elementu DataRelation lub elementu Constraint, które maja różne ustawienia Locale lub CaseSensitive w tabeli nadrzędnej i jej tabelach podrzędnych.</value>
-  </data>
-  <data name="DataRelation_ParentOrChildColumnsDoNotHaveDataSet" xml:space="preserve">
-    <value>Nie można utworzyć elementu DataRelation, jeśli kolumn nadrzędnych lub podrzędnych nie ma w elemencie DataSet.</value>
-  </data>
-  <data name="DataRelation_InValidNestedRelation" xml:space="preserve">
-    <value>Tabela zagnieżdżona {0}, która dziedziczy przestrzeń nazw, nie może mieć wielu tabel nadrzędnych w różnych przestrzeniach nazw.</value>
-  </data>
-  <data name="DataRelation_InValidNamespaceInNestedRelation" xml:space="preserve">
-    <value>Tabela zagnieżdżona {0} z pustą przestrzenią nazw nie może mieć wielu tabel nadrzędnych w różnych przestrzeniach nazw.</value>
-  </data>
-  <data name="DataRow_NotInTheDataSet" xml:space="preserve">
-    <value>Wiersz nie należy do tego samego elementu DataSet co ta relacja.</value>
-  </data>
-  <data name="DataRow_NotInTheTable" xml:space="preserve">
-    <value>Nie można wykonać tej operacji na wierszu nieznajdującym się w tabeli.</value>
-  </data>
-  <data name="DataRow_ParentRowNotInTheDataSet" xml:space="preserve">
-    <value>Ta relacja i wiersz podrzędny nie należą do tego samego elementu DataSet.</value>
-  </data>
-  <data name="DataRow_EditInRowChanging" xml:space="preserve">
-    <value>Nie można zmienić proponowanej wartości w zdarzeniu RowChanging.</value>
-  </data>
-  <data name="DataRow_EndEditInRowChanging" xml:space="preserve">
-    <value>Nie można wywołać elementu EndEdit() wewnątrz zdarzenia OnRowChanging.</value>
-  </data>
-  <data name="DataRow_BeginEditInRowChanging" xml:space="preserve">
-    <value>Nie można wywołać elementu BeginEdit() wewnątrz zdarzenia RowChanging.</value>
-  </data>
-  <data name="DataRow_CancelEditInRowChanging" xml:space="preserve">
-    <value>Nie można wywołać elementu CancelEdit() wewnątrz zdarzenia OnRowChanging.  Zgłoś wyjątek, aby anulować tę aktualizację.</value>
-  </data>
-  <data name="DataRow_DeleteInRowDeleting" xml:space="preserve">
-    <value>Nie można wywołać elementu Delete wewnątrz zdarzenia OnRowDeleting.  Zgłoś wyjątek, aby anulować to usunięcie.</value>
-  </data>
-  <data name="DataRow_ValuesArrayLength" xml:space="preserve">
-    <value>Tablica wejściowa jest dłuższa niż liczba kolumn w tej tabeli.</value>
-  </data>
-  <data name="DataRow_NoCurrentData" xml:space="preserve">
-    <value>Brak dostępnych danych o stanie Current.</value>
-  </data>
-  <data name="DataRow_NoOriginalData" xml:space="preserve">
-    <value>Brak dostępnych danych o stanie Original.</value>
-  </data>
-  <data name="DataRow_NoProposedData" xml:space="preserve">
-    <value>Brak dostępnych danych o stanie Proposed.</value>
-  </data>
-  <data name="DataRow_RemovedFromTheTable" xml:space="preserve">
-    <value>Ten wiersz został usunięty z tabeli i nie zawiera żadnych danych.  Funkcja BeginEdit() umożliwi tworzenie nowych danych w tym wierszu.</value>
-  </data>
-  <data name="DataRow_DeletedRowInaccessible" xml:space="preserve">
-    <value>Nie można uzyskać dostępu do informacji o usuniętym wierszu za pośrednictwem tego wiersza.</value>
-  </data>
-  <data name="DataRow_InvalidVersion" xml:space="preserve">
-    <value>Element Version musi być ustawiony na wartość Original, Current lub Proposed.</value>
-  </data>
-  <data name="DataRow_OutOfRange" xml:space="preserve">
-    <value>Brak wiersza w pozycji {0}.</value>
-  </data>
-  <data name="DataRow_RowInsertOutOfRange" xml:space="preserve">
-    <value>Pozycja wstawiania wiersza {0} jest nieprawidłowa.</value>
-  </data>
-  <data name="DataRow_RowInsertTwice" xml:space="preserve">
-    <value>Dwukrotnie znaleziono wartość rowOrder={0} w tabeli o nazwie {1}.</value>
-  </data>
-  <data name="DataRow_RowInsertMissing" xml:space="preserve">
-    <value>Brak wartości w sekwencji rowOrder dla tabeli {0}.</value>
-  </data>
-  <data name="DataRow_RowOutOfRange" xml:space="preserve">
-    <value>Brak podanego wiersza DataRow w bieżącej kolekcji DataRowCollection.</value>
-  </data>
-  <data name="DataRow_AlreadyInOtherCollection" xml:space="preserve">
-    <value>Ten wiersz należy już do innej tabeli.</value>
-  </data>
-  <data name="DataRow_AlreadyInTheCollection" xml:space="preserve">
-    <value>Ten wiersz należy już do tej tabeli.</value>
-  </data>
-  <data name="DataRow_AlreadyDeleted" xml:space="preserve">
-    <value>Nie można usunąć tego wiersza, ponieważ został już usunięty.</value>
-  </data>
-  <data name="DataRow_Empty" xml:space="preserve">
-    <value>Ten wiersz jest pusty.</value>
-  </data>
-  <data name="DataRow_AlreadyRemoved" xml:space="preserve">
-    <value>Nie można usunąć wiersza, który został już usunięty.</value>
-  </data>
-  <data name="DataRow_MultipleParents" xml:space="preserve">
-    <value>Wiersz podrzędny ma wiele elementów nadrzędnych.</value>
-  </data>
-  <data name="DataRow_InvalidRowBitPattern" xml:space="preserve">
-    <value>Nierozpoznany wzorzec bitów stanu wiersza.</value>
-  </data>
-  <data name="DataSet_SetNameToEmpty" xml:space="preserve">
-    <value>Nie można zmienić nazwy elementu DataSet na pusty ciąg.</value>
-  </data>
-  <data name="DataSet_SetDataSetNameConflicting" xml:space="preserve">
-    <value>Nazwa „{0}” jest nieprawidłowa. Element DataSet nie może mieć tej samej nazwy co element DataTable.</value>
-  </data>
-  <data name="DataSet_UnsupportedSchema" xml:space="preserve">
-    <value>Przestrzeń nazw schematu jest nieprawidłowa. Zamiast tego użyj: {0}.</value>
-  </data>
-  <data name="DataSet_CannotChangeCaseLocale" xml:space="preserve">
-    <value>Nie można zmienić właściwości CaseSensitive ani Locale. Ta zmiana doprowadziłaby do tego, że co najmniej jeden element DataRelation lub Constraint miałby różne ustawienia Locale lub CaseSensitive w tabelach pokrewnych.</value>
-  </data>
-  <data name="DataSet_CannotChangeSchemaSerializationMode" xml:space="preserve">
-    <value>Właściwość SchemaSerializationMode można ustawić tylko wtedy, jeśli jest ona zastępowana przez element pochodny DataSet.</value>
-  </data>
-  <data name="DataTable_ForeignPrimaryKey" xml:space="preserve">
-    <value>Kolumny PrimaryKey nie należą do tej tabeli.</value>
-  </data>
-  <data name="DataTable_CannotAddToSimpleContent" xml:space="preserve">
-    <value>Nie można dodać zagnieżdżonej relacji lub kolumny typu Element do tabeli zawierającej kolumnę typu SimpleContent.</value>
-  </data>
-  <data name="DataTable_NoName" xml:space="preserve">
-    <value>Element TableName jest wymagany, jeśli jest on częścią elementu DataSet.</value>
-  </data>
-  <data name="DataTable_MultipleSimpleContentColumns" xml:space="preserve">
-    <value>Element DataTable już ma kolumnę SimpleContent.</value>
-  </data>
-  <data name="DataTable_MissingPrimaryKey" xml:space="preserve">
-    <value>Tabela nie ma klucza podstawowego.</value>
-  </data>
-  <data name="DataTable_InvalidSortString" xml:space="preserve">
-    <value>{0} nie jest prawidłowym wpisem ciągu Sort.</value>
-  </data>
-  <data name="DataTable_CanNotSerializeDataTableHierarchy" xml:space="preserve">
-    <value>Nie można serializować elementu DataTable. Element DataTable używany w jednym lub większej liczbie wyrażeń DataColumn nie jest elementem potomnym bieżącego elementu DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotRemoteDataTable" xml:space="preserve">
-    <value>Ten element DataTable może być zdalny tylko jako część elementu DataSet. Co najmniej jedna kolumna wyrażenia ma odwołanie do innych obiektów DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotSetRemotingFormat" xml:space="preserve">
-    <value>Wartość właściwości formatu usług zdalnych musi być taka sama dla elementu DataSet i elementu DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotSerializeDataTableWithEmptyName" xml:space="preserve">
-    <value>Nie można serializować elementu DataTable. Nie ustawiono nazwy elementu DataTable.</value>
-  </data>
-  <data name="DataTable_DuplicateName" xml:space="preserve">
-    <value>Element DataTable o nazwie {0} już należy do tego elementu DataSet.</value>
-  </data>
-  <data name="DataTable_DuplicateName2" xml:space="preserve">
-    <value>Element DataTable o nazwie {0} z tą samą przestrzenią nazw Namespace ({1}) już należy do tego elementu DataSet.</value>
-  </data>
-  <data name="DataTable_SelfnestedDatasetConflictingName" xml:space="preserve">
-    <value>Tabela ({0}) nie może być tabelą podrzędną dla samej siebie w relacji zagnieżdżonej: istnieje konflikt między nazwą elementu DataSet i nazwą tabeli.</value>
-  </data>
-  <data name="DataTable_DatasetConflictingName" xml:space="preserve">
-    <value>Nazwa „{0}” jest nieprawidłowa. Element DataTable nie może mieć tej samej nazwy co element DataSet.</value>
-  </data>
-  <data name="DataTable_AlreadyInOtherDataSet" xml:space="preserve">
-    <value>Element DataTable już należy do innego elementu DataSet.</value>
-  </data>
-  <data name="DataTable_AlreadyInTheDataSet" xml:space="preserve">
-    <value>Element DataTable już należy do tego elementu DataSet.</value>
-  </data>
-  <data name="DataTable_NotInTheDataSet" xml:space="preserve">
-    <value>Tabela {0} nie należy do tego elementu DataSet.</value>
-  </data>
-  <data name="DataTable_OutOfRange" xml:space="preserve">
-    <value>Nie można odnaleźć tabeli {0}.</value>
-  </data>
-  <data name="DataTable_InRelation" xml:space="preserve">
-    <value>Nie można usunąć tabeli, która ma istniejące relacje.  Najpierw usuń relacje.</value>
-  </data>
-  <data name="DataTable_InConstraint" xml:space="preserve">
-    <value>Nie można usunąć tabeli {0}, ponieważ odwołuje się ona do elementu ForeignKeyConstraint {1}.  Najpierw usuń ograniczenie.</value>
-  </data>
-  <data name="DataTable_TableNotFound" xml:space="preserve">
-    <value>Element DataTable {0} nie odpowiada żadnemu elementowi DataTable istniejącemu w źródle.</value>
-  </data>
-  <data name="DataMerge_MissingDefinition" xml:space="preserve">
-    <value>W docelowym elemencie DataSet brak definicji dla {0}.</value>
-  </data>
-  <data name="DataMerge_MissingConstraint" xml:space="preserve">
-    <value>W docelowym elemencie DataSet brak {0} {1}.</value>
-  </data>
-  <data name="DataMerge_DataTypeMismatch" xml:space="preserve">
-    <value>&lt;target&gt;.{0} i &lt;source&gt;.{0} mają sprzeczne właściwości: niezgodność właściwości DataType.</value>
-  </data>
-  <data name="DataMerge_PrimaryKeyMismatch" xml:space="preserve">
-    <value>Elementy &lt;target&gt;.PrimaryKey i &lt;source&gt;.PrimaryKey mają różną długość Length.</value>
-  </data>
-  <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
-    <value>Niezgodność kolumn w elemencie PrimaryKey: &lt;target&gt;.{0} zamiast &lt;source&gt;.{1}.</value>
-  </data>
-  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
-    <value>Relacja {0} nie może być scalona, ponieważ klucze mają niezgodne kolumny.</value>
-  </data>
-  <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
-    <value>W tabeli docelowej {0} brak definicji dla kolumny {1}.</value>
-  </data>
-  <data name="DataMerge_MissingPrimaryKeyColumnInSource" xml:space="preserve">
-    <value>Kolumna {0} elementu PrimaryKey nie istnieje w tabeli źródłowej.</value>
-  </data>
-  <data name="DataIndex_RecordStateRange" xml:space="preserve">
-    <value>Parametr RowStates musi być ustawiony na prawidłową kombinację wartości z wyliczenia DataViewRowState.</value>
-  </data>
-  <data name="DataIndex_FindWithoutSortOrder" xml:space="preserve">
-    <value>Funkcja Find znajduje wiersz w oparciu o porządek sortowania, a nie określono żadnego porządku sortowania.</value>
-  </data>
-  <data name="DataIndex_KeyLength" xml:space="preserve">
-    <value>Oczekiwano {0} wartości dla indeksowanego klucza, ale otrzymano {1} wartości.</value>
-  </data>
-  <data name="DataStorage_AggregateException" xml:space="preserve">
-    <value>Niewłaściwe użycie funkcji agregującej {0}() i typu: {1}.</value>
-  </data>
-  <data name="DataStorage_InvalidStorageType" xml:space="preserve">
-    <value>Niewłaściwy typ magazynu: {0}.</value>
-  </data>
-  <data name="DataStorage_ProblematicChars" xml:space="preserve">
-    <value>Utrwalenie Xml elementu DataSet nie obsługuje wartości {0} jako wartości Char, w zamian użyj magazynu Byte.</value>
-  </data>
-  <data name="DataStorage_SetInvalidDataType" xml:space="preserve">
-    <value>Typ wartości niezgodny z typem kolumny</value>
-  </data>
-  <data name="DataStorage_IComparableNotDefined" xml:space="preserve">
-    <value>Typ {0} nie implementuje interfejsu IComparable. Nie można wykonać porównania.</value>
-  </data>
-  <data name="DataView_SetFailed" xml:space="preserve">
-    <value>Nie można ustawić {0}.</value>
-  </data>
-  <data name="DataView_SetDataSetFailed" xml:space="preserve">
-    <value>Nie można zmienić elementu DataSet w elemencie DataViewManager, który jest już domyślnym widokiem dla elementu DataSet.</value>
-  </data>
-  <data name="DataView_SetRowStateFilter" xml:space="preserve">
-    <value>Element RowStateFilter nie może pokazywać elementów ModifiedOriginals i ModifiedCurrents w tym samym czasie.</value>
-  </data>
-  <data name="DataView_SetTable" xml:space="preserve">
-    <value>Nie można zmienić właściwości Table w elemencie DefaultView lub DataView pochodzącym z elementu DataViewManager.</value>
-  </data>
-  <data name="DataView_CanNotSetDataSet" xml:space="preserve">
-    <value>Po ustawieniu właściwości DataSet nie można jej zmienić.</value>
-  </data>
-  <data name="DataView_CanNotUseDataViewManager" xml:space="preserve">
-    <value>Element DataSet musi być ustawiony przed użyciem elementu DataViewManager.</value>
-  </data>
-  <data name="DataView_CanNotSetTable" xml:space="preserve">
-    <value>Po ustawieniu właściwości Table nie można jej zmienić.</value>
-  </data>
-  <data name="DataView_CanNotUse" xml:space="preserve">
-    <value>Element DataTable musi być ustawiony przed użyciem elementu DataView.</value>
-  </data>
-  <data name="DataView_CanNotBindTable" xml:space="preserve">
-    <value>Nie można powiązać do elementu DataTable bez nazwy.</value>
-  </data>
-  <data name="DataView_SetIListObject" xml:space="preserve">
-    <value>Nie można ustawić obiektu dla tej listy.</value>
-  </data>
-  <data name="DataView_AddNewNotAllowNull" xml:space="preserve">
-    <value>Nie można wywołać elementu AddNew w elemencie DataView, jeśli element AllowNew ma wartość false.</value>
-  </data>
-  <data name="DataView_NotOpen" xml:space="preserve">
-    <value>Element DataView nie jest otwarty.</value>
-  </data>
-  <data name="DataView_CreateChildView" xml:space="preserve">
-    <value>W tabeli, do której odnosi się ten element DataView, brak elementu nadrzędnego dla tej relacji.</value>
-  </data>
-  <data name="DataView_CanNotDelete" xml:space="preserve">
-    <value>Nie można usunąć danych z elementu DataSource, jeśli element AllowDelete ma wartość false.</value>
-  </data>
-  <data name="DataView_CanNotEdit" xml:space="preserve">
-    <value>Nie można edytować danych z elementu DataSource, jeśli element AllowEdit ma wartość false.</value>
-  </data>
-  <data name="DataView_GetElementIndex" xml:space="preserve">
-    <value>Indeks {0} jest ujemny lub większy niż liczba wierszy.</value>
-  </data>
-  <data name="DataView_AddExternalObject" xml:space="preserve">
-    <value>Nie można dodać obiektów zewnętrznych do tej listy.</value>
-  </data>
-  <data name="DataView_CanNotClear" xml:space="preserve">
-    <value>Nie można wyczyścić tej listy.</value>
-  </data>
-  <data name="DataView_InsertExternalObject" xml:space="preserve">
-    <value>Nie można wstawić obiektów zewnętrznych do tej listy.</value>
-  </data>
-  <data name="DataView_RemoveExternalObject" xml:space="preserve">
-    <value>Nie można usunąć obiektów nieznajdujących się na liście.</value>
-  </data>
-  <data name="DataROWView_PropertyNotFound" xml:space="preserve">
-    <value>{0} nie jest ani elementem DataColumn, ani elementem DataRelation dla tabeli {1}.</value>
-  </data>
-  <data name="Range_Argument" xml:space="preserve">
-    <value>Min ({0}) musi być mniejsze lub równe max ({1}) w obiekcie Range.</value>
-  </data>
-  <data name="Range_NullRange" xml:space="preserve">
-    <value>To jest zakres null.</value>
-  </data>
-  <data name="RecordManager_MinimumCapacity" xml:space="preserve">
-    <value>Element MinimumCapacity nie może być zerowy.</value>
-  </data>
-  <data name="CodeGen_InvalidIdentifier" xml:space="preserve">
-    <value>Nie można wygenerować identyfikatora dla nazwy '{0}'.</value>
-  </data>
-  <data name="CodeGen_DuplicateTableName" xml:space="preserve">
-    <value>Istnieje więcej niż jedna tabela o tej samej nazwie {0} (nawet jeśli przestrzeń nazw jest inna).</value>
-  </data>
-  <data name="CodeGen_TypeCantBeNull" xml:space="preserve">
-    <value>Kolumna '{0}': typ '{1}' nie może być zerowy.</value>
-  </data>
-  <data name="CodeGen_NoCtor0" xml:space="preserve">
-    <value>Kolumna {0}: typ {1} nie ma bezparametrowego konstruktora.</value>
-  </data>
-  <data name="CodeGen_NoCtor1" xml:space="preserve">
-    <value>Kolumna {0}: typ {1} nie ma konstruktora z argumentem typu string.</value>
-  </data>
   <data name="SqlConvert_ConvertFailed" xml:space="preserve">
     <value>Nie można przekonwertować obiektu typu „{0}” na obiekt typu „{1}”.</value>
-  </data>
-  <data name="DataSet_DefaultDataException" xml:space="preserve">
-    <value>Data Exception.</value>
-  </data>
-  <data name="DataSet_DefaultConstraintException" xml:space="preserve">
-    <value>Constraint Exception.</value>
-  </data>
-  <data name="DataSet_DefaultDeletedRowInaccessibleException" xml:space="preserve">
-    <value>Usunięte wiersze są niedostępne.</value>
-  </data>
-  <data name="DataSet_DefaultDuplicateNameException" xml:space="preserve">
-    <value>Zduplikowana nazwa nie jest dozwolona.</value>
-  </data>
-  <data name="DataSet_DefaultInRowChangingEventException" xml:space="preserve">
-    <value>Operacja nie jest obsługiwana w zdarzeniu RowChanging.</value>
-  </data>
-  <data name="DataSet_DefaultInvalidConstraintException" xml:space="preserve">
-    <value>Nieprawidłowe ograniczenie.</value>
-  </data>
-  <data name="DataSet_DefaultMissingPrimaryKeyException" xml:space="preserve">
-    <value>Brak klucza podstawowego.</value>
-  </data>
-  <data name="DataSet_DefaultNoNullAllowedException" xml:space="preserve">
-    <value>Wartość Null jest niedozwolona.</value>
-  </data>
-  <data name="DataSet_DefaultReadOnlyException" xml:space="preserve">
-    <value>Kolumna jest oznaczona jako przeznaczona tylko do odczytu.</value>
-  </data>
-  <data name="DataSet_DefaultRowNotInTableException" xml:space="preserve">
-    <value>Nie odnaleziono wiersza w tabeli.</value>
-  </data>
-  <data name="DataSet_DefaultVersionNotFoundException" xml:space="preserve">
-    <value>Nie odnaleziono wersji.</value>
-  </data>
-  <data name="Load_ReadOnlyDataModified" xml:space="preserve">
-    <value>Dane elementu ReadOnly mają właściwość Modified.</value>
-  </data>
-  <data name="DataTableReader_InvalidDataTableReader" xml:space="preserve">
-    <value>Element DataTableReader jest nieprawidłowy dla bieżącego elementu DataTable {0}.</value>
-  </data>
-  <data name="DataTableReader_SchemaInvalidDataTableReader" xml:space="preserve">
-    <value>Schemat bieżącego elementu DataTable {0} w elemencie DataTableReader został zmieniony – element DataTableReader jest nieprawidłowy.</value>
-  </data>
-  <data name="DataTableReader_CannotCreateDataReaderOnEmptyDataSet" xml:space="preserve">
-    <value>Nie można utworzyć elementu DataTableReader. Brak elementu DataTable w elemencie DataSet.</value>
-  </data>
-  <data name="DataTableReader_DataTableReaderArgumentIsEmpty" xml:space="preserve">
-    <value>Nie można utworzyć elementu DataTableReader. Argument jest pusty.</value>
-  </data>
-  <data name="DataTableReader_ArgumentContainsNullValue" xml:space="preserve">
-    <value>Nie można utworzyć elementu DataTableReader. Argumenty zawierają wartość null.</value>
-  </data>
-  <data name="DataTableReader_InvalidRowInDataTableReader" xml:space="preserve">
-    <value>Bieżący element DataRow jest w stanie Deleted albo Detached.</value>
-  </data>
-  <data name="DataTableReader_DataTableCleared" xml:space="preserve">
-    <value>Bieżący element DataTable {0} jest pusty. Brak elementu DataRow w tabeli DataTable.</value>
-  </data>
-  <data name="RbTree_InvalidState" xml:space="preserve">
-    <value>Indeks wewnętrzny elementu DataTable jest uszkodzony: {0}.</value>
-  </data>
-  <data name="RbTree_EnumerationBroken" xml:space="preserve">
-    <value>Kolekcja została zmodyfikowana; nie można wykonać operacji wyliczania.</value>
-  </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
-    <value>Typ prosty „{0}” został już zadeklarowany z innym elementem „{1}”.</value>
-  </data>
-  <data name="DataDom_Foliation" xml:space="preserve">
-    <value>Niewłaściwe uwarstwienie.</value>
-  </data>
-  <data name="DataDom_TableNameChange" xml:space="preserve">
-    <value>Nie można zmienić nazwy tabeli po zmapowaniu skojarzonego elementu DataSet do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_TableNamespaceChange" xml:space="preserve">
-    <value>Nie można zmienić przestrzeni nazw tabeli po zmapowaniu skojarzonego elementu DataSet do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_ColumnNameChange" xml:space="preserve">
-    <value>Nie można zmienić nazwy kolumny po zmapowaniu skojarzonego elementu DataSet do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_ColumnNamespaceChange" xml:space="preserve">
-    <value>Nie można zmienić przestrzeni nazw kolumny po zmapowaniu skojarzonego elementu DataSet do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_ColumnMappingChange" xml:space="preserve">
-    <value>Nie można zmienić właściwości ColumnMapping po zmapowaniu skojarzonego elementu DataSet do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_TableColumnsChange" xml:space="preserve">
-    <value>Nie można dodać ani usunąć kolumn z tabeli po zmapowaniu elementu DataSet do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_DataSetTablesChange" xml:space="preserve">
-    <value>Nie można dodać lub usunąć tabel z elementu DataSet po zmapowaniu tego elementu do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_DataSetNestedRelationsChange" xml:space="preserve">
-    <value>Nie można dodać, usunąć lub zmienić relacji zagnieżdżonych z elementu DataSet po zmapowaniu tego elementu do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_DataSetNull" xml:space="preserve">
-    <value>Parametr zestawu danych jest nieprawidłowy. Nie może mieć wartości null.</value>
-  </data>
-  <data name="DataDom_DataSetNameChange" xml:space="preserve">
-    <value>Nie można zmienić nazwy elementu DataSet po zmapowaniu tego elementu do załadowanego dokumentu XML.</value>
-  </data>
-  <data name="DataDom_CloneNode" xml:space="preserve">
-    <value>Ten typ węzła nie może być klonowany: {0}.</value>
-  </data>
-  <data name="DataDom_MultipleLoad" xml:space="preserve">
-    <value>Nie można załadować elementu XmlDataDocument, jeśli zawiera on już dane. Użyj nowego dokumentu XmlDataDocument.</value>
-  </data>
-  <data name="DataDom_MultipleDataSet" xml:space="preserve">
-    <value>Element DataSet może być skojarzony z co najwyżej jednym elementem XmlDataDocument. Nie można skojarzyć elementu DataSet z bieżącym obiektem XmlDataDocument, ponieważ zestaw danych jest już skojarzony z innym obiektem XmlDataDocument.</value>
-  </data>
-  <data name="DataDom_EnforceConstraintsShouldBeOff" xml:space="preserve">
-    <value>Ustaw ograniczenie DataSet.EnforceConstraints == false przed próbą edycji dokumentu XmlDataDocument przy użyciu operacji XML.</value>
-  </data>
-  <data name="DataDom_NotSupport_GetElementById" xml:space="preserve">
-    <value>Element GetElementById() nie jest obsługiwany w dokumencie DataDocument.</value>
-  </data>
-  <data name="DataDom_NotSupport_EntRef" xml:space="preserve">
-    <value>Nie można stworzyć odwołań do jednostki w dokumencie DataDocument.</value>
-  </data>
-  <data name="DataDom_NotSupport_Clear" xml:space="preserve">
-    <value>Wykonywanie funkcji Clear na elementach DateSet i DataTable nie jest obsługiwane w dokumencie XmlDataDocument.</value>
-  </data>
-  <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
-    <value>Nie można usunąć kolumny, ponieważ jest ona wbudowana do tego elementu dataSet.</value>
-  </data>
-  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
-    <value>Nie można usunąć relacji, ponieważ jest ona wbudowana do tego elementu DataSet.</value>
-  </data>
-  <data name="propertyChangedEventDescr" xml:space="preserve">
-    <value>Występuje za każdym razem, gdy ulega zmianie dowolna właściwość dla tego sterownika.</value>
-  </data>
-  <data name="collectionChangedEventDescr" xml:space="preserve">
-    <value>Występuje, gdy zmieni się członkostwo tej kolekcji.</value>
-  </data>
-  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Nie można pobrać wartości, ponieważ jest to wartość DBNull.</value>
-  </data>
-  <data name="ADP_PropertyNotSupported" xml:space="preserve">
-    <value>Właściwość {0} wymaga systemu operacyjnego Microsoft WindowsNT lub opartego na systemie WindowsNT.</value>
-  </data>
-  <data name="ConfigProviderNotFound" xml:space="preserve">
-    <value>Nie można znaleźć żądanego dostawcy danych .NET Framework.  Być może nie jest zainstalowany.</value>
-  </data>
-  <data name="ConfigProviderInvalid" xml:space="preserve">
-    <value>Żądana implementacja dostawcy danych programu .NET Framework nie ma pola wystąpienia typu pochodnego System.Data.Common.DbProviderFactory.</value>
-  </data>
-  <data name="ConfigProviderNotInstalled" xml:space="preserve">
-    <value>Nie można odnaleźć lub załadować zarejestrowanego dostawcy danych programu .NET Framework.</value>
-  </data>
-  <data name="ConfigProviderMissing" xml:space="preserve">
-    <value>Brakująca nazwa kwalifikowana zestawu dostawcy danych programu .NET Framework jest wymagana.</value>
-  </data>
-  <data name="ConfigBaseElementsOnly" xml:space="preserve">
-    <value>Dozwolone są tylko elementy.</value>
-  </data>
-  <data name="ConfigBaseNoChildNodes" xml:space="preserve">
-    <value>Węzły podrzędne nie są dozwolone.</value>
-  </data>
-  <data name="ConfigUnrecognizedAttributes" xml:space="preserve">
-    <value>nierozpoznany atrybut {0}.</value>
-  </data>
-  <data name="ConfigUnrecognizedElement" xml:space="preserve">
-    <value>Nierozpoznany element.</value>
-  </data>
-  <data name="ConfigSectionsUnique" xml:space="preserve">
-    <value>W każdym pliku konfiguracyjnym sekcja {0} może wystąpić tylko raz.</value>
-  </data>
-  <data name="ConfigRequiredAttributeMissing" xml:space="preserve">
-    <value>Nie znaleziono wymaganego atrybutu „{0}”.</value>
-  </data>
-  <data name="ConfigRequiredAttributeEmpty" xml:space="preserve">
-    <value>Wymagany atrybut {0} nie może być pusty.</value>
-  </data>
-  <data name="ADP_EmptyArray" xml:space="preserve">
-    <value>Oczekiwana jest niepusta tablica dla parametru {0}.</value>
   </data>
   <data name="ADP_SingleValuedProperty" xml:space="preserve">
     <value>Jedyną dopuszczalną wartością właściwości {0} jest {1}.</value>
@@ -1767,9 +336,6 @@
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
     <value>Długość argumentu {0} przekracza limit wynoszący {1}.</value>
   </data>
-  <data name="SQL_WrongType" xml:space="preserve">
-    <value>Oczekiwano argumentu typu {1}, ale otrzymano typ {0}.</value>
-  </data>
   <data name="ADP_InvalidConnectionOptionValue" xml:space="preserve">
     <value>Nieprawidłowa wartość klucza „{0}”.</value>
   </data>
@@ -1782,23 +348,8 @@
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Słowo kluczowe jest nieobsługiwane: „{0}”.</value>
   </data>
-  <data name="ADP_UdlFileError" xml:space="preserve">
-    <value>Nie można załadować pliku UDL.</value>
-  </data>
-  <data name="ADP_InvalidUDL" xml:space="preserve">
-    <value>Nieprawidłowy plik UDL.</value>
-  </data>
   <data name="ADP_InternalProviderError" xml:space="preserve">
     <value>Błąd wewnętrzny dostawcy danych programu .NET Framework: {0}.</value>
-  </data>
-  <data name="ADP_NoQuoteChange" xml:space="preserve">
-    <value>Właściwości QuotePrefix i QuoteSuffix nie mogą być już zmieniane po wygenerowaniu polecenia Insert, Update lub Delete.</value>
-  </data>
-  <data name="ADP_MissingSourceCommand" xml:space="preserve">
-    <value>Właściwość DataAdapter.SelectCommand musi zostać zainicjowana.</value>
-  </data>
-  <data name="ADP_MissingSourceCommandConnection" xml:space="preserve">
-    <value>Właściwość DataAdapter.SelectCommand.Connection musi zostać zainicjowana;</value>
   </data>
   <data name="ADP_InvalidMultipartName" xml:space="preserve">
     <value>{0} „{1}”.</value>
@@ -1824,53 +375,14 @@
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
     <value>Operacja SqlCommand.DeriveParameters nie powiodła się, ponieważ właściwość SqlCommand.CommandText jest nieprawidłową nazwą wieloczęściową</value>
   </data>
-  <data name="ODBC_ODBCCommandText" xml:space="preserve">
-    <value>Operacja OdbcCommandBuilder.DeriveParameters nie powiodła się, ponieważ właściwość OdbcCommand.CommandText jest nieprawidłową nazwą wieloczęściową.</value>
-  </data>
-  <data name="OLEDB_OLEDBCommandText" xml:space="preserve">
-    <value>Operacja OleDbCommandBuilder.DeriveParameters nie powiodła się, ponieważ właściwość OleDbCommandBuilder.CommandText jest nieprawidłową nazwą wieloczęściową.</value>
-  </data>
   <data name="SQLMSF_FailoverPartnerNotSupported" xml:space="preserve">
     <value>Nawiązywanie połączenia z dublowanym wystąpieniem programu SQL Server z użyciem opcji połączenia MultiSubnetFailover jest nieobsługiwane.</value>
-  </data>
-  <data name="ADP_ColumnSchemaExpression" xml:space="preserve">
-    <value>Nie można mapować kolumn z elementu SourceColumn {0}, ponieważ element DataColumn {1} jest kolumną obliczaną.</value>
-  </data>
-  <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
-    <value>Niezgodność typów niemożliwych do konwersji między elementem SourceColumn {0} z {1} a elementem DataColumn {2} z {3}.</value>
-  </data>
-  <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
-    <value>Brak elementu DataColumn {0} w elemencie DataTable {1} dla elementu SourceColumn {2}.</value>
-  </data>
-  <data name="ADP_InvalidSourceColumn" xml:space="preserve">
-    <value>Wymagane jest, aby element SourceColumn były niepustym ciągiem.</value>
-  </data>
-  <data name="ADP_MissingColumnMapping" xml:space="preserve">
-    <value>Brak mapowania elementu SourceColumn dla {0}.</value>
   </data>
   <data name="ADP_NotSupportedEnumerationValue" xml:space="preserve">
     <value>Wartość wyliczenia elementu {0}, wynosząca {1}, nie jest obsługiwana przez metodę {2}.</value>
   </data>
-  <data name="ODBC_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>Wartość wyliczenia elementu {0}, wynosząca {1}, nie jest obsługiwana przez dostawcę danych Odbc programu .NET Framework.</value>
-  </data>
-  <data name="OLEDB_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>Wartość wyliczenia elementu {0}, wynosząca {1}, nie jest obsługiwana przez dostawcę danych OleDb programu .NET Framework.</value>
-  </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
     <value>Wartość wyliczenia elementu{0} , wynosząca {1}, nie jest obsługiwana przez dostawcę danych SqlClient programu .NET Framework.</value>
-  </data>
-  <data name="ADP_ComputerNameEx" xml:space="preserve">
-    <value>Nie można pobrać danych ComputerNameDnsFullyQualified, {0}.</value>
-  </data>
-  <data name="ADP_MissingTableSchema" xml:space="preserve">
-    <value>Brak elementu DataTable {0} dla elementu SourceTable {1}.</value>
-  </data>
-  <data name="ADP_InvalidSourceTable" xml:space="preserve">
-    <value>Element SourceTable musi być ciągiem niepustym</value>
-  </data>
-  <data name="ADP_MissingTableMapping" xml:space="preserve">
-    <value>Brak mapowania elementu SourceTable: {0}</value>
   </data>
   <data name="ADP_CommandTextRequired" xml:space="preserve">
     <value>{0}: właściwość CommandText nie została zainicjowana</value>
@@ -1881,50 +393,8 @@
   <data name="ADP_OpenConnectionRequired" xml:space="preserve">
     <value>Element {0} wymaga otwartego i dostępnego połączenia (Connection). {1}</value>
   </data>
-  <data name="ADP_ConnectionRequired_Fill" xml:space="preserve">
-    <value>Fill: właściwość SelectCommand.Connection nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_FillPage" xml:space="preserve">
-    <value>FillPage: właściwość SelectCommand.Connection nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_FillSchema" xml:space="preserve">
-    <value>FillSchema: właściwość SelectCommand.Connection nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Insert" xml:space="preserve">
-    <value>Aktualizacja wymaga, aby element InsertCommand miał obiekt połączenia. Właściwość Connection elementu InsertCommand nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Update" xml:space="preserve">
-    <value>Aktualizacja wymaga, aby element UpdateCommand miał obiekt połączenia. Właściwość Connection elementu UpdateCommand nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Delete" xml:space="preserve">
-    <value>Aktualizacja wymaga, aby element DeleteCommand miał obiekt połączenia. Właściwość Connection elementu DeleteCommand nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Batch" xml:space="preserve">
-    <value>Aktualizacja wymaga obiektu połączenia.  Nie zainicjowano właściwości Connection.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
-    <value>Aktualizacja wymaga, aby klon polecenia miał obiekt połączenia. Właściwość Connection klona polecenia nie została zainicjowana.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
-    <value>Aktualizacja wymaga połączenia.</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
-    <value>Operacja Update wymaga, aby element {0}Command miał obiekt z otwartym połączeniem. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Update" xml:space="preserve">
-    <value>Operacja Update wymaga, aby element {0}Command miał obiekt z otwartym połączeniem. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Delete" xml:space="preserve">
-    <value>Operacja Update wymaga, aby element {0}Command miał obiekt z otwartym połączeniem. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Clone" xml:space="preserve">
-    <value>Operacja Update wymaga, aby polecenie aktualizujące miało obiekt z otwartym połączeniem. {1}</value>
-  </data>
   <data name="ADP_NoStoredProcedureExists" xml:space="preserve">
     <value>Przechowywana procedura {0} nie istnieje.</value>
-  </data>
-  <data name="ADP_TransactionCompleted" xml:space="preserve">
-    <value>Transakcja przypisana do tego polecenia musi być najbardziej zagnieżdżoną oczekującą transakcją lokalną.</value>
   </data>
   <data name="ADP_TransactionConnectionMismatch" xml:space="preserve">
     <value>Transakcja nie jest skojarzona z bieżącym połączeniem lub została ukończona.</value>
@@ -1935,9 +405,6 @@
   <data name="ADP_TransactionRequired" xml:space="preserve">
     <value>Element {0} wymaga, aby polecenie miało transakcję, gdy połączenie przypisane do polecenia jest w fazie oczekującej transakcji lokalnej.  Właściwość Transaction polecenia nie została zainicjowana.</value>
   </data>
-  <data name="ADP_OpenResultSetExists" xml:space="preserve">
-    <value>Istnieje już skojarzony z tym poleceniem otwarty element SqlResultSet, który należy najpierw zamknąć.</value>
-  </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
     <value>Istnieje już skojarzony z tym poleceniem {0} otwarty element DataReader, który należy najpierw zamknąć.</value>
   </data>
@@ -1946,81 +413,6 @@
   </data>
   <data name="ADP_CalledTwice" xml:space="preserve">
     <value>Metoda {0} nie może być wywoływana więcej niż raz dla tego samego wykonania.</value>
-  </data>
-  <data name="ADP_IncorrectAsyncResult" xml:space="preserve">
-    <value>Nieprawidłowy wynik operacji asynchronicznej.</value>
-  </data>
-  <data name="ADP_MissingSelectCommand" xml:space="preserve">
-    <value>Właściwość SelectCommand nie została zainicjowana przed wywołaniem {0}.</value>
-  </data>
-  <data name="ADP_UnwantedStatementType" xml:space="preserve">
-    <value>Elementu StatementType {0} nie oczekiwano w tym miejscu.</value>
-  </data>
-  <data name="ADP_FillSchemaRequiresSourceTableName" xml:space="preserve">
-    <value>Operacja FillSchema: oczekiwano niepustego ciągu w nazwie elementu SourceTable.</value>
-  </data>
-  <data name="ADP_InvalidMaxRecords" xml:space="preserve">
-    <value>Nieprawidłowa wartość elementu MaxRecords wynosząca {0}; wartość musi być &gt;= 0.</value>
-  </data>
-  <data name="ADP_InvalidStartRecord" xml:space="preserve">
-    <value>Nieprawidłowa wartość elementu StartRecord wynosząca {0}; wartość musi być &gt;= 0.</value>
-  </data>
-  <data name="ADP_FillRequiresSourceTableName" xml:space="preserve">
-    <value>Operacja Fill: oczekiwano niepustego ciągu w nazwie elementu SourceTable.</value>
-  </data>
-  <data name="ADP_FillChapterAutoIncrement" xml:space="preserve">
-    <value>Hierarchiczne kolumny rozdziałów muszą mapować do elementu DataColumn typu AutoIncrement.</value>
-  </data>
-  <data name="ADP_MissingDataReaderFieldType" xml:space="preserve">
-    <value>Element DataReader.GetFieldType({0}) zwrócił wartość null.</value>
-  </data>
-  <data name="ADP_OnlyOneTableForStartRecordOrMaxRecords" xml:space="preserve">
-    <value>W przypadku używania niezerowych wartości dla elementów startRecords lub maxRecords określ tylko jeden element w tablicy dataTables.</value>
-  </data>
-  <data name="ADP_UpdateRequiresSourceTable" xml:space="preserve">
-    <value>Operacja Update nie może odnaleźć elementu TableMapping[{0}] lub elementu DataTable {0}.</value>
-  </data>
-  <data name="ADP_UpdateRequiresSourceTableName" xml:space="preserve">
-    <value>Operacja Update: oczekiwano niepustej nazwy elementu SourceTable.</value>
-  </data>
-  <data name="ADP_MissingTableMappingDestination" xml:space="preserve">
-    <value>Brak elementu TableMapping, gdy element TableMapping.DataSetTable={0}.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandClone" xml:space="preserve">
-    <value>Operacja Update wymaga prawidłowego klonu polecenia.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandSelect" xml:space="preserve">
-    <value>Automatyczne generowanie kodu SQL podczas operacji Update wymaga prawidłowego elementu SelectCommand.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandInsert" xml:space="preserve">
-    <value>Operacja Update wymaga prawidłowego elementu InsertCommand podczas przekazywania kolekcji DataRow z nowymi wierszami.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandUpdate" xml:space="preserve">
-    <value>Operacja Update wymaga prawidłowego elementu UpdateCommand podczas przekazywania kolekcji DataRow ze zmodyfikowanymi wierszami.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandDelete" xml:space="preserve">
-    <value>Operacja Update wymaga prawidłowego elementu DeleteCommand podczas przekazywania kolekcji DataRow z usuniętymi wierszami.</value>
-  </data>
-  <data name="ADP_UpdateMismatchRowTable" xml:space="preserve">
-    <value>Element DataRow[{0}] jest z innego elementu DataTable niż element DataRow[0].</value>
-  </data>
-  <data name="ADP_RowUpdatedErrors" xml:space="preserve">
-    <value>RowUpdatedEvent: wystąpiły błędy; brak dodatkowych informacji.</value>
-  </data>
-  <data name="ADP_RowUpdatingErrors" xml:space="preserve">
-    <value>RowUpdatingEvent: wystąpiły błędy; brak dodatkowych informacji.</value>
-  </data>
-  <data name="ADP_ResultsNotAllowedDuringBatch" xml:space="preserve">
-    <value>Podczas przetwarzania wsadowego wartość UpdateRowSource.FirstReturnedRecord lub UpdateRowSource.Both właściwości UpdatedRowSource polecenia jest nieprawidłowa.</value>
-  </data>
-  <data name="ADP_UpdateConcurrencyViolation_Update" xml:space="preserve">
-    <value>Naruszenie współbieżności: element UpdateCommand dotyczy następującej liczby rekordów: {0} (oczekiwana liczba rekordów: {1}).</value>
-  </data>
-  <data name="ADP_UpdateConcurrencyViolation_Delete" xml:space="preserve">
-    <value>Naruszenie współbieżności: element DeleteCommand dotyczy następującej liczby rekordów: {0} (oczekiwana liczba rekordów: {1}).</value>
-  </data>
-  <data name="ADP_UpdateConcurrencyViolation_Batch" xml:space="preserve">
-    <value>Naruszenie współbieżności: polecenie w trybie wsadowym wpłynęło na {0} z oczekiwanych {1} rekordów.</value>
   </data>
   <data name="ADP_InvalidCommandTimeout" xml:space="preserve">
     <value>Nieprawidłowa wartość elementu CommandTimeout {0}; wartość musi być &gt;= 0.</value>
@@ -2043,9 +435,6 @@
   <data name="ADP_ClosedConnectionError" xml:space="preserve">
     <value>Nieprawidłowa operacja. Połączenie jest zamknięte.</value>
   </data>
-  <data name="ADP_ConnectionIsDisabled" xml:space="preserve">
-    <value>Połączenie zostało wyłączone.</value>
-  </data>
   <data name="ADP_LocalTransactionPresent" xml:space="preserve">
     <value>Nie można zarejestrować w transakcji, ponieważ transakcja lokalna jest w toku w połączeniu.  Zakończ transakcję lokalną i spróbuj ponownie.</value>
   </data>
@@ -2055,20 +444,11 @@
   <data name="ADP_EmptyDatabaseName" xml:space="preserve">
     <value>Baza danych nie może być zerowa, nie może być ciągiem pustym ani ciągiem złożonym tylko z odstępów.</value>
   </data>
-  <data name="ADP_DatabaseNameTooLong" xml:space="preserve">
-    <value>Argument jest za długi.</value>
-  </data>
-  <data name="ADP_InvalidConnectTimeoutValue" xml:space="preserve">
-    <value>Nieprawidłowa wartość elementu Connect Timeout, która musi być liczbą całkowitą &gt;= 0.</value>
-  </data>
   <data name="ADP_InvalidSourceBufferIndex" xml:space="preserve">
     <value>Nieprawidłowe przesunięcie buforu źródłowego (rozmiar {0}): {1}</value>
   </data>
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Nieprawidłowe przesunięcie buforu docelowego (rozmiar {0}): {1}</value>
-  </data>
-  <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
-    <value>Wartość numeryczna jest za duża – nie mieści się w 96-bitowej zmiennej dziesiętnej.</value>
   </data>
   <data name="ADP_StreamClosed" xml:space="preserve">
     <value>Nieprawidłowa próba {0} podjęta, gdy strumień jest zamknięty.</value>
@@ -2076,56 +456,8 @@
   <data name="ADP_InvalidSeekOrigin" xml:space="preserve">
     <value>Określona wartość elementu SeekOrigin jest nieprawidłowa.</value>
   </data>
-  <data name="ADP_DynamicSQLJoinUnsupported" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL nie jest obsługiwane dla wielu tabel podstawowych.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoTableInfo" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL nie jest obsługiwane dla elementu SelectCommand, który nie zwraca żadnych informacji o tabeli podstawowej.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoDelete" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL dla elementu DeleteCommand nie jest obsługiwane dla elementu SelectCommand, który nie zwraca żadnych informacji o kolumnie klucza.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoUpdate" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL dla elementu UpdateCommand nie jest obsługiwane dla elementu SelectCommand, który nie zwraca żadnych informacji o kolumnie klucza.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoRowVersionDelete" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL dla elementu DeleteCommand nie jest obsługiwane dla elementu SelectCommand, który nie zawiera kolumny wersji wiersza.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoRowVersionUpdate" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL dla elementu UpdateCommand nie jest obsługiwane dla elementu SelectCommand, który nie zawiera kolumny wersji wiersza.</value>
-  </data>
-  <data name="ADP_DynamicSQLNestedQuote" xml:space="preserve">
-    <value>Dynamiczne generowanie kodu SQL nie jest obsługiwane dla nazw tabel {0} zawierających znak {1} stanowiący element QuotePrefix lub QuoteSuffix.</value>
-  </data>
   <data name="ADP_NonSequentialColumnAccess" xml:space="preserve">
     <value>Nieprawidłowa próba odczytu z numeru kolumny {0}.  Właściwość CommandBehavior.SequentialAccess umożliwia odczyt tylko z kolumn o liczbie porządkowej „{1}” lub większej.</value>
-  </data>
-  <data name="ADP_InvalidDateTimeDigits" xml:space="preserve">
-    <value>Typu danych {0} nie można sformatować jako literału, ponieważ ma nieprawidłowe cyfry daty/godziny.</value>
-  </data>
-  <data name="ADP_InvalidFormatValue" xml:space="preserve">
-    <value>Wartości nie można sformatować jako literału żądanego typu.</value>
-  </data>
-  <data name="ADP_InvalidMaximumScale" xml:space="preserve">
-    <value>Typu danych {0} nie można sformatować jako literału, ponieważ ma nieprawidłową maksymalną skalę.</value>
-  </data>
-  <data name="ADP_LiteralValueIsInvalid" xml:space="preserve">
-    <value>Podana wartość literału nie jest prawidłowym literałem dla typu danych {0}.</value>
-  </data>
-  <data name="ADP_EvenLengthLiteralValue" xml:space="preserve">
-    <value>„{0}”: długość wartości literału musi być parzysta.</value>
-  </data>
-  <data name="ADP_HexDigitLiteralValue" xml:space="preserve">
-    <value>{0}: wartość literału musi być ciągiem z cyframi szesnastkowymi.</value>
-  </data>
-  <data name="ADP_QuotePrefixNotSet" xml:space="preserve">
-    <value>Element {0} wymaga otwartego połączenia, gdy prefiks oferty nie został ustawiony.</value>
-  </data>
-  <data name="ADP_UnableToCreateBooleanLiteral" xml:space="preserve">
-    <value>Nie można określić prawidłowych wartości literałów logicznych. Nie można utworzyć literałów logicznych.</value>
-  </data>
-  <data name="ADP_UnsupportedNativeDataTypeOleDb" xml:space="preserve">
-    <value>Literały macierzystego typu danych skojarzone z typem danych {0} nie są obsługiwane.</value>
   </data>
   <data name="ADP_InvalidDataType" xml:space="preserve">
     <value>Typ danych parametru {0} jest nieprawidłowy.</value>
@@ -2148,9 +480,6 @@
   <data name="ADP_BadParameterName" xml:space="preserve">
     <value>Określona nazwa parametru „{0}” jest nieprawidłowa.</value>
   </data>
-  <data name="ADP_MultipleReturnValue" xml:space="preserve">
-    <value>Wiele parametrów wartości zwracanej nie jest obsługiwane.</value>
-  </data>
   <data name="ADP_InvalidSizeValue" xml:space="preserve">
     <value>Nieprawidłowa wartość rozmiaru parametru {0}. Wartość musi być większa niż lub równa 0.</value>
   </data>
@@ -2159,9 +488,6 @@
   </data>
   <data name="ADP_InvalidMetaDataValue" xml:space="preserve">
     <value>Nieprawidłowa wartość dla tych metadanych.</value>
-  </data>
-  <data name="ADP_NotRowType" xml:space="preserve">
-    <value>Metadane muszą być elementem SqlDbType.Row</value>
   </data>
   <data name="ADP_ParameterConversionFailed" xml:space="preserve">
     <value>Nie można przekonwertować wartości parametru z {0} na {1}.</value>
@@ -2172,308 +498,23 @@
   <data name="ADP_TransactionZombied" xml:space="preserve">
     <value>Ten element {0} zakończył się; nie można go już używać.</value>
   </data>
-  <data name="ADP_DbRecordReadOnly" xml:space="preserve">
-    <value>Nie można wywołać elementu {0}, jeśli rekord jest tylko do odczytu.</value>
-  </data>
-  <data name="ADP_DbDataUpdatableRecordReadOnly" xml:space="preserve">
-    <value>Nie można wywołać elementu {0}, jeśli element DbDataRecord jest tylko do odczytu.</value>
-  </data>
-  <data name="ADP_InvalidImplicitConversion" xml:space="preserve">
-    <value>Jawna konwersja typu obiektu „{0}” na typ danych „{1}” nie jest obsługiwana.</value>
-  </data>
-  <data name="ADP_InvalidBufferSizeOrIndex" xml:space="preserve">
-    <value>Suma przesunięcia buforu „{1}” i liczby dostępnych bajtów „{0}” jest większa niż długość przekazana w buforze.</value>
-  </data>
-  <data name="ADP_InvalidDataLength" xml:space="preserve">
-    <value>Długość danych „{0}” ma wartość mniejszą niż 0.</value>
-  </data>
   <data name="ADP_InvalidDataLength2" xml:space="preserve">
     <value>Określona długość {0} nie należy do zakresu.</value>
   </data>
   <data name="ADP_NonSeqByteAccess" xml:space="preserve">
     <value>Nieprawidłowa próba {2} w indeksie dataIndex {0}.  Właściwość CommandBehavior.SequentialAccess umożliwia odczyt tylko z kolumn o liczbie porządkowej {1} lub większej.</value>
   </data>
-  <data name="ADP_OffsetOutOfRangeException" xml:space="preserve">
-    <value>Przesunięcie musi odwoływać się do lokalizacji w wartości.</value>
-  </data>
-  <data name="ODBC_GetSchemaRestrictionRequired" xml:space="preserve">
-    <value>"Dostawca zarządzany za pośrednictwem ODBC wymaga, aby ograniczenie TABLE_NAME było określone i niezerowe dla kolekcji indeksów GetSchema.</value>
-  </data>
-  <data name="ADP_InvalidArgumentValue" xml:space="preserve">
-    <value>Nieprawidłowa wartość argumentu dla metody {0}.</value>
-  </data>
-  <data name="ADP_OdbcNoTypesFromProvider" xml:space="preserve">
-    <value>Dostawca ODBC nie zwrócił wyników z funkcji SQLGETTYPEINFO.</value>
-  </data>
-  <data name="ADP_NullDataTable" xml:space="preserve">
-    <value>Nieoczekiwany argument null elementu DataTable</value>
-  </data>
-  <data name="ADP_NullDataSet" xml:space="preserve">
-    <value>Nieoczekiwany zerowy argument null elementu DataSet.</value>
-  </data>
-  <data name="OdbcConnection_ConnectionStringTooLong" xml:space="preserve">
-    <value>Parametry połączenia przekraczają maksymalną dozwoloną długość wynoszącą {0}.</value>
-  </data>
-  <data name="Odbc_GetTypeMapping_UnknownType" xml:space="preserve">
-    <value>{0} – nie można zmapować typu.</value>
-  </data>
-  <data name="Odbc_UnknownSQLType" xml:space="preserve">
-    <value>Nieznany typ SQL – {0}.</value>
-  </data>
-  <data name="Odbc_UnknownURTType" xml:space="preserve">
-    <value>Nieznany typ URT – {0}.</value>
-  </data>
-  <data name="Odbc_NegativeArgument" xml:space="preserve">
-    <value>Nieprawidłowy argument ujemny!</value>
-  </data>
-  <data name="Odbc_CantSetPropertyOnOpenConnection" xml:space="preserve">
-    <value>Nie można ustawić właściwości dla otwartego połączenia.</value>
-  </data>
-  <data name="Odbc_NoMappingForSqlTransactionLevel" xml:space="preserve">
-    <value>Brak prawidłowego mapowania dla elementu SQL_TRANSACTION {0} do wartości wyliczenia System.Data.IsolationLevel.</value>
-  </data>
-  <data name="Odbc_CantEnableConnectionpooling" xml:space="preserve">
-    <value>{0} – nie można włączyć puli połączeń...</value>
-  </data>
-  <data name="Odbc_CantAllocateEnvironmentHandle" xml:space="preserve">
-    <value>{0} – nie można przydzielić uchwytu środowiska.</value>
-  </data>
-  <data name="Odbc_FailedToGetDescriptorHandle" xml:space="preserve">
-    <value>{0} – nie można pobrać uchwytu deskryptora.</value>
-  </data>
-  <data name="Odbc_NotInTransaction" xml:space="preserve">
-    <value>Poza transakcją</value>
-  </data>
-  <data name="Odbc_UnknownOdbcType" xml:space="preserve">
-    <value>Nieprawidłowa wartość wyliczenia OdbcType={0}.</value>
-  </data>
-  <data name="Odbc_NullData" xml:space="preserve">
-    <value>Użyj elementu IsDBNull tam, gdzie oczekiwane są dane DBNull.Value.</value>
-  </data>
-  <data name="Odbc_ExceptionMessage" xml:space="preserve">
-    <value>{0} [{1}] {2}</value>
-  </data>
-  <data name="Odbc_ExceptionNoInfoMsg" xml:space="preserve">
-    <value>{0} – brak dostępnych informacji o błędzie</value>
-  </data>
-  <data name="Odbc_ConnectionClosed" xml:space="preserve">
-    <value>Połączenie jest zamknięte.</value>
-  </data>
-  <data name="Odbc_OpenConnectionNoOwner" xml:space="preserve">
-    <value>Połączenie wewnętrzne nie ma właściciela.</value>
-  </data>
-  <data name="Odbc_MDACWrongVersion" xml:space="preserve">
-    <value>Dostawca danych Odbc programu .NET Framework wymaga programu Microsoft Data Access Components (MDAC) w wersji 2.6 lub nowszej.  Znaleziono obecnie zainstalowaną wersję {0}.</value>
-  </data>
-  <data name="OleDb_MDACWrongVersion" xml:space="preserve">
-    <value>Dostawca danych OleDb programu .NET Framework wymaga składników programu Microsoft Data Access Components (MDAC) w wersji 2.6 lub nowszej.  Znaleziono obecnie zainstalowaną wersję {0}.</value>
-  </data>
-  <data name="OleDb_SchemaRowsetsNotSupported" xml:space="preserve">
-    <value>Interfejs {0} nie jest obsługiwany przez dostawcę {1}.  Element GetOleDbSchemaTable jest niedostępny u bieżącego dostawcy.</value>
-  </data>
-  <data name="OleDb_NoErrorInformation2" xml:space="preserve">
-    <value>Niepowodzenie elementu {0}, żaden komunikat o błędzie nie jest dostępny. Kod wyniku: {1}.</value>
-  </data>
-  <data name="OleDb_NoErrorInformation" xml:space="preserve">
-    <value>Brak dostępnych komunikatów o błędach, kod wyniku: {0}.</value>
-  </data>
-  <data name="OleDb_MDACNotAvailable" xml:space="preserve">
-    <value>Dostawcy danych programu .NET Framework wymagają składników programu Microsoft Data Access Components(MDAC).  Zainstaluj program Microsoft Data Access Components (MDAC) w wersji 2.6 lub nowszej.</value>
-  </data>
-  <data name="OleDb_MSDASQLNotSupported" xml:space="preserve">
-    <value>Dostawca danych programu .NET Framework dla OLEDB (Microsoft.Data.OleDb) nie obsługuje dostawcy OLE DB firmy Microsoft dla sterowników ODBC (MSDASQL). Użyj dostawcy danych programu .NET Framework dla interfejsu ODBC (System.Data.Odbc).</value>
-  </data>
-  <data name="OleDb_PossiblePromptNotUserInteractive" xml:space="preserve">
-    <value>Dostawca danych (Provider) programu .NET Framework dla OLEDB nie pozwoli dostawcy bazy danych OLE DB Provider na monitowanie użytkownika w środowisku nieinterakcyjnym.</value>
-  </data>
-  <data name="OleDb_ProviderUnavailable" xml:space="preserve">
-    <value>Dostawca {0} nie jest zarejestrowany na lokalnym komputerze.</value>
-  </data>
-  <data name="OleDb_CommandTextNotSupported" xml:space="preserve">
-    <value>Interfejs ICommandText nie jest obsługiwany przez dostawcę {0}. Zamiast tego użyj elementu CommandType.TableDirect.</value>
-  </data>
-  <data name="OleDb_TransactionsNotSupported" xml:space="preserve">
-    <value>Interfejs ITransactionLocal nie jest obsługiwany przez dostawcę {0}.  Transakcje lokalne są niedostępne u bieżącego dostawcy.</value>
-  </data>
-  <data name="OleDb_ConnectionStringSyntax" xml:space="preserve">
-    <value>Format ciągu inicjowania jest niezgodny ze specyfikacją OLE DB.  Rozpoczynanie od znaku char[{0}] w parametrach połączenia.</value>
-  </data>
-  <data name="OleDb_AsynchronousNotSupported" xml:space="preserve">
-    <value>„Przetwarzanie asynchroniczne” nie jest obsługiwaną funkcją dostawcy OLE DB danych programu .NET Framework (Microsoft.Data.OleDb).</value>
-  </data>
-  <data name="OleDb_NoProviderSpecified" xml:space="preserve">
-    <value>Dostawca OLE DB nie został określony w parametrze ConnectionString.  Przykładem może być „Provider=SQLOLEDB;”.</value>
-  </data>
-  <data name="OleDb_InvalidProviderSpecified" xml:space="preserve">
-    <value>Określenie dostawcy danych OLE DB w elemencie ConnectionString jest za długie.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsDbInfoKeywords" xml:space="preserve">
-    <value>Nie oczekiwano żadnych ograniczeń dla elementu DbInfoKeywords OleDbSchemaGuid.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsDbInfoLiteral" xml:space="preserve">
-    <value>Nie oczekiwano żadnych ograniczeń dla elementu DbInfoLiterals OleDbSchemaGuid.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsSchemaGuids" xml:space="preserve">
-    <value>Nie oczekiwano żadnych ograniczeń dla identyfikatora guid schematu OleDbSchemaGuid.</value>
-  </data>
-  <data name="OleDb_NotSupportedSchemaTable" xml:space="preserve">
-    <value>Schemat OleDbSchemaGuid {0} nie jest obsługiwany przez dostawcę {1}.</value>
-  </data>
-  <data name="OleDb_ConfigWrongNumberOfValues" xml:space="preserve">
-    <value>Ustawienie konfiguracji {0} ma błędną liczbę wartości.</value>
-  </data>
-  <data name="OleDb_ConfigUnableToLoadXmlMetaDataFile" xml:space="preserve">
-    <value>Nie można załadować pliku XML określonego w ustawieniu konfiguracyjnym {0}.</value>
-  </data>
-  <data name="OleDb_CommandParameterBadAccessor" xml:space="preserve">
-    <value>Parametr polecenia[{0}] {1} jest nieprawidłowy.</value>
-  </data>
-  <data name="OleDb_CommandParameterCantConvertValue" xml:space="preserve">
-    <value>Nie można konwertować wartości danych parametru polecenia[{0}] {1} z innego powodu niż niezgodność podpisu lub przepełnienie danych.</value>
-  </data>
-  <data name="OleDb_CommandParameterSignMismatch" xml:space="preserve">
-    <value>Nie można konwertować parametru polecenia[{0}] {1}, ponieważ wartość danych była typu signed, a typ użyty przez dostawcę był typem unsigned.</value>
-  </data>
-  <data name="OleDb_CommandParameterDataOverflow" xml:space="preserve">
-    <value>Nie można konwertować parametru polecenia[{0}] {1}, ponieważ wartość danych przepełniła typ użyty przez dostawcę.</value>
-  </data>
-  <data name="OleDb_CommandParameterUnavailable" xml:space="preserve">
-    <value>Dostawca napotkał błąd podczas wysyłania wartości parametru polecenia[{0}] {1}, przetwarzanie zostało zatrzymane.</value>
-  </data>
-  <data name="OleDb_CommandParameterDefault" xml:space="preserve">
-    <value>Parametr[{0}] {1} nie ma wartości domyślnej.</value>
-  </data>
-  <data name="OleDb_CommandParameterError" xml:space="preserve">
-    <value>Wystąpił błąd parametru [{0}]: {1}.</value>
-  </data>
-  <data name="OleDb_BadStatus_ParamAcc" xml:space="preserve">
-    <value>Błąd wewnętrzny Microsoft.Data.OleDb.OleDbDataAdapter: nieprawidłowy metoda dostępu do parametru: {0}{1}.</value>
-  </data>
-  <data name="OleDb_UninitializedParameters" xml:space="preserve">
-    <value>Parameter[{0}]: właściwość typu OleDbType nie została zainicjowana: OleDbType.{1}.</value>
-  </data>
-  <data name="OleDb_NoProviderSupportForParameters" xml:space="preserve">
-    <value>Interfejs ICommandWithParameters nie jest obsługiwany przez dostawcę {0}.  Parametry polecenia nie są obsługiwane przez bieżącego dostawcę.</value>
-  </data>
-  <data name="OleDb_NoProviderSupportForSProcResetParameters" xml:space="preserve">
-    <value>Pobieranie informacji o parametrach procedury nie jest obsługiwane przez dostawcę {0}.</value>
-  </data>
-  <data name="OleDb_CanNotDetermineDecimalSeparator" xml:space="preserve">
-    <value>Nie można określić separatora dziesiętnego serwera. Nie można utworzyć literałów liczbowych innych niż całkowite.</value>
-  </data>
-  <data name="OleDb_Fill_NotADODB" xml:space="preserve">
-    <value>Obiekt nie jest ani elementem ADODB.RecordSet ani ADODB.Record.</value>
-  </data>
-  <data name="OleDb_Fill_EmptyRecordSet" xml:space="preserve">
-    <value>Nie można pobrać interfejsu {0} z obiektu ADODB.RecordSet.</value>
-  </data>
-  <data name="OleDb_Fill_EmptyRecord" xml:space="preserve">
-    <value>Nie można pobrać interfejsu IRow z obiektu ADODB.Record.</value>
-  </data>
-  <data name="OleDb_ISourcesRowsetNotSupported" xml:space="preserve">
-    <value>Typ nie obsługuje interfejsu ISourcesRowset bazy danych OLE DB.</value>
-  </data>
-  <data name="OleDb_IDBInfoNotSupported" xml:space="preserve">
-    <value>Nie można utworzyć kolekcji schematu ReservedWords, ponieważ dostawca nie obsługuje elementu IDBInfo.</value>
-  </data>
-  <data name="OleDb_PropertyNotSupported" xml:space="preserve">
-    <value>Wartość właściwości nie została ustawiona, ponieważ dostawca nie obsługuje właściwości {0} albo użytkownik próbował pobrać lub ustawić wartości właściwości poza grupą właściwości Initialization, podczas gdy obiekt źródła danych nie został zainicjowany.</value>
-  </data>
-  <data name="OleDb_PropertyBadValue" xml:space="preserve">
-    <value>Nie można zainicjować właściwości {0} z jednego z następujących powodów:
-	Typ danych wartości nie był typem danych właściwości ani nie miał wartości null. Na przykład właściwość DBPROP_MEMORYUSAGE ma typ danych Int32, a typ danych to Int64.
-	Wartość nie była prawidłową wartością. Na przykład właściwość to DBPROP_MEMORYUSAGE, a wartość była ujemna.
-	Wartość była prawidłową wartością właściwości, a dostawca obsługuje tę właściwość jako właściwość ustawialną, ale dostawca nie obsługuje określonej wartości. Obejmuje to przypadek, w którym wartość została dodana do właściwości w OLE DB po zapisaniu dostawcy.</value>
-  </data>
-  <data name="OleDb_PropertyBadOption" xml:space="preserve">
-    <value>Wartość opcji Options była nieprawidłowa.</value>
-  </data>
-  <data name="OleDb_PropertyBadColumn" xml:space="preserve">
-    <value>Element ColumnID był nieprawidłowy.</value>
-  </data>
-  <data name="OleDb_PropertyNotAllSettable" xml:space="preserve">
-    <value>Właściwość {0} została określona w celu zastosowania dla wszystkich kolumn, ale nie można jej zastosować dla co najmniej jednej z nich.</value>
-  </data>
-  <data name="OleDb_PropertyNotSettable" xml:space="preserve">
-    <value>Właściwość {0} była tylko do odczytu lub użytkownik próbował ustawić wartości właściwości w grupie właściwości Initialization po zainicjowaniu obiektu źródła danych. Użytkownicy mogą ustawić wartość właściwości tylko do odczytu na jej bieżącą wartość. Ten stan jest również zwracany, jeśli nie można ustawić właściwości kolumny ustawialnej dla określonej kolumny.</value>
-  </data>
-  <data name="OleDb_PropertyNotSet" xml:space="preserve">
-    <value>Opcjonalna wartość właściwości {0} nie została ustawiona na określoną wielkość. Ustawienie właściwości na określoną wartość nie było niemożliwe.</value>
-  </data>
-  <data name="OleDb_PropertyConflicting" xml:space="preserve">
-    <value>Wartość właściwości {0} nie została ustawiona, ponieważ próba jej ustawienia spowodowała wystąpienie konfliktu z istniejącą właściwością.</value>
-  </data>
-  <data name="OleDb_PropertyNotAvailable" xml:space="preserve">
-    <value>(Zarezerwowany).</value>
-  </data>
-  <data name="OleDb_PropertyStatusUnknown" xml:space="preserve">
-    <value>Dostawca zwrócił nieznaną wartość DBPROPSTATUS_ {0}.</value>
-  </data>
-  <data name="OleDb_BadAccessor" xml:space="preserve">
-    <value>Weryfikacja metody dostępu została odroczona i została wykonana, gdy metoda zwróciła dane. Powiązanie było nieprawidłowe dla tej kolumny lub parametru.</value>
-  </data>
-  <data name="OleDb_BadStatusRowAccessor" xml:space="preserve">
-    <value>Błąd wewnętrzny elementu OleDbDataAdapter: nieprawidłowy akcesor zestawu wierszy: liczba porządkowa Ordinal={0}, stan Status={1}.</value>
-  </data>
-  <data name="OleDb_CantConvertValue" xml:space="preserve">
-    <value>Nie można konwertować wartości danych z innego powodu niż niezgodność podpisu lub przepełnienie danych. Na przykład dane zostały uszkodzone w magazynie danych, ale wiersz nadal można było pobrać.</value>
-  </data>
-  <data name="OleDb_CantCreate" xml:space="preserve">
-    <value>Dostawca nie mógł przydzielić pamięci, do której należy zwrócić dane {0}.</value>
-  </data>
-  <data name="OleDb_DataOverflow" xml:space="preserve">
-    <value>Nie można dokonać konwersji, ponieważ wartość danych {0} przepełniła typ określony dla wartości {0} w buforze użytkownika.</value>
-  </data>
-  <data name="OleDb_GVtUnknown" xml:space="preserve">
-    <value>Błąd wewnętrzny elementu OleDbDataAdapter: [get] Nieznany typ danych OLE DB: 0x{0} ({1}).</value>
-  </data>
-  <data name="OleDb_SignMismatch" xml:space="preserve">
-    <value>Nie można dokonać konwersji, ponieważ wartość danych {0} była typu signed, a typ określony dla wartości {0} w buforze użytkownika był typem unsigned.</value>
-  </data>
-  <data name="OleDb_SVtUnknown" xml:space="preserve">
-    <value>Błąd wewnętrzny elementu OleDbDataAdapter: [set] nieznany typ danych OLE DB: 0x{0} ({1}).</value>
-  </data>
-  <data name="OleDb_Unavailable" xml:space="preserve">
-    <value>Dostawca nie mógł określić wartości {0}. Na przykład wiersz został właśnie utworzony, wartość domyślna kolumny {0} jest niedostępna, a użytkownik nie ustawił jeszcze nowej wartości {0}.</value>
-  </data>
-  <data name="OleDb_UnexpectedStatusValue" xml:space="preserve">
-    <value>Dostawca OLE DB zwrócił niespodziewaną wartość stanu wynoszącą {0}.</value>
-  </data>
-  <data name="OleDb_ThreadApartmentState" xml:space="preserve">
-    <value>Element OleDbDataReader.Read musi być używany z tego samego wątku, w którym został stworzony, jeśli element ApartmentState tego wątku nie był elementem ApartmentState.MTA.</value>
-  </data>
-  <data name="OleDb_NoErrorMessage" xml:space="preserve">
-    <value>Nieokreślony błąd: {0}</value>
-  </data>
-  <data name="OleDb_FailedGetDescription" xml:space="preserve">
-    <value>Funkcja IErrorInfo.GetDescription nie powiodła się z {0}.</value>
-  </data>
-  <data name="OleDb_FailedGetSource" xml:space="preserve">
-    <value>Funkcja IErrorInfo.GetSource nie powiodła się z {0}.</value>
-  </data>
-  <data name="OleDb_DBBindingGetVector" xml:space="preserve">
-    <value>Dane DBTYPE_VECTOR nie są obsługiwane przez dostawcę OLE DB danych programu .NET Framework (Microsoft.Data.OleDb).</value>
-  </data>
   <data name="ADP_InvalidMinMaxPoolSizeValues" xml:space="preserve">
     <value>Nieprawidłowa minimalna lub maksymalna wartość rozmiaru puli, minimalny rozmiar puli nie może być większy niż maksymalny rozmiar puli.</value>
   </data>
-  <data name="ADP_ObsoleteKeyword" xml:space="preserve">
-    <value>Słowo kluczowe {0} jest przestarzałe. Zamiast tego użyj „{1}”.</value>
-  </data>
   <data name="SQL_CannotGetDTCAddress" xml:space="preserve">
     <value>Nie można pobrać z serwera adresu koordynatora transakcji rozproszonych (Distributed Transaction Coordinator) dla tego serwera.  Czy usługa DTC jest włączona na serwerze?</value>
-  </data>
-  <data name="SQL_InvalidOptionLength" xml:space="preserve">
-    <value>Długość wartości parametru połączenia &lt;{0}&gt; przekracza maksymalną dozwoloną długość 65535 znaków.</value>
   </data>
   <data name="SQL_InvalidPacketSizeValue" xml:space="preserve">
     <value>Nieprawidłowy „Rozmiar pakietu”.  Wartość musi być liczbą całkowitą z przedziału od 512 do 32768.</value>
   </data>
   <data name="SQL_NullEmptyTransactionName" xml:space="preserve">
     <value>Nieprawidłowa transakcja lub nieprawidłowa nazwa dla punktu, w którym następuje zapis stanu transakcji.</value>
-  </data>
-  <data name="SQL_SnapshotNotSupported" xml:space="preserve">
-    <value>Wartość wyliczenia elementu {0}, wynosząca {1}, nie jest obsługiwana przez program SQL Server 7.0 ani przez program SQL Server 2000.</value>
   </data>
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
     <value>Wystąpienie użytkownika i tryb failover nie są zgodnymi opcjami.  Wybierz tylko jeden z dwóch parametrów połączenia.</value>
@@ -2499,17 +540,11 @@
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
     <value>Nie można ustawić właściwości Credential, jeśli w parametrach połączenia ustawiono wartość „Authentication=Active Directory Integrated”.</value>
   </data>
-  <data name="SQL_Certificate" xml:space="preserve">
-    <value>Określono nieprawidłowe parametry uwierzytelniania z uwierzytelnianiem certyfikatu.</value>
-  </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>Wystąpienie programu SQL Server, z którym próbowano się połączyć, wymaga szyfrowania, ale ten komputer go nie obsługuje.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByServer" xml:space="preserve">
     <value>Wystąpienie programu SQL Server, z którym próbowano się połączyć, nie obsługuje szyfrowania.</value>
-  </data>
-  <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
-    <value>Wystąpienie programu SQL Server, z którym próbowano nawiązać połączenie, nie obsługuje funkcji CTAIP.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
     <value>Nieobsługiwana wersja programu SQL Server.  Dostawcy danych SqlClient programu .NET Framework można używać tylko z programem SQL Server w wersji 7.0 lub nowszej.</value>
@@ -2517,14 +552,8 @@
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>Nie można zmienić elementu {0}, gdy operacja asynchroniczna jest w toku.</value>
   </data>
-  <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
-    <value>To polecenie wymaga połączenia asynchronicznego. Ustaw wartość „Asynchronous Processing=true” w parametrach połączenia.</value>
-  </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
     <value>Upłynął limit czasu próby połączenia.</value>
-  </data>
-  <data name="SQL_FatalTimeout" xml:space="preserve">
-    <value>Upłynął limit czasu.  W wyniku tego połączenie zostało przerwane.</value>
   </data>
   <data name="SQL_InstanceFailure" xml:space="preserve">
     <value>Błąd wystąpienia.</value>
@@ -2556,26 +585,17 @@
   <data name="SQL_MSALInnerException" xml:space="preserve">
     <value>Kod błędu 0x{0}</value>
   </data>
-  <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
-    <value>Element ChangePassword wymaga programu SQL Server 9.0 lub nowszej wersji.</value>
-  </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Przekierowywanie wystąpienia SSE nie jest obsługiwane dla wystąpień użytkowników nielokalnych.</value>
   </data>
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>Uwierzytelnianie „{0}” nie jest obsługiwane.</value>
   </data>
-  <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
-    <value>Metoda uwierzytelniania SQL „{0}” nie jest obsługiwana.</value>
-  </data>
   <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>Nie można utworzyć wystąpienia dostawcy uwierzytelniania typu {1} dla elementu {0}.</value>
   </data>
   <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
     <value>Nie można utworzyć wystąpienia elementu SqlAuthenticationInitializer typu {0}.</value>
-  </data>
-  <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
-    <value>Dostawca „{0}” zgłosił wyjątek podczas inicjowania.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
     <value>Dostawca „{0}” nie obsługuje uwierzytelniania „{1}”.</value>
@@ -2586,23 +606,14 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zainstaluj pakiet NuGet „Microsoft.Data.SqlClient.Extensions.Azure” (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), aby korzystać z metod uwierzytelniania usługi Active Directory (Entra ID).</value>
   </data>
-  <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
-    <value>Nie można odczytać sekcji konfiguracji dla dostawców uwierzytelniania.</value>
-  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości null ani być pusty.</value>
-  </data>
-  <data name="SQL_AsyncOperationCompleted" xml:space="preserve">
-    <value>Operacja asynchroniczna została już ukończona.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
     <value>Nie można kontynuować wykonywania polecenia, ponieważ istnieje oczekująca operacja asynchroniczna, która jest już w toku.</value>
   </data>
   <data name="SQL_NonXmlResult" xml:space="preserve">
     <value>Do elementu ExecuteXmlReader wysłano nieprawidłowe polecenie.  Polecenie musi zwrócić wynik XML.</value>
-  </data>
-  <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
-    <value>Powiadomienia wymagają programu SQL Server 9.0 lub nowszej wersji.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">
     <value>Nieprawidłowy format nazwy trzyczęściowej dla elementu UdtTypeName.</value>
@@ -2697,9 +708,6 @@
   <data name="SQL_SSPIInitializeError" xml:space="preserve">
     <value>Nie można zainicjować pakietu SSPI.</value>
   </data>
-  <data name="SQL_Timeout" xml:space="preserve">
-    <value>Upłynął limit czasu.  Limit czasu upłynął przed ukończeniem operacji lub serwer nie odpowiada.</value>
-  </data>
   <data name="SQL_Timeout_PreLogin_Begin" xml:space="preserve">
     <value>Upłynął limit czasu połączenia.  Limit czasu upłynął na początku fazy przed logowaniem.  Może to być spowodowane niewystarczającym czasem podanym dla limitu czasu połączenia.</value>
   </data>
@@ -2745,12 +753,6 @@
   <data name="SQL_UserInstanceFailure" xml:space="preserve">
     <value>Wystąpienie użytkownika było żądane w parametrach połączenia, ale określony serwer nie obsługuje tej opcji.</value>
   </data>
-  <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>Weryfikacja aplikacji certyfikatu serwera nie powiodła się.</value>
-  </data>
-  <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
-    <value>Określona długość danych {0} przekracza dozwoloną maksymalną długość {1}.</value>
-  </data>
   <data name="SQL_InvalidRead" xml:space="preserve">
     <value>Nieprawidłowa próba odczytu, gdy brak jakichkolwiek danych.</value>
   </data>
@@ -2774,9 +776,6 @@
   </data>
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Długość danych „{0}” ma wartość mniejszą niż 0.</value>
-  </data>
-  <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
-    <value>Nie można wywołać elementu {0}, jeśli element SqlDataRecord jest tylko do odczytu.</value>
   </data>
   <data name="SQL_BulkLoadMappingInaccessible" xml:space="preserve">
     <value>Mapowana kolekcja jest używana i w tym momencie nie można uzyskać do niej dostępu;</value>
@@ -2847,21 +846,6 @@
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Nawiązywanie połączenia kontekstowego przy użyciu Microsoft.Data.SqlClient nie jest obsługiwane.</value>
   </data>
-  <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
-    <value>Zagnieżdżone elementy TransactionScopes nie są obsługiwane.</value>
-  </data>
-  <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
-    <value>Nieoczekiwane zdarzenie serwera: {0}.</value>
-  </data>
-  <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
-    <value>Długość {0} musi być zgodna z długością {1}.</value>
-  </data>
-  <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>Element SqlDbType „{0}” jest nieprawidłowy dla {1}.  Obsługiwany jest tylko element {2}.</value>
-  </data>
-  <data name="SQL_TooManyValues" xml:space="preserve">
-    <value>Zbyt wiele wartości.</value>
-  </data>
   <data name="SQL_StreamWriteNotSupported" xml:space="preserve">
     <value>Element Stream nie obsługuje zapisywania.</value>
   </data>
@@ -2886,44 +870,11 @@
   <data name="SqlMisc_NullString" xml:space="preserve">
     <value>Null</value>
   </data>
-  <data name="SqlMisc_MessageString" xml:space="preserve">
-    <value>Wiadomość</value>
-  </data>
-  <data name="SqlMisc_ArithOverflowMessage" xml:space="preserve">
-    <value>Przepełnienie arytmetyczne.</value>
-  </data>
-  <data name="SqlMisc_DivideByZeroMessage" xml:space="preserve">
-    <value>Wystąpił błąd dzielenia przez zero.</value>
-  </data>
-  <data name="SqlMisc_NullValueMessage" xml:space="preserve">
-    <value>Dane mają wartość null. Tej metody lub właściwości nie można wywołać dla wartości null.</value>
-  </data>
-  <data name="SqlMisc_TruncationMessage" xml:space="preserve">
-    <value>Arytmetyka numeryczna powoduje obcięcie.</value>
-  </data>
   <data name="SqlMisc_DateTimeOverflowMessage" xml:space="preserve">
     <value>Przepełnienie elementu SqlDateTime. Musi należeć do zakresu od 1.01.1753 12:00:00 do 31.12.9999 23:59:59.</value>
   </data>
-  <data name="SqlMisc_ConcatDiffCollationMessage" xml:space="preserve">
-    <value>Dwa ciągi, które mają zostać złączone, są posortowane w różny sposób.</value>
-  </data>
-  <data name="SqlMisc_CompareDiffCollationMessage" xml:space="preserve">
-    <value>Dwa ciągi, które mają zostać porównane, są posortowane w różny sposób.</value>
-  </data>
-  <data name="SqlMisc_InvalidFlagMessage" xml:space="preserve">
-    <value>Nieprawidłowa wartość flagi.</value>
-  </data>
-  <data name="SqlMisc_NumeToDecOverflowMessage" xml:space="preserve">
-    <value>Konwersja z elementu SqlDecimal na element Decimal spowodowała przepełnienie.</value>
-  </data>
   <data name="SqlMisc_ConversionOverflowMessage" xml:space="preserve">
     <value>Przepełnienie konwersji.</value>
-  </data>
-  <data name="SqlMisc_InvalidDateTimeMessage" xml:space="preserve">
-    <value>Nieprawidłowy element SqlDateTime.</value>
-  </data>
-  <data name="SqlMisc_TimeZoneSpecifiedMessage" xml:space="preserve">
-    <value>Określono strefę czasową. Element SqlDateTime nie obsługuje stref czasowych.</value>
   </data>
   <data name="SqlMisc_InvalidArraySizeMessage" xml:space="preserve">
     <value>Nieprawidłowy rozmiar tablicy.</value>
@@ -2931,65 +882,11 @@
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
     <value>Nieprawidłowa skala/precyzja numeryczna.</value>
   </data>
-  <data name="SqlMisc_FormatMessage" xml:space="preserve">
-    <value>Dane wejściowe były w niepoprawnym formacie.</value>
-  </data>
-  <data name="SqlMisc_SqlTypeMessage" xml:space="preserve">
-    <value>Błąd elementu SqlType.</value>
-  </data>
-  <data name="SqlMisc_LenTooLargeMessage" xml:space="preserve">
-    <value>W tej wersji elementy SqlBytes i SqlChars nie obsługują długości przekraczającej 2GB.</value>
-  </data>
   <data name="SqlMisc_StreamErrorMessage" xml:space="preserve">
     <value>Wystąpił błąd podczas odczytu.</value>
   </data>
-  <data name="SqlMisc_StreamClosedMessage" xml:space="preserve">
-    <value>Element Stream został zamknięty lub usunięty.</value>
-  </data>
-  <data name="SqlMisc_NoBufferMessage" xml:space="preserve">
-    <value>Brak buforu. Operacja odczytu lub zapisu nie powiodła się.</value>
-  </data>
-  <data name="SqlMisc_SetNonZeroLenOnNullMessage" xml:space="preserve">
-    <value>Nie można ustawić długości na niezerową, ponieważ bieżąca wartość jest równa Null.</value>
-  </data>
-  <data name="SqlMisc_BufferInsufficientMessage" xml:space="preserve">
-    <value>Bufor jest niewystarczający. Operacja odczytu lub zapisu nie powiodła się.</value>
-  </data>
-  <data name="SqlMisc_WriteNonZeroOffsetOnNullMessage" xml:space="preserve">
-    <value>Nie można zapisać danych do przesunięcia niezerowego, ponieważ bieżąca wartość jest równa Null.</value>
-  </data>
-  <data name="SqlMisc_WriteOffsetLargerThanLenMessage" xml:space="preserve">
-    <value>Nie można zapisać z przesunięcia większego niż bieżąca długość. Spowoduje to pozostawienie niezainicjowanych danych w buforze.</value>
-  </data>
   <data name="SqlMisc_TruncationMaxDataMessage" xml:space="preserve">
     <value>Zwrócone dane mają rozmiar większy niż 2 Gb. Użyj zachowania polecenia SequentialAccess, aby uzyskać wszystkie dane.</value>
-  </data>
-  <data name="SqlMisc_InvalidFirstDayMessage" xml:space="preserve">
-    <value>Argument dla elementu GetDayOfWeek musi być liczbą całkowitą z przedziału od 1 do 7.</value>
-  </data>
-  <data name="SqlMisc_NotFilledMessage" xml:space="preserve">
-    <value>Element SQL Type nie został załadowany z danymi.</value>
-  </data>
-  <data name="SqlMisc_AlreadyFilledMessage" xml:space="preserve">
-    <value>Element SQL Type został już załadowany z danymi.</value>
-  </data>
-  <data name="SqlMisc_ClosedXmlReaderMessage" xml:space="preserve">
-    <value>Nieprawidłowa próba uzyskania dostępu do zamkniętego elementu XmlReader.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamClosed" xml:space="preserve">
-    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest zamknięty.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonWritable" xml:space="preserve">
-    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest nie do zapisu.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonReadable" xml:space="preserve">
-    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest nie do odczytu.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonSeekable" xml:space="preserve">
-    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest niemożliwy do wyszukiwania.</value>
-  </data>
-  <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
-    <value>Podklasa nie przesłoniła wymaganej metody.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>Nie można utworzyć normalizatora dla „{0}”.</value>
@@ -2997,80 +894,11 @@
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Błąd wewnętrzny</value>
   </data>
-  <data name="Sql_NullCommandText" xml:space="preserve">
-    <value>Parametr polecenia musi mieć niezerowy i niepusty tekst polecenia.</value>
-  </data>
-  <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
-    <value>Tablica parametru MetaData musi mieć długość odpowiadającą argumentowi tablicy ParameterDirection.</value>
-  </data>
-  <data name="ADP_AdapterMappingExceptionMessage" xml:space="preserve">
-    <value>Błąd mapowania karty danych.</value>
-  </data>
-  <data name="ADP_DataAdapterExceptionMessage" xml:space="preserve">
-    <value>Błąd karty danych.</value>
-  </data>
-  <data name="ADP_DBConcurrencyExceptionMessage" xml:space="preserve">
-    <value>Naruszenie współbieżności bazy danych.</value>
-  </data>
   <data name="ADP_OperationAborted" xml:space="preserve">
     <value>Operacja przerwana.</value>
   </data>
   <data name="ADP_OperationAbortedExceptionMessage" xml:space="preserve">
     <value>Operacja została przerwana z powodu wyjątku (aby uzyskać szczegółowe informacje, zobacz element InnerException).</value>
-  </data>
-  <data name="DataAdapter_AcceptChangesDuringFill" xml:space="preserve">
-    <value>Określa, czy operacja Fill wywoła element DataRow.AcceptChanges.</value>
-  </data>
-  <data name="DataAdapter_AcceptChangesDuringUpdate" xml:space="preserve">
-    <value>Określa, czy operacja Update wywoła element DataRow.AcceptChanges.</value>
-  </data>
-  <data name="DataAdapter_ContinueUpdateOnError" xml:space="preserve">
-    <value>Określa, czy kontynuować do następnego wiersza danych DataRow, gdy stanem zdarzeń Update – RowUpdating i RowUpdated – jest stan Status UpdateStatus.ErrorsOccurred.</value>
-  </data>
-  <data name="DataAdapter_FillLoadOption" xml:space="preserve">
-    <value>Sposób wypełniania elementu DataTable z elementu DataReader.</value>
-  </data>
-  <data name="DataAdapter_MissingMappingAction" xml:space="preserve">
-    <value>Akcja podejmowana, gdy w elemencie TableMappings brakuje tabeli albo kolumny.</value>
-  </data>
-  <data name="DataAdapter_MissingSchemaAction" xml:space="preserve">
-    <value>Akcja podejmowana, gdy w elemencie DataSet brakuje tabeli albo kolumny.</value>
-  </data>
-  <data name="DataAdapter_TableMappings" xml:space="preserve">
-    <value>Określa, w jaki sposób mapować tabelę źródłową do tabeli DataSet.</value>
-  </data>
-  <data name="DataAdapter_FillError" xml:space="preserve">
-    <value>Zdarzenie wyzwalane, gdy wystąpi odwracalny błąd podczas operacji Fill.</value>
-  </data>
-  <data name="DataAdapter_ReturnProviderSpecificTypes" xml:space="preserve">
-    <value>Czy operacja Fill ma zwracać wartości określone dla dostawcy, czy też wspólne wartości CLSCompliant.</value>
-  </data>
-  <data name="DataColumnMapping_DataSetColumn" xml:space="preserve">
-    <value>DataColumn.ColumnName</value>
-  </data>
-  <data name="DataColumnMapping_SourceColumn" xml:space="preserve">
-    <value>Nazwa kolumny źródłowej – uwzględniana wielkość liter.</value>
-  </data>
-  <data name="DataColumnMappings_Count" xml:space="preserve">
-    <value>Liczba elementów w kolekcji</value>
-  </data>
-  <data name="DataColumnMappings_Item" xml:space="preserve">
-    <value>Określony obiekt DataColumnMapping.</value>
-  </data>
-  <data name="DataTableMapping_ColumnMappings" xml:space="preserve">
-    <value>Mapowania poszczególnych kolumn przy dopasowywaniu mapowania tej tabeli.</value>
-  </data>
-  <data name="DataTableMapping_DataSetTable" xml:space="preserve">
-    <value>DataTable.TableName</value>
-  </data>
-  <data name="DataTableMapping_SourceTable" xml:space="preserve">
-    <value>Nazwa tabeli źródłowej DataTableMapping. W tej nazwie jest uwzględniana wielkość liter.</value>
-  </data>
-  <data name="DataTableMappings_Count" xml:space="preserve">
-    <value>Liczba elementów w kolekcji</value>
-  </data>
-  <data name="DataTableMappings_Item" xml:space="preserve">
-    <value>Określony obiekt DataTableMapping</value>
   </data>
   <data name="DbDataAdapter_DeleteCommand" xml:space="preserve">
     <value>Używane podczas aktualizacji na potrzeby usuniętych wierszy w elemencie DataSet.</value>
@@ -3090,62 +918,8 @@
   <data name="DbDataAdapter_RowUpdating" xml:space="preserve">
     <value>Zdarzenie wyzwalane po każdym elemencie DataRow podczas operacji Update.</value>
   </data>
-  <data name="DbDataAdapter_UpdateBatchSize" xml:space="preserve">
-    <value>Liczba wierszy do przetwarzania partiami przed wykonywaniem względem źródła danych.</value>
-  </data>
-  <data name="DbTable_Connection" xml:space="preserve">
-    <value>Połączenie używane, jeśli polecenia Select/Insert/Update/DeleteCommands nie mają jeszcze połączenia.</value>
-  </data>
-  <data name="DbTable_DeleteCommand" xml:space="preserve">
-    <value>Używane podczas operacji Update dla usuniętych wierszy w elemencie DataTable.</value>
-  </data>
-  <data name="DbTable_InsertCommand" xml:space="preserve">
-    <value>Używane podczas operacji Update na potrzeby nowych wierszy w tabeli DataTable.</value>
-  </data>
-  <data name="DbTable_SelectCommand" xml:space="preserve">
-    <value>Używane podczas operacji Fill.</value>
-  </data>
-  <data name="DbTable_UpdateCommand" xml:space="preserve">
-    <value>Używane podczas operacji Update na potrzeby zmodyfikowanych wierszy w tabeli DataTable.</value>
-  </data>
-  <data name="DbTable_ReturnProviderSpecificTypes" xml:space="preserve">
-    <value>Czy operacja Fill ma zwracać wartości określone dla dostawcy, czy też wspólne wartości CLSCompliant.</value>
-  </data>
-  <data name="DbTable_TableMapping" xml:space="preserve">
-    <value>Określa sposób mapowania tabeli źródłowej do elementu DataTable.</value>
-  </data>
-  <data name="DbTable_ConflictDetection" xml:space="preserve">
-    <value>Sposób generowania poleceń Insert/Update/DeleteCommands, gdy nie zostały ustawione przez użytkownika.</value>
-  </data>
-  <data name="DbTable_UpdateBatchSize" xml:space="preserve">
-    <value>Liczba wierszy do przetwarzania partiami przed wykonywaniem względem źródła danych.</value>
-  </data>
-  <data name="DbConnectionString_ConnectionString" xml:space="preserve">
-    <value>Parametry połączenia użyte do nawiązania połączenia ze źródłem danych.</value>
-  </data>
-  <data name="DbConnectionString_Driver" xml:space="preserve">
-    <value>Nazwa sterownika ODBC do użycia podczas połączenia ze źródłem danych Data Source.</value>
-  </data>
-  <data name="DbConnectionString_DSN" xml:space="preserve">
-    <value>Nazwa DSN do użycia podczas połączenia ze źródłem danych Data Source.</value>
-  </data>
-  <data name="DbConnectionString_AdoNetPooler" xml:space="preserve">
-    <value>Gdy ma wartość true, wskazuje, że powinny być używane funkcje zarządzanej obsługi puli połączeń.</value>
-  </data>
-  <data name="DbConnectionString_FileName" xml:space="preserve">
-    <value>Plik UDL do użycia podczas połączenia ze źródłem danych Data Source.</value>
-  </data>
-  <data name="DbConnectionString_OleDbServices" xml:space="preserve">
-    <value>Określa, które usługi bazy danych OLE DB Services włączyć lub wyłączyć dla dostawcy OleDb Provider.</value>
-  </data>
-  <data name="DbConnectionString_Provider" xml:space="preserve">
-    <value>Nazwa dostawcy bazy danych OLE DB do użycia podczas połączenia ze źródłem danych Data Source.</value>
-  </data>
   <data name="DbConnectionString_ApplicationName" xml:space="preserve">
     <value>Nazwa aplikacji.</value>
-  </data>
-  <data name="DbConnectionString_AsynchronousProcessing" xml:space="preserve">
-    <value>Gdy ma wartość true, włącza użycie funkcji asynchroniczności w dostawcy danych programu .NET Framework.</value>
   </data>
   <data name="DbConnectionString_AttachDBFilename" xml:space="preserve">
     <value>Nazwa pliku głównego (wraz z pełną nazwą ścieżki) bazą danych możliwej do dołączenia.</value>
@@ -3155,9 +929,6 @@
   </data>
   <data name="DbConnectionString_ConnectionReset" xml:space="preserve">
     <value>Gdy ma wartość true, wskazuje, że stan połączenia jest resetowany w przypadku usunięcia z puli.</value>
-  </data>
-  <data name="DbConnectionString_ContextConnection" xml:space="preserve">
-    <value>Gdy ma wartość true, wskazuje, że połączenie powinno pochodzić z kontekstu programu Sql Server.  Dostępne tylko w przypadku uruchamiania w procesie programu Sql Server.</value>
   </data>
   <data name="DbConnectionString_CurrentLanguage" xml:space="preserve">
     <value>Nazwa rekordu języka programu SQL Server.</value>
@@ -3252,53 +1023,8 @@
   <data name="DbConnectionString_Authentication" xml:space="preserve">
     <value>Określa metodę uwierzytelniania w programie SQL Server.</value>
   </data>
-  <data name="DbConnectionString_Certificate" xml:space="preserve">
-    <value>Określony certyfikat klienta na potrzeby uwierzytelniania w programie SQL Server.  </value>
-  </data>
-  <data name="OdbcConnection_ConnectionString" xml:space="preserve">
-    <value>Informacje używane do połączenia ze źródłem danych.</value>
-  </data>
-  <data name="OdbcConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Bieżąca wartość limitu czasu, niemożliwa do ustawienia w elemencie ConnectionString.</value>
-  </data>
-  <data name="OdbcConnection_Database" xml:space="preserve">
-    <value>Bieżąca wartość wykazu źródeł danych, „Database=X” w parametrach połączenia.</value>
-  </data>
-  <data name="OdbcConnection_DataSource" xml:space="preserve">
-    <value>Bieżące źródło danych, „Server=X” w parametrach połączenia.</value>
-  </data>
-  <data name="OdbcConnection_Driver" xml:space="preserve">
-    <value>Bieżący sterownik ODBC.</value>
-  </data>
-  <data name="OdbcConnection_ServerVersion" xml:space="preserve">
-    <value>Wersja produktu, do której uzyskuje dostęp sterownik ODBC.</value>
-  </data>
-  <data name="OleDbConnection_ConnectionString" xml:space="preserve">
-    <value>Informacje używane do połączenia ze źródłem danych.</value>
-  </data>
-  <data name="OleDbConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Bieżąca wartość limitu czasu połączenia, „Connect Timeout=X” w elemencie ConnectionString.</value>
-  </data>
-  <data name="OleDbConnection_Database" xml:space="preserve">
-    <value>Bieżąca wartość wykazu źródeł danych, „Initial Catalog=X” w parametrach połączenia.</value>
-  </data>
-  <data name="OleDbConnection_DataSource" xml:space="preserve">
-    <value>Bieżące źródło danych, „Data Source=X” w parametrach połączenia.</value>
-  </data>
-  <data name="OleDbConnection_Provider" xml:space="preserve">
-    <value>Bieżący identyfikator ProgID dostawcy OLE DB, „Provider=X” w parametrach połączenia.</value>
-  </data>
-  <data name="OleDbConnection_ServerVersion" xml:space="preserve">
-    <value>Wersja produktu, do której uzyskuje dostęp dostawca OLE DB.</value>
-  </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
     <value>Token dostępu używany na potrzeby uwierzytelniania.</value>
-  </data>
-  <data name="SqlConnection_Asynchronous" xml:space="preserve">
-    <value>Stan połączenia, synchroniczny lub asynchroniczny.  „Przetwarzanie asynchroniczne=x” w parametrach połączenia.</value>
-  </data>
-  <data name="SqlConnection_Replication" xml:space="preserve">
-    <value>Informacje używane do połączenia na potrzeby replikacji.</value>
   </data>
   <data name="SqlConnection_ConnectionString" xml:space="preserve">
     <value>Informacje używane do połączenia ze źródłem danych DataSource, na przykład „Data Source=x;Initial Catalog=x;Integrated Security=SSPI”.</value>
@@ -3323,9 +1049,6 @@
   </data>
   <data name="SqlConnection_StatisticsEnabled" xml:space="preserve">
     <value>Gromadzenie danych statystycznych dla tego połączenia.</value>
-  </data>
-  <data name="SqlConnection_CustomColumnEncryptionKeyStoreProviders" xml:space="preserve">
-    <value>Niestandardowi dostawcy magazynu kluczy szyfrowania kolumn.</value>
   </data>
   <data name="SqlConnection_ClientConnectionId" xml:space="preserve">
     <value>Identyfikator GUID służący do reprezentowania połączenia fizycznego.</value>
@@ -3363,98 +1086,8 @@
   <data name="SqlCommand_NotificationAutoEnlist" xml:space="preserve">
     <value>Automatyczne umieszczanie w powiadomieniach używane przez program Microsoft SQL Server.</value>
   </data>
-  <data name="DbCommandBuilder_ConflictOption" xml:space="preserve">
-    <value>Sposób automatycznego generowania klauzuli where dla poleceń Update i Delete, gdy nie został określony przez użytkownika.</value>
-  </data>
-  <data name="DbCommandBuilder_CatalogLocation" xml:space="preserve">
-    <value>Wskazuje pozycję nazwy wykazu w kwalifikowanej nazwie tabeli w poleceniu tekstowym.</value>
-  </data>
-  <data name="DbCommandBuilder_CatalogSeparator" xml:space="preserve">
-    <value>Znak oddzielający nazwę wykazu od pozostałej części identyfikatora w poleceniu tekstowym.</value>
-  </data>
-  <data name="DbCommandBuilder_SchemaSeparator" xml:space="preserve">
-    <value>Znak oddzielający nazwę schematu od pozostałej części identyfikatora w poleceniu tekstowym.</value>
-  </data>
-  <data name="DbCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Ciąg prefiksu otaczający obiekty sql.</value>
-  </data>
-  <data name="DbCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Ciąg sufiksu otaczający obiekty sql.</value>
-  </data>
-  <data name="DbCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>Element DataAdapter, dla którego mają być automatycznie generowane polecenia.</value>
-  </data>
-  <data name="DbCommandBuilder_SchemaLocation" xml:space="preserve">
-    <value>Użyj schematu z elementu DataTable lub polecenia SelectCommand.</value>
-  </data>
-  <data name="DbCommandBuilder_SetAllValues" xml:space="preserve">
-    <value>Sposób automatycznego generowania klauzuli set dla polecenia Update, gdy nie został określony przez użytkownika.</value>
-  </data>
-  <data name="OdbcCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>Element DataAdapter, dla którego mają być automatycznie generowane elementy OdbcCommands</value>
-  </data>
-  <data name="OdbcCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Znak używany w poleceniu tekstowym jako cudzysłów otwierający dla identyfikatorów, które zawierają znaki specjalne.</value>
-  </data>
-  <data name="OdbcCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Znak używany w poleceniu tekstowym jako cudzysłów zamykający dla identyfikatorów, które zawierają znaki specjalne.</value>
-  </data>
-  <data name="OleDbCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>Element DataAdapter, dla którego mają być automatycznie generowane polecenia OleDbCommands</value>
-  </data>
-  <data name="OleDbCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>Separator dziesiętny używany w literałach numerycznych.</value>
-  </data>
-  <data name="OleDbCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Ciąg prefiksu otaczający obiekty sql</value>
-  </data>
-  <data name="OleDbCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Ciąg sufiksu otaczający obiekty sql</value>
-  </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
     <value>Element DataAdapter, dla którego mają być automatycznie generowane elementy SqlCommands</value>
-  </data>
-  <data name="SqlCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>Separator dziesiętny używany w literałach numerycznych.</value>
-  </data>
-  <data name="SqlCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Znak używany w poleceniu tekstowym jako cudzysłów otwierający dla identyfikatorów, które zawierają znaki specjalne.</value>
-  </data>
-  <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Znak używany w poleceniu tekstowym jako cudzysłów zamykający dla identyfikatorów, które zawierają znaki specjalne.</value>
-  </data>
-  <data name="DbDataParameter_Precision" xml:space="preserve">
-    <value>W przypadku korzystania ze scenariuszy Prepare, FillSchema i CommandBuilder opcję tę należy ustawić tylko dla parametrów numerycznych i dziesiętnych.</value>
-  </data>
-  <data name="DbDataParameter_Scale" xml:space="preserve">
-    <value>W przypadku korzystania ze scenariuszy Prepare, FillSchema i CommandBuilder opcję tę należy ustawić tylko dla parametrów numerycznych i dziesiętnych.</value>
-  </data>
-  <data name="OdbcParameter_OdbcType" xml:space="preserve">
-    <value>Macierzysty typ parametru.</value>
-  </data>
-  <data name="OleDbParameter_OleDbType" xml:space="preserve">
-    <value>Macierzysty typ parametru.</value>
-  </data>
-  <data name="SqlParameter_ParameterName" xml:space="preserve">
-    <value>Nazwa parametru, np. „@p1”</value>
-  </data>
-  <data name="SqlParameter_SqlDbType" xml:space="preserve">
-    <value>Macierzysty typ parametru.</value>
-  </data>
-  <data name="SqlParameter_TypeName" xml:space="preserve">
-    <value>Nazwa serwera dla typu.</value>
-  </data>
-  <data name="SqlParameter_Offset" xml:space="preserve">
-    <value>Przesunięcie w typach danych o zmiennej długości.</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionDatabase" xml:space="preserve">
-    <value>XmlSchemaCollectionDatabase</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionOwningSchema" xml:space="preserve">
-    <value>XmlSchemaCollectionOwningSchema</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionName" xml:space="preserve">
-    <value>XmlSchemaCollectionName</value>
   </data>
   <data name="SqlParameter_UnsupportedTVPOutputParameter" xml:space="preserve">
     <value>Parametr ParameterDirection „{0}” określony dla parametru „{1}” nie jest obsługiwany. Parametry z wartościami przechowywanych w tabeli obsługują tylko parametr ParameterDirection.Input.</value>
@@ -3468,9 +1101,6 @@
   <data name="SqlParameter_UnexpectedTypeNameForNonStruct" xml:space="preserve">
     <value>Określono element TypeName dla parametru „{0}”.  Właściwość TypeName może być ustawiona tylko dla parametrów strukturalnych.</value>
   </data>
-  <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
-    <value>Typ SqlDbType.Structured jest obsługiwany tylko w przypadku typów o wielu wartościach.</value>
-  </data>
   <data name="NullSchemaTableDataTypeNotSupported" xml:space="preserve">
     <value>Kolumna DateType pola {0} w tabeli schematów ma wartość null.  Element DataType musi mieć wartość inną niż null.</value>
   </data>
@@ -3483,17 +1113,8 @@
   <data name="SQL_EnumeratedRecordFieldCountChanged" xml:space="preserve">
     <value>Liczba pól w rekordzie „{0}” jest niezgodna z liczbą w rekordzie oryginalnym.</value>
   </data>
-  <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
-    <value>zakres: 0–8000</value>
-  </data>
   <data name="SQLUDT_Unexpected" xml:space="preserve">
     <value>napotkano nieoczekiwany błąd dostawcy danych SqlClient. {0}</value>
-  </data>
-  <data name="SQLUDT_InvalidDbId" xml:space="preserve">
-    <value>Nie można uzyskać informacji Type Info dla elementu {0},{1}</value>
-  </data>
-  <data name="SQLUDT_CantLoadAssembly" xml:space="preserve">
-    <value>Dostawca nie może załadować następującego zestawu: {0}.</value>
   </data>
   <data name="SQLUDT_InvalidUdtTypeName" xml:space="preserve">
     <value>Właściwość UdtTypeName musi być ustawiona dla parametrów UDT.</value>
@@ -3504,71 +1125,8 @@
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
     <value>Określony typ nie został zarejestrowany na serwerze docelowym {0}.</value>
   </data>
-  <data name="SQLUDT_InWhereClause" xml:space="preserve">
-    <value>Parametry UDT nie są dozwolone w klauzuli where, chyba że są częścią klucza podstawowego.</value>
-  </data>
-  <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
-    <value>„{0}” jest nieprawidłowym typem zdefiniowanym przez użytkownika, przyczyna: {1}.</value>
-  </data>
-  <data name="SqlUdtReason_MultipleSerFormats" xml:space="preserve">
-    <value>obsługuje zarówno formaty w pamięci, jak i formaty zdefiniowane przez użytkownika</value>
-  </data>
-  <data name="SqlUdtReason_CannotSupportNative" xml:space="preserve">
-    <value>Nie można obsłużyć formatu macierzystego.</value>
-  </data>
-  <data name="SqlUdtReason_CannotSupportUserDefined" xml:space="preserve">
-    <value>nie implementuje interfejsu IBinarySerialize</value>
-  </data>
-  <data name="SqlUdtReason_NotSerializable" xml:space="preserve">
-    <value>nie można serializować</value>
-  </data>
-  <data name="SqlUdtReason_NoPublicConstructors" xml:space="preserve">
-    <value>brak konstruktorów publicznych</value>
-  </data>
-  <data name="SqlUdtReason_NotNullable" xml:space="preserve">
-    <value>nie implementuje interfejsu INullable</value>
-  </data>
-  <data name="SqlUdtReason_NoPublicConstructor" xml:space="preserve">
-    <value>nie ma konstruktora publicznego</value>
-  </data>
   <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
     <value>brak atrybutu UDT</value>
-  </data>
-  <data name="SqlUdtReason_MaplessNotYetSupported" xml:space="preserve">
-    <value>Serializacja bez mapowania nie jest jeszcze obsługiwana.</value>
-  </data>
-  <data name="SqlUdtReason_ParseMethodMissing" xml:space="preserve">
-    <value>brak metody „public static x Parse(System.Data.SqlTypes.SqlString)”</value>
-  </data>
-  <data name="SqlUdtReason_ToStringMethodMissing" xml:space="preserve">
-    <value>brak metody „public override string ToString()”</value>
-  </data>
-  <data name="SqlUdtReason_NullPropertyMissing" xml:space="preserve">
-    <value>brak metody „public static x Null { get; }”</value>
-  </data>
-  <data name="SqlUdtReason_NativeFormatNoFieldSupport" xml:space="preserve">
-    <value>Format macierzysty nie obsługuje pól (jawnie ani przez inne pole) typu „{0}”</value>
-  </data>
-  <data name="SqlUdtReason_TypeNotPublic" xml:space="preserve">
-    <value>Typ nie jest publiczny</value>
-  </data>
-  <data name="SqlUdtReason_NativeUdtNotSequentialLayout" xml:space="preserve">
-    <value>Natywny układ UDT nie jest układem sekwencyjnym z powodu typu „{0}”</value>
-  </data>
-  <data name="SqlUdtReason_NativeUdtMaxByteSize" xml:space="preserve">
-    <value>Format macierzysty UDT (Native UDT) określa maksymalny rozmiar w bajtach (byte)</value>
-  </data>
-  <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
-    <value>pole „{0}” jest oznaczone jako nieserializowane</value>
-  </data>
-  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
-    <value>Typ pola „{0}” jest oznaczony jako układ jawny, co jest niedozwolone w formacie natywnym</value>
-  </data>
-  <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
-    <value>Odwołania do zestawów mające wiele wartości muszą mieć niezerowy identyfikator zestawu.</value>
-  </data>
-  <data name="SQLTVP_TableTypeCanOnlyBeParameter" xml:space="preserve">
-    <value>Typy strukturalne o wielu wartościach mogą być używane tylko dla parametrów i nie mogą być zagnieżdżane w innych typach.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
     <value>Nazwa ścieżki jest nieprawidłowa.</value>
@@ -3585,9 +1143,6 @@
   <data name="SqlDelegatedTransaction_PromotionFailed" xml:space="preserve">
     <value>Błąd podczas próby podwyższenia poziomu transakcji.</value>
   </data>
-  <data name="SqlDependency_SqlDependency" xml:space="preserve">
-    <value>Obiekt zależności używany do obierania powiadomień dotyczących zapytań.</value>
-  </data>
   <data name="SqlDependency_HasChanges" xml:space="preserve">
     <value>Właściwość wskazująca, czy dana zależność jest nieprawidłowa.</value>
   </data>
@@ -3599,9 +1154,6 @@
   </data>
   <data name="SqlDependency_AddCommandDependency" xml:space="preserve">
     <value>Dodawanie polecenia do istniejącego obiektu zależności.</value>
-  </data>
-  <data name="SqlDependency_Duplicate" xml:space="preserve">
-    <value>Polecenie jest już skojarzone z innym obiektem zależności. Nie można zastąpić.</value>
   </data>
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Ten obiekt SqlCommand został już skojarzony z innym obiektem SqlDependency.</value>
@@ -3629,12 +1181,6 @@
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
     <value>Określony limit czasu jest nieprawidłowy. Limit czasu nie może być &lt; 0.</value>
-  </data>
-  <data name="SQLNotify_ErrorFormat" xml:space="preserve">
-    <value>Błąd powiadomienia. Typ={0}, Info={1}, Źródło={2}.</value>
-  </data>
-  <data name="SqlMetaData_NoMetadata" xml:space="preserve">
-    <value>Element GetMetaData nie jest prawidłowy dla tego elementu SqlDbType.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
     <value>Typ dbType {0} jest nieprawidłowy dla tego konstruktora.</value>
@@ -4104,9 +1650,6 @@
   <data name="TCE_NullPlainText" xml:space="preserve">
     <value>Błąd wewnętrzny. Zwykły tekst nie może mieć wartości null.</value>
   </data>
-  <data name="TCE_VeryLargeCiphertext" xml:space="preserve">
-    <value>Nie można zaszyfrować. Szyfrowanie spowodowało {0} B szyfru, który przekracza maksymalny dozwolony limit {1} B. Określona wartość w postaci zwykłego tekstu jest prawdopodobnie za duża (rozmiar zwykłego tekstu: {2} B).</value>
-  </data>
   <data name="TCE_NullCipherText" xml:space="preserve">
     <value>Błąd wewnętrzny. Tekst szyfrowany nie może mieć wartości null.</value>
   </data>
@@ -4224,9 +1767,6 @@
   <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
     <value>Program SQL Server nie zwrócił informacji o zaświadczaniach. Typ enklawy to „{0}”, a adres URL zaświadczania enklawy to „{1}”.</value>
   </data>
-  <data name="TCE_UnableToEstablishSecureChannel" xml:space="preserve">
-    <value>Nie można ustanowić bezpiecznego kanału. Komunikat o błędzie: {0}</value>
-  </data>
   <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
     <value>Błąd wewnętrzny. Argument o wartości null „{0}” określony podczas konstruowania obiektu typu „{1}”. Element „{0}” nie może mieć wartości null.</value>
   </data>
@@ -4242,15 +1782,6 @@
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
     <value>Określa punkt końcowy usługi zaświadczania enklawy, która będzie używana do sprawdzenia, czy enklawa skonfigurowana w wystąpieniu programu SQL Server dla obliczeń w kolumnach bazy danych zaszyfrowanych przy użyciu funkcji Always Encrypted jest prawidłowa i bezpieczna.</value>
   </data>
-  <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>Nie można odczytać sekcji konfiguracji dla dostawców enklawy. Upewnij się, że sekcja jest poprawnie sformatowana w pliku konfiguracji aplikacji. Komunikat o błędzie: {0}</value>
-  </data>
-  <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia dostawcy enklawy typu „{1}” dla nazwy „{0}”. Komunikat o błędzie: {2} </value>
-  </data>
-  <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
-    <value>Błąd wewnętrzny. Właściwość SqlColumnEncryptionEnchaveProviderName nie może mieć wartości null ani być pusta.</value>
-  </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
     <value>Wystąpił błąd podczas odczytywania zestawu wyników „{0}”. Adres URL zaświadczania nie został określony w parametrach połączenia, ale zapytanie wymaga obliczeń enklawy.  Typ enklawy to „{1}”. </value>
   </data>
@@ -4259,9 +1790,6 @@
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Błąd wewnętrzny. Typ enklawy odebrany z programu SQL Server ma wartość null lub jest pusty podczas wykonywania zapytania wymagającego obliczeń enklawy.</value>
-  </data>
-  <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>Wykonanie zapytania wymaga obliczeń enklawy, ale w konfiguracji aplikacji brakuje sekcji dostawcy enklawy.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Nie znaleziono dostawcy enklawy dla typu enklawy „{0}” i protokołu zaświadczania „{1}”. Określ poprawny protokół zaświadczania w parametrach połączenia. </value>
@@ -4320,9 +1848,6 @@
   <data name="TCE_DbConnectionString_ColumnEncryptionSetting" xml:space="preserve">
     <value>Domyślne ustawienie szyfrowania kolumny dla wszystkich poleceń w ramach połączenia.</value>
   </data>
-  <data name="TCE_SqlParameter_ForceColumnEncryption" xml:space="preserve">
-    <value>Wymusza szyfrowanie parametru przed wysłaniem poufnych danych na serwer. </value>
-  </data>
   <data name="TCE_SqlConnection_TrustedColumnMasterKeyPaths" xml:space="preserve">
     <value>Obiekt słownika zawierający nazwy programu SQL Server i ich zaufane ścieżki klucza głównego kolumny.</value>
   </data>
@@ -4331,9 +1856,6 @@
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Nawiązywanie połączenia z dublowanym wystąpieniem programu SQL Server z użyciem opcji połączenia ApplicationIntent ReadOnly jest nieobsługiwane.</value>
-  </data>
-  <data name="SQLROR_UnexpectedRoutingInfo" xml:space="preserve">
-    <value>Odebrano nieoczekiwane informacje routingu.</value>
   </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Odebrano nieprawidłowe informacje routingu.</value>
@@ -4485,9 +2007,6 @@
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
     <value>Nieobsługiwane uwierzytelnianie określone w tym kontekście: {0}</value>
   </data>
-  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Upłynął limit czasu uwierzytelniania interaktywnego usługi Active Directory. Użytkownik potrzebował zbyt dużo czasu, aby odpowiedzieć na żądanie uwierzytelnienia.</value>
-  </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
     <value>Nie można użyć opcji „Authentication=Active Directory Interactive”, jeśli właściwość Credential została ustawiona.</value>
   </data>
@@ -4496,9 +2015,6 @@
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
     <value>Identyfikator procesu serwera (SPID) aktywnego połączenia.</value>
-  </data>
-  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Upłynął limit czasu uwierzytelniania przepływu kodu urządzenia usługi Active Directory. Użytkownik potrzebował zbyt dużo czasu, aby odpowiedzieć na żądanie uwierzytelnienia.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Nie można ustawić właściwości Credential, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Device Code Flow”.</value>
@@ -4533,9 +2049,6 @@
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
     <value>Dla żądanej akcji są obsługiwane tylko tablice jednowymiarowe.</value>
   </data>
-  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Nie można usunąć określonego elementu, ponieważ nie znaleziono go w określonej kolekcji.</value>
-  </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Wymagana jest liczba nieujemna.</value>
   </data>
@@ -4563,20 +2076,8 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Nie można ustawić właściwości AccessTokenCallback, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Default”.</value>
   </data>
-  <data name="event_OperationReturnedSomething" xml:space="preserve">
-    <value>{0} zwrócono {1}.</value>
-  </data>
-  <data name="net_auth_message_not_encrypted" xml:space="preserve">
-    <value>Błąd protokołu: odebrana wiadomość zawiera prawidłowy podpis, ale nie została zaszyfrowana, czego wymagają ustawienia obowiązującego poziomu zabezpieczeń.</value>
-  </data>
-  <data name="net_log_operation_failed_with_error" xml:space="preserve">
-    <value>Operacja {0} nie powiodła się z powodu błędu: {1}.</value>
-  </data>
   <data name="net_MethodNotImplementedException" xml:space="preserve">
     <value>Metoda ta nie jest implementowana przez tę klasę.</value>
-  </data>
-  <data name="net_securitypackagesupport" xml:space="preserve">
-    <value>Żądany pakiet zabezpieczeń nie jest obsługiwany.</value>
   </data>
   <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
     <value>Nieprawidłowy typ połączenia physicalConnection.</value>
@@ -4584,14 +2085,8 @@
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Wystąpił wyjątek podczas próby ustawienia przełącznika AppContext „{0}”={1}.</value>
   </data>
-  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
-    <value>Typ {0} nie jest obsługiwany na tej platformie.</value>
-  </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Tryb niezmienny globalizacji nie jest obsługiwany.</value>
-  </data>
-  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
-    <value>Nie można uwierzytelnić przy użyciu protokołu Kerberos. Upewnij się, że protokół Kerberos został zainicjowany na kliencie za pomocą funkcji „kinit”, a nazwa główna usługi została zarejestrowana dla serwera Microsoft SQL Server, aby umożliwić uwierzytelnianie protokołu Kerberos.</value>
   </data>
   <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
     <value>Słowo kluczowe „Biblioteka sieciowa” nie jest obsługiwane na tej platformie, zamiast tego należy poprzedzić „Źródło danych” żądanym protokołem („tcp:” dla połączenia TCP lub „np:” dla połączenia typu Nazwany potok).</value>
@@ -4599,50 +2094,17 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Gniazdo nie zgłosiło oczekiwanego elementu „{0}” z kodem błędu „{1}”.</value>
   </data>
-  <data name="SQL_UnsupportedFeature" xml:space="preserve">
-    <value>Serwer próbuje użyć funkcji, która nie jest obsługiwana na tej platformie.</value>
-  </data>
   <data name="SQL_UnsupportedKeyword" xml:space="preserve">
     <value>Słowo kluczowe „{0}” nie jest obsługiwane na tej platformie.</value>
   </data>
   <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Aktualnie załadowana biblioteka System.Transactions.dll nie obsługuje transakcji globalnych.</value>
   </data>
-  <data name="SQL_UnsupportedToken" xml:space="preserve">
-    <value>Odebrano nieobsługiwany token „{0}” podczas odczytywania danych z serwera.</value>
-  </data>
-  <data name="SSPIInvalidHandleType" xml:space="preserve">
-    <value>„{0}” nie jest obsługiwanym typem uchwytu.</value>
-  </data>
   <data name="SqlFileStream_NotSupported" xml:space="preserve">
     <value>Obiekt SqlFileStream nie jest obsługiwany na tej platformie.</value>
   </data>
   <data name="LocalDBNotSupported" xml:space="preserve">
     <value>Usługa LocalDB nie jest obsługiwana na tej platformie.</value>
-  </data>
-  <data name="net_context_buffer_too_small" xml:space="preserve">
-    <value>Za mało miejsca w buforze. Wymagane: {0} wartość rzeczywista: {1}.</value>
-  </data>
-  <data name="net_gssapi_operation_failed" xml:space="preserve">
-    <value>Operacja GSSAPI nie powiodła się. Stan: {0} (Stan pomocniczy: {1}).</value>
-  </data>
-  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
-    <value>Operacja GSSAPI nie powiodła się z powodu błędu — {0} ({1}).</value>
-  </data>
-  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
-    <value>Brak obsługi powiązania kanałów w systemach operacyjnych innych niż Windows.</value>
-  </data>
-  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
-    <value>Nazwa obiektu docelowego nie może być pusta, jeśli zostaną przekazane poświadczenia domyślne.</value>
-  </data>
-  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
-    <value>Żądany poziom ochrony nie jest obsługiwany przez aktualnie zainstalowane wdrożenie interfejsu GSSAPI.</value>
-  </data>
-  <data name="net_nego_server_not_supported" xml:space="preserve">
-    <value>Implementacja serwera nie jest obsługiwana.</value>
-  </data>
-  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
-    <value>Uwierzytelnianie NTLM nie jest możliwe w przypadku poświadczeń domyślnych na tej platformie.</value>
   </data>
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>Gdy jest używana przez element DataAdapter.Update, wartość parametru jest zmieniana z DBNull.Value na (Int32)1 lub (Int32)0, jeśli jest niezerowa.</value>
@@ -4667,9 +2129,6 @@
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
     <value>Przekroczono maksymalny rozmiar buforu: {0}</value>
-  </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Brak elementu DataColumn {0} dla elementu SourceColumn {2}.</value>
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>Lista SqlBatchCommand nie została zainicjowana.</value>

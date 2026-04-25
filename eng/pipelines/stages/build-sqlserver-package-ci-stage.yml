@@ -1,0 +1,83 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Microsoft.SqlServer.Server package and publishes the
+# resulting NuGet packages as pipeline artifacts.
+#
+# The NuGet packages have the following properties:
+#
+#   Name:     Microsoft.SqlServer.Server
+#   Version:  <sqlServerPackageVersion> (from parameter)
+#
+# The following NuGet packages are published:
+#
+#   Microsoft.SqlServer.Server.<version>.nupkg
+#   Microsoft.SqlServer.Server.<version>.snupkg (symbols)
+#
+# The packages are published to pipeline artifacts with the name specified by
+# the sqlServerArtifactsName parameter.
+#
+# This template defines a stage named 'build_sqlserver_package_stage' that
+# can be depended on by downstream stages.
+
+parameters:
+
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The name of the pipeline artifacts to publish.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The version to apply to the SqlServer NuGet package and DLLs.
+  - name: sqlServerPackageVersion
+    type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+
+  - stage: build_sqlserver_package_stage
+    displayName: Build SqlServer Package
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
+
+    jobs:
+      - template: /eng/pipelines/jobs/pack-sqlserver-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
