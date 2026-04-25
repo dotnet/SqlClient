@@ -5511,9 +5511,8 @@ namespace Microsoft.Data.SqlClient
         internal TdsOperationStatus TryProcessCipherInfoTable(TdsParserStateObject stateObj, out SqlTceCipherInfoTable cipherTable)
         {
             // Read count
-            short tableSize = 0;
             cipherTable = null;
-            TdsOperationStatus result = stateObj.TryReadInt16(out tableSize);
+            TdsOperationStatus result = stateObj.TryReadUInt16(out ushort tableSize);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
