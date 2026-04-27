@@ -59,7 +59,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         );
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-            new SqlConnectionOptions("DataSource=localhost;"),
+            new SqlConnectionOptions("Data Source=localhost;"),
             new DbConnectionPoolKey("TestDataSource"),
             poolGroupOptions
         );
