@@ -1,51 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <!--
-    Additional project config is imported from parent Directory.Build.props
-    files.
-
-    Logging versioning information found in our sibling file LoggingVersions.props
-    is imported via tools/props/Versions.props.
-  -->
-
-  <!-- Target Config -->
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-  </PropertyGroup>
-
-  <!-- When we're not signing, we are permitted to expose our internals to tests. -->
-  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
-    <InternalsVisibleTo Include="$(AssemblyName).Test" />
-  </ItemGroup>
-
-  <!-- Compiler Config -->
-  <PropertyGroup>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <!-- Build Config -->
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Internal.Logging</AssemblyName>
-
-    <!--
-      Clear the root namespace since our directory structure doesn't match our
-      namespace definitions.  Otherwise, if omitted it would default to the
-      AssemblyName.
-    -->
-    <RootNamespace></RootNamespace>
-
-    <!--
-      We pin the AssemblyVersion of our package to the default major version
-      number, with all remaining parts set to 0.
-    -->
-    <AssemblyVersion>$(LoggingDefaultMajorVersion).0.0.0</AssemblyVersion>
-
-    <AssemblyFileVersion>$(LoggingAssemblyFileVersion)</AssemblyFileVersion>
-    <FileVersion>$(LoggingAssemblyFileVersion)</FileVersion>
-    <Version>$(LoggingPackageVersion)</Version>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- @TODO: Can we just change the one file namespace to Microsoft.Data.SqlClient.Internal.Logging -->
+    <RootNamespace>Microsoft.Data.SqlClient.Internal</RootNamespace>
+  </PropertyGroup>
+
+  <!-- CLS Compliance ================================================== -->
   <ItemGroup>
     <!-- Our API is CLS Compliant. -->
     <AssemblyAttribute Include="System.CLSCompliantAttribute">
@@ -53,36 +23,30 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- Build Output Config-->
+  <!-- Versioning ====================================================== -->
+  <Import Project="Versions.props" />
   <PropertyGroup>
-
-    <!--
-      The obj/ folder for each target framework.  This contains intermediate files used during the
-      build process.
-    -->
-    <IntermediateOutputPath>$(Artifacts)/obj/$(Configuration)/$(AssemblyName)</IntermediateOutputPath>
-
-    <!-- The bin/ folder for each target framework. This contains the final build artifacts. -->
-    <OutputPath>$(Artifacts)/bin/$(Configuration)/$(AssemblyName)</OutputPath>
-
-    <!--
-      Generate XML documentation from /// comments.  The compiler places the
-      XML file alongside the assembly in $(OutputPath).  SDK Pack then includes
-      this file automatically in the NuGet package under lib/<tfm>/.
-    -->
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
+    <AssemblyVersion>$(LoggingAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(LoggingFileVersion)</FileVersion>
+    <Version>$(LoggingPackageVersion)</Version>
   </PropertyGroup>
 
-  <!--
-    NuGet Package Config
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
 
-    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
-  -->
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/</OutputPath>
+  </PropertyGroup>
+
+  <!-- NuGet Package Config ============================================ -->
+  <!-- See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
   <PropertyGroup>
     <PackageId>$(AssemblyName)</PackageId>
-    <PackageVersion>$(LoggingPackageVersion)</PackageVersion>
-    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
@@ -111,18 +75,7 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
-  <!--
-    Generate ThisAssembly.cs which contains some version information that is
-    used at runtime and otherwise would not be available.
-  -->
-  <PropertyGroup>
-    <!--
-      We must specify a unique namespace for ThisAssembly since MDS puts its
-      ThisAssembly class in the System namespace, and we cannot have two
-      classes with the same name in the same namespace.
-    -->
-    <ThisAssemblyNamespace>$(AssemblyName)</ThisAssemblyNamespace>
-  </PropertyGroup>
+  <!-- CodeGen Targets ================================================= -->
   <Import Project="$(ToolsDir)/targets/GenerateThisAssemblyCs.targets" />
 
 </Project>

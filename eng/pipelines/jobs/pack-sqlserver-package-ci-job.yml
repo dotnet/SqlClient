@@ -1,0 +1,113 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This job packs the Microsoft.SqlServer.Server package into NuGet and symbols
+# packages and publishes them as a named pipeline artifact.
+#
+# This template defines a job named 'pack_sqlserver_package_job' that can be
+# depended on by downstream jobs.
+
+parameters:
+
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    type: string
+    values:
+    - Release
+    - Debug
+
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The name of the pipeline artifacts to publish.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The version to apply to the SqlServer NuGet package and its assemblies.
+  - name: sqlServerPackageVersion
+    type: string
+
+  # The list of upstream jobs to depend on.
+  - name: dependsOn
+    type: object
+    default: []
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+jobs:
+
+  - job: pack_sqlserver_package_job
+    displayName: Pack SqlServer Package
+
+    dependsOn: ${{ parameters.dependsOn }}
+
+    pool:
+      name: Azure Pipelines
+      vmImage: ubuntu-latest
+
+    variables:
+
+      # The SqlServer project file to use for all dotnet CLI commands.
+      - name: project
+        value: src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj
+
+      # The directory where the NuGet packages will be staged before being
+      # published as pipeline artifacts.
+      - name: dotnetPackagesDir
+        value: $(Build.StagingDirectory)/dotnetPackages
+
+      # Explicitly unset the $PLATFORM environment variable that is set by the
+      # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
+      - name: Platform
+        value: ''
+
+      # Do the same for $CONFIGURATION since we explicitly set it using our
+      # 'buildConfiguration' parameter, and we don't want the environment to
+      # override us.
+      - name: Configuration
+        value: ''
+
+    steps:
+
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+          displayName: '[Debug] Print Environment Variables'
+
+      # Install the .NET SDK.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+
+      # Create the NuGet packages.
+      - task: DotNetCoreCLI@2
+        displayName: Create NuGet Package
+        inputs:
+          command: pack
+          packagesToPack: $(project)
+          configurationToPack: ${{ parameters.buildConfiguration }}
+          packDirectory: $(dotnetPackagesDir)
+          verbosityToPack: ${{ parameters.dotnetVerbosity }}
+          buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Pipeline Artifact
+        inputs:
+          targetPath: $(dotnetPackagesDir)
+          artifactName: ${{ parameters.sqlServerArtifactsName }}
+          publishLocation: pipeline

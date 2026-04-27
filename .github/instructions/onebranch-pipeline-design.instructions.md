@@ -34,7 +34,7 @@ Defined in `stages/build-stages.yml`. Four build stages plus validation, ordered
 - **`build_abstractions`** (Stage 2) — Abstractions; `dependsOn: build_independent`; downloads Logging artifact
 - **`build_dependent`** (Stage 3) — SqlClient and Extensions.Azure in parallel; `dependsOn: build_abstractions`; downloads Abstractions + Logging artifacts
 - **`build_addons`** (Stage 4) — AKV Provider; `dependsOn: build_dependent`; downloads SqlClient + Abstractions + Logging artifacts
-- **`mds_package_validation`** — Validates signed SqlClient package; `dependsOn: build_dependent`; runs in parallel with Stage 4
+- **`sqlclient_package_validation`** — Validates signed SqlClient package; `dependsOn: build_dependent`; runs in parallel with Stage 4
 
 Each build job copies PDB files into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published pipeline artifact alongside the NuGet packages in `$(JOB_OUTPUT)/packages/`.
 
@@ -47,17 +47,16 @@ Stage conditional rules:
 
 ## Job Templates
 
-- **`build-signed-csproj-package-job.yml`** — Generic job for csproj-based packages (Logging, SqlServer.Server, Abstractions, Azure, AKV Provider). Flow: Build DLLs → ESRP DLL signing → NuGet pack (`NoBuild=true`) → ESRP NuGet signing → Copy PDBs to artifact
-- **`build-signed-sqlclient-package-job.yml`** — SqlClient-specific job (nuspec-based). Flow: Build all configurations → ESRP DLL signing (main + resource DLLs) → NuGet pack via nuspec → ESRP NuGet signing → Copy PDBs to artifact
+- **`build-buildproj-job.yml`** — Shared build.proj-driven package job used for all shipped packages. Flow: build via `build.proj` → optional ESRP DLL signing → pack via `build.proj` → optional ESRP NuGet signing → copy outputs for APIScan/artifacts
 - **`validate-signed-package-job.yml`** — Validates signed MDS package (signature, strong names, folder structure, target frameworks)
 - **`publish-nuget-package-job.yml`** — Reusable release job using OneBranch `templateContext.type: releaseJob` with `inputs` for artifact download; pushes via `NuGetCommand@2`
 - **`publish-symbols-job.yml`** — Reusable symbols job: downloads a build artifact, locates PDBs under `symbols/`, and invokes `publish-symbols-step.yml`
 
-When adding a new csproj-based package:
-- Use `build-signed-csproj-package-job.yml` with appropriate `packageName`, `packageFullName`, `versionProperties`, and `downloadArtifacts`
-- Add build and pack targets to `build.proj`
+When adding a new package to the OneBranch flow:
+- Extend `build-buildproj-job.yml` inputs with the new package metadata and dependency artifacts
+- Add or update the corresponding build/pack targets in `build.proj`
 - Add version variables to `variables/common-variables.yml`
-- Add artifact name variable to `variables/onebranch-variables.yml`
+- Add artifact name variables to `variables/onebranch-variables.yml`
 
 ## Symbols Publishing Stage
 
@@ -124,8 +123,7 @@ Variable groups:
 
 - Uses ESRP v6 tasks (`EsrpMalwareScanning@6`, `EsrpCodeSigning@6`) with MSI/federated identity authentication
 - Signing only runs when `isOfficial: true` — non-official pipelines skip ESRP steps
-- csproj-based packages: sign DLLs first → pack with `NoBuild=true` → sign NuGet package (ensures NuGet contains signed DLLs)
-- SqlClient: sign DLLs (including resource DLLs) → nuspec pack → sign NuGet package
+- The shared OneBranch job signs DLLs before packing and signs the resulting NuGet package afterward so the published package contains signed binaries
 - DLL signing uses keyCode `CP-230012` (Authenticode); NuGet signing uses keyCode `CP-401405`
 - All ESRP credentials come from variable groups — never hardcode secrets in YAML
 

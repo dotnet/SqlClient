@@ -18,8 +18,7 @@ variables:
     value: $(Build.SourcesDirectory)
 
   # This is where our C# projects place their build outputs (see Directory.Build.props
-  # <ArtifactsPath>). We exclude the reference type here since Official pipelines always use
-  # Package mode.
+  # <ArtifactsPath>).
   - name: BUILD_OUTPUT
     value: $(REPO_ROOT)/artifacts
 
@@ -30,14 +29,7 @@ variables:
   - name: JOB_INPUT
     value: $(REPO_ROOT)/packages
 
-  # Root directory for all job output artifacts (NuGet packages, symbols, etc.).
-  # OneBranch auto-publishes everything under this directory. It is intentionally
-  # separated from packages/ (where downloaded pipeline artifacts go) so that ESRP
-  # signing and OneBranch artifact publishing only operate on the current job's output.
-  #
-  # Sub-directory layout:
-  #   assemblies/ - DLL assemblies for APIScan (preserving TFM folder structure)
-  #   packages/   - NuGet packages (.nupkg, .snupkg)
-  #   symbols/    - PDB symbol files (preserving TFM folder structure)
+  # Root directory for all job output artifacts (NuGet packages, symbols, etc.). OneBranch auto
+  # publishes everything under this directory as the artifact for the job.
   - name: JOB_OUTPUT
     value: $(REPO_ROOT)/output
