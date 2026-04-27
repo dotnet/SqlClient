@@ -137,19 +137,19 @@ public void TestIntermittentlyFails() { ... }
 
 ## Running Tests
 
-### Using `dotnet build` (Recommended)
+### Using `build.proj` targets (Recommended)
 ```bash
 # Build and run all unit tests
-dotnet build build.proj -t:RunUnitTests
+dotnet build build.proj -t:TestSqlClientUnit
 
 # Run functional tests only
-dotnet build build.proj -t:RunFunctionalTests
+dotnet build build.proj -t:TestSqlClientFunctional
 
 # Run manual tests for specific framework
-dotnet build build.proj -t:RunManualTests -p:TF=net8.0
+dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net8.0
 
 # Run specific test set
-dotnet build build.proj -t:RunManualTests -p:TestSet=1
+dotnet build build.proj -t:TestSqlClientManual -p:TestSet=1
 ```
 
 ### Using dotnet CLI
@@ -159,7 +159,7 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClie
   -p:Configuration=Release
 
 # Functional tests with filter (excludes failing, flaky, and interactive tests)
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" \
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
   --filter "category!=failing&category!=flaky&category!=interactive"
 
 # Run ONLY quarantined flaky tests (for investigation)

@@ -551,8 +551,19 @@
 
     <!-- This is a bit hacky, and can be (@TODO:) removed once packaging is done w/o a nuspec from dotnet -->
     <PropertyGroup>
+      <!--
+        This query intentionally uses `dotnet msbuild` instead of `dotnet build`.
+
+        Unlike the other commands in this file, this is not performing a normal build. It is asking
+        MSBuild to evaluate the SqlClient project and print the final value of
+        `SqlClientPackageVersion` so that the nuspec-based pack step can reuse the exact version that
+        the project computed after imports and versioning logic have run.
+
+        `-getProperty` is an MSBuild query switch, so using `dotnet msbuild` here is the most direct
+        and reliable way to express that intent.
+      -->
       <GetSqlClientPackageVersionCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientProjectPath)"
+        "$(DotnetPath)dotnet" msbuild "$(SqlClientProjectPath)"
         -nologo
         -verbosity:quiet
         -getProperty:SqlClientPackageVersion

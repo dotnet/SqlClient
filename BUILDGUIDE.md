@@ -306,7 +306,7 @@ Build v1.0.1 of Abstractions that depends on v2.2.2 of Logging:
 dotnet build -t:PackAbstractions \
   -p:ReferenceType=Package \
   -p:PackageVersionAbstractions=1.0.1 \
-  -p:PackageVersionLogging=2.2.2 \
+  -p:PackageVersionLogging=2.2.2
 cp artifacts/Microsoft.Data.SqlClient.Extensions.Abstractions/Package-Debug/*.*pkg packages/
 ```
 
