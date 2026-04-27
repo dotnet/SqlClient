@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             // @TODO: Ok, I think we should consider centralizing all these keywords into a single
             //    place. We have DbConnectionString*, Keywords, etc.
             //    Can we consider something DbConnectionOptions as backing store for the values
-            //    and both SqlConnectionStringBuilder and SqlConnectionString use it to store?
+            //    and both SqlConnectionStringBuilder and SqlConnectionOptions use it to store?
             Dictionary<string, Keywords> pairs = new(StringComparer.OrdinalIgnoreCase)
             {
                 { DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent },
@@ -828,19 +828,19 @@ namespace Microsoft.Data.SqlClient
                     svalue = svalue.Trim();
                     if (StringComparer.OrdinalIgnoreCase.Equals(svalue, NamedPipes))
                     {
-                        return SqlConnectionString.NETLIB.NamedPipes;
+                        return SqlConnectionOptions.NETLIB.NamedPipes;
                     }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, SharedMemory))
                     {
-                        return SqlConnectionString.NETLIB.SharedMemory;
+                        return SqlConnectionOptions.NETLIB.SharedMemory;
                     }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, TCPIP))
                     {
-                        return SqlConnectionString.NETLIB.TCPIP;
+                        return SqlConnectionOptions.NETLIB.TCPIP;
                     }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, VIA))
                     {
-                        return SqlConnectionString.NETLIB.VIA;
+                        return SqlConnectionOptions.NETLIB.VIA;
                     }
                     else
                     {
@@ -859,10 +859,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     return svalue.Trim().ToLower(CultureInfo.InvariantCulture) switch
                     {
-                        SqlConnectionString.NETLIB.NamedPipes => NamedPipes,
-                        SqlConnectionString.NETLIB.SharedMemory => SharedMemory,
-                        SqlConnectionString.NETLIB.TCPIP => TCPIP,
-                        SqlConnectionString.NETLIB.VIA => VIA,
+                        SqlConnectionOptions.NETLIB.NamedPipes => NamedPipes,
+                        SqlConnectionOptions.NETLIB.SharedMemory => SharedMemory,
+                        SqlConnectionOptions.NETLIB.TCPIP => TCPIP,
+                        SqlConnectionOptions.NETLIB.VIA => VIA,
                         _ => svalue,
                     };
                 }
@@ -1877,14 +1877,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     value = value.Trim().ToLower(CultureInfo.InvariantCulture) switch
                     {
-                        SqlConnectionString.NETLIB.AppleTalk => SqlConnectionString.NETLIB.AppleTalk,
-                        SqlConnectionString.NETLIB.BanyanVines => SqlConnectionString.NETLIB.BanyanVines,
-                        SqlConnectionString.NETLIB.IPXSPX => SqlConnectionString.NETLIB.IPXSPX,
-                        SqlConnectionString.NETLIB.Multiprotocol => SqlConnectionString.NETLIB.Multiprotocol,
-                        SqlConnectionString.NETLIB.NamedPipes => SqlConnectionString.NETLIB.NamedPipes,
-                        SqlConnectionString.NETLIB.SharedMemory => SqlConnectionString.NETLIB.SharedMemory,
-                        SqlConnectionString.NETLIB.TCPIP => SqlConnectionString.NETLIB.TCPIP,
-                        SqlConnectionString.NETLIB.VIA => SqlConnectionString.NETLIB.VIA,
+                        SqlConnectionOptions.NETLIB.AppleTalk => SqlConnectionOptions.NETLIB.AppleTalk,
+                        SqlConnectionOptions.NETLIB.BanyanVines => SqlConnectionOptions.NETLIB.BanyanVines,
+                        SqlConnectionOptions.NETLIB.IPXSPX => SqlConnectionOptions.NETLIB.IPXSPX,
+                        SqlConnectionOptions.NETLIB.Multiprotocol => SqlConnectionOptions.NETLIB.Multiprotocol,
+                        SqlConnectionOptions.NETLIB.NamedPipes => SqlConnectionOptions.NETLIB.NamedPipes,
+                        SqlConnectionOptions.NETLIB.SharedMemory => SqlConnectionOptions.NETLIB.SharedMemory,
+                        SqlConnectionOptions.NETLIB.TCPIP => SqlConnectionOptions.NETLIB.TCPIP,
+                        SqlConnectionOptions.NETLIB.VIA => SqlConnectionOptions.NETLIB.VIA,
                         _ => throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.NetworkLibrary),
                     };
                 }

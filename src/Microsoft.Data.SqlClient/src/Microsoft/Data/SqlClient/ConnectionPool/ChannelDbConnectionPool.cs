@@ -12,7 +12,6 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
@@ -225,7 +224,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public DbConnectionInternal ReplaceConnection(
             DbConnection owningObject, 
-            DbConnectionOptions userOptions, 
+            SqlConnectionOptions userOptions, 
             DbConnectionInternal oldConnection)
         {
             throw new NotImplementedException();
@@ -283,7 +282,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool TryGetConnection(
             DbConnection owningObject, 
             TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
-            DbConnectionOptions userOptions, 
+            SqlConnectionOptions userOptions, 
             out DbConnectionInternal? connection)
         {
             var timeout = TimeSpan.FromSeconds(owningObject.ConnectionTimeout);
@@ -384,7 +383,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection, 
-            DbConnectionOptions userOptions, 
+            SqlConnectionOptions userOptions, 
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -513,7 +512,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection, 
-            DbConnectionOptions userOptions, 
+            SqlConnectionOptions userOptions, 
             bool async, 
             TimeSpan timeout)
         {

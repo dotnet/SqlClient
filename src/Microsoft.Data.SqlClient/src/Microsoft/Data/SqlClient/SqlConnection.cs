@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly SqlConnectionFactory s_connectionFactory = SqlConnectionFactory.Instance;
         private static int _objectTypeCount; // EventSource Counter
 
-        private DbConnectionOptions _userConnectionOptions;
+        private SqlConnectionOptions _userConnectionOptions;
         private DbConnectionPoolGroup _poolGroup;
         private DbConnectionInternal _innerConnection;
         private int _closeCount;
@@ -201,41 +201,40 @@ namespace Microsoft.Data.SqlClient
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
                 //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than ArgumentException
                 //  Need to call setter on Credential property rather than setting _credential directly as pool groups need to be checked
-                SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
-                if (UsesClearUserIdOrPassword(connectionOptions))
+                if (UsesClearUserIdOrPassword(ConnectionOptions))
                 {
                     throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
                 }
 
-                if (UsesIntegratedSecurity(connectionOptions))
+                if (UsesIntegratedSecurity(ConnectionOptions))
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
                 }
-                else if (UsesActiveDirectoryIntegrated(connectionOptions))
+                else if (UsesActiveDirectoryIntegrated(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithIntegratedArgument();
                 }
-                else if (UsesActiveDirectoryInteractive(connectionOptions))
+                else if (UsesActiveDirectoryInteractive(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithInteractiveArgument();
                 }
-                else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                else if (UsesActiveDirectoryDeviceCodeFlow(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithDeviceFlowArgument();
                 }
-                else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                else if (UsesActiveDirectoryManagedIdentity(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                 }
-                else if (UsesActiveDirectoryMSI(connectionOptions))
+                else if (UsesActiveDirectoryMSI(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                 }
-                else if (UsesActiveDirectoryDefault(connectionOptions))
+                else if (UsesActiveDirectoryDefault(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
                 }
-                else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                else if (UsesActiveDirectoryWorkloadIdentity(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                 }
@@ -337,8 +336,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt?.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled;
+                return ConnectionOptions?.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled;
             }
         }
 
@@ -433,9 +431,9 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionFactory ConnectionFactory => s_connectionFactory;
 
-        internal DbConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
+        internal SqlConnectionOptions ConnectionOptions => PoolGroup?.ConnectionOptions;
 
-        internal DbConnectionOptions UserConnectionOptions => _userConnectionOptions;
+        internal SqlConnectionOptions UserConnectionOptions => _userConnectionOptions;
 
         internal DbConnectionInternal InnerConnection => _innerConnection;
 
@@ -455,7 +453,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal string EnclaveAttestationUrl
         {
-            get => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
+            get => ConnectionOptions.EnclaveAttestationUrl;
         }
 
         /// <summary>
@@ -463,7 +461,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlConnectionAttestationProtocol AttestationProtocol
         {
-            get => ((SqlConnectionString)ConnectionOptions).AttestationProtocol;
+            get => ConnectionOptions.AttestationProtocol;
         }
 
         /// <summary>
@@ -471,25 +469,24 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlConnectionIPAddressPreference iPAddressPreference
         {
-            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
+            get => ConnectionOptions.IPAddressPreference;
         }
 
         // This method will be called once connection string is set or changed.
         private void CacheConnectionStringProperties()
         {
-            SqlConnectionString connString = ConnectionOptions as SqlConnectionString;
-            if (connString != null)
+            if (ConnectionOptions != null)
             {
-                _connectRetryCount = connString.ConnectRetryCount;
+                _connectRetryCount = ConnectionOptions.ConnectRetryCount;
                 // For Azure Synapse ondemand connections, set _connectRetryCount to 5 instead of 1 to greatly improve recovery
                 //  success rate. Note: Synapse should be detected first as it could be detected as a regular Azure SQL DB endpoint.
-                if (_connectRetryCount == 1 && ADP.IsAzureSynapseOnDemandEndpoint(connString.DataSource))
+                if (_connectRetryCount == 1 && ADP.IsAzureSynapseOnDemandEndpoint(ConnectionOptions.DataSource))
                 {
                     _connectRetryCount = 5;
                 }
                 // For Azure SQL connection, set _connectRetryCount to 2 instead of 1 will greatly improve recovery
                 //  success rate
-                else if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(connString.DataSource))
+                else if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(ConnectionOptions.DataSource))
                 {
                     _connectRetryCount = 2;
                 }
@@ -563,54 +560,54 @@ namespace Microsoft.Data.SqlClient
             set => _AsyncCommandInProgress = value;
         }
 
-        private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
+        private bool UsesActiveDirectoryIntegrated(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated;
         }
 
-        private bool UsesActiveDirectoryInteractive(SqlConnectionString opt)
+        private bool UsesActiveDirectoryInteractive(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
         }
 
-        private bool UsesActiveDirectoryDeviceCodeFlow(SqlConnectionString opt)
+        private bool UsesActiveDirectoryDeviceCodeFlow(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
         }
 
-        private bool UsesActiveDirectoryManagedIdentity(SqlConnectionString opt)
+        private bool UsesActiveDirectoryManagedIdentity(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
         }
 
-        private bool UsesActiveDirectoryMSI(SqlConnectionString opt)
+        private bool UsesActiveDirectoryMSI(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
         }
 
-        private bool UsesActiveDirectoryDefault(SqlConnectionString opt)
+        private bool UsesActiveDirectoryDefault(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
         }
 
-        private bool UsesActiveDirectoryWorkloadIdentity(SqlConnectionString opt)
+        private bool UsesActiveDirectoryWorkloadIdentity(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
         }
 
-        private bool UsesAuthentication(SqlConnectionString opt)
+        private bool UsesAuthentication(SqlConnectionOptions opt)
         {
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
         }
 
         // Does this connection use Integrated Security?
-        private bool UsesIntegratedSecurity(SqlConnectionString opt)
+        private bool UsesIntegratedSecurity(SqlConnectionOptions opt)
         {
             return opt != null && opt.IntegratedSecurity;
         }
 
         // Does this connection use old style of clear userID or Password in connection string?
-        private bool UsesClearUserIdOrPassword(SqlConnectionString opt)
+        private bool UsesClearUserIdOrPassword(SqlConnectionOptions opt)
         {
             bool result = false;
             if (opt != null)
@@ -620,24 +617,24 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        internal SqlConnectionString.TransactionBindingEnum TransactionBinding
+        internal SqlConnectionOptions.TransactionBindingEnum TransactionBinding
         {
-            get => ((SqlConnectionString)ConnectionOptions).TransactionBinding;
+            get => ConnectionOptions.TransactionBinding;
         }
 
-        internal SqlConnectionString.TypeSystem TypeSystem
+        internal SqlConnectionOptions.TypeSystem TypeSystem
         {
-            get => ((SqlConnectionString)ConnectionOptions).TypeSystemVersion;
+            get => ConnectionOptions.TypeSystemVersion;
         }
 
         internal Version TypeSystemAssemblyVersion
         {
-            get => ((SqlConnectionString)ConnectionOptions).TypeSystemAssemblyVersion;
+            get => ConnectionOptions.TypeSystemAssemblyVersion;
         }
 
         internal int ConnectRetryInterval
         {
-            get => ((SqlConnectionString)ConnectionOptions).ConnectRetryInterval;
+            get => ConnectionOptions.ConnectRetryInterval;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
@@ -659,7 +656,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_credential != null || _accessToken != null || _accessTokenCallback != null)
                 {
-                    SqlConnectionString connectionOptions = new SqlConnectionString(value);
+                    SqlConnectionOptions connectionOptions = new SqlConnectionOptions(value);
                     if (_credential != null)
                     {
                         // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
@@ -722,8 +719,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
+                return ConnectionOptions != null ? ConnectionOptions.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
             }
         }
 
@@ -734,8 +730,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
+                return ConnectionOptions != null ? ConnectionOptions.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
             }
         }
 
@@ -750,8 +745,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
                 // otherwise, return null
-                SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
-                return InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo ? null : _accessToken;
+                return InnerConnection.ShouldHidePassword && UserConnectionOptions != null && !UserConnectionOptions.PersistSecurityInfo ? null : _accessToken;
             }
             set
             {
@@ -764,7 +758,7 @@ namespace Microsoft.Data.SqlClient
                 if (value != null)
                 {
                     // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
-                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken((SqlConnectionString)ConnectionOptions);
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(ConnectionOptions);
                 }
 
                 // Need to call ConnectionString_Set to do proper pool group check
@@ -788,7 +782,7 @@ namespace Microsoft.Data.SqlClient
                 if (value != null)
                 {
                     // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
-                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(ConnectionOptions);
                 }
 
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
@@ -831,8 +825,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
+                    result = ConnectionOptions != null ? ConnectionOptions.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
 
                 return result;
@@ -903,8 +896,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
+                    result = ConnectionOptions != null ? ConnectionOptions.DataSource : DbConnectionStringDefaults.DataSource;
                 }
 
                 return result;
@@ -930,8 +922,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
+                    result = ConnectionOptions != null ? ConnectionOptions.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
 
                 return result;
@@ -1025,9 +1016,8 @@ namespace Microsoft.Data.SqlClient
                 // If not supplied by the user, the default value is the MachineName
                 // Note: In Longhorn you'll be able to rename a machine without
                 // rebooting.  Therefore, don't cache this machine name.
-                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
 
-                return constr?.WorkstationId
+                return ConnectionOptions?.WorkstationId
                     // Getting machine name requires Environment.Permission.
                     // User must have that permission in order to retrieve this
                     ?? Environment.MachineName;
@@ -1046,8 +1036,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When a connection is connecting or is ever opened, make credential available only if "Persist Security Info" is set to true
                 //  otherwise, return null
-                SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
-                if (InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo)
+                if (InnerConnection.ShouldHidePassword && UserConnectionOptions != null && !UserConnectionOptions.PersistSecurityInfo)
                 {
                     result = null;
                 }
@@ -1066,41 +1055,40 @@ namespace Microsoft.Data.SqlClient
                 // check if the usage of credential has any conflict with the keys used in connection string
                 if (value != null)
                 {
-                    var connectionOptions = (SqlConnectionString)ConnectionOptions;
                     // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
                     // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI | ActiveDirectoryDefault. Since a different error string is used
                     // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                     // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
-                    if (UsesActiveDirectoryIntegrated(connectionOptions))
+                    if (UsesActiveDirectoryIntegrated(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithIntegratedInvalid();
                     }
-                    else if (UsesActiveDirectoryInteractive(connectionOptions))
+                    else if (UsesActiveDirectoryInteractive(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithInteractiveInvalid();
                     }
-                    else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                    else if (UsesActiveDirectoryDeviceCodeFlow(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithDeviceFlowInvalid();
                     }
-                    else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                    else if (UsesActiveDirectoryManagedIdentity(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                     }
-                    else if (UsesActiveDirectoryMSI(connectionOptions))
+                    else if (UsesActiveDirectoryMSI(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                     }
-                    else if (UsesActiveDirectoryDefault(connectionOptions))
+                    else if (UsesActiveDirectoryDefault(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
                     }
-                    else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                    else if (UsesActiveDirectoryWorkloadIdentity(ConnectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                     }
 
-                    CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
+                    CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(ConnectionOptions);
 
                     if (_accessToken != null)
                     {
@@ -1119,7 +1107,7 @@ namespace Microsoft.Data.SqlClient
         //  with the keys used in connection string
         //  If there is any conflict, it throws InvalidOperationException
         //  This is used in the setter of ConnectionString and Credential properties.
-        private void CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(SqlConnectionString connectionOptions)
+        private void CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(SqlConnectionOptions connectionOptions)
         {
             if (UsesClearUserIdOrPassword(connectionOptions))
             {
@@ -1136,7 +1124,7 @@ namespace Microsoft.Data.SqlClient
         //  with the keys used in connection string and credential
         //  If there is any conflict, it throws InvalidOperationException
         //  This is to be used setter of ConnectionString and AccessToken properties
-        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(SqlConnectionString connectionOptions)
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(SqlConnectionOptions connectionOptions)
         {
             if (UsesClearUserIdOrPassword(connectionOptions))
             {
@@ -1173,7 +1161,7 @@ namespace Microsoft.Data.SqlClient
         //  with the keys used in connection string and credential
         //  If there is any conflict, it throws InvalidOperationException
         //  This is to be used setter of ConnectionString and AccessTokenCallback properties
-        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionString connectionOptions)
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionOptions connectionOptions)
         {
             if (UsesIntegratedSecurity(connectionOptions))
             {
@@ -1359,7 +1347,7 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
 
-            DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
+            SqlConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
             {
 #if NETFRAMEWORK
@@ -1648,7 +1636,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void RegisterWaitingForReconnect(Task waitingTask)
         {
-            if (((SqlConnectionString)ConnectionOptions).MARS)
+            if (ConnectionOptions.MARS)
             {
                 return;
             }
@@ -2147,7 +2135,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
         {
-            SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
             bool result = false;
 
             if (LocalAppContextSwitches.GlobalizationInvariantMode)
@@ -2155,18 +2142,18 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.GlobalizationInvariantModeNotSupported();
             }
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = !overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && ConnectionOptions != null && ConnectionOptions.ConnectRetryCount > 0;
 
-            if (connectionOptions != null &&
-                (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+            if (ConnectionOptions != null &&
+                (ConnectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
                 #pragma warning disable 0618 // Use of obsolete member 'SqlAuthenticationMethod.ActiveDirectoryPassword'
-                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                    ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                 #pragma warning restore 0618 // Use of obsolete member 'SqlAuthenticationMethod.ActiveDirectoryPassword'
-                    connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
-                (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
+                    ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
+                (!ConnectionOptions._hasUserIdKeyword || !ConnectionOptions._hasPasswordKeyword) &&
                 _credential == null)
             {
-                throw SQL.CredentialsNotProvided(connectionOptions.Authentication);
+                throw SQL.CredentialsNotProvided(ConnectionOptions.Authentication);
             }
 
 #if NETFRAMEWORK
@@ -2189,7 +2176,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (this.UsesIntegratedSecurity(connectionOptions) || this.UsesActiveDirectoryIntegrated(connectionOptions))
+                if (this.UsesIntegratedSecurity(ConnectionOptions) || this.UsesActiveDirectoryIntegrated(ConnectionOptions))
                 {
                     _lastIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
                 }
@@ -2257,13 +2244,13 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
 
             DbConnectionPoolGroup poolGroup = PoolGroup;
-            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
+            SqlConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
             if (connectionOptions == null || connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
             }
 
-            DbConnectionOptions userConnectionOptions = UserConnectionOptions;
+            SqlConnectionOptions userConnectionOptions = UserConnectionOptions;
             Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
 
 #if NETFRAMEWORK
@@ -2507,13 +2494,13 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
-            DbConnectionOptions connectionOptions = UserConnectionOptions;
+            SqlConnectionOptions connectionOptions = UserConnectionOptions;
             return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
         private void ConnectionString_Set(DbConnectionPoolKey key)
         {
-            DbConnectionOptions connectionOptions = null;
+            SqlConnectionOptions connectionOptions = null;
             DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
             DbConnectionInternal connectionInternal = InnerConnection;
             bool flag = connectionInternal.AllowSetConnectionString;
@@ -2619,7 +2606,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
+                SqlConnectionOptions connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
@@ -2673,7 +2660,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
+                SqlConnectionOptions connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
                 // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
@@ -2700,7 +2687,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static void ChangePassword(string connectionString, SqlConnectionString connectionOptions, SqlCredential credential, string newPassword, SecureString newSecurePassword)
+        private static void ChangePassword(string connectionString, SqlConnectionOptions connectionOptions, SqlCredential credential, string newPassword, SecureString newSecurePassword)
         {
             // note: This is the only case where we directly construct the internal connection, passing in the new password.
             // Normally we would simply create a regular connection and open it, but there is no other way to pass the

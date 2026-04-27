@@ -376,7 +376,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo serverInfo,
             SqlConnectionInternal connHandler,
             TimeoutTimer timeout,
-            SqlConnectionString connectionOptions,
+            SqlConnectionOptions connectionOptions,
 
             #if NETFRAMEWORK
             bool withFailover,

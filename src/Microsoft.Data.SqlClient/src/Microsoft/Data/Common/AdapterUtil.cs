@@ -514,7 +514,7 @@ namespace Microsoft.Data.Common
 
         internal static Exception CreateSqlException(
             SqlAuthenticationProviderException authException,
-            SqlConnectionString connectionOptions,
+            SqlConnectionOptions connectionOptions,
             SqlConnectionInternal sender,
             string username)
         {

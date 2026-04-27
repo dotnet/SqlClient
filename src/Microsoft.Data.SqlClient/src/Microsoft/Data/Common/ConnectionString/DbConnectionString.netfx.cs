@@ -15,7 +15,9 @@ using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Common
 {
-    // @TODO: Theoretically this class could be replaced with SqlConnectionString.
+    // Note: This class exists exclusively for use in SqlClientPermission. It provides a stable serialization format when the permission set is serialized
+    // by Code Access Security (CAS). CAS itself is deprecated in all versions of .NET and .NET Framework, but it won't be dropped from .NET Framework.
+    // We should maintain this class and SqlClientPermission to ensure that existing CAS-based security checks continue to work correctly on .NET Framework.
     
     [Serializable] // MDAC 83147
     internal sealed class DbConnectionString
@@ -53,20 +55,20 @@ namespace Microsoft.Data.Common
             string restrictions,
             KeyRestrictionBehavior behavior,
             IReadOnlyDictionary<string, string> synonyms)
-            : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
+            : this(new SqlConnectionOptions(value), restrictions, behavior, synonyms, false)
         {
             // The IReadOnlyDictionary doesn't need to be cloned since it isn't shared with anything else
         }
 
-        internal DbConnectionString(DbConnectionOptions connectionOptions)
+        internal DbConnectionString(SqlConnectionOptions connectionOptions)
             : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, null, true)
         {
-            // used by DBDataPermission to convert from DbConnectionOptions to DbConnectionString
+            // used by DBDataPermission to convert from SqlConnectionOptions to DbConnectionString
             // since backward compatibility requires Everett level classes
         }
 
         private DbConnectionString(
-            DbConnectionOptions connectionOptions,
+            SqlConnectionOptions connectionOptions,
             string restrictions,
             KeyRestrictionBehavior behavior,
             IReadOnlyDictionary<string, string> synonyms,
@@ -505,7 +507,7 @@ namespace Microsoft.Data.Common
                 int startPosition = nextStartPosition;
 
                 string keyname; // since parsing restrictions ignores values, it doesn't matter if we use ODBC rules or OLEDB rules
-                nextStartPosition = DbConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out _);
+                nextStartPosition = SqlConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out _);
                 if (!string.IsNullOrEmpty(keyname))
                 {
 #if DEBUG

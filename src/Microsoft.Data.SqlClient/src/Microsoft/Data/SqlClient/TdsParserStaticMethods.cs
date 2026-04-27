@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient
                                 if (-1 != index && index + 1 < parsedAliasName.Length)
                                 {
                                     parsedProtocol = parsedAliasName.Substring(0, index);
-                                    if (SqlConnectionString.ValidProtocol(parsedProtocol))
+                                    if (SqlConnectionOptions.ValidProtocol(parsedProtocol))
                                     {
                                         protocol = parsedProtocol;
                                         host = parsedAliasName.Substring(index + 1);
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
+                                protocol = (string)SqlConnectionOptions.NetlibMapping()[parsedProtocol];
                                 if (protocol != null)
                                 {
                                     host = parsedAliasName;
