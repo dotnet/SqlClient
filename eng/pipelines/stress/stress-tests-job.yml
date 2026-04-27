@@ -102,7 +102,7 @@ jobs:
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
           --artifacts-path $(dotnetArtifactsDir)
-          --configuration ${{ parameters.buildConfiguration }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
 
       # The contents of the config file to use for all tests.  We will write this to a JSON file and
       # then point to it via the STRESS_CONFIG_FILE environment variable.

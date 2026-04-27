@@ -102,9 +102,9 @@
   <!-- ================================================================== -->
   <Target Name="_BuildRefProject" DependsOnTargets="_SetApiCompatProperties">
     <Message Importance="high" Text="Building consolidated ref project (all TFMs)..." />
-    <MSBuild 
-      Targets="Restore;Build" 
-      Projects="$(RefProjectPath)"/>
+    <Exec
+      Command="dotnet build &quot;$(RefProjectPath)&quot; -p:Configuration=$(Configuration) -p:ReferenceType=$(ReferenceType)"
+      WorkingDirectory="$(RepoRoot)" />
   </Target>
 
   <!-- ================================================================== -->
@@ -134,7 +134,7 @@
       Text="--- Comparing %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) ---" />
 
     <Exec
-      Command="dotnet apicompat -l &quot;$(BaselineExtractDir)ref\%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)\Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      Command="dotnet apicompat -l &quot;$(BaselineExtractDir)ref/%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
       WorkingDirectory="$(RepoRoot)"
       ContinueOnError="ErrorAndContinue" />
 

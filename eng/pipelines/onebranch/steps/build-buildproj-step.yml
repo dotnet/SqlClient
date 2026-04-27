@@ -47,13 +47,14 @@ steps:
       secureFile: 'netfxKeypair.snk'
     name: keyFile
 
-  - task: MSBuild@1
+  - task: DotNetCoreCLI@2
     displayName: 'build.proj - Build${{ parameters.packageShortName }}'
     inputs:
-      solution: '$(REPO_ROOT)/build.proj'
-      configuration: '${{ parameters.buildConfiguration }}'
-      msbuildArguments: >-
+      command: build
+      projects: '$(REPO_ROOT)/build.proj'
+      arguments: >-
         -t:Build${{ parameters.packageShortName }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
         -p:ReferenceType=Package
         -p:SigningKeyPath="$(keyFile.secureFilePath)"
         -p:BuildNumber="$(Build.BuildNumber)"
