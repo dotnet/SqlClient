@@ -94,6 +94,7 @@
     <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\DatabaseContextReconnectionTest.cs" />
     <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
