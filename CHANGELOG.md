@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Stable Release 6.1.5] - 2026-04-24
+## [Stable Release 6.1.5] - 2026-04-27
 
 This update brings the following changes since the [6.1.4](release-notes/6.1/6.1.4.md) release.
 See the [full release notes](release-notes/6.1/6.1.5.md) for target platform support and dependency information.
