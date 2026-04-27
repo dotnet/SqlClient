@@ -63,11 +63,12 @@ public class App : IDisposable
             ---------------------------
 
             Packages used:
-              Logging:       {PackageVersions.MicrosoftDataSqlClientInternalLogging}
               Abstractions:  {PackageVersions.MicrosoftDataSqlClientExtensionsAbstractions}
-              SqlClient:     {PackageVersions.MicrosoftDataSqlClient}
               AKV Provider:  {PackageVersions.MicrosoftDataSqlClientAlwaysEncryptedAzureKeyVaultProvider}
               Azure:         {PackageVersions.MicrosoftDataSqlClientExtensionsAzureVersion}
+              Logging:       {PackageVersions.MicrosoftDataSqlClientInternalLogging}
+              SqlClient:     {PackageVersions.MicrosoftDataSqlClient}
+              SqlServer:     {PackageVersions.MicrosoftSqlServerServer}
 
             """);
 

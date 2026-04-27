@@ -5,10 +5,11 @@
 
   <PropertyGroup>
     <!-- Use the following package versions if not supplied. -->
-    <LoggingVersion>1.0.0</LoggingVersion>
     <AbstractionsVersion>1.0.0</AbstractionsVersion>
-    <SqlClientVersion>7.0.0</SqlClientVersion>
     <AkvProviderVersion>7.0.0</AkvProviderVersion>
+    <LoggingVersion>1.0.0</LoggingVersion>
+    <SqlClientVersion>7.0.0</SqlClientVersion>
+    <SqlServerVersion>1.0.0</SqlServerVersion>
 
     <!-- We omit referencing the Azure package entirely by default. -->
   </PropertyGroup>
@@ -19,12 +20,13 @@
       Normal apps wouldn't explcitily reference these 2 packages, but we do here to force the
       desired versions.  This helps detect version conflicts.
     -->
-    <PackageVersion Include="Microsoft.Data.SqlClient.Internal.Logging" Version="$(LoggingVersion)" />
     <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Abstractions" Version="$(AbstractionsVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Internal.Logging" Version="$(LoggingVersion)" />
 
     <!-- These are normal references for apps. -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(SqlClientVersion)" />
     <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="$(AkvProviderVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(SqlClientVersion)" />
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="$(SqlServerVersion)" />
 
     <!-- Declare a version for the Azure package if one was specified. -->
     <PackageVersion

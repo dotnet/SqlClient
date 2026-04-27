@@ -11,14 +11,11 @@
 
   <!-- SqlClient Packages -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
-    <!--
-      We include the AKV Provider to ensure there are no transitive dependency conflicts.  It is
-      instantiated to ensure its assembly isn't elided, but we don't actually use it.
-    -->
     <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
 
     <!-- Include the Azure package if a version for it was specified. -->
     <PackageReference
