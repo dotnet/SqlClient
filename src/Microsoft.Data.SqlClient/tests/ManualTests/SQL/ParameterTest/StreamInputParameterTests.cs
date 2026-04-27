@@ -41,23 +41,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string outputPath = "StreamInputParameter.out";
             string baselinePath;
 #if DEBUG
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "StreamInputParameter_DebugMode.bsl";
-            }
-            else
-            {
-                baselinePath = "StreamInputParameter_DebugMode_Azure.bsl";
-            }
+            baselinePath = "StreamInputParameter_DebugMode.bsl";
 #else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "StreamInputParameter_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "StreamInputParameter_ReleaseMode_Azure.bsl";
-            }
+            baselinePath = "StreamInputParameter_ReleaseMode.bsl";
 #endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);

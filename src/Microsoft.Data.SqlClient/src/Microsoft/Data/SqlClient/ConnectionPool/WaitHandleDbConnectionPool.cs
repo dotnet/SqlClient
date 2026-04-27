@@ -16,6 +16,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -258,7 +259,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return PoolGroupOptions.CreationTimeout; }
         }
 
+        /// <inheritdoc/>
         public int Count => _totalObjects;
+
+        /// <inheritdoc/>
+        public int IdleCount => _stackNew.Count + _stackOld.Count;
 
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
@@ -289,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return true;
                 }
 
-                int freeObjects = _stackNew.Count + _stackOld.Count;
+                int freeObjects = IdleCount;
                 int waitingRequests = _waitCount;
                 bool needToReplenish = (freeObjects < waitingRequests) || ((freeObjects == waitingRequests) && (totalObjects > 1));
 
@@ -304,9 +309,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return State is Running; }
         }
 
-        private int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
+        internal int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
 
-        private int MinPoolSize => PoolGroupOptions.MinPoolSize;
+        internal int MinPoolSize => PoolGroupOptions.MinPoolSize;
 
         public DbConnectionPoolGroup PoolGroup => _connectionPoolGroup;
 
@@ -322,6 +327,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
         private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
+
+        public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
         private void CleanupCallback(object state)
         {
@@ -525,8 +532,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 newObj = _connectionFactory.CreatePooledConnection(
                     owningObject,
                     this,
-                    _connectionPoolGroup.PoolKey,
-                    _connectionPoolGroup.ConnectionOptions, 
                     userOptions);
 
                 lock (_objectList)
@@ -939,6 +944,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // If automatic transaction enlistment is required, then we try to
             // get the connection from the transacted connection pool first.
+            // If automatic enlistment is not enabled, then we cannot vend connections
+            // from the transacted pool.
             if (HasTransactionAffinity)
             {
                 obj = GetFromTransactedPool(out transaction);

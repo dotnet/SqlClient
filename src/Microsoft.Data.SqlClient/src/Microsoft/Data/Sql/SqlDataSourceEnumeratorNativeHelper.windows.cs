@@ -13,6 +13,7 @@ using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using static Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.Sql
 {

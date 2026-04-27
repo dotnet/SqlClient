@@ -4,6 +4,7 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -191,9 +192,7 @@ public abstract partial class SqlAuthenticationProvider
 
         private static void Log(string message)
         {
-            // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39080):
-            // Convert to proper logging.
-            Console.WriteLine($"SqlAuthenticationProvider.Internal(): {message}");
+            SqlClientEventSource.Log.TryTraceEvent("SqlAuthenticationProvider.Internal | {0}", message);
         }
     }
 }

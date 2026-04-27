@@ -1,0 +1,180 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This job builds and runs stress tests by compiling the SqlClient projects transitively.
+#
+# The stress tests are located here:
+#
+#   src/Microsoft.Data.SqlClient/tests/StressTests
+#
+# This template defines a job named 'stress_tests_job_<suffix>' that can be depended on by
+# downstream jobs.
+
+parameters:
+
+  # The type of build to produce (Debug or Release)
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debugging steps.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The prefix to prepend to the job's display name:
+  #
+  #   [<prefix>] Run Stress Tests
+  #
+  - name: displayNamePrefix
+    type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The suffix to append to the job name.
+  - name: jobNameSuffix
+    type: string
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    type: object
+    default: []
+
+  # The list of .NET runtimes to test against.
+  - name: netTestRuntimes
+    type: object
+    default: []
+
+  # The name of the Azure Pipelines pool to use.
+  - name: poolName
+    type: string
+
+  # The local SQL Server instance's 'sa' password, for use in the config file.
+  - name: saPassword
+    type: string
+
+  # The step to run to configure SQL Server.  This should configure a local SQL Server instance with
+  # an 'sa' login using the same password provided by the saPassword parameter.
+  - name: sqlSetupStep
+    type: step
+
+  # The pool VM image to use.
+  - name: vmImage
+    type: string
+
+jobs:
+  - job: stress_tests_job_${{ parameters.jobNameSuffix }}
+    displayName: '[${{ parameters.displayNamePrefix }}] Run Stress Tests'
+    pool:
+      name: ${{ parameters.poolName }}
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.vmImage }}
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
+
+    variables:
+
+      # The directory where dotnet artifacts will be staged.  Not to be
+      # confused with pipeline artifacts.
+      - name: dotnetArtifactsDir
+        value: $(Build.StagingDirectory)/dotnetArtifacts
+
+      # The top-level project file to build and run.
+      - name: project
+        value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
+
+      # dotnet CLI arguments.
+      - name: dotnetArguments
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          --artifacts-path $(dotnetArtifactsDir)
+          --configuration ${{ parameters.buildConfiguration }}
+
+      # The contents of the config file to use for all tests.  We will write this to a JSON file and
+      # then point to it via the STRESS_CONFIG_FILE environment variable.
+      - name: configContent
+        value: |
+          [
+            {
+              "name": "Azure SQL",
+              "type": "SqlServer",
+              "isDefault": true,
+              "dataSource": "localhost",
+              "user": "sa",
+              "password": "${{ parameters.saPassword }}",
+              "supportsWindowsAuthentication": false,
+              "isLocal": false,
+              "disableMultiSubnetFailover": true,
+              "disableNamedPipes": true,
+              "encrypt": false
+            }
+          ]
+
+      # Stress test command-line arguments.
+      - name: testArguments
+        value: -a SqlClient.Stress.Tests -console
+
+    steps:
+
+      # Install the .NET SDK and Runtimes.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          runtimes: [8.x, 9.x]
+
+      # Setup the local SQL Server.
+      - ${{ parameters.sqlSetupStep }}
+
+      # Write the config file.
+      - task: PowerShell@2
+        displayName: Write Config File
+        inputs:
+          pwsh: true
+          targetType: inline
+          script: |
+            # Capture the multi-line JSON content into a variable.
+            $content = @"
+            $(configContent)
+            "@
+
+            # Write the JSON content to the config file.
+            $content | Out-File -FilePath "config.json"
+
+      # Build the project.
+      - task: DotNetCoreCLI@2
+        displayName: Build Project
+        inputs:
+          command: build
+          projects: $(project)
+          arguments: $(dotnetArguments)
+
+      # Run the stress tests for each .NET runtime.
+      - ${{ each runtime in parameters.netTestRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          inputs:
+            command: run
+            projects: $(project)
+            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+
+      # Run the stress tests for each .NET Framework runtime.
+      - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          inputs:
+            command: run
+            projects: $(project)
+            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)

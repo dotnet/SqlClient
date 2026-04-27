@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NET
 using System.Threading;

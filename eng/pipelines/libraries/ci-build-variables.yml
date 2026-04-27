@@ -28,7 +28,7 @@ variables:
 
   # Abstractions library NuGet package version
   - name: abstractionsPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 1.0.0-ci$(Build.BuildNumber)
 
   # AKV provider assembly file version
   - name: akvAssemblyFileVersion
@@ -36,7 +36,7 @@ variables:
 
   # AKV provider NuGet package version
   - name: akvPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.0-ci$(Build.BuildNumber)
 
   # Azure library assembly file version
   - name: azureAssemblyFileVersion
@@ -44,7 +44,7 @@ variables:
 
   # Azure library NuGet package version
   - name: azurePackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 1.0.0-ci$(Build.BuildNumber)
 
   # Logging library assembly file version
   - name: loggingAssemblyFileVersion
@@ -52,19 +52,32 @@ variables:
 
   # Logging library NuGet package version
   - name: loggingPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
-
-  # MDS library assembly file version
-  - name: mdsAssemblyFileVersion
-    value: 7.0.0.$(assemblyBuildNumber)
+    value: 1.0.0-ci$(Build.BuildNumber)
 
   # MDS library NuGet package version
+  # NOTE: This differs from the other structures! MdsVersions.props will deconstruct a provided
+  #    package version and build an assembly version from it. If the build number is included
+  #    before the "-" the build number will be appended again, generating an invalid file version.
   - name: mdsPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.0-ci$(AssemblyBuildNumber)
 
-  # Output path for built NuGet packages
-  - name: packagePath
+  # SqlServer library NuGet package version
+  # NOTE: SqlServer's version props derive file version from the package version by appending the
+  #    assembly build number, so this must remain a three-part SemVer base with a prerelease
+  #    suffix, not a four-part numeric version.
+  - name: sqlServerPackageVersion
+    value: 1.0.0-ci$(AssemblyBuildNumber)
+
+  # Local NuGet feed directory where downloaded pipeline artifacts are placed.
+  # NuGet.config references this as a local package source for restore.
+  - name: localFeedPath
     value: $(Build.SourcesDirectory)/packages
+
+  # Output path for built NuGet packages.  This is intentionally separate from
+  # localFeedPath (where downloaded pipeline artifacts go) so that artifact
+  # publishing only uploads packages built by the current job.
+  - name: packagePath
+    value: $(Build.SourcesDirectory)/output
 
   # Disable codesign validation injection for CI builds
   - name: runCodesignValidationInjection

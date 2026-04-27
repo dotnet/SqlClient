@@ -1,4 +1,4 @@
-﻿namespace SqlClientDiagnosticCounter;
+namespace SqlClientDiagnosticCounter;
 
 // <Snippet1>
 using System;

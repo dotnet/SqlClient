@@ -1,4 +1,4 @@
-﻿namespace SqlDataAdapterUpdateExample;
+namespace SqlDataAdapterUpdateExample;
 
 using System;
 using System.Data;

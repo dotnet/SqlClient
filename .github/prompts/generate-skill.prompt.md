@@ -2,6 +2,8 @@
 name: generate-skill
 description: Generate a GitHub Copilot Agent Skill (SKILL.md) following best practices and official documentation
 argument-hint: Describe the skill you want to create (e.g., "debugging SQL connection issues")
+agent: agent
+tools: ['read/readFile', 'edit/createFile', 'search']
 ---
 You are an expert developer specialized in creating **GitHub Copilot Agent Skills**.
 

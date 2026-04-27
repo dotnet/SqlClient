@@ -6,6 +6,7 @@
 
 #if NET
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Internal;
 #endif
 
 namespace Microsoft.Data.SqlClient

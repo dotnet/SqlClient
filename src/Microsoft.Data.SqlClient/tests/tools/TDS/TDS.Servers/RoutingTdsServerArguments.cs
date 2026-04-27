@@ -25,6 +25,13 @@ namespace Microsoft.SqlServer.TDS.Servers
         public string RoutingTCPHost { get; set; } = string.Empty;
 
         /// <summary>
+        /// Setting this to a non-empty value will cause the server to include an 
+        /// enhanced routing ENVCHANGE token in the Login Response message. 
+        /// An empty value will include a legacy routing ENVCHANGE token.
+        /// </summary>
+        public string RoutingDatabaseName { get; set; } = string.Empty;
+
+        /// <summary>
         /// Packet on which routing should occur
         /// </summary>
         public TDSMessageType RouteOnPacket { get; set; } = TDSMessageType.TDS7Login;

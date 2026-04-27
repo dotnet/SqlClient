@@ -25,9 +25,9 @@ Follow this workflow step-by-step:
 ## 3. Write a Failing Test
 - Create a test that reproduces the bug BEFORE implementing the fix.
 - Choose the correct test project:
-  - `tests/UnitTests/` — for isolated logic tests (no SQL Server needed)
-  - `tests/FunctionalTests/` — for API behavior tests (no SQL Server needed)
-  - `tests/ManualTests/` — for integration tests (requires SQL Server)
+  - `src/Microsoft.Data.SqlClient/tests/UnitTests/` — for isolated logic tests (no SQL Server needed)
+  - `src/Microsoft.Data.SqlClient/tests/FunctionalTests/` — for API behavior tests (no SQL Server needed)
+  - `src/Microsoft.Data.SqlClient/tests/ManualTests/` — for integration tests (requires SQL Server)
 - Follow existing naming conventions: `{ClassName}Tests.cs` with methods named `{MethodName}_{Scenario}_{ExpectedResult}`.
 - If the bug is platform-specific, add appropriate `[ConditionalFact]` or `[ConditionalTheory]` attributes with `[PlatformSpecific]`.
 - **Cover both sync and async code paths** if the affected API has both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async paths often have different internal implementations and a bug may manifest in only one.

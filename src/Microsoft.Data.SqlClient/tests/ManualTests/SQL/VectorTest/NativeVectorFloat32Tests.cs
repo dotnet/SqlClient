@@ -29,19 +29,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             yield return new object[] { 3, new SqlVector<float>(testData), testData, vectorColumnLength };
             yield return new object[] { 4, new SqlVector<float>(testData), testData, vectorColumnLength };
 
-            // Pattern 1-4 with SqlVector<float>(n)  
+            // Pattern 1-4 with SqlVector<float>(n)
             yield return new object[] { 1, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 2, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 3, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 4, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
 
-            // Pattern 1-4 with DBNull  
+            // Pattern 1-4 with DBNull
             yield return new object[] { 1, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 2, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 3, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
             yield return new object[] { 4, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
 
-            // Pattern 1-4 with SqlVector<float>.Null  
+            // Pattern 1-4 with SqlVector<float>.Null
             yield return new object[] { 1, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
 
             // Following scenario is not supported in SqlClient.
@@ -559,6 +559,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             vector = await verifyReader.GetFieldValueAsync<SqlVector<float>>(0);
             Assert.Equal(Array.Empty<float>(), vector.Memory.ToArray());
             Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        public void TestGetFieldTypeReturnsSqlVectorForVectorColumn()
+        {
+            using var connection = new SqlConnection(s_connectionString);
+            connection.Open();
+
+            // Insert a row so we can query it
+            using (var insertCmd = new SqlCommand(s_insertCmdString, connection))
+            {
+                var param = insertCmd.Parameters.Add(s_vectorParamName, SqlDbTypeExtensions.Vector);
+                param.Value = new SqlVector<float>(VectorFloat32TestData.testData);
+                insertCmd.ExecuteNonQuery();
+            }
+
+            using var selectCmd = new SqlCommand(s_selectCmdString, connection);
+            using var reader = selectCmd.ExecuteReader();
+
+            // Verify GetFieldType returns SqlVector<float> for the vector column
+            Assert.Equal(typeof(SqlVector<float>), reader.GetFieldType(0));
+
+            // Verify GetProviderSpecificFieldType also returns SqlVector<float>
+            Assert.Equal(typeof(SqlVector<float>), reader.GetProviderSpecificFieldType(0));
+
+            // Verify that GetValue returns an instance consistent with GetFieldType
+            Assert.True(reader.Read(), "No data found in the table.");
+            object value = reader.GetValue(0);
+            Assert.IsType<SqlVector<float>>(value);
+            Assert.Equal(VectorFloat32TestData.testData, ((SqlVector<float>)value).Memory.ToArray());
+
+            // Verify GetFieldValue<SqlVector<float>> returns the correct typed value
+            SqlVector<float> typedValue = reader.GetFieldValue<SqlVector<float>>(0);
+            Assert.IsType<SqlVector<float>>(typedValue);
+            Assert.Equal(VectorFloat32TestData.testData, typedValue.Memory.ToArray());
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]

@@ -39,6 +39,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         int Count { get; }
 
         /// <summary>
+        /// The number of connections currently sitting idle in the pool.
+        /// </summary>
+        int IdleCount { get; }
+
+        /// <summary>
         /// Indicates whether an error has occurred in the pool.
         /// Primarily used to support the pool blocking period feature.
         /// </summary>
@@ -86,6 +91,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         DbConnectionPoolState State { get; }
 
         /// <summary>
+        /// Holds connections that are currently enlisted in a transaction.
+        /// </summary>
+        TransactedConnectionPool TransactedConnectionPool { get; }
+
+        /// <summary>
         /// Indicates whether the connection pool is using load balancing.
         /// </summary>
         bool UseLoadBalancing { get; }
@@ -95,6 +105,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Clears the connection pool, releasing all connections and resetting the state.
         /// </summary>
+        /// <remarks>
+        /// Clearing the pool is an expensive operation and should only be used if required.
+        /// This operation may negatively interfere with pool warmup and generate high connection
+        /// churn as the warmup operation continually opens new connections to attempt 
+        /// to reach min pool size. This situation is especially likely if clear is called in a 
+        /// tight loop.
+        /// </remarks>
         void Clear();
 
         /// <summary>
@@ -106,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
         /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
-        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
+        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
 
         /// <summary>
         /// Replaces the internal connection currently associated with owningObject with a new internal connection from the pool.

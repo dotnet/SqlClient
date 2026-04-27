@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    This file exists because the shared test package versions (xunit, Test.Sdk,
+    etc.) live in the SqlClient tests Directory.Packages.props rather than the
+    repo root.  Without this file, NuGet's CPM directory walk would resolve to
+    the repo-root props and miss the test-only versions.  Importing the
+    SqlClient tests props brings in both the shared test dependencies and
+    (transitively) the root production dependencies.
+  -->
+  <Import Project="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Directory.Packages.props" />
+</Project>

@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Net.Security;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 

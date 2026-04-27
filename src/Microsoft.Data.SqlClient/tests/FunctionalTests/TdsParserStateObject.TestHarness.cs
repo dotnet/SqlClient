@@ -63,7 +63,8 @@ namespace Microsoft.Data.SqlClient
         internal class Strings
         {
             internal static string SqlMisc_InvalidArraySizeMessage = nameof(SqlMisc_InvalidArraySizeMessage);
-
+            internal static string SQL_Multiplexer_PartialPacketNotNull = nameof(SQL_Multiplexer_PartialPacketNotNull);
+            internal static string SQL_Multiplexer_ConflictingConsumeModes = nameof(SQL_Multiplexer_ConflictingConsumeModes);
         }
 
         public class Parser

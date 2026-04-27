@@ -16,6 +16,7 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NET
 using System.Runtime.Loader;
@@ -140,15 +141,13 @@ namespace Microsoft.Data.SqlClient
         internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
             IDbConnectionPool pool,
-            DbConnectionPoolKey poolKey,
-            DbConnectionOptions options,
             DbConnectionOptions userOptions)
         {
             Debug.Assert(pool != null, "null pool?");
 
             DbConnectionInternal newConnection = CreateConnection(
-                options,
-                poolKey, // @TODO: is pool.PoolGroup.Key the same thing?
+                pool.PoolGroup.ConnectionOptions,
+                pool.PoolGroup.PoolKey,
                 pool.PoolGroup.ProviderInfo,
                 pool,
                 owningConnection,

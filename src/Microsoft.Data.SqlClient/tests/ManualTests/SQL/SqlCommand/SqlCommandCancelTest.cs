@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     cmd.Cancel();
-                    DataTestUtility.AssertThrowsWrapper<SqlException>(
+                    DataTestUtility.AssertThrows<SqlException>(
                         () =>
                         {
                             do
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
                 Task<SqlDataReader> readerTask = cmd.ExecuteReaderAsync();
-                DataTestUtility.AssertThrowsWrapper<SqlException>(
+                DataTestUtility.AssertThrows<SqlException>(
                     () =>
                     {
                         readerTask.Wait(2000);
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void CancelFollowedByAlert(string constr)
         {
             var alertName = "myAlert" + Guid.NewGuid().ToString();
-            // Since Alert conditions are randomly generated, 
+            // Since Alert conditions are randomly generated,
             // we will retry on unexpected error messages to avoid collision in pipelines.
             var n = new Random().Next(1, 100);
             bool retry = true;

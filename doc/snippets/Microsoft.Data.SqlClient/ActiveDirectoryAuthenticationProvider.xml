@@ -143,7 +143,7 @@
         The callback method to be called by MSAL.NET to delegate the Web user interface with the Secure Token Service (STS).
       </param>
       <summary>
-        Sets a callback method which is invoked with a custom Web UI instance that will let the user sign-in with Azure Active Directory, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.
+        Sets a callback method which is invoked with a custom Web UI instance that will let the user sign-in with Entra ID, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.
       </summary>
       <remarks>
         The "authorizationUri" is crafted to leverage PKCE in order to protect the token from a man in the middle attack. Only MSAL.NET can redeem the code. In the event of cancellation, the implementer should return <see cref="T:System.OperationCanceledException" />.

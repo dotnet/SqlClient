@@ -10,6 +10,7 @@ using System.Text;
 using Interop.Windows.Handles;
 using Interop.Windows.Kernel32;
 using Microsoft.Win32;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {

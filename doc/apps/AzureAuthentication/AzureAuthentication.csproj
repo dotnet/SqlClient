@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net481;net10.0</TargetFrameworks>
+    <RootNamespace>Microsoft.Data.SqlClient.Samples.AzureAuthentication</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <!-- SqlClient Packages -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <!--
+      We include the AKV Provider to ensure there are no transitive dependency conflicts.  It is
+      instantiated to ensure its assembly isn't elided, but we don't actually use it.
+    -->
+    <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
+
+    <!-- Include the Azure package if a version for it was specified. -->
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Condition="'$(AzureVersion)' != ''" />
+  </ItemGroup>
+
+  <!--
+    Define AZURE_EXTENSIONS so that C# code can use #if AZURE_EXTENSIONS to guard references to
+    types from the optional Extensions.Azure package.  Without this, the build would fail when the
+    package is absent because the compiler would still try to resolve those type references.  See
+    PackageVersions.Partial.cs for usage.
+  -->
+  <PropertyGroup Condition="'$(AzureVersion)' != ''">
+    <DefineConstants>$(DefineConstants);AZURE_EXTENSIONS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Other Packages -->
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <!-- Generate code with the SqlClient package versions. -->
+  <Import Project="GeneratePackageVersions.targets" />
+
+</Project>

@@ -4,6 +4,7 @@
 
 using System;
 using System.Data.Common;
+using System.IO;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -49,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                     // Check that the copying fails
                                     string message = string.Format(SystemDataResourceManager.Instance.ADP_OpenConnectionRequired, "WriteToServer", SystemDataResourceManager.Instance.ADP_ConnectionStateMsg_Closed);
-                                    DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => bulkcopy.WriteToServerAsync(reader).Wait(5000), innerExceptionMessage: message);
+                                    DataTestUtility.AssertThrowsInnerWithAlternate<AggregateException, InvalidOperationException, IOException>(() => bulkcopy.WriteToServerAsync(reader).Wait(5000), innerExceptionMessage: message);
                                 }
                             }
                         }

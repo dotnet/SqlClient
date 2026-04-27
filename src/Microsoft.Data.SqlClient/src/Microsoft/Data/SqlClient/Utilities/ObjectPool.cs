@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Utilities
                 return item;
             }
 
-            return _onCreate?.Invoke() ?? throw new InvalidOperationException("Can only rent from a pool if an onCreate delegate is available");
+            return _onCreate?.Invoke() ?? throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ObjectPoolNoCreateDelegate));
         }
 
         public bool TryGet(out T item)

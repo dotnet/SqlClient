@@ -1,4 +1,4 @@
-﻿namespace ConnectionStrings_Encrypt;
+namespace ConnectionStrings_Encrypt;
 
 using System;
 using System.Configuration;

@@ -119,4 +119,4 @@ class Program
             "Initial Catalog=AdventureWorks;";
     }
 }
-// </Snippet>
+// </Snippet1>

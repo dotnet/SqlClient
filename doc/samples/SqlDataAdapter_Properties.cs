@@ -1,4 +1,4 @@
-﻿namespace SqlDataAdapter_Properties;
+namespace SqlDataAdapter_Properties;
 
 // <Snippet1>
 using System;

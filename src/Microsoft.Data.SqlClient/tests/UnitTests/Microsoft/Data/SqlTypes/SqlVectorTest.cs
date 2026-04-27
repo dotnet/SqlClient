@@ -38,7 +38,7 @@ public class SqlVectorTest
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(SQLResource.NullString, vec.GetString());
+        Assert.Equal(SQLMessage.NullString(), vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
@@ -58,7 +58,7 @@ public class SqlVectorTest
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(SQLResource.NullString, vec.GetString());
+        Assert.Equal(SQLMessage.NullString(), vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);

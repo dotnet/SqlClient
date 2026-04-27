@@ -8,7 +8,9 @@ namespace AzureKeyVaultProvider_ColumnEncryptionKeyCacheScope
     // <Snippet1>
     class Program
     {
+#pragma warning disable CS0649 // Field is never assigned to
         private static string connectionString;
+#pragma warning restore CS0649
 
         static void Main()
         {

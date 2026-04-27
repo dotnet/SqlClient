@@ -68,7 +68,7 @@ jobs:
 
       # The Logging project file to use for all dotnet CLI commands.
       - name: project
-        value: src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj
+        value: src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj
 
       # The directory where the NuGet packages will be staged before being
       # published as pipeline artifacts.

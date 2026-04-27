@@ -78,12 +78,12 @@ public sealed class UserAgentTests
         Assert.Equal(7, parts.Length);
         Assert.Equal("1", parts[0]);
         Assert.Equal("MS-MDS", parts[1]);
-        Assert.Equal(System.ThisAssembly.NuGetPackageVersion, parts[2]);
+        Assert.Equal(ThisAssembly.NuGetPackageVersion, parts[2]);
 
         // Architecture must be non-empty and 10 characters or less.
         Assert.True(parts[3] == "Unknown" || parts[3].Length > 0);
         Assert.True(parts[3].Length <= 10);
-        
+
         // Check the OS Type against the guaranteed values.
         var osType = parts[4];
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -112,7 +112,7 @@ public sealed class UserAgentTests
         // OS Info must be non-empty and 44 characters or less.
         Assert.True(parts[5] == "Unknown" || parts[5].Length > 0);
         Assert.True(parts[5].Length <= 44);
-        
+
         // Runtime Info must be non-empty and 44 characters or less.
         Assert.True(parts[6] == "Unknown" || parts[6].Length > 0);
         Assert.True(parts[6].Length <= 44);
@@ -145,7 +145,7 @@ public sealed class UserAgentTests
             #else
             Encoding.Unicode.GetString(bytes.ToArray());
             #endif
-        
+
         Assert.Equal(UserAgent.Value, value);
     }
 
@@ -197,7 +197,7 @@ public sealed class UserAgentTests
             "P",
             UserAgent.Build(
                 1, "PV", "A", "B", Architecture.X64, "C", "D", "E"));
-        
+
         // The payload version is longer than its per-field max length of 2.
         Assert.Equal(
             "12|A|B|X64|C|D|E",
@@ -216,7 +216,7 @@ public sealed class UserAgentTests
             "2|DriverNa",
             UserAgent.Build(
                 10, "2", "DriverName", "B", Architecture.X64, "C", "D", "E"));
-        
+
         // The driver name is longer than its per-field max length of 12.
         Assert.Equal(
             "2|LongDriverNa|B|X64|C|D|E",
@@ -237,7 +237,7 @@ public sealed class UserAgentTests
             UserAgent.Build(
                 12, "2", "A", "DriverVersion", Architecture.X64, "C", "D",
                 "E"));
-        
+
         // The driver version is longer than its per-field max length of 24.
         Assert.Equal(
             "2|A|ReallyLongDriverVersionS|X64|C|D|E",
@@ -281,7 +281,7 @@ public sealed class UserAgentTests
             "2|A|B|X64|LongOs",
             UserAgent.Build(
                 16, "2", "A", "B", Architecture.X64, "LongOsName", "D", "E"));
-        
+
         // The OS Type is longer than its per-field max length of 10.
         Assert.Equal(
             "2|A|B|X64|VeryLongOs|D|E",
@@ -301,7 +301,7 @@ public sealed class UserAgentTests
             "2|A|B|X64|C|LongOsI",
             UserAgent.Build(
                 19, "2", "A", "B", Architecture.X64, "C", "LongOsInfo", "E"));
-        
+
         // The OS Type is longer than its per-field max length of 44.
         Assert.Equal(
             "2|A|B|X64|C|01234567890123456789012345678901234567890123|E",
@@ -323,7 +323,7 @@ public sealed class UserAgentTests
             UserAgent.Build(
                 22, "2", "A", "B", Architecture.X64, "C", "D",
                 "LongRuntimeInfo"));
-        
+
         // The Runtime Type is longer than its per-field max length of 44.
         Assert.Equal(
             "2|A|B|X64|C|D|01234567890123456789012345678901234567890123",
@@ -339,7 +339,7 @@ public sealed class UserAgentTests
     [Fact]
     public void Build_Truncate_Most()
     {
-        var name = 
+        var name =
             UserAgent.Build(
                 192,
                 // Payload version > 2 chars.
@@ -379,7 +379,7 @@ public sealed class UserAgentTests
     [Fact]
     public void Build_Truncate_All()
     {
-        var name = 
+        var name =
             UserAgent.Build(
                 192,
                 // Payload version > 2 chars.
@@ -536,19 +536,19 @@ public sealed class UserAgentTests
         Assert.Equal("", UserAgent.Truncate(" ", 0));
         Assert.Equal("", UserAgent.Truncate("A", 0));
         Assert.Equal("", UserAgent.Truncate("ABCDE FGHIJ", 0));
-        
+
         // Max length of 1.
         Assert.Equal("", UserAgent.Truncate("", 1));
         Assert.Equal(" ", UserAgent.Truncate(" ", 1));
         Assert.Equal("A", UserAgent.Truncate("A", 1));
         Assert.Equal("A", UserAgent.Truncate("ABCDE FGHIJ", 1));
-        
+
         // Max length of 5.
         Assert.Equal("", UserAgent.Truncate("", 5));
         Assert.Equal(" ", UserAgent.Truncate(" ", 5));
         Assert.Equal("A", UserAgent.Truncate("A", 5));
         Assert.Equal("ABCDE", UserAgent.Truncate("ABCDE FGHIJ", 5));
-        
+
         // Max length of 100.
         Assert.Equal("", UserAgent.Truncate("", 100));
         Assert.Equal(" ", UserAgent.Truncate(" ", 100));

@@ -1,0 +1,46 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This step template downloads and runs the NuGet.VerifyMicrosoftPackage tool to validate that NuGet
+# packages comply with Microsoft metadata requirements.  This is done via a helper PowerShell
+# script.
+#
+# The verification tool checks package metadata such as authors, copyright, license URL, and project
+# URL against Microsoft's policies for nuget.org.
+#
+# This step requires a Windows agent because the NuGet.VerifyMicrosoftPackage executable is
+# Windows-only.
+#
+# See: https://github.com/NuGet/NuGetGallery/tree/main/src/VerifyMicrosoftPackage
+#
+# The NuGet.VerifyMicrosoftPackage NuGet package is downloaded via dotnet restore using the
+# PackageDownload property into the global NuGet packages cache, and the executable is run directly.
+
+parameters:
+
+  # The path (including glob pattern) to the .nupkg files to verify.
+  # For example: '$(packagePath)/*.nupkg' or '$(dotnetPackagesDir)/*.nupkg'.
+  - name: packagePath
+    type: string
+
+  # The full path to the NuGet.config file that dotnet restore must use.
+  # Defaults to $(Build.SourcesDirectory)/NuGet.config.
+  - name: nugetConfig
+    type: string
+    default: $(Build.SourcesDirectory)/NuGet.config
+
+steps:
+  # Install the .NET SDK, required by the PowerShell script.
+  - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+  # Invoke the script with the path to the packages to verify.
+  - task: PowerShell@2
+    displayName: 'Verify NuGet Package Metadata'
+    inputs:
+      targetType: filePath
+      pwsh: true
+      filePath: $(Build.SourcesDirectory)/eng/pipelines/common/templates/steps/verify-nuget-package.ps1
+      arguments: -PackagePath "${{ parameters.packagePath }}" -NugetConfig "${{ parameters.nugetConfig }}"

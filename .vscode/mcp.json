@@ -1,31 +1,75 @@
 {
 	"servers": {
-		"bluebird-mcp-sqlclient": {
-			"url": "https://mcp.bluebird-ai.net/",
+		"ado": {
+			"args": [
+				"-y",
+				"@azure-devops/mcp",
+				"SqlClientDrivers"
+			],
+			"command": "npx",
+			"type": "stdio"
+		},
+		"bluebird_ctaip": {
+			"headers": {
+				"x-mcp-ec-branch": "certAuth",
+				"x-mcp-ec-organization": "sqlclientdrivers",
+				"x-mcp-ec-project": "ADO.NET",
+				"x-mcp-ec-repository": "Microsoft.Data.SqlClient.Ctaip"
+			},
 			"type": "http",
-			   "headers": {
+			"url": "https://mcp.bluebird-ai.net/"
+		},
+		"bluebird_onebranchwiki": {
+			"headers": {
+				"x-mcp-ec-branch": "main",
+				"x-mcp-ec-organization": "onebranch",
+				"x-mcp-ec-project": "OneBranch Customer Wiki",
+				"x-mcp-ec-repository": "OneBranch-Customer-Wiki.v2"
+			},
+			"type": "http",
+			"url": "https://mcp.bluebird-ai.net/"
+		},
+		"bluebird-mcp-1es-docs": {
+			"headers": {
+				"x-mcp-ec-branch": "main",
+				"x-mcp-ec-organization": "mseng",
+				"x-mcp-ec-project": "1ES",
+				"x-mcp-ec-repository": "1ES-on-EngHub"
+			},
+			"type": "http",
+			"url": "https://mcp.bluebird-ai.net/"
+		},
+		"bluebird-mcp-sni": {
+			"headers": {
+				"x-mcp-ec-branch": "master",
 				"x-mcp-ec-organization": "SqlClientDrivers",
 				"x-mcp-ec-project": "ADO.NET",
-				"x-mcp-ec-repository": "dotnet-sqlclient",
-				"x-mcp-ec-branch": "internal/main"
-			}
+				"x-mcp-ec-repository": "Microsoft.Data.SqlClient.SNI"
+			},
+			"type": "http",
+			"url": "https://mcp.bluebird-ai.net/"
 		},
-		"icm": {
-			"url": "https://icm-mcp-prod.azure-api.net/v1/",
-			"type": "http"
+		"bluebird-mcp-sqlclient": {
+			"headers": {
+				"x-mcp-ec-branch": "internal/main",
+				"x-mcp-ec-organization": "SqlClientDrivers",
+				"x-mcp-ec-project": "ADO.NET",
+				"x-mcp-ec-repository": "dotnet-sqlclient"
+			},
+			"type": "http",
+			"url": "https://mcp.bluebird-ai.net/"
 		},
 		"github": {
 			"type": "http",
 			"url": "https://api.githubcopilot.com/mcp/"
 		},
-		"ado": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"@azure-devops/mcp",
-				"SqlClientDrivers"
-			]
+		"icm": {
+			"type": "http",
+			"url": "https://icm-mcp-prod.azure-api.net/v1/"
+		},
+		"microsoft-learn": {
+			"type": "http",
+			"url": "https://learn.microsoft.com/api/mcp"
 		}
 	}
 }

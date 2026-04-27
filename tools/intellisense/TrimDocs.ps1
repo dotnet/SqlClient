@@ -7,10 +7,11 @@ param (
     [string]$outputFile=""
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Validate inputFile exists
 if (-not (Test-Path $inputFile)) {
-    Write-Host "XML File not found: $inputFile"
-    exit
+    throw "XML File not found: $inputFile"
 }
 
 [xml]$xml = Get-Content $inputFile

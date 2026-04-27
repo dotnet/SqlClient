@@ -53,6 +53,9 @@ Generated\ Files/
 TestResult.xml
 nunit-*.xml
 
+# TRX format test results
+**/*.trx
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/
@@ -197,6 +200,10 @@ PublishScripts/
 # Most of the packages folder can be ignored.
 **/[Pp]ackages/*
 !**/[Pp]ackages/.gitkeep
+
+# Most of the output folder can be ignored.
+**/[Oo]utput/*
+!**/[Oo]utput/.gitkeep
 
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
@@ -363,3 +370,9 @@ MigrationBackup/
 
 # Config Json file
 **/config.json
+
+# Generated Milestone PR metadata files
+.milestone-prs/
+
+# MDS "Not Supported" GenAPI code
+**/notsupported/*.cs

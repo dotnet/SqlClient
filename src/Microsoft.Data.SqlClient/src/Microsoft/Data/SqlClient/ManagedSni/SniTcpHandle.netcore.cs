@@ -16,6 +16,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -220,8 +221,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                                     {
                                         throw;
                                     }
-                                    if (exRetry is SocketException || exRetry is ArgumentNullException
-                                        || exRetry is ArgumentException || exRetry is ArgumentOutOfRangeException || exRetry is AggregateException)
+                                    if (exRetry is
+                                        SocketException or
+                                        ArgumentException or
+                                        AggregateException)
                                     {
                                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying exception {1}", args0: _connectionId, args1: exRetry?.Message);
                                         if (parallel)

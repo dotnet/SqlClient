@@ -30,6 +30,11 @@ namespace Microsoft.SqlServer.TDS
         VectorSupport = 0x0E,
 
         /// <summary>
+        /// Enhanced Routing Support
+        /// </summary>
+        EnhancedRoutingSupport = 0x0F,
+
+        /// <summary>
         /// User Agent Support
         /// </summary>
         UserAgentSupport = 0x10,

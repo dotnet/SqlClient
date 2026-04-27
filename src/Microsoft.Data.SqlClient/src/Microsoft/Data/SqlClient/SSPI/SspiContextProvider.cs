@@ -6,6 +6,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 

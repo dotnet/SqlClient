@@ -1,0 +1,92 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="Versions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(AkvProviderAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(AkvProviderFileVersion)</FileVersion>
+    <Version>$(AkvProviderPackageVersion)</Version>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)</OutputPath>
+  </PropertyGroup>
+
+  <!-- NuGet Package Config ============================================ -->
+  <!-- See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Title>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</Title>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>
+      Always Encrypted Azure Key Vault Provider for Microsoft.Data.SqlClient.
+
+      This library enables .NET applications to use Microsoft Azure Key Vault with Always Encrypted
+      in Microsoft Azure SQL Database and Microsoft SQL Server. The library includes the column
+      master key store provider that allows client applications to access data when a column master
+      key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please
+      refer to: https://aka.ms/AlwaysEncrypted.
+
+      Use this library only with the Microsoft.Data.SqlClient
+      (https://www.nuget.org/packages/Microsoft.Data.SqlClient) client driver.
+    </Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</PackageTags>
+    <PackageReleaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+  <!-- References ====================================================== -->
+  <!-- SqlClient Reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- Logging Reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- Other dependencies -->
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" />
+    <PackageReference Include="Azure.Security.KeyVault.Keys" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+  </ItemGroup>
+</Project>

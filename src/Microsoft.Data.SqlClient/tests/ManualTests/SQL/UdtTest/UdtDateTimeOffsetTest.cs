@@ -1,10 +1,11 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
@@ -32,7 +33,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class UdtDateTimeOffsetTest
     {
         private readonly string _connectionString = null;
-        private readonly string _udtTableType = DataTestUtility.GetLongName("DataTimeOffsetTableType");
         private readonly ITestOutputHelper _testOutputHelper;
 
         public UdtDateTimeOffsetTest(ITestOutputHelper testOutputHelper)
@@ -47,30 +47,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new(_connectionString);
             connection.Open();
-            SetupUserDefinedTableType(connection, _udtTableType);
 
-            try
-            {
-                DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, 500, TimeSpan.Zero);
-                var param = new SqlParameter
-                {
-                    ParameterName = "@params",
-                    SqlDbType = SqlDbType.Structured,
-                    TypeName = $"dbo.{_udtTableType}",
-                    Value = new DateTimeOffsetList[] { new DateTimeOffsetList(dateTimeOffset) }
-                };
+            using UserDefinedType udtTableType = new(connection, nameof(SelectFromSqlParameterShouldSucceed), "TABLE ([Value] DATETIMEOFFSET(1) NOT NULL)");
 
-                using (var cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT * FROM @params";
-                    cmd.Parameters.Add(param);
-                    var result = cmd.ExecuteScalar();
-                    Assert.Equal(dateTimeOffset, result);
-                }
-            }
-            finally
+            DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, 500, TimeSpan.Zero);
+            var param = new SqlParameter
             {
-                DataTestUtility.DropUserDefinedType(connection, _udtTableType);
+                ParameterName = "@params",
+                SqlDbType = SqlDbType.Structured,
+                TypeName = udtTableType.Name,
+                Value = new DateTimeOffsetList[] { new DateTimeOffsetList(dateTimeOffset) }
+            };
+
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "SELECT * FROM @params";
+                cmd.Parameters.Add(param);
+                var result = cmd.ExecuteScalar();
+                Assert.Equal(dateTimeOffset, result);
             }
         }
 
@@ -87,7 +81,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             for (int scale = fromScale; scale <= toScale; scale++)
             {
-                string tvpTypeName = DataTestUtility.GetLongName("tvpType"); // Need a unique name per scale, else we get errors. See https://github.com/dotnet/SqlClient/issues/3011
+                // Need a unique name per scale, else we get errors. See https://github.com/dotnet/SqlClient/issues/3011
+                using UserDefinedType udtTableType = new(connection, "tvpType", $"TABLE ([Value] DATETIMEOFFSET({scale}) NOT NULL)");
 
                 DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
 
@@ -95,63 +90,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TimeSpan subSeconds = TimeSpan.FromTicks((long)(TimeSpan.TicksPerSecond / Math.Pow(10, scale)));
                 dateTimeOffset = dateTimeOffset.Add(subSeconds);
 
-                DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
-
-                try
+                var param = new SqlParameter
                 {
-                    SetupDateTimeOffsetTableType(connection, tvpTypeName, scale);
+                    ParameterName = "@params",
+                    SqlDbType = SqlDbType.Structured,
+                    Scale = (byte)scale,
+                    TypeName = udtTableType.Name,
+                    Value = new DateTimeOffsetVariableScale[] { new DateTimeOffsetVariableScale(dateTimeOffset, scale) }
+                };
 
-                    var param = new SqlParameter
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT * FROM @params";
+                    cmd.Parameters.Add(param);
+
+                    object result = null;
+                    try
                     {
-                        ParameterName = "@params",
-                        SqlDbType = SqlDbType.Structured,
-                        Scale = (byte)scale,
-                        TypeName = $"dbo.{tvpTypeName}",
-                        Value = new DateTimeOffsetVariableScale[] { new DateTimeOffsetVariableScale(dateTimeOffset, scale) }
-                    };
-
-                    using (var cmd = connection.CreateCommand())
+                        result = cmd.ExecuteScalar();
+                        Assert.Equal(dateTimeOffset, result);
+                    }
+                    catch (Exception)
                     {
-                        cmd.CommandText = "SELECT * FROM @params";
-                        cmd.Parameters.Add(param);
-
-                        object result = null;
-                        try
-                        {
-                            result = cmd.ExecuteScalar();
-                            Assert.Equal(dateTimeOffset, result);
-                        }
-                        catch (Exception)
-                        {
-                            _testOutputHelper.WriteLine($"{DateTime.UtcNow:O}: Failed for scale {scale} DateTimeOffset: {dateTimeOffset} Result: {result ?? "No result"}");
-                            throw;
-                        }
+                        _testOutputHelper.WriteLine($"{DateTime.UtcNow:O}: Failed for scale {scale} DateTimeOffset: {dateTimeOffset} Result: {result ?? "No result"}");
+                        throw;
                     }
                 }
-                finally
-                {
-                    DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
-                }
-            }
-        }
-
-        private static void SetupUserDefinedTableType(SqlConnection connection, string tableTypeName)
-        {
-            using (SqlCommand cmd = connection.CreateCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([Value] DATETIMEOFFSET(1) NOT NULL) ";
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        private static void SetupDateTimeOffsetTableType(SqlConnection connection, string tableTypeName, int scale)
-        {
-            using (SqlCommand cmd = connection.CreateCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([Value] DATETIMEOFFSET({scale}) NOT NULL) ";
-                cmd.ExecuteNonQuery();
             }
         }
     }

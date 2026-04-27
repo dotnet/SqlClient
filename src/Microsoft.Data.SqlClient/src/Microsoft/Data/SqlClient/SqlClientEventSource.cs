@@ -3,13 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.Diagnostics;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Internal bridge that provides access to SqlClientMetrics from the main driver.
     /// The SqlClientEventSource class itself is now defined in the
-    /// Microsoft.Data.SqlClient.Extensions.Logging package.
+    /// Microsoft.Data.SqlClient.Internal.Logging package.
     /// </summary>
     internal static class SqlClientDiagnostics
     {
