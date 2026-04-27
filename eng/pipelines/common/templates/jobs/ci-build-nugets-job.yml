@@ -194,7 +194,7 @@ jobs:
   - task: CopyFiles@2
     displayName: Copy AKV Package to Output Folder
     inputs:
-      sourceFolder: src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/bin/${{ parameters.buildConfiguration }}
+      sourceFolder: artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/${{ parameters.buildConfiguration }}
       contents: |
         **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.nupkg
         **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.snupkg

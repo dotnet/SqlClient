@@ -139,7 +139,7 @@ public void TestIntermittentlyFails() { ... }
 
 ## Running Tests
 
-### Using `dotnet build` (Recommended)
+### Using `build.proj` targets (Recommended)
 ```bash
 # Build and run all unit tests
 dotnet build build.proj -t:TestSqlClientUnit
