@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in SqlClient OneBranch Official pipelines.
+# This file is only included in SqlClient OneBranch official/non-official pipelines.
 
 variables:
   # Libraries ==============================================================
@@ -24,11 +24,11 @@ variables:
   # make it clear that these variables are used for symbols (as opposed to other msc tasks).
   #
   # SymbolsAzureSubscription
-  # SymbolsPublishProjectName
-  # SymbolsPublishServer
-  # SymbolsPublishTokenUri
+  # SymbolsPublishProjectNameSqlClient
+  # SymbolsPublishServerProd / SymbolsPublishServerPPE
+  # SymbolsPublishTokenUriProd / SymbolsPublishTokenUriPPE
   # SymbolsUploadAccount
-  - group: 'symbols-variables-v2'
+  - group: 'Symbols Publishing'
 
   # OneBranch Template Variables ###########################################
 
@@ -39,6 +39,12 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
 
-  # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  # OneBranch supplies a variety of container images we must use for our jobs.
+  #
+  # Windows jobs use this image.
   - name: WindowsContainerImage
-    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest"
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+
+  # Linux jobs use this image.
+  - name: LinuxContainerImage
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0

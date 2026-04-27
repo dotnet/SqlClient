@@ -259,7 +259,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return PoolGroupOptions.CreationTimeout; }
         }
 
+        /// <inheritdoc/>
         public int Count => _totalObjects;
+
+        /// <inheritdoc/>
+        public int IdleCount => _stackNew.Count + _stackOld.Count;
 
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
@@ -290,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return true;
                 }
 
-                int freeObjects = _stackNew.Count + _stackOld.Count;
+                int freeObjects = IdleCount;
                 int waitingRequests = _waitCount;
                 bool needToReplenish = (freeObjects < waitingRequests) || ((freeObjects == waitingRequests) && (totalObjects > 1));
 
@@ -528,8 +532,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 newObj = _connectionFactory.CreatePooledConnection(
                     owningObject,
                     this,
-                    _connectionPoolGroup.PoolKey,
-                    _connectionPoolGroup.ConnectionOptions, 
                     userOptions);
 
                 lock (_objectList)

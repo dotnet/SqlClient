@@ -34,7 +34,8 @@ parameters:
   - name: searchPath
     type: string
 
-  # Globbing pattern to use to search for NuGet packages. If not provided, defaults to '*.*nupkg'
+  # Minimatch pattern(s) to search for NuGet packages. Supports multi-line
+  # patterns and negation (!pattern). Defaults to '*.*nupkg'.
   - name: searchPattern
     type: string
     default: '*.*nupkg'
@@ -51,6 +52,7 @@ steps:
       EsrpClientId: '${{ parameters.esrpClientId }}'
       FolderPath: '${{ parameters.searchPath }}'
       Pattern: '${{ parameters.searchPattern }}'
+      UseMinimatch: true
       UseMSIAuthentication: true
       VerboseLogin: 1
 
@@ -66,6 +68,7 @@ steps:
       AuthSignCertName: '${{ parameters.authSignCertName }}'
       FolderPath: '${{ parameters.searchPath }}'
       Pattern: '${{ parameters.searchPattern }}'
+      UseMinimatch: true
       signConfigType: 'inlineSignParams'
       UseMSIAuthentication: true
       inlineOperation: |

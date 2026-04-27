@@ -23,7 +23,7 @@ Perform the following steps to address the work item. Think step-by-step.
 - Locate the relevant code in `src/` or `tests/`.
 
 ### 2. Planning and Branching
-- Propose a descriptive branch name following the pattern `dev/username/branch-name` (e.g., `dev/jdoe/fix-connection-pool`).
+- Propose a descriptive branch name following the repository rule `dev/automation/<branch-name>` (e.g., `dev/automation/fix-connection-pool`).
 - Identify any dependencies or potential breaking changes.
 
 ### 3. Implementation
@@ -33,13 +33,13 @@ Perform the following steps to address the work item. Think step-by-step.
 
 ### 4. Testing and Verification
 - **Mandatory**: All changes must be tested.
-- Create new unit tests in `tests/UnitTests` or functional tests in `tests/FunctionalTests` as appropriate.
+- Create new unit tests in `src/Microsoft.Data.SqlClient/tests/UnitTests` or functional tests in `src/Microsoft.Data.SqlClient/tests/FunctionalTests` as appropriate.
 - Verify that the tests pass.
 
 ### 5. Documentation and Finalization
 - If public APIs are modified, update the documentation in `doc/`.
 - Provide a clear summary of changes for the Pull Request.
-- Suggest an entry for [CHANGELOG.md](CHANGELOG.md) if the change is significant.
+- Suggest a release-note entry under `release-notes/` or in the PR description if the change is significant; do not edit `CHANGELOG.md` directly.
 
 ## Input
 **Work Item ID**: ${input:workItemId}
