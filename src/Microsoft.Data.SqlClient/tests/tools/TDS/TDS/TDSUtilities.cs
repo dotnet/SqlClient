@@ -345,109 +345,107 @@ namespace Microsoft.SqlServer.TDS
                 return;
             }
 
-            // Check if null
-            if (instance == null)
-            {
-                SerializedWriteLineToLog(log, string.Format("{0}: <null>", prefix));
-
-                return;
-            }
-
-            // Get object type
-            Type objectType = instance.GetType();
-
-            // Check if simple type
-            if (objectType.IsEnum
-                || instance is bool
-                || instance is string
-                || instance is int
-                || instance is uint
-                || instance is byte
-                || instance is sbyte
-                || instance is short
-                || instance is ushort
-                || instance is long
-                || instance is ulong
-                || instance is double
-                || instance is float
-                || instance is Version)
-            {
-                SerializedWriteLineToLog(log, string.Format("{0}: {1}", prefix, instance));
-
-                return;
-            }
-
-
-            // Check declaring type
-            if (objectType.IsGenericType || (objectType.BaseType != null && objectType.BaseType.IsGenericType))  // IList<T>
-            {
-                int index = 0;
-
-                // Log values
-                foreach (object o in (instance as System.Collections.IEnumerable))
-                {
-                    Log(log, string.Format("{0}[{1}]", prefix, index++), o);
-                }
-
-                // Check if we logged anything
-                if (index == 0)
-                {
-                    SerializedWriteLineToLog(log, string.Format("{0}: <empty>", prefix));
-                }
-            }
-            else if (objectType.IsArray)
-            {
-                // Prepare prefix
-                string preparedLine = string.Format("{0}: [", prefix);
-
-                // Log values
-                foreach (object o in (instance as Array))
-                {
-                    preparedLine += string.Format("{0:X} ", o);
-                }
-
-                // Finish the line
-                preparedLine += "]";
-
-                // Move to the next line
-                SerializedWriteLineToLog(log, preparedLine);
-            }
-
-            // Iterate all public properties
-            foreach (PropertyInfo info in objectType.GetProperties())
-            {
-                // Check if this is an indexer
-                if (info.GetIndexParameters().Length > 0 || !info.DeclaringType.Assembly.Equals(Assembly.GetExecutingAssembly()))
-                {
-                    // We ignore indexers
-                    continue;
-                }
-
-                // Get property value
-                object value = info.GetValue(instance, null);
-
-                // Log each property
-                Log(log, string.Format("{0}.{1}.{2}", prefix, objectType.Name, info.Name), value);
-            }
-
-            // Flush to destination
             lock (s_logWriterLock)
             {
+                // Check if null
+                if (instance == null)
+                {
+                    SerializedWriteLineToLog(log, string.Format("{0}: <null>", prefix));
+                    log.Flush();
+                    return;
+                }
+
+                // Get object type
+                Type objectType = instance.GetType();
+
+                // Check if simple type
+                if (objectType.IsEnum
+                    || instance is bool
+                    || instance is string
+                    || instance is int
+                    || instance is uint
+                    || instance is byte
+                    || instance is sbyte
+                    || instance is short
+                    || instance is ushort
+                    || instance is long
+                    || instance is ulong
+                    || instance is double
+                    || instance is float
+                    || instance is Version)
+                {
+                    SerializedWriteLineToLog(log, string.Format("{0}: {1}", prefix, instance));
+                    log.Flush();
+                    return;
+                }
+
+
+                // Check declaring type
+                if (objectType.IsGenericType || (objectType.BaseType != null && objectType.BaseType.IsGenericType))  // IList<T>
+                {
+                    int index = 0;
+
+                    // Log values
+                    foreach (object o in (instance as System.Collections.IEnumerable))
+                    {
+                        Log(log, string.Format("{0}[{1}]", prefix, index++), o);
+                    }
+
+                    // Check if we logged anything
+                    if (index == 0)
+                    {
+                        SerializedWriteLineToLog(log, string.Format("{0}: <empty>", prefix));
+                    }
+                }
+                else if (objectType.IsArray)
+                {
+                    // Prepare prefix
+                    string preparedLine = string.Format("{0}: [", prefix);
+
+                    // Log values
+                    foreach (object o in (instance as Array))
+                    {
+                        preparedLine += string.Format("{0:X} ", o);
+                    }
+
+                    // Finish the line
+                    preparedLine += "]";
+
+                    // Move to the next line
+                    SerializedWriteLineToLog(log, preparedLine);
+                }
+
+                // Iterate all public properties
+                foreach (PropertyInfo info in objectType.GetProperties())
+                {
+                    // Check if this is an indexer
+                    if (info.GetIndexParameters().Length > 0 || !info.DeclaringType.Assembly.Equals(Assembly.GetExecutingAssembly()))
+                    {
+                        // We ignore indexers
+                        continue;
+                    }
+
+                    // Get property value
+                    object value = info.GetValue(instance, null);
+
+                    // Log each property
+                    Log(log, string.Format("{0}.{1}.{2}", prefix, objectType.Name, info.Name), value);
+                }
+
+                // Flush to destination
                 log.Flush();
             }
         }
 
         /// <summary>
-        /// Serialized write line to destination
+        /// Serialized write line to destination.  Must be called under lock.
         /// </summary>
         /// <param name="log">Destination</param>
         /// <param name="text">Text to log</param>        
         public static void SerializedWriteLineToLog(TextWriter log, string text)
         {
-            lock (s_logWriterLock)
-            {
-                log.WriteLine(string.Format("[{0}] {1}", DateTime.Now, text));
-            }
+            var now = DateTime.UtcNow;
+            log.WriteLine($"[{now:yyyy-MM-dd hh:mm:ss.fff}Z] {text}");
         }
     }
 }
