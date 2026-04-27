@@ -518,18 +518,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    DataTable t = reader.GetSchemaTable();
+                    DataTable syncSchemaTable = reader.GetSchemaTable();
 
                     string expectedSchemaTableValues =
                         "ids, 0, 4, 10, 255, False, , , , ids, , , System.Int32, True, 8, , , False, False, False, , False, False, System.Data.SqlTypes.SqlInt32, int, , , , , 8, False, " + Environment.NewLine +
                         "pos, 1, 20, 255, 255, False, , , , pos, , , Line, True, 29, , , False, False, False, , False, False, Line, UdtTestDb.dbo.Line, , , , Line, Shapes, Version=1.2.0.0, Culture=neutral, PublicKeyToken=a3e3aa32e6a16344, 29, False, " + Environment.NewLine;
 
                     StringBuilder builder = new StringBuilder();
-                    foreach (DataRow row in t.Rows)
+                    for (int i = 0; i < syncSchemaTable.Rows.Count; i++)
                     {
-                        foreach (DataColumn col in t.Columns)
+                        DataRow syncRow = syncSchemaTable.Rows[i];
+
+                        for (int j = 0; j < syncSchemaTable.Columns.Count; j++)
                         {
-                            builder.Append(row[col] + ", ");
+                            DataColumn syncColumn = syncSchemaTable.Columns[j];
+
+                            builder.Append(syncRow[syncColumn] + ", ");
                         }
 
                         builder.AppendLine();
