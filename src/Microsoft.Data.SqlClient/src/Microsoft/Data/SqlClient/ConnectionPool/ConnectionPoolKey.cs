@@ -6,14 +6,14 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
-    // SqlConnectionPoolKey: Implementation of a key to connection pool groups for specifically to be used for SqlConnection
-    //  Connection string and SqlCredential are used as a key
-    internal class SqlConnectionPoolKey : DbConnectionPoolKey
+    // ConnectionPoolKey: Key to connection pool groups for SqlConnection
+    //  Connection string, SqlCredential, access token, access token callback, and SSPI context provider are used as a key
+    internal class ConnectionPoolKey : ICloneable
     {
+        private string _connectionString;
         private int _hashValue;
         private readonly SqlCredential _credential;
         private readonly string _accessToken;
@@ -25,24 +25,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
         internal SspiContextProvider SspiContextProvider => _sspiContextProvider;
 
-        internal override string ConnectionString
+        internal string ConnectionString
         {
-            get => base.ConnectionString;
+            get => _connectionString;
             set
             {
-                base.ConnectionString = value;
+                _connectionString = value;
                 CalculateHashCode();
             }
         }
 
-        internal SqlConnectionPoolKey(
+        internal ConnectionPoolKey(
             string connectionString,
             SqlCredential credential,
             string accessToken,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback,
-            SspiContextProvider sspiContextProvider) : base(connectionString)
+            SspiContextProvider sspiContextProvider)
         {
             Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
+            _connectionString = connectionString;
             _credential = credential;
             _accessToken = accessToken;
             _accessTokenCallback = accessTokenCallback;
@@ -50,26 +51,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             CalculateHashCode();
         }
 
-        private SqlConnectionPoolKey(SqlConnectionPoolKey key) : base(key)
+        private ConnectionPoolKey(ConnectionPoolKey key)
         {
-            _credential = key.Credential;
-            _accessToken = key.AccessToken;
+            _connectionString = key._connectionString;
+            _credential = key._credential;
+            _accessToken = key._accessToken;
             _accessTokenCallback = key._accessTokenCallback;
             _sspiContextProvider = key._sspiContextProvider;
-
             CalculateHashCode();
         }
 
-        public override object Clone()
+        public object Clone()
         {
-            return new SqlConnectionPoolKey(this);
+            return new ConnectionPoolKey(this);
         }
 
         public override bool Equals(object obj)
         {
-            return (obj is SqlConnectionPoolKey key
+            return (obj is ConnectionPoolKey key
                 && _credential == key._credential
-                && ConnectionString == key.ConnectionString
+                && _connectionString == key._connectionString
                 && _accessTokenCallback == key._accessTokenCallback
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0
                 && _sspiContextProvider == key._sspiContextProvider);
@@ -82,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void CalculateHashCode()
         {
-            _hashValue = base.GetHashCode();
+            _hashValue = _connectionString == null ? 0 : _connectionString.GetHashCode();
 
             if (_credential != null)
             {
