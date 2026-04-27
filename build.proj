@@ -82,7 +82,7 @@
     <!--
       PackBuild
       Applies to:     Pack*
-      Description:    Whether the Pack* targets should buiild the project before packaging. If
+      Description:    Whether the Pack* targets should build the project before packaging. If
                       true, the project will be built as part of packaging. If false, it will not.
 
                       For most developers, building immediately before packing is the norm, and
