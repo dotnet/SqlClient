@@ -193,10 +193,29 @@ else
 
   lookup_milestone "${VERSION}"
 
+  # Build the PR body using printf to avoid quoting pitfalls with embedded
+  # newlines (mixed $'...' and '...' quoting can leave literal \n in output).
+  CONFLICT_BODY="$(printf '%s' \
+    "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into " \
+    "\`${TARGET_BRANCH}\` **failed due to merge conflicts**." \
+    "${MILESTONE_NOTE}" \
+    $'\n\nPlease resolve manually:\n```bash\n' \
+    "git fetch origin" \
+    $'\n' \
+    "git checkout ${CHERRY_PICK_BRANCH}" \
+    $'\n' \
+    "${CHERRY_PICK_CMD}" \
+    $'\n' \
+    "# resolve conflicts" \
+    $'\n' \
+    "git push origin ${CHERRY_PICK_BRANCH} --force" \
+    $'\n```')"
+
   gh pr create \
+    --draft \
     --base "${TARGET_BRANCH}" \
     --head "${CHERRY_PICK_BRANCH}" \
     --title "[${VERSION} Cherry-pick - CONFLICTS] ${PR_TITLE}" \
     ${MILESTONE_ARG} \
-    --body $'Cherry-pick of #'"${PR_NUMBER}"' ('"${MERGE_COMMIT_SHA}"') into `'"${TARGET_BRANCH}"'` **failed due to merge conflicts**.'"${MILESTONE_NOTE}"$'\n\nPlease resolve manually:\n```bash\ngit fetch origin\ngit checkout '"${CHERRY_PICK_BRANCH}"'\n'"${CHERRY_PICK_CMD}"$'\n# resolve conflicts\ngit push origin '"${CHERRY_PICK_BRANCH}"' --force\n```'
+    --body "${CONFLICT_BODY}"
 fi

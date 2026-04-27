@@ -296,3 +296,52 @@ STUB
   # Should have created an empty commit.
   grep -q "GIT: commit --allow-empty" "${STUB_DIR}/git.log"
 }
+
+@test "conflict PR body contains real newlines, not literal backslash-n" {
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then
+      if [[ "$2" == "--abort" ]]; then exit 0; fi
+      exit 1
+    fi
+    if [[ "$1" == "commit" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  # Capture the full --body argument to a file for inspection.
+  write_gh_mock '
+    if [[ "$1" == "api" ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+
+  # The body file must exist (gh pr create was called with --body).
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+
+  local body
+  body="$(cat "${STUB_DIR}/pr-body.txt")"
+
+  # Must NOT contain literal two-character sequence '\n'.
+  [[ "$body" != *'\\n'* ]]
+  # Each command in the code block must be on its own line.
+  [[ "$body" == *$'\ngit fetch origin\n'* ]]
+  [[ "$body" == *$'\ngit checkout dev/automation/pr-42-to-7.0.1\n'* ]]
+  [[ "$body" == *$'\ngit cherry-pick abc123def456\n'* ]]
+  [[ "$body" == *$'\n# resolve conflicts\n'* ]]
+  [[ "$body" == *$'\ngit push origin dev/automation/pr-42-to-7.0.1 --force\n'* ]]
+}
