@@ -23,14 +23,18 @@ These projects target `net8.0`, `net9.0`, and `net10.0` on all platforms. On Win
 Use [build.proj](build.proj) from the repository root:
 
 ```bash
-msbuild build.proj -t:<test_target> [optional_parameters]
+dotnet build build.proj -t:<test_target> [optional_parameters]
 ```
 
-If `msbuild` is not available, use `dotnet msbuild`:
+Since `build.proj` is the only project file in the repo root, it can be omitted when building from
+the root:
 
 ```bash
-dotnet msbuild build.proj -t:<test_target> [optional_parameters]
+dotnet build -t:<test_target> [optional_parameters]
 ```
+
+The command-line examples below will assume that `build.proj` is selected by default and will omit
+it from the `dotnet build` command.
 
 Test targets build the projects they depend on, so a separate build step is not required for normal test runs.
 
@@ -51,55 +55,55 @@ Test targets build the projects they depend on, so a separate build step is not 
 Run the SqlClient unit tests:
 
 ```bash
-msbuild build.proj -t:TestSqlClientUnit
+dotnet build -t:TestSqlClientUnit
 ```
 
 Run the SqlClient functional tests:
 
 ```bash
-msbuild build.proj -t:TestSqlClientFunctional
+dotnet build -t:TestSqlClientFunctional
 ```
 
 Run the SqlClient manual tests:
 
 ```bash
-msbuild build.proj -t:TestSqlClientManual
+dotnet build -t:TestSqlClientManual
 ```
 
 Run only manual test set 2:
 
 ```bash
-msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run manual test sets 1 and 3:
 
 ```bash
-msbuild build.proj -t:TestSqlClientManual -p:TestSet=13
+dotnet build -t:TestSqlClientManual -p:TestSet=13
 ```
 
 Run Always Encrypted manual tests:
 
 ```bash
-msbuild build.proj -t:TestSqlClientManual -p:TestSet=AE
+dotnet build -t:TestSqlClientManual -p:TestSet=AE
 ```
 
 Run a specific target framework:
 
 ```bash
-msbuild build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ```
 
 Run functional tests against an x86 `dotnet` installation:
 
 ```bash
-msbuild build.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+dotnet build -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Azure extension tests, including `interactive` tests, while still excluding tests marked `failing` or `flaky`:
 
 ```bash
-msbuild build.proj -t:TestAzure -p:TestFilters=category!=failing
+dotnet build -t:TestAzure -p:TestFilters=category!=failing
 ```
 
 ## Test Parameters
@@ -132,13 +136,13 @@ Examples:
 
 ```bash
 # Run a single test by fully-qualified name.
-msbuild build.proj -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+dotnet build -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
 
 # Run only flaky tests while investigating quarantine failures.
-msbuild build.proj -t:TestSqlClientManual -p:TestFilters=category=flaky
+dotnet build -t:TestSqlClientManual -p:TestFilters=category=flaky
 
 # Disable the default filter.
-msbuild build.proj -t:TestSqlClientFunctional -p:TestFilters=none
+dotnet build -t:TestSqlClientFunctional -p:TestFilters=none
 ```
 
 When passing filter expressions that contain shell-sensitive characters such as `&`, quote or escape the value as
@@ -222,14 +226,14 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 You can override the config file path with the `MDS_TEST_CONFIG` environment variable:
 
 ```bash
-MDS_TEST_CONFIG=/path/to/config.json msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
+MDS_TEST_CONFIG=/path/to/config.json dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
 $env:MDS_TEST_CONFIG = "C:\path\to\config.json"
-msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 ## Configuration Properties
@@ -289,23 +293,23 @@ If `TestSet` is omitted, all sets are compiled and run. You can combine sets by 
 Test results are written to `test_results` by default. Override the location with `TestResultsFolderPath`:
 
 ```bash
-msbuild build.proj -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
+dotnet build -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
 ```
 
 Hang blame collection is enabled by default with a `10m` timeout. To increase the timeout:
 
 ```bash
-msbuild build.proj -t:TestSqlClientManual -p:TestBlameTimeout=30m
+dotnet build -t:TestSqlClientManual -p:TestBlameTimeout=30m
 ```
 
 To disable hang blame collection:
 
 ```bash
-msbuild build.proj -t:TestSqlClientManual -p:TestBlameTimeout=0
+dotnet build -t:TestSqlClientManual -p:TestBlameTimeout=0
 ```
 
 Code coverage is enabled by default. To disable it for a faster local run:
 
 ```bash
-msbuild build.proj -t:TestSqlClientUnit -p:TestCodeCoverage=false
+dotnet build -t:TestSqlClientUnit -p:TestCodeCoverage=false
 ```

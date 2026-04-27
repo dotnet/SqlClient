@@ -28,7 +28,7 @@ The app is designed to run against both **published NuGet packages** and **local
 
 ## Build Parameters
 
-Package versions are controlled through MSBuild properties. Pass them on the command line with `-p:`
+Package versions are controlled through build properties. Pass them on the command line with `-p:`
 (or `/p:`) to override the defaults defined in `Directory.Packages.props`.
 
 | Property | Default | Description |

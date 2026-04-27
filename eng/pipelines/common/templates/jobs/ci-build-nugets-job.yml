@@ -85,7 +85,6 @@ jobs:
     name: ${{parameters.poolName }}
     demands:
     - imageOverride -equals ${{ parameters.imageOverride }}
-    - msbuild
 
   variables:
     - template: /eng/pipelines/libraries/ci-build-variables.yml@self
@@ -179,12 +178,28 @@ jobs:
   - task: DotNetCoreCLI@2
     displayName: 'Create AKV Provider NuGet Package'
     inputs:
-      command: pack
-      packagesToPack: src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
-      configurationToPack: ${{ parameters.buildConfiguration }}
-      nobuild: true
-      packDirectory: $(packagePath)
-      buildProperties: ReferenceType=${{ parameters.referenceType }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};SqlClientPackageVersion=${{ parameters.mdsPackageVersion }};AkvProviderPackageVersion=${{ parameters.akvPackageVersion }};BuildNumber=$(Build.BuildNumber);AssemblyBuildNumber=$(assemblyBuildNumber)
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackAkvProvider
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:PackBuild=false
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:BuildNumber=$(Build.BuildNumber)
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
+
+  - task: CopyFiles@2
+    displayName: Copy AKV Package to Output Folder
+    inputs:
+      sourceFolder: artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/${{ parameters.buildConfiguration }}
+      contents: |
+        **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.nupkg
+        **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.snupkg
+      targetFolder: $(packagePath)
+      flattenFolders: true
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'

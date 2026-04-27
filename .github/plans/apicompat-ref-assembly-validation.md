@@ -9,7 +9,7 @@ The comparison uses `Microsoft.DotNet.ApiCompat.Tool` in **strict mode**, which 
 ## Usage
 
 ```
-dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+dotnet build build.proj /t:CompareMdsRefAssemblies /p:BaselinePackageVersion=6.1.4
 ```
 
 - `BaselinePackageVersion` is **required** (no default). The user must specify which published package to compare against.
@@ -22,7 +22,7 @@ dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.
 
 Add an entry for version `9.0.200` alongside the existing `dotnet-coverage` entry. This enables `dotnet apicompat` after `dotnet tool restore`.
 
-### 2. Create `tools/targets/CompareRefAssemblies.targets`
+### 2. Create `tools/targets/CompareMdsRefAssemblies.targets`
 
 A single new file containing all properties, items, and targets (steps 3–11 below). Follows the naming convention of existing files like `GenerateMdsPackage.targets`.
 
@@ -85,7 +85,7 @@ Runs `<Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />`.
 - Preceded by `<Message Importance="high">` labelling each comparison
 - Uses item metadata to map `net462` to `$(LegacyNetFxRefDir)` and others to `$(LegacyNetCoreRefDir)`
 
-### 11. `CompareRefAssemblies` target (public entry point)
+### 11. `CompareMdsRefAssemblies` target (public entry point)
 
 - Declared with `DependsOnTargets="_RunRefApiCompat"`
 - Emits a final `<Message>` summarizing completion
@@ -95,12 +95,12 @@ Runs `<Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />`.
 Add one line after the existing `.targets` imports (after line 7):
 
 ```xml
-<Import Project="$(ToolsDir)targets\CompareRefAssemblies.targets" />
+<Import Project="$(ToolsDir)targets\CompareMdsRefAssemblies.targets" />
 ```
 
 ## Design Decisions
 
-- **Single new file** at `tools/targets/CompareRefAssemblies.targets` — only one `<Import>` line added to `build.proj`.
+- **Single new file** at `tools/targets/CompareMdsRefAssemblies.targets` — only one `<Import>` line added to `build.proj`.
 - **Internal targets prefixed with `_`** to signal they're not intended to be called directly.
 - **Strict mode** ensures API additions are also flagged — important for detecting accidental public surface changes during file reorganization.
 - **`ContinueOnError="ErrorAndContinue"`** on each apicompat `Exec` so all 8 comparisons run and all differences are reported together.
@@ -111,7 +111,7 @@ Add one line after the existing `.targets` imports (after line 7):
 ## Verification
 
 ```
-dotnet msbuild build.proj /t:CompareRefAssemblies /p:BaselinePackageVersion=6.1.4
+dotnet build build.proj /t:CompareMdsRefAssemblies /p:BaselinePackageVersion=6.1.4
 ```
 
 - Downloads 6.1.4 nupkg, builds both ref project variants, runs 8 comparisons (4 TFMs × 2 variants).

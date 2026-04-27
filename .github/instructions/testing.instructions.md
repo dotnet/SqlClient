@@ -113,7 +113,7 @@ The default test filter is defined in `build.proj`:
 ```xml
 <FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
 ```
-This can be overridden via MSBuild property: `msbuild -p:FilterStatement="your_filter"`.
+This can be overridden via build property: `dotnet build build.proj -p:FilterStatement="your_filter"`.
 
 ### Test Attributes
 ```csharp
@@ -137,19 +137,19 @@ public void TestIntermittentlyFails() { ... }
 
 ## Running Tests
 
-### Using MSBuild (Recommended)
+### Using `build.proj` targets (Recommended)
 ```bash
 # Build and run all unit tests
-msbuild -t:RunUnitTests
+dotnet build build.proj -t:TestSqlClientUnit
 
 # Run functional tests only
-msbuild -t:RunFunctionalTests
+dotnet build build.proj -t:TestSqlClientFunctional
 
 # Run manual tests for specific framework
-msbuild -t:RunManualTests -p:TF=net8.0
+dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net8.0
 
 # Run specific test set
-msbuild -t:RunManualTests -p:TestSet=1
+dotnet build build.proj -t:TestSqlClientManual -p:TestSet=1
 ```
 
 ### Using dotnet CLI
@@ -159,7 +159,7 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClie
   -p:Configuration=Release
 
 # Functional tests with filter (excludes failing, flaky, and interactive tests)
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" \
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
   --filter "category!=failing&category!=flaky&category!=interactive"
 
 # Run ONLY quarantined flaky tests (for investigation)
@@ -323,7 +323,7 @@ AssertExtensions.ThrowsContains<SqlException>(() => action(), "expected message"
 
 ### Running with Coverage
 ```bash
-msbuild -t:RunTests -p:CollectCoverage=true
+dotnet build build.proj -t:RunTests -p:CollectCoverage=true
 ```
 
 ### Coverage Targets
@@ -333,15 +333,10 @@ msbuild -t:RunTests -p:CollectCoverage=true
 
 ## Debugging Tests
 
-### Visual Studio
+### IDE
 1. Set breakpoints in test code
-2. Right-click test → Debug Test
+2. Right-click test → Debug Test (or use CodeLens "Debug Test" link)
 3. Use Test Explorer for navigation
-
-### VS Code
-1. Configure C# extension
-2. Use CodeLens "Debug Test" link
-3. Attach to test process
 
 ### Command Line
 ```bash

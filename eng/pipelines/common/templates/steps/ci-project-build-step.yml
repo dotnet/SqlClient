@@ -75,18 +75,17 @@ parameters:
 steps:
   # Build MDS
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
-    - task: MSBuild@1
+    - task: DotNetCoreCLI@2
       displayName: 'Build Driver'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.buildConfiguration }}'
-        msbuildArguments:
+        command: build
+        projects: build.proj
+        arguments: >-
           -t:BuildSqlClient
+          -p:Configuration=${{ parameters.buildConfiguration }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:BuildNumber=${{ parameters.assemblyBuildNumber }}
+          -p:BuildNumber=${{ parameters.buildNumber }}
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
@@ -98,14 +97,13 @@ steps:
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
       inputs:
         command: build
-        projects: src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
+        projects: build.proj
         arguments: >-
-          --configuration ${{ parameters.buildConfiguration }}
+          -t:BuildAkvProvider
+          -p:Configuration=${{ parameters.buildConfiguration }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:AssemblyBuildNumber=${{ parameters.assemblyBuildNumber }}
-          -p:AkvProviderPackageVersion=${{ parameters.akvPackageVersion }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
-
+          -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}

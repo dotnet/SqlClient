@@ -48,7 +48,7 @@ The `netcore/` and `netfx/` directories are legacy artifacts from the old dual-p
 - `netcore/ref/` and `netfx/ref/` — **STILL ACTIVE**. Reference assemblies remain in these directories and define the public API surface for each target framework.
 
 ### OS Targeting with `TargetOs`
-The unified project uses a `TargetOs` MSBuild property to handle OS-specific compilation:
+The unified project uses a `TargetOs` build property to handle OS-specific compilation:
 
 ```xml
 <!-- Automatic OS detection -->
