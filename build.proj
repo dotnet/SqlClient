@@ -552,7 +552,7 @@
     <!-- This is a bit hacky, and can be (@TODO:) removed once packaging is done w/o a nuspec from dotnet -->
     <PropertyGroup>
       <GetSqlClientPackageVersionCommand>
-        "$(DotnetPath)dotnet" msbuild "$(SqlClientProjectPath)"
+        "$(DotnetPath)dotnet" build "$(SqlClientProjectPath)"
         -nologo
         -verbosity:quiet
         -getProperty:SqlClientPackageVersion

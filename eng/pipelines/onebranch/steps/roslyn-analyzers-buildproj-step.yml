@@ -13,7 +13,8 @@
 # steps that perform versioning or signing.
 
 parameters:
-  # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  # Optional arguments to pass to dotnet build to indicate what version of dependencies should be
+  # used.
   - name: dependencyArguments
     type: string
     default: ''
@@ -30,7 +31,7 @@ parameters:
       - SqlClient
       - SqlServer
 
-  #  Version to assign to the project to build. This will be passed into msbuild as
+  #  Version to assign to the project to build. This will be passed into dotnet build as
   #  "-p:PackageVersion(packageShortName)".
   # @TODO: Make this optional to enable progressively migrating to single-source versioning.
   - name: packageVersion
