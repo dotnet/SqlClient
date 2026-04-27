@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
             internal const string ImplicitUnbind = "Implicit Unbind";
             internal const string ExplicitUnbind = "Explicit Unbind";
         }
-        
+
         private static readonly Dictionary<string, string> s_keywordMap =
             new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -109,9 +109,9 @@ namespace Microsoft.Data.SqlClient
         private static readonly Version s_constTypeSystemAsmVersion11 = new("11.0.0.0");
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
-        
+
         #region Constructors
-        
+
         /// <summary>
         /// Static constructor to do things that we can't do in a single line initialization.
         /// </summary>
@@ -125,13 +125,14 @@ namespace Microsoft.Data.SqlClient
             AddKeywordToMap(DbConnectionStringKeywords.ApplicationIntent,
                             DbConnectionStringSynonyms.ApplicationIntent);
             AddKeywordToMap(DbConnectionStringKeywords.ApplicationName,
-                            DbConnectionStringSynonyms.App); 
+                            DbConnectionStringSynonyms.App);
             AddKeywordToMap(DbConnectionStringKeywords.AttachDbFilename,
                             DbConnectionStringSynonyms.ExtendedProperties,
                             DbConnectionStringSynonyms.InitialFileName);
             AddKeywordToMap(DbConnectionStringKeywords.AttestationProtocol);
             AddKeywordToMap(DbConnectionStringKeywords.Authentication);
-            AddKeywordToMap(DbConnectionStringKeywords.ColumnEncryptionSetting);
+            AddKeywordToMap(DbConnectionStringKeywords.ColumnEncryptionSetting,
+                            DbConnectionStringSynonyms.ColumnEncryption);
             AddKeywordToMap(DbConnectionStringKeywords.CommandTimeout);
             AddKeywordToMap(DbConnectionStringKeywords.ConnectRetryCount,
                             DbConnectionStringSynonyms.ConnectRetryCount);
@@ -139,6 +140,7 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.ConnectRetryInterval);
             AddKeywordToMap(DbConnectionStringKeywords.ConnectTimeout,
                             DbConnectionStringSynonyms.ConnectionTimeout,
+                            DbConnectionStringSynonyms.ConnectTimeout,
                             DbConnectionStringSynonyms.Timeout);
             AddKeywordToMap(DbConnectionStringKeywords.ContextConnection);
             AddKeywordToMap(DbConnectionStringKeywords.CurrentLanguage,
@@ -151,7 +153,8 @@ namespace Microsoft.Data.SqlClient
             AddKeywordToMap(DbConnectionStringKeywords.EnclaveAttestationUrl);
             AddKeywordToMap(DbConnectionStringKeywords.Encrypt);
             AddKeywordToMap(DbConnectionStringKeywords.Enlist);
-            AddKeywordToMap(DbConnectionStringKeywords.FailoverPartner);
+            AddKeywordToMap(DbConnectionStringKeywords.FailoverPartner,
+                            DbConnectionStringSynonyms.FailoverPartner);
             AddKeywordToMap(DbConnectionStringKeywords.FailoverPartnerSpn,
                             DbConnectionStringSynonyms.FailoverPartnerSpn);
             AddKeywordToMap(DbConnectionStringKeywords.HostNameInCertificate,
@@ -170,7 +173,8 @@ namespace Microsoft.Data.SqlClient
             AddKeywordToMap(DbConnectionStringKeywords.MinPoolSize);
             AddKeywordToMap(DbConnectionStringKeywords.MultiSubnetFailover,
                             DbConnectionStringSynonyms.MultiSubnetFailover);
-            AddKeywordToMap(DbConnectionStringKeywords.PacketSize);
+            AddKeywordToMap(DbConnectionStringKeywords.PacketSize,
+                            DbConnectionStringSynonyms.PacketSize);
             AddKeywordToMap(DbConnectionStringKeywords.Password,
                             DbConnectionStringSynonyms.Pwd);
             AddKeywordToMap(DbConnectionStringKeywords.PersistSecurityInfo,
@@ -192,6 +196,7 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.User);
             AddKeywordToMap(DbConnectionStringKeywords.UserInstance);
             AddKeywordToMap(DbConnectionStringKeywords.WorkstationId,
+                            DbConnectionStringSynonyms.WorkstationId,
                             DbConnectionStringSynonyms.WsId);
 
             #if NETFRAMEWORK
@@ -203,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.TransparentNetworkIpResolution);
             #endif
         }
-        
+
         internal SqlConnectionString(string connectionString): base(connectionString, s_keywordMap)
         {
 #if !NETFRAMEWORK
@@ -568,12 +573,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         #endregion
-        
+
         internal bool IntegratedSecurity => _integratedSecurity;
 
         // @TODO: This is temporary until we can remove DbConnectionString (see SqlClientPermission)
         internal static IReadOnlyDictionary<string, string> KeywordMap => s_keywordMap;
-        
+
         // We always initialize in Async mode so that both synchronous and asynchronous methods
         // will work.  In the future we can deprecate the keyword entirely.
         internal bool Asynchronous => true;
@@ -983,21 +988,21 @@ namespace Microsoft.Data.SqlClient
         internal string NetworkLibrary => _networkLibrary;
 
 #endif // NETFRAMEWORK
-        
+
         #region Private Methods
-        
+
         private static void AddKeywordToMap(string keyword, params string[] synonyms)
         {
             // Add mapping of keyword to keyword
             s_keywordMap.Add(keyword, keyword);
-            
+
             // Add mapping of synonyms to keyword
             foreach (string synonym in synonyms)
             {
                 s_keywordMap.Add(synonym, keyword);
             }
         }
-        
+
         #endregion
     }
 }

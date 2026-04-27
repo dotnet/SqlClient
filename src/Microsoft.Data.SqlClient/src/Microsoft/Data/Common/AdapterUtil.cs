@@ -22,16 +22,13 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
+using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Security.Permissions;
-#endif
-
-#if _WINDOWS
-using Microsoft.Win32;
 #endif
 
 namespace Microsoft.Data.Common
@@ -67,6 +64,22 @@ namespace Microsoft.Data.Common
         /// Max duration for buffer in seconds
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
+
+        /// <summary>
+        /// This member returns true if the current OS platform is Windows.
+        /// </summary>
+        /// <remarks>
+        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
+        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
+        /// code when published to non-Windows platforms.
+        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
+        /// rather than in a throw helper.
+        /// </remarks>
+        #if NETFRAMEWORK
+        public const bool IsWindows = true;
+        #else
+        public static bool IsWindows => OperatingSystem.IsWindows();
+        #endif
 
         #region UDT
 
@@ -378,6 +391,9 @@ namespace Microsoft.Data.Common
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
 
+        internal static ArgumentOutOfRangeException InvalidArraySize(string parameterName) =>
+            ArgumentOutOfRange(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage), parameterName);
+
         internal static void CheckArgumentNull(object value, string parameterName)
         {
             if (value is null)
@@ -432,17 +448,16 @@ namespace Microsoft.Data.Common
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
 
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        {
+            #if NET
+            if (!IsWindows)
+            {
+                // No registry in non-Windows environments
+                return null;
+            }
+            #endif
 
-        #if _UNIX
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        {
-            // No registry in non-Windows environments
-            return null;
-        }
-        #endif
-        #if _WINDOWS
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        {
             #if NETFRAMEWORK
             new RegistryPermission(RegistryPermissionAccess.Read, $@"HKEY_LOCAL_MACHINE\{subkey}").Assert();
             #endif
@@ -468,7 +483,6 @@ namespace Microsoft.Data.Common
             }
             #endif
         }
-        #endif
 
         internal static void ValidateCommandBehavior(CommandBehavior value)
         {

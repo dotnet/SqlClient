@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             // Start a local transaction on the wrong connection.
                             SqlTransaction myTrans = conn3.BeginTransaction();
                             string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadConflictingTransactionOption;
-                            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => new SqlBulkCopy(dstConn, SqlBulkCopyOptions.UseInternalTransaction, myTrans), exceptionMessage: errorMsg);
+                            DataTestUtility.AssertThrows<ArgumentException>(() => new SqlBulkCopy(dstConn, SqlBulkCopyOptions.UseInternalTransaction, myTrans), exceptionMessage: errorMsg);
                         }
                     }
                 }

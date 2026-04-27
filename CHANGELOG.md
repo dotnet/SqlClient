@@ -7,6 +7,179 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.0.1] - 2026-04-23
+
+This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.
+See the [full release notes](release-notes/7.0/7.0.1.md) for detailed descriptions.
+
+### Fixed
+
+- Fixed `SqlBulkCopy` failing on SQL Server 2016 with `Invalid column name 'graph_type'` error by using dynamic SQL to extract column names.
+  ([#3714](https://github.com/dotnet/SqlClient/issues/3714),
+   [#4092](https://github.com/dotnet/SqlClient/pull/4092),
+   [#4147](https://github.com/dotnet/SqlClient/pull/4147))
+
+- Fixed `SqlBulkCopy` failing on Azure Synapse Analytics dedicated SQL pools by using `STRING_AGG` for the column-list query when targeting Synapse.
+  ([#4149](https://github.com/dotnet/SqlClient/issues/4149),
+   [#4176](https://github.com/dotnet/SqlClient/pull/4176),
+   [#4182](https://github.com/dotnet/SqlClient/pull/4182))
+
+- Fixed `SqlDataReader.GetFieldType()` and `GetProviderSpecificFieldType()` returning incorrect type for vector float32 columns.
+  ([#4104](https://github.com/dotnet/SqlClient/issues/4104),
+   [#4105](https://github.com/dotnet/SqlClient/pull/4105),
+   [#4152](https://github.com/dotnet/SqlClient/pull/4152))
+
+- Added missing `System.Data.Common` (v4.3.0) NuGet package dependency for .NET Framework consumers to resolve `CS0012` compilation errors.
+  ([#4063](https://github.com/dotnet/SqlClient/pull/4063),
+   [#4074](https://github.com/dotnet/SqlClient/pull/4074))
+
+### Changed
+
+- Enabled the User Agent TDS feature extension unconditionally; removed the `Switch.Microsoft.Data.SqlClient.EnableUserAgent` AppContext switch.
+  ([#4124](https://github.com/dotnet/SqlClient/pull/4124),
+   [#4154](https://github.com/dotnet/SqlClient/pull/4154))
+
+- Added type forwards from the core assembly to public types moved to `Microsoft.Data.SqlClient.Extensions.Abstractions`.
+  ([#4067](https://github.com/dotnet/SqlClient/pull/4067),
+   [#4117](https://github.com/dotnet/SqlClient/pull/4117))
+
+- Fixed API documentation include paths and duplicate doc snippets.
+  ([#4084](https://github.com/dotnet/SqlClient/pull/4084),
+   [#4086](https://github.com/dotnet/SqlClient/pull/4086),
+   [#4107](https://github.com/dotnet/SqlClient/pull/4107),
+   [#4161](https://github.com/dotnet/SqlClient/pull/4161))
+
+## [Stable Release 7.0.0] - 2026-03-17
+
+This section summarizes all changes across the 7.0 preview cycle for users upgrading from the latest 6.1 stable release.
+See the [full release notes](release-notes/7.0/7.0.0.md) for detailed descriptions.
+
+Also released as part of this milestone:
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 1.0.0. See [release notes](release-notes/Extensions/Abstractions/1.0/1.0.0.md).
+- Released Microsoft.Data.SqlClient.Extensions.Azure 1.0.0. See [release notes](release-notes/Extensions/Azure/1.0/1.0.0.md).
+- Released Microsoft.Data.SqlClient.Internal.Logging 1.0.0. See [release notes](release-notes/Internal/Logging/1.0/1.0.0.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.0. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.0.md).
+
+### Changed
+
+- **Breaking:** Removed Azure dependencies from the core package. Entra ID authentication (`ActiveDirectoryAuthenticationProvider` and related types) has been extracted into a new `Microsoft.Data.SqlClient.Extensions.Azure` package. The core `Microsoft.Data.SqlClient` package no longer depends on `Azure.Core`, `Azure.Identity`, or their transitive dependencies. Applications using Entra ID authentication must now install `Microsoft.Data.SqlClient.Extensions.Azure` separately.
+  ([#1108](https://github.com/dotnet/SqlClient/issues/1108),
+   [#3680](https://github.com/dotnet/SqlClient/pull/3680),
+   [#3902](https://github.com/dotnet/SqlClient/pull/3902),
+   [#3904](https://github.com/dotnet/SqlClient/pull/3904),
+   [#3908](https://github.com/dotnet/SqlClient/pull/3908),
+   [#3917](https://github.com/dotnet/SqlClient/pull/3917),
+   [#3982](https://github.com/dotnet/SqlClient/pull/3982),
+   [#3978](https://github.com/dotnet/SqlClient/pull/3978),
+   [#3986](https://github.com/dotnet/SqlClient/pull/3986))
+
+- Two additional packages were introduced to support this separation: `Microsoft.Data.SqlClient.Extensions.Abstractions` (shared types between the core driver and extensions) and `Microsoft.Data.SqlClient.Internal.Logging` (shared ETW tracing infrastructure).
+  ([#3626](https://github.com/dotnet/SqlClient/pull/3626),
+   [#3628](https://github.com/dotnet/SqlClient/pull/3628),
+   [#3967](https://github.com/dotnet/SqlClient/pull/3967),
+   [#4038](https://github.com/dotnet/SqlClient/pull/4038))
+
+- Deprecated `SqlAuthenticationMethod.ActiveDirectoryPassword` (ROPC flow). The method is now marked `[Obsolete]` and will generate compiler warnings. Migrate to `ActiveDirectoryInteractive`, `ActiveDirectoryServicePrincipal`, `ActiveDirectoryManagedIdentity`, or `ActiveDirectoryDefault`.
+  ([#3671](https://github.com/dotnet/SqlClient/pull/3671))
+
+- Reverted public visibility of internal interop enums (`IoControlCodeAccess` and `IoControlTransferType`) that were accidentally made public during the project merge.
+  ([#3900](https://github.com/dotnet/SqlClient/pull/3900))
+
+- Removed `Constrained Execution Region` error handling blocks and associated `SqlConnection` cleanup.
+  ([#3535](https://github.com/dotnet/SqlClient/pull/3535))
+
+- Performance improvements across SqlStatistics timing, Always Encrypted scenarios, and connection opening:
+  ([#3609](https://github.com/dotnet/SqlClient/pull/3609),
+   [#3612](https://github.com/dotnet/SqlClient/pull/3612),
+   [#3732](https://github.com/dotnet/SqlClient/pull/3732),
+   [#3660](https://github.com/dotnet/SqlClient/pull/3660),
+   [#3791](https://github.com/dotnet/SqlClient/pull/3791),
+   [#3772](https://github.com/dotnet/SqlClient/pull/3772),
+   [#3554](https://github.com/dotnet/SqlClient/pull/3554))
+
+- Allow `SqlBulkCopy` to operate on hidden columns.
+  ([#3590](https://github.com/dotnet/SqlClient/pull/3590))
+
+- Updated UserAgent feature to use a pipe-delimited format, replacing the previous JSON format.
+  ([#3826](https://github.com/dotnet/SqlClient/pull/3826))
+
+- Minor improvements to Managed SNI tracing to capture continuation events and errors.
+  ([#3859](https://github.com/dotnet/SqlClient/pull/3859))
+
+### Added
+
+- Added `SspiContextProvider` abstract class and `SqlConnection.SspiContextProvider` property, enabling custom SSPI authentication for scenarios like cross-domain Kerberos negotiation and NTLM username/password authentication.
+  ([#2253](https://github.com/dotnet/SqlClient/issues/2253),
+   [#2494](https://github.com/dotnet/SqlClient/pull/2494))
+
+- Continued refinement of packet multiplexing with bug fixes and stability improvements, plus new app context switches for opt-in control.
+  ([#3534](https://github.com/dotnet/SqlClient/pull/3534),
+   [#3537](https://github.com/dotnet/SqlClient/pull/3537),
+   [#3605](https://github.com/dotnet/SqlClient/pull/3605))
+
+- Added support for enhanced routing, a TDS feature that allows the server to redirect connections to a specific server and database during login, enabling Azure SQL Hyperscale read replica load balancing.
+  ([#3641](https://github.com/dotnet/SqlClient/issues/3641),
+   [#3969](https://github.com/dotnet/SqlClient/pull/3969),
+   [#3970](https://github.com/dotnet/SqlClient/pull/3970),
+   [#3973](https://github.com/dotnet/SqlClient/pull/3973))
+
+- Updated pipelines and test suites to compile the driver using the .NET 10 SDK.
+  ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
+
+- Added `SqlConfigurableRetryFactory.BaselineTransientErrors` static property exposing the default transient error codes list as a `ReadOnlyCollection<int>`.
+  ([#3903](https://github.com/dotnet/SqlClient/pull/3903))
+
+- Added app context switch `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` to set `MultiSubnetFailover=true` globally without modifying connection strings.
+  ([#3841](https://github.com/dotnet/SqlClient/pull/3841))
+
+- Added app context switch `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` to let the client ignore server-provided failover partner info in Basic Availability Groups.
+  ([#3625](https://github.com/dotnet/SqlClient/pull/3625))
+
+- Enabled `SqlClientDiagnosticListener` for `SqlCommand` on .NET Framework, closing a long-standing observability gap where diagnostic events were previously only available on .NET Core.
+  ([#3658](https://github.com/dotnet/SqlClient/pull/3658))
+
+- Brought the 15 strongly-typed diagnostic event classes in the `Microsoft.Data.SqlClient.Diagnostics` namespace (e.g., `SqlClientCommandBefore`, `SqlClientConnectionOpenAfter`, `SqlClientTransactionCommitError`) to .NET Framework as part of the codebase merge. These types were originally introduced for .NET Core in 6.0.
+  ([#3493](https://github.com/dotnet/SqlClient/pull/3493))
+
+- Enabled User Agent Feature Extension (opt-in via `Switch.Microsoft.Data.SqlClient.EnableUserAgent`).
+  ([#3606](https://github.com/dotnet/SqlClient/pull/3606))
+
+- Added actionable error message when Entra ID authentication methods are used without the `Microsoft.Data.SqlClient.Extensions.Azure` package installed.
+  ([#3962](https://github.com/dotnet/SqlClient/issues/3962),
+   [#4046](https://github.com/dotnet/SqlClient/pull/4046))
+
+### Fixed
+
+- Fixed a connection performance regression where SPN generation was triggered for non-integrated authentication modes (e.g., SQL authentication) on the native SNI path.
+  ([#3929](https://github.com/dotnet/SqlClient/pull/3929))
+
+- Fixed `ExecuteScalar` to propagate errors when the server sends data followed by an error token.
+  ([#3912](https://github.com/dotnet/SqlClient/pull/3912))
+
+- Fixed `NullReferenceException` in `SqlDataAdapter` when processing batch scenarios.
+  ([#3857](https://github.com/dotnet/SqlClient/pull/3857))
+
+- Fixed reading of multiple app context switches from a single `AppContextSwitchOverrides` configuration field.
+  ([#3960](https://github.com/dotnet/SqlClient/pull/3960))
+
+- Fixed an edge case in `TdsParserStateObject.TryReadPlpBytes` where zero-length reads returned `null` instead of an empty array.
+  ([#3872](https://github.com/dotnet/SqlClient/pull/3872))
+
+- Fixed issue where extra connection deactivation was occurring.
+  ([#3758](https://github.com/dotnet/SqlClient/pull/3758))
+
+- Fixed debug assertion in connection pool (no impact to production code).
+  ([#3587](https://github.com/dotnet/SqlClient/pull/3587))
+
+- Prevented uninitialized performance counters escaping `CreatePerformanceCounters`.
+  ([#3623](https://github.com/dotnet/SqlClient/pull/3623))
+
+- Fixed `SetProvider` to return immediately if user-defined authentication provider found.
+  ([#3620](https://github.com/dotnet/SqlClient/pull/3620))
+
+- Fixed connection pool concurrency issue.
+  ([#3632](https://github.com/dotnet/SqlClient/pull/3632))
+
 ## [Preview Release 7.0.0-preview4.26064.3] - 2026-03-05
 
 This update brings the below changes over the previous preview release:

@@ -54,6 +54,15 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 6. **Performance Optimization**: Use pooling, async, efficient allocations
 7. **Observability**: EventSource tracing, meaningful errors
 
+## Branch Naming
+
+All branches created by AI agents **must** live under the `dev/automation/` prefix. Use a descriptive suffix, for example:
+
+- `dev/automation/fix-connection-timeout`
+- `dev/automation/add-json-type-tests`
+
+Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+
 ## Common Tasks
 
 ### Bug Fix Workflow

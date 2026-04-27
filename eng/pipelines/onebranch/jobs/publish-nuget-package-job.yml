@@ -38,15 +38,18 @@ parameters:
   # artifact.  For example, if we're publishing the SqlClient package, and the build job publishes a
   # pipeline artifact with the following structure:
   #
-  #   drop_BuildAndTest_PackageReference/
-  #   ├── Microsoft.Data.SqlClient.5.0.0.nupkg
-  #   ├── Microsoft.Data.SqlClient.5.0.0.snupkg
-  #   ├── Microsoft.Data.SqlClient.Extensions.Abstractions.1.0.0.nupkg
-  #   └── other-file.txt
+  #   drop_build_independent_build_logging/
+  #   ├── packages/
+  #   │   ├── Microsoft.Data.SqlClient.5.0.0.nupkg
+  #   │   └── Microsoft.Data.SqlClient.5.0.0.snupkg
+  #   └── symbols/
+  #       └── ...
   #
-  # Then the packagePath should be 'Microsoft.Data.SqlClient.5.0.0.nupkg'.
+  # Then the packagePath should be 'packages/Microsoft.Data.SqlClient.5.0.0.nupkg'.
   #
-  # Defaults to '${{ parameters.packageName }}.*.nupkg' to match any version of the package.
+  # Defaults to 'packages/${{ parameters.packageName }}.*.nupkg' to match any version of the
+  # package. Only .nupkg files are pushed; .snupkg files are included automatically by NuGet
+  # when they exist alongside the .nupkg in the same directory.
   #
   - name: packagePath
     type: string
@@ -65,13 +68,13 @@ jobs:
 
     variables:
       - name: ob_outputDirectory
-        value: $(Build.SourcesDirectory)/output
+        value: $(JOB_OUTPUT)
 
       - name: artifactPath
         value: $(Pipeline.Workspace)/${{ parameters.artifactName }}
 
       - name: packageToPush
-        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('{0}.*.nupkg', parameters.packageName)) }}
+        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('packages/{0}.*.nupkg', parameters.packageName)) }}
 
     # Template context inputs are used to pass parameters to the deployment job since it doesn't
     # automatically download pipeline artifacts.

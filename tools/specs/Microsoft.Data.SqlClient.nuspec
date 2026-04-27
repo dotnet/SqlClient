@@ -44,6 +44,7 @@
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
         <dependency id="System.Buffers" version="4.6.1" />
+        <dependency id="System.Data.Common" version="4.3.0" />
         <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.3" />
         <dependency id="System.Memory" version="4.6.3" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
@@ -123,103 +124,111 @@
       command line to indicate where the DLLs are.
     -->
 
-    <!-- ref NetFx -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
+    <!-- Lib Binaries ================================================== -->
+    <!-- lib/net462 - These contain the implementation -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
 
-    <!-- ref NetCore for Net 8 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.dll" target="ref\net8.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
+    <!-- lib/net462 Localized Resources -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\de\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\es\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\fr\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\it\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ja\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ko\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pl\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pt-BR\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ru\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\tr\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hans\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hant\" exclude="" />
 
-    <!-- ref NetCore for Net 9 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net9.0\Microsoft.Data.SqlClient.dll" target="ref\net9.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net9.0\Microsoft.Data.SqlClient.xml" target="ref\net9.0\" exclude="" />
+    <!-- lib/net8.0 - These are PlatformNotSupportedException assemblies -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
 
-    <!-- ref NetCore for NetStandard2.0 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.0\" exclude="" />
+    <!-- lib/net8.0 Localized Resources -->
+    <!-- Note: although these come from windows_nt, they will work on any OS -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\cs\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\de\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\es\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\fr\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\it\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ja\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ko\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pl\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pt-BR\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ru\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\tr\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
 
-    <!-- Localized Resource Files for NetFx -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\de\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\es\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\fr\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\it\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ja\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ko\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pl\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pt-BR\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ru\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\tr\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hans\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hant\" exclude="" />
+    <!-- lib/net9.0 - These are PlatformNotSupportedException assemblies -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
 
-    <!-- lib NetFx -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
+    <!-- lib/net9.0 Localized Resources -->
+    <!-- Note: although these come from windows_nt, they will work on any OS -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\cs\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\de\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\es\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\fr\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\it\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ja\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ko\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\pl\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\pt-BR\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ru\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\tr\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hans\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hant\" exclude="" />
 
-    <!-- lib NetCore for Net 8 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
+    <!-- lib/netstandard2.0 - These are PlatformNotSupportedException assemblies -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
 
-    <!-- lib NetCore for Net 9 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
+    <!-- Ref Binaries ================================================== -->
+    <!-- ref/net462 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
 
-    <!-- lib NetCore for NetStandard2.0 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
+    <!-- ref/net8.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="ref\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
 
-    <!-- Localization files for Net 8 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\cs\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\de\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\es\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\fr\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\it\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ja\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ko\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pl\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pt-BR\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ru\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\tr\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
-    <!-- End of Localization files for Net 8 -->
+    <!-- ref/net9.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="ref\net9.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="ref\net9.0\" exclude="" />
 
-    <!-- Localization files for Net 9 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\cs\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\de\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\es\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\fr\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\it\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ja\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ko\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\pl\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\pt-BR\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ru\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\tr\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hans\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hant\" exclude="" />
-    <!-- End of Localization files for Net 9 -->
+    <!-- ref/netstandard2.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.0\" exclude="" />
 
-    <!-- runtimes NetFx -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net462\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net462\" exclude="" />
+    <!-- Runtime Binaries ============================================== -->
+    <!-- runtimes/win/lib/net462 -->
+    <!-- @TODO: We include the impl version in the lib folder - is the runtimes version necessary? -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net462\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net462\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net462\" exclude="" />
 
-    <!-- runtimes NetCore for Net 8 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net8.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
+    <!-- runtimes/unix/lib/net8.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\unix\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\unix\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
 
-    <!-- runtimes NetCore for Net 9 -->
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net9.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net9.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net9.0\" exclude="" />
-    <file src="..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net9.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net9.0\" exclude="" />
+    <!-- runtimes/win/lib/net8.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
+
+    <!-- runtimes/unix/lib/net9.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\unix\net9.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net9.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\unix\net9.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net9.0\" exclude="" />
+
+    <!-- runtimes/win/lib/net9.0 -->
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net9.0\" exclude="" />
+    <file src="..\..\artifacts\Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\windows_nt\net9.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net9.0\" exclude="" />
   </files>
 </package>

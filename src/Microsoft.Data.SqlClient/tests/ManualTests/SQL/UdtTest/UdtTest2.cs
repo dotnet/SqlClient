@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 value[7] = 0;
                 p.Value = new SqlBinary(value);
 
-                DataTestUtility.AssertThrowsWrapper<SqlException>(
+                DataTestUtility.AssertThrows<SqlException>(
                     () => cmd.ExecuteReader(),
                     "Error converting data type varbinary to Point.");
             }
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     p.Value = addr;
                     pName.Value = addr;
 
-                    DataTestUtility.AssertThrowsWrapper<InvalidCastException>(
+                    DataTestUtility.AssertThrows<InvalidCastException>(
                         () => cmd.ExecuteReader(),
                         "Failed to convert parameter value from a Address to a String.");
                 }
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 p.UdtTypeName = "UdtTestDb.dbo.Point";
                 p.Value = 32;
 
-                DataTestUtility.AssertThrowsWrapper<ArgumentException>(
+                DataTestUtility.AssertThrows<ArgumentException>(
                     () => cmd.ExecuteReader(),
                     "Specified type is not registered on the target server. System.Int32");
             }
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     string errorMsg = "Procedure or function '" + spInsertCustomerNoBrackets + "' expects parameter '@addr', which was not supplied.";
 
-                    DataTestUtility.AssertThrowsWrapper<SqlException>(
+                    DataTestUtility.AssertThrows<SqlException>(
                         () => cmd.ExecuteNonQuery(),
                         errorMsg);
                 }
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
 
                     // retrieve the UDT as a string
-                    DataTestUtility.AssertThrowsWrapper<InvalidCastException>(
+                    DataTestUtility.AssertThrows<InvalidCastException>(
                         () => reader.GetString(1),
                         "Unable to cast object of type 'System.Byte[]' to type 'System.String'.");
                 }
@@ -584,12 +584,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string udtError = SystemDataResourceManager.Instance.SQLUDT_MaxByteSizeValue;
             string errorMessage = (new ArgumentOutOfRangeException("MaxByteSize", 8001, udtError)).Message;
 
-            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(
+            DataTestUtility.AssertThrows<ArgumentOutOfRangeException>(
                 () => create(SqlUserDefinedAggregateAttribute.MaxByteSizeValue + 1),
                 errorMessage);
 
             errorMessage = (new ArgumentOutOfRangeException("MaxByteSize", -2, udtError)).Message;
-            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(
+            DataTestUtility.AssertThrows<ArgumentOutOfRangeException>(
                 () => create(-2),
                 errorMessage);
         }
@@ -702,4 +702,3 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
     }
 }
-

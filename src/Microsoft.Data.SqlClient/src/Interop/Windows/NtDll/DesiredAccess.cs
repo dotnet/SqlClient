@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if _WINDOWS
-
 using System;
 
 namespace Interop.Windows.NtDll
@@ -190,5 +188,3 @@ namespace Interop.Windows.NtDll
         FILE_GENERIC_EXECUTE = 0x20000000 // GENERIC_EXECUTE
     }
 }
-
-#endif

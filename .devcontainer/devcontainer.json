@@ -16,7 +16,7 @@
                 "ms-mssql.mssql"
             ],
             "settings": {
-                "dotnet.defaultSolution": "src/Microsoft.Data.SqlClient.sln"
+                "dotnet.defaultSolution": "src/Microsoft.Data.SqlClient.slnx"
             }
         }
     },

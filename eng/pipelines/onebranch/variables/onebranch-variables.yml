@@ -4,52 +4,47 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in MDS OneBranch Official pipelines.
+# This file is only included in SqlClient OneBranch official/non-official pipelines.
 
 variables:
-  - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
+  # Libraries ==============================================================
 
-  # onebranch template variables
+  # These variables are used for running ESRP signing tasks. All names start with "Signing" to make
+  # it clear that these variables are used for signing (as opposed to other msc tasks).
+  #
+  # SigningAppRegistrationClientId
+  # SigningAppRegistrationTenantId
+  # SigningAuthAkvName
+  # SigningAuthSignCertName
+  # SigningEsrpClientId
+  # SigningEsrpConnectedServiceName
+  - group: 'esrp-variables-v2'
+
+  # These variables are used for running symbol publishing tasks. All names start with "Symbols" to
+  # make it clear that these variables are used for symbols (as opposed to other msc tasks).
+  #
+  # SymbolsAzureSubscription
+  # SymbolsPublishProjectNameSqlClient
+  # SymbolsPublishServerProd / SymbolsPublishServerPPE
+  # SymbolsPublishTokenUriProd / SymbolsPublishTokenUriPPE
+  # SymbolsUploadAccount
+  - group: 'Symbols Publishing'
+
+  # OneBranch Template Variables ###########################################
+
+  # https://aka.ms/obpipelines/sdl
   - name: ob_sdl_binskim_break
-    value: true # https://aka.ms/obpipelines/sdl
+    value: true
+
   - name: Packaging.EnableSBOMSigning
     value: true
+
+  # OneBranch supplies a variety of container images we must use for our jobs.
+  #
+  # Windows jobs use this image.
   - name: WindowsContainerImage
-    value: "onebranch.azurecr.io/windows/ltsc2022/vse2022:latest" # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
 
-  # OneBranch automatically publishes pipeline artifacts from all jobs.  Use of the
-  # PublishPipelineArtifacts task is prohibited.  All content in the ob_outputDirectory is
-  # published.  The artifacts are named according to this pattern:
-  #
-  #   drop_<stageName>_<jobName>
-  #
-  # Downstream stages and jobs may download these artifacts via the DownloadPipelineArtifact task,
-  # but they must know the artifact name.
-  #
-  # Here we define the artifact names that our OneBranch pipelines produce to avoid hardcoding them
-  # throughout the pipeline files.  If any of the stage or job names change, we only need to update
-  # the artifact names here.
-
-  # The Abstractions package artifacts.
-  - name: abstractionsArtifactsName
-    value: drop_build_abstractions_build_package_Abstractions
-
-  # The AKV Provider package artifacts.
-  - name: akvArtifactsName
-    value: drop_build_addons_build_package_AkvProvider
-
-  # The Azure package artifacts.
-  - name: azureArtifactsName
-    value: drop_build_dependent_build_package_Azure
-
-  # The Logging package artifacts.
-  - name: loggingArtifactsName
-    value: drop_build_independent_build_package_Logging
-
-  # The SqlServer package artifacts.
-  - name: sqlServerArtifactsName
-    value: drop_build_independent_build_package_SqlServer
-
-  # The SqlClient package artifacts.
-  - name: sqlClientArtifactsName
-    value: drop_build_dependent_build_package_SqlClient
+  # Linux jobs use this image.
+  - name: LinuxContainerImage
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0

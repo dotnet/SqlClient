@@ -365,11 +365,7 @@ namespace Microsoft.Data.SqlClient
 
                 lock (_instanceLock)
                 {
-                    if (_dependencyIdToDependencyHash.ContainsKey(id))
-                    {
-                        entry = _dependencyIdToDependencyHash[id];
-                    }
-                    else
+                    if (!_dependencyIdToDependencyHash.TryGetValue(id, out entry))
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP|ERR> ERROR - dependency ID mismatch - not throwing.");
                     }

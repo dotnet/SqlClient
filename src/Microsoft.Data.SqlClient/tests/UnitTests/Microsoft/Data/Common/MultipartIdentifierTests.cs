@@ -26,6 +26,7 @@ public class MultipartIdentifierTests
         {
             ReadOnlySpan<string> part1Words = ["word1", "word 1"];
             TheoryData<string, string[]> data = [];
+            HashSet<string> seen = [];
 
             // Combination 1: embedded and non-embedded whitespace.
             // Combination 2: leading and/or trailing whitespace, and no whitespace
@@ -36,6 +37,13 @@ public class MultipartIdentifierTests
             {
                 foreach ((string p1Combination, string p1Expected) in GeneratePartCombinations(part1))
                 {
+                    // Skip duplicates — different generation paths can produce
+                    // identical (input, expected) pairs, which xUnit rejects.
+                    if (!seen.Add(p1Combination))
+                    {
+                        continue;
+                    }
+
                     string onePartCombination = p1Combination;
                     string[] onePartExpected = [p1Expected];
 

@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void InvalidLocalDBTest()
         {
             using var connection = new SqlConnection(s_badConnectionString);
-            DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
+            DataTestUtility.AssertThrows<SqlException>(() => connection.Open());
         }
 #endregion
 

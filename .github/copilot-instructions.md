@@ -11,17 +11,18 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj` that multi-targets `net462`, `net8.0`, and `net9.0`. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. It targets `net8.0` and `net9.0` on all supported hosts, and adds `net462` only when building on Windows. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
 The project includes:
 - **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
-  - **Unit Tests**: Located in `tests/UnitTests/` directory, which includes tests for individual components and methods.
-  - **Functional Tests**: Located in `tests/FunctionalTests/` directory, which includes tests for various features and functionalities that can be run without a SQL Server instance.
-  - **Manual Tests**: Located in `tests/ManualTests/` directory, which includes tests that require a SQL Server instance to run.
+  - **Unit Tests**: Located in `src/Microsoft.Data.SqlClient/tests/UnitTests/`.
+  - **Functional Tests**: Located in `src/Microsoft.Data.SqlClient/tests/FunctionalTests/`.
+  - **Manual Tests**: Located in `src/Microsoft.Data.SqlClient/tests/ManualTests/`.
+  - **Performance/Stress Tests**: Located in `src/Microsoft.Data.SqlClient/tests/PerformanceTests/` and `src/Microsoft.Data.SqlClient/tests/StressTests/`.
 - **Documentation**: Found in the `doc/` directory, including API documentation, usage examples.
 - **Policies**: Contribution guidelines, coding standards, and review policies in the `policy/` directory.
-- **Building**: The project uses MSBuild for building and testing, with configurations and targets defined in the `build.proj` file, whereas instructions are provided in the `BUILDGUIDE.md` file.
+- **Building**: The repo uses `build.proj` for orchestrated build/test/pack workflows, `src/Microsoft.Data.SqlClient.slnx` for solution-centric development tooling, and Azure DevOps YAML under `eng/pipelines/` plus `eng/pipelines/onebranch/` for CI and official release flows. See `BUILDGUIDE.md` for local build details.
 - **CI/CD**: ADO Pipelines for CI/CD and Pull request validation are defined in the `eng/` directory, ensuring code quality and automated testing.
 
 ## 📦 Products
@@ -128,6 +129,10 @@ When a new issue is created, follow these steps:
 - Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
 - Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
+
+## 🌿 Branch Naming
+- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
+- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.

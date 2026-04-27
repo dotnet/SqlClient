@@ -3,6 +3,12 @@
     <AssemblyName>Microsoft.Data.SqlClient.TestCommon</AssemblyName>
     <RootNamespace>Microsoft.Data.SqlClient.TestCommon</RootNamespace>
     <Nullable>enable</Nullable>
+
+    <!--
+      This is a shared helper library, not a test project. IsTestProject prevents test adapters
+      (e.g. dotnet test) from discovering this assembly.
+    -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <!-- Target Frameworks =============================================== -->
@@ -26,16 +32,12 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
-    <PackageReference Include="xunit" />
   </ItemGroup>
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <PackageReference Include="xunit" />
   </ItemGroup>
 </Project>

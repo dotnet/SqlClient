@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => SqlDependency.Start(cb.ToString()));
+                DataTestUtility.AssertThrows<InvalidOperationException>(() => SqlDependency.Start(cb.ToString()));
             }
             finally
             {
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Console.WriteLine("4 Notification callback. Type={0}, Info={1}, Source={2}", args.Type, args.Info, args.Source);
                 };
 
-                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => cmd.ExecuteReader());
+                DataTestUtility.AssertThrows<InvalidOperationException>(() => cmd.ExecuteReader());
             }
         }
 
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Console.WriteLine("5 Notification callback. Type={0}, Info={1}, Source={2}", args.Type, args.Info, args.Source);
                 };
 
-                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => cmd.ExecuteReader());
+                DataTestUtility.AssertThrows<InvalidOperationException>(() => cmd.ExecuteReader());
             }
         }
 

@@ -12,18 +12,18 @@ using System.Text.Json;
 
 namespace Microsoft.Data.SqlTypes
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/SqlJson/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/SqlJson/*' />
     public class SqlJson : INullable
     {
         // Our serialized JSON string, or null.
         private readonly string? _jsonString = null;
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor1/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor1/*' />
         public SqlJson()
         {
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
         #if NET
         public SqlJson([StringSyntax(StringSyntaxAttribute.Json)] string? jsonString)
         #else
@@ -45,8 +45,8 @@ namespace Microsoft.Data.SqlTypes
             _jsonString = jsonString;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
-        public SqlJson(JsonDocument? jsonDoc) 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
+        public SqlJson(JsonDocument? jsonDoc)
         {
             if (jsonDoc == null)
             {
@@ -57,15 +57,15 @@ namespace Microsoft.Data.SqlTypes
             _jsonString = jsonDoc.RootElement.GetRawText();
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/IsNull/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/IsNull/*' />
         public bool IsNull => _jsonString is null;
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Null/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Null/*' />
         public static SqlJson Null => new();
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Value/*' />
-        public string Value 
-        { 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Value/*' />
+        public string Value
+        {
             get
             {
                 if (IsNull)
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ToString/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ToString/*' />
         public override string? ToString()
         {
             return _jsonString;
