@@ -187,7 +187,7 @@ dotnet test <project.csproj> --list-tests --filter "<your-filter>" --framework <
 
 ```bash
 # Generate filter for "ChannelDbConnectionPoolTest" class
-dotnet test tests/UnitTests/UnitTests.csproj --list-tests --filter "FullyQualifiedName~ChannelDbConnectionPoolTest" --framework net9.0
+dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj --list-tests --filter "FullyQualifiedName~ChannelDbConnectionPoolTest" --framework net9.0
 
 # Expected output shows matching tests:
 # The following Tests are available:
