@@ -117,9 +117,9 @@ variables:
 
   - name: sqlClientPackageVersion
     ${{ if parameters.isPreview }}:
-      value: '7.0.0-preview4.$(Build.BuildNumber)'
+      value: '7.1.0-preview1.$(Build.BuildNumber)'
     ${{ else }}:
-      value: '7.0.0'
+      value: '7.1.0'
 
   # ------------------------------------------------------------------------
   # SqlServer Package
