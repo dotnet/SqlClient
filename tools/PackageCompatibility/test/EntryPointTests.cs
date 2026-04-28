@@ -28,6 +28,7 @@ public class EntryPointTests
         using StringWriter output = new();
 
         int exitCode;
+        string commandOutput;
 
         try
         {
@@ -36,6 +37,9 @@ public class EntryPointTests
 
             // Act: invoke with no arguments; --connection-string is required.
             exitCode = EntryPoint.Main(Array.Empty<string>());
+
+            // Wait for command help/validation text to flush before asserting.
+            commandOutput = WaitForCapturedOutput(output, "--connection-string");
         }
         finally
         {
@@ -43,9 +47,6 @@ public class EntryPointTests
             Console.SetOut(originalOut);
             Console.SetError(originalError);
         }
-
-        // Wait for command help/validation text to flush before asserting.
-        string commandOutput = WaitForCapturedOutput(output, "--connection-string");
 
         // Assert: parser should reject the command and mention the missing option.
         Assert.NotEqual(0, exitCode);
@@ -75,7 +76,8 @@ public class EntryPointTests
             int exitCode = EntryPoint.Main(new[] { "--help" });
             Assert.Equal(0, exitCode);
 
-            helpOutput = output.ToString();
+            // Ensure final help footer is present so all formatted content has been emitted.
+            helpOutput = WaitForCapturedOutput(output, "--version");
         }
         finally
         {
@@ -83,9 +85,6 @@ public class EntryPointTests
             Console.SetOut(originalOut);
             Console.SetError(originalError);
         }
-
-        // Ensure final help footer is present so all formatted content has been emitted.
-        helpOutput = WaitForCapturedOutput(output, "--version");
 
         // Assert: sample property overrides remain documented in help text.
         Assert.Contains("-p:AbstractionsVersion=1.0.1", helpOutput, StringComparison.Ordinal);
@@ -96,12 +95,12 @@ public class EntryPointTests
         Assert.Contains("-p:SqlServerVersion=1.0.0", helpOutput, StringComparison.Ordinal);
 
         // Assert: currently resolved package defaults are visible to aid troubleshooting.
-        Assert.Contains("Abstractions:  1.0.0", helpOutput, StringComparison.Ordinal);
-        Assert.Contains("AKV Provider:  7.0.0", helpOutput, StringComparison.Ordinal);
+        Assert.Contains($"Abstractions:  {PackageVersions.MicrosoftDataSqlClientExtensionsAbstractions}", helpOutput, StringComparison.Ordinal);
+        Assert.Contains($"AKV Provider:  {PackageVersions.MicrosoftDataSqlClientAlwaysEncryptedAzureKeyVaultProvider}", helpOutput, StringComparison.Ordinal);
         Assert.Contains("Azure:         N/A", helpOutput, StringComparison.Ordinal);
-        Assert.Contains("Logging:       1.0.0", helpOutput, StringComparison.Ordinal);
-        Assert.Contains("SqlClient:     7.0.1", helpOutput, StringComparison.Ordinal);
-        Assert.Contains("SqlServer:     1.0.0", helpOutput, StringComparison.Ordinal);
+        Assert.Contains($"Logging:       {PackageVersions.MicrosoftDataSqlClientInternalLogging}", helpOutput, StringComparison.Ordinal);
+        Assert.Contains($"SqlClient:     {PackageVersions.MicrosoftDataSqlClient}", helpOutput, StringComparison.Ordinal);
+        Assert.Contains($"SqlServer:     {PackageVersions.MicrosoftSqlServerServer}", helpOutput, StringComparison.Ordinal);
     }
 
     /// <summary>

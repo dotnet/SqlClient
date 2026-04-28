@@ -138,12 +138,20 @@ public class BuildVersionOverrideTests
         var psi = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = string.Join(" ", buildArgs),
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true
         };
+
+#if NET
+        foreach (string buildArg in buildArgs)
+        {
+            psi.ArgumentList.Add(buildArg);
+        }
+#else
+        psi.Arguments = string.Join(" ", buildArgs.Select(QuoteArgument));
+#endif
 
         using (var process = Process.Start(psi))
         {
@@ -162,12 +170,21 @@ public class BuildVersionOverrideTests
                 process.Kill();
                 throw new InvalidOperationException("Build timed out after 60 seconds");
             }
-#else
-            process.WaitForExit(60000);
-#endif
 
             stdout = process.StandardOutput.ReadToEnd();
             stderr = process.StandardError.ReadToEnd();
+#else
+            Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+            bool completed = process.WaitForExit(60000);
+            stdout = stdoutTask.GetAwaiter().GetResult();
+            stderr = stderrTask.GetAwaiter().GetResult();
+            if (!completed)
+            {
+                process.Kill();
+                throw new InvalidOperationException("Build timed out after 60 seconds");
+            }
+#endif
 
             // Fail fast with full command/stdout/stderr context for easy diagnosis.
             if (process.ExitCode != 0)
@@ -219,7 +236,7 @@ public class BuildVersionOverrideTests
 
         foreach (string directory in Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
         {
-            string relativePath = Path.GetRelativePath(sourceDirectory, directory);
+            string relativePath = GetRelativePath(sourceDirectory, directory);
             if (ShouldSkip(relativePath))
             {
                 continue;
@@ -230,7 +247,7 @@ public class BuildVersionOverrideTests
 
         foreach (string file in Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories))
         {
-            string relativePath = Path.GetRelativePath(sourceDirectory, file);
+            string relativePath = GetRelativePath(sourceDirectory, file);
             if (ShouldSkip(relativePath))
             {
                 continue;
@@ -251,7 +268,7 @@ public class BuildVersionOverrideTests
     {
         // Ignore generated artifacts and the test project itself to avoid recursive/self-copy issues.
         string normalizedPath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-        string[] segments = normalizedPath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        string[] segments = normalizedPath.Split(new[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach (string segment in segments)
         {
@@ -308,4 +325,42 @@ public class BuildVersionOverrideTests
     /// <param name="OutputDirectory">Build output directory for binaries.</param>
     /// <param name="GeneratedVersionsFile">Path to generated <c>PackageVersions.g.cs</c>.</param>
     private sealed record BuildArtifacts(string ProjectDirectory, string OutputDirectory, string GeneratedVersionsFile);
+
+#if !NET
+    /// <summary>
+    /// Quotes a single command-line argument for use with <see cref="System.Diagnostics.ProcessStartInfo.Arguments"/>
+    /// on .NET Framework, where <c>ArgumentList</c> is unavailable.
+    /// Wraps the value in double-quotes and escapes any embedded double-quotes.
+    /// </summary>
+    /// <param name="arg">The argument to quote.</param>
+    /// <returns>The argument, quoted if it contains whitespace or double-quote characters.</returns>
+    private static string QuoteArgument(string arg)
+    {
+        if (arg.IndexOfAny(new[] { ' ', '\t', '"' }) < 0)
+        {
+            return arg;
+        }
+
+        return "\"" + arg.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+    }
+#endif
+
+    /// <summary>
+    /// Returns the relative path from <paramref name="relativeTo"/> to <paramref name="path"/>.
+    /// Polyfills <see cref="Path.GetRelativePath"/> which is unavailable on .NET Framework.
+    /// </summary>
+    private static string GetRelativePath(string relativeTo, string path)
+    {
+#if NET
+        return Path.GetRelativePath(relativeTo, path);
+#else
+        // Ensure the base URI ends with a separator so MakeRelativeUri treats it as a directory.
+        string baseStr = relativeTo.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        Uri baseUri = new Uri(baseStr);
+        Uri targetUri = new Uri(path);
+        return Uri.UnescapeDataString(baseUri.MakeRelativeUri(targetUri).ToString())
+            .Replace('/', Path.DirectorySeparatorChar);
+#endif
+    }
 }
