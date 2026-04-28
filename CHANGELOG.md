@@ -7,6 +7,65 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 7.1.0-preview1] - 2026-04-29
+
+This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.
+See the [full release notes](release-notes/7.1/7.1.0-preview1.md) for detailed descriptions.
+
+### Added
+
+- Added `SqlBatch` support on .NET Framework so the batching API is available across the full supported platform matrix.
+  ([#3926](https://github.com/dotnet/SqlClient/pull/3926))
+
+- Added additional accepted connection-string synonyms for cross-driver alignment, including `ColumnEncryption`, `ConnectTimeout`, `FailoverPartner`, `PacketSize`, and `WorkstationId`.
+  ([#4192](https://github.com/dotnet/SqlClient/pull/4192))
+
+### Changed
+
+- `SqlConnection.ClearPool` and `SqlConnection.ClearAllPools` now work correctly with the channel-based pool implementation.
+  ([#4194](https://github.com/dotnet/SqlClient/pull/4194))
+
+- Added type forwards for public authentication abstractions moved into `Microsoft.Data.SqlClient.Extensions.Abstractions`.
+  ([#4067](https://github.com/dotnet/SqlClient/pull/4067),
+   [#4117](https://github.com/dotnet/SqlClient/pull/4117))
+
+- Enabled the User Agent feature extension by default.
+  ([#4124](https://github.com/dotnet/SqlClient/pull/4124),
+   [#4154](https://github.com/dotnet/SqlClient/pull/4154))
+
+- Reduced allocations when sending large string values, plus related source-build and packaging consolidation updates.
+  ([#4072](https://github.com/dotnet/SqlClient/pull/4072),
+   [#4033](https://github.com/dotnet/SqlClient/pull/4033),
+   [#4068](https://github.com/dotnet/SqlClient/pull/4068),
+   [#4204](https://github.com/dotnet/SqlClient/pull/4204))
+
+### Fixed
+
+- Fixed `SqlBulkCopy` on SQL Server 2016 graph tables by extracting graph metadata with dynamic SQL.
+  ([#3714](https://github.com/dotnet/SqlClient/issues/3714),
+   [#4092](https://github.com/dotnet/SqlClient/pull/4092),
+   [#4147](https://github.com/dotnet/SqlClient/pull/4147))
+
+- Fixed `SqlBulkCopy` support for Azure Synapse Analytics dedicated SQL pools.
+  ([#4149](https://github.com/dotnet/SqlClient/issues/4149),
+   [#4176](https://github.com/dotnet/SqlClient/pull/4176),
+   [#4182](https://github.com/dotnet/SqlClient/pull/4182))
+
+- Fixed vector float32 metadata so `GetFieldType()` and `GetProviderSpecificFieldType()` return the expected vector type.
+  ([#4104](https://github.com/dotnet/SqlClient/issues/4104),
+   [#4105](https://github.com/dotnet/SqlClient/pull/4105),
+   [#4152](https://github.com/dotnet/SqlClient/pull/4152))
+
+- Added the missing `System.Data.Common` dependency for .NET Framework consumers.
+  ([#4063](https://github.com/dotnet/SqlClient/pull/4063),
+   [#4074](https://github.com/dotnet/SqlClient/pull/4074))
+
+- Fixed a `SqlDataReader` streaming bug triggered by calling `IsDBNull()` before reading streamed column data.
+  ([#4082](https://github.com/dotnet/SqlClient/pull/4082))
+
+- Fixed a `NullReferenceException` in `SqlDataReader`.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159))
+
 ## [Stable Release 7.0.1] - 2026-04-23
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.
@@ -480,7 +539,7 @@ This update brings the following changes over the previous preview release:
 
 *What Changed:*
 
-- Updated pipelines and test suites to compile the driver using the .NET 10 SDK. Cleaned up unnecessary dependency references. 
+- Updated pipelines and test suites to compile the driver using the .NET 10 SDK. Cleaned up unnecessary dependency references.
   ([#3686](https://github.com/dotnet/SqlClient/pull/3686))
 
 *Who Benefits:*
@@ -687,7 +746,7 @@ This update brings the following changes since [7.0.0-preview1.25257.1]
 
 #### Other changes
 
-- Improve performance in `SqlStatistics` by using `Environment.TickCount` for calculating execution timing 
+- Improve performance in `SqlStatistics` by using `Environment.TickCount` for calculating execution timing
   ([#3609](https://github.com/dotnet/SqlClient/pull/3609))
 
 - Improve performance in Always Encrypted scenarios by using lower-allocation primitives
@@ -1359,7 +1418,7 @@ This update brings the below changes over the previous release:
 - Added support for Georgian collation [#2194](https://github.com/dotnet/SqlClient/pull/2194)
 - Added Localization support on .NET [#2210](https://github.com/dotnet/SqlClient/pull/2110)
 - Added .NET 8 support [#2230](https://github.com/dotnet/SqlClient/pull/2230)
-- Added explicit version for major .NET version dependencies on System.Runtime.Caching 8.0.0, System.Configuration.ConfigurationManager 8.0.0, and System.Diagnostics. 
+- Added explicit version for major .NET version dependencies on System.Runtime.Caching 8.0.0, System.Configuration.ConfigurationManager 8.0.0, and System.Diagnostics.
 - DiagnosticSource 8.0.0 [#2303](https://github.com/dotnet/SqlClient/pull/2303)
 
 ### Fixed
@@ -1597,7 +1656,7 @@ This update brings the below changes over the previous release:
 
 - Moved to new System.Data.SqlTypes APIs in **.NET 7** and upper. [1934](https://github.com/dotnet/SqlClient/pull/1934) and [#1981](https://github.com/dotnet/SqlClient/pull/1981)
 - Changed **[UseOneSecFloorInTimeoutCalculationDuringLogin](https://learn.microsoft.com/sql/connect/ado-net/appcontext-switches#enable-a-minimum-timeout-during-login)** App Context switch default to **true** and extended its effect to .NET and .NET Standard. [#2012](https://github.com/dotnet/SqlClient/pull/2012)
-- Updated `Microsoft.Identity.Client` version from 4.47.2 to 4.53.0. [#2031](https://github.com/dotnet/SqlClient/pull/2031), [#2055](https://github.com/dotnet/SqlClient/pull/2055) 
+- Updated `Microsoft.Identity.Client` version from 4.47.2 to 4.53.0. [#2031](https://github.com/dotnet/SqlClient/pull/2031), [#2055](https://github.com/dotnet/SqlClient/pull/2055)
 - Code health improvement: [#1985](https://github.com/dotnet/SqlClient/pull/1985)
 
 ## [Stable Release 2.1.6] - 2023-04-27

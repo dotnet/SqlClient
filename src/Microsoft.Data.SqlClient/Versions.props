@@ -19,7 +19,7 @@
       This is the *next* version to release of SqlClient. Update this after a version is released.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <SqlClientVersionDefault>7.0.0</SqlClientVersionDefault>
+    <SqlClientVersionDefault>7.1.0-preview1</SqlClientVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->

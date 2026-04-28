@@ -59,7 +59,7 @@ variables:
   #    package version and build an assembly version from it. If the build number is included
   #    before the "-" the build number will be appended again, generating an invalid file version.
   - name: mdsPackageVersion
-    value: 7.0.0-ci$(AssemblyBuildNumber)
+    value: 7.1.0-preview1ci$(AssemblyBuildNumber)
 
   # SqlServer library NuGet package version
   # NOTE: SqlServer's version props derive file version from the package version by appending the

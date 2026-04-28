@@ -9,6 +9,8 @@ applyTo: "**/tests/**,**/*Test*.cs"
 src/Microsoft.Data.SqlClient/tests/
 ├── FunctionalTests/          # Tests without SQL Server dependency
 ├── ManualTests/              # Integration tests requiring SQL Server
+├── PerformanceTests/         # Benchmark-style perf validation
+├── StressTests/              # Long-running stress coverage
 ├── UnitTests/                # Unit tests with minimal dependencies
 └── tools/
     └── Microsoft.Data.SqlClient.TestUtilities/
@@ -109,11 +111,11 @@ public async Task OpenAsync_TimingDependent_MayFail() { ... }
 All test runs use `--blame-hang-timeout 10m` to kill tests that hang for more than 10 minutes. This is configured in `build.proj` and applied to all test targets. If a test is expected to run longer than 10 minutes, it must be restructured or split.
 
 ### Test Filter Configuration
-The default test filter is defined in `build.proj`:
+The default test filter is defined in `build.proj` via `TestFilters`:
 ```xml
-<FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
+<TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
 ```
-This can be overridden via MSBuild property: `msbuild -p:FilterStatement="your_filter"`.
+This can be overridden via MSBuild property: `msbuild build.proj -t:TestSqlClientUnit -p:TestFilters="your_filter"`.
 
 ### Test Attributes
 ```csharp
@@ -140,16 +142,16 @@ public void TestIntermittentlyFails() { ... }
 ### Using MSBuild (Recommended)
 ```bash
 # Build and run all unit tests
-msbuild -t:RunUnitTests
+msbuild build.proj -t:TestSqlClientUnit
 
 # Run functional tests only
-msbuild -t:RunFunctionalTests
+msbuild build.proj -t:TestSqlClientFunctional
 
 # Run manual tests for specific framework
-msbuild -t:RunManualTests -p:TF=net8.0
+msbuild build.proj -t:TestSqlClientManual -p:TestFramework=net8.0
 
 # Run specific test set
-msbuild -t:RunManualTests -p:TestSet=1
+msbuild build.proj -t:TestSqlClientManual -p:TestSet=1
 ```
 
 ### Using dotnet CLI
@@ -159,7 +161,7 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClie
   -p:Configuration=Release
 
 # Functional tests with filter (excludes failing, flaky, and interactive tests)
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" \
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
   --filter "category!=failing&category!=flaky&category!=interactive"
 
 # Run ONLY quarantined flaky tests (for investigation)
@@ -323,7 +325,7 @@ AssertExtensions.ThrowsContains<SqlException>(() => action(), "expected message"
 
 ### Running with Coverage
 ```bash
-msbuild -t:RunTests -p:CollectCoverage=true
+msbuild build.proj -t:TestSqlClientUnit -p:TestCodeCoverage=true
 ```
 
 ### Coverage Targets

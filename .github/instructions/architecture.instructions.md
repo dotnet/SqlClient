@@ -34,10 +34,11 @@ src/
 ## Unified Project Model
 
 ### Architecture Goal
-The driver is transitioning away from separate `netfx/` and `netcore/` project files toward a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. This project multi-targets all supported frameworks from one codebase:
+The driver is transitioning away from separate `netfx/` and `netcore/` project files toward a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. This project targets the modern .NET TFMs on every host and conditionally adds .NET Framework on Windows:
 
 ```xml
-<TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+<TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
 ```
 
 **All new code MUST go into `src/Microsoft.Data.SqlClient/src/`**. Do NOT add files to the legacy `netcore/src/` or `netfx/src/` directories.
@@ -82,7 +83,7 @@ When writing code that differs by platform, use these preprocessor directives:
 | `#if _UNIX` | Code for Unix/Linux/macOS OS (any framework) |
 
 Guidelines:
-1. All code must compile for all target frameworks (`net462`, `net8.0`, `net9.0`)
+1. All code must compile for the TFMs supported by the current target OS: `net8.0`/`net9.0` everywhere, plus `net462` on Windows builds
 2. Use `#if NETFRAMEWORK` or `#if NET` for framework-specific code paths
 3. Use `#if _WINDOWS` or `#if _UNIX` for OS-specific code paths
 4. Avoid APIs that don't exist on a target platform without conditional compilation
@@ -104,10 +105,14 @@ The `ref/` directories define the public API surface:
 **IMPORTANT**: Any public API changes MUST update the corresponding reference assembly in the appropriate `ref/` directory.
 
 ### Build Output
-Build artifacts are organized by framework and OS:
+Build artifacts are organized by reference mode, configuration, OS, and framework:
 ```
-artifacts/Microsoft.Data.SqlClient/{Configuration}/{TargetOs}/{TargetFramework}/
+artifacts/Microsoft.Data.SqlClient/{ReferenceType}-{Configuration}/{NormalizedTargetOs}/{TargetFramework}/
 ```
+
+`ReferenceType` is a first-class build dimension in this branch. Local and CI builds may run in:
+- `Project` mode — sibling packages referenced as projects
+- `Package` mode — sibling packages restored from locally produced NuGet packages
 
 ## SNI (SQL Server Network Interface) Layer
 
