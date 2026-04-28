@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return sniHandle;
         }
 
-        private static ResolvedServerSpn GetSqlServerSPNs(DataSource dataSource, string serverSPN)
+        internal static ResolvedServerSpn GetSqlServerSPNs(DataSource dataSource, string serverSPN)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
             if (!string.IsNullOrWhiteSpace(serverSPN))
@@ -132,14 +132,19 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             else if (!string.IsNullOrWhiteSpace(dataSource.InstanceName))
             {
-                postfix = dataSource.ResolvedProtocol == DataSource.Protocol.TCP ? dataSource.ResolvedPort.ToString() : dataSource.InstanceName;
+                // Named Pipes use the instance name in the SPN (MSSQLSvc/host:instance).
+                // All other protocols (TCP, None, Admin) use the port resolved by SSRP
+                // (MSSQLSvc/host:port). Protocol.None is the default when no prefix is
+                // specified in the data source (e.g. "server\instance"), and it is treated
+                // as TCP for connection purposes. See GitHub issue #3566.
+                postfix = dataSource.ResolvedProtocol == DataSource.Protocol.NP ? dataSource.InstanceName : dataSource.ResolvedPort.ToString();
             }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
             return GetSqlServerSPNs(hostName, postfix, dataSource.ResolvedProtocol);
         }
 
-        private static ResolvedServerSpn GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
+        internal static ResolvedServerSpn GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(hostNameOrAddress));
             IPHostEntry hostEntry = null;
@@ -607,8 +612,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
-                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
-                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance,
+                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path
                     // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
                     if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && ResolvedProtocol == Protocol.NP)
                     {
