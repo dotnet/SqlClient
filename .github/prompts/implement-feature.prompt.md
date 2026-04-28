@@ -62,9 +62,9 @@ Before writing code, produce a brief implementation plan covering:
 4. Test against multiple SQL Server versions.
 
 ## 5. Write Tests
-- **Unit tests** in `tests/UnitTests/` for isolated logic.
-- **Functional tests** in `tests/FunctionalTests/` for API behavior without SQL Server.
-- **Manual tests** in `tests/ManualTests/` for full integration with SQL Server.
+- **Unit tests** in `src/Microsoft.Data.SqlClient/tests/UnitTests/` for isolated logic.
+- **Functional tests** in `src/Microsoft.Data.SqlClient/tests/FunctionalTests/` for API behavior without SQL Server.
+- **Manual tests** in `src/Microsoft.Data.SqlClient/tests/ManualTests/` for full integration with SQL Server.
 - Cover:
   - Happy path and edge cases
   - **Both sync and async code paths** where the feature exposes both variants

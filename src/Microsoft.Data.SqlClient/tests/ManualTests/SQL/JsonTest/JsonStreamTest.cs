@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 using Newtonsoft.Json.Linq;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -164,15 +165,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
         public void TestJsonStreaming()
         {
-            GenerateJsonFile(1000, _jsonFile);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            try
             {
+                GenerateJsonFile(1000, _jsonFile);
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
                 connection.Open();
-                var tableName = DataTestUtility.GetLongName("jsonTab");
-                DataTestUtility.CreateTable(connection, tableName, "(data json)");
-                StreamJsonFileToServer(connection, tableName);
-                PrintJsonDataToFile(connection, tableName);
+
+                using Table jsonTable = new(connection, "jsonTab", "(data json)");
+
+                StreamJsonFileToServer(connection, jsonTable.Name);
+                PrintJsonDataToFile(connection, jsonTable.Name);
                 CompareJsonFiles();
+            }
+            finally
+            {
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
             }
@@ -181,15 +187,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
         public async Task TestJsonStreamingAsync()
         {
-            GenerateJsonFile(1000, _jsonFile);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            try
             {
+                GenerateJsonFile(1000, _jsonFile);
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
                 await connection.OpenAsync();
-                var tableName = DataTestUtility.GetLongName("jsonTab");
-                DataTestUtility.CreateTable(connection, tableName, "(data json)");
-                await StreamJsonFileToServerAsync(connection, tableName);
-                await PrintJsonDataToFileAsync(connection, tableName);
+
+                using Table jsonTable = new(connection, "jsonTab", "(data json)");
+
+                await StreamJsonFileToServerAsync(connection, jsonTable.Name);
+                await PrintJsonDataToFileAsync(connection, jsonTable.Name);
                 CompareJsonFiles();
+            }
+            finally
+            {
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
             }

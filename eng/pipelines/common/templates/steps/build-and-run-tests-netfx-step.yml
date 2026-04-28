@@ -49,7 +49,7 @@ steps:
       -p:ReferenceType=Package
       -p:Configuration=Release
       -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category!=failing&category!=flaky&category!=interactive"
@@ -70,7 +70,7 @@ steps:
       -p:ReferenceType=Package
       -p:Configuration=Release
       -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category=flaky"
@@ -92,7 +92,7 @@ steps:
       -p:ReferenceType=Package
       -p:Configuration=Release
       -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category!=failing&category!=flaky&category!=interactive"
@@ -114,7 +114,7 @@ steps:
       -p:ReferenceType=Package
       -p:Configuration=Release
       -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
       --no-build
       -v n
       --filter "category=flaky"

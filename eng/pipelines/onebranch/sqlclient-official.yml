@@ -33,9 +33,10 @@ parameters:
     type: boolean
     default: false
 
-  # Push packages to NuGet Production (otherwise pushes to NuGet Test).
+  # When true, publish symbols and push NuGet packages to Production environments.  When false,
+  # symbols use PPE and NuGet packages use QA/Test.
   - name: releaseToProduction
-    displayName: Release to NuGet Production
+    displayName: Publish Symbols and NuGet Packages to Production
     type: boolean
     default: false
 
@@ -201,9 +202,7 @@ extends:
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
-          isPreview: ${{ parameters.isPreview }}
           isOfficial: true # This is an official pipeline.
-          publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
           buildAkvProvider: ${{ parameters.buildAkvProvider }}
@@ -233,10 +232,37 @@ extends:
           signingAuthSignCertName: '$(SigningAuthSignCertName)'
           signingEsrpClientId: '$(SigningEsrpClientId)'
           signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
+
+      - template: /eng/pipelines/onebranch/stages/publish-symbols-stage.yml@self
+        parameters:
+          publishSymbols: ${{ parameters.publishSymbols }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+
+          abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
+          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
+          akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
+          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
+          azureArtifactsName: '${{ variables.azureArtifactsName }}'
+          azurePackageVersion: '${{ variables.azurePackageVersion }}'
+          loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
+          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
+          sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
+          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
+          sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
+          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
+
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
-          symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
-          symbolsPublishServer: '$(SymbolsPublishServer)'
-          symbolsPublishTokenUri: '$(SymbolsPublishTokenUri)'
+          symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
+          # Symbol server target follows releaseToProduction: Production for
+          # real releases, PPE for test/QA releases.
+          ${{ if eq(parameters.releaseToProduction, true) }}:
+            symbolsPublishServer: '$(SymbolsPublishServerProd)'
+            symbolsPublishTokenUri: '$(SymbolsPublishTokenUriProd)'
+          ${{ else }}:
+            symbolsPublishServer: '$(SymbolsPublishServerPPE)'
+            symbolsPublishTokenUri: '$(SymbolsPublishTokenUriPPE)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
       - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
@@ -246,6 +272,8 @@ extends:
           # This is an official pipeline.
           isOfficial: true
           stageNameSuffix: production
+
+          publishSymbols: ${{ parameters.publishSymbols }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'

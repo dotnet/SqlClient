@@ -273,12 +273,17 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.Uid, Keywords.UserID },
                 { DbConnectionStringSynonyms.User, Keywords.UserID },
                 { DbConnectionStringSynonyms.WsId, Keywords.WorkstationID },
+                { DbConnectionStringSynonyms.WorkstationId, Keywords.WorkstationID },
                 { DbConnectionStringSynonyms.ServerSpn, Keywords.ServerSPN },
                 { DbConnectionStringSynonyms.FailoverPartnerSpn, Keywords.FailoverPartnerSPN },
+                { DbConnectionStringSynonyms.ColumnEncryption, Keywords.ColumnEncryptionSetting },
+                { DbConnectionStringSynonyms.ConnectTimeout, Keywords.ConnectTimeout },
+                { DbConnectionStringSynonyms.FailoverPartner, Keywords.FailoverPartner },
+                { DbConnectionStringSynonyms.PacketSize, Keywords.PacketSize },
             };
             return pairs;
         }
-        
+
         // @TODO These methods are completely unnecessary.
 
         private static bool ConvertToBoolean(object value) => DbConnectionStringUtilities.ConvertToBoolean(value);
@@ -565,7 +570,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: These methods can be inlined with the property setters.
-        
+
         private void SetValue(string keyword, bool value) => base[keyword] = value.ToString();
 
         private void SetValue(string keyword, int value) => base[keyword] = value.ToString((System.IFormatProvider)null);
@@ -732,13 +737,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentNull(nameof(destinationType));
                 }
-                if (typeof(InstanceDescriptor) == destinationType)
+                if (destinationType == typeof(InstanceDescriptor) && value is SqlConnectionStringBuilder obj)
                 {
-                    SqlConnectionStringBuilder obj = (value as SqlConnectionStringBuilder);
-                    if (obj is not null)
-                    {
-                        return ConvertToInstanceDescriptor(obj);
-                    }
+                    return ConvertToInstanceDescriptor(obj);
                 }
                 return base.ConvertTo(context, culture, value, destinationType);
             }

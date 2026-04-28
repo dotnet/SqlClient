@@ -1,544 +1,1022 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
-  <Import Project="$(ToolsDir)targets\GenerateMdsPackage.targets" />
-  <Import Project="$(ToolsDir)targets\CompareMdsRefAssemblies.targets" />
 
+  <!-- Build Parameters ================================================ -->
+  <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
   <PropertyGroup>
-    <!-- SourceLink variable-->
-    <DisableSourceLink>false</DisableSourceLink>
-
-    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
-    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
-    <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
-    <!-- Flag to control if Windows drivers should be built or not -->
-    <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
-    <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
-    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
-    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
-    <TF Condition="$(TF) == ''">net9.0</TF> <!-- Default Target Framework -->
-    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETFramework'">netfx</TFGroup>
-    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETCoreApp'">netcore</TFGroup>
-    <TargetGroup Condition="'$(TFGroup)' == 'netfx'">netfx</TargetGroup>
-    <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
-    <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
-    <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
-    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
-
-    <CommonProperties>Configuration=$(Configuration);ReferenceType=$(ReferenceType);</CommonProperties>
-    <ProjectProperties>$(CommonProperties);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
-    <TestProjectProperties>$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
-    <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
     <!--
-      Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
-      This property is empty by default to use the default path of the system's path variable.
-      The provided path should be ended to a `\` character without white spaces: Ex. C:\x86\
+      BuildNumber
+      Applies to:     Build*, Pack*
+      Description:    Number that identifies the build.
+
+                      For local developer builds, this does not need to be used. The developer
+                      should either specify an entire package version override (via
+                      PackageVersion*, et. al.) or by omitting the package version.
+
+                      For automated builds, this should always be specified instead of
+                      a package version. Thus, the version base is controlled via source and the
+                      build number is simply appended as a revision number.
+      Default value:  [blank]
+      Example:        1234
     -->
-    <DotnetPath></DotnetPath>
-    <!-- Using these properties to compile and pack netfx dll fixes nuget package explorer error "Compiler flags: missing" -->
-    <NugetPackProperties>DebugType=portable;DebugSymbols=true;IncludeSymbols=true;SymbolPackageFormat=snupkg;PublishRepositoryUrl=true;RepositoryUrl=https://github.com/dotnet/sqlclient;RepositoryType=git;EmbedUnTrackedSources=true;Deterministic=true;</NugetPackProperties>
-    <!-- TF_BUILD is enabled only within AzureDevOps pipeline to support continuous integation build. -->
-    <NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
-  </PropertyGroup>
+    <!-- @TODO: Currently this is defaulted to 0 by Directory.Build.props, which is the same default used later on anyhow. -->
+    <BuildNumber Condition="'$(BuildNumber)' == ''" />
+    <BuildNumberArgument Condition="'$(BuildNumber)' != ''">
+      -p:BuildNumber=$(BuildNumber)
+    </BuildNumberArgument>
 
-  <!-- Test configuration properties -->
-  <PropertyGroup>
-    <!-- Set up default filters for tests to exclude failing and flaky tests -->
-    <Filter Condition="'$(Filter)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</Filter>
-    <FilterArgument>--filter "$(Filter)"</FilterArgument>
+    <!--
+      BuildSuffix
+      Aplies to:      Build*, Pack*
+      Description:    Suffix to add at the end of the package version to indicate the generated
+                      version is a pre-release.
 
-    <!-- Collect code coverage unless explicitly disabled -->
-    <CollectCodeCoverage Condition="'$(CollectCodeCoverage)' == ''">true</CollectCodeCoverage>
-    <CodeCoverageRunSettings>$(TestsPath)/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings</CodeCoverageRunSettings>
-    <CollectArgument Condition="'$(CollectCodeCoverage)' == 'true'">--collect "Code coverage" --settings "$(CodeCoverageRunSettings)"</CollectArgument>
+                      For local developer builds, this does not need to be set. If a specific
+                      package version is needed, specify PackageVersionMds. Otherwise, the
+                      generated package version will eg, 1.2.3.dev.
 
-    <!-- Set up tests to fail after hangs and report via blame -->
-    <BlameArgument>$(Blame)</BlameArgument>
-    <BlameArgument Condition="'$(BlameArgument)' == ''">
+                      For automated builds, this should only be specified on pre-release builds, ie
+                      PR/CI pipeline runs. For official, production-ready builds, omit this field
+                      and include a BuildNumber.
+      Default value:  [blank]
+      Example:        prbuild
+    -->
+    <BuildSuffix Condition="'$(BuildSuffix)' == ''" />
+    <BuildSuffixArgument Condition="'$(BuildSuffix)' != ''">
+      -p:BuildSuffix=$(BuildSuffix)
+    </BuildSuffixArgument>
+
+    <!--
+      Configuration
+      Applies to:     All targets
+      Description:    Which build configuration to build
+      Default value:  Debug
+      Allowed values: Debug, Release
+    -->
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+
+    <!--
+      DotnetPath
+      Applies to:    All targets
+      Description:   Path to folder containing the `dotnet` binary. Override this if a specific
+                     version (eg, x86) is required. Otherwise, this defaults to using the dotnet
+                     binary in the PATH variable. The provided path should end with a `\` (or `/`)
+                     character.
+      Default value: [blank]
+      Example:       C:\x86\
+    -->
+    <DotnetPath Condition="'$(DotnetPath)' == ''" />
+
+    <!--
+      NugetPath
+      Applies to:     PackSqlClient
+      Description:    Path to NuGet executable. Override if `nuget` is not included in the PATH
+                      variable.
+      Default value:  nuget
+      Example:        C:\nuget\nuget.exe
+    -->
+    <NugetPath Condition="'$(NugetPath)' == ''">nuget</NugetPath>
+
+    <!--
+      PackBuild
+      Applies to:     Pack*
+      Description:    Whether the Pack* targets should buiild the project before packaging. If
+                      true, the project will be built as part of packaging. If false, it will not.
+
+                      For most developers, building immediately before packing is the norm, and
+                      this functionality is added for convenience. However, for official builds,
+                      binaries are signed between building and packing, so building immediately
+                      before packing would clobber the signed binaries.
+      Default value:  true
+      Allowed values: (true|false)
+    -->
+    <PackBuild Condition="'$(PackBuild)' == ''">true</PackBuild>
+    <PackBuildArgument Condition="'$(PackBuild.ToLower())' != 'true'">
+      --no-build
+    </PackBuildArgument>
+    <!--
+      @TODO: This is kinda hacky, ideally we can pack via dotnet pack, which will handle building,
+        and can thus be switched off by passing -no-build. However, we're not there because we need
+        to build multiple projects before packaging, and thus need to use nuget. So, until then we
+        will switch off dependency building dynamically building the target dependencies
+    -->
+    <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
+
+    <!--
+      PackageVersionAbstractions
+      Applies to:     BuildAbstractions, PackAbstractions
+      Description:    Specifies what version to assign to the Microsoft.Data.SqlClient.Extensions.Abstractions
+                      package. If this is omitted, the assigned version will default to the version
+                      calculated by Versions.props. If this is provided, it will override the
+                      package version and assembly versions will be calculated based on it.
+
+      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
+                      BuildAkvProvider, PackAkvProvider
+                      (with -p:ReferenceType=Package)
+      Description:    Specifies what version of Microsoft.Data.SqlClient.Extensions.Abstractions
+                      to use when compiling/packaging/testing the specified package.
+
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''" />
+    <PackageVersionAbstractionsArgument Condition="'$(PackageVersionAbstractions)' != ''">
+      -p:AbstractionsPackageVersion=$(PackageVersionAbstractions)
+    </PackageVersionAbstractionsArgument>
+
+    <!--
+      PackageVersionAkvProvider
+      Applies to:     BuildAkvProvider, PackAkvProvider
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+                      when building/packing the AKV provider. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''" />
+    <PackageVersionAkvProviderArgument Condition="'$(PackageVersionAkvProvider)' != ''">
+      -p:AkvProviderPackageVersion=$(PackageVersionAkvProvider)
+    </PackageVersionAkvProviderArgument>
+
+    <!--
+      PackageVersionAzure
+      Applies to:     BuildAzure, PackAzure
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Extensions.Azure
+                      when building/packing the Azure package. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
+    <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
+      -p:AzurePackageVersion=$(PackageVersionAbstractions)
+    </PackageVersionAzureArgument>
+
+    <!--
+      PackageVersionLogging
+      Applies to:     BuildLogging, PackLogging
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Internal.Logging
+                      when building/packing the Logging package. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
+
+      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
+                      BuildAkvProvider, PackAkvProvider
+                      BuildAbstractions, PackAbstractions
+                      BuildAzure, PackAzure,
+                      (with -p:ReferenceType=Package)
+      Description:    Specifies what version of Microsoft.Data.SqlClient.Internal.Logging
+                      to use when compiling/packaging/testing the specified package.
+
+      Default value:  [blank]
+      Example:        1.0.1-dev2345
+    -->
+    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''" />
+    <PackageVersionLoggingArgument Condition="'$(PackageVersionLogging)' != ''">
+      -p:LoggingPackageVersion=$(PackageVersionLogging)
+    </PackageVersionLoggingArgument>
+
+    <!--
+      PackageVersionSqlClient
+      Applies to:     TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
+                      BuildAkvProvider, PackAkvProvider
+                      TestAzure
+                      (with -p:ReferenceType=Package)
+      Description     Specifies what version of Microsoft.Data.SqlClient to use when compiling
+                      to use when compiling/packaging/testing the specified package.
+
+      Applies to:     BuildSqlClient*, PackSqlClient
+      Description:    Specifies what version to assign to Microsoft.Data.SqlClient when building/
+                      packing the SqlClient package. If this is omitted, the assigned
+                      version will default to the version calculated by Versions.props. If this is
+                      provided, it will override the package version and assembly version will be
+                      calculated based on it.
+
+      Default value:  [blank]
+      Example:        7.0.0-preview4
+    -->
+    <PackageVersionSqlClient Condition="'$(PackageVersionSqlClient)' == ''" />
+    <PackageVersionSqlClientArgument Condition="'$(PackageVersionSqlClient)' != ''">
+      -p:SqlClientPackageVersion=$(PackageVersionSqlClient)
+    </PackageVersionSqlClientArgument>
+
+    <!--
+      PackageVersionSqlServer
+      Applies to:     BuildSqlServer
+      Description:    Specifies the package version to use for Microsoft.SqlServer.Server. If this
+                      is specified, it will be used preferentially: assembly version and file
+                      version will be derived from the specified package version.
+      Default value:  [blank]
+      Example:        1.0.0-dev2345
+    -->
+    <PackageVersionSqlServer Condition="'$(PackageVersionSqlServer)' == ''" />
+    <PackageVersionSqlServerArgument Condition="'$(PackageVersionSqlServer)' != ''">
+      -p:SqlServerPackageVersion=$(PackageVersionSqlServer)
+    </PackageVersionSqlServerArgument>
+
+    <!--
+      ReferenceType
+      Applies to:     BuildSqlClient, BuildSqlClientUnix, BuildSqlClientWindows
+      Description:    Determines how to build SqlClient. If set to "Project", any cross-project
+                      references (eg, Abstractions from SqlClient) will be made as project references. If
+                      set to "Package", package references will be made instead. When running in
+                      package mode, target versions can be specified via PackageVersion* build
+                      parameters. If these are not provided, the central feed version will be used
+                      instead (see Directory.Packages.props). When running in project mode, the
+                      dependencies will be built automatically.
+
+      Applies to:     TestSqlClientFunctional, TestSqlClientManual
+      Description:    Determines whether to test against a project reference or a package version
+                      of the test targets. Same description above applies.
+
+      Default value:  Project
+      Allowed values: (Package|Project)
+    -->
+    <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
+    <ReferenceTypeArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
+      -p:ReferenceType=Package
+    </ReferenceTypeArgument>
+
+    <!--
+      SigningKeyPath
+      Applies to:     Build*, Pack*
+      Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
+                      will not be strong name signed.
+                      For Pack* targets, this only applies to a build - ie, if PackBuild is set to
+                      false, SigningKeyPath will have no effect.
+      Default value:  [blank]
+      Example:        C:\path\to\my\signing\key.snk
+    -->
+    <SigningKeyPath Condition="'$(SigningKeyPath)' == ''" />
+    <SigningKeyPathArgument Condition="'$(SigningKeyPath)' != ''">
+      -p:SigningKeyPath="$(SigningKeyPath)"
+    </SigningKeyPathArgument>
+
+    <!--
+      TestBlameTimeout
+      Applies to:     Test* targets
+      Description:    How long to wait on a test before timing it out. This will be fed to the
+                      dotnet blame-hang-timeout argument. If 0 is specified, hang timeout will be
+                      disabled. For more details and supported suffixes see:
+                      https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-test-vstest#options
+      Default value:  10m
+      Allowed values: (time_expression|0)
+    -->
+    <TestBlameTimeout Condition="'$(TestBlameTimeout)' == ''">10m</TestBlameTimeout>
+    <TestBlameArgument Condition="'$(TestBlameTimeout)' != '0'">
       --blame-hang
       --blame-hang-dump-type full
-      --blame-hang-timeout 10m
-    </BlameArgument>
-  </PropertyGroup>
-
-  <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
-  <PropertyGroup>
-    <BuildForRelease Condition="$(BuildForRelease) == ''">true</BuildForRelease>
-    <CI>ContinuousIntegrationBuild=$(BuildForRelease);EmbedUntrackedSources=$(BuildForRelease)</CI>
-  </PropertyGroup>
-
-  <!-- Populate all managed projects -->
-  <ItemGroup>
-    <Tools Include="tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj" />
-    <SqlServer Include="**/Microsoft.SqlServer.Server.csproj" />
-    <Abstractions Include="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
-    <Azure Include="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
-    <Logging Include="src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
-    <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
-    <!-- Used to build .NET Standard DLL for lib folder from this project. -->
-    <NetStandardDriver Include="**/netcore/ref/Microsoft.Data.SqlClient*.csproj" />
-    <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
-
-    <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
-    <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
-
-    <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
-    <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
-
-    <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
-    <ManualTestsProj Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
-  </ItemGroup>
-
-  <!-- Top Level Build targets -->
-  <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCore;BuildNetStandard" />
-  <!-- TODO: This doesn't really build everything; just the SqlClient driver and its NuGet package. -->
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServer;BuildLogging;BuildAbstractions;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateMdsPackage" />
-
-  <!-- SqlServer Targets -->
-  <PropertyGroup>
-    <SqlServerProperties>$(CommonProperties)</SqlServerProperties>
-
-    <SqlServerProperties
-      Condition="'$(SqlServerPackageVersion)' != ''">
-      $(SqlServerProperties);SqlServerPackageVersion=$(SqlServerPackageVersion)
-    </SqlServerProperties>
-
-    <SqlServerProperties
-      Condition="'$(SqlServerAssemblyFileVersion)' != ''">
-      $(SqlServerProperties);SqlServerAssemblyFileVersion=$(SqlServerAssemblyFileVersion)
-    </SqlServerProperties>
-  </PropertyGroup>
-
-  <Target Name="RestoreSqlServer">
-    <MSBuild Projects="@(SqlServer)" Targets="restore" Properties="$(SqlServerProperties)" />
-  </Target>
-
-  <Target Name="BuildSqlServer" DependsOnTargets="RestoreSqlServer">
-    <MSBuild
-      Projects="@(SqlServer)"
-      Targets="Build"
-      Properties="$(CI);$(SqlServerProperties)" />
-  </Target>
-
-  <Target Name="PackSqlServer">
-    <MSBuild
-      Projects="@(SqlServer)"
-      Targets="Pack"
-      Properties="$(SqlServerProperties);NoBuild=true" />
-  </Target>
-
-  <!-- Abstractions Targets -->
-  <PropertyGroup>
-    <AbstractionsProperties>$(CommonProperties)</AbstractionsProperties>
+      --blame-hang-timeout $(TestBlameTimeout)
+    </TestBlameArgument>
 
     <!--
-      If the AbstractionsPackageVersion property was supplied on the
-      command-line, then pass it along to the Abstractions build.  Otherwise,
-      omit it entirely to avoid it expanding as empty here and thus overriding
-      the default behaviour in the Abstractions project.  Command-line
-      properties take precedence over project defaults, even if their value is
-      empty.  For example:
-
-        dotnet build -p:AbstractionsPackageVersion=
-
-      That results in $(AbstractionsPackageVersion) being defined as empty,
-      and cannot be overridden by the project.
+      TestCodeCoverage
+      Applies to:     Test* targets
+      Description:    Whether code coverage data should be collected during test target execution.
+      Default value:  true
+      Allowed value:  (true|false)
     -->
-    <AbstractionsProperties
-      Condition="'$(AbstractionsPackageVersion)' != ''">
-      $(AbstractionsProperties);AbstractionsPackageVersion=$(AbstractionsPackageVersion)
-    </AbstractionsProperties>
-
-    <!-- Do the same for the AbstractionsAssemblyFileVersion property. -->
-    <AbstractionsProperties
-      Condition="'$(AbstractionsAssemblyFileVersion)' != ''">
-      $(AbstractionsProperties);AbstractionsAssemblyFileVersion=$(AbstractionsAssemblyFileVersion)
-    </AbstractionsProperties>
-  </PropertyGroup>
-
-  <Target Name="RestoreAbstractions" DependsOnTargets="RestoreLogging">
-    <MSBuild
-      Projects="@(Abstractions)"
-      Targets="Restore"
-      Properties="$(AbstractionsProperties)" />
-  </Target>
-
-  <Target Name="BuildAbstractions" DependsOnTargets="RestoreAbstractions;BuildLogging">
-    <MSBuild
-      Projects="@(Abstractions)"
-      Targets="Build"
-      Properties="$(CI);$(AbstractionsProperties)" />
-  </Target>
-
-  <Target Name="PackAbstractions">
-    <MSBuild
-      Projects="@(Abstractions)"
-      Targets="Pack"
-      Properties="$(AbstractionsProperties);NoBuild=true" />
-  </Target>
-
-  <!-- Logging Targets -->
-  <PropertyGroup>
-    <LoggingProperties>$(CommonProperties)</LoggingProperties>
+    <TestCodeCoverage Condition="'$(TestCodeCoverage)' == ''">true</TestCodeCoverage>
+    <TestCodeCoverageArgument Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
+      --collect "Code coverage"
+      --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
+    </TestCodeCoverageArgument>
 
     <!--
-      If the LoggingPackageVersion property was supplied on the command-line,
-      then pass it along to the Logging build.  Otherwise, omit it entirely
-      to avoid it expanding as empty here and thus overriding the default
-      behaviour in the Logging project.
+      TestFilters
+      Applies to:     Test* targets
+      Description:    Filter to use to include or exclude any tests. If not specified, this defaults
+                      to including all tests that are not in the category "failing", "flaky", or
+                      "interactive". Use "none" to disable filtering and run all tests in the
+                      target. For more information see:
+                      https://learn.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests
+      Default value:  category!=failing&category!=flaky&category!=interactive
+      Allowed values: (category_expression|none)
     -->
-    <LoggingProperties
-      Condition="'$(LoggingPackageVersion)' != ''">
-      $(LoggingProperties);LoggingPackageVersion=$(LoggingPackageVersion)
-    </LoggingProperties>
-
-    <!-- Do the same for the LoggingAssemblyFileVersion property. -->
-    <LoggingProperties
-      Condition="'$(LoggingAssemblyFileVersion)' != ''">
-      $(LoggingProperties);LoggingAssemblyFileVersion=$(LoggingAssemblyFileVersion)
-    </LoggingProperties>
-  </PropertyGroup>
-
-  <Target Name="RestoreLogging">
-    <MSBuild
-      Projects="@(Logging)"
-      Targets="Restore"
-      Properties="$(LoggingProperties)" />
-  </Target>
-
-  <Target Name="BuildLogging" DependsOnTargets="RestoreLogging">
-    <MSBuild
-      Projects="@(Logging)"
-      Targets="Build"
-      Properties="$(CI);$(LoggingProperties)" />
-  </Target>
-
-  <Target Name="PackLogging">
-    <MSBuild
-      Projects="@(Logging)"
-      Targets="Pack"
-      Properties="$(LoggingProperties);NoBuild=true" />
-  </Target>
-
-  <!-- Azure Targets -->
-  <PropertyGroup>
-    <AzureProperties>$(CommonProperties)</AzureProperties>
+    <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
+    <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
+    <TestFiltersArgument Condition="'$(TestFilters)' != ''">
+      --filter "$(TestFilters)"
+    </TestFiltersArgument>
 
     <!--
-      If the AzurePackageVersion property was supplied on the command-line, then
-      pass it along to the Azure build.  Otherwise, omit it entirely to avoid it
-      expanding as empty here and thus overriding the default behaviour in the
-      Azure project.  Command-line properties take precedence over project
-      defaults, even if their value is empty.  For example:
-
-        dotnet build -p:AzurePackageVersion=
-
-      That results in $(AzurePackageVersion) being defined as empty, and cannot
-      be overridden by the project.
+      TestFramework
+      Applies to:    Test* targets
+      Description:   Target framework moniker for the version of .NET to use to execute the
+                     specified test target. If not specified, this defaults to running tests for
+                     *all* framework versions supported for the project.
+      Default value: [blank]
+      Example:       net462
     -->
-    <AzureProperties
-      Condition="'$(AzurePackageVersion)' != ''">
-      $(AzureProperties);AzurePackageVersion=$(AzurePackageVersion)
-    </AzureProperties>
+    <TestFramework Condition="'$(TestFramework)' == ''" />
+    <TestFrameworkArgument Condition="'$(TestFramework)' != ''">-f $(TestFramework)</TestFrameworkArgument>
 
-    <!-- Do the same for the AzureAssemblyFileVersion property. -->
-    <AzureProperties
-      Condition="'$(AzureAssemblyFileVersion)' != ''">
-      $(AzureProperties);AzureAssemblyFileVersion=$(AzureAssemblyFileVersion)
-    </AzureProperties>
+    <!--
+      TestResultsFolderPath
+      Applies to:    Test* targets
+      Description:   Absolute path to directory where any test results should be dumped. If not
+                     specified, this path will default to test_results in the root of the
+                     repository.
+      Default value: $(RepoRoot)\test_results
+      Example:       C:\my_test_results\my_extra_special_test_run_folder\
+    -->
+    <TestResultsFolderPath Condition="'$(TestResultsFolderPath)' == ''">$(RepoRoot)test_results</TestResultsFolderPath>
+
+    <!--
+      TestSet
+      Applies to:     TestSqlClientManual
+      Description:    Used to select a set of tests to run from the SqlClient manual tests project. If not
+                      specified, all tests will be executed.
+      Default value:  [blank]
+      Allowed values: ([1][2][3][AE])
+      Examples:       "1", "12", "AE", "12AE"
+    -->
+    <TestSet Condition="'$(TestSet)' == ''" />
+    <TestSetArgument Condition="'$(TestSet)' != ''">-p:TestSet="$(TestSet)"</TestSetArgument>
   </PropertyGroup>
 
-  <Target Name="RestoreAzure">
-    <MSBuild
-      Projects="@(Azure)"
-      Targets="Restore"
-      Properties="$(AzureProperties)" />
+  <!-- ================================================================= -->
+  <!-- Top Level/Miscellaneous Targets -->
+
+  <!--
+    Build: Builds all packages
+    Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
+  -->
+  <Target Name="Build" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
+
+  <!-- Clean: Convenience target to remove build/test output -->
+  <Target Name="Clean">
+    <!-- Remove known build output paths -->
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'artifacts', SearchOption.AllDirectories))" />
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'test_results', SearchOption.AllDirectories))" />
+
+    <!-- Remove remaining bin/intermediate paths, eg test binaries -->
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'bin', SearchOption.AllDirectories))" />
+    <RemoveDir Directories="$([System.IO.Directory]::GetDirectories('.', 'obj', SearchOption.AllDirectories))" />
   </Target>
 
-  <Target Name="BuildAzure" DependsOnTargets="RestoreAzure">
-    <MSBuild
-      Projects="@(Azure)"
-      Targets="Build"
-      Properties="$(CI);$(AzureProperties)" />
+  <!--
+    Pack: Packages all packages
+    Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
+  -->
+  <Target Name="Pack" DependsOnTargets="PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider;PackSqlServer" />
+
+  <!--
+    Test: Run all test targets for all packages.
+    Note: This will run for a *very* long time and it is not recommended, even in automated test
+      environments. Please consider running project specific test targets or specific test sets
+      within the project.
+  -->
+  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
+
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient Targets -->
+  <PropertyGroup>
+    <!-- Root for SqlClient projects -->
+    <SqlClientSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient/</SqlClientSrcRoot>
+    <SqlClientArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient/</SqlClientArtifactRoot>
+
+    <!-- Project Path -->
+    <SqlClientProjectPath>$(SqlClientSrcRoot)src/Microsoft.Data.SqlClient.csproj</SqlClientProjectPath>
+    <SqlClientRefProjectPath>$(SqlClientSrcRoot)ref/Microsoft.Data.SqlClient.csproj</SqlClientRefProjectPath>
+    <SqlClientNotSupportedProjectPath>$(SqlClientSrcRoot)notsupported/Microsoft.Data.SqlClient.csproj</SqlClientNotSupportedProjectPath>
+
+    <!-- Test Project Paths -->
+    <SqlClientFunctionalTestProjectPath>$(SqlClientSrcRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</SqlClientFunctionalTestProjectPath>
+    <SqlClientManualTestProjectPath>$(SqlClientSrcRoot)tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</SqlClientManualTestProjectPath>
+    <SqlClientUnitTestProjectPath>$(SqlClientSrcRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</SqlClientUnitTestProjectPath>
+
+    <!-- Tools/Specs Paths -->
+    <SqlClientNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientNuspecPath>
+    <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/</GenApiPath>
+    <GenApiProjectPath>$(GenApiPath)Microsoft.DotNet.GenAPI.csproj</GenApiProjectPath>
+  </PropertyGroup>
+
+  <!-- Build SqlClient Targets =============================================== -->
+  <!-- BuildSqlClient: Builds all binaries for SqlClient -->
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientUnix;BuildSqlClientWindows;BuildSqlClientRef;BuildSqlClientNotSupported" />
+
+  <!--
+    BuildSqlClientNotSupported: Builds a version of the SqlClient assemblies that always throws
+    PlatformNotSupportedException. It generates the source for this using GenAPI which is built as
+    the first step of this target.
+  -->
+  <Target Name="BuildSqlClientNotSupported">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(GenApiProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building GenAPI project via command: '$(DotnetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- Get the path to the GenAPI artifact -->
+    <ItemGroup>
+      <GenApiArtifactPath Include="$(GenApiPath)bin/$(Configuration)/**/Microsoft.DotNet.GenAPI.dll" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(SqlClientNotSupportedProjectPath)"
+        -p:Configuration=$(Configuration)
+        -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building not supported binaries project via command: '$(DotnetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <Target Name="PackAzure">
-    <MSBuild
-      Projects="@(Azure)"
-      Targets="Pack"
-      Properties="$(AzureProperties);NoBuild=true" />
+  <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
+  <Target Name="BuildSqlClientRef">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building SqlClient ref binaries via command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Other Targets -->
-  <Target Name="RestoreNetCore" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging">
-    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="$(ProjectProperties)" />
+  <!-- BuildSqlClientUnix: Builds all unix-specific SqlClient binaries -->
+  <Target Name="BuildSqlClientUnix">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
+        -p:Configuration=$(Configuration)
+        -p:TargetOs=Unix
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building SqlClient for Unix via command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <Target Name="RestoreNetFx" DependsOnTargets="RestoreSqlServer;RestoreAbstractions;RestoreLogging" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="$(ProjectProperties)" />
+  <!-- BuildSqlClientWindows: Builds all windows-specific SqlClient binaries -->
+  <Target Name="BuildSqlClientWindows">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
+        -p:Configuration=$(Configuration)
+        -p:TargetOs=Windows_NT
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning Arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Building SqlClient for Windows via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <Target Name="RestoreTools" Condition="'$(BuildTools)' == 'true'">
-    <MSBuild Projects="@(Tools)" Targets="restore" Properties="$(CommonProperties)" />
+  <!-- Pack SqlClient Target ===================================================== -->
+  <!--
+    PackSqlClient: Packages SqlClient binaries into a NuGet package.
+    Because the SqlClient package depends on the "not supported" and ref projects, we can't use dotnet to
+    automatically build before packaging. Instead, we rely on target dependency to handle building
+    the same binaries that will be packaged.
+  -->
+  <Target Name="PackSqlClient" DependsOnTargets="$(PackSqlClientDependsOn)">
+    <PropertyGroup>
+      <GitCommand>
+        git rev-parse HEAD
+      </GitCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <GitCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GitCommand), "\s+", " "))</GitCommand>
+    </PropertyGroup>
+    <Message Text=">>> Fetching latest git commit hash via command: $(GitCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(GitCommand)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
+    </Exec>
+
+    <!-- This is a bit hacky, and can be (@TODO:) removed once packaging is done w/o a nuspec from dotnet -->
+    <PropertyGroup>
+      <GetSqlClientPackageVersionCommand>
+        "$(DotnetPath)dotnet" msbuild "$(SqlClientProjectPath)"
+        -nologo
+        -verbosity:quiet
+        -getProperty:SqlClientPackageVersion
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+      </GetSqlClientPackageVersionCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <GetSqlClientPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetSqlClientPackageVersionCommand), "\s+", " "))</GetSqlClientPackageVersionCommand>
+    </PropertyGroup>
+    <Message Text=">>> Evaluating SqlClient package version via command: $(GetSqlClientPackageVersionCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(GetSqlClientPackageVersionCommand)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_EvaluatedSqlClientPackageVersion" />
+    </Exec>
+    <Error Text="Failed to evaluate SqlClientPackageVersion for PackSqlClient."
+           Condition="'$(_EvaluatedSqlClientPackageVersion)' == ''" />
+
+    <PropertyGroup>
+      <_EvaluatedSqlClientPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(_EvaluatedSqlClientPackageVersion), "\s", ""))</_EvaluatedSqlClientPackageVersion>
+      <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
+      <NuGetCommand>
+        "$(NugetPath)" pack "$(SqlClientNuspecPath)"
+        -Symbols
+        -SymbolPackageFormat snupkg
+        -Version "$(_EvaluatedSqlClientPackageVersion)"
+        -OutputDirectory "$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
+        -properties "COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(PackageVersionAbstractions);LoggingPackageVersion=$(PackageVersionLogging)"
+      </NuGetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <NuGetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(NuGetCommand), "\s+", " "))</NuGetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Packing SqlClient nuget via command: $(NuGetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(NuGetCommand)" />
   </Target>
 
-  <Target Name="BuildTools" DependsOnTargets="RestoreTools" Condition="'$(BuildTools)' == 'true'">
-    <MSBuild Projects="@(Tools)" Properties="$(CommonProperties)" />
+  <!-- Test SqlClient Targets ==================================================== -->
+  <!-- TestSqlClient: Runs all test projects for SqlClient -->
+  <Target Name="TestSqlClient" DependsOnTargets="TestSqlClientFunctional;TestSqlClientManual;TestSqlClientUnit" />
+
+  <!-- TestSqlClientFunctional: Runs functional tests for SqlClient -->
+  <Target Name="TestSqlClientFunctional">
+    <!-- @TODO: Prevent from running in non-admin user mode -->
+    <PropertyGroup>
+      <LogFilePrefix>SqlClientFunctional-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(SqlClientFunctionalTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running functional tests for SqlClient via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx;BuildSqlServer;BuildAbstractions;BuildLogging" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
+  <!-- TestSqlClientManual: Runs manual tests for SqlClient -->
+  <Target Name="TestSqlClientManual">
+    <PropertyGroup>
+      <LogFilePrefix>SqlClientManual-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(SqlClientManualTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        $(TestSetArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running manual tests for SqlClient via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
-  </Target>
-
-  <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore;BuildSqlServer;BuildAbstractions;BuildLogging">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-  </Target>
-
-  <Target Name="BuildNetCoreUnix" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;"   RemoveProperties="TargetsWindows;TargetsUnix;" />
-   </Target>
-
-  <!-- Build .NET Standard target DLLs for Lib folder from here.
-   This target enables BuildForLib for the NetCore ref project. -->
-  <Target Name="BuildNetStandard">
-    <MSBuild Projects="@(NetStandardDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;BuildForLib=True" RemoveProperties="TargetsWindows;TargetsUnix;" />
-  </Target>
-
-  <!-- Tests -->
-
-  <!-- Run all tests applicable to the host OS. -->
-  <Target Name="RunTests" DependsOnTargets="RunUnitTests;RunFunctionalTests;RunManualTests"/>
-
-  <!-- Run all unit tests applicable to the host OS. -->
-  <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix" Condition="$(ReferenceType.Contains('Project'))"/>
-
-  <!-- Run all unit tests applicable to Windows. -->
-  <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
+  <!-- TestSqlClientUnit: Runs unit tests for SqlClient -->
+  <Target Name="TestSqlClientUnit">
     <PropertyGroup>
       <!--
-        The UnitTests project exclusively uses Project references, which is the default applied by
-        src/Directory.Build.props, so no need to specify the ReferenceType property here.
+        Note: This test exclusively uses project references, so neither ReferenceType nor any
+            package version arguments are specified in this command.
       -->
-      <TestCommand>
-        $(DotnetPath)dotnet test "@(UnitTestsProj)"
-        -f $(TF)
+      <LogFilePrefix>SqlClientUnit-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(SqlClientUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
-        $(FilterArgument)
-        $(BlameArgument)
-        $(CollectArgument)
-        --results-directory $(ResultsDirectory)
-        --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
-      </TestCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
-    </PropertyGroup>
-    <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
-  </Target>
-
-  <!-- Run all unit tests applicable to Unix. -->
-  <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true' AND $(ReferenceType.Contains('Project'))">
-    <PropertyGroup>
-      <TestCommand>
-        $(DotnetPath)dotnet test "@(UnitTestsProj)"
-        -f $(TF)
-        -p:Configuration=$(Configuration)
-        $(FilterArgument)
-        $(BlameArgument)
-        $(CollectArgument)
-        --results-directory $(ResultsDirectory)
-        --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
-      </TestCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
-    </PropertyGroup>
-    <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
-  </Target>
-
-  <!-- Run all Functional tests applicable to the host OS. -->
-  <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindows;RunFunctionalTestsUnix" />
-
-  <!-- Run all Functional tests applicable to Windows. -->
-  <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
-    <PropertyGroup>
-      <TestCommand>
-        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
-        -f $(TF)
-        -p:Configuration=$(Configuration)
-        -p:ReferenceType=$(ReferenceType)
-        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
-        -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(FilterArgument)
-        $(BlameArgument)
-        $(CollectArgument)
-        --results-directory $(ResultsDirectory)
-        --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
-      </TestCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
-    </PropertyGroup>
-    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
-  </Target>
-
-  <!-- Run all Functional tests applicable to Unix. -->
-  <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
-    <PropertyGroup>
-      <TestCommand>
-        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
-        -f $(TF)
-        -p:Configuration=$(Configuration)
-        -p:ReferenceType=$(ReferenceType)
-        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
-        -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(FilterArgument)
-        $(BlameArgument)
-        $(CollectArgument)
-        --results-directory $(ResultsDirectory)
-        --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
-      </TestCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
-    </PropertyGroup>
-    <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
-  </Target>
-
-  <!-- Run all Manual tests applicable to the host OS. -->
-  <Target Name="RunManualTests" DependsOnTargets="RunManualTestsWindows;RunManualTestsUnix" />
-
-  <!-- Run all Manual tests applicable to Windows. -->
-  <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
-    <PropertyGroup>
-      <TestCommand>
-        $(DotnetPath)dotnet test "@(ManualTestsProj)"
-        -f $(TF)
-        -p:Configuration=$(Configuration)
-        -p:ReferenceType=$(ReferenceType)
-        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
-        -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(FilterArgument)
-        $(BlameArgument)
-        $(CollectArgument)
-        --results-directory $(ResultsDirectory)
-        --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
-      </TestCommand>
-      <!-- Add test set only if it was provided - otherwise it will be permanently set to '' -->
-      <TestCommand Condition="'$(TestSet)' != ''">
-        $(TestCommand)
-        -p:TestSet=$(TestSet)
-      </TestCommand>
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
 
       <!-- Convert more than one whitespace character into one space -->
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+    <Message Text=">>> Running unit tests for SqlClient via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- Run all Manual tests applicable to Unix. -->
-  <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
-    <PropertyGroup>
-      <TestCommand>
-        $(DotnetPath)dotnet test "@(ManualTestsProj)"
-        -f $(TF)
-        -p:Configuration=$(Configuration)
-        -p:ReferenceType=$(ReferenceType)
-        -p:AbstractionsPackageVersion=$(AbstractionsPackageVersion)
-        -p:MdsPackageVersion=$(MdsPackageVersion)
-        $(FilterArgument)
-        $(BlameArgument)
-        $(CollectArgument)
-        --results-directory $(ResultsDirectory)
-        --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
-      </TestCommand>
-
-      <!-- Add test set only if it was provided - otherwise it will be permanently set to '' -->
-      <TestCommand Condition="'$(TestSet)' != ''">
-        $(TestCommand)
-        -p:TestSet=$(TestSet)
-      </TestCommand>
-
-      <!-- Convert more than one whitespace character into one space -->
-      <TestCommand>$([System.Text.RegularExpressions.Regex]::Replace($(TestCommand), "\s+", " "))</TestCommand>
-    </PropertyGroup>
-    <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
-  </Target>
-
-  <!-- Clean all build outputs. -->
-  <Target Name="Clean">
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "artifacts", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "bin", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", ".nuget", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".", "obj", SearchOption.AllDirectories))' />
-    <!-- Remove generated .nupkg and .snupkg files from packages/ and output/. -->
-    <ItemGroup>
-      <PackagesToDelete Include="$(RepoRoot)/packages/*.nupkg" />
-      <PackagesToDelete Include="$(RepoRoot)/packages/*.snupkg" />
-      <PackagesToDelete Include="$(RepoRoot)/output/*.nupkg" />
-      <PackagesToDelete Include="$(RepoRoot)/output/*.snupkg" />
-    </ItemGroup>
-    <Delete Files="@(PackagesToDelete)" />
-  </Target>
-
-  <!-- AKV Provider Targets ==================================================== -->
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider Targets -->
   <PropertyGroup>
-    <AkvProviderProperties>$(CommonProperties)</AkvProviderProperties>
-
-    <AkvProviderProperties
-      Condition="'$(AkvPackageVersion)' != ''">
-      $(AkvProviderProperties);AkvPackageVersion=$(AkvPackageVersion)
-    </AkvProviderProperties>
-
-    <AkvProviderProperties
-      Condition="'$(AkvAssemblyFileVersion)' != ''">
-      $(AkvProviderProperties);AkvAssemblyFileVersion=$(AkvAssemblyFileVersion)
-    </AkvProviderProperties>
-
-    <AkvProviderProperties
-      Condition="'$(MdsPackageVersion)' != ''">
-      $(AkvProviderProperties);MdsPackageVersion=$(MdsPackageVersion)
-    </AkvProviderProperties>
-
-    <AkvProviderProperties
-      Condition="'$(LoggingPackageVersion)' != ''">
-      $(AkvProviderProperties);LoggingPackageVersion=$(LoggingPackageVersion)
-    </AkvProviderProperties>
-
-    <AkvProviderProperties
-      Condition="'$(AbstractionsPackageVersion)' != ''">
-      $(AkvProviderProperties);AbstractionsPackageVersion=$(AbstractionsPackageVersion)
-    </AkvProviderProperties>
+    <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
+    <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
   </PropertyGroup>
 
-  <Target Name="RestoreAkvProvider">
-    <MSBuild Projects="@(AKVProvider)" Targets="Restore" Properties="$(AkvProviderProperties)" />
+  <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider -->
+  <Target Name="BuildAkvProvider">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!--Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAkvProviderArgument)
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <Target Name="BuildAkvProvider" DependsOnTargets="RestoreAkvProvider">
-    <MSBuild
-      Projects="@(AKVProvider)"
-      Targets="Build"
-      Properties="$(CI);$(AkvProviderProperties)" />
-  </Target>
-
+  <!-- PackAkvProvider: Packages Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider -->
   <Target Name="PackAkvProvider">
-    <MSBuild
-      Projects="@(AKVProvider)"
-      Targets="Pack"
-      Properties="$(AkvProviderProperties);NoBuild=true" />
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(AkvProviderProjectpath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAkvProviderArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
+  <PropertyGroup>
+    <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
+    <AbstractionsProjectPath>$(AbstractionsSrcRoot)src/Abstractions.csproj</AbstractionsProjectPath>
+    <AbstractionsTestProjectPath>$(AbstractionsSrcRoot)test/Abstractions.Test.csproj</AbstractionsTestProjectPath>
+  </PropertyGroup>
+
+  <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
+  <Target Name="BuildAbstractions">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAbstractionsArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- PackAbstractions: Packages Microsoft.Data.SqlClient.Extensions.Abstractions -->
+  <Target Name="PackAbstractions">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(AbstractionsProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAbstractionsArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
+  <Target Name="TestAbstractions">
+    <PropertyGroup>
+      <!--
+        Note: This test exclusively uses project references, so neither ReferenceType nor any
+            package version arguments are specified in this command.
+      -->
+      <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AbstractionsTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.Extensions.Azure Targets -->
+  <PropertyGroup>
+    <AzureSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/</AzureSrcRoot>
+    <AzureProjectPath>$(AzureSrcRoot)src/Azure.csproj</AzureProjectPath>
+    <AzureTestProjectPath>$(AzureSrcRoot)test/Azure.Test.csproj</AzureTestProjectPath>
+  </PropertyGroup>
+
+  <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
+  <Target Name="BuildAzure">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AzureProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAzureArgument)
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- PackAzure: Packages Microsoft.Data.SqlClient.Extensions.Azure -->
+  <Target Name="PackAzure">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(AzureProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionAzureArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- TestAzure: Runs Microsoft.Data.SqlClient.Extensions.Azure.Tests -->
+  <Target Name="TestAzure">
+    <PropertyGroup>
+      <LogFilePrefix>AzureTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AzureTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+
+        $(PackageVersionSqlClientArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
+  <!-- Microsoft.Data.SqlClient.Internal.Logging Targets -->
+  <PropertyGroup>
+    <LoggingSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/src/</LoggingSrcRoot>
+    <LoggingProjectPath>$(LoggingSrcRoot)Logging.csproj</LoggingProjectPath>
+  </PropertyGroup>
+
+  <!-- BuildLogging: Builds Microsoft.Data.SqlClient.Internal.Logging -->
+  <Target Name="BuildLogging">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(LoggingProjectPath)
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- PackLogging: Packages Microsoft.Data.SqlClient.Internal.Logging -->
+  <Target Name="PackLogging">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack $(LoggingProjectPath)
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- ================================================================= -->
+  <!-- Microsoft.SqlServer.Server Targets -->
+  <PropertyGroup>
+    <SqlServerSrcRoot>$(RepoRoot)src/Microsoft.SqlServer.Server/</SqlServerSrcRoot>
+    <SqlServerProjectPath>$(SqlServerSrcRoot)Microsoft.SqlServer.Server.csproj</SqlServerProjectPath>
+  </PropertyGroup>
+
+  <!-- BuildSqlServer: Builds the Microsoft.SqlServer.Server project -->
+  <Target Name="BuildSqlServer">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build $(SqlServerProjectPath)
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!--Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- PackSqlServer: Packages the Microsoft.SqlServer.Server project -->
+  <Target Name="PackSqlServer">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack $(SqlServerProjectPath)
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Packaging Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 </Project>
