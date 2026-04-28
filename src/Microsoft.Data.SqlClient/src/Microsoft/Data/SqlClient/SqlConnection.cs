@@ -163,19 +163,19 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl))]
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled))]
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlConnection_TrustedColumnMasterKeyPaths))]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
         }
 
         /// <summary>
@@ -511,7 +511,7 @@ namespace Microsoft.Data.SqlClient
         //  connect the parser to the object.
         //  if there is no parser at this time we need to connect it after creation.
         [DefaultValue(false)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.SqlConnection_StatisticsEnabled))]
         public bool StatisticsEnabled
         {
@@ -645,9 +645,9 @@ namespace Microsoft.Data.SqlClient
 #pragma warning disable 618 // ignore obsolete warning about RecommendedAsConfigurable to use SettingsBindableAttribute
         [RecommendedAsConfigurable(true)]
 #pragma warning restore 618
-        [SettingsBindableAttribute(true)]
+        [SettingsBindable(true)]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.SqlConnection_ConnectionString))]
         public override string ConnectionString
         {
@@ -1202,7 +1202,7 @@ namespace Microsoft.Data.SqlClient
         //
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
-        [ResCategoryAttribute(nameof(Strings.DataCategory_InfoMessage))]
+        [ResCategory(nameof(Strings.DataCategory_InfoMessage))]
         [ResDescription(nameof(Strings.DbConnection_InfoMessage))]
 #if NET
         public event SqlInfoMessageEventHandler InfoMessage;
@@ -1332,7 +1332,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
-            
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1408,7 +1408,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlStatistics statistics = null;
                 Exception e = null;
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1901,7 +1901,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken) 
+        public override Task OpenAsync(CancellationToken cancellationToken)
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
