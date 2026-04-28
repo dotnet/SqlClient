@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -26,6 +26,13 @@ public class SqlVectorTest
     public void Construct_Length_Negative()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(-1));
+    }
+
+    [Fact]
+    public void Construct_Length_Exceeds_8000()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(1999));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(int.MaxValue / 2));
     }
 
     [Fact]
