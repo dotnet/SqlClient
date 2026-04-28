@@ -50,7 +50,7 @@ public static class EntryPoint
             Supply specific package versions when building to test different versions of the
             SqlClient suite, for example:
 
-              -p:AbstractionVersion=1.0.1
+              -p:AbstractionsVersion=1.0.1
               -p:AkvProviderVersion=7.0.1-preview2
               -p:AzureVersion=1.0.0-preview1
               -p:LoggingVersion=1.0.2

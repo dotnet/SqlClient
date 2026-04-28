@@ -33,6 +33,11 @@ Specifically, it:
 The app is designed to run against both **published NuGet packages** and **locally-built packages**
 (via the `packages/` directory configured in `NuGet.config`).
 
+## Project Layout
+
+- `src/` contains the tool source files and project file.
+- `test/` is reserved for tests.
+
 ## Authentication Modes
 
 The authentication mode embedded in the connection string controls which code paths and packages are
@@ -63,7 +68,7 @@ Package versions are controlled through build properties. Pass them on the comma
 | `AkvProviderVersion` | `7.0.0` | Version of `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` to reference. |
 | `AzureVersion` | None | Version of `Microsoft.Data.SqlClient.Extensions.Azure` to reference.  When omitted, the `Azure` package will not be referenced. |
 | `LoggingVersion` | `1.0.0` | Version of `Microsoft.Data.SqlClient.Internal.Logging` to reference. |
-| `SqlClientVersion` | `7.0.0` | Version of `Microsoft.Data.SqlClient` to reference. |
+| `SqlClientVersion` | `7.0.1` | Version of `Microsoft.Data.SqlClient` to reference. |
 | `SqlServerVersion` | `1.0.0` | Version of `Microsoft.SqlServer.Server` to reference. |
 
 ## Local Package Source
