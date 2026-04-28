@@ -184,7 +184,7 @@ dotnet run \
   -p:AzureVersion=1.0.0 \
   -p:LoggingVersion=1.0.1 \
   -p:SqlClientVersion=7.1.0-preview1 \
-  -p:SqlServerVersio=1.0.0 \
+  -p:SqlServerVersion=1.0.0 \
   -- -c "<connection string>"
 ```
 

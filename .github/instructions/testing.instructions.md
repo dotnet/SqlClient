@@ -182,16 +182,16 @@ class and method level.
 - Add XML `<summary>` comments to every test class.
 - Add XML `<summary>` comments to every test method (`[Fact]`, `[Theory]`, conditional variants).
 - For helper methods used by tests, add XML `<summary>` comments and XML `<param>` / `<returns>`
-    where applicable.
+  where applicable.
 - For fixture and collection types, add XML `<summary>` comments describing why the fixture exists
-    (for example, serialization of console-mutating tests).
+  (for example, serialization of console-mutating tests).
 
 ### What the Comments Must Explain
 - The behavior/contract being tested (not just restating the method name).
 - Why the scenario matters (for example: regression guard, parsing contract, sync/async parity,
-    isolation requirement).
+  isolation requirement).
 - For helper methods, what side effects occur (for example console redirection, file system
-    copying, process execution) and why they are needed.
+  copying, process execution) and why they are needed.
 
 ### Style Guidance
 - Keep comments concise and factual.

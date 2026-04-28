@@ -17,7 +17,7 @@
   <!-- SqlClient Packages -->
   <ItemGroup>
     <!--
-      Normal apps wouldn't explcitily reference these 2 packages, but we do here to force the
+      Normal apps wouldn't explicitly reference these 2 packages, but we do here to force the
       desired versions.  This helps detect version conflicts.
     -->
     <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Abstractions" Version="$(AbstractionsVersion)" />
