@@ -10,8 +10,8 @@
     <!-- The stress tests root. -->
     <StressRoot>$(MSBuildThisFileDirectory)</StressRoot>
 
-    <!-- Target all frameworks that MDS supports. -->
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <!-- Target the same frameworks that MDS ships (net8.0, net9.0, plus net462 on Windows). -->
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 
     <!--
       We can only build MDS for net462 if we are building for Windows, so we will only build this
