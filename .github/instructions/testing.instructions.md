@@ -115,7 +115,7 @@ The default test filter is defined in `build.proj` via `TestFilters`:
 ```xml
 <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
 ```
-This can be overridden via build property: `dotnet build build.proj -t:TestSqlClientUnit -p:FilterStatement="your_filter"`.
+This can be overridden via build property: `dotnet build build.proj -t:TestSqlClientUnit -p:TestFilters="your_filter"`.
 
 ### Test Attributes
 ```csharp
