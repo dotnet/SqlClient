@@ -961,6 +961,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             long cb = 0;
             long di = 0;
             long cbTotal = 0;
+            long expectedTotal = 0;
             object o;
             int i;
             SqlBinary sqlbin;
@@ -968,6 +969,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
+                // Compute the expected total bytes independently of the C# APIs under test in order to compare.
+                //The inner SELECT generates the XML, CAST converts it to a Unicode string, LEN() * 2 matches s.Length * 2 in C# since UTF-16 uses 2 bytes per character.
+                // SUM() totals across all rows, matching the loop below.
+                using (SqlCommand cmdExpected = new SqlCommand("SELECT SUM(LEN(CAST(xml_data AS NVARCHAR(MAX))) * 2) FROM " +
+                                                "(SELECT CAST((SELECT * FROM orders FOR XML AUTO) AS NVARCHAR(MAX)) AS xml_data) t", conn))
+                {
+                    expectedTotal = (long)cmdExpected.ExecuteScalar();
+                }
+
                 using (SqlCommand cmd = new SqlCommand("select * from orders for xml auto", conn))
                 {
                     // Simple reads
@@ -982,7 +992,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
 
                     // Simple GetFieldValue<T>
                     cbTotal = 0;
@@ -997,7 +1007,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
 
                     // Simple GetFieldValueAsync<T>
                     cbTotal = 0;
@@ -1012,7 +1022,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
 
                     // test sequential access reading everything
                     cbTotal = 0;
@@ -1036,7 +1046,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
                 }
 
                 // Test IsDBNull
