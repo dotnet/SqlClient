@@ -2,8 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+
     <TargetFrameworks>net481;net10.0</TargetFrameworks>
+
     <RootNamespace>Microsoft.Data.SqlClient.Tools.PackageCompatibility</RootNamespace>
+
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -36,6 +39,12 @@
   <!-- Other Packages -->
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>PackageCompatibility.Test</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <!-- Generate code with the SqlClient package versions. -->
