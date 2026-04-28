@@ -273,6 +273,6 @@ where T : unmanaged
 
         return result;
     }
-    
-#endregion
+
+    #endregion
 }
