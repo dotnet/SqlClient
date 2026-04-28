@@ -206,7 +206,6 @@
     <Compile Include="SQL\MARSTest\MARSTest.cs" />
     <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
     <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
-    <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
     <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
     <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
     <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
@@ -260,10 +259,6 @@
              CopyToOutputDirectory="PreserveNewest" />
 
     <!-- Baseline files for individual test groups -->
-    <Content Include="SQL\ParameterTest\DateTimeVariant.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>DateTimeVariant.bsl</Link>
-    </Content>
     <Content Include="SQL\ParameterTest\StreamInputParameter_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>StreamInputParameter_DebugMode.bsl</Link>
