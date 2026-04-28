@@ -153,6 +153,17 @@ steps:
         $wmi = Get-WmiObject -Namespace "${{parameters.SQLRootPath }}" -Class FilestreamSettings | where {$_.InstanceName -eq $instance}
         $wmi.EnableFilestream(3, $instance)
 
+        # Restart SQL Server so the WMI-level FileStream change takes effect.
+        # Without this restart, Invoke-Sqlcmd often fails because the service
+        # becomes temporarily unavailable after the WMI call.
+        $serviceName = "${{parameters.instanceName }}"
+        if ("${{parameters.instanceName }}" -ne "MSSQLSERVER") {
+            $serviceName = "MSSQL`$${{parameters.instanceName }}"
+        }
+        Write-Host "Restarting SQL Server service ($serviceName) after enabling FileStream..."
+        Restart-Service -Name $serviceName -Force
+        Write-Host "SQL Server service restarted."
+
         $machineName = $env:COMPUTERNAME
 
         if ("${{parameters.instanceName }}" -ne "MSSQLSERVER"){
@@ -163,8 +174,8 @@ steps:
         Set-ExecutionPolicy Unrestricted
         Import-Module "sqlps"
 
-        # Retry loop: SQL Server may be temporarily unavailable after enabling FileStream via WMI.
-        # Worst-case budget: 10 attempts x (5s connection timeout + 5s sleep) = ~100s
+        # Retry loop: SQL Server may need time to accept connections after restart.
+        # Worst-case budget: 20 attempts x (5s connection timeout + 5s sleep) = ~200s
         $tries = 0
         while ($true) {
             $tries++
@@ -176,11 +187,11 @@ steps:
                 Write-Host "FileStream access level configured successfully."
                 break
             } catch {
-                if ($tries -ge 10) {
+                if ($tries -ge 20) {
                     Write-Host "##[error]Failed to configure FileStream access level after $tries tries."
                     throw
                 }
-                Write-Host "Failed to connect to SQL Server (attempt $tries/10). Retrying in 5 seconds..."
+                Write-Host "Failed to connect to SQL Server (attempt $tries/20). Retrying in 5 seconds..."
                 Start-Sleep -Seconds 5
             }
         }
