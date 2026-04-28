@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -72,5 +73,37 @@ public class SqlAuthenticationProviderManagerTests
             provider2,
             SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+    }
+
+    // Verify that SqlAuthenticationProviderManager registers its GetProvider
+    // and SetProvider methods as callbacks on SqlAuthenticationProvider during
+    // static initialization.  This is the AOT-safe code path that avoids
+    // reflection-based assembly loading.
+    [Fact]
+    public void CallbackDelegates_RegisteredByManager()
+    {
+        // Accessing SqlAuthenticationProviderManager triggers its static
+        // constructor, which should register the callbacks.
+        _ = SqlAuthenticationProviderManager.GetProvider(
+            SqlAuthenticationMethod.NotSpecified);
+
+        // Use reflection to inspect the private callback fields on
+        // SqlAuthenticationProvider (the test itself doesn't need to be
+        // AOT-safe).
+        BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic;
+
+        FieldInfo? getCallbackField = typeof(SqlAuthenticationProvider)
+            .GetField("s_getProviderCallback", flags);
+        FieldInfo? setCallbackField = typeof(SqlAuthenticationProvider)
+            .GetField("s_setProviderCallback", flags);
+
+        Assert.NotNull(getCallbackField);
+        Assert.NotNull(setCallbackField);
+
+        object? getCallback = getCallbackField.GetValue(null);
+        object? setCallback = setCallbackField.GetValue(null);
+
+        Assert.NotNull(getCallback);
+        Assert.NotNull(setCallback);
     }
 }
