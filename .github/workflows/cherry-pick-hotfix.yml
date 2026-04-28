@@ -57,7 +57,7 @@ jobs:
       versions: ${{ steps.extract.outputs.versions }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Only the scripts directory is needed; skip full history.
           sparse-checkout: .github/scripts
@@ -91,7 +91,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Full history is required so the merge commit and target branch are available
           # for the cherry-pick operation.

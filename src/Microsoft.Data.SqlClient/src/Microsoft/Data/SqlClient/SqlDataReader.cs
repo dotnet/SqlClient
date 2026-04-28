@@ -1307,6 +1307,10 @@ namespace Microsoft.Data.SqlClient
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    fieldType = GetVectorFieldType(metaData.scale);
+                }
                 else
                 { // For all other types, including Xml - use data in MetaType.
                     if (metaData.cipherMD != null)
@@ -1327,6 +1331,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             return fieldType;
+        }
+
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetVectorFieldType(byte vectorElementType)
+        {
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
+            return elementType switch
+            {
+                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
         }
 
         virtual internal int GetLocaleId(int i)
@@ -1421,6 +1438,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
+                }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    providerSpecificFieldType = GetVectorFieldType(metaData.scale);
                 }
                 else
                 {
@@ -2116,7 +2137,7 @@ namespace Microsoft.Data.SqlClient
                     // if bad buffer index, throw
                     if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
                     {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                        throw ADP.InvalidDestinationBufferIndex(buffer?.Length ?? 0, bufferIndex, nameof(bufferIndex));
                     }
 
                     // if there is not enough room in the buffer for data
@@ -3104,7 +3125,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.JsonDocumentNotSupportedOnColumnType(metaData.column);
                 }
-                JsonDocument document = JsonDocument.Parse(data.Value as string);
+                JsonDocument document = JsonDocument.Parse(data.String);
                 return (T)(object)document;
             }
             else
@@ -3921,8 +3942,16 @@ namespace Microsoft.Data.SqlClient
             // Check if we've already read the header already
             if (i < _sharedState._nextColumnHeaderToRead)
             {
-                // Read the header, but we need to read the data
-                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly))
+                // The column header has been read (e.g. by IsDBNull) but data hasn't
+                // been consumed yet.  Consume it now unless:
+                //  - readHeaderOnly: caller only wants the header (e.g. IsDBNull itself).
+                //  - forStreaming + SequentialAccess: a streaming type (Stream, TextReader,
+                //    XmlReader) was requested in sequential mode.  The data must stay on the
+                //    wire so that SqlSequentialStream / SqlSequentialTextReader can read it
+                //    incrementally.  In non-sequential mode we still need to materialize the
+                //    data into _data[i] for the MemoryStream / StringReader path.
+                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly) &&
+                    !(forStreaming && IsCommandBehavior(CommandBehavior.SequentialAccess)))
                 {
                     return TryReadColumnData();
                 }

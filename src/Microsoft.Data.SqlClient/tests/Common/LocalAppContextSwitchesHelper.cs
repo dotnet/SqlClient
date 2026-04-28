@@ -43,7 +43,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _disableTnirByDefaultOriginal;
     #endif
     private readonly bool? _enableMultiSubnetFailoverByDefaultOriginal;
-    private readonly bool? _enableUserAgentOriginal;
     #if NET
     private readonly bool? _globalizationInvariantModeOriginal;
     #endif
@@ -94,8 +93,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             #endif
             _enableMultiSubnetFailoverByDefaultOriginal =
                 GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
-            _enableUserAgentOriginal =
-                GetSwitchValue("s_enableUserAgent");
             #if NET
             _globalizationInvariantModeOriginal =
                 GetSwitchValue("s_globalizationInvariantMode");
@@ -152,9 +149,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_enableMultiSubnetFailoverByDefault",
                 _enableMultiSubnetFailoverByDefaultOriginal);
-            SetSwitchValue(
-                "s_enableUserAgent",
-                _enableUserAgentOriginal);
             #if NET
             SetSwitchValue(
                 "s_globalizationInvariantMode",
@@ -232,15 +226,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
         set => SetSwitchValue("s_enableMultiSubnetFailoverByDefault", value);
-    }
-
-    /// <summary>
-    /// Get or set the EnableUserAgent switch value.
-    /// </summary>
-    public bool? EnableUserAgent
-    {
-        get => GetSwitchValue("s_enableUserAgent");
-        set => SetSwitchValue("s_enableUserAgent", value);
     }
 
     #if NET

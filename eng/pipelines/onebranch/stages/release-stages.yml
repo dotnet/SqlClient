@@ -23,15 +23,6 @@
 #   - false → NuGet Test feed (via NuGetServiceConnectionTest).
 #
 # This template depends on stages defined by the build-stages.yml template.
-#
-# This template depends on the following runtime (i.e. macro expansion) variables being defined:
-#
-#  - effectiveSqlServerVersion
-#  - effectiveLoggingVersion
-#  - effectiveAbstractionsVersion
-#  - effectiveSqlClientVersion
-#  - effectiveAzureVersion
-#  - effectiveAkvProviderVersion
 
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
@@ -60,6 +51,52 @@ parameters:
       - production
       - test
 
+  # Package Parameters -----------------------------------------------------
+
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: akvProviderArtifactsName
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: azureArtifactsName
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: loggingArtifactsName
+    type: string
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: sqlClientArtifactsName
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlServerArtifactsName
+    type: string
+
+  - name: sqlServerPackageVersion
+    type: string
+
+  # ── Symbols publishing parameter ───────────────────────────────────────
+  # When true, the release stage will depend on publish_symbols so that
+  # symbol publishing completes before packages are released.
+
+  - name: publishSymbols
+    type: boolean
+    default: false
+
   # ── Release parameters ─────────────────────────────────────────────────
 
   - name: releaseSqlServerServer
@@ -77,7 +114,7 @@ parameters:
   - name: releaseAzure
     type: boolean
 
-  - name: releaseAKVProvider
+  - name: releaseAkvProvider
     type: boolean
 
 stages:
@@ -94,7 +131,7 @@ stages:
   #   true  → NuGet Production feed.
   #   false → NuGet Test feed.
   # ====================================================================
-  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAKVProvider) }}:
+  - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging, parameters.releaseAbstractions, parameters.releaseSqlClient, parameters.releaseAzure, parameters.releaseAkvProvider) }}:
     - stage: release_${{ parameters.stageNameSuffix }}
       ${{ if eq(parameters.releaseToProduction, true) }}:
         displayName: Release to NuGet Production
@@ -107,9 +144,11 @@ stages:
           - build_abstractions
         - ${{ if or(parameters.releaseSqlClient, parameters.releaseAzure) }}:
           - build_dependent
-          - mds_package_validation
-        - ${{ if parameters.releaseAKVProvider }}:
+          - sqlclient_package_validation
+        - ${{ if parameters.releaseAkvProvider }}:
           - build_addons
+        - ${{ if parameters.publishSymbols }}:
+          - publish_symbols
 
       variables:
         - name: onebranchReleaseEnvironment
@@ -153,8 +192,8 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.SqlServer.Server
-              artifactName: $(sqlServerArtifactsName)
-              packagePath: Microsoft.SqlServer.Server.$(effectiveSqlServerVersion).nupkg
+              artifactName: '${{ parameters.sqlServerArtifactsName }}'
+              packagePath: 'packages/Microsoft.SqlServer.Server.${{ parameters.sqlServerPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -163,8 +202,8 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Internal.Logging
-              artifactName: $(loggingArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.Internal.Logging.$(effectiveLoggingVersion).nupkg
+              artifactName: '${{ parameters.loggingArtifactsName }}'
+              packagePath: 'packages/Microsoft.Data.SqlClient.Internal.Logging.${{ parameters.loggingPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -173,8 +212,8 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
-              artifactName: $(abstractionsArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.Extensions.Abstractions.$(effectiveAbstractionsVersion).nupkg
+              artifactName: '${{ parameters.abstractionsArtifactsName }}'
+              packagePath: 'packages/Microsoft.Data.SqlClient.Extensions.Abstractions.${{ parameters.abstractionsPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -183,8 +222,8 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient
-              artifactName: $(sqlClientArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.$(effectiveSqlClientVersion).nupkg
+              artifactName: '${{ parameters.sqlClientArtifactsName }}'
+              packagePath: 'packages/Microsoft.Data.SqlClient.${{ parameters.sqlClientPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -193,18 +232,18 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Azure
-              artifactName: $(azureArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.Extensions.Azure.$(effectiveAzureVersion).nupkg
+              artifactName: '${{ parameters.azureArtifactsName }}'
+              packagePath: 'packages/Microsoft.Data.SqlClient.Extensions.Azure.${{ parameters.azurePackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
 
-        - ${{ if eq(parameters.releaseAKVProvider, true) }}:
+        - ${{ if eq(parameters.releaseAkvProvider, true) }}:
           - template: /eng/pipelines/onebranch/jobs/publish-nuget-package-job.yml@self
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-              artifactName: $(akvArtifactsName)
-              packagePath: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.$(effectiveAkvProviderVersion).nupkg
+              artifactName: '${{ parameters.akvProviderArtifactsName }}'
+              packagePath: 'packages/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.${{ parameters.akvProviderPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}

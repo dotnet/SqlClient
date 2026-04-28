@@ -105,8 +105,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //       the server, we will use that name over what was specified  
             //       in the original connection string.
 
-            if (userConnectionOptions.ContainsKey(DbConnectionStringKeywords.FailoverPartner) &&
-                userConnectionOptions[DbConnectionStringKeywords.FailoverPartner] == null)
+            if (userConnectionOptions.TryGetParsetableValue(DbConnectionStringKeywords.FailoverPartner, out string failoverPartnerValue) &&
+                failoverPartnerValue == null)
             {
                 keywordToReplace = DbConnectionStringKeywords.DataSource;
             }
