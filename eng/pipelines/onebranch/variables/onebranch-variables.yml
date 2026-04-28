@@ -25,10 +25,12 @@ variables:
   #
   # SymbolsAzureSubscription
   # SymbolsPublishProjectNameSqlClient
-  # SymbolsPublishServerProd / SymbolsPublishServerPPE
-  # SymbolsPublishTokenUriProd / SymbolsPublishTokenUriPPE
+  # SymbolsPublishServerProd
+  # SymbolsPublishServerPpe
+  # SymbolsPublishTokenUriProd
+  # SymbolsPublishTokenUriPpe
   # SymbolsUploadAccount
-  - group: 'Symbols Publishing'
+  - group: 'symbols-variables-v3'
 
   # OneBranch Template Variables ###########################################
 
