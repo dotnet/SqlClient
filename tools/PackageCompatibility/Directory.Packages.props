@@ -37,7 +37,6 @@
 
   <!-- Other Packages -->
   <ItemGroup>
-    <PackageVersion Include="Azure.Core" Version="1.53.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.6" />
     <PackageVersion Include="xunit.v3" Version="4.0.0-pre.81" />
   </ItemGroup>
