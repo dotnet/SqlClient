@@ -58,6 +58,52 @@ This prompt uses the following skill:
 - Identify the contributors for the "Contributors" section.
 - **Assign each PR to one or more packages** using the identification rules in the Package Registry table. A PR may be relevant to multiple packages. PRs not matching any non-core package belong to `Microsoft.Data.SqlClient`.
 
+### 2.5. Determine Target Framework (TFM) Scope Per Change
+
+For each PR included in release notes, determine whether it applies to all supported TFMs for the package or only a subset.
+
+Use source-level evidence (not assumptions) to classify scope:
+
+- **TFM-specific files** indicate scoped impact (for example, `.netfx.cs`, `.netcore.cs`).
+- **Conditional compilation** indicates scoped impact (for example, `#if NETFRAMEWORK`, `#if NET`).
+- **Project or build conditions** indicate scoped impact (for example, `Condition` expressions on `TargetFramework` or `TargetFrameworks`).
+- **Tests-only TFM changes** should not be called out as customer-facing unless the behavior change is also present in product code.
+
+When writing notes:
+
+- If the change affects **all supported TFMs** for that package, do not add a TFM qualifier.
+- If the change affects **only some TFMs**, include an explicit qualifier in the relevant bullet or section title.
+- Use concise qualifiers like:
+  - `(net462 only)`
+  - `(net8.0/net9.0 only)`
+
+Do not infer TFM scope from labels alone; verify from changed files and code paths.
+
+### 2.6. Determine Operating System (OS) Scope Per Change
+
+For each PR included in release notes, determine whether it applies to all supported OS targets for the package or only a subset.
+
+Use source-level evidence (not assumptions) to classify scope:
+
+- **OS-specific files** indicate scoped impact (for example, `.windows.cs`, `.unix.cs`).
+- **OS preprocessor symbols** indicate scoped impact (for example, `#if _WINDOWS`, `#if _UNIX`).
+- **Project/build conditions** indicate scoped impact (for example, `TargetOs`, `NormalizedTargetOs`, or OS-conditional `ItemGroup`/`PropertyGroup` entries).
+- **SNI implementation or native dependency gates** can imply OS scope when behavior changes only apply to native Windows SNI vs managed cross-platform paths.
+- **Tests-only OS changes** should not be called out as customer-facing unless the behavior change is also present in product code.
+
+When writing notes:
+
+- If the change affects **all supported OS targets**, do not add an OS qualifier.
+- If the change affects **only some OS targets**, include an explicit qualifier in the relevant bullet or section title.
+- Use concise qualifiers like:
+  - `(Windows only)`
+  - `(Unix only)`
+  - `(Linux only)`
+  - `(macOS only)`
+- If both TFM and OS are scoped, combine them in one qualifier, for example: `(net8.0/net9.0 on Windows only)`.
+
+Do not infer OS scope from labels alone; verify from changed files and code paths.
+
 ### 3. Enrich Feature Sections with Issue Context
 
 For significant features or bug fixes that reference a GitHub issue:
@@ -84,6 +130,7 @@ For each package that has relevant PRs in the milestone:
    - Use the template from [release-notes/template/release-notes-template.md](release-notes/template/release-notes-template.md).
    - Fill in the template following the instructions in each section.
    - Only include sections (Added, Changed, Fixed, Removed) that have entries.
+    - For each Added/Changed/Fixed/Removed item, include TFM and OS scope qualifiers when Step 2.5 or Step 2.6 determines the change is not universal across the package's supported targets.
    - Look up dependencies using the Dependency Sources from the lookup table above. Resolve concrete versions from [Directory.Packages.props](Directory.Packages.props).
    - List dependencies per target framework. Use the project file's `<TargetFrameworks>` to determine which frameworks to list.
    - Omit the Contributors section for packages with no public contributors.
