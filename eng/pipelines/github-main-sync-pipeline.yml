@@ -1,0 +1,266 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This pipeline keeps the ADO internal/main branch aligned with the public
+# GitHub main branch by:
+#
+#   1. Fetching the latest commits from GitHub main.
+#   2. Verifying that internal/main can be fast-forwarded to that commit.
+#   3. Pushing a sync branch into the ADO repository.
+#   4. Creating or refreshing a PR from the sync branch into internal/main.
+#   5. Enabling PR auto-complete using the "rebase" merge strategy so the PR
+#      completes without a merge commit after approvals and policies succeed.
+#
+# Notes:
+#
+#   - This pipeline is intended to run in the ADO project only.
+#   - The GitHub repository is public, so the initial implementation fetches it
+#     anonymously and does not require a PAT.
+#   - The target branch should be configured to allow only the fast-forward
+#     compatible PR merge strategy ("rebase and fast-forward") if that history
+#     shape is required.
+#   - If internal/main has diverged from GitHub main, this pipeline fails and
+#     leaves reconciliation to a human, since auto-repairing that case would be
+#     risky.
+
+# Set the pipeline run name to the year, day-of-year, and daily run counter.
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+
+# Do not trigger this pipeline for PRs or CI pushes.
+pr: none
+trigger: none
+
+# Run the sync once per week against the ADO internal/main branch.
+schedules:
+  - cron: '0 6 * * Mon'
+    displayName: Weekly GitHub to ADO Sync
+    branches:
+      include:
+        - internal/main
+    always: true
+
+# Pipeline parameters, visible in the Azure DevOps UI.
+parameters:
+  # True to emit debug information and shell tracing.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # Public GitHub repository to mirror into the ADO repo.
+  - name: githubRepositoryUrl
+    displayName: GitHub repository URL
+    type: string
+    default: https://github.com/dotnet/SqlClient.git
+
+  # Public GitHub branch to mirror into the ADO repo.
+  - name: githubBranch
+    displayName: GitHub branch
+    type: string
+    default: main
+
+  # Target branch in the ADO repo.
+  - name: adoTargetBranch
+    displayName: ADO target branch
+    type: string
+    default: internal/main
+
+  # Temporary source branch used for the synchronization PR.
+  - name: syncBranch
+    displayName: ADO sync branch
+    type: string
+    default: automation/sync/github-main
+
+  # If true, set the PR to auto-complete after all branch policies succeed.
+  - name: enableAutoComplete
+    displayName: Enable PR auto-complete
+    type: boolean
+    default: true
+
+variables:
+  - name: system.debug
+    value: ${{ parameters.debug }}
+
+stages:
+  - stage: sync_internal_main_stage
+    displayName: Sync GitHub Main to ADO Internal Main
+    jobs:
+      - job: sync_internal_main_job
+        displayName: Create or Refresh Sync PR
+        pool:
+          vmImage: ubuntu-latest
+
+        steps:
+          # Persist the OAuth token so git push can authenticate back to the
+          # ADO repository without any extra credential setup in the script.
+          - checkout: self
+            clean: true
+            fetchDepth: 0
+            persistCredentials: true
+
+          - bash: |
+              set -euo pipefail
+
+              if [ "${DEBUG_ENABLED}" = "true" ]; then
+                set -x
+              fi
+
+              github_remote='github-source'
+              github_branch="${GITHUB_BRANCH#refs/heads/}"
+              target_branch="${ADO_TARGET_BRANCH#refs/heads/}"
+              sync_branch="${SYNC_BRANCH#refs/heads/}"
+              source_ref="refs/remotes/${github_remote}/${github_branch}"
+              target_ref="refs/remotes/origin/${target_branch}"
+              sync_ref="refs/heads/${sync_branch}"
+
+              if [ -z "${SYSTEM_ACCESSTOKEN:-}" ]; then
+                echo "##vso[task.logissue type=error]System.AccessToken is not available. Enable OAuth token access for this pipeline."
+                exit 1
+              fi
+
+              git config user.name 'SqlClient Sync Automation'
+              git config user.email 'sqlclient-sync-automation@users.noreply.github.com'
+
+              git remote remove "${github_remote}" 2>/dev/null || true
+              git remote add "${github_remote}" "${GITHUB_REPOSITORY_URL}"
+
+              echo "Fetching ADO target branch '${target_branch}'."
+              git fetch --no-tags origin "refs/heads/${target_branch}:${target_ref}"
+
+              echo "Fetching GitHub branch '${github_branch}' from '${GITHUB_REPOSITORY_URL}'."
+              git fetch --no-tags "${github_remote}" "refs/heads/${github_branch}:${source_ref}"
+
+              source_commit="$(git rev-parse "${source_ref}")"
+              target_commit="$(git rev-parse "${target_ref}")"
+
+              echo "GitHub source commit: ${source_commit}"
+              echo "ADO target commit:   ${target_commit}"
+
+              if [ "${source_commit}" = "${target_commit}" ]; then
+                echo "No synchronization is required."
+                exit 0
+              fi
+
+              if ! git merge-base --is-ancestor "${target_ref}" "${source_ref}"; then
+                echo "##vso[task.logissue type=error]${ADO_TARGET_BRANCH} is not an ancestor of ${GITHUB_BRANCH}. Fast-forward sync is not possible without manual intervention."
+                exit 1
+              fi
+
+              echo "Preparing sync branch '${sync_branch}' at ${source_commit}."
+              git checkout --detach "${source_ref}"
+              git branch -f "${sync_branch}" "${source_ref}"
+
+              echo "Pushing '${sync_branch}' to the ADO repository."
+              git push origin "${sync_ref}:${sync_ref}" --force
+
+              export PR_TITLE="Sync GitHub ${GITHUB_BRANCH} into ${ADO_TARGET_BRANCH}"
+              export PR_DESCRIPTION="$(cat <<EOF
+              Automated synchronization from the public GitHub repository into the ADO repository.
+
+              - GitHub repository: \`${GITHUB_REPOSITORY_URL}\`
+              - GitHub branch: \`${GITHUB_BRANCH}\`
+              - ADO target branch: \`${ADO_TARGET_BRANCH}\`
+              - Source commit: \`${source_commit}\`
+
+              This PR was generated by the scheduled ADO sync pipeline.
+              EOF
+              )"
+
+              echo "Looking for an existing active sync PR."
+              pr_list_response="$(curl --silent --show-error --fail \
+                --get \
+                --header "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
+                --header 'Content-Type: application/json' \
+                --data-urlencode 'searchCriteria.status=active' \
+                --data-urlencode "searchCriteria.sourceRefName=${sync_ref}" \
+                --data-urlencode "searchCriteria.targetRefName=refs/heads/${target_branch}" \
+                --data-urlencode 'api-version=7.1' \
+                "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_apis/git/repositories/${BUILD_REPOSITORY_ID}/pullrequests")"
+
+              pr_id="$(python3 -c "import json,sys; data=json.load(sys.stdin); print(data['value'][0]['pullRequestId'] if data.get('value') else '')" <<< "${pr_list_response}")"
+
+              if [ -z "${pr_id}" ]; then
+                echo "Creating a new sync PR."
+                create_payload="$(python3 <<'PY'
+import json
+import os
+
+print(json.dumps({
+    "sourceRefName": os.environ["SYNC_REF"],
+    "targetRefName": os.environ["TARGET_PR_REF"],
+    "title": os.environ["PR_TITLE"],
+    "description": os.environ["PR_DESCRIPTION"],
+}))
+PY
+                )"
+
+                pr_response="$(curl --silent --show-error --fail \
+                  --request POST \
+                  --header "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
+                  --header 'Content-Type: application/json' \
+                  --data "${create_payload}" \
+                  "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_apis/git/repositories/${BUILD_REPOSITORY_ID}/pullrequests?api-version=7.1")"
+
+                pr_id="$(python3 -c "import json,sys; data=json.load(sys.stdin); print(data['pullRequestId'])" <<< "${pr_response}")"
+              else
+                echo "Reusing existing sync PR #${pr_id}."
+              fi
+
+              if [ "${ENABLE_AUTO_COMPLETE}" = "true" ]; then
+                echo "Updating PR #${pr_id} and enabling auto-complete."
+                if [ -z "${BUILD_REQUESTEDFORID:-}" ]; then
+                  echo "##vso[task.logissue type=warning]Build.RequestedForId is empty, so auto-complete cannot be enabled by this run."
+                fi
+              else
+                echo "Updating PR #${pr_id} without auto-complete."
+              fi
+
+              update_payload="$(python3 <<'PY'
+import json
+import os
+
+payload = {
+    "title": os.environ["PR_TITLE"],
+    "description": os.environ["PR_DESCRIPTION"],
+    "completionOptions": {
+        "deleteSourceBranch": True,
+        "mergeStrategy": "rebase",
+        "transitionWorkItems": False,
+    },
+}
+
+requested_for_id = os.environ.get("BUILD_REQUESTEDFORID", "")
+enable_auto_complete = os.environ.get("ENABLE_AUTO_COMPLETE", "false").lower() == "true"
+
+if enable_auto_complete and requested_for_id:
+    payload["autoCompleteSetBy"] = {"id": requested_for_id}
+
+print(json.dumps(payload))
+PY
+              )"
+
+              curl --silent --show-error --fail \
+                --request PATCH \
+                --header "Authorization: Bearer ${SYSTEM_ACCESSTOKEN}" \
+                --header 'Content-Type: application/json' \
+                --data "${update_payload}" \
+                "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_apis/git/repositories/${BUILD_REPOSITORY_ID}/pullrequests/${pr_id}?api-version=7.1" \
+                > /dev/null
+
+              echo "Sync PR is ready:"
+              echo "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/pullrequest/${pr_id}"
+            displayName: Sync GitHub main into ADO internal/main
+            env:
+              ADO_TARGET_BRANCH: ${{ parameters.adoTargetBranch }}
+              BUILD_REQUESTEDFORID: $(Build.RequestedForId)
+              DEBUG_ENABLED: ${{ parameters.debug }}
+              ENABLE_AUTO_COMPLETE: ${{ parameters.enableAutoComplete }}
+              GITHUB_BRANCH: ${{ parameters.githubBranch }}
+              GITHUB_REPOSITORY_URL: ${{ parameters.githubRepositoryUrl }}
+              SYNC_BRANCH: ${{ parameters.syncBranch }}
+              SYNC_REF: refs/heads/${{ parameters.syncBranch }}
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              TARGET_PR_REF: refs/heads/${{ parameters.adoTargetBranch }}
