@@ -33,6 +33,74 @@ Specifically, it:
 The app is designed to run against both **published NuGet packages** and **locally-built packages**
 (via the `packages/` directory configured in `NuGet.config`).
 
+## How This Differs From the Existing Test Suite
+
+The SqlClient repository has a large suite of unit, functional, and manual tests.  This tool
+complements — but does not replace — those tests.  The key differences are:
+
+### Heterogeneous package versions
+
+The test projects reference sibling packages via project references or a shared `Directory.Packages.
+props` file.  Every test run uses a **single, uniform version set** derived from whatever is
+currently checked out.  You cannot ask the test suite to run `SqlClient 7.0.1` against
+`AkvProvider 7.1.0-preview1` without editing project files.
+
+This tool accepts any combination of independent version numbers — including versions that have not
+been published yet — at the command line:
+
+```bash
+dotnet run \
+  -p:SqlClientVersion=7.0.1 \
+  -p:AkvProviderVersion=7.1.0-preview1 \
+  -- -c "<connection string>"
+```
+
+This makes it straightforward to answer questions like *"does the new AKV provider build work
+against the last published SqlClient release?"* without modifying any source files.
+
+### Pre-release and locally-built packages
+
+Because NuGet resolves packages from the `packages/` local feed before falling back to NuGet.org,
+you can drop pre-release `.nupkg` files in that folder and reference them immediately — even before
+they have been published.  The existing tests have no equivalent mechanism; they can only reference
+packages that are either checked out as source or already published to a configured feed.
+
+### End-to-end runtime coverage across the full package graph
+
+The test suite exercises individual classes and APIs in isolation.  Functional and manual tests do
+open real connections, but they always run against the packages as built from source in the current
+branch.
+
+This tool loads every package in the dependency graph simultaneously in a single process and then
+opens a live `SqlConnection`.  This catches a class of failures that isolated tests miss:
+
+- **Binding redirect conflicts**: two packages pulling in incompatible versions of a shared
+  dependency (`Azure.Core`, `Microsoft.Identity.*`, etc.) that only manifest when all packages are
+  present in the same AppDomain.
+- **Transitive version mismatches**: a package expecting an internal API surface that has changed in
+  a sibling package across a version boundary.
+- **Registration side-effects**: authentication providers or other singleton registrations that
+  interfere when packages are composed in an unexpected order or version combination.
+
+### Diagnostic console output
+
+When a connection fails, the tool can emit structured TDS-level and authentication trace output via
+the `--log` and `--trace` flags.  This output is written directly to the console and requires no
+test harness or log configuration — useful for quickly diagnosing authentication failures in CI
+environments or on developer machines where full test infrastructure is unavailable.
+
+The test suite's diagnostics are routed through `EventSource`/`DiagnosticListener` and are only
+visible if a listener is attached (e.g. via `dotnet-trace` or a custom test initializer).
+
+### What this tool does NOT do
+
+- It does not assert on individual API behaviours, query results, or error messages.  For that, use
+  the existing unit and functional tests.
+- It cannot run without a real SQL Server instance.  The manual test suite has the same constraint
+  for connectivity tests, but unit and functional tests run without a server.
+- It does not cover every authentication mode automatically.  You must provide a suitable connection
+  string for each mode you want to validate.
+
 ## Project Layout
 
 - `src/` contains the tool source files and project file.
