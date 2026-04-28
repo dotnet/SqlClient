@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // All batch sql statements must be executed inside sp_executesql, including those
                 // without parameters
-                BuildExecuteSql(CommandBehavior.Default, commandText, batchCommand.Parameters, ref rpc);
+                BuildExecuteSql(batchCommand.CommandBehavior, commandText, batchCommand.Parameters, ref rpc);
             }
 
             _RPCList.Add(rpc);

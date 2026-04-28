@@ -293,7 +293,14 @@ namespace Microsoft.Data.SqlClient
         #else
         virtual
         #endif
-        DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader();
+        DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        {
+            ValidateCommandBehavior(nameof(ExecuteDbDataReader), behavior);
+
+            CheckDisposed();
+            SetupBatchCommandExecute();
+            return _batchCommand.ExecuteReader(behavior);
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
         protected
@@ -304,9 +311,11 @@ namespace Microsoft.Data.SqlClient
         #endif
         Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
+            ValidateCommandBehavior(nameof(ExecuteDbDataReaderAsync), behavior);
+
             CheckDisposed();
             SetupBatchCommandExecute();
-            return _batchCommand.ExecuteReaderAsync(cancellationToken)
+            return _batchCommand.ExecuteReaderAsync(behavior, cancellationToken)
                 .ContinueWith<DbDataReader>((result) =>
                 {
                     if (result.IsFaulted)
@@ -349,6 +358,15 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.AddBatchCommand(_commands[index]);
             }
             _batchCommand.SetBatchRPCModeReadyToExecute();
+        }
+
+        internal static void ValidateCommandBehavior(string method, CommandBehavior behavior)
+        {
+            if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))
+            {
+                ADP.ValidateCommandBehavior(behavior);
+                throw ADP.NotSupportedCommandBehavior(behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection), method);
+            }
         }
     }
 }
