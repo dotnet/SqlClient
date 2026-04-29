@@ -114,8 +114,8 @@ extends:
         enabled: true
       apiscan:
         enabled: true
-        softwareFolder: $(softwareFolder)
-        symbolsFolder: $(symbolsFolder)
+        softwareFolder: $(apiscanDllPath)
+        symbolsFolder: $(apiscanPdbPath)
         softwarename: Microsoft.Data.SqlClient
         versionNumber: $(AssemblyFileVersion)
       codeql:
