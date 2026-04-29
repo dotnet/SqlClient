@@ -533,24 +533,9 @@ namespace Microsoft.Data.SqlClient
             };
         }
 
-        internal static Exception ParameterCannotBeEmpty(string paramName)
-        {
-            return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
-        }
-
         internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
-        }
-
-        internal static Exception ActiveDirectoryInteractiveTimeout()
-        {
-            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_Interactive_Authentication);
-        }
-
-        internal static Exception ActiveDirectoryDeviceFlowTimeout()
-        {
-            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
         internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
@@ -1931,9 +1916,8 @@ namespace Microsoft.Data.SqlClient
             Exception exceptionToInclude = e.InnerException != null ? e.InnerException : e;
             sqlErs.Add(new SqlError(infoNumber: 0, errorState: (byte)0x00, errorClass: (byte)TdsEnums.MIN_ERROR_CLASS, server: serverName, errorMessage: errorMessage, procedure: null, lineNumber: 0));
 
-            if (e is SqlException)
+            if (e is SqlException exThrown)
             {
-                SqlException exThrown = (SqlException)e;
                 SqlErrorCollection errorList = exThrown.Errors;
                 for (int i = 0; i < exThrown.Errors.Count; i++)
                 {
@@ -2155,11 +2139,6 @@ namespace Microsoft.Data.SqlClient
         internal static Exception SocketDidNotThrow()
         {
             return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
-        }
-#else
-        static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
         }
 #endif
 

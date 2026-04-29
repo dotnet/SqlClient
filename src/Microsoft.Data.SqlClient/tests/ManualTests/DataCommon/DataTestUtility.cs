@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
@@ -94,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SQL Server capabilities
         private static bool? s_isDataClassificationSupported;
         private static bool? s_isVectorSupported;
+        private static bool? s_isVectorFloat16Supported;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -154,6 +156,68 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsSqlVectorSupported =>
             s_isVectorSupported ??= IsTCPConnStringSetup() &&
                 IsTypePresent("vector");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'float16' base type for the 'vector' data type.
+        /// </summary>
+        /// <remarks>
+        /// Probes the server by first executing
+        /// <c>ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;</c> and then executing
+        /// <c>DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;</c>.
+        /// As a side effect, this enables preview features for the current database. If the server does not
+        /// recognize <c>float16</c> as a vector base type, if the server does not support the required syntax,
+        /// if the current principal lacks permission to change the database scoped configuration, or if another
+        /// server-side error occurs while running the probe, this method returns
+        /// <see langword="false"/>. Implies <see cref="IsSqlVectorSupported"/>.
+        /// </remarks>
+        /// <returns><see langword="true"/> if the 'float16' vector base type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorFloat16Supported =>
+            s_isVectorFloat16Supported ??= IsTCPConnStringSetup() &&
+                IsSqlVectorSupported &&
+                CheckVectorFloat16Supported();
+
+        private static bool CheckVectorFloat16Supported()
+        {
+            try
+            {
+                using SqlConnection connection = new(TCPConnectionString);
+                // Enable preview features (required while float16 is in preview), then declare a
+                // float16 vector and select it back. Without a negotiated float16 feature extension,
+                // the server returns the value as a varchar(max) JSON string, which the client can
+                // safely read. We use 1.0 (exactly representable in IEEE-754 binary16) so the
+                // round-tripped JSON matches the input bit-for-bit. Any failure (server parse
+                // error such as Msg 195 "'float16' is not a recognized vector base type.", lack of
+                // permission to set PREVIEW_FEATURES, etc.) means we cannot exercise the float16
+                // path.
+                float[] expected = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+                using SqlCommand command = new(
+                    "ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;" +
+                    "DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;",
+                    connection);
+                connection.Open();
+                using SqlDataReader reader = command.ExecuteReader();
+                if (!reader.Read())
+                {
+                    return false;
+                }
+                string json = reader.GetString(0);
+                float[] actual = System.Text.Json.JsonSerializer.Deserialize<float[]>(json);
+                return actual != null && actual.Length == expected.Length
+                    && actual.AsSpan().SequenceEqual(expected);
+            }
+            catch (SqlException)
+            {
+                // Server-side failure (e.g. Msg 195 "'float16' is not a recognized vector base
+                // type.", Msg 102 syntax errors on older servers, lack of permission to set
+                // PREVIEW_FEATURES) — float16 path is unavailable.
+                return false;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Server returned a payload we can't parse as a float[] JSON array.
+                return false;
+            }
+        }
 
         static DataTestUtility()
         {
@@ -645,177 +709,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // Generate a new GUID and return the characters from its 1st and 4th
-        // parts, as shown here:
-        //
-        //   7ff01cb8-88c7-11f0-b433-00155d7e531e
-        //   ^^^^^^^^           ^^^^
-        //
-        // These 12 characters are concatenated together without any
-        // separators.  These 2 parts typically comprise a timestamp and clock
-        // sequence, most likely to be unique for tests that generate names in
-        // quick succession.
-        private static string GetGuidParts()
-        {
-            var guid = Guid.NewGuid().ToString();
-            // GOTCHA: The slice operator is inclusive of the start index and
-            // exclusive of the end index!
-            return guid.Substring(0, 8) + guid.Substring(19, 4);
-        }
+        public static string GetShortName(string prefix, bool withBracket = true) =>
+            DatabaseObject.GenerateShortName(prefix, withBracket);
 
-        /// <summary>
-        /// Generate a short unique database object name, whose maximum length
-        /// is 30 characters, with the format:
-        ///
-        ///   <Prefix>_<GuidParts>
-        ///
-        /// The Prefix will be truncated to satisfy the overall maximum length.
-        ///
-        /// The GUID parts will be the characters from the 1st and 4th blocks
-        /// from a traditional string representation, as shown here:
-        ///
-        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
-        ///   ^^^^^^^^           ^^^^
-        ///
-        /// These 2 parts typically comprise a timestamp and clock sequence,
-        /// most likely to be unique for tests that generate names in quick
-        /// succession.  The 12 characters are concatenated together without any
-        /// separators.
-        /// </summary>
-        ///
-        /// <param name="prefix">
-        /// The prefix to use when generating the unique name, truncated to at
-        /// most 18 characters when withBracket is false, and 16 characters when
-        /// withBracket is true.
-        ///
-        /// This should not contain any characters that cannot be used in
-        /// database object names.  See:
-        ///
-        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
-        /// </param>
-        ///
-        /// <param name="withBracket">
-        /// When true, the entire generated name will be enclosed in square
-        /// brackets, for example:
-        ///
-        ///   [MyPrefix_7ff01cb811f0]
-        /// </param>
-        ///
-        /// <returns>
-        /// A unique database object name, no more than 30 characters long.
-        /// </returns>
-        public static string GetShortName(string prefix, bool withBracket = true)
-        {
-            StringBuilder name = new(30);
-
-            if (withBracket)
-            {
-                name.Append('[');
-            }
-
-            int maxPrefixLength = withBracket ? 16 : 18;
-            if (prefix.Length > maxPrefixLength)
-            {
-                prefix = prefix.Substring(0, maxPrefixLength);
-            }
-
-            name.Append(prefix);
-            name.Append('_');
-            name.Append(GetGuidParts());
-
-            if (withBracket)
-            {
-                name.Append(']');
-            }
-
-            return name.ToString();
-        }
-
-        /// <summary>
-        /// Generate a long unique database object name, whose maximum length is
-        /// 96 characters, with the format:
-        ///
-        ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
-        ///
-        /// The Prefix will be truncated to satisfy the overall maximum length.
-        ///
-        /// The GUID Parts will be the characters from the 1st and 4th blocks
-        /// from a traditional string representation, as shown here:
-        ///
-        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
-        ///   ^^^^^^^^           ^^^^
-        ///
-        /// These 2 parts typically comprise a timestamp and clock sequence,
-        /// most likely to be unique for tests that generate names in quick
-        /// succession.  The 12 characters are concatenated together without any
-        /// separators.
-        ///
-        /// The UserName and MachineName are obtained from the Environment,
-        /// and will be truncated to satisfy the maximum overall length.
-        /// </summary>
-        ///
-        /// <param name="prefix">
-        /// The prefix to use when generating the unique name, truncated to at
-        /// most 32 characters.
-        ///
-        /// This should not contain any characters that cannot be used in
-        /// database object names.  See:
-        ///
-        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
-        /// </param>
-        ///
-        /// <param name="withBracket">
-        /// When true, the entire generated name will be enclosed in square
-        /// brackets, for example:
-        ///
-        ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
-        /// </param>
-        ///
-        /// <returns>
-        /// A unique database object name, no more than 96 characters long.
-        /// </returns>
-        public static string GetLongName(string prefix, bool withBracket = true)
-        {
-            StringBuilder name = new(96);
-
-            if (withBracket)
-            {
-                name.Append('[');
-            }
-
-            if (prefix.Length > 32)
-            {
-                prefix = prefix.Substring(0, 32);
-            }
-
-            name.Append(prefix);
-            name.Append('_');
-            name.Append(GetGuidParts());
-            name.Append('_');
-
-            var suffix =
-              Environment.UserName + '_' +
-              Environment.MachineName;
-
-            int maxSuffixLength = 96 - name.Length;
-            if (withBracket)
-            {
-                --maxSuffixLength;
-            }
-            if (suffix.Length > maxSuffixLength)
-            {
-                suffix = suffix.Substring(0, maxSuffixLength);
-            }
-
-            name.Append(suffix);
-
-            if (withBracket)
-            {
-                name.Append(']');
-            }
-
-            return name.ToString();
-        }
+        public static string GetLongName(string prefix, bool withBracket = true) =>
+            DatabaseObject.GenerateLongName(prefix, withBracket);
 
         public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
         {
@@ -843,15 +741,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
-        {
-            ResurrectConnection(sqlConnection);
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
             }

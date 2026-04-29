@@ -128,7 +128,6 @@
   </Folder>
   <Folder Name="/eng/">
     <File Path="../build.proj" />
-    <File Path="../build2.proj" />
     <Project Path="../eng/pipelines/Pipelines.csproj">
       <Build Project="false" />
     </Project>
@@ -137,7 +136,7 @@
     <File Path="Directory.Build.props" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/">
-    <Project Path="Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <Project Path="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient.Extensions.Abstractions/">
     <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
@@ -151,7 +150,7 @@
     <Project Path="Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient/">
-    <File Path="Microsoft.Data.SqlClient/MdsVersions.props" />
+    <File Path="Microsoft.Data.SqlClient/Versions.props" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient/notsupported/">
     <Project Path="../tools/GenAPI/Microsoft.Cci.Extensions/Microsoft.Cci.Extensions.csproj">
