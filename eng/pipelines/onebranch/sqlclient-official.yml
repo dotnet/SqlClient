@@ -199,6 +199,7 @@ extends:
               buildConfiguration: Release
               nugetPackageVersion: $(effectiveAkvPackageVersion)
               mdsPackageVersion: $(akvMdsPackageVersion)
+              mdsArtifactName: $(packageFolderName)
               publishSymbols: ${{ parameters['publishSymbols'] }}
               isOfficialBuild: true
               signingAppRegistrationClientId: $(SigningAppRegistrationClientId)

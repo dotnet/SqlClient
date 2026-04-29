@@ -24,6 +24,10 @@ parameters:
     - name: mdsPackageVersion
       type: string
 
+    - name: mdsArtifactName
+      type: string
+      default: ''
+
     - name: publishSymbols
       type: boolean
 
@@ -101,6 +105,27 @@ jobs:
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
+
+          - ${{ if ne(parameters.mdsArtifactName, '') }}:
+            - download: current
+              artifact: '${{ parameters.mdsArtifactName }}'
+              patterns: '**/*.*nupkg'
+              displayName: 'Download MDS NuGet Package'
+
+            - powershell: |
+                  $downloadedPath = Resolve-Path "$(Pipeline.Workspace)/${{ parameters.mdsArtifactName }}"
+                  Write-Host "Adding local NuGet source: $downloadedPath"
+
+                  [Xml] $nugetConfig = Get-Content -Path "$(REPOROOT)/NuGet.config"
+                  $newAdd = $nugetConfig.CreateElement("add")
+                  $newAdd.SetAttribute("key", "MDS Local Package")
+                  $newAdd.SetAttribute("value", "$downloadedPath")
+                  $nugetConfig.configuration.packageSources.AppendChild($newAdd)
+                  $nugetConfig.Save("$(REPOROOT)/NuGet.config")
+
+                  Write-Host "Updated NuGet.config:"
+                  Get-Content -Path "$(REPOROOT)/NuGet.config"
+              displayName: 'Add MDS package as local NuGet source'
 
           - template: /eng/pipelines/onebranch/steps/compound-build-akv-step.yml@self
             parameters:

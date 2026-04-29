@@ -199,6 +199,7 @@ extends:
               assemblyFileVersion: $(akvAssemblyFileVersion)
               nugetPackageVersion: $(effectiveAkvPackageVersion)
               mdsPackageVersion: $(akvMdsPackageVersion)
+              mdsArtifactName: $(packageFolderName)
               publishSymbols: ${{ parameters['publishSymbols'] }}
               isOfficialBuild: false
 
