@@ -16,12 +16,9 @@
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>
   <!--Generating Strong Name-->
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
@@ -31,7 +28,7 @@
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)\$(TargetFramework)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
-  <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
     </AssemblyAttribute>
