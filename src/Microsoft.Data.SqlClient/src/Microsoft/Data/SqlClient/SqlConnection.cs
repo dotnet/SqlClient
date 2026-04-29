@@ -2234,7 +2234,7 @@ namespace Microsoft.Data.SqlClient
             var innerConnection = InnerConnection;
             if (innerConnection is not SqlConnectionInternal tdsInnerConnection)
             {
-                throw ADP.ConnectionAlreadyOpen(State);
+                throw ADP.ConnectionAlreadyOpen(innerConnection.State);
             }
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
