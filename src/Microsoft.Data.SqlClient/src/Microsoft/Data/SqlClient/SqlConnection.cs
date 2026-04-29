@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
         }
 
         /// <summary>
@@ -1332,7 +1332,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
-            
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1408,7 +1408,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlStatistics statistics = null;
                 Exception e = null;
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1901,7 +1901,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken) 
+        public override Task OpenAsync(CancellationToken cancellationToken)
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
@@ -2224,7 +2224,18 @@ namespace Microsoft.Data.SqlClient
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            var tdsInnerConnection = (SqlConnectionInternal)InnerConnection;
+            // Capture InnerConnection once into a local to avoid a TOCTOU race: another thread
+            // concurrently calling Open() on the same SqlConnection instance can change
+            // _innerConnection to DbConnectionClosedConnecting between the TryOpenConnection()
+            // call above and the cast below. Without this local capture the second read of
+            // InnerConnection may return DbConnectionClosedConnecting, which is not assignable
+            // to SqlConnectionInternal and would produce an opaque InvalidCastException.
+            // See GitHub issue #3314.
+            var innerConnection = InnerConnection;
+            if (innerConnection is not SqlConnectionInternal tdsInnerConnection)
+            {
+                throw ADP.ConnectionAlreadyOpen(State);
+            }
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
 
