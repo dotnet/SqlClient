@@ -73,7 +73,7 @@ A selection of parameters for build targets in `build.proj` can be found below:
 | `[optional_parameter]`            | Allowed Values                   | Default   | Description                                                                                                                                   |
 |-----------------------------------|----------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`               | `Debug`, `Release`               | `Debug`   | Build configuration                                                                                                                           |
-| `-p:PackageVersion<TargetPackage> | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the target package. Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
+| `-p:PackageVersion<TargetPackage>` | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the target package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
 
 For most projects, build output is placed in `artifacts/<package_name>/Project-<configuration>/<tfm>`. `<package_name>`
 is the full name of the package, `<configuration>` is the build configuration, and `<tfm>` is the target framework
