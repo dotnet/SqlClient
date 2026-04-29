@@ -155,7 +155,9 @@ jobs:
               authSignCertName: '${{ parameters.signingAuthSignCertName }}'
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              pattern: '**/${{ parameters.packageFullName }}.dll'
+              pattern: |
+                **/${{ parameters.packageFullName }}.dll
+                **/${{ parameters.packageFullName }}.resources.dll
 
       # Copy signed/unsigned DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
