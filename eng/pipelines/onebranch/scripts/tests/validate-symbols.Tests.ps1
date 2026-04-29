@@ -9,7 +9,7 @@
 # Run with:  pwsh -c "Invoke-Pester ./validate-symbols.Tests.ps1 -Output Detailed"
 
 BeforeAll {
-    $Script:ScriptPath = Join-Path $PSScriptRoot '..' 'jobs' 'validate-symbols.ps1'
+    $Script:ScriptPath = Join-Path $PSScriptRoot '..' 'validate-symbols.ps1'
 
     # Common parameters reused across tests.
     $Script:CommonParams = @{

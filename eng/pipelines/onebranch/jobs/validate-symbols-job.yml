@@ -64,7 +64,7 @@ jobs:
           displayName: Verify ${{ pkg.packageName }} on ${{ server.name }}
           inputs:
             pwsh: true
-            filePath: eng/pipelines/onebranch/jobs/validate-symbols.ps1
+            filePath: eng/pipelines/onebranch/scripts/validate-symbols.ps1
             arguments: >
               -ArtifactPath "$(Pipeline.Workspace)\${{ pkg.artifactName }}"
               -ExtractPath "$(extractRoot)\${{ pkg.packageName }}"

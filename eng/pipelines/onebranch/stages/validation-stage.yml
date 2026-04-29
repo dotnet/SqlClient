@@ -4,15 +4,21 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Validation stage template.  Runs after build stages complete and verifies the signed SqlClient
-# package as well as (optionally) symbol availability on public and internal symbol servers.
+# Validation stage template. Runs after build stages complete and verifies the
+# signed SqlClient package, and optionally validates symbol availability.
 #
-# This template defines the validation stage.
+# Stage defined by this template:
+#   - validation (always emitted)
 #
-# The validate-symbols-job checks the following packages depending on parameters:
-#   - SqlServer - when buildSqlServerServer is true.
-#   - Logging, Abstractions, SqlClient, Azure - when buildSqlClient is true.
-#   - AKV Provider - when buildSqlClient and buildAKVProvider are true.
+# Jobs included in the validation stage:
+#   - validate-signed-package-job when buildSqlClient is true
+#   - validate-symbols-job when publishSymbols is true
+#
+# The validate-symbols-job checks the following packages depending on
+# parameters:
+#   - SqlServer when buildSqlServerServer is true.
+#   - Logging, Abstractions, SqlClient, Azure when buildSqlClient is true.
+#   - AKV Provider when buildSqlClient and buildAKVProvider are true.
 
 parameters:
   # ── General parameters ─────────────────────────────────────────────────

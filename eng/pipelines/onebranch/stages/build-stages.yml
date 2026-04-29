@@ -4,18 +4,25 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Unified build stages template for sqlclient OneBranch pipelines.  Consumed by both the official
-# and non-official pipeline definitions.
+# Unified build stages template for SqlClient OneBranch pipelines. Consumed by
+# both the official and non-official pipeline definitions.
 #
 # Stages defined by this template and their controlling parameters:
 #
-#   Stage                  | Condition                                | Packages
-#   -----------------------|------------------------------------------|-----------------------------------
-#   build_independent      | Always (at least one job when any        | Logging  (buildSqlClient || buildAKVProvider)
-#                          |   build* param is true)                  | SqlServer (buildSqlServerServer)
-#   build_abstractions     | buildSqlClient                           | Abstractions
-#   build_dependent        | buildSqlClient                           | SqlClient, Azure
-#   build_addons           | buildAKVProvider && buildSqlClient       | AKV Provider
+#   Stage              | Condition                              | Produced packages
+#   -------------------|----------------------------------------|-----------------------------------
+#   build_independent  | Always emitted                         | Logging (buildSqlClient ||
+#                      |                                        |   buildAkvProvider)
+#                      |                                        | SqlServer (buildSqlServerServer)
+#   build_abstractions | buildSqlClient                         | Abstractions
+#   build_dependent    | buildSqlClient                         | SqlClient, Azure
+#   build_addons       | buildAkvProvider && buildSqlClient     | AKV Provider
+#
+# Notes:
+# - build_independent is always present so downstream stages can depend on a
+#   stable stage name; individual jobs inside it are compile-time conditional.
+# - build_dependent stage name is intentionally stable because downstream
+#   templates depend on it by name.
 #
 # This template depends on the following runtime (i.e. macro expansion) variables being defined:
 #

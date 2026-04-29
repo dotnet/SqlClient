@@ -1,43 +1,79 @@
-# Publish-Symbols Tests
+# OneBranch Script Tests
 
-Pester tests for the `publish-symbols.ps1` script used by the symbol publishing pipeline step.
+This directory contains [Pester](https://pester.dev/) tests for PowerShell
+scripts used by the OneBranch pipelines.
 
 ## Prerequisites
 
-- PowerShell 5.1+ or PowerShell 7+
-- [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
+| Tool | Version | Install |
+| ---- | ------- | ------- |
+| PowerShell (pwsh) | 7.2+ | [Install PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell) |
+| Pester | 5.x | `Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck` |
 
-## Running the Tests
+## Running tests
 
-From this directory:
-
-```powershell
-Invoke-Pester ./publish-symbols.Tests.ps1
-```
-
-Or from the repository root:
+From the repository root:
 
 ```powershell
-Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
+pwsh -c "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/ -Output Detailed"
 ```
 
-For detailed output:
+Run a single test file:
 
 ```powershell
-Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
+pwsh -c "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/publish-symbols.Tests.ps1 -Output Detailed"
+pwsh -c "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/validate-symbols.Tests.ps1 -Output Detailed"
 ```
 
-## Test Coverage
+## Writing tests
 
-| Area                  | What's tested                                                    |
-| --------------------- | ---------------------------------------------------------------- |
-| Parameter validation  | Empty strings rejected for all mandatory parameters              |
-| URL construction      | Base URL, register URL, request URL built from parameters        |
-| Request bodies        | Registration body, default publish flags, flag overrides         |
-| Error handling        | Token failure, registration failure, publish failure, status failure — all verify expanded URI in error message |
-| Status validation     | Detects Failed/Cancelled results, respects PublishToInternal/PublishToPublic flags, passes on Succeeded/Pending |
+### File naming
+
+Test files must follow Pester naming conventions:
+
+```text
+<ScriptUnderTest>.Tests.ps1
+```
+
+### Locating the script under test
+
+When scripts and tests are siblings under `scripts/` and `scripts/tests/`,
+reference scripts relative to `$PSScriptRoot`:
+
+```powershell
+BeforeAll {
+	$Script:ScriptPath = Join-Path $PSScriptRoot '..' 'my-script.ps1'
+}
+```
+
+### Testing scripts that use `exit`
+
+Pipeline scripts commonly use `exit` for control flow. To validate exit codes,
+run scripts as child processes with `Start-Process`:
+
+```powershell
+$proc = Start-Process -FilePath 'pwsh' `
+	-ArgumentList @('-NoProfile', '-NonInteractive', '-File', $scriptPath, <args...>) `
+	-NoNewWindow -Wait -PassThru `
+	-RedirectStandardOutput $stdoutFile `
+	-RedirectStandardError  $stderrFile
+
+$proc.ExitCode | Should -Be 0
+```
+
+### Mocking external tools
+
+When a script calls external tools (for example `symchk.exe`, `az`, or
+`Invoke-RestMethod`), mock those calls in tests. See
+`validate-symbols.Tests.ps1` and `publish-symbols.Tests.ps1`.
+
+## Test inventory
+
+| Test file | Script under test | What it covers |
+| --------- | ----------------- | -------------- |
+| `publish-symbols.Tests.ps1` | `scripts/publish-symbols.ps1` | Parameter validation, URL construction, request bodies, status validation, error handling |
+| `validate-symbols.Tests.ps1` | `scripts/validate-symbols.ps1` | Syntax validation, package discovery/extraction, symchk detection, retry logic |
 
 ## Notes
 
-- All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
-- Tests validate the script at `../publish-symbols.ps1` relative to this directory.
+- Tests for `publish-symbols.ps1` mock all external calls (`az`, `Invoke-RestMethod`), so no network access or Azure credentials are required.

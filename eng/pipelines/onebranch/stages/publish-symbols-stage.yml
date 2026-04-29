@@ -4,12 +4,14 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Unified symbols publishing stage template for sqlclient OneBranch pipelines.
+# Unified symbols publishing stage template for SqlClient OneBranch pipelines.
 # Consumed by both the official and non-official pipeline definitions.
 #
-# This stage publishes PDB symbol files to the internal and public symbol servers.
-# Each package's PDBs are published in a separate job to maintain unique naming and
-# versioning information per package.
+# Stage defined by this template:
+#   - publish_symbols (emitted only when publishSymbols is true)
+#
+# This stage publishes PDB symbol files for each built package in separate jobs
+# to preserve package-specific naming and versioning metadata.
 #
 # PDBs are expected to be located under the 'symbols/' directory at the root of
 # each build artifact, with target framework subdirectories preserved by the build
