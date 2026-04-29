@@ -193,7 +193,7 @@ A selection of parameters for pack targets in `build.proj` relevant to common de
 | `-p:Configuration=`                | `Debug`       | `Debug`, `Release`    | Build configuration. Only applies if project and dependencies are being built.                                                                                 |
 | `-p:NugetPath=`                    | `[blank]`     | eg. `C:\my\nuget.exe` | _Only applies to `PackSqlClient`._ Path to `nuget.exe` to use. If not provided, defaults to `nuget.exe` in the PATH.                                           |
 | `-p:PackBuild=`                    | `true`        | `true`, `false`       | Whether or not to build the project before packing. If `false`, project must be built using the same parameters.                                               |
-| `-p:PackageVersion<TargetProject>` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
+| `-p:PackageVersion<TargetPackage>=` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
 
 #### Examples
 
