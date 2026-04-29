@@ -37,6 +37,9 @@ jobs:
   - job: validate_symbols
     displayName: Verify symbols on symbol servers
 
+    # Pool schema docs (OneBranch): https://aka.ms/obpipelines/yaml/jobs
+    # Agent pool concepts (Azure Pipelines):
+    # https://learn.microsoft.com/azure/devops/pipelines/agents/pools-queues
     pool:
       type: windows
       isCustom: true

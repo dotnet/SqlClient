@@ -120,6 +120,9 @@ stages:
         - ${{ if not(or(parameters.buildSqlServerServer, parameters.buildSqlClient, parameters.buildAkvProvider)) }}:
           - job: publish_symbols_noop
             displayName: "No symbols to publish"
+            # Pool schema docs (OneBranch): https://aka.ms/obpipelines/yaml/jobs
+            # Agent pool concepts (Azure Pipelines):
+            # https://learn.microsoft.com/azure/devops/pipelines/agents/pools-queues
             pool:
               type: linux
             steps:

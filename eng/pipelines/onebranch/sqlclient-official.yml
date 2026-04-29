@@ -269,15 +269,13 @@ extends:
         parameters:
           debug: ${{ parameters.debug }}
           isOfficial: true
-          isPreview: ${{ parameters.isPreview }}
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
           buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAKVProvider: ${{ parameters.buildAKVProvider }}
+          buildAKVProvider: ${{ parameters.buildAkvProvider }}
 
       - template: /eng/pipelines/onebranch/stages/release-stage.yml@self
         parameters:
-          debug: ${{ parameters.debug }}
           isOfficial: true
           releaseToProduction: ${{ parameters.releaseToProduction }}
           stageNameSuffix: production

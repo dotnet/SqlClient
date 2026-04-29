@@ -31,10 +31,6 @@ parameters:
   - name: isOfficial
     type: boolean
 
-  # True if this is a preview build.
-  - name: isPreview
-    type: boolean
-
   # True to verify that symbols are available on symbol servers.
   - name: publishSymbols
     type: boolean
@@ -60,6 +56,8 @@ stages:
         - build_dependent
         - ${{ if eq(parameters.buildAKVProvider, true) }}:
           - build_addons
+      - ${{ if eq(parameters.publishSymbols, true) }}:
+        - publish_symbols
 
     jobs:
       # ── Signed-package validation ──────────────────────────────────
@@ -69,8 +67,9 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
           parameters:
             artifactName: $(sqlClientArtifactsName)
+            expectedFileVersion: $(sqlClientFileVersion)
+            expectedPackageVersion: $(sqlClientPackageVersion)
             isOfficial: ${{ parameters.isOfficial }}
-            isPreview: ${{ parameters.isPreview }}
 
       # ── Symbol-server validation ───────────────────────────────────
       - ${{ if eq(parameters.publishSymbols, true) }}:

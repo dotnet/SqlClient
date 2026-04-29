@@ -183,6 +183,35 @@ Describe 'Package discovery' {
         $result.StdOut   | Should -Match 'Found:.*MyPackage\.1\.0\.0\.nupkg'
     }
 
+    It 'finds nupkg under packages subfolder' {
+        $artifactDir = Join-Path $TestDrive 'nested_artifacts'
+        $packageDir  = Join-Path $artifactDir 'packages'
+        $extractDir  = Join-Path $TestDrive 'extract_nested'
+        New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+        $dllRel = Join-Path 'lib' 'net8.0' 'NestedPackage.dll'
+        New-FakeNupkg -OutputDir $packageDir `
+                      -PackageName 'NestedPackage' `
+                      -Version '1.2.3' `
+                      -DllRelativePath $dllRel
+
+        $result = Invoke-ValidateSymbols @{
+            ArtifactPath = $artifactDir
+            ExtractPath  = $extractDir
+            PackageName  = 'NestedPackage'
+            DllPath      = $dllRel
+            SymbolServerUrl  = $Script:CommonParams.SymbolServerUrl
+            SymbolServerName = $Script:CommonParams.SymbolServerName
+            MaxRetries       = '1'
+            RetryIntervalSeconds = '0'
+        }
+
+        $extractedDll = Join-Path $extractDir $dllRel
+        $extractedDll | Should -Exist
+        $result.ExitCode | Should -Be 1
+        $result.StdOut   | Should -Match 'Found:.*NestedPackage\.1\.2\.3\.nupkg'
+    }
+
     It 'skips extraction when DLL already exists' {
         $artifactDir = Join-Path $TestDrive 'pre_extracted_artifacts'
         $extractDir  = Join-Path $TestDrive 'pre_extracted'

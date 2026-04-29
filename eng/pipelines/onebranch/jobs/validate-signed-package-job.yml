@@ -36,21 +36,20 @@ parameters:
   - name: isOfficial
     type: boolean
 
-  # True if this build is a preview.
-  - name: isPreview
-    type: boolean
-
 jobs:
   - job: validate_signed_package
     displayName: Verify SqlClient NuGet Package
 
+    # Pool schema docs (OneBranch): https://aka.ms/obpipelines/yaml/jobs
+    # Agent pool concepts (Azure Pipelines):
+    # https://learn.microsoft.com/azure/devops/pipelines/agents/pools-queues
     pool:
-      type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+      type: windows
       isCustom: true
       name: ADO-1ES-Pool
       vmImage: ADO-Win25
 
-    variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+    variables:
 
       # Path within the downloaded artifact where NuGet packages are located.
       - name: artifactPath

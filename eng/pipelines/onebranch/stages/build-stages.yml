@@ -24,15 +24,6 @@
 # - build_dependent stage name is intentionally stable because downstream
 #   templates depend on it by name.
 #
-# This template depends on the following runtime (i.e. macro expansion) variables being defined:
-#
-#  - effectiveSqlServerVersion
-#  - effectiveLoggingVersion
-#  - effectiveAbstractionsVersion
-#  - effectiveSqlClientVersion
-#  - effectiveAzureVersion
-#  - effectiveAkvProviderVersion
-
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
 

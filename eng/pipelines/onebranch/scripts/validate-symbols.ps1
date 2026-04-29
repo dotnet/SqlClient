@@ -89,7 +89,7 @@ if (-not (Test-Path $dllFullPath)) {
 
     New-Item -ItemType Directory -Force -Path $ExtractPath | Out-Null
 
-    $nupkg = Get-ChildItem -Path $ArtifactPath -Filter "$PackageName.*.nupkg" `
+    $nupkg = Get-ChildItem -Path $ArtifactPath -Recurse -File -Filter "$PackageName.*.nupkg" `
         | Where-Object { $_.Name -notlike '*.snupkg' } `
         | Select-Object -First 1
 
