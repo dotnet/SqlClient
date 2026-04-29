@@ -58,7 +58,7 @@ This prompt uses the following skill:
 - Identify the contributors for the "Contributors" section.
 - **Assign each PR to one or more packages** using the identification rules in the Package Registry table. A PR may be relevant to multiple packages. PRs not matching any non-core package belong to `Microsoft.Data.SqlClient`.
 
-### 2.5. Determine Target Framework (TFM) Scope Per Change
+### 2.1. Determine Target Framework (TFM) Scope Per Change
 
 For each PR included in release notes, determine whether it applies to all supported TFMs for the package or only a subset.
 
@@ -79,7 +79,7 @@ When writing notes:
 
 Do not infer TFM scope from labels alone; verify from changed files and code paths.
 
-### 2.6. Determine Operating System (OS) Scope Per Change
+### 2.2. Determine Operating System (OS) Scope Per Change
 
 For each PR included in release notes, determine whether it applies to all supported OS targets for the package or only a subset.
 
@@ -130,7 +130,7 @@ For each package that has relevant PRs in the milestone:
    - Use the template from [release-notes/template/release-notes-template.md](release-notes/template/release-notes-template.md).
    - Fill in the template following the instructions in each section.
    - Only include sections (Added, Changed, Fixed, Removed) that have entries.
-    - For each Added/Changed/Fixed/Removed item, include TFM and OS scope qualifiers when Step 2.5 or Step 2.6 determines the change is not universal across the package's supported targets.
+   - For each Added/Changed/Fixed/Removed item, include TFM and OS scope qualifiers when Step 2.1 or Step 2.2 determines the change is not universal across the package's supported targets.
    - Look up dependencies using the Dependency Sources from the lookup table above. Resolve concrete versions from [Directory.Packages.props](Directory.Packages.props).
    - List dependencies per target framework. Use the project file's `<TargetFrameworks>` to determine which frameworks to list.
    - Omit the Contributors section for packages with no public contributors.
