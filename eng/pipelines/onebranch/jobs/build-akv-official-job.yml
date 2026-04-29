@@ -129,6 +129,7 @@ jobs:
 
           - template: /eng/pipelines/onebranch/steps/compound-build-akv-step.yml@self
             parameters:
+                referenceType: 'Package'
                 assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
@@ -139,7 +140,7 @@ jobs:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
                     dllPath: '${{ parameters.apiScanDllPath }}'
                     pdbPath: '${{ parameters.apiScanPdbPath }}'
-                    referenceType: Package
+                    referenceType: 'Package'
                     targetFramework: '${{ targetFramework }}'
 
           - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-akv-step.yml@self
