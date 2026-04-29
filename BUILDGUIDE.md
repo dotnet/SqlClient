@@ -173,7 +173,7 @@ following this pattern:
 msbuild build.proj -t:<pack_target> [optional_parameters]
 ```
 
-| `<build_target>`   | Description                                                                         |
+| `<pack_target>`   | Description                                                                         |
 |--------------------|-------------------------------------------------------------------------------------|
 | `Pack`             | Packages all projects in the repository.                                            |
 | `PackAbstractions` | Packages the Microsoft.Data.SqlClient.Extensions.Abstractions package               |
