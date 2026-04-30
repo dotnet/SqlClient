@@ -118,6 +118,13 @@ variables:
     parameters:
       isPreview: ${{ parameters.isPreview }}
 
+  # Drives ContinuousIntegrationBuild=true in src/Directory.Build.props so the shipped
+  # DLLs/PDBs embed portable /_/... source paths and the produced NuGet packages pass
+  # NuGet Package Explorer's "Deterministic (build)" check.  Set only on the official
+  # release pipeline; PR/CI and non-official builds leave it unset (false).
+  - name: BuildForRelease
+    value: true
+
 resources:
   repositories:
     - repository: templates
