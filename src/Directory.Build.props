@@ -126,6 +126,32 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
     <DisableSourceLinkTranslation Condition="'$(DisableSourceLinkTranslation)' == ''">false</DisableSourceLinkTranslation>
+
+    <!--
+      BuildForRelease gates the release-only behaviors below.  It defaults to false so that
+      PR validation, scheduled CI, and local developer builds use the simpler dev-friendly
+      behavior.  Both OneBranch pipelines (official and non-official) set this to true via
+      a pipeline variable so that release packages are built deterministically and the
+      non-official pipeline exercises the same path as official before any release.
+    -->
+    <BuildForRelease Condition="'$(BuildForRelease)' == ''">false</BuildForRelease>
+
+    <!--
+      Explicit deterministic build flag.  This is also the SDK default, but we set it
+      explicitly so the build does not silently regress if a future SDK changes the default.
+    -->
+    <Deterministic>true</Deterministic>
+
+    <!--
+      ContinuousIntegrationBuild enables DeterministicSourcePaths, which remaps the source
+      root to a portable form (/_/...) inside embedded PDB paths.  Without this property
+      set to true, NuGet Package Explorer's "Deterministic (build)" check fails because
+      the PDBs embed absolute build-agent paths (e.g. C:\__w\1\s\...).
+
+      Gated on BuildForRelease so PR/CI/local builds keep their pre-#4204 behavior; both
+      OneBranch pipelines (which set BuildForRelease=true) enable this.
+    -->
+    <ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''">$(BuildForRelease)</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <!-- Provides Build properties -->
