@@ -89,26 +89,30 @@ stages:
           clean: all    # Purge obj/artifacts from prior runs on self-hosted agents
         strategy:
           matrix:
+            # Azure Pipelines exposes matrix variables as environment variables for each step.
+            # Do not use the name targetFramework here: MSBuild imports environment variables as
+            # properties, and TargetFramework would leak into dotnet build build.proj, forcing
+            # transitive project references onto an invalid TFM (for example SqlServer.Server -> net9.0).
             net462_NativeSNI:
-              targetFramework: net462
+              testFramework: net462
               managedSNI: 'false'
             net8_NativeSNI:
-              targetFramework: net8.0
+              testFramework: net8.0
               managedSNI: 'false'
             net8_ManagedSNI:
-              targetFramework: net8.0
+              testFramework: net8.0
               managedSNI: 'true'
             net9_NativeSNI:
-              targetFramework: net9.0
+              testFramework: net9.0
               managedSNI: 'false'
             net9_ManagedSNI:
-              targetFramework: net9.0
+              testFramework: net9.0
               managedSNI: 'true'
             net10_NativeSNI:
-              targetFramework: net10.0
+              testFramework: net10.0
               managedSNI: 'false'
             net10_ManagedSNI:
-              targetFramework: net10.0
+              testFramework: net10.0
               managedSNI: 'true'
         pool:
           name: ADO-Trusted-Domain-Win-WestUS2
@@ -182,14 +186,14 @@ stages:
 
           # --- Run tests ---
           - task: DotNetCoreCLI@2
-            displayName: Run Tests ($(targetFramework))
+            displayName: Run Tests ($(testFramework))
             retryCountOnTaskFailure: 2
             inputs:
               command: build
               projects: build.proj
               arguments: >-
                 -t:TestSqlClient
-                -p:TestFramework=$(targetFramework)
+                -p:TestFramework=$(testFramework)
                 -p:Configuration=Release
 
           # --- Publish results & coverage ---
@@ -202,13 +206,13 @@ stages:
                 TestResults/*.trx
                 TestResults/**/*.coverage
               mergeTestResults: true
-              testRunTitle: Windows-netcore-$(targetFramework)-ManagedSNI_$(managedSNI)
+              testRunTitle: Windows-netcore-$(testFramework)-ManagedSNI_$(managedSNI)
               buildConfiguration: Release
 
           - pwsh: |
               cd TestResults
               Get-ChildItem -Filter "*.coverage" -Recurse |
-                Rename-Item -NewName { "$(targetFramework)" + $_.Name }
+                Rename-Item -NewName { "$(testFramework)" + $_.Name }
             displayName: Rename coverage files
             condition: succeededOrFailed()
 
@@ -217,7 +221,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               targetPath: TestResults
-              artifact: $(targetFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
+              artifact: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
 
   # ===========================================================================
   # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
@@ -232,11 +236,11 @@ stages:
         strategy:
           matrix:
             net8:
-              targetFramework: net8.0
+              testFramework: net8.0
             net9:
-              targetFramework: net9.0
+              testFramework: net9.0
             net10:
-              targetFramework: net10.0
+              testFramework: net10.0
         pool:
           name: ADO-Trusted-Linux-WestUS2
           demands:
@@ -302,13 +306,13 @@ stages:
 
           # --- Run tests ---
           - task: DotNetCoreCLI@2
-            displayName: Run Tests ($(targetFramework))
+            displayName: Run Tests ($(testFramework))
             inputs:
               command: build
               projects: build.proj
               arguments: >-
                 -t:TestSqlClient
-                -p:TestFramework=$(targetFramework)
+                -p:TestFramework=$(testFramework)
                 -p:Configuration=Release
 
           # --- Publish results & coverage ---
@@ -321,13 +325,13 @@ stages:
                 TestResults/*.trx
                 TestResults/**/*.coverage
               mergeTestResults: true
-              testRunTitle: Linux-netcore-$(targetFramework)
+              testRunTitle: Linux-netcore-$(testFramework)
               buildConfiguration: Release
 
           - pwsh: |
               cd TestResults
               Get-ChildItem -Filter "*.coverage" -Recurse |
-                Rename-Item -NewName { "$(targetFramework)" + $_.Name }
+                Rename-Item -NewName { "$(testFramework)" + $_.Name }
             displayName: Rename coverage files
             condition: succeededOrFailed()
 
@@ -336,7 +340,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               targetPath: TestResults
-              artifact: $(targetFramework)-linux-$(System.JobId)
+              artifact: $(testFramework)-linux-$(System.JobId)
 
           # --- Kerberos cleanup (always runs) ---
           - template: /eng/pipelines/common/templates/steps/kerberos-cleanup-step.yml@self
