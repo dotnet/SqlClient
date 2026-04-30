@@ -160,7 +160,7 @@ jobs:
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.nugetPackageVersion }}'
                 nuspecPath: '$(REPOROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
-                outputDirectory: '$(ARTIFACT_PATH)'
+                outputDirectory: '$(artifactDirectory)'
                 referenceType: 'Package'
 
           - ${{ if eq(parameters.isOfficialBuild, true) }}:
