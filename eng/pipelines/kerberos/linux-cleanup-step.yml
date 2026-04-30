@@ -6,7 +6,7 @@
 
 # This template leaves the Active Directory domain and destroys Kerberos
 # credentials.  It should be referenced at the end of any job that called
-# kerberos-init-step.yml.
+# linux-init-step.yml.
 #
 # All steps use condition: always() so that cleanup runs even when previous
 # steps fail.

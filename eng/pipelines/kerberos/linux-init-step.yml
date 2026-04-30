@@ -105,5 +105,6 @@ steps:
       echo "$DOMAIN_PASSWORD" | kinit "$DOMAIN_USER@$DOMAIN_UPPER"
 
       klist
-      sudo ifconfig
+      sudo ip addr
+      sudo ip route
     displayName: Initialize Kerberos (domain join + kinit)

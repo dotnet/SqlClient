@@ -34,7 +34,7 @@
 #   - REMOTE_NP_CONN_STRING   Named Pipe connection string to sqldrv-sql22
 # =============================================================================
 
-trigger: none   # Nightly only — no CI trigger
+trigger: none   # Scheduled runs only — no CI trigger
 pr: none        # Not triggered by PRs
 
 schedules:
@@ -50,11 +50,6 @@ schedules:
 name: $(date:yyyyMMdd)$(rev:.r)
 
 variables:
-  # Linux needs a secret from the $(agent-at-sqldrv-ad) secret from this group on order to expand
-  # the pipeline variable $(KerberosDomainPassword) at runtime.  This is because the password is
-  # used in the bash step to acquire a Kerberos ticket, and bash cannot read ADO secrets directly.
-  - group: kv-sqldrivers-shared
-
   # Our Kerberos environment doesn't change often, so we can define these variables here rather than
   # in the Pipeline UI or in Libraries.
   - name: KerberosDomain
@@ -86,6 +81,10 @@ stages:
   - stage: windows
     displayName: Windows
     dependsOn: []
+    variables:
+      # KerberosDomainPassword expands at runtime in this stage from the agent-at-sqldrv-ad secret
+      # exposed by this variable group.
+      - group: kv-sqldrivers-shared
     jobs:
       - job: windows
         displayName: Windows
@@ -139,12 +138,13 @@ stages:
           # inline PowerShell instead of the shared config template which
           # requires compile-time parameters.
           - pwsh: |
+              $managedSni = [System.Convert]::ToBoolean($env:MANAGED_SNI)
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
               foreach ($p in $jdata) {
                   $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
                   $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
-                  $p.SupportsIntegratedSecurity = "true"
-                  $p.UseManagedSNIOnWindows    = $env:MANAGED_SNI
+                  $p.SupportsIntegratedSecurity = $true
+                  $p.UseManagedSNIOnWindows    = $managedSni
               }
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
@@ -191,6 +191,10 @@ stages:
   - stage: linux
     displayName: Linux
     dependsOn: []
+    variables:
+      # KerberosDomainPassword expands at runtime in this stage from the agent-at-sqldrv-ad secret
+      # exposed by this variable group.
+      - group: kv-sqldrivers-shared
     jobs:
       - job: linux
         displayName: Linux
@@ -272,9 +276,9 @@ stages:
               kerberosDomainPassword: $(KerberosDomainPassword)
 
   # ===========================================================================
-  # Stage 4 — Merge Code Coverage (1 job)
+  # Stage 3 — Merge Code Coverage (1 job)
   # ===========================================================================
-  - stage: Merge_Code_Coverage
+  - stage: merge
     displayName: Merge Code Coverage
     dependsOn:
       - windows

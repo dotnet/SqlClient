@@ -38,6 +38,12 @@ steps:
   # ---------------------------------------------------------------------------
   # Build
   # ---------------------------------------------------------------------------
+
+  # Build the given target.
+  #
+  # The test stages will build this anyway, but it's nice to have a separate step to isolate build
+  # failures and avoid retries.
+  #
   - task: DotNetCoreCLI@2
     displayName: Build SqlClient
     retryCountOnTaskFailure: 1
@@ -51,6 +57,8 @@ steps:
   # ---------------------------------------------------------------------------
   # Run tests in separate steps to permit focused retries.
   # ---------------------------------------------------------------------------
+
+  # Run the Unit Test suite.
   - task: DotNetCoreCLI@2
     displayName: Run Unit Tests (${{ parameters.testFramework }})
     retryCountOnTaskFailure: 2
@@ -62,6 +70,7 @@ steps:
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
 
+  # Run the Functional Test suite.
   - task: DotNetCoreCLI@2
     displayName: Run Functional Tests (${{ parameters.testFramework }})
     retryCountOnTaskFailure: 2
@@ -73,6 +82,7 @@ steps:
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
 
+  # Run the Manual Test suite.
   - task: DotNetCoreCLI@2
     displayName: Run Manual Tests (${{ parameters.testFramework }})
     retryCountOnTaskFailure: 2
@@ -87,6 +97,8 @@ steps:
   # ---------------------------------------------------------------------------
   # Publish results & coverage
   # ---------------------------------------------------------------------------
+
+  # Publish the TRX test results to the pipeline run.
   - task: PublishTestResults@2
     displayName: Publish Test Results
     condition: succeededOrFailed()
@@ -94,13 +106,13 @@ steps:
       testResultsFormat: VSTest
       # build.proj defines TestResultsFolderPath which defaults to
       # $(Build.SourcesDirectory)/test_results, so we look there for the results and coverage files.
-      testResultsFiles: |
-        $(Build.SourcesDirectory)/test_results/*.trx
-        $(Build.SourcesDirectory)/test_results/**/*.coverage
+      testResultsFiles:  $(Build.SourcesDirectory)/test_results/**/*.trx
       mergeTestResults: true
       testRunTitle: ${{ parameters.testRunTitle }}
       buildConfiguration: Release
 
+  # Give our coverage files a unique name to make it clear where they originated when we download
+  # the artifacts from all jobs in the merge stage.
   - pwsh: |
       cd $(Build.SourcesDirectory)/test_results
       Get-ChildItem -Filter "*.coverage" -Recurse |
@@ -108,6 +120,8 @@ steps:
     displayName: Rename coverage files
     condition: succeededOrFailed()
 
+  # Publish TRX test results and coverage files as pipeline artifacts.  The merge stage needs the
+  # coverage files from all of the jobs.
   - task: PublishPipelineArtifact@1
     displayName: Publish Test Artifacts
     condition: succeededOrFailed()
