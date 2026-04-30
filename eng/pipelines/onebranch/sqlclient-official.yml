@@ -193,8 +193,8 @@ extends:
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-akv-official-job.yml@self
             parameters:
-              apiScanDllPath: $(apiScanDllPath)
-              apiScanPdbPath: $(apiScanPdbPath)
+              apiScanDllPath: $(softwareFolder)
+              apiScanPdbPath: $(symbolsFolder)
               assemblyFileVersion: $(akvAssemblyFileVersion)
               buildConfiguration: Release
               nugetPackageVersion: $(effectiveAkvPackageVersion)
