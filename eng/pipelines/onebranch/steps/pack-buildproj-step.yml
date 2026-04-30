@@ -5,7 +5,7 @@
 #################################################################################
 
 # Generic pack step for build.proj packages. This step runs the Pack* target to generate a NuGet
-# package of the target package. The generated NuGet packages will then be copied to $(PACK_OUTPUT).
+# package of the target package.
 #
 # Note: This step assumes that the package has been built previously using a Build* target.
 #   `-p:PackBuild=false` will be passed to msbuild to ensure the previously built assemblies are
@@ -71,14 +71,3 @@ steps:
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree
-
-  - task: CopyFiles@2
-    displayName: 'Copy NuGet Packages to PACK_OUTPUT'
-    inputs:
-      contents: '**/${{ parameters.packageFullName }}*.*nupkg'
-      flattenFolders: true
-      sourceFolder: '$(BUILD_OUTPUT)/${{ parameters.packageFullName }}/'
-      targetFolder: '$(PACK_OUTPUT)'
-
-  - script: tree /a /f $(PACK_OUTPUT)
-    displayName: Output Package Output Tree
