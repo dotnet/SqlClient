@@ -44,6 +44,32 @@ schedules:
 
 name: $(date:yyyyMMdd)$(rev:.r)
 
+variables:
+  # Linux needs a secret from the $(agent-at-sqldrv-ad) secret from this group on order to expand
+  # the pipeline variable $(KerberosDomainPassword) at runtime.  This is because the password is
+  # used in the bash step to acquire a Kerberos ticket, and bash cannot read ADO secrets directly.
+  - group: kv-sqldrivers-shared
+
+  # Our Kerberos environment doesn't change often, so we can define these variables here rather than
+  # in the Pipeline UI or in Libraries.
+  - name: KerberosDomain
+    value: sqldrv.ad
+
+  - name: KerberosDomainOU
+    value: agents
+
+  - name: KerberosDomainUser
+    value: agent
+
+  - name: KerberosDomainPassword
+    value: $(agent-at-sqldrv-ad)   # Secret from kv-sqldrivers-shared variable group
+
+  - name: REMOTE_TCP_CONN_STRING
+    value: Data Source=tcp:sqldrv-sql22.sqldrv.ad\sql2022;Initial Catalog=Northwind;Integrated Security=true;Encrypt=false;TrustServerCertificate=true
+
+  - name: REMOTE_NP_CONN_STRING
+    value: Data Source=np:sqldrv-sql22.sqldrv.ad\sql2022;Initial Catalog=Northwind;Integrated Security=true;Encrypt=false;TrustServerCertificate=true
+
 # =============================================================================
 # STAGES
 # =============================================================================
@@ -151,7 +177,7 @@ stages:
               command: build
               projects: build.proj
               arguments: >-
-                -t:BuildSqlClient
+                -t:BuildSqlClientWindows
                 -p:Configuration=Release
 
           # --- Run tests ---
@@ -216,13 +242,6 @@ stages:
           demands:
             - ImageOverride -equals ADO-UB20-SQL22
 
-        variables:
-          # Linux needs a secret from the $(agent-at-sqldrv-ad) secret from this group on order to
-          # expand the pipeline variable $(KerberosDomainPassword) at runtime.  This is because the
-          # password is used in the bash step to acquire a Kerberos ticket, and bash cannot read ADO
-          # secrets directly.
-          group: kv-sqldrivers-shared
-
         steps:
 
           - checkout: self
@@ -278,7 +297,7 @@ stages:
               command: build
               projects: build.proj
               arguments: >-
-                -t:BuildSqlClient
+                -t:BuildSqlClientUnix
                 -p:Configuration=Release
 
           # --- Run tests ---
