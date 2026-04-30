@@ -92,15 +92,17 @@ steps:
     condition: succeededOrFailed()
     inputs:
       testResultsFormat: VSTest
+      # build.proj defines TestResultsFolderPath which defaults to
+      # $(Build.SourcesDirectory)/test_results, so we look there for the results and coverage files.
       testResultsFiles: |
-        TestResults/*.trx
-        TestResults/**/*.coverage
+        $(Build.SourcesDirectory)/test_results/*.trx
+        $(Build.SourcesDirectory)/test_results/**/*.coverage
       mergeTestResults: true
       testRunTitle: ${{ parameters.testRunTitle }}
       buildConfiguration: Release
 
   - pwsh: |
-      cd TestResults
+      cd $(Build.SourcesDirectory)/test_results
       Get-ChildItem -Filter "*.coverage" -Recurse |
         Rename-Item -NewName { "${{ parameters.testFramework }}" + $_.Name }
     displayName: Rename coverage files
@@ -110,5 +112,5 @@ steps:
     displayName: Publish Test Artifacts
     condition: succeededOrFailed()
     inputs:
-      targetPath: TestResults
+      targetPath: $(Build.SourcesDirectory)/test_results
       artifact: ${{ parameters.artifactName }}
