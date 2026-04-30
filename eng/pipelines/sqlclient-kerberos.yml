@@ -33,22 +33,16 @@ trigger: none   # Nightly only — no CI trigger
 pr: none        # Not triggered by PRs
 
 schedules:
-  - cron: '0 7 * * 1,2,3,4,5'
-    displayName: Weekday nightly run (07:00 UTC)
+  - cron: '0 7 * * *'
+    displayName: Daily run (07:00 UTC)
     branches:
       include:
         - main
         - release/6.1
-        - release/6.0
+        - release/7.0
     always: true
 
 name: $(date:yyyyMMdd)$(rev:.r)
-
-variables:
-  - name: Configuration
-    value: Release
-  - name: Platform
-    value: AnyCPU
 
 # =============================================================================
 # STAGES
@@ -76,15 +70,11 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - task: NuGetToolInstaller@1
-            displayName: Use NuGet
-
           # Install .NET SDK (from global.json) and runtimes using the shared
-          # template.  All three runtimes are installed so the build system can
-          # resolve any needed references.
+          # template.
           - template: /eng/pipelines/steps/install-dotnet.yml@self
             parameters:
-              runtimes: ['8.x', '9.x', '10.x']
+              runtimes: ['8.x', '9.x']
 
           # --- Update test configuration ---
           - pwsh: |
@@ -126,47 +116,27 @@ stages:
             displayName: Enable Network DTC Access
 
           # --- Build ---
-          - task: MSBuild@1
-            displayName: Restore NuGets
-            inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              msbuildArguments: >-
-                -t:restore
-                -p:ReferenceType=Project
-            retryCountOnTaskFailure: 1
-
-          - task: MSBuild@1
-            displayName: Build Driver (netfx)
+          - task: DotNetCoreCLI@2
+            displayName: Build SqlClient
             retryCountOnTaskFailure: 1
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
-                -t:BuildNetFx
-                -p:ReferenceType=Project
-                -p:GenerateNuget=false
-                -p:GenerateDocumentationFile=false
-
-          - pwsh: dotnet sdk check
-            displayName: .NET SDK check
-            condition: succeededOrFailed()
+              command: build
+              projects: build.proj
+              arguments: >-
+                -t:BuildSqlClient
+                -p:Configuration=Release
 
           # --- Run tests ---
-          - task: MSBuild@1
+          - task: DotNetCoreCLI@2
             displayName: Run Tests (net462)
             retryCountOnTaskFailure: 2
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
-                -t:RunTests
-                -p:TF=net462
-                -p:ReferenceType=Project
+              command: build
+              projects: build.proj
+              arguments: >-
+                -t:TestSqlClient
+                -p:TestFramework=net462
+                -p:Configuration=Release
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
@@ -179,8 +149,7 @@ stages:
                 TestResults/**/*.coverage
               mergeTestResults: true
               testRunTitle: Windows-netfx-net462
-              buildPlatform: $(Platform)
-              buildConfiguration: $(Configuration)
+              buildConfiguration: Release
 
           - pwsh: |
               cd TestResults
@@ -239,12 +208,9 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - task: NuGetToolInstaller@1
-            displayName: Use NuGet
-
           - template: /eng/pipelines/steps/install-dotnet.yml@self
             parameters:
-              runtimes: ['8.x', '9.x', '10.x']
+              runtimes: ['8.x', '9.x']
 
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
@@ -290,46 +256,28 @@ stages:
             displayName: Enable Network DTC Access
 
           # --- Build ---
-          - task: MSBuild@1
-            displayName: Restore NuGets
+
+          - task: DotNetCoreCLI@2
+            displayName: Build SqlClient
             retryCountOnTaskFailure: 1
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              msbuildArguments: >-
-                -t:restore
-                -p:ReferenceType=Project
-
-          - task: MSBuild@1
-            displayName: Build Driver (netcore)
-            retryCountOnTaskFailure: 1
-            inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
-                -t:BuildNetCore
-                -p:ReferenceType=Project
-                -p:GenerateDocumentationFile=false
-
-          - pwsh: dotnet sdk check
-            displayName: .NET SDK check
-            condition: succeededOrFailed()
+              command: build
+              projects: build.proj
+              arguments: >-
+                -t:BuildSqlClient
+                -p:Configuration=Release
 
           # --- Run tests ---
-          - task: MSBuild@1
+          - task: DotNetCoreCLI@2
             displayName: Run Tests ($(targetFramework))
             retryCountOnTaskFailure: 2
             inputs:
-              solution: build.proj
-              msbuildArchitecture: x64
-              platform: $(Platform)
-              configuration: $(Configuration)
-              msbuildArguments: >-
-                -t:RunTests
-                -p:TF=$(targetFramework)
-                -p:ReferenceType=Project
+              command: build
+              projects: build.proj
+              arguments: >-
+                -t:TestSqlClient
+                -p:TestFramework=$(targetFramework)
+                -p:Configuration=Release
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
@@ -342,8 +290,7 @@ stages:
                 TestResults/**/*.coverage
               mergeTestResults: true
               testRunTitle: Windows-netcore-$(targetFramework)-ManagedSNI_$(managedSNI)
-              buildPlatform: $(Platform)
-              buildConfiguration: $(Configuration)
+              buildConfiguration: Release
 
           - pwsh: |
               cd TestResults
@@ -388,8 +335,10 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - task: NuGetToolInstaller@1
-            displayName: Use NuGet
+          # --- Install .NET SDK and runtimes ---
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+            parameters:
+              runtimes: ['8.x', '9.x', '10.x']
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
@@ -427,41 +376,26 @@ stages:
             env:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
 
-          # --- Install .NET SDK and runtimes ---
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
-            parameters:
-              runtimes: ['8.x', '9.x', '10.x']
-
           # --- Build ---
           - task: DotNetCoreCLI@2
-            displayName: Build Driver
+            displayName: Build SqlClient
             inputs:
-              command: custom
+              command: build
               projects: build.proj
-              custom: msbuild
               arguments: >-
                 -t:BuildSqlClient
-                -p:ReferenceType=Project
-                -p:TestEnabled=true
-                -p:GenerateNuget=false
-                -p:GenerateDocumentationFile=false
-                -p:Configuration=$(Configuration)
-                -p:Platform=$(Platform)
-            retryCountOnTaskFailure: 1
+                -p:Configuration=Release
 
           # --- Run tests ---
           - task: DotNetCoreCLI@2
             displayName: Run Tests ($(targetFramework))
             inputs:
-              command: custom
+              command: build
               projects: build.proj
-              custom: msbuild
               arguments: >-
-                -t:RunTests
-                -p:TF=$(targetFramework)
-                -p:ReferenceType=Project
-                -p:Configuration=$(Configuration)
-                -p:Platform=$(Platform)
+                -t:TestSqlClient
+                -p:TestFramework=$(targetFramework)
+                -p:Configuration=Release
 
           # --- Publish results & coverage ---
           - task: PublishTestResults@2
@@ -474,8 +408,7 @@ stages:
                 TestResults/**/*.coverage
               mergeTestResults: true
               testRunTitle: Linux-netcore-$(targetFramework)
-              buildPlatform: $(Platform)
-              buildConfiguration: $(Configuration)
+              buildConfiguration: Release
 
           - pwsh: |
               cd TestResults
