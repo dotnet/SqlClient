@@ -68,11 +68,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
-            // Build a connection string with Protocol.None (no prefix) pointing to the named instance
-            // SSRP resolution should occur and populate the port in the SPN
-            string protocolNoneConnStr = $"Data Source={hostname}\\{instanceName};Integrated Security=true;";
+            // Build from the base connection string to preserve environment settings (Encrypt,
+            // TrustServerCertificate, timeouts, etc.), overriding only DataSource and IntegratedSecurity.
+            // SSRP resolution should occur and populate the port in the SPN.
+            SqlConnectionStringBuilder protocolNoneBuilder = new(tcpConnStr)
+            {
+                DataSource = $"{hostname}\\{instanceName}",
+                IntegratedSecurity = true
+            };
 
-            using SqlConnection conn = new(protocolNoneConnStr);
+            using SqlConnection conn = new(protocolNoneBuilder.ConnectionString);
             conn.Open(); // Connection should succeed with Kerberos using the SSRP-resolved port in SPN
 
             // Verify authentication occurred with KERBEROS auth_scheme
@@ -97,20 +102,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tcpConnStr = DataTestUtility.TCPConnectionString;
             if (string.IsNullOrEmpty(tcpConnStr) ||
                 !DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
-                    out string hostname, out int port, out string instanceName))
+                    out string hostname, out int port, out string instanceName) ||
+                string.IsNullOrEmpty(instanceName))
             {
-                return; // Skip test
+                return; // Skip test; no named instance available
             }
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
-            // If an explicit port is available in the test connection string, use it
-            // Otherwise, use a typical SQL instance port (1433) and rely on SSRP if needed
-            int testPort = port > 0 ? port : 1433;
+            // Build the tcp: data source. Include an explicit port only when the test connection string
+            // already has one; otherwise leave SSRP to resolve the port for the named instance.
+            // Do NOT fall back to port 1433: that disables SSRP and is unlikely to be correct for
+            // named instances, and produces an invalid "host\,1433" when instanceName is empty.
+            string newDataSource = port > 0
+                ? $"tcp:{hostname}\\{instanceName},{port}"
+                : $"tcp:{hostname}\\{instanceName}";
 
-            string protocolTcpConnStr = $"Data Source=tcp:{hostname}\\{instanceName},{testPort};Integrated Security=true;";
+            // Preserve the base connection string settings (Encrypt, TrustServerCertificate, etc.)
+            SqlConnectionStringBuilder builder = new(tcpConnStr)
+            {
+                DataSource = newDataSource,
+                IntegratedSecurity = true
+            };
 
-            using SqlConnection conn = new(protocolTcpConnStr);
+            using SqlConnection conn = new(builder.ConnectionString);
             conn.Open();
 
             using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
@@ -142,19 +157,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return; // Skip test
             }
 
+            // For a reliable custom SPN test, we need to know the exact port so we can construct
+            // the TCP-format SPN the server expects: MSSQLSvc/fqdn:port.
+            // Using the instance name here is wrong for TCP environments that register only port-based SPNs.
+            if (port <= 0)
+            {
+                return; // Skip test; cannot construct a valid port-based custom SPN without an explicit port
+            }
+
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
-            // Build the expected SPN for the server
+            // Build the TCP-format SPN that matches what the driver would auto-generate.
+            // TCP Kerberos connections use MSSQLSvc/fqdn:port regardless of instance name.
             string fqdn = DataTestUtility.GetMachineFQDN(hostname);
-            string customSpn = $"MSSQLSvc/{fqdn}";
-            if (!string.IsNullOrEmpty(instanceName))
-            {
-                customSpn += ":" + instanceName;
-            }
-            else if (port > 0)
-            {
-                customSpn += ":" + port;
-            }
+            string customSpn = $"MSSQLSvc/{fqdn}:{port}";
 
             SqlConnectionStringBuilder builder = new(tcpConnStr);
             builder.IntegratedSecurity = true;
@@ -185,35 +201,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tcpConnStr = DataTestUtility.TCPConnectionString;
             if (string.IsNullOrEmpty(tcpConnStr) ||
                 !DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
-                    out string hostname, out int port, out string instanceName))
+                    out string hostname, out int port, out string instanceName) ||
+                string.IsNullOrEmpty(instanceName))
             {
-                return; // Skip test
+                return; // Skip test; no named instance available
             }
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
-            int testPort = port > 0 ? port : 1433;
+            // Build the admin: data source from the base connection string to preserve environment
+            // settings. Do NOT fall back to port 1433 — the DAC port is separate from the regular
+            // SQL Server port and must be discovered via SSRP if not explicitly known.
+            string newDataSource = port > 0
+                ? $"admin:{hostname}\\{instanceName},{port}"
+                : $"admin:{hostname}\\{instanceName}";
 
-            // Build admin: connection string
-            string protocolAdminConnStr = $"Data Source=admin:{hostname}\\{instanceName},{testPort};Integrated Security=true;";
-
-            try
+            SqlConnectionStringBuilder adminBuilder = new(tcpConnStr)
             {
-                using SqlConnection conn = new(protocolAdminConnStr);
-                conn.Open();
+                DataSource = newDataSource,
+                IntegratedSecurity = true
+            };
 
-                using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
-                using SqlDataReader reader = command.ExecuteReader();
-                if (reader.Read())
-                {
-                    Assert.Equal("KERBEROS", reader.GetString(0));
-                }
-            }
-            catch (SqlException ex) when (ex.Message.Contains("DAC") || ex.Message.Contains("Dedicated"))
-            {
-                // DAC may not be enabled or accessible; skip this test without failing
-                return;
-            }
+            // Note: this test requires DAC to be enabled on the target instance
+            // (sp_configure 'remote admin connections', 1). If DAC is not enabled,
+            // the connection will fail with a SqlException and the test will report as failed,
+            // which is the desired behavior — the test environment should be fixed.
+            using SqlConnection conn = new(adminBuilder.ConnectionString);
+            conn.Open();
+
+            using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
+            using SqlDataReader reader = command.ExecuteReader();
+            Assert.True(reader.Read(), "Expected to receive one row data");
+            Assert.Equal("KERBEROS", reader.GetString(0));
         }
     }
 
