@@ -1,0 +1,114 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Shared build-and-test steps used by both the Windows and Linux Kerberos jobs.
+#
+# Parameters:
+#   buildTarget   — The build.proj target that builds SqlClient for the current
+#                   OS (e.g. BuildSqlClientWindows or BuildSqlClientUnix).
+#   testFramework — The TFM to test against (e.g. net9.0, net462).
+#   testRunTitle  — Title for the published test results (displayed in the ADO
+#                   Tests tab).
+#   artifactName  — Name of the published pipeline artifact that carries the
+#                   test results and coverage files.
+
+parameters:
+
+  # build.proj target to build SqlClient for the current OS.
+  - name: buildTarget
+    type: string
+
+  # TFM to pass to the test targets (-p:TestFramework).
+  - name: testFramework
+    type: string
+
+  # Title shown in the ADO Tests tab for this run.
+  - name: testRunTitle
+    type: string
+
+  # Pipeline artifact name for test results and coverage.
+  - name: artifactName
+    type: string
+
+steps:
+
+  # ---------------------------------------------------------------------------
+  # Build
+  # ---------------------------------------------------------------------------
+  - task: DotNetCoreCLI@2
+    displayName: Build SqlClient
+    retryCountOnTaskFailure: 1
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:${{ parameters.buildTarget }}
+        -p:Configuration=Release
+
+  # ---------------------------------------------------------------------------
+  # Run tests in separate steps to permit focused retries.
+  # ---------------------------------------------------------------------------
+  - task: DotNetCoreCLI@2
+    displayName: Run Unit Tests (${{ parameters.testFramework }})
+    retryCountOnTaskFailure: 2
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:TestSqlClientUnit
+        -p:TestFramework=${{ parameters.testFramework }}
+        -p:Configuration=Release
+
+  - task: DotNetCoreCLI@2
+    displayName: Run Functional Tests (${{ parameters.testFramework }})
+    retryCountOnTaskFailure: 2
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:TestSqlClientFunctional
+        -p:TestFramework=${{ parameters.testFramework }}
+        -p:Configuration=Release
+
+  - task: DotNetCoreCLI@2
+    displayName: Run Manual Tests (${{ parameters.testFramework }})
+    retryCountOnTaskFailure: 2
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:TestSqlClientManual
+        -p:TestFramework=${{ parameters.testFramework }}
+        -p:Configuration=Release
+
+  # ---------------------------------------------------------------------------
+  # Publish results & coverage
+  # ---------------------------------------------------------------------------
+  - task: PublishTestResults@2
+    displayName: Publish Test Results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: VSTest
+      testResultsFiles: |
+        TestResults/*.trx
+        TestResults/**/*.coverage
+      mergeTestResults: true
+      testRunTitle: ${{ parameters.testRunTitle }}
+      buildConfiguration: Release
+
+  - pwsh: |
+      cd TestResults
+      Get-ChildItem -Filter "*.coverage" -Recurse |
+        Rename-Item -NewName { "${{ parameters.testFramework }}" + $_.Name }
+    displayName: Rename coverage files
+    condition: succeededOrFailed()
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Test Artifacts
+    condition: succeededOrFailed()
+    inputs:
+      targetPath: TestResults
+      artifact: ${{ parameters.artifactName }}

@@ -41,5 +41,5 @@ steps:
 
       # Destroy the TGT and credential cache
       kdestroy || true
-    displayName: 'Clean up Kerberos (domain leave + kdestroy)'
+    displayName: Clean up Kerberos (domain leave + kdestroy)
     condition: always()

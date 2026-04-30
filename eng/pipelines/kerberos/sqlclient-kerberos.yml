@@ -127,7 +127,7 @@ stages:
 
           - template: /eng/pipelines/steps/install-dotnet.yml@self
             parameters:
-              runtimes: ['8.x', '9.x']
+              runtimes: [8.x, 9.x]
 
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
@@ -172,56 +172,13 @@ stages:
               Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
             displayName: Enable Network DTC Access
 
-          # --- Build ---
-
-          - task: DotNetCoreCLI@2
-            displayName: Build SqlClient
-            retryCountOnTaskFailure: 1
-            inputs:
-              command: build
-              projects: build.proj
-              arguments: >-
-                -t:BuildSqlClientWindows
-                -p:Configuration=Release
-
-          # --- Run tests ---
-          - task: DotNetCoreCLI@2
-            displayName: Run Tests ($(testFramework))
-            retryCountOnTaskFailure: 2
-            inputs:
-              command: build
-              projects: build.proj
-              arguments: >-
-                -t:TestSqlClient
-                -p:TestFramework=$(testFramework)
-                -p:Configuration=Release
-
-          # --- Publish results & coverage ---
-          - task: PublishTestResults@2
-            displayName: Publish Test Results
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: VSTest
-              testResultsFiles: |
-                TestResults/*.trx
-                TestResults/**/*.coverage
-              mergeTestResults: true
-              testRunTitle: Windows-netcore-$(testFramework)-ManagedSNI_$(managedSNI)
-              buildConfiguration: Release
-
-          - pwsh: |
-              cd TestResults
-              Get-ChildItem -Filter "*.coverage" -Recurse |
-                Rename-Item -NewName { "$(testFramework)" + $_.Name }
-            displayName: Rename coverage files
-            condition: succeededOrFailed()
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Test Artifacts
-            condition: succeededOrFailed()
-            inputs:
-              targetPath: TestResults
-              artifact: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
+          # --- Build and test ---
+          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+            parameters:
+              buildTarget: BuildSqlClientWindows
+              testFramework: $(testFramework)
+              testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
+              artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
 
   # ===========================================================================
   # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
@@ -256,7 +213,7 @@ stages:
           # --- Install .NET SDK and runtimes ---
           - template: /eng/pipelines/steps/install-dotnet.yml@self
             parameters:
-              runtimes: ['8.x', '9.x']
+              runtimes: [8.x, 9.x]
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
@@ -278,7 +235,7 @@ stages:
               KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Kerberos domain join ---
-          - template: /eng/pipelines/common/templates/steps/kerberos-init-step.yml@self
+          - template: /eng/pipelines/kerberos/linux-init-step.yml@self
             parameters:
               kerberosDomain: $(KerberosDomain)
               kerberosDomainOU: $(KerberosDomainOU)
@@ -294,56 +251,16 @@ stages:
             env:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
 
-          # --- Build ---
-          - task: DotNetCoreCLI@2
-            displayName: Build SqlClient
-            inputs:
-              command: build
-              projects: build.proj
-              arguments: >-
-                -t:BuildSqlClientUnix
-                -p:Configuration=Release
-
-          # --- Run tests ---
-          - task: DotNetCoreCLI@2
-            displayName: Run Tests ($(testFramework))
-            inputs:
-              command: build
-              projects: build.proj
-              arguments: >-
-                -t:TestSqlClient
-                -p:TestFramework=$(testFramework)
-                -p:Configuration=Release
-
-          # --- Publish results & coverage ---
-          - task: PublishTestResults@2
-            displayName: Publish Test Results
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: VSTest
-              testResultsFiles: |
-                TestResults/*.trx
-                TestResults/**/*.coverage
-              mergeTestResults: true
-              testRunTitle: Linux-netcore-$(testFramework)
-              buildConfiguration: Release
-
-          - pwsh: |
-              cd TestResults
-              Get-ChildItem -Filter "*.coverage" -Recurse |
-                Rename-Item -NewName { "$(testFramework)" + $_.Name }
-            displayName: Rename coverage files
-            condition: succeededOrFailed()
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Test Artifacts
-            condition: succeededOrFailed()
-            inputs:
-              targetPath: TestResults
-              artifact: $(testFramework)-linux-$(System.JobId)
+          # --- Build and test ---
+          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+            parameters:
+              buildTarget: BuildSqlClientUnix
+              testFramework: $(testFramework)
+              testRunTitle: Linux-$(testFramework)
+              artifactName: $(testFramework)-linux-$(System.JobId)
 
           # --- Kerberos cleanup (always runs) ---
-          - template: /eng/pipelines/common/templates/steps/kerberos-cleanup-step.yml@self
+          - template: /eng/pipelines/kerberos/linux-cleanup-step.yml@self
             parameters:
               kerberosDomain: $(KerberosDomain)
               kerberosDomainUser: $(KerberosDomainUser)

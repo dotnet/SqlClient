@@ -106,4 +106,4 @@ steps:
 
       klist
       sudo ifconfig
-    displayName: 'Initialize Kerberos (domain join + kinit)'
+    displayName: Initialize Kerberos (domain join + kinit)
