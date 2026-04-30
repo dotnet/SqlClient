@@ -96,7 +96,7 @@ jobs:
           type: windows
 
       variables:
-          ob_outputDirectory: '$(Build.ArtifactStagingDirectory)'
+          ob_outputDirectory: '$(artifactDirectory)'
 
       steps:
           - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
