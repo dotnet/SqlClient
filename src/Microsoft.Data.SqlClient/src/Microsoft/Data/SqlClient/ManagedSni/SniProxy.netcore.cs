@@ -137,8 +137,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // MSSQLSvc/<FQDN>:<instancename> for named instances. For our managed SNI path,
                 // NP uses instance-name postfix and TCP-like protocols (TCP, None, Admin)
                 // use a port postfix (resolved via SSRP for named instances).
+                // If SSRP resolution hasn't populated ResolvedPort yet (value is -1), fall back
+                // to the instance name to avoid producing a malformed SPN like ":-1".
                 // https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/register-a-service-principal-name-for-kerberos-connections?view=sql-server-ver17#named-instance
-                postfix = dataSource.ResolvedProtocol == DataSource.Protocol.NP ? dataSource.InstanceName : dataSource.ResolvedPort.ToString();
+                postfix = (dataSource.ResolvedProtocol == DataSource.Protocol.NP || dataSource.ResolvedPort <= 0)
+                    ? dataSource.InstanceName
+                    : dataSource.ResolvedPort.ToString();
             }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, ResolvedPort {3}, ResolvedProtocol {4}, postfix {5}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, dataSource?.ResolvedPort, dataSource?.ResolvedProtocol, postfix);

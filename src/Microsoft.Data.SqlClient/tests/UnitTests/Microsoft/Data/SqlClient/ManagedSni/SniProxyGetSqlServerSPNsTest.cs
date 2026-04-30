@@ -35,8 +35,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [Fact]
         public void GetSqlServerSPNs_ProtocolNone_WithResolvedPort_UsesPortNotInstanceName()
         {
-            // Arrange: parse "server\instance" which sets Protocol.None and IsSsrpRequired
-            DataSource dataSource = DataSource.ParseServerName(@"server\instance");
+            // Arrange: parse "localhost\instance" which sets Protocol.None and IsSsrpRequired.
+            // Using "localhost" instead of an arbitrary hostname avoids real DNS lookups
+            // that would make the test flaky in environments with restricted DNS resolution.
+            DataSource dataSource = DataSource.ParseServerName(@"localhost\instance");
             Assert.NotNull(dataSource);
             Assert.Equal(DataSource.Protocol.None, dataSource.ResolvedProtocol);
             Assert.Equal("instance", dataSource.InstanceName);
@@ -62,8 +64,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [Fact]
         public void GetSqlServerSPNs_ProtocolTcp_WithResolvedPort_UsesPort()
         {
-            // Arrange: parse "tcp:server\instance" which sets Protocol.TCP
-            DataSource dataSource = DataSource.ParseServerName(@"tcp:server\instance");
+            // Arrange: parse "tcp:localhost\instance" which sets Protocol.TCP.
+            // Using "localhost" avoids real DNS lookups that would make the test flaky.
+            DataSource dataSource = DataSource.ParseServerName(@"tcp:localhost\instance");
             Assert.NotNull(dataSource);
             Assert.Equal(DataSource.Protocol.TCP, dataSource.ResolvedProtocol);
 
@@ -88,10 +91,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [Fact]
         public void GetSqlServerSPNs_ProtocolNp_WithInstanceName_UsesInstanceName()
         {
-            // Arrange & Act: test the lower-level overload directly with NP protocol
+            // Arrange & Act: test the lower-level overload directly with NP protocol.
             // Named Pipes data sources go through a different parsing path that doesn't
             // populate InstanceName in the same way, so we call the helper directly.
-            ResolvedServerSpn spn = SniProxy.GetSqlServerSPNs("server", "myinstance", DataSource.Protocol.NP);
+            // Using "localhost" avoids real DNS lookups that would make the test flaky.
+            ResolvedServerSpn spn = SniProxy.GetSqlServerSPNs("localhost", "myinstance", DataSource.Protocol.NP);
 
             // Assert: SPN should use the instance name, not a port
             Assert.Contains(":myinstance", spn.Primary);
@@ -108,8 +112,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [Fact]
         public void GetSqlServerSPNs_CustomSpnProvided_UsesCustomSpn()
         {
-            // Arrange: parse a named instance, but provide a custom SPN override
-            DataSource dataSource = DataSource.ParseServerName(@"server\instance");
+            // Arrange: parse a named instance, but provide a custom SPN override.
+            // Using "localhost" avoids real DNS lookups that would make the test flaky.
+            DataSource dataSource = DataSource.ParseServerName(@"localhost\instance");
             Assert.NotNull(dataSource);
             dataSource.ResolvedPort = 12345;
 
@@ -133,8 +138,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [Fact]
         public void GetSqlServerSPNs_ProtocolAdmin_WithResolvedPort_UsesPort()
         {
-            // Arrange: parse "admin:server\instance" which sets Protocol.Admin
-            DataSource dataSource = DataSource.ParseServerName(@"admin:server\instance");
+            // Arrange: parse "admin:localhost\instance" which sets Protocol.Admin.
+            // Using "localhost" avoids real DNS lookups that would make the test flaky.
+            DataSource dataSource = DataSource.ParseServerName(@"admin:localhost\instance");
             Assert.NotNull(dataSource);
             Assert.Equal(DataSource.Protocol.Admin, dataSource.ResolvedProtocol);
 
