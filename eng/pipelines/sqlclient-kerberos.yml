@@ -50,135 +50,22 @@ name: $(date:yyyyMMdd)$(rev:.r)
 stages:
 
   # ===========================================================================
-  # Stage 1 — Windows · .NET Framework (1 job)
+  # Stage 1 - Windows (7 jobs = net462 + 3 TFs × 2 ManagedSNI)
   # ===========================================================================
-  - stage: Windows_netfx
-    displayName: Windows - .NET Framework
+  - stage: windows
+    displayName: Windows
     dependsOn: []
     jobs:
-      - job: Windows_netfx_net462
-        displayName: Windows netfx net462
-        timeoutInMinutes: 360
-        pool:
-          name: ADO-Trusted-Domain-Win-WestUS2
-          demands:
-            - ImageOverride -equals ADO-MMS22-SQL19
-        steps:
-
-          - checkout: self
-            clean: true
-            fetchDepth: 1
-            fetchTags: false
-
-          # Install .NET SDK (from global.json) and runtimes using the shared
-          # template.
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
-            parameters:
-              runtimes: ['8.x', '9.x']
-
-          # --- Update test configuration ---
-          - pwsh: |
-              $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
-              foreach ($p in $jdata) {
-                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
-                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
-                  $p.SupportsIntegratedSecurity = "true"
-                  $p.UseManagedSNIOnWindows    = "false"
-              }
-              $jdata | ConvertTo-Json | Set-Content "config.json"
-            workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-            displayName: Update test config.json
-            env:
-              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
-              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
-
-          # --- Prepare Windows services ---
-          - powershell: |
-              $svc = Get-Service -Name SQLBrowser -ErrorAction SilentlyContinue
-              if ($null -ne $svc) {
-                  Set-Service -StartupType Automatic SQLBrowser
-                  if ($svc.Status -ne 'Running') { Start-Service SQLBrowser }
-                  Get-Service SQLBrowser | Select-Object Name, StartType, Status
-              }
-            displayName: Start SQL Server Browser
-
-          - powershell: |
-              Set-DtcNetworkSetting -DtcName "Local" `
-                -InboundTransactionsEnabled $true `
-                -OutboundTransactionsEnabled $true `
-                -RemoteClientAccessEnabled $true `
-                -Confirm:$false
-
-              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC)"      | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
-              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC-EPMAP)" | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
-              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-Out)"   | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
-              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
-            displayName: Enable Network DTC Access
-
-          # --- Build ---
-          - task: DotNetCoreCLI@2
-            displayName: Build SqlClient
-            retryCountOnTaskFailure: 1
-            inputs:
-              command: build
-              projects: build.proj
-              arguments: >-
-                -t:BuildSqlClient
-                -p:Configuration=Release
-
-          # --- Run tests ---
-          - task: DotNetCoreCLI@2
-            displayName: Run Tests (net462)
-            retryCountOnTaskFailure: 2
-            inputs:
-              command: build
-              projects: build.proj
-              arguments: >-
-                -t:TestSqlClient
-                -p:TestFramework=net462
-                -p:Configuration=Release
-
-          # --- Publish results & coverage ---
-          - task: PublishTestResults@2
-            displayName: Publish Test Results
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: VSTest
-              testResultsFiles: |
-                TestResults/*.trx
-                TestResults/**/*.coverage
-              mergeTestResults: true
-              testRunTitle: Windows-netfx-net462
-              buildConfiguration: Release
-
-          - pwsh: |
-              cd TestResults
-              Get-ChildItem -Filter "*.coverage" -Recurse |
-                Rename-Item -NewName { "net462" + $_.Name }
-            displayName: Rename coverage files
-            condition: succeededOrFailed()
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Test Artifacts
-            condition: succeededOrFailed()
-            inputs:
-              targetPath: TestResults
-              artifact: net462-$(System.JobId)
-
-  # ===========================================================================
-  # Stage 2 — Windows · .NET Core (6 jobs = 3 TFs × 2 ManagedSNI)
-  # ===========================================================================
-  - stage: Windows_netcore
-    displayName: Windows - .NET Core
-    dependsOn: []
-    jobs:
-      - job: Windows_netcore
-        displayName: Windows netcore
+      - job: windows
+        displayName: Windows
         timeoutInMinutes: 360
         workspace:
           clean: all    # Purge obj/artifacts from prior runs on self-hosted agents
         strategy:
           matrix:
+            net462_NativeSNI:
+              targetFramework: net462
+              managedSNI: 'false'
             net8_NativeSNI:
               targetFramework: net8.0
               managedSNI: 'false'
@@ -307,14 +194,14 @@ stages:
               artifact: $(targetFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
 
   # ===========================================================================
-  # Stage 3 — Linux · .NET Core + Kerberos (3 jobs = 3 TFs)
+  # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
   # ===========================================================================
-  - stage: Linux_netcore
-    displayName: Linux - .NET Core (Kerberos)
+  - stage: linux
+    displayName: Linux
     dependsOn: []
     jobs:
-      - job: Linux_netcore
-        displayName: Linux Kerberos
+      - job: linux
+        displayName: Linux
         timeoutInMinutes: 360
         strategy:
           matrix:
@@ -328,6 +215,14 @@ stages:
           name: ADO-Trusted-Linux-WestUS2
           demands:
             - ImageOverride -equals ADO-UB20-SQL22
+
+        variables:
+          # Linux needs a secret from the $(agent-at-sqldrv-ad) secret from this group on order to
+          # expand the pipeline variable $(KerberosDomainPassword) at runtime.  This is because the
+          # password is used in the bash step to acquire a Kerberos ticket, and bash cannot read ADO
+          # secrets directly.
+          group: kv-sqldrivers-shared
+
         steps:
 
           - checkout: self
@@ -338,7 +233,7 @@ stages:
           # --- Install .NET SDK and runtimes ---
           - template: /eng/pipelines/steps/install-dotnet.yml@self
             parameters:
-              runtimes: ['8.x', '9.x', '10.x']
+              runtimes: ['8.x', '9.x']
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
@@ -437,9 +332,8 @@ stages:
   - stage: Merge_Code_Coverage
     displayName: Merge Code Coverage
     dependsOn:
-      - Windows_netfx
-      - Windows_netcore
-      - Linux_netcore
+      - windows
+      - linux
     condition: succeededOrFailed()
     jobs:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
