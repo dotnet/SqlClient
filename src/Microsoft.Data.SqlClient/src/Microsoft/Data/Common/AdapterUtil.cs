@@ -13,13 +13,13 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Security;
+using Microsoft.Data.SqlClient;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
-using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
 using Microsoft.Win32;
@@ -64,22 +64,6 @@ namespace Microsoft.Data.Common
         /// Max duration for buffer in seconds
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
-
-        /// <summary>
-        /// This member returns true if the current OS platform is Windows.
-        /// </summary>
-        /// <remarks>
-        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
-        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
-        /// code when published to non-Windows platforms.
-        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
-        /// rather than in a throw helper.
-        /// </remarks>
-        #if NETFRAMEWORK
-        public const bool IsWindows = true;
-        #else
-        public static bool IsWindows => OperatingSystem.IsWindows();
-        #endif
 
         #region UDT
 
@@ -441,7 +425,7 @@ namespace Microsoft.Data.Common
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
             #if NET
-            if (!IsWindows)
+            if (OsConstants.IsUnix)
             {
                 // No registry in non-Windows environments
                 return null;

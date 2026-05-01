@@ -979,7 +979,7 @@ namespace Microsoft.Data.SqlClient
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
 #if NET
-            if (OperatingSystem.IsWindows())
+            if (OsConstants.IsWindows)
 #endif
             {
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
