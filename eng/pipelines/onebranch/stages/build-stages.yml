@@ -4,16 +4,26 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Unified build stages template for sqlclient OneBranch pipelines.
-# Consumed by both the official and non-official pipeline definitions via:
+# Unified build stages template for SqlClient OneBranch pipelines. Consumed by
+# both the official and non-official pipeline definitions.
 #
-# Depending on the build* parameters, this template will define the following stages:
+# Stages defined by this template and their controlling parameters:
 #
-#   - build_independent: builds packages with no cross-package dependencies (Logging, SqlServer)
-#   - build_abstractions: builds the Abstractions package, which depends on Logging
-#   - build_dependent: builds packages with dependencies on Abstractions (SqlClient, Azure)
-#   - build_addons: builds add-on packages with dependencies on the core packages (Akv Provider)
-
+#   Stage              | Condition                              | Produced packages
+#   -------------------|----------------------------------------|-----------------------------------
+#   build_independent  | Always emitted                         | Logging (buildSqlClient ||
+#                      |                                        |   buildAkvProvider)
+#                      |                                        | SqlServer (buildSqlServerServer)
+#   build_abstractions | buildSqlClient                         | Abstractions
+#   build_dependent    | buildSqlClient                         | SqlClient, Azure
+#   build_addons       | buildAkvProvider && buildSqlClient     | AKV Provider
+#
+# Notes:
+# - build_independent is always present so downstream stages can depend on a
+#   stable stage name; individual jobs inside it are compile-time conditional.
+# - build_dependent stage name is intentionally stable because downstream
+#   templates depend on it by name.
+#
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
 
@@ -288,18 +298,3 @@ stages:
               packageFullName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
               packageShortName: 'AkvProvider'
               packageVersion: '${{ parameters.akvProviderPackageVersion }}'
-
-  # ====================================================================
-  # Validation
-  # ====================================================================
-  - ${{ if eq(parameters.buildSqlClient, true) }}:
-      - stage: sqlclient_package_validation
-        displayName: "SqlClient Package Validation"
-        dependsOn: build_dependent
-        jobs:
-          - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
-            parameters:
-              artifactName: '${{ parameters.sqlClientArtifactsName }}'
-              expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
-              expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              isOfficial: ${{ parameters.isOfficial }}

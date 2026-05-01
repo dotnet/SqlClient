@@ -15,13 +15,14 @@ steps:
 - task: PowerShell@2
   displayName: Add SNI Validation Feed in Nuget.config
   inputs:
+    pwsh: true
     targetType: inline
     script: |
       Write-Host "SNI validation feed to use = ${{parameters.SNIValidationFeed}}"
 
       # define file to update
       $NugetCfg = Join-Path -Path '.' -ChildPath 'NuGet.config'
-      type $NugetCfg
+      Get-Content $NugetCfg
 
       # load content of xml from file defined above
       $xml = New-Object XML
@@ -44,10 +45,11 @@ steps:
 
       # save the xml file
       $xml.Save($NugetCfg)
-      type $NugetCfg
+      Get-Content $NugetCfg
 - task: PowerShell@2
   displayName: Update SNI Version in Versions.props
   inputs:
+    pwsh: true
     targetType: inline
     # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42204):
     # Package dependency versions have moved to Directory.Packages.props, so the below script no
@@ -57,7 +59,7 @@ steps:
 
       # define file to update
       $PropsPath = Join-Path -Path '.' -ChildPath 'tools\props\Versions.props'
-      type $PropsPath
+      Get-Content $PropsPath
 
       # load content of xml from file defined above
       $xml = New-Object XML
@@ -79,6 +81,6 @@ steps:
 
       # save the xml file
       $xml.Save($PropsPath)
-      type $PropsPath
+      Get-Content $PropsPath
 - task: NuGetAuthenticate@1
   displayName: 'NuGet Authenticate with SNI Validation Feed'

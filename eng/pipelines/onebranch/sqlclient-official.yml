@@ -272,12 +272,19 @@ extends:
             symbolsPublishTokenUri: '$(SymbolsPublishTokenUriPPE)'
           symbolsUploadAccount: '$(SymbolsUploadAccount)'
 
-      - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
+      - template: /eng/pipelines/onebranch/stages/validation-stage.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          releaseToProduction: ${{ parameters.releaseToProduction }}
-          # This is an official pipeline.
           isOfficial: true
+          publishSymbols: ${{ parameters.publishSymbols }}
+          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
+          buildSqlClient: ${{ parameters.buildSqlClient }}
+          buildAKVProvider: ${{ parameters.buildAkvProvider }}
+
+      - template: /eng/pipelines/onebranch/stages/release-stage.yml@self
+        parameters:
+          isOfficial: true
+          releaseToProduction: ${{ parameters.releaseToProduction }}
           stageNameSuffix: production
 
           publishSymbols: ${{ parameters.publishSymbols }}

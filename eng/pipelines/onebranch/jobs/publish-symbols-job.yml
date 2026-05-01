@@ -49,6 +49,9 @@ parameters:
 jobs:
   - job: 'publish_symbols_${{ parameters.packageShortName }}'
     displayName: 'Publish Symbols: ${{ parameters.packageFullName }}'
+    # Pool schema docs (OneBranch): https://aka.ms/obpipelines/yaml/jobs
+    # Agent pool concepts (Azure Pipelines):
+    # https://learn.microsoft.com/azure/devops/pipelines/agents/pools-queues
     pool:
       type: linux
 

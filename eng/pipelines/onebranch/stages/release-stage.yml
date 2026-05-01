@@ -4,15 +4,17 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 #
-# Unified release stages template for dotnet-sqlclient OneBranch pipelines.
-# Consumed by both the official and non-official pipeline definitions via:
+# Unified release stage template for dotnet-sqlclient OneBranch pipelines.
+# Consumed by both the official and non-official pipeline definitions.
 #
-#   stages:
-#     - template: /eng/pipelines/onebranch/stages/release-stages.yml@self
-#       parameters:
-#         isOfficial:          true   # or false
-#         releaseToProduction: false  # or true
-#         ...
+# Stages defined by this template and their controlling parameters:
+#
+#   Stage                  | Condition                                       | Packages
+#   -----------------------|-------------------------------------------------|------------------------------
+#   release_<stageNameSuffix> | Any release* parameter is true               | One publish job per enabled
+#                          |   (releaseSqlServerServer, releaseLogging,      | release parameter
+#                          |    releaseAbstractions, releaseSqlClient,       |
+#                          |    releaseAzure, releaseAkvProvider)            |
 #
 # The isOfficial flag controls release-stage behaviour:
 #   - Official  → Production environment, approval gate.
@@ -27,8 +29,8 @@
 parameters:
   # ── General parameters ─────────────────────────────────────────────────
 
-  # True to enable debug information and steps.
-  - name: debug
+  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
+  - name: isOfficial
     type: boolean
 
   # Controls where packages are pushed during the release stage.
@@ -39,10 +41,6 @@ parameters:
   - name: releaseToProduction
     type: boolean
     default: false
-
-  # True for a OneBranch Official pipeline, false for a Non-Official pipeline.
-  - name: isOfficial
-    type: boolean
 
   # The stage name suffix, used in the stage ID (e.g. release_production) and display name.
   - name: stageNameSuffix
@@ -138,6 +136,11 @@ stages:
       ${{ else }}:
         displayName: Release to NuGet Test
       dependsOn:
+        # We always depend on validation.  That stage has its own checks to gate execution of the
+        # validation jobs, so it's safe to depend on it unconditionally.
+        - validation
+        # Additionally, we depend on the build stages corresponding to any packages we intend to
+        # release.
         - ${{ if or(parameters.releaseSqlServerServer, parameters.releaseLogging) }}:
           - build_independent
         - ${{ if parameters.releaseAbstractions }}:
