@@ -57,9 +57,8 @@
     <FileVersionBuildNumber>$(BuildNumber.Split('.')[0])</FileVersionBuildNumber>
   </PropertyGroup>
 
-  <!-- @TODO: What is this? -->
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+    <!-- Release builds embed generated assembly-info as source. -->
   </PropertyGroup>
 
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
