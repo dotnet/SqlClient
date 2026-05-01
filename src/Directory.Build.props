@@ -57,11 +57,6 @@
     <FileVersionBuildNumber>$(BuildNumber.Split('.')[0])</FileVersionBuildNumber>
   </PropertyGroup>
 
-  <!-- @TODO: What is this? -->
-  <PropertyGroup Condition="$(BuildForRelease) == 'true'">
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
-  </PropertyGroup>
-
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />

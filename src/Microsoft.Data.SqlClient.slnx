@@ -134,6 +134,7 @@
   </Folder>
   <Folder Name="/src/">
     <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/">
     <Project Path="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
