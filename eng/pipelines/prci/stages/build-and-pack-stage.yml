@@ -106,10 +106,12 @@ stages:
           # Emit the build output
           - script: tree /a /f $(BUILD_OUTPUT)
             displayName: Output Build Output Tree
+            condition: succeededOrFailed()
 
           # Upload the build output as the artifact of the job
           - publish: $(BUILD_OUTPUT)
             artifact: build_and_pack_projects
+            condition: succeededOrFailed()
 
 
 

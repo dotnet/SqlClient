@@ -25,4 +25,8 @@
   <ItemGroup>
     <None Include="**/*" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="prci\variables\" />
+  </ItemGroup>
 </Project>
