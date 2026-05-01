@@ -41,8 +41,9 @@ steps:
 
   # Build the given target.
   #
-  # The test stages will build this anyway, but it's nice to have a separate step to isolate build
-  # failures and avoid retries.
+  # The test stages build as part of their targets, but this separate step isolates build failures
+  # so we can fail fast before running tests. Retries are enabled intentionally (1 attempt for
+  # build, 2 attempts for test steps) to reduce transient infrastructure-related failures.
   #
   - task: DotNetCoreCLI@2
     displayName: Build SqlClient

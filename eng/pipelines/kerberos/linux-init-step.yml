@@ -71,7 +71,12 @@ steps:
       # -----------------------------------------------------------------------
       # Set the hostname to FQDN within the domain
       # -----------------------------------------------------------------------
-      sudo hostnamectl set-hostname "$(hostname).$DOMAIN"
+      CURRENT_HOSTNAME="$(hostname)"
+      if [ "$CURRENT_HOSTNAME" = "$DOMAIN" ] || [[ "$CURRENT_HOSTNAME" == *".$DOMAIN" ]]; then
+        echo "Hostname already uses domain suffix '.$DOMAIN': $CURRENT_HOSTNAME"
+      else
+        sudo hostnamectl set-hostname "$CURRENT_HOSTNAME.$DOMAIN"
+      fi
 
       # -----------------------------------------------------------------------
       # Synchronize time with the domain controller (required for Kerberos)
