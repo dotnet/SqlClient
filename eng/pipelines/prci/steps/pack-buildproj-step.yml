@@ -10,6 +10,15 @@
 # NuGet package.
 
 parameters:
+  # General Parameters =====================================================
+
+  # Condition parameter to forward onto the DotNetCoreCLI task.
+  - name: condition
+    type: string
+    default: succeeded()
+
+  # Build Parameters =======================================================
+
   # Configuration to use to build the project.
   - name: buildConfiguration
     type: string
@@ -38,6 +47,7 @@ parameters:
 steps:
   - task: DotNetCoreCLI@2
     displayName: 'build.proj - Build${{ parameters.packageShortName }}'
+    condition: ${{ parameters.condition }}
     inputs:
       command: build
       projects: build.proj
