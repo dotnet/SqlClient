@@ -76,7 +76,9 @@ steps:
       # -----------------------------------------------------------------------
       # Synchronize time with the domain controller (required for Kerberos)
       # -----------------------------------------------------------------------
-      echo "server $DOMAIN" | sudo tee -a /etc/ntp.conf
+      if ! sudo grep -Fqx "server $DOMAIN" /etc/ntp.conf; then
+        echo "server $DOMAIN" | sudo tee -a /etc/ntp.conf
+      fi
       sudo systemctl stop ntp
       sudo ntpdate "$DOMAIN"
       sudo systemctl start ntp

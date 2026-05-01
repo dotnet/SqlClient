@@ -199,6 +199,8 @@ stages:
       - job: linux
         displayName: Linux
         timeoutInMinutes: 90
+        workspace:
+          clean: all    # Purge leftovers on self-hosted agents to reduce cross-run flakiness
         strategy:
           matrix:
             net8:
@@ -230,7 +232,7 @@ stages:
               foreach ($p in $jdata) {
                   $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
                   $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
-                  $p.SupportsIntegratedSecurity = "true"
+                  $p.SupportsIntegratedSecurity = $true
               }
               $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
               $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
