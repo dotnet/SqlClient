@@ -111,6 +111,19 @@ steps:
       testRunTitle: ${{ parameters.testRunTitle }}
       buildConfiguration: Release
 
+  # Azure Pipelines task conditions do not support path existence checks directly,
+  # so compute this once and gate later steps on the variable.
+  - pwsh: |
+      $resultsDir = "$(Build.SourcesDirectory)/test_results"
+      if (Test-Path -LiteralPath $resultsDir) {
+        Write-Host "##vso[task.setvariable variable=HasTestResultsDir]true"
+      }
+      else {
+        Write-Host "##vso[task.setvariable variable=HasTestResultsDir]false"
+      }
+    displayName: Detect test_results directory
+    condition: succeededOrFailed()
+
   # Give our coverage files a unique name to make it clear where they originated when we download
   # the artifacts from all jobs in the merge stage.
   - pwsh: |
@@ -118,13 +131,13 @@ steps:
       Get-ChildItem -Filter "*.coverage" -Recurse |
         Rename-Item -NewName { "${{ parameters.testFramework }}" + $_.Name }
     displayName: Rename coverage files
-    condition: and(succeededOrFailed(), exists('$(Build.SourcesDirectory)/test_results'))
+    condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
 
   # Publish TRX test results and coverage files as pipeline artifacts.  The merge stage needs the
   # coverage files from all of the jobs.
   - task: PublishPipelineArtifact@1
     displayName: Publish Test Artifacts
-    condition: and(succeededOrFailed(), exists('$(Build.SourcesDirectory)/test_results'))
+    condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
     inputs:
       targetPath: $(Build.SourcesDirectory)/test_results
       artifact: ${{ parameters.artifactName }}
