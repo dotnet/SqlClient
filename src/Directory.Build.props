@@ -57,10 +57,6 @@
     <FileVersionBuildNumber>$(BuildNumber.Split('.')[0])</FileVersionBuildNumber>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(BuildForRelease) == 'true'">
-    <!-- Release builds embed generated assembly-info as source. -->
-  </PropertyGroup>
-
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
