@@ -13,13 +13,13 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Security;
-using Microsoft.Data.SqlClient;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.Server;
 using Microsoft.Win32;
@@ -425,7 +425,7 @@ namespace Microsoft.Data.Common
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
             #if NET
-            if (OsConstants.IsUnix)
+            if (!OsConstants.IsWindows)
             {
                 // No registry in non-Windows environments
                 return null;

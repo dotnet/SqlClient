@@ -31,7 +31,7 @@ internal static class OsConstants
     /// </summary>
     internal static readonly bool IsMacOS;
 
-#if NET
+    #if NET
     /// <summary>
     /// Gets a value indicating whether the runtime is executing on FreeBSD.
     /// </summary>
@@ -40,16 +40,7 @@ internal static class OsConstants
     /// <c>false</c> on .NET Framework or if the runtime does not support FreeBSD detection.
     /// </remarks>
     internal static readonly bool IsFreeBSD;
-#endif
-
-    /// <summary>
-    /// Gets a value indicating whether the runtime is executing on a Unix-like operating system.
-    /// </summary>
-    /// <remarks>
-    /// This is <c>true</c> for Linux, macOS, FreeBSD, and other Unix-like platforms.
-    /// It is <c>false</c> only on Windows.
-    /// </remarks>
-    internal static readonly bool IsUnix;
+    #endif
 
     /// <summary>
     /// Initializes platform detection flags by querying <see cref="RuntimeInformation"/>.
@@ -72,11 +63,8 @@ internal static class OsConstants
         IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         IsMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-#if NET
+        #if NET
         IsFreeBSD = RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD);
-        IsUnix = IsLinux || IsMacOS || IsFreeBSD;
-#else
-        IsUnix = IsLinux || IsMacOS;
-#endif
+        #endif
     }
 }

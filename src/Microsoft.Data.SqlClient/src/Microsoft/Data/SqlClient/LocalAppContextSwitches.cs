@@ -635,7 +635,7 @@ internal static class LocalAppContextSwitches
                 return s_useManagedNetworking == SwitchValue.True;
             }
 
-            if (OsConstants.IsUnix)
+            if (!OsConstants.IsWindows)
             {
                 s_useManagedNetworking = SwitchValue.True;
                 return true;
