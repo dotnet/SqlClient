@@ -114,17 +114,11 @@ steps:
   # Give our coverage files a unique name to make it clear where they originated when we download
   # the artifacts from all jobs in the merge stage.
   - pwsh: |
-      $resultsDir = "$(Build.SourcesDirectory)/test_results"
-      if (-not (Test-Path -LiteralPath $resultsDir)) {
-        Write-Host "No test_results directory found; skipping coverage rename."
-        exit 0
-      }
-
-      cd $resultsDir
+      cd $(Build.SourcesDirectory)/test_results
       Get-ChildItem -Filter "*.coverage" -Recurse |
         Rename-Item -NewName { "${{ parameters.testFramework }}" + $_.Name }
     displayName: Rename coverage files
-    condition: succeededOrFailed()
+    condition: and(succeededOrFailed(), exists('$(Build.SourcesDirectory)/test_results'))
 
   # Publish TRX test results and coverage files as pipeline artifacts.  The merge stage needs the
   # coverage files from all of the jobs.
