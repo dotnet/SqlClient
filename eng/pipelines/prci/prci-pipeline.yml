@@ -4,8 +4,16 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+name: $(DayOfYear)$(Rev:rr)
+
 parameters:
 
 variables:
+  - template: /eng/pipelines/common/variables/common-variables.yml@self
 
 stages:
+  # Stage 1: Build and pack all projects in the repository
+  - template: /eng/pipelines/prci/stages/build-and-pack-stage.yml
+    parameters:
+      buildConfiguration: Debug
+      buildSuffix: pr

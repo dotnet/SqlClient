@@ -1,0 +1,48 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This is a step to build a project via the build.proj. This will execute the "Pack*" target in
+# build.proj, where * is the packageShortName provided in the parameters. Because the "no build"
+# parameter is not provided, the target will implicitly build the projects required to create the
+# NuGet package.
+
+parameters:
+  # Configuration to use to build the project.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Suffix to apply to the generated packages such that the package will be considered a prerelease
+  # version. The resulting package version will look like: `1.2.3-suffix888.1` where 1.2.3 is the
+  # default version specified in Versions.props, suffix is this parameter, and 888.1 is the build
+  # number for the currently executing build.
+  - name: buildSuffix
+    type: string
+
+  # Package/project to build and pack.
+  - name: packageShortName
+    type: string
+    values:
+      - Azure
+      - AkvProvider
+      - Abstractions
+      - Logging
+      - SqlClient
+      - SqlServer
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'build.proj - Build${{ parameters.packageShortName }}'
+    inputs:
+      command: build
+      projects: build.proj
+      verbosity: detailed
+      arguments: >-
+        -t:Pack{{ parameters.packageShortName }}
+        -p:BuildNumber='$(Build.BuildNumber)'
+        -p:BuildSuffix='${{ parameters.buildSuffix }}'
