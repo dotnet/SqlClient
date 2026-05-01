@@ -18,19 +18,19 @@
 #   build.proj isn't properly aware of how to do this. So, instead, arranging the build steps
 #   alphabetically is the best way to arrange for now.
 
+parameters:
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  - name: buildSuffix
+    type: string
+
 stages:
   - stage: build_and_pack_projects
     displayName: Build and Pack Projects
-
-    parameters:
-      - name: buildConfiguration
-        type: string
-        values:
-          - Debug
-          - Release
-
-      - name: buildSuffix
-        type: string
 
     jobs:
       - job: build_and_pack_projects

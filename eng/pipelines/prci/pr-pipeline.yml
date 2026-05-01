@@ -6,7 +6,7 @@
 
 name: $(DayOfYear)$(Rev:rr)
 
-parameters:
+#parameters:
 
 variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
