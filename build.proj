@@ -399,7 +399,7 @@
     the first step of this target.
   -->
   <PropertyGroup>
-    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions</BuildSqlClientNotSupportedDependsOn>
+    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientNotSupported" DependsOnTargets="$(BuildSqlClientNotSupportedDependsOn)">
     <PropertyGroup>
