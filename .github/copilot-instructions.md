@@ -150,6 +150,14 @@ When a new issue is created, follow these steps:
 - Do not modify `CHANGELOG.md` unless executing a release workflow (see `release-notes` prompt).
 - Do not close issues without a fix or without providing a clear reason.
 
+## Terminal Execution Safety
+- Treat any non-zero shell exit code as a failed step that requires correction before proceeding.
+- If a bash process exits, do not wait for more output from that process; rerun the command in a fresh terminal session.
+- Validate that expected command output was produced before using it as evidence for conclusions.
+- When terminal execution fails, surface the failure immediately and retry with a corrected command.
+- Avoid `set -e` in this automation workflow; use focused commands and verify each result explicitly so shell exits are observable and attributable.
+- Prefer short, single-purpose terminal commands over long chained scripts when debugging or gathering state.
+
 ## 📝 Notes
 - Update policies and guidelines in the `policy/` directory as needed based on trending practices and team feedback.
 - Regularly review and update the `doc/` directory to ensure it reflects the current state of the project.
