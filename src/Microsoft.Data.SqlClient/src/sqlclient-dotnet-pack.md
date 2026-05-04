@@ -46,9 +46,17 @@ Passing all tokens through `NuspecProperties` looks correct, but this command fa
 dotnet pack src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj --no-build -p:Configuration=Debug -p:ReferenceType=Project -p:NuspecFile=<repo>/tools/specs/Microsoft.Data.SqlClient.nuspec -p:NuspecBasePath=<repo>/tools/specs -p:NuspecProperties="COMMITID=abc;Configuration=Debug;ReferenceType=Project;AbstractionsPackageVersion=1.0.0-dev;LoggingPackageVersion=1.0.0-dev" -p:NuspecVersion=7.1.0-preview1-dev -p:PackageOutputPath=<repo>/artifacts/tmp -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
 ```
 
-Observed error:
+To reproduce this failure in the current branch and exercise the workaround, also pass the required MSBuild properties:
 
-- `An error occured while trying to parse the value '' of property 'dependencies' in the manifest file.`
+```bash
+dotnet pack src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj --no-build -p:Configuration=Debug -p:ReferenceType=Project -p:PackageVersionAbstractions=1.0.0-dev -p:PackageVersionLogging=1.0.0-dev -p:NuspecVersion=7.1.0-preview1-dev -p:PackageOutputPath=<repo>/artifacts/tmp -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+```
+
+The `PrepareSqlClientPackNuspec` target will materialize the tokens into an intermediate nuspec, bypassing the SDK's substitution bug.
+
+Observed error (without workaround):
+
+- `An error occurred while trying to parse the value '' of property 'dependencies' in the manifest file.`
 - `'' is not a valid version string.`
 
 The same flow succeeds when dependency tokens are pre-materialized into the intermediate nuspec by `PrepareSqlClientPackNuspec`.
@@ -74,9 +82,10 @@ SqlClient-specific pack defaults are set in:
 The `build.proj` target passes dynamic values only:
 
 - `CommitId`
-- `NuspecVersion`
 - `PackageOutputPath`
 - plus standard version/reference-type arguments
+
+Note: `NuspecVersion` is derived from `$(Version)` by SDK defaults and does not need to be explicitly passed.
 
 ## Outputs
 

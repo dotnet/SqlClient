@@ -166,7 +166,7 @@ dotnet build build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ### Packaging Projects
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
-also handle by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
+also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:
 
 ```bash

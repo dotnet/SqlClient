@@ -107,7 +107,7 @@
         Condition="'$(NuspecVersion)' == ''" />
 
     <PropertyGroup>
-      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('<version>1.0.0</version>','<version>$(NuspecVersion)</version>'))</_SqlClientPackNuspecExpandedText>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('$NuspecVersion$','$(NuspecVersion)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
 
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
