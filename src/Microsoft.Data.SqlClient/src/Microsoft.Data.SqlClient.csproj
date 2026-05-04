@@ -76,6 +76,41 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
 
+  <!-- NuGet Package Config ============================================ -->
+  <!-- Pack design notes: ./sqlclient-dotnet-pack.md -->
+  <PropertyGroup>
+    <SqlClientPackNuspecTemplatePath Condition="'$(SqlClientPackNuspecTemplatePath)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
+    <SqlClientPackNuspecGeneratedPath Condition="'$(SqlClientPackNuspecGeneratedPath)' == ''">$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
+
+    <NuspecFile Condition="'$(NuspecFile)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</NuspecFile>
+    <NuspecBasePath Condition="'$(NuspecBasePath)' == ''">$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
+    <IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
+    <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == ''">snupkg</SymbolPackageFormat>
+    <SuppressDependenciesWhenPacking Condition="'$(SuppressDependenciesWhenPacking)' == ''">true</SuppressDependenciesWhenPacking>
+
+    <NuspecProperties Condition="'$(NuspecProperties)' == ''">COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
+  </PropertyGroup>
+
+  <!--
+    SDK pack does not reliably substitute dependency version tokens in this nuspec flow.
+    We materialize those dependency versions into an intermediate nuspec before PackTask runs.
+  -->
+  <Target Name="PrepareSqlClientPackNuspec"
+          BeforeTargets="GenerateNuspec"
+          Condition="'$(NuspecFile)' == '$(SqlClientPackNuspecTemplatePath)'">
+    <PropertyGroup>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('<version>1.0.0</version>','<version>$(NuspecVersion)</version>'))</_SqlClientPackNuspecExpandedText>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
+                      Lines="$(_SqlClientPackNuspecExpandedText)"
+                      Overwrite="true" />
+
+    <PropertyGroup>
+      <NuspecFile>$(SqlClientPackNuspecGeneratedPath)</NuspecFile>
+    </PropertyGroup>
+  </Target>
+
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
     <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->

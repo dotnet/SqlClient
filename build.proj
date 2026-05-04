@@ -70,16 +70,6 @@
     <DotnetPath Condition="'$(DotnetPath)' == ''" />
 
     <!--
-      NugetPath
-      Applies to:     PackSqlClient
-      Description:    Path to NuGet executable. Override if `nuget` is not included in the PATH
-                      variable.
-      Default value:  nuget
-      Example:        C:\nuget\nuget.exe
-    -->
-    <NugetPath Condition="'$(NugetPath)' == ''">nuget</NugetPath>
-
-    <!--
       PackBuild
       Applies to:     Pack*
       Description:    Whether the Pack* targets should buiild the project before packaging. If
@@ -97,10 +87,8 @@
       --no-build
     </PackBuildArgument>
     <!--
-      @TODO: This is kinda hacky, ideally we can pack via dotnet pack, which will handle building,
-        and can thus be switched off by passing -no-build. However, we're not there because we need
-        to build multiple projects before packaging, and thus need to use nuget. So, until then we
-        will switch off dependency building dynamically building the target dependencies
+      SqlClient packaging uses dotnet pack and keeps this dependency gate so signed-binary workflows
+      can still set PackBuild=false and package pre-built artifacts.
     -->
     <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
 
@@ -394,7 +382,6 @@
     <SqlClientUnitTestProjectPath>$(SqlClientSrcRoot)tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</SqlClientUnitTestProjectPath>
 
     <!-- Tools/Specs Paths -->
-    <SqlClientNuspecPath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientNuspecPath>
     <GenApiPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/</GenApiPath>
     <GenApiProjectPath>$(GenApiPath)Microsoft.DotNet.GenAPI.csproj</GenApiProjectPath>
   </PropertyGroup>
@@ -531,10 +518,9 @@
 
   <!-- Pack SqlClient Target ===================================================== -->
   <!--
-    PackSqlClient: Packages SqlClient binaries into a NuGet package.
-    Because the SqlClient package depends on the "not supported" and ref projects, we can't use dotnet to
-    automatically build before packaging. Instead, we rely on target dependency to handle building
-    the same binaries that will be packaged.
+    PackSqlClient: Packages SqlClient binaries with dotnet pack.
+    The package layout is defined by a nuspec file because we package the artifacts from multiple
+    projects into a single .nupkg file.
   -->
   <Target Name="PackSqlClient" DependsOnTargets="$(PackSqlClientDependsOn)">
     <PropertyGroup>
@@ -549,10 +535,10 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
     </Exec>
 
-    <!-- This is a bit hacky, and can be (@TODO:) removed once packaging is done w/o a nuspec from dotnet -->
+    <!-- Evaluate package version used to stamp the nuspec-driven pack output. -->
     <PropertyGroup>
       <GetSqlClientPackageVersionCommand>
-        "$(DotnetPath)dotnet" msbuild "$(SqlClientProjectPath)"
+        "$(DotnetPath)dotnet" build "$(SqlClientProjectPath)"
         -nologo
         -verbosity:quiet
         -getProperty:SqlClientPackageVersion
@@ -571,6 +557,10 @@
     </Exec>
     <Error Text="Failed to evaluate SqlClientPackageVersion for PackSqlClient."
            Condition="'$(_EvaluatedSqlClientPackageVersion)' == ''" />
+        <Error Text="PackSqlClient requires PackageVersionAbstractions. Specify -p:PackageVersionAbstractions=&lt;version&gt;."
+          Condition="'$(PackageVersionAbstractions)' == ''" />
+        <Error Text="PackSqlClient requires PackageVersionLogging. Specify -p:PackageVersionLogging=&lt;version&gt;."
+          Condition="'$(PackageVersionLogging)' == ''" />
 
     <!-- Evaluate AbstractionsPackageVersion from project if not provided -->
     <PropertyGroup Condition="'$(PackageVersionAbstractions)' == ''">
@@ -619,19 +609,32 @@
       <PackageVersionAbstractions>$([System.Text.RegularExpressions.Regex]::Replace($(PackageVersionAbstractions), "\s", ""))</PackageVersionAbstractions>
       <PackageVersionLogging>$([System.Text.RegularExpressions.Regex]::Replace($(PackageVersionLogging), "\s", ""))</PackageVersionLogging>
       <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
-      <NuGetCommand>
-        "$(NugetPath)" pack "$(SqlClientNuspecPath)"
-        -Symbols
-        -SymbolPackageFormat snupkg
-        -Version "$(_EvaluatedSqlClientPackageVersion)"
-        -OutputDirectory "$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
-        -properties "COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsPackageVersion=$(PackageVersionAbstractions);LoggingPackageVersion=$(PackageVersionLogging)"
-      </NuGetCommand>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" pack "$(SqlClientProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(PackBuildArgument)
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+
+        <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
+        -p:CommitId="$(CommitId)"
+        -p:NuspecVersion="$(_EvaluatedSqlClientPackageVersion)"
+        -p:PackageOutputPath="$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
+      </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
-      <NuGetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(NuGetCommand), "\s+", " "))</NuGetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Packing SqlClient nuget via command: $(NuGetCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(NuGetCommand)" />
+    <Message Text=">>> Packing SqlClient via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- Test SqlClient Targets ==================================================== -->
