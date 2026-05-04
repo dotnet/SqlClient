@@ -3,6 +3,14 @@
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
 
+  <!-- Import each project's Versions.props to apply default version numbers in Package mode. -->
+  <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />
+  <Import Project="src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props" />
+  <Import Project="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props" />
+  <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
+  <Import Project="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Versions.props" />
+  <Import Project="src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props" />
+
   <!-- Build Parameters ================================================ -->
   <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
   <PropertyGroup>
@@ -104,7 +112,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''" />
+    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''">$(AbstractionsPackageVersion)</PackageVersionAbstractions>
     <PackageVersionAbstractionsArgument Condition="'$(PackageVersionAbstractions)' != ''">
       -p:AbstractionsPackageVersion=$(PackageVersionAbstractions)
     </PackageVersionAbstractionsArgument>
@@ -120,7 +128,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''" />
+    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''">$(AkvProviderPackageVersion)</PackageVersionAkvProvider>
     <PackageVersionAkvProviderArgument Condition="'$(PackageVersionAkvProvider)' != ''">
       -p:AkvProviderPackageVersion=$(PackageVersionAkvProvider)
     </PackageVersionAkvProviderArgument>
@@ -136,7 +144,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
+    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''">$(AzurePackageVersion)</PackageVersionAzure>
     <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
       -p:AzurePackageVersion=$(PackageVersionAzure)
     </PackageVersionAzureArgument>
@@ -161,7 +169,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''" />
+    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''">$(LoggingPackageVersion)</PackageVersionLogging>
     <PackageVersionLoggingArgument Condition="'$(PackageVersionLogging)' != ''">
       -p:LoggingPackageVersion=$(PackageVersionLogging)
     </PackageVersionLoggingArgument>
@@ -185,7 +193,7 @@
       Default value:  [blank]
       Example:        7.0.0-preview4
     -->
-    <PackageVersionSqlClient Condition="'$(PackageVersionSqlClient)' == ''" />
+    <PackageVersionSqlClient Condition="'$(PackageVersionSqlClient)' == ''">$(SqlClientPackageVersion)</PackageVersionSqlClient>
     <PackageVersionSqlClientArgument Condition="'$(PackageVersionSqlClient)' != ''">
       -p:SqlClientPackageVersion=$(PackageVersionSqlClient)
     </PackageVersionSqlClientArgument>
@@ -199,7 +207,7 @@
       Default value:  [blank]
       Example:        1.0.0-dev2345
     -->
-    <PackageVersionSqlServer Condition="'$(PackageVersionSqlServer)' == ''" />
+    <PackageVersionSqlServer Condition="'$(PackageVersionSqlServer)' == ''">$(SqlServerPackageVersion)</PackageVersionSqlServer>
     <PackageVersionSqlServerArgument Condition="'$(PackageVersionSqlServer)' != ''">
       -p:SqlServerPackageVersion=$(PackageVersionSqlServer)
     </PackageVersionSqlServerArgument>
@@ -211,8 +219,9 @@
                       references (eg, Abstractions from SqlClient) will be made as project references. If
                       set to "Package", package references will be made instead. When running in
                       package mode, target versions can be specified via PackageVersion* build
-                      parameters. If these are not provided, the central feed version will be used
-                      instead (see Directory.Packages.props). When running in project mode, the
+                      parameters. If these are not provided, defaults are evaluated from each
+                      package's Versions.props and applied via Directory.Packages.props. When
+                      running in project mode, the
                       dependencies will be built automatically.
 
       Applies to:     TestSqlClientFunctional, TestSqlClientManual
@@ -226,7 +235,6 @@
     <ReferenceTypeArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
       -p:ReferenceType=Package
     </ReferenceTypeArgument>
-
     <!--
       SigningKeyPath
       Applies to:     Build*, Pack*
@@ -390,7 +398,10 @@
     PlatformNotSupportedException. It generates the source for this using GenAPI which is built as
     the first step of this target.
   -->
-  <Target Name="BuildSqlClientNotSupported">
+  <PropertyGroup>
+    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions</BuildSqlClientNotSupportedDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildSqlClientNotSupported" DependsOnTargets="$(BuildSqlClientNotSupportedDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(GenApiProjectPath)"
@@ -424,6 +435,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -434,7 +446,10 @@
   </Target>
 
   <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
-  <Target Name="BuildSqlClientRef">
+  <PropertyGroup>
+    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions</BuildSqlClientRefDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildSqlClientRef" DependsOnTargets="$(BuildSqlClientRefDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
@@ -459,7 +474,10 @@
   </Target>
 
   <!-- BuildSqlClientUnix: Builds all unix-specific SqlClient binaries -->
-  <Target Name="BuildSqlClientUnix">
+  <PropertyGroup>
+    <BuildSqlClientUnixDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackLogging;PackSqlServer</BuildSqlClientUnixDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildSqlClientUnix" DependsOnTargets="$(BuildSqlClientUnixDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
@@ -476,6 +494,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -486,7 +505,10 @@
   </Target>
 
   <!-- BuildSqlClientWindows: Builds all windows-specific SqlClient binaries -->
-  <Target Name="BuildSqlClientWindows">
+  <PropertyGroup>
+    <BuildSqlClientWindowsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackLogging;PackSqlServer</BuildSqlClientWindowsDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildSqlClientWindows" DependsOnTargets="$(BuildSqlClientWindowsDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
@@ -503,6 +525,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -657,7 +680,10 @@
   </PropertyGroup>
 
   <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider -->
-  <Target Name="BuildAkvProvider">
+  <PropertyGroup>
+    <BuildAkvProviderDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackSqlClient;PackLogging</BuildAkvProviderDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildAkvProvider" DependsOnTargets="$(BuildAkvProviderDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)"
@@ -720,7 +746,10 @@
   </PropertyGroup>
 
   <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
-  <Target Name="BuildAbstractions">
+  <PropertyGroup>
+    <BuildAbstractionsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging</BuildAbstractionsDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildAbstractions" DependsOnTargets="$(BuildAbstractionsDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)"
@@ -807,7 +836,10 @@
   </PropertyGroup>
 
   <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
-  <Target Name="BuildAzure">
+  <PropertyGroup>
+    <BuildAzureDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackLogging</BuildAzureDependsOn>
+  </PropertyGroup>
+  <Target Name="BuildAzure" DependsOnTargets="$(BuildAzureDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AzureProjectPath)"
@@ -970,6 +1002,7 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack $(SqlServerProjectPath)
         -p:Configuration=$(Configuration)
+        -p:PackageOutputPath="$(PackagesDir)"
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
 

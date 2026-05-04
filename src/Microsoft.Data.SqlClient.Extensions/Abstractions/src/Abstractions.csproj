@@ -71,9 +71,9 @@
   <!-- Reference to Logging  -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
-                      Condition="'$(ReferenceType)' != 'Package' "/>
+                      Condition="'$(ReferenceType)' != 'Package' " />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
-                      Condition="'$(ReferenceType)' == 'Package' "/>
+                      Condition="'$(ReferenceType)' == 'Package' " />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

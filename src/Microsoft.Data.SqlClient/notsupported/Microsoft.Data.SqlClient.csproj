@@ -123,6 +123,11 @@
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+  </ItemGroup>
+
   <!-- References to external packages that the API refers to -->
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
@@ -156,7 +161,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="Microsoft.SqlServer.Server" Condition="'$(ReferenceType)' == 'Package'" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
@@ -170,7 +175,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="Microsoft.SqlServer.Server" Condition="'$(ReferenceType)' == 'Package'" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
