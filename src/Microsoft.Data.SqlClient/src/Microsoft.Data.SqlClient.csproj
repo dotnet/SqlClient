@@ -82,6 +82,7 @@
     <SqlClientPackNuspecTemplatePath Condition="'$(SqlClientPackNuspecTemplatePath)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
     <SqlClientPackNuspecGeneratedPath Condition="'$(SqlClientPackNuspecGeneratedPath)' == ''">$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
 
+    <NuspecVersion Condition="'$(NuspecVersion)' == ''">$(Version)</NuspecVersion>
     <NuspecFile Condition="'$(NuspecFile)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</NuspecFile>
     <NuspecBasePath Condition="'$(NuspecBasePath)' == ''">$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
     <IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>

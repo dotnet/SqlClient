@@ -535,32 +535,10 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
     </Exec>
 
-    <!-- Evaluate package version used to stamp the nuspec-driven pack output. -->
-    <PropertyGroup>
-      <GetSqlClientPackageVersionCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientProjectPath)"
-        -nologo
-        -verbosity:quiet
-        -getProperty:SqlClientPackageVersion
-
-        <!-- Versioning arguments -->
-        $(BuildNumberArgument)
-        $(BuildSuffixArgument)
-        $(PackageVersionSqlClientArgument)
-      </GetSqlClientPackageVersionCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <GetSqlClientPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetSqlClientPackageVersionCommand), "\s+", " "))</GetSqlClientPackageVersionCommand>
-    </PropertyGroup>
-    <Message Text=">>> Evaluating SqlClient package version via command: $(GetSqlClientPackageVersionCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(GetSqlClientPackageVersionCommand)">
-      <Output TaskParameter="ConsoleOutput" PropertyName="_EvaluatedSqlClientPackageVersion" />
-    </Exec>
-    <Error Text="Failed to evaluate SqlClientPackageVersion for PackSqlClient."
-           Condition="'$(_EvaluatedSqlClientPackageVersion)' == ''" />
-        <Error Text="PackSqlClient requires PackageVersionAbstractions. Specify -p:PackageVersionAbstractions=&lt;version&gt;."
-          Condition="'$(PackageVersionAbstractions)' == ''" />
-        <Error Text="PackSqlClient requires PackageVersionLogging. Specify -p:PackageVersionLogging=&lt;version&gt;."
-          Condition="'$(PackageVersionLogging)' == ''" />
+    <Error Text="PackSqlClient requires PackageVersionAbstractions. Specify -p:PackageVersionAbstractions=&lt;version&gt;."
+           Condition="'$(PackageVersionAbstractions)' == ''" />
+    <Error Text="PackSqlClient requires PackageVersionLogging. Specify -p:PackageVersionLogging=&lt;version&gt;."
+           Condition="'$(PackageVersionLogging)' == ''" />
 
     <!-- Evaluate AbstractionsPackageVersion from project if not provided -->
     <PropertyGroup Condition="'$(PackageVersionAbstractions)' == ''">
@@ -605,9 +583,12 @@
            Condition="'$(PackageVersionLogging)' == ''" />
 
     <PropertyGroup>
+<<<<<<< HEAD
       <_EvaluatedSqlClientPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(_EvaluatedSqlClientPackageVersion), "\s", ""))</_EvaluatedSqlClientPackageVersion>
       <PackageVersionAbstractions>$([System.Text.RegularExpressions.Regex]::Replace($(PackageVersionAbstractions), "\s", ""))</PackageVersionAbstractions>
       <PackageVersionLogging>$([System.Text.RegularExpressions.Regex]::Replace($(PackageVersionLogging), "\s", ""))</PackageVersionLogging>
+=======
+>>>>>>> a31e7e8fc (Simplify SqlClient pack version flow)
       <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(SqlClientProjectPath)"
@@ -627,7 +608,6 @@
 
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
         -p:CommitId="$(CommitId)"
-        -p:NuspecVersion="$(_EvaluatedSqlClientPackageVersion)"
         -p:PackageOutputPath="$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
