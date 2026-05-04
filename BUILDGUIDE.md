@@ -20,9 +20,8 @@ on operating systems that do not support .NET Framework. As such, it is not nece
 no action is required. On Linux and macOS systems, the `pwsh` command is required to be in the `$PATH` environment
 variable. For specific instructions see: [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell)
 
-The **NuGet** binary is required to package the Microsoft.Data.SqlClient project. For convenience, this can be done
-via the PowerShell script [tools/scripts/downloadLatestNuget.ps1](tools/scripts/downloadLatestNuget.ps1), however, any
-`nuget.exe` binary can be used.
+The **NuGet** binary is optional for inspection and feed-management workflows, but build and packaging flows in this
+repository are run through `dotnet build` against `build.proj`.
 
 ## Developer Workflow
 
@@ -35,9 +34,7 @@ package the project. The `build.proj` file provides convenient targets to accomp
 > is recommended that `build.proj` is used for local development, as well.
 
 > [!TIP]
-> `build.proj` was written with the intention of being called from `msbuild`. As such, the examples below
-> use `msbuild`. On systems where `msbuild` is not available, simply replace `msbuild` with `dotnet msbuild` to get the
-> same behavior.
+> Use `dotnet build` with `build.proj` for local and CI workflows in this repository.
 
 > [!TIP]
 > This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is available in
@@ -45,10 +42,10 @@ package the project. The `build.proj` file provides convenient targets to accomp
 
 ### Building Projects
 
-From the root of your repository, run `msbuild` against `build.proj` with a build target, following this pattern:
+From the root of your repository, run `dotnet build` against `build.proj` with a build target, following this pattern:
 
 ```bash
-msbuild build.proj -t:<build_target> [optional_parameters]
+dotnet build build.proj -t:<build_target> [optional_parameters]
 ```
 
 The following build targets can be used to build the following projects. All targets will implicitly build any other
@@ -86,18 +83,21 @@ placed in `artifacts/Microsoft.Data.SqlClient.ref/Project-<configuration>/<tfm>`
 #### Examples
 
 Build all projects:
+
 ```bash
-msbuild build.proj -t:Build
+dotnet build build.proj -t:Build
 ```
 
 Build Microsoft.Data.SqlClient in Release configuration:
+
 ```bash
-msbuild build.proj -t:BuildSqlClient -p:Configuration=Release
+dotnet build build.proj -t:BuildSqlClient -p:Configuration=Release
 ```
 
 Build v1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
+
 ```bash
-msbuild build.proj -t:BuildAbstractions -p:PackageVersionAbstractions=1.2.3
+dotnet build build.proj -t:BuildAbstractions -p:PackageVersionAbstractions=1.2.3
 ```
 
 ### Testing Projects
@@ -105,10 +105,10 @@ msbuild build.proj -t:BuildAbstractions -p:PackageVersionAbstractions=1.2.3
 This section provides a summary and brief example of how to execute tests for projects in this repository. **For more
 information about test procedures, including config file setup, see [TESTGUIDE.md](TESTGUIDE.md).**
 
-From the root of your repository, run `msbuild` against `build.proj` with a test target, following this pattern:
+From the root of your repository, run `dotnet build` against `build.proj` with a test target, following this pattern:
 
 ```bash
-msbuild build.proj -t:<test_target> [optional_parameters]
+dotnet build build.proj -t:<test_target> [optional_parameters]
 ```
 
 | `<test_target>`            | Description                                                                                                                                         |
@@ -140,37 +140,37 @@ A selection of parameters for test targets in `build.proj` relevant to common de
 Run Microsoft.Data.SqlClient unit tests:
 
 ```bash
-msbuild build.proj -t:TestSqlClientUnit
+dotnet build build.proj -t:TestSqlClientUnit
 ```
 
 Run Microsoft.Data.SqlClient manual test set 2:
 ```bash
-msbuild build.proj -t:TestSqlClientManual -p:TestSet=2
+dotnet build build.proj -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run Microsoft.Data.SqlClient functional tests against x86 dotnet:
 ```bash
-msbuild build.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+dotnet build build.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Microsoft.Data.SqlClient.Extensions.Azure unit tests, including interactive, but excluding failing tests:
 ```bash
-msbuild build.proj -t:TestAzure -p:TestFilters=category!=failing
+dotnet build build.proj -t:TestAzure -p:TestFilters=category!=failing
 ```
 
 Run Microsoft.Data.SqlClient functional tests against net8.0 runtime:
 ```bash
-msbuild build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ```
 
 ### Packaging Projects
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
-also handled by `build.proj`. From the root of your repository, run `msbuild` against `build.proj` with a pack target,
+also handle by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:
 
 ```bash
-msbuild build.proj -t:<pack_target> [optional_parameters]
+dotnet build build.proj -t:<pack_target> [optional_parameters]
 ```
 
 | `<pack_target>`   | Description                                                                         |
@@ -191,30 +191,34 @@ A selection of parameters for pack targets in `build.proj` relevant to common de
 | `[optional_parameter]`             | Default Value | Allowed Values        | Description                                                                                                                                                    |
 |------------------------------------|---------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`                | `Debug`       | `Debug`, `Release`    | Build configuration. Only applies if project and dependencies are being built.                                                                                 |
-| `-p:NugetPath=`                    | `[blank]`     | eg. `C:\my\nuget.exe` | _Only applies to `PackSqlClient`._ Path to `nuget.exe` to use. If not provided, defaults to `nuget.exe` in the PATH.                                           |
 | `-p:PackBuild=`                    | `true`        | `true`, `false`       | Whether or not to build the project before packing. If `false`, project must be built using the same parameters.                                               |
 | `-p:PackageVersion<TargetPackage>=` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
+
+For `PackSqlClient`, these additional parameters are required because dependency versions are injected into the SqlClient nuspec during pack:
+
+- `-p:PackageVersionAbstractions=<version>`
+- `-p:PackageVersionLogging=<version>`
 
 #### Examples
 
 Package Microsoft.Data.SqlClient.Internal.Logging into a NuGet package:
 ```bash
-msbuild build.proj -t:PackLogging
+dotnet build build.proj -t:PackLogging
 ```
 
-Package Microsoft.Data.SqlClient if `nuget.exe` is not in the `$PATH` environment variable:
+Package Microsoft.Data.SqlClient:
 ```bash
-msbuild build.proj -t:PackSqlClient -p:NugetPath="C:\my\nuget.exe"
+dotnet build build.proj -t:PackSqlClient -p:PackageVersionAbstractions=<version> -p:PackageVersionLogging=<version>
 ```
 
 Package version 1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
 ```bash
-msbuild build.proj -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
+dotnet build build.proj -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
 ```
 
 Package Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand:
 ```bash
-msbuild build.proj -t:PackAzure -p:PackBuild=false
+dotnet build build.proj -t:PackAzure -p:PackBuild=false
 ```
 
 ## Versioning
@@ -276,20 +280,20 @@ and Microsoft.Data.SqlClient.Internal.Logging v2.2.2.
 
 ```bash
 # Build v2.2.2 of Logging and copy to packages
-msbuild build.proj -t:PackLogging \
+dotnet build build.proj -t:PackLogging \
   -p:ReferenceType=Package \
   -p:PackageVersionLogging=2.2.2
 cp artifacts/Microsoft.Data.SqlClient.Internal.Logging/Debug/*.*pkg packages/
 
 # Build v1.0.1 of Abstractions that depends on v2.2.2 of Logging
-msbuild build.proj -t:PackAbstractions \
+dotnet build build.proj -t:PackAbstractions \
   -p:ReferenceType=Package \
   -p:PackageVersionAbstractions=1.0.1 \
   -p:PackageVersionLogging=2.2.2 \
 cp artifacts/Microsoft.Data.SqlClient.Extensions.Abstractions/Package-Debug/*.*pkg packages/
 
 # Build SqlClient
-msbuild -t:PackSqlClient \
+dotnet build build.proj -t:PackSqlClient \
   -p:ReferenceType=Package \
   -p:PackageVersionSqlClient=7.1.1 \
   -p:PackageVersionAbstractions=1.0.1 \
@@ -299,7 +303,7 @@ cp artifacts/Microsoft.Data.SqlClient/Package-Debug/*.*pkg packages/
 
 Run Microsoft.Data.SqlClient functional tests against the versions built above:
 ```bash
-msbuild build.proj -t:TestSqlClientFunctional \
+dotnet build build.proj -t:TestSqlClientFunctional \
   -p:ReferenceType=Package \
   -p:PackageVersionSqlClient=7.1.1 \
   -p:PackageVersionAbstractions=1.0.1 \

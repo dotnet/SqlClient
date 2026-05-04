@@ -83,7 +83,7 @@
     <SqlClientPackNuspecGeneratedPath Condition="'$(SqlClientPackNuspecGeneratedPath)' == ''">$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
 
     <NuspecVersion Condition="'$(NuspecVersion)' == ''">$(Version)</NuspecVersion>
-    <NuspecFile Condition="'$(NuspecFile)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</NuspecFile>
+    <NuspecFile Condition="'$(NuspecFile)' == ''">$(SqlClientPackNuspecTemplatePath)</NuspecFile>
     <NuspecBasePath Condition="'$(NuspecBasePath)' == ''">$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
     <IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
     <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == ''">snupkg</SymbolPackageFormat>
@@ -99,6 +99,13 @@
   <Target Name="PrepareSqlClientPackNuspec"
           BeforeTargets="GenerateNuspec"
           Condition="'$(NuspecFile)' == '$(SqlClientPackNuspecTemplatePath)'">
+      <Error Text="PrepareSqlClientPackNuspec requires AbstractionsPackageVersion. Specify -p:PackageVersionAbstractions=&lt;version&gt;."
+        Condition="'$(AbstractionsPackageVersion)' == ''" />
+      <Error Text="PrepareSqlClientPackNuspec requires LoggingPackageVersion. Specify -p:PackageVersionLogging=&lt;version&gt;."
+        Condition="'$(LoggingPackageVersion)' == ''" />
+      <Error Text="PrepareSqlClientPackNuspec requires NuspecVersion. Specify -p:NuspecVersion=&lt;version&gt;."
+        Condition="'$(NuspecVersion)' == ''" />
+
     <PropertyGroup>
       <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('<version>1.0.0</version>','<version>$(NuspecVersion)</version>'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
