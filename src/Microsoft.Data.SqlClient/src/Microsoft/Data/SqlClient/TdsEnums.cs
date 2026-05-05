@@ -314,19 +314,13 @@ namespace Microsoft.Data.SqlClient
 
             Client sends:
             0x70000000 -> 7.0
-            0x71000000 -> 2000 RTM
-            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
 
             Server responds:
-            0x07000000 -> 7.0     // Notice server response format is different for bwd compat
-            0x07010000 -> 2000 RTM // Notice server response format is different for bwd compat
-            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
         */
 
         // Majors:
-        // For 2000 SP1 and later the versioning schema changed and
         // the high-byte is sufficient to distinguish later versions
         public const int SQL2005_MAJOR = 0x72;
         public const int SQL2008_MAJOR = 0x73;
@@ -448,11 +442,9 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 
-        // The following datatypes are specific to 2000 (version 8) and later.
+        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
-
-        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLXMLTYPE = 0xf1;
         public const int XMLUNICODEBOM = 0xfeff;
         public static readonly byte[] XMLUNICODEBOMBYTES = { 0xff, 0xfe };
