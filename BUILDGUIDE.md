@@ -16,11 +16,11 @@ on operating systems that do not support .NET Framework. As such, it is not nece
 
 ### Miscellaneous
 
-**Powershell** is required to run several miscellaneous tasks as part of building and packaging. On Windows systems,
-no action is required. On Linux and MacOS systems, the `pwsh` command is required to be in the `$PATH` environment
+**PowerShell** is required to run several miscellaneous tasks as part of building and packaging. On Windows systems,
+no action is required. On Linux and macOS systems, the `pwsh` command is required to be in the `$PATH` environment
 variable. For specific instructions see: [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell)
 
-The **NuGet** binary is required to package the Microsoft.Data.SqlClient project. For convenience, this can be be done
+The **NuGet** binary is required to package the Microsoft.Data.SqlClient project. For convenience, this can be done
 via the PowerShell script [tools/scripts/downloadLatestNuget.ps1](tools/scripts/downloadLatestNuget.ps1), however, any
 `nuget.exe` binary can be used.
 
@@ -35,12 +35,12 @@ package the project. The `build.proj` file provides convenient targets to accomp
 > is recommended that `build.proj` is used for local development, as well.
 
 > [!TIP]
-> `build.proj` was written with the intention of being called from `msbuild`. As such, the following examples below
+> `build.proj` was written with the intention of being called from `msbuild`. As such, the examples below
 > use `msbuild`. On systems where `msbuild` is not available, simply replace `msbuild` with `dotnet msbuild` to get the
 > same behavior.
 
 > [!TIP]
-> This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is avilable in
+> This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is available in
 > [`build.proj`](build.proj).
 
 ### Building Projects
@@ -73,7 +73,7 @@ A selection of parameters for build targets in `build.proj` can be found below:
 | `[optional_parameter]`            | Allowed Values                   | Default   | Description                                                                                                                                   |
 |-----------------------------------|----------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`               | `Debug`, `Release`               | `Debug`   | Build configuration                                                                                                                           |
-| `-p:PackageVersion<TargetPackage> | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the target package. Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
+| `-p:PackageVersion<TargetPackage>=` | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the target package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
 
 For most projects, build output is placed in `artifacts/<package_name>/Project-<configuration>/<tfm>`. `<package_name>`
 is the full name of the package, `<configuration>` is the build configuration, and `<tfm>` is the target framework
@@ -97,7 +97,7 @@ msbuild build.proj -t:BuildSqlClient -p:Configuration=Release
 
 Build v1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
 ```bash
-msbuild build.proj -t:BuildAbstractions -p:PackageVersion=1.2.3
+msbuild build.proj -t:BuildAbstractions -p:PackageVersionAbstractions=1.2.3
 ```
 
 ### Testing Projects
@@ -165,15 +165,15 @@ msbuild build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
 
 ### Packaging Projects
 
-Just like bulding and testing the various projects in this repository, packaging the projects into NuGet packages is
-also handle by `build.proj`. From the root of your repository, run `msbuild` against `build.proj` with a test target,
+Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
+also handled by `build.proj`. From the root of your repository, run `msbuild` against `build.proj` with a pack target,
 following this pattern:
 
 ```bash
 msbuild build.proj -t:<pack_target> [optional_parameters]
 ```
 
-| `<build_target>`   | Desription                                                                          |
+| `<pack_target>`   | Description                                                                         |
 |--------------------|-------------------------------------------------------------------------------------|
 | `Pack`             | Packages all projects in the repository.                                            |
 | `PackAbstractions` | Packages the Microsoft.Data.SqlClient.Extensions.Abstractions package               |
@@ -191,9 +191,9 @@ A selection of parameters for pack targets in `build.proj` relevant to common de
 | `[optional_parameter]`             | Default Value | Allowed Values        | Description                                                                                                                                                    |
 |------------------------------------|---------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`                | `Debug`       | `Debug`, `Release`    | Build configuration. Only applies if project and dependencies are being built.                                                                                 |
-| `-p:NugetPath=`                    | `[blank]`     | eg. `C:\my\nuget.exe` | _Only applies to `PackSqlClient`._ Path to `nuget.exe` that to use. If not provided, defaults to `nuget.exe` in the PATH.                                      |
+| `-p:NugetPath=`                    | `[blank]`     | eg. `C:\my\nuget.exe` | _Only applies to `PackSqlClient`._ Path to `nuget.exe` to use. If not provided, defaults to `nuget.exe` in the PATH.                                           |
 | `-p:PackBuild=`                    | `true`        | `true`, `false`       | Whether or not to build the project before packing. If `false`, project must be built using the same parameters.                                               |
-| `-p:PackageVersion<TargetProject>` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
+| `-p:PackageVersion<TargetPackage>=` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
 
 #### Examples
 
@@ -212,7 +212,7 @@ Package version 1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
 msbuild build.proj -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
 ```
 
-Package version Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand:
+Package Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand:
 ```bash
 msbuild build.proj -t:PackAzure -p:PackBuild=false
 ```
@@ -236,7 +236,7 @@ as the latest released version of the package. For the table below, we assume th
 |------------------|---------------|---------------|------------------|------------------|---------------|------------------------------------------------------------|
 | N/A              | N/A           | N/A           | `1.2.3-dev`      | `1.0.0`          | `1.2.3.0`     | Standard developer scenario                                |
 | `9.8.7`          | N/A           | N/A           | `9.8.7`          | `9.0.0`          | `9.8.7.0`     | Developer is building a specific version of the package    |
-| `9.8.7-preview1` | N/A           | N/A           | `9.8.7-preview1` | `9.0.0`          | `9.8.7.0`     | Developer is buildins a pre-release version of the package |
+| `9.8.7-preview1` | N/A           | N/A           | `9.8.7-preview1` | `9.0.0`          | `9.8.7.0`     | Developer is building a pre-release version of the package |
 | N/A              | `1234`        | N/A           | `1.2.3`          | `1.0.0`          | `1.2.3.1234`  | Automated pipelines building GA releases                   |
 | N/A              | `1234`        | `ci`          | `1.2.3-ci1234`   | `1.0.0`          | `1.2.3.1234`  | Automated pipelines building non-prod releases             |
 
@@ -247,7 +247,7 @@ as the latest released version of the package. For the table below, we assume th
 The above documentation is the default mode of operation, and is the recommended mode for most developers. However,
 `build.proj` supports "package mode" builds. In this mode, instead of projects depending on other projects, they
 depend on NuGet packages. This mode is useful for verifying that packages work with each other, especially in automated
-build scenarios. For completeness, and debugging of autoamted builds, this section documents behavior of "package mode".
+build scenarios. For completeness, and debugging of automated builds, this section documents behavior of "package mode".
 
 To switch to "package mode", set the `ReferenceType` parameter in `build.proj` to `Package`. And, optionally, include
 one or more of the following parameters:
@@ -297,7 +297,7 @@ msbuild -t:PackSqlClient \
 cp artifacts/Microsoft.Data.SqlClient/Package-Debug/*.*pkg packages/
 ```
 
-Run Microsoft.Data.SqlClient functional tests against the versions build above:
+Run Microsoft.Data.SqlClient functional tests against the versions built above:
 ```bash
 msbuild build.proj -t:TestSqlClientFunctional \
   -p:ReferenceType=Package \
@@ -422,7 +422,7 @@ copy the file into the `artifacts` directory alongside the benchmark DLL.  By
 default, the benchmarks look for `runnerconfig.json` in the same directory as
 the DLL.
 
-Optionally, to avoid polluting your git workspace and requring a build after
+Optionally, to avoid polluting your git workspace and requiring a build after
 each config change, copy `runnerconfig.json` to a new file, make your edits
 there, and then specify the new file with the RUNNER_CONFIG environment
 variable.

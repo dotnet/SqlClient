@@ -155,7 +155,7 @@
     -->
     <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
     <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
-      -p:AzurePackageVersion=$(PackageVersionAbstractions)
+      -p:AzurePackageVersion=$(PackageVersionAzure)
     </PackageVersionAzureArgument>
 
     <!--
@@ -572,8 +572,52 @@
     <Error Text="Failed to evaluate SqlClientPackageVersion for PackSqlClient."
            Condition="'$(_EvaluatedSqlClientPackageVersion)' == ''" />
 
+    <!-- Evaluate AbstractionsPackageVersion from project if not provided -->
+    <PropertyGroup Condition="'$(PackageVersionAbstractions)' == ''">
+      <GetAbstractionsPackageVersionCommand>
+        "$(DotnetPath)dotnet" msbuild "$(AbstractionsProjectPath)"
+        -nologo
+        -verbosity:quiet
+        -getProperty:AbstractionsPackageVersion
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+      </GetAbstractionsPackageVersionCommand>
+      <GetAbstractionsPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetAbstractionsPackageVersionCommand), "\s+", " "))</GetAbstractionsPackageVersionCommand>
+    </PropertyGroup>
+    <Message Text=">>> Evaluating Abstractions package version via command: $(GetAbstractionsPackageVersionCommand)"
+             Condition="'$(PackageVersionAbstractions)' == ''" />
+    <Exec ConsoleToMsBuild="true" Command="$(GetAbstractionsPackageVersionCommand)"
+          Condition="'$(PackageVersionAbstractions)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="PackageVersionAbstractions" />
+    </Exec>
+    <Error Text="Failed to evaluate AbstractionsPackageVersion for PackSqlClient."
+           Condition="'$(PackageVersionAbstractions)' == ''" />
+
+    <!-- Evaluate LoggingPackageVersion from project if not provided -->
+    <PropertyGroup Condition="'$(PackageVersionLogging)' == ''">
+      <GetLoggingPackageVersionCommand>
+        "$(DotnetPath)dotnet" msbuild "$(LoggingProjectPath)"
+        -nologo
+        -verbosity:quiet
+        -getProperty:LoggingPackageVersion
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+      </GetLoggingPackageVersionCommand>
+      <GetLoggingPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetLoggingPackageVersionCommand), "\s+", " "))</GetLoggingPackageVersionCommand>
+    </PropertyGroup>
+    <Message Text=">>> Evaluating Logging package version via command: $(GetLoggingPackageVersionCommand)"
+             Condition="'$(PackageVersionLogging)' == ''" />
+    <Exec ConsoleToMsBuild="true" Command="$(GetLoggingPackageVersionCommand)"
+          Condition="'$(PackageVersionLogging)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="PackageVersionLogging" />
+    </Exec>
+    <Error Text="Failed to evaluate LoggingPackageVersion for PackSqlClient."
+           Condition="'$(PackageVersionLogging)' == ''" />
+
     <PropertyGroup>
       <_EvaluatedSqlClientPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(_EvaluatedSqlClientPackageVersion), "\s", ""))</_EvaluatedSqlClientPackageVersion>
+      <PackageVersionAbstractions>$([System.Text.RegularExpressions.Regex]::Replace($(PackageVersionAbstractions), "\s", ""))</PackageVersionAbstractions>
+      <PackageVersionLogging>$([System.Text.RegularExpressions.Regex]::Replace($(PackageVersionLogging), "\s", ""))</PackageVersionLogging>
       <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
       <NuGetCommand>
         "$(NugetPath)" pack "$(SqlClientNuspecPath)"
