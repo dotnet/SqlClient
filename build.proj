@@ -333,13 +333,13 @@
       TestSet
       Applies to:     TestSqlClientManual
       Description:    Used to select a set of tests to run from the SqlClient manual tests project. If not
-                      specified, all tests will be executed.
+                      specified, all manual tests will be executed. In the manual test target, this
+                      value is converted into a Set trait filter and combined with any TestFilters.
       Default value:  [blank]
       Allowed values: ([1][2][3][AE])
       Examples:       "1", "12", "AE", "12AE"
     -->
     <TestSet Condition="'$(TestSet)' == ''" />
-    <TestSetArgument Condition="'$(TestSet)' != ''">-p:TestSet="$(TestSet)"</TestSetArgument>
   </PropertyGroup>
 
   <!-- ================================================================= -->
@@ -675,14 +675,27 @@
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
 
+      <!-- Join test sets together, if any were selected -->
+      <NormalizedTestSet>$(TestSet.ToUpper())</NormalizedTestSet>
+      <TestSetFilter Condition="$(NormalizedTestSet.Contains('1'))">Set=1</TestSetFilter>
+      <TestSetFilter Condition="$(NormalizedTestSet.Contains('2'))">$(TestSetFilter)|Set=2</TestSetFilter>
+      <TestSetFilter Condition="$(NormalizedTestSet.Contains('3'))">$(TestSetFilter)|Set=3</TestSetFilter>
+      <TestSetFilter Condition="$(NormalizedTestSet.Contains('AE'))">$(TestSetFilter)|Set=AE</TestSetFilter>
+      <TestSetFilter>$(TestSetFilter.Trim('|'))</TestSetFilter>
+
+      <!-- Combine existing filters with test set filters -->
+      <ManualTestFilters Condition="'$(TestSetFilter)' != '' and '$(TestFilters)' != ''">$(TestFilters)&amp;($(TestSetFilter))</ManualTestFilters>
+      <ManualTestFilters Condition="'$(TestSetFilter)' == ''">$(TestFilters)</ManualTestFilters>
+      <ManualTestFilters Condition="'$(TestFilters)' == ''">$(TestSetFilter)</ManualTestFilters>
+      <ManualTestFiltersArgument Condition="'$(ManualTestFilters)' != ''">--filter "$(ManualTestFilters)"</ManualTestFiltersArgument>
+
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientManualTestProjectPath)"
         -p:Configuration=$(Configuration)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
-        $(TestFiltersArgument)
+        $(ManualTestFiltersArgument)
         $(TestFrameworkArgument)
-        $(TestSetArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
