@@ -34,6 +34,8 @@ az rest \
   --url "https://dev.azure.com/<org>/_apis/projects?api-version=7.1-preview.4"
 ```
 
+Note: API versions can differ by endpoint. The examples below use `7.1-preview.3` for work item PATCH calls, while this auth check uses `7.1-preview.4`.
+
 ## Safe Update Pattern (Prevents Type/Value Errors)
 
 Some work items reject a direct type switch unless a valid value is provided. Use this two-step process:
@@ -47,32 +49,36 @@ desc=$(az boards work-item show --id <id> | jq -r '.fields["System.Description"]
 ### Step 2: Force markdown type with temporary empty value
 
 ```bash
+PATCH_STEP1_FILE="${PATCH_STEP1_FILE:-./patch-step1.json}"
+
 jq -n '[
   {"op":"replace","path":"/fields/System.Description","value":""},
   {"op":"replace","path":"/multilineFieldsFormat/System.Description","value":"markdown"}
-]' >/tmp/patch-step1.json
+]' >"$PATCH_STEP1_FILE"
 
 az rest \
   --method PATCH \
   --resource 499b84ac-1321-427f-aa17-267ca6975798 \
   --url "https://dev.azure.com/<org>/<project>/_apis/wit/workitems/<id>?api-version=7.1-preview.3" \
   --headers "Content-Type=application/json-patch+json" \
-  --body @/tmp/patch-step1.json
+  --body @"$PATCH_STEP1_FILE"
 ```
 
 ### Step 3: Restore exact Markdown text
 
 ```bash
+PATCH_STEP2_FILE="${PATCH_STEP2_FILE:-./patch-step2.json}"
+
 jq -n --arg d "$desc" '[
   {"op":"replace","path":"/fields/System.Description","value":$d}
-]' >/tmp/patch-step2.json
+]' >"$PATCH_STEP2_FILE"
 
 az rest \
   --method PATCH \
   --resource 499b84ac-1321-427f-aa17-267ca6975798 \
   --url "https://dev.azure.com/<org>/<project>/_apis/wit/workitems/<id>?api-version=7.1-preview.3" \
   --headers "Content-Type=application/json-patch+json" \
-  --body @/tmp/patch-step2.json
+  --body @"$PATCH_STEP2_FILE"
 ```
 
 ## Newline Integrity Checks
@@ -107,7 +113,7 @@ Use this after bulk updates:
 ```bash
 python3 - <<'PY'
 import json, subprocess
-ids = [44787, 44794]  # replace with your target IDs
+ids = [12345, 12346]  # replace with your target IDs
 bad = []
 for i in ids:
     out = subprocess.check_output(["az", "boards", "work-item", "show", "--id", str(i)], text=True)
