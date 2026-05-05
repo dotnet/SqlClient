@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     sealed internal class DbConnectionPoolGroup
     {
         private readonly SqlConnectionOptions _connectionOptions;
-        private readonly DbConnectionPoolKey _poolKey;
+        private readonly ConnectionPoolKey _poolKey;
         private readonly DbConnectionPoolGroupOptions _poolGroupOptions;
         private ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool> _poolCollection;
 
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private const int PoolGroupStateIdle = 2; // all pools are pruned via Clear
         private const int PoolGroupStateDisabled = 4; // factory pool entry pruning method
 
-        internal DbConnectionPoolGroup(SqlConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
+        internal DbConnectionPoolGroup(SqlConnectionOptions connectionOptions, ConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
         {
             Debug.Assert(connectionOptions != null, "null connection options");
 
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal SqlConnectionOptions ConnectionOptions => _connectionOptions;
 
-        internal DbConnectionPoolKey PoolKey => _poolKey;
+        internal ConnectionPoolKey PoolKey => _poolKey;
 
         internal DbConnectionPoolGroupProviderInfo ProviderInfo
         {

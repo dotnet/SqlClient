@@ -129,11 +129,9 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.loggingArtifactsName }}'
-              packageName: Logging
               packageFullName: Microsoft.Data.SqlClient.Internal.Logging
+              packageShortName: Logging
               packageVersion: '${{ parameters.loggingPackageVersion }}'
-              # Matches: Microsoft.Data.SqlClient.Internal.Logging.pdb across all TFM subdirs.
-              searchPattern: '**/Microsoft.Data.SqlClient.Internal.Logging.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -145,11 +143,9 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.sqlServerArtifactsName }}'
-              packageName: SqlServer
               packageFullName: Microsoft.SqlServer.Server
+              packageShortName: SqlServer
               packageVersion: '${{ parameters.sqlServerPackageVersion }}'
-              # Matches: Microsoft.SqlServer.Server.pdb across all TFM subdirs.
-              searchPattern: '**/Microsoft.SqlServer.Server.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -161,11 +157,9 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.abstractionsArtifactsName }}'
-              packageName: Abstractions
               packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
+              packageShortName: Abstractions
               packageVersion: '${{ parameters.abstractionsPackageVersion }}'
-              # Matches: Microsoft.Data.SqlClient.Extensions.Abstractions.pdb across all TFM subdirs.
-              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Abstractions.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -177,12 +171,9 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.sqlClientArtifactsName }}'
-              packageName: SqlClient
               packageFullName: Microsoft.Data.SqlClient
+              packageShortName: SqlClient
               packageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              # Matches: Microsoft.Data.SqlClient.pdb across all OS/TFM subdirs.
-              # Excludes: Microsoft.Data.SqlClient.SNI*.pdb (native SNI — symbols published separately).
-              searchPattern: '**/Microsoft.Data.SqlClient.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -194,11 +185,9 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.azureArtifactsName }}'
-              packageName: Azure
               packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
+              packageShortName: Azure
               packageVersion: '${{ parameters.azurePackageVersion }}'
-              # Matches: Microsoft.Data.SqlClient.Extensions.Azure.pdb across all TFM subdirs.
-              searchPattern: '**/Microsoft.Data.SqlClient.Extensions.Azure.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
@@ -210,11 +199,9 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.akvProviderArtifactsName }}'
-              packageName: AkvProvider
               packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+              packageShortName: AkvProvider
               packageVersion: '${{ parameters.akvProviderPackageVersion }}'
-              # Matches: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb across all TFM subdirs.
-              searchPattern: '**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb'
               symbolsAzureSubscription: '${{ parameters.symbolsAzureSubscription }}'
               symbolsPublishProjectName: '${{ parameters.symbolsPublishProjectName }}'
               symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'

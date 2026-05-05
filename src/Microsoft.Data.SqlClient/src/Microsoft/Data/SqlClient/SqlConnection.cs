@@ -705,7 +705,7 @@ namespace Microsoft.Data.SqlClient
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
                     }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
+                ConnectionString_Set(new ConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -762,7 +762,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null));
                 _accessToken = value;
             }
         }
@@ -785,7 +785,7 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(ConnectionOptions);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
                 _accessTokenCallback = value;
             }
         }
@@ -802,7 +802,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
+                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
         }
@@ -1099,7 +1099,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null));
             }
         }
 
@@ -2014,10 +2014,30 @@ namespace Microsoft.Data.SqlClient
             return GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*' />
+#if NET
+        public override Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
+#else
+        public Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
+#endif
+        {
+            return GetSchemaAsync(DbMetaDataCollectionNames.MetaDataCollections, cancellationToken);
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
         public override DataTable GetSchema(string collectionName)
         {
             return GetSchema(collectionName, null);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*' />
+#if NET
+        public override Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
+#else
+        public Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
+#endif
+        {
+            return GetSchemaAsync(collectionName, null, cancellationToken);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
@@ -2028,6 +2048,17 @@ namespace Microsoft.Data.SqlClient
             SqlConnection.ExecutePermission.Demand();
 #endif
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValuesAsync/*' />
+#if NET
+        public override Task<DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, CancellationToken cancellationToken = default)
+#else
+        public Task<DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, CancellationToken cancellationToken = default)
+#endif
+        {
+            SqlClientEventSource.Log.TryTraceEvent("SqlConnection.GetSchemaAsync | Info | Object Id {0}, Collection Name '{1}'", ObjectID, collectionName);
+            return InnerConnection.GetSchemaAsync(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues, cancellationToken);
         }
 
 #if NET
@@ -2498,7 +2529,7 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
-        private void ConnectionString_Set(DbConnectionPoolKey key)
+        private void ConnectionString_Set(ConnectionPoolKey key)
         {
             SqlConnectionOptions connectionOptions = null;
             DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
@@ -2604,7 +2635,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
+                ConnectionPoolKey key = new ConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
                 SqlConnectionOptions connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -2658,7 +2689,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
+                ConnectionPoolKey key = new ConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
                 SqlConnectionOptions connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
@@ -2708,7 +2739,7 @@ namespace Microsoft.Data.SqlClient
             {
                 con?.Dispose();
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
+            ConnectionPoolKey key = new ConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: null);
 
             SqlConnectionFactory.Instance.ClearPool(key);
         }
