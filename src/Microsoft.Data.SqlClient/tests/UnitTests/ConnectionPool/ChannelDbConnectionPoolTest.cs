@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             dbConnectionPoolGroup ??= new DbConnectionPoolGroup(
                 new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
             return new ChannelDbConnectionPool(
@@ -615,7 +615,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
                     minPoolSize: 0,
@@ -936,7 +936,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             protected override DbConnectionInternal CreateConnection(
                 DbConnectionOptions options,
-                DbConnectionPoolKey poolKey,
+                ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
                 DbConnection owningConnection,
@@ -950,7 +950,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             protected override DbConnectionInternal CreateConnection(
                 DbConnectionOptions options,
-                DbConnectionPoolKey poolKey,
+                ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
                 DbConnection owningConnection,
@@ -1007,7 +1007,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
 
@@ -1038,7 +1038,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
 
@@ -1079,7 +1079,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
                 new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions1
             );
 
@@ -1105,7 +1105,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
                 new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions2
             );
 

@@ -243,8 +243,10 @@
     <Compile Include="SQL\UdtTest\UdtTest2.cs" />
     <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
     <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
+    <Compile Include="SQL\VectorTest\Float16VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
     <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
+    <Compile Include="SQL\VectorTest\VectorBackwardCompatTestBase.cs" />
     <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />

@@ -155,7 +155,9 @@ jobs:
               authSignCertName: '${{ parameters.signingAuthSignCertName }}'
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              pattern: '${{ parameters.packageFullName }}.dll'
+              pattern: |
+                **/${{ parameters.packageFullName }}.dll
+                **/${{ parameters.packageFullName }}.resources.dll
 
       # Copy signed/unsigned DLLs and PDBs to APIScan folders.
       - task: CopyFiles@2
@@ -199,8 +201,8 @@ jobs:
               authSignCertName: '${{ parameters.signingAuthSignCertName }}'
               esrpClientId: '${{ parameters.signingEsrpClientId }}'
               esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
-              searchPath: '$(PACK_OUTPUT)'
-              searchPattern: '${{ parameters.packageFullName}}.*nupkg'
+              searchPath: '$(BUILD_OUTPUT)'
+              searchPattern: '**/${{ parameters.packageFullName}}.*nupkg'
 
       # Copy the contents of the build output for this package to the artifacts folder
       - task: CopyFiles@2

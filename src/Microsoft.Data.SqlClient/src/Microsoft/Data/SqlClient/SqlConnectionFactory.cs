@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient
         private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
         private readonly List<IDbConnectionPool> _poolsToRelease;
         private readonly Timer _pruningTimer;
-        private Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
+        private Dictionary<ConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
 
         #endregion
         
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
         
         protected SqlConnectionFactory()
         {
-            _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
+            _connectionPoolGroups = new Dictionary<ConnectionPoolKey, DbConnectionPoolGroup>();
             _poolsToRelease = new List<IDbConnectionPool>();
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
             _pruningTimer = ADP.UnsafeCreateTimer(
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient
             poolGroup?.Clear();
         }
         
-        internal void ClearPool(DbConnectionPoolKey key)
+        internal void ClearPool(ConnectionPoolKey key)
         {
             ADP.CheckArgumentNull(key.ConnectionString, $"{nameof(key)}.{nameof(key.ConnectionString)}");
             
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal DbConnectionPoolGroup GetConnectionPoolGroup(
-            DbConnectionPoolKey key,
+            ConnectionPoolKey key,
             DbConnectionPoolGroupOptions poolOptions,
             ref DbConnectionOptions userConnectionOptions)
         {
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient
                     if ((object)expandedConnectionString != (object)key.ConnectionString)
                     {
                         // CONSIDER: caching the original string to reduce future parsing
-                        DbConnectionPoolKey newKey = (DbConnectionPoolKey)key.Clone();
+                        ConnectionPoolKey newKey = (ConnectionPoolKey)key.Clone();
                         newKey.ConnectionString = expandedConnectionString;
                         return GetConnectionPoolGroup(newKey, null, ref userConnectionOptions);
                     }
@@ -233,9 +233,9 @@ namespace Microsoft.Data.SqlClient
                             };
 
                         // build new dictionary with space for new connection string
-                        Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> newConnectionPoolGroups = 
-                            new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>(1 + _connectionPoolGroups.Count);
-                        foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in _connectionPoolGroups)
+                        Dictionary<ConnectionPoolKey, DbConnectionPoolGroup> newConnectionPoolGroups = 
+                            new Dictionary<ConnectionPoolKey, DbConnectionPoolGroup>(1 + _connectionPoolGroups.Count);
+                        foreach (KeyValuePair<ConnectionPoolKey, DbConnectionPoolGroup> entry in _connectionPoolGroups)
                         {
                             newConnectionPoolGroups.Add(entry.Key, entry.Value);
                         }
@@ -469,7 +469,7 @@ namespace Microsoft.Data.SqlClient
             DbConnectionOptions connectionOptions) =>
             new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
 
-        internal SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
+        internal SqlConnectionString FindSqlConnectionOptions(ConnectionPoolKey key)
         {
             Debug.Assert(key is not null, "Key cannot be null");
 
@@ -576,14 +576,14 @@ namespace Microsoft.Data.SqlClient
         // @TODO: I think this could be broken down into methods more specific to use cases above
         protected virtual DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
+            ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
             DbConnection owningConnection,
             DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
-            SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
+            ConnectionPoolKey key = poolKey;
             SessionData recoverySessionData = null;
 
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
@@ -899,10 +899,10 @@ namespace Microsoft.Data.SqlClient
             // one. This will cause any empty pools to be put into the release list.
             lock (this)
             {
-                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> newConnectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>(connectionPoolGroups.Count);
+                Dictionary<ConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
+                Dictionary<ConnectionPoolKey, DbConnectionPoolGroup> newConnectionPoolGroups = new Dictionary<ConnectionPoolKey, DbConnectionPoolGroup>(connectionPoolGroups.Count);
 
-                foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
+                foreach (KeyValuePair<ConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
                 {
                     if (entry.Value != null)
                     {
