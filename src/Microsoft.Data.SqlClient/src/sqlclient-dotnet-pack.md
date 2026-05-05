@@ -34,7 +34,7 @@ In this flow, SDK pack token substitution is reliable for general nuspec propert
 - Replacements applied:
   - `$AbstractionsPackageVersion$` -> `$(AbstractionsPackageVersion)`
   - `$LoggingPackageVersion$` -> `$(LoggingPackageVersion)`
-  - `<version>1.0.0</version>` -> `<version>$(NuspecVersion)</version>`
+  - `$NuspecVersion$` -> `$(NuspecVersion)`
 
 This keeps layout parity with the existing nuspec while using `dotnet pack` end-to-end.
 
@@ -49,8 +49,10 @@ dotnet pack src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj --n
 To reproduce this failure in the current branch and exercise the workaround, also pass the required MSBuild properties:
 
 ```bash
-dotnet pack src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj --no-build -p:Configuration=Debug -p:ReferenceType=Project -p:PackageVersionAbstractions=1.0.0-dev -p:PackageVersionLogging=1.0.0-dev -p:NuspecVersion=7.1.0-preview1-dev -p:PackageOutputPath=<repo>/artifacts/tmp -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+dotnet pack src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj --no-build -p:Configuration=Debug -p:ReferenceType=Project -p:AbstractionsPackageVersion=1.0.0-dev -p:LoggingPackageVersion=1.0.0-dev -p:NuspecVersion=7.1.0-preview1-dev -p:PackageOutputPath=<repo>/artifacts/tmp -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
 ```
+
+Note: `PackageVersionAbstractions` and `PackageVersionLogging` are `build.proj` entrypoint properties and are translated to `AbstractionsPackageVersion` and `LoggingPackageVersion` for direct project pack.
 
 The `PrepareSqlClientPackNuspec` target will materialize the tokens into an intermediate nuspec, bypassing the SDK's substitution bug.
 

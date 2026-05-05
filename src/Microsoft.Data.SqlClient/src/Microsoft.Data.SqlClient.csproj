@@ -99,9 +99,9 @@
   <Target Name="PrepareSqlClientPackNuspec"
           BeforeTargets="GenerateNuspec"
           Condition="'$(NuspecFile)' == '$(SqlClientPackNuspecTemplatePath)'">
-      <Error Text="PrepareSqlClientPackNuspec requires AbstractionsPackageVersion. Specify -p:PackageVersionAbstractions=&lt;version&gt;."
+      <Error Text="PrepareSqlClientPackNuspec requires AbstractionsPackageVersion. Specify -p:AbstractionsPackageVersion=&lt;version&gt; (or -p:PackageVersionAbstractions=&lt;version&gt; when invoking build.proj)."
         Condition="'$(AbstractionsPackageVersion)' == ''" />
-      <Error Text="PrepareSqlClientPackNuspec requires LoggingPackageVersion. Specify -p:PackageVersionLogging=&lt;version&gt;."
+      <Error Text="PrepareSqlClientPackNuspec requires LoggingPackageVersion. Specify -p:LoggingPackageVersion=&lt;version&gt; (or -p:PackageVersionLogging=&lt;version&gt; when invoking build.proj)."
         Condition="'$(LoggingPackageVersion)' == ''" />
       <Error Text="PrepareSqlClientPackNuspec requires NuspecVersion. Specify -p:NuspecVersion=&lt;version&gt;."
         Condition="'$(NuspecVersion)' == ''" />
