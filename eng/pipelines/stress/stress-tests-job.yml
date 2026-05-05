@@ -97,12 +97,19 @@ jobs:
       - name: project
         value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
 
-      # dotnet CLI arguments.
-      - name: dotnetArguments
+      # dotnet CLI arguments for build.
+      - name: buildArguments
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
           --artifacts-path $(dotnetArtifactsDir)
           -p:Configuration=${{ parameters.buildConfiguration }}
+
+      # dotnet CLI arguments for run.
+      - name: runArguments
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          --artifacts-path $(dotnetArtifactsDir)
+          --configuration ${{ parameters.buildConfiguration }}
 
       # The contents of the config file to use for all tests.  We will write this to a JSON file and
       # then point to it via the STRESS_CONFIG_FILE environment variable.
@@ -159,7 +166,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(dotnetArguments)
+          arguments: $(buildArguments)
 
       # Run the stress tests for each .NET runtime.
       - ${{ each runtime in parameters.netTestRuntimes }}:
@@ -168,7 +175,7 @@ jobs:
           inputs:
             command: run
             projects: $(project)
-            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
@@ -177,4 +184,4 @@ jobs:
           inputs:
             command: run
             projects: $(project)
-            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)

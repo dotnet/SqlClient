@@ -17,9 +17,9 @@ on operating systems that do not support .NET Framework. As such, it is not nece
 
 ### Miscellaneous
 
-**Powershell** is required to run several miscellaneous tasks as part of building and packaging. On
+**PowerShell** is required to run several miscellaneous tasks as part of building and packaging. On
 Windows systems, either the built-in `powershell.exe` will be used, or if installed, the modern
-`pwsh` will be used. On Linux and MacOS systems, the `pwsh` command is required to be in the `$PATH`
+`pwsh` will be used. On Linux and macOS systems, the `pwsh` command is required to be in the `$PATH`
 environment variable. For specific instructions see: [Install
 PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell)
 
@@ -36,11 +36,6 @@ package the project. The `build.proj` file provides convenient targets to accomp
 > Although every effort has been made to make building and testing work in your IDE of choice, some quirks in behavior
 > may be noticed, possibly severe. All official build and test infrastructure uses the `build.proj` entrypoint, and it
 > is recommended that `build.proj` is used for local development, as well.
-
-> [!TIP]
-> `build.proj` was written with the intention of being called from `msbuild`. As such, the examples below
-> use `msbuild`. On systems where `msbuild` is not available, simply replace `msbuild` with `dotnet msbuild` to get the
-> same behavior.
 
 > [!TIP]
 > This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is available in
@@ -179,7 +174,7 @@ dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ### Packaging Projects
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
-also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a test target,
+also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:
 
 ```bash
@@ -313,7 +308,7 @@ cp artifacts/Microsoft.Data.SqlClient.Extensions.Abstractions/Package-Debug/*.*p
 Build SqlClient:
 
 ```bash
-msbuild -t:PackSqlClient \
+dotnet build -t:PackSqlClient \
   -p:ReferenceType=Package \
   -p:PackageVersionSqlClient=7.1.1 \
   -p:PackageVersionAbstractions=1.0.1 \
@@ -321,7 +316,7 @@ msbuild -t:PackSqlClient \
 cp artifacts/Microsoft.Data.SqlClient/Package-Debug/*.*pkg packages/
 ```
 
-Run Microsoft.Data.SqlClient functional tests against the versions build above:
+Run Microsoft.Data.SqlClient functional tests against the versions built above:
 
 ```bash
 dotnet build -t:TestSqlClientFunctional \
