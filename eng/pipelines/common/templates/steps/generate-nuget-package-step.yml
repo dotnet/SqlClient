@@ -70,11 +70,11 @@ steps:
         ${{parameters.nuspecPath}}
         -Version ${{parameters.packageVersion}}
         -OutputDirectory ${{parameters.outputDirectory}}
-        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"
+        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};NuspecVersion=${{parameters.packageVersion}};${{parameters.properties}}"
     ${{else }}:
       arguments: >-
         pack
         ${{parameters.nuspecPath}}
         -Version ${{parameters.packageVersion}}
         -OutputDirectory ${{parameters.outputDirectory}}
-        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};${{parameters.properties}}"
+        -properties "COMMITID=$(CommitHead);Configuration=${{parameters.buildConfiguration}};ReferenceType=${{parameters.referenceType}};NuspecVersion=${{parameters.packageVersion}};${{parameters.properties}}"

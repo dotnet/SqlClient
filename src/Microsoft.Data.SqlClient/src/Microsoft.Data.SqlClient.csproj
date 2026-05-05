@@ -79,41 +79,90 @@
   <!-- NuGet Package Config ============================================ -->
   <!-- Pack design notes: ./sqlclient-dotnet-pack.md -->
   <PropertyGroup>
+
+    <!-- Spec and proj paths. -->
     <SqlClientPackNuspecTemplatePath Condition="'$(SqlClientPackNuspecTemplatePath)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
     <SqlClientPackNuspecGeneratedPath Condition="'$(SqlClientPackNuspecGeneratedPath)' == ''">$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
+    <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
+    <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
 
-    <NuspecVersion Condition="'$(NuspecVersion)' == ''">$(Version)</NuspecVersion>
+    <!-- Properties used by dotnet pack. -->
     <NuspecFile Condition="'$(NuspecFile)' == ''">$(SqlClientPackNuspecTemplatePath)</NuspecFile>
     <NuspecBasePath Condition="'$(NuspecBasePath)' == ''">$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
+    <NuspecVersion Condition="'$(NuspecVersion)' == ''">$(Version)</NuspecVersion>
+    <NuspecProperties Condition="'$(NuspecProperties)' == ''">COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
     <IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
     <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == ''">snupkg</SymbolPackageFormat>
     <SuppressDependenciesWhenPacking Condition="'$(SuppressDependenciesWhenPacking)' == ''">true</SuppressDependenciesWhenPacking>
-
-    <NuspecProperties Condition="'$(NuspecProperties)' == ''">COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
   </PropertyGroup>
 
   <!--
     SDK pack does not reliably substitute dependency version tokens in this nuspec flow.
     We materialize those dependency versions into an intermediate nuspec before PackTask runs.
+
+    Why an intermediate nuspec is generated:
+    * The source nuspec keeps dependency versions as tokens to stay template-driven.
+    * During SDK-style packing, dependency token substitution is not consistently applied in this flow.
+    * Expanding tokens up front guarantees deterministic dependency versions in the final package metadata.
+
+    Why sibling package versions are evaluated here:
+    * Pack entrypoints may call this project directly and omit Abstractions/Logging version overrides.
+    * Those versions must still align with sibling projects' versioning rules (BuildNumber/BuildSuffix and defaults).
+    * Querying each sibling project for its computed package version preserves a single source of version truth.
   -->
   <Target Name="PrepareSqlClientPackNuspec"
           BeforeTargets="GenerateNuspec"
           Condition="'$(NuspecFile)' == '$(SqlClientPackNuspecTemplatePath)'">
-      <Error Text="PrepareSqlClientPackNuspec requires AbstractionsPackageVersion. Specify -p:AbstractionsPackageVersion=&lt;version&gt; (or -p:PackageVersionAbstractions=&lt;version&gt; when invoking build.proj)."
-        Condition="'$(AbstractionsPackageVersion)' == ''" />
-      <Error Text="PrepareSqlClientPackNuspec requires LoggingPackageVersion. Specify -p:LoggingPackageVersion=&lt;version&gt; (or -p:PackageVersionLogging=&lt;version&gt; when invoking build.proj)."
-        Condition="'$(LoggingPackageVersion)' == ''" />
-      <Error Text="PrepareSqlClientPackNuspec requires NuspecVersion. Specify -p:NuspecVersion=&lt;version&gt;."
-        Condition="'$(NuspecVersion)' == ''" />
 
+    <!-- Calculate AbstractionsPackageVersion if not already set. -->
+    <PropertyGroup Condition="'$(AbstractionsPackageVersion)' == ''">
+      <GetAbstractionsPackageVersionCommand>
+        "$(DOTNET_HOST_PATH)" msbuild "$(AbstractionsProjectPath)"
+        -nologo
+        -verbosity:quiet
+        -getProperty:AbstractionsPackageVersion
+        -p:BuildNumber=$(BuildNumber)
+        -p:BuildSuffix=$(BuildSuffix)
+      </GetAbstractionsPackageVersionCommand>
+      <GetAbstractionsPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetAbstractionsPackageVersionCommand), "\s+", " "))</GetAbstractionsPackageVersionCommand>
+    </PropertyGroup>
+    <Exec ConsoleToMsBuild="true" Command="$(GetAbstractionsPackageVersionCommand)"
+      Condition="'$(AbstractionsPackageVersion)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="AbstractionsPackageVersion" />
+    </Exec>
+    <PropertyGroup Condition="'$(GetAbstractionsPackageVersionCommand)' != ''">
+      <AbstractionsPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(AbstractionsPackageVersion), "\s", ""))</AbstractionsPackageVersion>
+    </PropertyGroup>
+
+    <!-- Calculate LoggingPackageVersion if not already set. -->
+    <PropertyGroup Condition="'$(LoggingPackageVersion)' == ''">
+      <GetLoggingPackageVersionCommand>
+        "$(DOTNET_HOST_PATH)" msbuild "$(LoggingProjectPath)"
+        -nologo
+        -verbosity:quiet
+        -getProperty:LoggingPackageVersion
+        -p:BuildNumber=$(BuildNumber)
+        -p:BuildSuffix=$(BuildSuffix)
+      </GetLoggingPackageVersionCommand>
+      <GetLoggingPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetLoggingPackageVersionCommand), "\s+", " "))</GetLoggingPackageVersionCommand>
+    </PropertyGroup>
+    <Exec ConsoleToMsBuild="true" Command="$(GetLoggingPackageVersionCommand)"
+      Condition="'$(LoggingPackageVersion)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="LoggingPackageVersion" />
+    </Exec>
+    <PropertyGroup Condition="'$(GetLoggingPackageVersionCommand)' != ''">
+      <LoggingPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(LoggingPackageVersion), "\s", ""))</LoggingPackageVersion>
+    </PropertyGroup>
+
+    <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>
       <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('$NuspecVersion$','$(NuspecVersion)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
-
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
                       Lines="$(_SqlClientPackNuspecExpandedText)"
                       Overwrite="true" />
 
+    <!-- Set the NuspecFile property to the generated nuspec file. -->
     <PropertyGroup>
       <NuspecFile>$(SqlClientPackNuspecGeneratedPath)</NuspecFile>
     </PropertyGroup>
@@ -158,7 +207,7 @@
   <!-- References ====================================================== -->
   <!-- Reference to Abstractions -->
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
+    <ProjectReference Include="$(AbstractionsProjectPath)"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
@@ -166,7 +215,7 @@
 
   <!-- Reference to Logging -->
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
+    <ProjectReference Include="$(LoggingProjectPath)"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
