@@ -77,23 +77,54 @@
   </PropertyGroup>
 
   <!-- NuGet Package Config ============================================ -->
-  <!-- Pack design notes: ./sqlclient-dotnet-pack.md -->
   <PropertyGroup>
 
     <!-- Spec and proj paths. -->
-    <SqlClientPackNuspecTemplatePath Condition="'$(SqlClientPackNuspecTemplatePath)' == ''">$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
-    <SqlClientPackNuspecGeneratedPath Condition="'$(SqlClientPackNuspecGeneratedPath)' == ''">$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
+    <SqlClientPackNuspecTemplatePath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
+    <SqlClientPackNuspecGeneratedPath>$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
+
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
 
-    <!-- Properties used by dotnet pack. -->
-    <NuspecFile Condition="'$(NuspecFile)' == ''">$(SqlClientPackNuspecTemplatePath)</NuspecFile>
-    <NuspecBasePath Condition="'$(NuspecBasePath)' == ''">$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
-    <NuspecVersion Condition="'$(NuspecVersion)' == ''">$(Version)</NuspecVersion>
-    <NuspecProperties Condition="'$(NuspecProperties)' == ''">COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
-    <IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
-    <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == ''">snupkg</SymbolPackageFormat>
-    <SuppressDependenciesWhenPacking Condition="'$(SuppressDependenciesWhenPacking)' == ''">true</SuppressDependenciesWhenPacking>
+    <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
+
+    <!--
+      Path to the nuspec to pack from. Initialized to the template path so
+      PrepareSqlClientPackNuspec can detect that it is still the template and switch to the
+      generated intermediate nuspec before GenerateNuspec runs.
+    -->
+    <NuspecFile>$(SqlClientPackNuspecTemplatePath)</NuspecFile>
+
+    <!--
+      Root used to resolve relative file paths in the nuspec (for example lib/ and runtimes/).
+      The SDK pack targets do not provide a default value; PackTask receives this value as-is.
+      This project packs from a generated nuspec under obj/, but template file paths are authored
+      relative to tools/specs, so this must point to the template directory. Clearing this causes
+      path resolution failures (for example looking under src/Microsoft.Data.SqlClient/src/icons).
+    -->
+    <NuspecBasePath>$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
+
+    <!--
+      Semicolon-separated key=value substitutions for $KEY$ tokens in nuspec metadata.
+      In this flow, metadata fields like $Version$ are substituted by PackTask, but dependency
+      version attribute tokens are not reliably substituted and are pre-expanded in
+      PrepareSqlClientPackNuspec.
+    -->
+    <NuspecProperties>Version=$(Version);COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
+
+    <!-- Emit a .snupkg symbols package alongside the main .nupkg. -->
+    <IncludeSymbols>true</IncludeSymbols>
+
+    <!-- Use snupkg (NuGet.org symbol package format). -->
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!--
+      Keep dependency information sourced from the nuspec; do not auto-generate from project
+      references.  This is necessary because, with NuspecFile-based pack, all dependency information
+      must come from the nuspec file.  The SDK will not auotmatically populate dependencies for us.
+    -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+
   </PropertyGroup>
 
   <!--
@@ -109,10 +140,22 @@
     * Pack entrypoints may call this project directly and omit Abstractions/Logging version overrides.
     * Those versions must still align with sibling projects' versioning rules (BuildNumber/BuildSuffix and defaults).
     * Querying each sibling project for its computed package version preserves a single source of version truth.
+
+    Known SDK behavior (SDK 10.0.107):
+    * Tokens in NuspecProperties are substituted for string-valued metadata fields (for example $Version$).
+    * Tokens used as dependency version attribute values are not reliably substituted in this flow, which can
+      surface as: "An error occurred while trying to parse the value '' of property 'dependencies' in the
+      manifest file" and "'' is not a valid version string."
+    * Pre-materializing dependency version tokens into the generated intermediate nuspec avoids this failure.
+
+    Related upstream issues:
+    * dotnet/sdk#15482
+    * dotnet/sdk#29661
+    * dotnet/sdk#10516
+    * dotnet/sdk#15407
+    * dotnet/sdk#16816
   -->
-  <Target Name="PrepareSqlClientPackNuspec"
-          BeforeTargets="GenerateNuspec"
-          Condition="'$(NuspecFile)' == '$(SqlClientPackNuspecTemplatePath)'">
+  <Target Name="PrepareSqlClientPackNuspec" BeforeTargets="GenerateNuspec">
 
     <!-- Calculate AbstractionsPackageVersion if not already set. -->
     <PropertyGroup Condition="'$(AbstractionsPackageVersion)' == ''">
@@ -156,7 +199,7 @@
 
     <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>
-      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('$NuspecVersion$','$(NuspecVersion)'))</_SqlClientPackNuspecExpandedText>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
                       Lines="$(_SqlClientPackNuspecExpandedText)"

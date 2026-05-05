@@ -194,10 +194,12 @@ A selection of parameters for pack targets in `build.proj` relevant to common de
 | `-p:PackBuild=`                    | `true`        | `true`, `false`       | Whether or not to build the project before packing. If `false`, project must be built using the same parameters.                                               |
 | `-p:PackageVersion<TargetPackage>=` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
 
-For `PackSqlClient`, these additional parameters are required because dependency versions are injected into the SqlClient nuspec during pack:
+For `PackSqlClient`, these additional parameters are optional overrides for dependency versions injected into the SqlClient nuspec during pack:
 
 - `-p:PackageVersionAbstractions=<version>`
 - `-p:PackageVersionLogging=<version>`
+
+If omitted, `PackSqlClient` computes `AbstractionsPackageVersion` and `LoggingPackageVersion` from sibling projects using the current `BuildNumber` and `BuildSuffix` context.
 
 #### Examples
 
@@ -208,7 +210,7 @@ dotnet build build.proj -t:PackLogging
 
 Package Microsoft.Data.SqlClient:
 ```bash
-dotnet build build.proj -t:PackSqlClient -p:PackageVersionAbstractions=<version> -p:PackageVersionLogging=<version>
+dotnet build build.proj -t:PackSqlClient
 ```
 
 Package version 1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
