@@ -5,6 +5,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
@@ -47,6 +48,15 @@ namespace Microsoft.Data.ProviderBase
         {
             throw ADP.ClosedConnectionError();
         }
+
+        protected internal override Task<DataTable> GetSchemaAsync(
+            SqlConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions,
+            CancellationToken cancellationToken)
+            => throw ADP.ClosedConnectionError();
 
         protected override DbReferenceCollection CreateReferenceCollection() => throw ADP.ClosedConnectionError();
 
