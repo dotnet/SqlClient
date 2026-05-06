@@ -7,7 +7,7 @@ using System;
 using System.Data;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
     /// Tests for Code Access Security (CAS) permission demands in SqlConnection.
