@@ -14,7 +14,8 @@ using Xunit;
 #nullable enable
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public enum TestVariations {
+    public enum TestVariations
+    {
         TestSimpleParameter_Type,
         TestSimpleParameter_Variant,
         TestSqlDataRecordParameterToTVP_Type,
@@ -31,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         SqlBulkCopyDataTable_Variant,
         SqlBulkCopyDataRow_Type,
         SqlBulkCopyDataRow_Variant
-    };
+    }
 
     public struct TestResult
     {
@@ -81,7 +82,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Assert.True(isExpectedException(e, paramValue), e.Message);
                 }
-                else {
+                else
+                {
                     Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
                 }
             }
@@ -113,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleParameter_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -149,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleParameter_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -185,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataRecordParameterToTVP_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -228,7 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataRecordParameterToTVP_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -271,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReaderParameterToTVP_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -317,7 +319,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReaderParameterToTVP_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -365,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReader_TVP_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -434,7 +436,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReader_TVP_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -503,7 +505,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleDataReader_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -554,7 +556,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleDataReader_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -605,7 +607,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopySqlDataReader_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -672,7 +674,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopySqlDataReader_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -743,7 +745,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataTable_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -792,7 +794,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataTable_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -841,7 +843,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataRow_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -885,7 +887,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataRow_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
