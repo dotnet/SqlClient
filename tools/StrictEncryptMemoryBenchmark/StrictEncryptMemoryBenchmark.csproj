@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+  </ItemGroup>
+
+  <!--
+    To test different versions, change the Version attribute below.
+    Examples:
+      Microsoft.Data.SqlClient: 6.0.2, 6.0.1, 5.2.3, etc.
+
+    To test with a locally-built MDS, replace the PackageReference with a ProjectReference:
+      <ProjectReference Include="..\..\src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj" />
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+  </ItemGroup>
+
+</Project>
