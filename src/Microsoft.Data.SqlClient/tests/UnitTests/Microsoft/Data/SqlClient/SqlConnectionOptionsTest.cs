@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
-    public class SqlConnectionStringTest : IDisposable
+    public class SqlConnectionOptionsTest : IDisposable
     {
         // Ensure we restore the original app context switch values after each
         // test.
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // Note: TNIR is disabled by default for Azure SQL Database servers (i.e. *.database.windows.net)
             // and when using federated auth unless explicitly set in the connection string.
             // However, this evaluation only happens at login time so TNIR behavior may not match
-            // the value of TransparentNetworkIPResolution property in SqlConnectionString.
+            // the value of TransparentNetworkIPResolution property in SqlConnectionOptions.
 
             // Arrange
             _appContextSwitchHelper.DisableTnirByDefault = tnirDisabledAppContext;
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             {
                 builder.TransparentNetworkIPResolution = tnirEnabledInConnString.Value;
             }
-            SqlConnectionString connectionString = new(builder.ConnectionString);
+            SqlConnectionOptions connectionString = new(builder.ConnectionString);
 
             // Assert
             Assert.Equal(expectedValue, connectionString.TransparentNetworkIPResolution);
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             {
                 builder.MultiSubnetFailover = msfInConnString.Value;
             }
-            SqlConnectionString connectionString = new(builder.ConnectionString);
+            SqlConnectionOptions connectionString = new(builder.ConnectionString);
 
             Assert.Equal(expectedValue, connectionString.MultiSubnetFailover);
         }
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
                 InitialCatalog = "database"
             };
 
-            Assert.Throws<ArgumentException>(() => new SqlConnectionString(builder.ConnectionString));
+            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
         }
     }
 }

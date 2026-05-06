@@ -18,6 +18,10 @@ using DBDataPermission = System.Data.Common.DBDataPermission;
 
 namespace Microsoft.Data.SqlClient
 {
+    // Note: This class implements Code Access Security (CAS) permission for SQL Server connections. CAS is deprecated
+    // in all modern versions of .NET and .NET Framework, but it will not be removed from .NET Framework. This class
+    // should be maintained to ensure that existing CAS-based security checks continue to work correctly on .NET Framework.
+
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*' />
     [Serializable]
     public sealed class SqlClientPermission : DBDataPermission
@@ -55,9 +59,9 @@ namespace Microsoft.Data.SqlClient
             // Used by SqlClientPermissionAttribute.CreatePermission
         }
 
-        internal SqlClientPermission(SqlConnectionString constr) : base(PermissionState.None)
+        internal SqlClientPermission(SqlConnectionOptions constr) : base(PermissionState.None)
         {
-            // Used by SqlConnectionString.CreatePermissionSet
+            // Used by SqlConnectionOptions.CreatePermissionSet
             
             if (constr != null)
             {
@@ -106,7 +110,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add[@name="connectionStringAndrestrictionsStringAndBehavior"]/*' />
         public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior)
         {
-            DbConnectionString constr = new DbConnectionString(connectionString, restrictions, behavior, SqlConnectionString.KeywordMap);
+            DbConnectionString constr = new DbConnectionString(connectionString, restrictions, behavior, SqlConnectionOptions.KeywordMap);
             AddPermissionEntry(constr);
         }
         
