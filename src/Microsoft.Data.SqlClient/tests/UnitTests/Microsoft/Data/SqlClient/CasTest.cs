@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             permissions.AddPermission(new System.Security.Permissions.SecurityPermission(
                 System.Security.Permissions.SecurityPermissionFlag.Execution));
             var sqlPerm = new SqlClientPermission(System.Security.Permissions.PermissionState.None);
-            sqlPerm.Add("Server=will_not_resolve_12345;", "", KeyRestrictionBehavior.AllowOnly);
+            sqlPerm.Add("Server=will_not_resolve_12345;Connect Timeout=1;", "", KeyRestrictionBehavior.AllowOnly);
             permissions.AddPermission(sqlPerm);
 
             var setup = new AppDomainSetup
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         private static void OpenConnectionInSandbox()
         {
-            using var connection = new SqlConnection("Server=will_not_resolve_12345;");
+            using var connection = new SqlConnection("Server=will_not_resolve_12345;Connect Timeout=1;");
             connection.Open();
         }
     }
