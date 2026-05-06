@@ -1271,7 +1271,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         {
                                             try
                                             {
-                                                // Don't specify any user options because there is no outer connection associated with the new connection
                                                 newObj = CreateObject(owningObject: null, oldConnection: null);
                                             }
                                             catch
