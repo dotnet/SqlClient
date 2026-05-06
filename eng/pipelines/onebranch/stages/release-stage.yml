@@ -147,7 +147,6 @@ stages:
           - build_abstractions
         - ${{ if or(parameters.releaseSqlClient, parameters.releaseAzure) }}:
           - build_dependent
-          - sqlclient_package_validation
         - ${{ if parameters.releaseAkvProvider }}:
           - build_addons
         - ${{ if parameters.publishSymbols }}:

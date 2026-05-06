@@ -42,6 +42,10 @@
 .PARAMETER RetryIntervalSeconds
     Seconds to wait between retry attempts (default 30).
 
+.PARAMETER SymchkPath
+    Optional path to symchk.exe. If not provided, searches standard Windows Kit installation directories.
+    Useful when symchk.exe is in a non-standard location or has been downloaded.
+
 .EXAMPLE
     .\validate-symbols.ps1 `
         -ArtifactPath    "C:\agent\_work\1\drop_SqlClient" `
@@ -74,7 +78,9 @@ param(
 
     [int]$MaxRetries = 10,
 
-    [int]$RetryIntervalSeconds = 30
+    [int]$RetryIntervalSeconds = 30,
+
+    [string]$SymchkPath
 )
 
 Set-StrictMode -Version Latest
@@ -113,22 +119,33 @@ if (-not (Test-Path $dllFullPath)) {
 
 # -- Locate symchk.exe ---------------------------------------------------------
 
-$symchkCandidates = @(
-    "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\symchk.exe"
-    "${env:ProgramFiles}\Windows Kits\10\Debuggers\x64\symchk.exe"
-)
+if (-not $SymchkPath) {
+    $symchkCandidates = @(
+        "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\symchk.exe"
+        "${env:ProgramFiles}\Windows Kits\10\Debuggers\x64\symchk.exe"
+        "${env:ProgramFiles(x86)}\Windows Kits\11\Debuggers\x64\symchk.exe"
+        "${env:ProgramFiles}\Windows Kits\11\Debuggers\x64\symchk.exe"
+    )
 
-$symchkPath = $null
-foreach ($candidate in $symchkCandidates) {
-    if (Test-Path $candidate) {
-        $symchkPath = $candidate
-        break
+    $symchkPath = $null
+    foreach ($candidate in $symchkCandidates) {
+        if (Test-Path $candidate) {
+            $symchkPath = $candidate
+            break
+        }
+    }
+
+    if (-not $symchkPath) {
+        Write-Host "##vso[task.logissue type=error]symchk.exe not found in standard locations. Ensure Debugging Tools for Windows are installed, or use -SymchkPath to specify its location."
+        exit 1
     }
 }
-
-if (-not $symchkPath) {
-    Write-Host "##vso[task.logissue type=error]symchk.exe not found. Ensure Debugging Tools for Windows are installed."
-    exit 1
+else {
+    $symchkPath = $SymchkPath
+    if (-not (Test-Path $symchkPath)) {
+        Write-Host "##vso[task.logissue type=error]symchk.exe not found at specified path: $symchkPath"
+        exit 1
+    }
 }
 
 # -- Verify symbols (with retries for publishing latency) ----------------------
