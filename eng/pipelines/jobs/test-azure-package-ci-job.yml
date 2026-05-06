@@ -153,7 +153,7 @@ jobs:
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public

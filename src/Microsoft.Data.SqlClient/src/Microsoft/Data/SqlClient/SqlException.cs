@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient
         override public string Source => DbConnectionStringDefaults.ApplicationName;
 
 
-#if NET
+        #if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
@@ -127,14 +127,15 @@ namespace Microsoft.Data.SqlClient
             get => _batchCommand;
             internal set => _batchCommand = value;
         }
-#else
-        internal SqlBatchCommand BatchCommand
+        #else
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
+        public SqlBatchCommand BatchCommand
         {
             get => _batchCommand;
-            set => _batchCommand = value;
+            internal set => _batchCommand = value;
         }
-#endif 
-        
+        #endif
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {

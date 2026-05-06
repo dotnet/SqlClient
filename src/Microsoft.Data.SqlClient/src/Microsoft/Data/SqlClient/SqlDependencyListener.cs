@@ -85,7 +85,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     _queue = _hashHelper.Queue;
                 }
 #if DEBUG
-                SqlConnectionString connectionStringOptions = new(_hashHelper.ConnectionStringBuilder.ConnectionString);
+                SqlConnectionOptions connectionStringOptions = new(_hashHelper.ConnectionStringBuilder.ConnectionString);
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
@@ -93,10 +93,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 // connection string used in the hashHelper.
                 _con = new SqlConnection(_hashHelper.ConnectionStringBuilder.ConnectionString); // Create connection and open.
 
+#if NETFRAMEWORK
                 // Assert permission for this particular connection string since it differs from the user passed string
                 // which we have already demanded upon.  
-                SqlConnectionString connStringObj = (SqlConnectionString)_con.ConnectionOptions;
-#if NETFRAMEWORK
+                SqlConnectionOptions connStringObj = _con.ConnectionOptions;
                 connStringObj.CreatePermissionSet().Assert();
                 if (connStringObj.LocalDBInstance != null)
                 {
@@ -837,9 +837,8 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     // If null, then this was called from SqlDependencyProcessDispatcher, we ignore appDomainKeyHash.
                     lock (_appDomainKeyHash)
                     {
-                        if (_appDomainKeyHash.ContainsKey(appDomainKey))
+                        if (_appDomainKeyHash.TryGetValue(appDomainKey, out int value))
                         { // Do nothing if AppDomain did not call Start!
-                            int value = _appDomainKeyHash[appDomainKey];
 
                             Debug.Assert(value > 0, "Unexpected count for appDomainKey");
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer.Stop|DEP> _appDomainKeyHash contained AppDomainKey: '{0}', pre-decrement Count: '{1}'.", appDomainKey, value);
@@ -1628,7 +1627,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                                 out user,
                                                                     queueService);
 #if DEBUG
-            SqlConnectionString connectionStringOptions = new(connectionStringBuilder.ConnectionString);
+            SqlConnectionOptions connectionStringOptions = new(connectionStringBuilder.ConnectionString);
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
@@ -1704,7 +1703,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                               out user,
                                                                   queueService);
 #if DEBUG
-            SqlConnectionString connectionStringOptions = new(connectionStringBuilder.ConnectionString);
+            SqlConnectionOptions connectionStringOptions = new(connectionStringBuilder.ConnectionString);
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 

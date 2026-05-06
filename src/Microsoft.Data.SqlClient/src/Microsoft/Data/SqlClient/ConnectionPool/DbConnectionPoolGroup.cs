@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -33,8 +32,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
     sealed internal class DbConnectionPoolGroup
     {
-        private readonly DbConnectionOptions _connectionOptions;
-        private readonly DbConnectionPoolKey _poolKey;
+        private readonly SqlConnectionOptions _connectionOptions;
+        private readonly ConnectionPoolKey _poolKey;
         private readonly DbConnectionPoolGroupOptions _poolGroupOptions;
         private ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool> _poolCollection;
 
@@ -50,12 +49,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private const int PoolGroupStateIdle = 2; // all pools are pruned via Clear
         private const int PoolGroupStateDisabled = 4; // factory pool entry pruning method
 
-        internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
+        internal DbConnectionPoolGroup(SqlConnectionOptions connectionOptions, ConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
         {
             Debug.Assert(connectionOptions != null, "null connection options");
-#if NETFRAMEWORK
-            Debug.Assert(poolGroupOptions == null || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
-#endif
 
             _connectionOptions = connectionOptions;
             _poolKey = key;
@@ -69,9 +65,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _state = PoolGroupStateActive;
         }
 
-        internal DbConnectionOptions ConnectionOptions => _connectionOptions;
+        internal SqlConnectionOptions ConnectionOptions => _connectionOptions;
 
-        internal DbConnectionPoolKey PoolKey => _poolKey;
+        internal ConnectionPoolKey PoolKey => _poolKey;
 
         internal DbConnectionPoolGroupProviderInfo ProviderInfo
         {
@@ -143,10 +139,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             IDbConnectionPool pool = null;
             if (_poolGroupOptions != null)
             {
-#if NETFRAMEWORK
-                Debug.Assert(ADP.s_isWindowsNT, "should not be pooling on Win9x");
-#endif
-
                 DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.NoIdentity;
 
                 if (_poolGroupOptions.PoolByIdentity)
@@ -179,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 IDbConnectionPool newPool;
                                 if (LocalAppContextSwitches.UseConnectionPoolV2)
                                 {
-                                    throw new NotImplementedException();
+                                    newPool = new ChannelDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
                                 }
                                 else
                                 {

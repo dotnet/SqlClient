@@ -7,7 +7,6 @@ using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 
 #nullable enable
@@ -37,6 +36,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// May be larger than the number of connections currently sitting idle in the pool.
         /// </summary>
         int Count { get; }
+
+        /// <summary>
+        /// The number of connections currently sitting idle in the pool.
+        /// </summary>
+        int IdleCount { get; }
 
         /// <summary>
         /// Indicates whether an error has occurred in the pool.
@@ -100,6 +104,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Clears the connection pool, releasing all connections and resetting the state.
         /// </summary>
+        /// <remarks>
+        /// Clearing the pool is an expensive operation and should only be used if required.
+        /// This operation may negatively interfere with pool warmup and generate high connection
+        /// churn as the warmup operation continually opens new connections to attempt 
+        /// to reach min pool size. This situation is especially likely if clear is called in a 
+        /// tight loop.
+        /// </remarks>
         void Clear();
 
         /// <summary>
@@ -111,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
         /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
-        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
+        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, SqlConnectionOptions userOptions, out DbConnectionInternal? connection);
 
         /// <summary>
         /// Replaces the internal connection currently associated with owningObject with a new internal connection from the pool.
@@ -120,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="oldConnection">The internal connection currently associated with the owning object.</param>
         /// <returns>A reference to the new DbConnectionInternal.</returns>
-        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection);
+        DbConnectionInternal ReplaceConnection(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection);
 
         /// <summary>
         /// Returns an internal connection to the pool.

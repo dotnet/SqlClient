@@ -73,10 +73,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>xunit.runner.json</Link>
     </None>
-    <None Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>CodeCoverage.runsettings</Link>
-    </None>
   </ItemGroup>
 
   <!-- Items to include in test set 1 -->
@@ -191,7 +187,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
-    <Compile Include="SQL\Batch\BatchTests.netcore.cs" />
+    <Compile Include="SQL\Batch\BatchTests.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolStressTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
@@ -246,8 +242,10 @@
     <Compile Include="SQL\UdtTest\UdtTest2.cs" />
     <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
     <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
+    <Compile Include="SQL\VectorTest\Float16VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
     <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
+    <Compile Include="SQL\VectorTest\VectorBackwardCompatTestBase.cs" />
     <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
@@ -342,7 +340,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
 
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <!-- @TODO: Should there be a package mode test for AKV? -->
   </ItemGroup>
 
@@ -416,5 +414,5 @@
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
   </ItemGroup>
-  
+
 </Project>
