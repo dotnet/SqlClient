@@ -321,6 +321,38 @@ Extended assertions for SqlClient:
 AssertExtensions.ThrowsContains<SqlException>(() => action(), "expected message");
 ```
 
+### RAII Database Object Classes
+When writing manual integration tests that require transient database objects, use the RAII classes from `Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects` instead of manually writing `try/finally` blocks with DDL `DROP`/`CREATE` statements.
+
+**Available classes:**
+
+| Class | SQL generated | Example definition argument |
+|-------|--------------|----------------------------|
+| `Table` | `CREATE TABLE {Name} {definition}` | `"(Id INT, Value NVARCHAR(100))"` |
+| `StoredProcedure` | `CREATE PROCEDURE {Name} {definition}` | `"AS BEGIN SELECT 1 END"` |
+| `UserDefinedType` | `CREATE TYPE [dbo].{Name} AS {definition}` | `"TABLE (f1 INT)"` |
+
+Each class generates a unique object name from the given prefix (incorporating a timestamp-based GUID, username, and machine name), creates the object on construction (requiring the connection to already be open), and drops it when disposed. The generated name is available via the `.Name` property.
+
+**Pattern:**
+```csharp
+using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+conn.Open();
+
+using Table testTable = new(conn, "MyTable", "(Id INT, Name NVARCHAR(100))");
+using StoredProcedure proc = new(conn, "MyProc", $"AS BEGIN SELECT * FROM {testTable.Name} END");
+
+using SqlCommand cmd = conn.CreateCommand();
+cmd.CommandText = proc.Name;
+cmd.CommandType = CommandType.StoredProcedure;
+// ... objects are automatically dropped when the scope ends
+```
+
+**Rules:**
+- Open the connection **before** constructing any database object (the constructor executes DDL immediately)
+- When objects depend on each other (e.g., a stored procedure that references a table), declare the dependent object **last** so it is disposed first — `using` declarations are disposed in reverse order
+- Use the `.Name` property directly wherever you need to reference the object in SQL; for `UserDefinedType` this already includes the `[dbo].` schema prefix, making it suitable for use as a TVP `TypeName`
+
 ## Code Coverage
 
 ### Running with Coverage
