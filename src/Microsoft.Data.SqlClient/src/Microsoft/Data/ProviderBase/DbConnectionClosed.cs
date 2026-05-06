@@ -62,9 +62,8 @@ namespace Microsoft.Data.ProviderBase
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions) =>
-            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            TaskCompletionSource<DbConnectionInternal> retry) =>
+            TryOpenConnectionInternal(outerConnection, connectionFactory, retry);
 
         /// <inheritdoc/>
         internal override void ResetConnection() => throw ADP.ClosedConnectionError();
@@ -79,8 +78,7 @@ namespace Microsoft.Data.ProviderBase
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
             => throw ADP.ConnectionAlreadyOpen(State);
     }
 
@@ -121,15 +119,13 @@ namespace Microsoft.Data.ProviderBase
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions) =>
-            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            TaskCompletionSource<DbConnectionInternal> retry) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry);
 
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             if (retry == null || !retry.Task.IsCompleted)
             {
@@ -177,8 +173,7 @@ namespace Microsoft.Data.ProviderBase
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions) =>
-            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            TaskCompletionSource<DbConnectionInternal> retry) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry);
     }
 }

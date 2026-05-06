@@ -312,8 +312,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// - Although the new password is generally not used it must be passed to the ctor. The
         ///   new Login7 packet will always write out the new password (or a length of zero and no
         ///   bytes if not present).
-        /// - userConnectionOptions may be different to connectionOptions if the connection string
-        ///   has been expanded (see SqlConnectionOptions.Expand)
         /// </remarks>
         // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
         internal SqlConnectionInternal(
@@ -324,7 +322,6 @@ namespace Microsoft.Data.SqlClient.Connection
             string newPassword,
             SecureString newSecurePassword,
             bool redirectedUserInstance,
-            SqlConnectionOptions userConnectionOptions = null,
             SessionData reconnectSessionData = null,
             bool applyTransientFaultHandling = false,
             string accessToken = null,
@@ -341,29 +338,6 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 reconnectSessionData._debugReconnectDataApplied = true;
             }
-
-            #if NETFRAMEWORK
-            try
-            {
-                // use this to help validate this object is only created after the following
-                // permission has been previously demanded in the current codepath
-                if (userConnectionOptions != null)
-                {
-                    // As mentioned above, userConnectionOptions may be different to
-                    // connectionOptions, so we need to demand on the correct connection string
-                    userConnectionOptions.DemandPermission();
-                }
-                else
-                {
-                    connectionOptions.DemandPermission();
-                }
-            }
-            catch (SecurityException)
-            {
-                Debug.Assert(false, "unexpected SecurityException for current codepath");
-                throw;
-            }
-            #endif
             #endif
 
             Debug.Assert(reconnectSessionData == null || connectionOptions.ConnectRetryCount > 0,
@@ -1970,10 +1944,9 @@ namespace Microsoft.Data.SqlClient.Connection
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
-            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry);
         }
 
         internal void ValidateConnectionForExecute(SqlCommand command)
