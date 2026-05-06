@@ -1,3 +1,5 @@
+namespace SqlCommand_ExecuteNonQueryAsync;
+
 using System;
 // <Snippet1>
 using Microsoft.Data.SqlClient;

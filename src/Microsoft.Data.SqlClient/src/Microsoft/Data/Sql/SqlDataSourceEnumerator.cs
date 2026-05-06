@@ -4,22 +4,39 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.Sql
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/SqlDataSourceEnumerator/*' />
     public sealed partial class SqlDataSourceEnumerator : DbDataSourceEnumerator
     {
-        private static readonly Lazy<SqlDataSourceEnumerator> s_singletonInstance = new(() => new SqlDataSourceEnumerator());
+        private static readonly Lazy<SqlDataSourceEnumerator> s_singletonInstance =
+            new(() => new SqlDataSourceEnumerator());
 
-        private SqlDataSourceEnumerator() : base(){}
+        private SqlDataSourceEnumerator() : base()
+        {
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/Instance/*' />
         public static SqlDataSourceEnumerator Instance => s_singletonInstance.Value;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/GetDataSources/*' />
-        override public DataTable GetDataSources() => GetDataSourcesInternal();
+        public override DataTable GetDataSources()
+        {
+            #if NETFRAMEWORK
+            return SqlDataSourceEnumeratorNativeHelper.GetDataSources();
+            #else
 
-        private partial DataTable GetDataSourcesInternal();
+            #if _UNIX
+            return SqlDataSourceEnumeratorManagedHelper.GetDataSources();
+            #else
+            return SqlClient.LocalAppContextSwitches.UseManagedNetworking
+                ? SqlDataSourceEnumeratorManagedHelper.GetDataSources()
+                : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
+            #endif
+
+            #endif
+        }
     }
 }

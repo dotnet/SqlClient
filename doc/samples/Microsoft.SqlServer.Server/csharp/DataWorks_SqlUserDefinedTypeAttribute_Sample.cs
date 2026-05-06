@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace DataWorks_SqlUserDefinedTypeAttribute_Sample;
+
+using System;
 using System.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 using System.Text;

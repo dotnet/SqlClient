@@ -1,0 +1,66 @@
+﻿<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationParameters">
+    <SqlAuthenticationParameters>
+      <summary>
+        Represents AD authentication parameters passed by a driver to authentication providers.
+      </summary>
+    </SqlAuthenticationParameters>
+    <ctor>
+      <summary>
+        Construct with values for all properties.
+      </summary>
+      <param name="authenticationMethod">The authentication method.</param>
+      <param name="serverName">The server name.</param>
+      <param name="databaseName">The database name.</param>
+      <param name="resource">The resource URI.</param>
+      <param name="authority">The authority URI.</param>
+      <param name="userId">The user login name/ID, or null if not applicable.</param>
+      <param name="password">The user password, or null if not applicable.</param>
+      <param name="connectionId">The connection ID.</param>
+      <param name="connectionTimeout">
+        The authentication timeout, in seconds.  The overall connection timeout
+        is managed by the driver; this timeout only applies to authentication.
+      </param>
+    </ctor>
+    <AuthenticationMethod>
+      <summary>Gets the authentication method.</summary>
+      <value>The authentication method.</value>
+    </AuthenticationMethod>
+    <ServerName>
+      <summary>Gets the server name.</summary>
+      <value>The server name.</value>
+    </ServerName>
+    <DatabaseName>
+      <summary>Gets the database name.</summary>
+      <value>The database name.</value>
+    </DatabaseName>
+    <Resource>
+      <summary>The resource URIs.</summary>
+      <value>The resource URI.</value>
+    </Resource>
+    <Authority>
+      <summary>Gets the authority URI.</summary>
+      <value>The authority URI.</value>
+    </Authority>
+    <UserId>
+      <summary>Gets the user login name/ID.</summary>
+      <value>The user login name/ID, or null if not applicable.</value>
+    </UserId>
+    <Password>
+      <summary>Gets the user password.</summary>
+      <value>The user password, or null if not applicable.</value>
+    </Password>
+    <ConnectionId>
+      <summary>Gets the connection ID.</summary>
+      <value>The connection ID.</value>
+    </ConnectionId>
+    <ConnectionTimeout>
+      <summary>Gets the authentication timeout value, in seconds.</summary>
+    </ConnectionTimeout>
+  </members>
+</docs>

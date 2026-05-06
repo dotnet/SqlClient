@@ -1,3 +1,5 @@
+namespace DataColumn_DataType;
+
 using System;
 using System.Data;
 // <Snippet1>

@@ -1,45 +1,69 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
-    <Description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.</Description>
-    <BaseProduct>Microsoft SqlServer Server</BaseProduct>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\</OutputPath>
-    <DocumentationFile>$(OutputPath)$(TargetFramework)\Microsoft.SqlServer.Server.xml</DocumentationFile>
-    <DebugType>portable</DebugType>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
+  <!-- Versioning ====================================================== -->
+  <Import Project="Versions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(SqlServerAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(SqlServerFileVersion)</FileVersion>
+    <Version>$(SqlServerPackageVersion)</Version>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(Configuration)/</OutputPath>
+  </PropertyGroup>
+
+  <!-- NuGet Package Config ============================================ -->
+  <!-- See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <Title>Microsoft.SqlServer.Server</Title>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
+
+Available Types:
+Microsoft.SqlServer.Server.IBinarySerializer
+Microsoft.SqlServer.Server.InvalidUdtException
+Microsoft.SqlServer.Server.SqlFacetAttribute
+Microsoft.SqlServer.Server.SqlFunctionAttribute
+Microsoft.SqlServer.Server.SqlMethodAttribute
+Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute
+Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute
+Microsoft.SqlServer.Server.DataAccessKind
+Microsoft.SqlServer.Server.SystemDataAccessKind
+Microsoft.SqlServer.Server.Format</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>sqlserver microsoft.sqlserver.server</PackageTags>
+    <PackageReleaseNotes>https://go.microsoft.com/fwlink/?linkid=2185441</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageProjectUrl>https://aka.ms/sqlclientproject</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>dotnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
   <ItemGroup>
-    <None Remove=".AssemblyAttributes" />
+    <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
-    <Compile Include="TypeForwards.cs" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' != 'net46'">
-    <Compile Include="IBinarySerialize.cs" />
-    <Compile Include="InvalidUdtException.cs" />
-    <Compile Include="SqlFacetAttribute.cs" />
-    <Compile Include="SqlFunctionAttribute.cs" />
-    <Compile Include="SqlMethodAttribute.cs" />
-    <Compile Include="SqlUserDefinedAggregateAttribute.cs" />
-    <Compile Include="SqlUserDefinedTypeAttribute.cs" />
-    <Compile Include="StringsHelper.cs" />
-    <Compile Include="Strings.Designer.cs" />
-    <Compile Update="Strings.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
-    <EmbeddedResource Update="Strings.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-
+  <!-- CodeGen Targets ================================================= -->
+  <PropertyGroup>
+    <!-- This is backwards compatibility only - @TODO: We should assess whether we actually need it in System or it can default to the assembly namespace -->
+  </PropertyGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>

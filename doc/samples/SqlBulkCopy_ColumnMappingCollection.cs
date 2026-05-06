@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ColumnMappingCollection;
+
 // <Snippet1>
 using System;
 using System.Data;

@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_RowArray;
+
 using System;
 using System.Data;
 // <Snippet1>
@@ -117,4 +119,4 @@ class Program
             "Initial Catalog=AdventureWorks;";
     }
 }
-// </Snippet>
+// </Snippet1>

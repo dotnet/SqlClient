@@ -1,3 +1,5 @@
+namespace SqlMethodCSExample;
+
 using System;
 // <Snippet1>
 using Microsoft.SqlServer.Server;

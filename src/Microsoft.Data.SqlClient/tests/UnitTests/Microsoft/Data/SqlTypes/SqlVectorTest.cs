@@ -1,4 +1,3 @@
-﻿
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
@@ -30,6 +29,13 @@ public class SqlVectorTest
     }
 
     [Fact]
+    public void Construct_Length_Exceeds_8000()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(1999));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(int.MaxValue / 2));
+    }
+
+    [Fact]
     public void Construct_Length()
     {
         var vec = SqlVector<float>.CreateNull(5);
@@ -39,7 +45,7 @@ public class SqlVectorTest
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(SQLResource.NullString, vec.GetString());
+        Assert.Equal(SQLMessage.NullString(), vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
@@ -59,7 +65,7 @@ public class SqlVectorTest
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(SQLResource.NullString, vec.GetString());
+        Assert.Equal(SQLMessage.NullString(), vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);

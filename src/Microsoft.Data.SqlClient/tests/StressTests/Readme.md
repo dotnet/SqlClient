@@ -1,26 +1,21 @@
 # Microsoft.Data.SqlClient Stress Test
 
-This Stress testing application for `Microsoft.Data.SqlClient` is under progress.
+This Stress testing application for the `Microsoft.Data.SqlClient` suite is a work in progress.
 
-This project intends to help finding a certain level of effectiveness under
-unfavorable conditions, and verifying the mode of failures.
+This project intends to help finding a certain level of effectiveness under unfavorable conditions,
+and verifying the mode of failures.
 
-This is a console application targeting all frameworks supported by MDS,
-currently:
+This is a console application targeting all frameworks supported by MDS, currently:
 
-- .NET 8.0
+- .NET 10.0
 - .NET 9.0
-- .NET Framework 4.6.2
-- .NET Framework 4.7
-- .NET Framework 4.7.1
-- .NET Framework 4.7.2
-- .NET Framework 4.8
-- .NET Framework 4.8.1
+- .NET 8.0
+- .NET Framework 4.6.2 (Windows only; higher .NET Framework versions are supported at runtime via
+  compatibility)
 
 ## Purpose of application for developers
 
-Define fuzz tests for all new features/APIs in the driver and to be run before
-every GA release.
+Define fuzz tests for all new features/APIs in the driver and to be run before every GA release.
 
 ## Pre-Requisites
 
@@ -40,14 +35,13 @@ Required in the config file:
 |`disableNamedPipes`|`true`, `false`|`true` means the connections will create just using tcp protocol.|
 |`encrypt`|`true`, `false`|Assigns the encrypt property of the connection strings.|
 
-Note: The database user must have permission to create and drop databases.
-Each execution of the stress tests will create a database with a name like:
+Note: The database user must have permission to create and drop databases.  Each execution of the
+stress tests will create a database with a name like:
 
 - `StressTests-<GUID>`
 
-The database will be dropped as a best effort once testing is complete.  This
-allows for multiple test runs to execute in parallel against the same database
-server without colliding.
+The database will be dropped as a best effort once testing is complete.  This allows for multiple
+test runs to execute in parallel against the same database server without colliding.
 
 ## Adding new Tests
 
@@ -55,83 +49,55 @@ server without colliding.
 
 ## Building the application
 
-To build the application using the `StressTests.slnx` solution:
+Build the application using the top-level project `SqlClient.Stress.Runner`:
 
 ```bash
-dotnet build [-c|--configuration <Release|Debug>]
-```
-
-```bash
-# Builds the application for the Client Os in `Debug` Configuration for `AnyCpu`
-# platform.
-#
-# All supported target frameworks are built by default.
-
-$ dotnet build
-```
-
-```bash
-# Build the application for .Net framework 4.8.1 with `Debug` configuration.
-
-$ dotnet build -f net481
-```
-
-```bash
-# Build the application for .Net 9.0 with `Release` configuration.
-
-$ dotnet build -f net9.0 -c Release
-```
-
-```bash
-# Cleans all build directories
-
-$ dotnet clean
+$ cd .../src/Microsoft.Data.SqlClient/tests/StressTests
+dotnet build SqlClient.Stress.Runner [-c <Release|Debug>]
 ```
 
 ## Running tests
 
-After building the application, find the built folder with target framework and
-run the `stresstest.exe` file with required arguments.
+After building the application, find the built folder with target framework and run the
+`stresstest.exe` file with required arguments.
 
-Find the result in a log file inside the `logs` folder besides the command
-prompt.
+Find the result in a log file inside the `logs` folder besides the command prompt.
 
-You may specify the config file by supplying an environment variable that
-points to the file:
+You may specify the config file by supplying an environment variable that points to the file:
 
 - `STRESS_CONFIG_FILE=/path/to/my/config.jsonc`
 
 ## Command prompt
 
-You must run the stress tests from the root of the Stress Tests project
-directory (i.e. the same directory this readme file is in).
+You must run the stress tests from the root of the Stress Tests project directory (i.e. the same
+directory this readme file is in).
 
 ```bash
 # Linux
-$ cd /home/paul/dev/SqlClient/src/Microsoft.Data.SqlClient/tests/StressTests
+$ cd .../src/Microsoft.Data.SqlClient/tests/StressTests
 
 # Via dotnet run CLI:
-$ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj -- -a SqlClient.Stress.Tests
+$ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- -a SqlClient.Stress.Tests
 
 # Via dotnet CLI:
 $ dotnet SqlClient.Stress.Runner/bin/Debug/net9.0/stresstest.dll -a SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
-$ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj -e STRESS_CONFIG_FILE=/path/to/config.jsonc -- -a SqlClient.Stress.Tests -console
+$ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=/path/to/config.jsonc -- -a SqlClient.Stress.Tests -console
 ```
 
 ```powershell
 # Windows
-> cd \dev\SqlClient\src\Microsoft.Data.SqlClient\tests\StressTests
+> cd ...\src\Microsoft.Data.SqlClient\tests\StressTests
 
 # Via dotnet run CLI:
-> dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner\SqlClient.Stress.Runner.csproj -- -a SqlClient.Stress.Tests
+> dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- -a SqlClient.Stress.Tests
 
 # Via executable:
 > .\SqlClient.Stress.Runner\bin\Debug\net481\stresstest.exe -a SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
-> dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner\SqlClient.Stress.Runner.csproj -e STRESS_CONFIG_FILE=c:\path\to\config.jsonc -- -a SqlClient.Stress.Tests -console
+> dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=c:\path\to\config.jsonc -- -a SqlClient.Stress.Tests -console
 ```
 
 ## Supported arguments
@@ -164,14 +130,14 @@ $ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner/SqlClient.St
 # Run the application for a built target framework and all discovered tests
 # without debugger attached and shows the test methods' names.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -printMethodName 
+> .\stresstest.exe -a SqlClient.Stress.Tests -all -printMethodName
 ```
 
 ```powershell
 # Run the application for a built target framework and all discovered tests and
 # will wait for debugger to be attached.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -debug 
+> .\stresstest.exe -a SqlClient.Stress.Tests -all -debug
 ```
 
 ```powershell

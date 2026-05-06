@@ -1,4 +1,9 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -107,7 +112,7 @@ public class NativeAeadBaseline
     public void Known_Plaintext_Encrypts_To_Known_FinalCell(byte[] plainText, byte[] rootKey, byte[] expectedFinalCell)
     {
         SqlClientSymmetricKey cek = new(rootKey);
-        SqlAeadAes256CbcHmac256Factory aeadFactory = new();
+        AeadAes256CbcHmac256Factory aeadFactory = AeadAes256CbcHmac256Factory.Instance;
         SqlClientEncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, SqlClientEncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         byte[] encryptedData = aeadAlgorithm.EncryptData(plainText);
@@ -126,7 +131,7 @@ public class NativeAeadBaseline
     public void Known_FinalCell_Decrypts_To_Known_Plaintext(byte[] expectedPlaintext, byte[] rootKey, byte[] finalCell)
     {
         SqlClientSymmetricKey cek = new(rootKey);
-        SqlAeadAes256CbcHmac256Factory aeadFactory = new();
+        AeadAes256CbcHmac256Factory aeadFactory = AeadAes256CbcHmac256Factory.Instance;
         SqlClientEncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, SqlClientEncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         byte[] decryptedData = aeadAlgorithm.DecryptData(finalCell);

@@ -1,0 +1,101 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This pipeline runs the stress test suite against the SqlClient projects, building them
+# transitively as necessary, triggered by successful runs of the following pipelines:
+#
+# Public project:
+#   Triggering pipelines: PR-SqlClient-Project, CI-SqlClient (branch main only)
+#   Pipeline name:        Stress-SqlClient
+#   Pipeline URL:         TODO: Create the Azure DevOps pipeline.
+#
+# ADO.Net project:
+#   Triggering pipeline:  MDS Main CI (branch internal/main only)
+#   Pipeline name:        Stress-SqlClient
+#   Pipeline URL:         TODO: Create the Azure DevOps pipeline.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Do not trigger this pipeline for PRs, commits, or schedules.
+pr: none
+trigger: none
+
+# Trigger this pipeline after successful runs of the desired pipelines.
+#
+# The pipeline identifiers are displayed in the Azure DevOps UI, so it is helpful if they indicate
+# the project, folder, and pipeline name, hence the verbose values below.
+#
+resources:
+  pipelines:
+
+    # The PR-SqlClient-Project pipeline in the Public project.
+    - pipeline: Public-ADO-PR-SqlClient-Project
+      project: Public
+      source: /ADO/PR-SqlClient-Project
+      trigger: true
+
+    # The CI-SqlClient pipeline in the Public project.
+    - pipeline: Public-ADO-CI-SqlClient
+      project: Public
+      source: /ADO/CI-SqlClient
+      trigger:
+        branches:
+          include:
+            - main
+
+    # The MDS Main CI pipeline in the ADO.Net project.
+    - pipeline: ADO-Net-Internal-CI-MDS-Main-CI
+      project: ADO.Net
+      source: /Internal CI/MDS Main CI
+      trigger:
+        branches:
+          include:
+            - internal/main
+
+# Pipeline parameters, visible in the Azure DevOps UI.
+parameters:
+
+  # The build configuration to use; defaults to Release.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  # True to emit debug information and steps.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+# The stages to run.
+stages:
+
+  # Generate secrets.  We use these for the local SQL Server 'sa' logins.
+  - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+
+  # Run the stress tests.
+  - template: /eng/pipelines/stress/stress-tests-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

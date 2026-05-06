@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
+using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -112,10 +114,10 @@ namespace Microsoft.Data.SqlClient
         public byte State => Errors.Count > 0 ? Errors[0].State : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
-        override public string Source => TdsEnums.SQL_PROVIDER_NAME;
+        override public string Source => DbConnectionStringDefaults.ApplicationName;
 
 
-#if NET
+        #if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
@@ -125,14 +127,15 @@ namespace Microsoft.Data.SqlClient
             get => _batchCommand;
             internal set => _batchCommand = value;
         }
-#else
-        internal SqlBatchCommand BatchCommand
+        #else
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
+        public SqlBatchCommand BatchCommand
         {
             get => _batchCommand;
-            set => _batchCommand = value;
+            internal set => _batchCommand = value;
         }
-#endif 
-        
+        #endif
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {
@@ -174,7 +177,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlError error,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null)
         {
             SqlErrorCollection errorCollection = new() { error };
@@ -200,7 +203,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlErrorCollection errorCollection,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null)
         {
             return CreateException(
@@ -214,7 +217,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CreateException(
             SqlErrorCollection errorCollection,
             string serverVersion,
-            SqlInternalConnectionTds internalConnection,
+            SqlConnectionInternal internalConnection,
             Exception innerException = null,
             SqlBatchCommand batchCommand = null)
         {
@@ -253,8 +256,6 @@ namespace Microsoft.Data.SqlClient
             Exception innerException = null,
             SqlBatchCommand batchCommand = null)
         {
-            Debug.Assert(errorCollection != null && errorCollection.Count > 0, "no errorCollection?");
-
             StringBuilder message = new();
             for (int i = 0; i < errorCollection.Count; i++)
             {
@@ -265,7 +266,11 @@ namespace Microsoft.Data.SqlClient
                 message.Append(errorCollection[i].Message);
             }
 
-            if (innerException == null && errorCollection[0].Win32ErrorCode != 0 && errorCollection[0].Win32ErrorCode != -1)
+            if (innerException is null &&
+                errorCollection is not null &&
+                errorCollection.Count > 0 &&
+                errorCollection[0].Win32ErrorCode != 0 &&
+                errorCollection[0].Win32ErrorCode != -1)
             {
                 innerException = new Win32Exception(errorCollection[0].Win32ErrorCode);
             }
@@ -278,7 +283,10 @@ namespace Microsoft.Data.SqlClient
                 exception.Data.Add("HelpLink.ProdVer", serverVersion);
             }
             exception.Data.Add("HelpLink.EvtSrc", "MSSQLServer");
-            exception.Data.Add("HelpLink.EvtID", errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
+            if (errorCollection is not null && errorCollection.Count > 0)
+            {
+                exception.Data.Add("HelpLink.EvtID", errorCollection[0].Number.ToString(CultureInfo.InvariantCulture));
+            }
             exception.Data.Add("HelpLink.BaseHelpUrl", "https://go.microsoft.com/fwlink");
             exception.Data.Add("HelpLink.LinkId", "20476");
 

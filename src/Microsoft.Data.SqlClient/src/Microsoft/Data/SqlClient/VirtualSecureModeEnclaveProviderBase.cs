@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient
         #region Members
 
         private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache(new MemoryCacheOptions());
+        private static readonly TimeSpan s_rootSigningCertificateCacheTimeout = TimeSpan.FromDays(1);
 
         #endregion
 
@@ -211,11 +212,8 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
-                };
-                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, options);
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection,
+                    absoluteExpirationRelativeToNow: s_rootSigningCertificateCacheTimeout);
             }
 
             return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);

@@ -35,7 +35,20 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Constants
         private const int DefaultBinaryBufferSize = 4096;  // Size of the buffer used to read input parameter of type Stream
-        private const int DefaultTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader       
+        private const int DefaultTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
+
+        // @TODO: Replace field with the `field` keyword when LangVersion >= 14.
+        private static XmlWriterSettings s_xmlWriterSettings;
+
+        private static XmlWriterSettings XmlWriterSettings =>
+            s_xmlWriterSettings ??= new XmlWriterSettings()
+            {
+                // Don't close the memory stream
+                CloseOutput = false,
+                ConformanceLevel = ConformanceLevel.Fragment,
+                Encoding = System.Text.Encoding.Unicode,
+                OmitXmlDeclaration = true
+            };
 
         //
         //  User-visible semantics-laden Getter/Setter support methods
@@ -3457,16 +3470,8 @@ namespace Microsoft.Data.SqlClient.Server
         private static void SetXmlReader_Unchecked(ITypedSettersV3 setters, int ordinal, XmlReader xmlReader)
         {
             // set up writer
-            XmlWriterSettings WriterSettings = new XmlWriterSettings
-            {
-                CloseOutput = false, // don't close the memory stream
-                ConformanceLevel = ConformanceLevel.Fragment,
-                Encoding = System.Text.Encoding.Unicode,
-                OmitXmlDeclaration = true
-            };
-
             using (Stream target = new SmiSettersStream(setters, ordinal, SmiMetaData.DefaultXml))
-            using (XmlWriter xmlWriter = XmlWriter.Create(target, WriterSettings))
+            using (XmlWriter xmlWriter = XmlWriter.Create(target, XmlWriterSettings))
             {
                 // now spool the data into the writer (WriteNode will call Read())
                 xmlReader.Read();

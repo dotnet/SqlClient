@@ -10,9 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
@@ -90,6 +90,17 @@ namespace Microsoft.Data.ProviderBase
         /// When the connection was created.
         /// </summary>
         internal DateTime CreateTime { get; }
+
+        /// <summary>
+        /// The pool generation at the time this connection was created or added to the pool.
+        /// Used by <see cref="ChannelDbConnectionPool"/> to detect stale connections after a pool clear.
+        /// </summary>
+        /// <remarks>
+        /// Not safe, should only be set by the connection pool.
+        /// </remarks>
+        // TODO: Ideally this would be readonly and set in the constructor. Piping the value all the way through the connection factory is too complicated to be worth it.
+        // If we can expose the constructor to the connection pool in the future, it can be set in the constructor.
+        internal int ClearGeneration { get; set; }
 
         internal bool AllowSetConnectionString { get; }
 
@@ -341,7 +352,7 @@ namespace Microsoft.Data.ProviderBase
 
             Activate(transaction);
 
-            SqlClientEventSource.Metrics.EnterActiveConnection();
+            SqlClientDiagnostics.Metrics.EnterActiveConnection();
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -454,7 +465,7 @@ namespace Microsoft.Data.ProviderBase
                             // and transactions may not get cleaned up...
                             Deactivate();
 
-                            SqlClientEventSource.Metrics.HardDisconnectRequest();
+                            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
 
                             // To prevent an endless recursion, we need to clear the owning object
                             // before we call dispose so that we can't get here a second time...
@@ -469,7 +480,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                SqlClientEventSource.Metrics.ExitNonPooledConnection();
+                                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
                                 Dispose();
                             }
                         }
@@ -495,7 +506,7 @@ namespace Microsoft.Data.ProviderBase
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
-            SqlClientEventSource.Metrics.ExitActiveConnection();
+            SqlClientDiagnostics.Metrics.ExitActiveConnection();
 
             if (!IsConnectionDoomed && Pool.UseLoadBalancing)
             {
@@ -555,7 +566,7 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks
                 // in.
-                SqlClientEventSource.Metrics.ExitNonPooledConnection();
+                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
 
                 Dispose();
             }
@@ -776,7 +787,7 @@ namespace Microsoft.Data.ProviderBase
             IsTxRootWaitingForTxEnd = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
 
-            SqlClientEventSource.Metrics.EnterStasisConnection();
+            SqlClientDiagnostics.Metrics.EnterStasisConnection();
         }
 
         /// <remarks>
@@ -790,7 +801,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
         {
             throw ADP.ConnectionAlreadyOpen(State);
         }
@@ -799,7 +810,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
         {
             throw ADP.MethodNotImplemented();
         }
@@ -860,10 +871,26 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
 
-            DbMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
             Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
 
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
+        }
+
+        protected internal virtual Task<DataTable> GetSchemaAsync(
+            SqlConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions,
+            CancellationToken cancellationToken)
+        {
+            Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
+
+            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
+
+            return metaDataFactory.GetSchemaAsync(outerConnection, collectionName, restrictions, cancellationToken);
         }
 
         protected virtual bool ObtainAdditionalLocksForClose()
@@ -886,7 +913,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
@@ -939,7 +966,7 @@ namespace Microsoft.Data.ProviderBase
                 : "Delegated Transaction has ended, connection is closed/leaked.  Disposing.";
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, {1}", ObjectID, message);
 
-            SqlClientEventSource.Metrics.ExitStasisConnection();
+            SqlClientDiagnostics.Metrics.ExitStasisConnection();
 
             IsTxRootWaitingForTxEnd = false;
         }

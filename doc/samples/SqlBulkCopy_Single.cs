@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_Single;
+
 using System;
 using System.Data;
 // <Snippet1>

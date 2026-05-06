@@ -27,15 +27,15 @@ When targeting .NET on Windows, a package reference to [Microsoft.Data.SqlClient
 
 | Topic | Link to File |
 | :---- | :------------- |
-| Coding Style | [coding-style.md](/policy/coding-style.md) |
 | Best Practices | [coding-best-practices.md](/policy/coding-best-practices.md) |
-| Review Process | [review-process.md](/policy/review-process.md) |
-| Guidelines for building the driver | [BUILDGUIDE.md](BUILDGUIDE.md) |
-| Guidelines for Contributors | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Changelog for all driver releases | [CHANGELOG.md](CHANGELOG.md) |
-| Support Policy | [SUPPORT.md](SUPPORT.md) |
+| Build Guide | [BUILDGUIDE.md](/BUILDGUIDE.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
+| Coding Style | [coding-style.md](/policy/coding-style.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
+| Review Process | [review-process.md](/policy/review-process.md) |
+| Support Policy | [SUPPORT.md](SUPPORT.md) |
 
 ## Our Featured Contributors
 

@@ -46,16 +46,15 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void WriteUserAgentFeatureRequest_WriteFalse_LengthOnlyReturn()
         {
-            byte[] payload = Encoding.UTF8.GetBytes("{\"kel\":\"sier\"}");
+            byte[] payload = Encoding.UTF8.GetBytes("User-Agent-Payload");
             var (_, countBefore) = ExtractOutputBuffer(_parser);
 
             int lengthOnly = _parser.WriteUserAgentFeatureRequest(payload, write: false);
 
             var (_, countAfter) = ExtractOutputBuffer(_parser);
 
-            // assert: total = 1 (feat-ID) + 4 (len field) + [1 (version) + payload.Length]
-            int expectedDataLen = 1 + payload.Length;
-            int expectedTotalLen = 1 + 4 + expectedDataLen;
+            // assert: total = 1 (feat-ID) + 4 (len field) + payload.Length
+            int expectedTotalLen = 1 + 4 + payload.Length;
             Assert.Equal(expectedTotalLen, lengthOnly);
 
             // assert: no bytes were written when write == false
@@ -65,7 +64,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void WriteUserAgentFeatureRequest_WriteTrue_AppendsOnlyExtensionBytes()
         {
-            byte[] payload = Encoding.UTF8.GetBytes("{\"kel\":\"sier\"}");
+            byte[] payload = Encoding.UTF8.GetBytes("User-Agent-Payload");
             var (bufferBefore, countBefore) = ExtractOutputBuffer(_parser);
 
             int returnedLength = _parser.WriteUserAgentFeatureRequest(payload, write: true);
@@ -84,23 +83,17 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 bufferAfter[start]);
 
             int dataLenFromStream = BitConverter.ToInt32(bufferAfter, start + 1);
-            int expectedDataLen = 1 + payload.Length;
-            Assert.Equal(expectedDataLen, dataLenFromStream);
-
-            Assert.Equal(
-                TdsEnums.SUPPORTED_USER_AGENT_VERSION,
-                bufferAfter[start + 5]);
+            Assert.Equal(payload.Length, dataLenFromStream);
 
             // slice into the existing buffer
             ReadOnlySpan<byte> writtenSpan = new(
                 bufferAfter,
-                start + 6,
-                appended - 6);
+                start + 5,
+                appended - 5);
 
             Assert.True(
                 writtenSpan.SequenceEqual(payload),
                 "Payload bytes did not match");
-
         }
 
     }

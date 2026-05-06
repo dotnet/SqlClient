@@ -2,9 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Win32.SafeHandles;
+#if NET && _WINDOWS
 
-#if NET
+using Microsoft.Win32.SafeHandles;
 
 namespace Interop.Windows.Handles
 {

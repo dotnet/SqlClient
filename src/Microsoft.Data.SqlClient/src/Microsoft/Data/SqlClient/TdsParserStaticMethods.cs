@@ -5,7 +5,6 @@
 using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -18,9 +17,6 @@ namespace Microsoft.Data.SqlClient
         // Static methods
         //
 
-        // SxS: this method accesses registry to resolve the alias.
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         static internal void AliasRegistryLookup(ref string host, ref string protocol)
         {
             if (!string.IsNullOrEmpty(host))
@@ -67,7 +63,7 @@ namespace Microsoft.Data.SqlClient
                                 if (-1 != index && index + 1 < parsedAliasName.Length)
                                 {
                                     parsedProtocol = parsedAliasName.Substring(0, index);
-                                    if (SqlConnectionString.ValidProtocol(parsedProtocol))
+                                    if (SqlConnectionOptions.ValidProtocol(parsedProtocol))
                                     {
                                         protocol = parsedProtocol;
                                         host = parsedAliasName.Substring(index + 1);
@@ -76,7 +72,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
+                                protocol = (string)SqlConnectionOptions.NetlibMapping()[parsedProtocol];
                                 if (protocol != null)
                                 {
                                     host = parsedAliasName;
@@ -168,8 +164,6 @@ namespace Microsoft.Data.SqlClient
 
         private static byte[] s_nicAddress = null;
 
-        [ResourceExposure(ResourceScope.None)] // SxS: we use MAC address for TDS login only
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         static internal byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
         {
             if (s_nicAddress != null)

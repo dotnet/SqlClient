@@ -68,7 +68,6 @@ namespace Microsoft.Data.SqlClient
     {
         #region Constants
         private const int NonceSize = 256;
-        private const int ThreadRetryCacheTimeoutInMinutes = 10;
         private const int LockTimeoutMaxInMilliseconds = 15 * 1000; // 15 seconds
         #endregion
 
@@ -85,6 +84,7 @@ namespace Microsoft.Data.SqlClient
 
         // It is used to save the attestation url and nonce value across API calls
         protected static readonly MemoryCache ThreadRetryCache = new MemoryCache(new MemoryCacheOptions());
+        private static readonly TimeSpan s_threadRetryCacheTimeout = TimeSpan.FromMinutes(10);
         #endregion
 
         #region protected methods
@@ -167,11 +167,8 @@ namespace Microsoft.Data.SqlClient
                         retryThreadID = Thread.CurrentThread.ManagedThreadId.ToString();
                     }
 
-                    MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
-                    {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(ThreadRetryCacheTimeoutInMinutes)
-                    };
-                    ThreadRetryCache.Set<string>(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID, options);
+                    ThreadRetryCache.Set<string>(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID,
+                        absoluteExpirationRelativeToNow: s_threadRetryCacheTimeout);
                 }
             }
         }

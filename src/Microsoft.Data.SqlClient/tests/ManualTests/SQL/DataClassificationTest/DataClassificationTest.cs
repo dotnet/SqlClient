@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_tableName;
 
         // Synapse: Azure Synapse does not support RANK
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsDataClassificationSupported))]
         public static void TestDataClassificationResultSetRank()
         {
             s_tableName = DataTestUtility.GetLongName("DC");
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     sqlConnection.Open();
-                    Assert.True(DataTestUtility.IsSupportedDataClassification());
+                    Assert.True(DataTestUtility.IsDataClassificationSupported);
                     CreateTable(sqlCommand);
                     AddSensitivity(sqlCommand, rankEnabled: true);
                     InsertData(sqlCommand);
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDataClassificationSupported))]
         public static void TestDataClassificationResultSet()
         {
             s_tableName = DataTestUtility.GetLongName("DC");
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     sqlConnection.Open();
-                    Assert.True(DataTestUtility.IsSupportedDataClassification());
+                    Assert.True(DataTestUtility.IsDataClassificationSupported);
                     CreateTable(sqlCommand);
                     AddSensitivity(sqlCommand);
                     InsertData(sqlCommand);
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlCommand.ExecuteNonQuery();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDataClassificationSupported))]
         public static void TestDataClassificationBulkCopy()
         {
             var data = new DataTable("Company");

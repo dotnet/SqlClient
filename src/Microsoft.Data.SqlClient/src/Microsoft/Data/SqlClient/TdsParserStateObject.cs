@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
@@ -2356,9 +2357,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     // if there is a snapshot which it contains a stored plp buffer take it
                     // and try to use it if it is the right length
-                    buff = TryTakeSnapshotStorage() as byte[];
-                    if (buff != null)
+                    byte[] existingBuff = TryTakeSnapshotStorage() as byte[];
+                    if (existingBuff != null)
                     {
+                        buff = existingBuff;
                         totalBytesRead = _snapshot.GetPacketDataOffset();
                     }
                 }
@@ -3492,7 +3494,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             if (s_failAsyncPends)
             {
-                throw new InvalidOperationException("Attempted to pend a read when s_failAsyncPends test hook was enabled");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_FailAsyncPendsEnabled));
             }
             if (s_forceSyncOverAsyncAfterFirstPend)
             {
@@ -3611,6 +3613,7 @@ namespace Microsoft.Data.SqlClient
             //    to the outstanding GCRoot until AppDomain.Unload.
             // We live with the above for the time being due to the constraints of the current
             // reliability infrastructure provided by the CLR.
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, Entered ReadAsyncCallback.", _objectID);
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
@@ -4867,7 +4870,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (Buffer != null && Read > 0)
                         {
-                            throw new InvalidOperationException("Packet modification detected. Hash is null but packet contains non-null buffer");
+                            throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_PacketHashNullWithNonNullBuffer));
                         }
                     }
                     else
@@ -4882,7 +4885,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (Hash[index] != checkHash[index])
                             {
-                                throw new InvalidOperationException("Packet modification detected. Hash from packet creation does not match hash from packet check");
+                                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_PacketHashMismatch));
                             }
                         }
                     }

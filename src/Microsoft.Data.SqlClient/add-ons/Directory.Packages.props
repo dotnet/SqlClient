@@ -1,6 +1,0 @@
-<Project>
-  <Import Project="..\..\..\Directory.Packages.props" />
-  <ItemGroup Condition="$(ReferenceType) == 'Package'">
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
-  </ItemGroup>
-</Project>

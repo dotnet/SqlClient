@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
@@ -74,7 +75,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string UdtTestDbName = "UdtTestDb";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
-        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
@@ -87,11 +87,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
-        private static bool s_isTDS8Supported;
+        private static string s_sqlServerVersion;
 
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
+
+        // SQL Server capabilities
+        private static bool? s_isDataClassificationSupported;
+        private static bool? s_isVectorSupported;
+        private static bool? s_isVectorFloat16Supported;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -123,22 +127,95 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
+                    s_sqlServerVersion ??= GetSqlServerProperty(TCPConnectionString, ServerProperty.ProductMajorVersion);
                 }
-                return s_sQLServerVersion;
+                return s_sqlServerVersion;
             }
         }
 
         // Is TDS8 supported
-        public static bool IsTDS8Supported
+        public static bool IsTDS8Supported =>
+            IsTCPConnStringSetup() &&
+                GetSQLServerStatusOnTDS8(TCPConnectionString);
+
+        /// <summary>
+        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
+        /// </summary>
+        /// <returns>True, if target SQL Server supports Data Classification</returns>
+        public static bool IsDataClassificationSupported =>
+            s_isDataClassificationSupported ??= IsTCPConnStringSetup() &&
+                IsObjectPresent("SYS.SENSITIVITY_CLASSIFICATIONS");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'vector' data type.
+        /// </summary>
+        /// <remarks>This method attempts to connect to the SQL Server and check for the existence of the
+        /// 'vector' data type. If a connection cannot be established or an error occurs during the query, the method
+        /// returns <see langword="false"/>.</remarks>
+        /// <returns><see langword="true"/> if the 'vector' data type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorSupported =>
+            s_isVectorSupported ??= IsTCPConnStringSetup() &&
+                IsTypePresent("vector");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'float16' base type for the 'vector' data type.
+        /// </summary>
+        /// <remarks>
+        /// Probes the server by first executing
+        /// <c>ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;</c> and then executing
+        /// <c>DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;</c>.
+        /// As a side effect, this enables preview features for the current database. If the server does not
+        /// recognize <c>float16</c> as a vector base type, if the server does not support the required syntax,
+        /// if the current principal lacks permission to change the database scoped configuration, or if another
+        /// server-side error occurs while running the probe, this method returns
+        /// <see langword="false"/>. Implies <see cref="IsSqlVectorSupported"/>.
+        /// </remarks>
+        /// <returns><see langword="true"/> if the 'float16' vector base type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorFloat16Supported =>
+            s_isVectorFloat16Supported ??= IsTCPConnStringSetup() &&
+                IsSqlVectorSupported &&
+                CheckVectorFloat16Supported();
+
+        private static bool CheckVectorFloat16Supported()
         {
-            get
+            try
             {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
+                using SqlConnection connection = new(TCPConnectionString);
+                // Enable preview features (required while float16 is in preview), then declare a
+                // float16 vector and select it back. Without a negotiated float16 feature extension,
+                // the server returns the value as a varchar(max) JSON string, which the client can
+                // safely read. We use 1.0 (exactly representable in IEEE-754 binary16) so the
+                // round-tripped JSON matches the input bit-for-bit. Any failure (server parse
+                // error such as Msg 195 "'float16' is not a recognized vector base type.", lack of
+                // permission to set PREVIEW_FEATURES, etc.) means we cannot exercise the float16
+                // path.
+                float[] expected = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+                using SqlCommand command = new(
+                    "ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;" +
+                    "DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;",
+                    connection);
+                connection.Open();
+                using SqlDataReader reader = command.ExecuteReader();
+                if (!reader.Read())
                 {
-                    s_isTDS8Supported = GetSQLServerStatusOnTDS8(TCPConnectionString);
+                    return false;
                 }
-                return s_isTDS8Supported;
+                string json = reader.GetString(0);
+                float[] actual = System.Text.Json.JsonSerializer.Deserialize<float[]>(json);
+                return actual != null && actual.Length == expected.Length
+                    && actual.AsSpan().SequenceEqual(expected);
+            }
+            catch (SqlException)
+            {
+                // Server-side failure (e.g. Msg 195 "'float16' is not a recognized vector base
+                // type.", Msg 102 syntax errors on older servers, lack of permission to set
+                // PREVIEW_FEATURES) — float16 path is unavailable.
+                return false;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Server returned a payload we can't parse as a float[] JSON array.
+                return false;
             }
         }
 
@@ -225,6 +302,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+
+            // Many of our tests require a Managed Identity provider to be
+            // registered.
+            //
+            // TODO: Figure out which ones and install on-demand rather than
+            // globally.
+            SqlAuthenticationProvider.SetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+                new ManagedIdentityProvider());
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -280,9 +366,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SecureString securePassword = new SecureString();
 
             securePassword.MakeReadOnly();
-#pragma warning disable CS0618 // Type or member is obsolete
+            #pragma warning disable CS0618 // Type or member is obsolete
             result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
-#pragma warning restore CS0618 // Type or member is obsolete
+            #pragma warning restore CS0618 // Type or member is obsolete
 
             return result.AccessToken;
         });
@@ -292,51 +378,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #nullable enable
 
         /// <summary>
-        /// Returns the current test name as:
-        /// 
-        ///   ClassName.MethodName
-        /// 
-        /// xUnit v2 doesn't provide access to a test context, so we use
-        /// reflection into the ITestOutputHelper to get the test name.
+        /// Returns the current test name as: ClassName.MethodName
+        /// xUnit v2 doesn't provide access to a test context, so we use reflection into the
+        /// ITestOutputHelper to get the test name.
         /// </summary>
-        /// 
-        /// <param name="outputHelper">
-        ///   The output helper instance for the currently running test.
-        /// </param>
-        /// 
-        /// <returns>The current test name.</returns>
+        /// <exception cref="Exception">
+        /// Thrown if any intermediate step of getting to the test name fails or is inaccessible.
+        /// </exception>
+        /// <param name="outputHelper">Output helper instance for the currently running test</param>
+        /// <returns>Current test name</returns>
         public static string CurrentTestName(ITestOutputHelper outputHelper)
         {
-            // Reflect our way to the ITest instance.
-            var type = outputHelper.GetType();
-            Assert.NotNull(type);
-            var testMember = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(testMember);
-            var test = testMember.GetValue(outputHelper) as ITest;
-            Assert.NotNull(test);
+            // Reflect our way to the ITestMethod.
+            Type type = outputHelper.GetType();
 
-            // The DisplayName is in the format:
-            // 
-            //   Namespace.ClassName.MethodName(args)
-            //
-            // We only want the ClassName.MethodName portion.
-            //
-            Match match = TestNameRegex.Match(test.DisplayName);
-            Assert.True(match.Success);
-            // There should be 2 groups: the overall match, and the capture
-            // group.
-            Assert.Equal(2, match.Groups.Count);
-            
-            // The portion we want is in the capture group.
-            return match.Groups[1].Value;
+            FieldInfo testField = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new Exception("Could not find field 'test' on ITestOutputHelper");
+
+            ITest test = testField.GetValue(outputHelper) as ITest
+                ?? throw new Exception("Field 'test' on outputHelper is null or not an ITest object.");
+
+            ITestMethod testMethod = test.TestCase.TestMethod;
+
+            // Class name will be fully-qualified. We only want the class name, so take the last part.
+            string[] testClassNameParts = testMethod.TestClass.Class.Name.Split('.');
+            string testClassName = testClassNameParts[testClassNameParts.Length - 1];
+
+            string testMethodName = testMethod.Method.Name;
+
+            // Reconstitute the test name as classname.methodname
+            return $"{testClassName}.{testMethodName}";
         }
 
-        private static readonly Regex TestNameRegex = new(
-            // Capture the ClassName.MethodName portion, which may terminate
-            // the name, or have (args...) appended.
-            @"\.((?:[^.]+)\.(?:[^.\(]+))(?:\(.*\))?$",
-            RegexOptions.Compiled);
-        
         /// <summary>
         /// SQL Server properties we can query.
         ///
@@ -350,7 +423,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ProductMajorVersion,
             EngineEdition
         }
-        
+
         public static string GetSqlServerProperty(string connectionString, ServerProperty property)
         {
             using SqlConnection conn = new(connectionString);
@@ -380,9 +453,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        #nullable disable
+        #nullable restore
 
-        public static bool GetSQLServerStatusOnTDS8(string connectionString)
+        private static bool GetSQLServerStatusOnTDS8(string connectionString)
         {
             bool isTDS8Supported = false;
             SqlConnectionStringBuilder builder = new(connectionString)
@@ -424,6 +497,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return present;
         }
 
+        public static bool IsObjectPresent(string objectName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT OBJECT_ID(@name)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", objectName);
+
+            return command.ExecuteScalar() is not DBNull;
+        }
+
+        public static bool IsTypePresent(string typeName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = @name", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@name", typeName);
+
+            return (int)command.ExecuteScalar() > 0;
+        }
+
         public static bool IsAdmin
         {
             get
@@ -433,32 +528,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
                 return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             }
-        }
-
-        /// <summary>
-        /// Checks if object SYS.SENSITIVITY_CLASSIFICATIONS exists in SQL Server
-        /// </summary>
-        /// <returns>True, if target SQL Server supports Data Classification</returns>
-        public static bool IsSupportedDataClassification()
-        {
-            try
-            {
-                using (var connection = new SqlConnection(TCPConnectionString))
-                using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
-                {
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (SqlException e)
-            {
-                // Check for Error 208: Invalid Object Name
-                if (e.Errors != null && e.Errors[0].Number == 208)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
@@ -486,7 +555,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
 
-        public static bool IsSQL2016() => string.Equals("14", s_sQLServerVersion.Trim());
+        public static bool IsSQL2017() => string.Equals("14", SQLServerVersion.Trim());
+
+        public static bool IsSQL2016() => string.Equals("13", SQLServerVersion.Trim());
+
+        // "At least" version checks for use as ConditionalFact/ConditionalTheory conditions.
+        public static bool IsAtLeastSQL2017() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 14;
+
+        public static bool IsAtLeastSQL2019() => int.TryParse(SQLServerVersion?.Trim(), out int major) && major >= 15;
 
         public static bool IsSQLAliasSetup()
         {
@@ -584,7 +660,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsUsingNativeSNI() =>
 #if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
-#else 
+#else
             true;
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
@@ -633,177 +709,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // Generate a new GUID and return the characters from its 1st and 4th
-        // parts, as shown here:
-        //
-        //   7ff01cb8-88c7-11f0-b433-00155d7e531e
-        //   ^^^^^^^^           ^^^^
-        //
-        // These 12 characters are concatenated together without any
-        // separators.  These 2 parts typically comprise a timestamp and clock
-        // sequence, most likely to be unique for tests that generate names in
-        // quick succession.
-        private static string GetGuidParts()
-        {
-            var guid = Guid.NewGuid().ToString();
-            // GOTCHA: The slice operator is inclusive of the start index and
-            // exclusive of the end index!
-            return guid.Substring(0, 8) + guid.Substring(19, 4);
-        }
+        public static string GetShortName(string prefix, bool withBracket = true) =>
+            DatabaseObject.GenerateShortName(prefix, withBracket);
 
-        /// <summary>
-        /// Generate a short unique database object name, whose maximum length
-        /// is 30 characters, with the format:
-        ///
-        ///   <Prefix>_<GuidParts>
-        ///
-        /// The Prefix will be truncated to satisfy the overall maximum length.
-        ///
-        /// The GUID parts will be the characters from the 1st and 4th blocks
-        /// from a traditional string representation, as shown here:
-        ///
-        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
-        ///   ^^^^^^^^           ^^^^
-        ///
-        /// These 2 parts typically comprise a timestamp and clock sequence,
-        /// most likely to be unique for tests that generate names in quick
-        /// succession.  The 12 characters are concatenated together without any
-        /// separators.
-        /// </summary>
-        /// 
-        /// <param name="prefix">
-        /// The prefix to use when generating the unique name, truncated to at
-        /// most 18 characters when withBracket is false, and 16 characters when
-        /// withBracket is true.
-        ///
-        /// This should not contain any characters that cannot be used in
-        /// database object names.  See:
-        /// 
-        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
-        /// </param>
-        /// 
-        /// <param name="withBracket">
-        /// When true, the entire generated name will be enclosed in square
-        /// brackets, for example:
-        /// 
-        ///   [MyPrefix_7ff01cb811f0]
-        /// </param>
-        /// 
-        /// <returns>
-        /// A unique database object name, no more than 30 characters long.
-        /// </returns>
-        public static string GetShortName(string prefix, bool withBracket = true)
-        {
-            StringBuilder name = new(30);
-
-            if (withBracket)
-            {
-                name.Append('[');
-            }
-
-            int maxPrefixLength = withBracket ? 16 : 18;
-            if (prefix.Length > maxPrefixLength)
-            {
-                prefix = prefix.Substring(0, maxPrefixLength);
-            }
-
-            name.Append(prefix);
-            name.Append('_');
-            name.Append(GetGuidParts());
-
-            if (withBracket)
-            {
-                name.Append(']');
-            }
-
-            return name.ToString();
-        }
-
-        /// <summary>
-        /// Generate a long unique database object name, whose maximum length is
-        /// 96 characters, with the format:
-        /// 
-        ///   <Prefix>_<GuidParts>_<UserName>_<MachineName>
-        ///
-        /// The Prefix will be truncated to satisfy the overall maximum length.
-        ///
-        /// The GUID Parts will be the characters from the 1st and 4th blocks
-        /// from a traditional string representation, as shown here:
-        ///
-        ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
-        ///   ^^^^^^^^           ^^^^
-        ///
-        /// These 2 parts typically comprise a timestamp and clock sequence,
-        /// most likely to be unique for tests that generate names in quick
-        /// succession.  The 12 characters are concatenated together without any
-        /// separators.
-        ///
-        /// The UserName and MachineName are obtained from the Environment,
-        /// and will be truncated to satisfy the maximum overall length.
-        /// </summary>
-        /// 
-        /// <param name="prefix">
-        /// The prefix to use when generating the unique name, truncated to at
-        /// most 32 characters.
-        ///
-        /// This should not contain any characters that cannot be used in
-        /// database object names.  See:
-        /// 
-        /// https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17#rules-for-regular-identifiers
-        /// </param>
-        /// 
-        /// <param name="withBracket">
-        /// When true, the entire generated name will be enclosed in square
-        /// brackets, for example:
-        /// 
-        ///   [MyPrefix_7ff01cb811f0_test_user_ci_agent_machine_name]
-        /// </param>
-        /// 
-        /// <returns>
-        /// A unique database object name, no more than 96 characters long.
-        /// </returns>
-        public static string GetLongName(string prefix, bool withBracket = true)
-        {
-            StringBuilder name = new(96);
-
-            if (withBracket)
-            {
-                name.Append('[');
-            }
-
-            if (prefix.Length > 32)
-            {
-                prefix = prefix.Substring(0, 32);
-            }
-
-            name.Append(prefix);
-            name.Append('_');
-            name.Append(GetGuidParts());
-            name.Append('_');
-
-            var suffix =
-              Environment.UserName + '_' +
-              Environment.MachineName;
-
-            int maxSuffixLength = 96 - name.Length;
-            if (withBracket)
-            {
-                --maxSuffixLength;
-            }
-            if (suffix.Length > maxSuffixLength)
-            {
-                suffix = suffix.Substring(0, maxSuffixLength);
-            }
-
-            name.Append(suffix);
-
-            if (withBracket)
-            {
-                name.Append(']');
-            }
-
-            return name.ToString();
-        }
+        public static string GetLongName(string prefix, bool withBracket = true) =>
+            DatabaseObject.GenerateLongName(prefix, withBracket);
 
         public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
         {
@@ -831,15 +741,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
-        {
-            ResurrectConnection(sqlConnection);
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
             }
@@ -946,35 +847,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static TException AssertThrowsWrapper<TException>(Action actionThatFails, string exceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        #nullable enable
+
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws an exception of type
+        /// <typeparamref name="TException"/> and optionally verifies that its message contains
+        /// <paramref name="exceptionMessage"/>.
+        /// </summary>
+        public static TException AssertThrows<TException>(
+            Action actionThatFails,
+            string? exceptionMessage = null)
+        where TException : Exception
         {
             TException ex = Assert.Throws<TException>(actionThatFails);
+
             if (exceptionMessage != null)
             {
                 Assert.True(ex.Message.Contains(exceptionMessage),
                     string.Format("FAILED: Exception did not contain expected message.\nExpected: {0}\nActual: {1}", exceptionMessage, ex.Message));
             }
 
-            if (innerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException == null, "FAILED: Expected InnerException to be null.");
-            }
-
-            if (customExceptionVerifier != null)
-            {
-                Assert.True(customExceptionVerifier(ex), "FAILED: Custom exception verifier returned false for this exception.");
-            }
-
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
+        /// whose <see cref="Exception.InnerException"/> is of type <typeparamref name="TInnerException"/>.
+        /// Optionally verifies message text on both the outer and inner exceptions.
+        /// </summary>
+        public static TException AssertThrowsInner<TException, TInnerException>(
+            Action actionThatFails,
+            string? exceptionMessage = null,
+            string? innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException>(actionThatFails, exceptionMessage, innerExceptionMustBeNull, customExceptionVerifier);
+            TException ex = AssertThrows<TException>(actionThatFails, exceptionMessage);
+
+            Assert.NotNull(ex.InnerException);
+            Assert.IsAssignableFrom<TInnerException>(ex.InnerException);
 
             if (innerExceptionMessage != null)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerExceptionMessage because InnerException is null.");
                 Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
                     string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
@@ -982,25 +896,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return ex;
         }
 
-        public static TException AssertThrowsWrapper<TException, TInnerException, TInnerInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, string innerInnerExceptionMessage = null, bool innerInnerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception where TInnerInnerException : Exception
+        /// <summary>
+        /// Asserts that <paramref name="actionThatFails"/> throws <typeparamref name="TException"/>
+        /// whose <see cref="Exception.InnerException"/> is either <typeparamref name="TInnerException"/>
+        /// or <typeparamref name="TAlternateInnerException"/>. Use this when a race condition
+        /// (e.g. disposal during an async read) may cause the inner exception type to vary
+        /// between runs. The <paramref name="innerExceptionMessage"/> is only verified when the
+        /// inner exception is <typeparamref name="TInnerException"/>.
+        /// </summary>
+        public static TException AssertThrowsInnerWithAlternate<TException, TInnerException, TAlternateInnerException>(
+            Action actionThatFails,
+            string? exceptionMessage = null,
+            string? innerExceptionMessage = null)
+        where TException : Exception
+        where TInnerException : Exception
+        where TAlternateInnerException : Exception
         {
-            TException ex = AssertThrowsWrapper<TException, TInnerException>(actionThatFails, exceptionMessage, innerExceptionMessage);
-            if (innerInnerInnerExceptionMustBeNull)
-            {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerInnerExceptionMustBeNull since InnerException is null");
-                Assert.True(ex.InnerException.InnerException == null, "FAILED: Expected InnerInnerException to be null.");
-            }
+            TException ex = AssertThrows<TException>(actionThatFails, exceptionMessage);
 
-            if (innerInnerExceptionMessage != null)
+            Assert.NotNull(ex.InnerException);
+            Assert.True(
+                ex.InnerException is TInnerException or TAlternateInnerException,
+                $"Expected {typeof(TInnerException).Name} or {typeof(TAlternateInnerException).Name}, got: {ex.InnerException?.GetType()}");
+
+            if (innerExceptionMessage != null && ex.InnerException is TInnerException)
             {
-                Assert.True(ex.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerException is null");
-                Assert.True(ex.InnerException.InnerException != null, "FAILED: Cannot check innerInnerExceptionMessage since InnerInnerException is null");
-                Assert.True(ex.InnerException.InnerException.Message.Contains(innerInnerExceptionMessage),
-                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerInnerExceptionMessage, ex.InnerException.InnerException.Message));
+                Assert.True(ex.InnerException.Message.Contains(innerExceptionMessage),
+                    string.Format("FAILED: Inner Exception did not contain expected message.\nExpected: {0}\nActual: {1}", innerExceptionMessage, ex.InnerException.Message));
             }
 
             return ex;
         }
+
+        #nullable restore
 
         public static TException ExpectFailure<TException>(Action actionThatFails, string[] exceptionMessages, bool innerExceptionMustBeNull = false, Func<TException, bool> customExceptionVerifier = null) where TException : Exception
         {
@@ -1222,11 +1150,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
         }
 
-        public class AKVEventListener : BaseEventListener
-        {
-            public override string Name => AKVEventSourceName;
-        }
-
         public class MDSEventListener : BaseEventListener
         {
             private static Type s_activityCorrelatorType = Type.GetType("Microsoft.Data.Common.ActivityCorrelator, Microsoft.Data.SqlClient");
@@ -1295,191 +1218,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #nullable enable
 
-        public readonly ref struct XEventScope : IDisposable
-        {
-            #region Private Fields
-
-            // Maximum dispatch latency for XEvents, in seconds.
-            private const int MaxDispatchLatencySeconds = 5;
-
-            // The connection to use for all operations.
-            private readonly SqlConnection _connection;
-
-            // True if connected to an Azure SQL instance.
-            private readonly bool _isAzureSql;
-
-            // True if connected to a non-Azure SQL Server 2025 (version 17) or
-            // higher.
-            private readonly bool _isVersion17OrHigher;
-
-            // Duration for the XEvent session, in minutes.
-            private readonly ushort _durationInMinutes;
-
-            #endregion
-
-            #region Properties
-
-            /// <summary>
-            /// The name of the XEvent session, derived from the session name
-            /// provided at construction time, with a unique suffix appended.
-            /// </summary>
-            public string SessionName { get; }
-
-            #endregion
-
-            #region Construction
-
-            /// <summary>
-            /// Construct with the specified parameters.
-            /// 
-            /// This will use the connection to query the server properties and
-            /// setup and start the XEvent session.
-            /// </summary>
-            /// <param name="sessionName">The base name of the session.</param>
-            /// <param name="connection">The SQL connection to use. (Must already be open.)</param>
-            /// <param name="eventSpecification">The event specification T-SQL string.</param>
-            /// <param name="targetSpecification">The target specification T-SQL string.</param>
-            /// <param name="durationInMinutes">The duration of the session in minutes.</param>
-            public XEventScope(
-                string sessionName,
-                // The connection must already be open.
-                SqlConnection connection,
-                string eventSpecification,
-                string targetSpecification,
-                ushort durationInMinutes = 5)
-            {
-                SessionName = GenerateRandomCharacters(sessionName);
-                
-                _connection = connection;
-                Assert.Equal(ConnectionState.Open, _connection.State);
-
-                _durationInMinutes = durationInMinutes;
-
-                // EngineEdition 5 indicates Azure SQL.
-                _isAzureSql = GetSqlServerProperty(connection, ServerProperty.EngineEdition) == "5";
-
-                // Determine if we're connected to a SQL Server instance version
-                // 17 or higher.
-                if (!_isAzureSql)
-                {
-                    int majorVersion;
-                    Assert.True(
-                        int.TryParse(
-                            GetSqlServerProperty(connection, ServerProperty.ProductMajorVersion),
-                            out majorVersion));
-                    _isVersion17OrHigher = majorVersion >= 17;
-                }
-
-                // Setup and start the XEvent session.
-                string sessionLocation = _isAzureSql ? "DATABASE" : "SERVER";
-                
-                // Both Azure SQL and SQL Server 2025+ support setting a maximum
-                // duration for the XEvent session.
-                string duration =
-                    _isAzureSql || _isVersion17OrHigher
-                    ? $"MAX_DURATION={_durationInMinutes} MINUTES,"
-                    : string.Empty;
-
-                string xEventCreateAndStartCommandText =
-                    $@"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}
-                        {eventSpecification}
-                        {targetSpecification}
-                        WITH (
-                            {duration}
-                            MAX_MEMORY=16 MB,
-                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
-                            MAX_DISPATCH_LATENCY={MaxDispatchLatencySeconds} SECONDS,
-                            MAX_EVENT_SIZE=0 KB,
-                            MEMORY_PARTITION_MODE=NONE,
-                            TRACK_CAUSALITY=ON,
-                            STARTUP_STATE=OFF)
-                            
-                        ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
-
-                using SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection);
-                createXEventSession.ExecuteNonQuery();
-            }
-
-            /// <summary>
-            /// Disposal stops and drops the XEvent session.
-            /// </summary>
-            /// <remarks>
-            /// Disposal isn't perfect - tests can abort without cleaning up the
-            /// events they have created.  For Azure SQL targets that outlive the
-            /// test pipelines, it is beneficial to periodically log into the
-            /// database and drop old XEvent sessions using T-SQL similar to
-            /// this:
-            ///
-            /// DECLARE @sql NVARCHAR(MAX) = N'';
-            ///
-            /// -- Identify inactive (stopped) event sessions and generate DROP commands
-            /// SELECT @sql += N'DROP EVENT SESSION [' + name + N'] ON SERVER;' + CHAR(13) + CHAR(10)
-            /// FROM sys.server_event_sessions
-            /// WHERE running = 0; -- Filter for sessions that are not running (inactive)
-            ///
-            /// -- Print the generated commands for review (optional, but recommended)
-            /// PRINT @sql;
-            ///
-            /// -- Execute the generated commands
-            /// EXEC sys.sp_executesql @sql;
-            /// </remarks>
-            public void Dispose()
-            {
-                string dropXEventSessionCommand = _isAzureSql
-                    // We choose the sys.(database|server)_event_sessions views
-                    // here to ensure we find sessions that may not be running.
-                    ? $"IF EXISTS (select * from sys.database_event_sessions where name ='{SessionName}')" +
-                        $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
-                    : $"IF EXISTS (select * from sys.server_event_sessions where name ='{SessionName}')" +
-                        $" DROP EVENT SESSION [{SessionName}] ON SERVER";
-
-                using SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection);
-                command.ExecuteNonQuery();
-            }
-
-            #endregion
-
-            #region Public Methods
-
-            /// <summary>
-            /// Query the XEvent session for its collected events, returning
-            /// them as an XML document.
-            ///
-            /// This always blocks the thread for MaxDispatchLatencySeconds to
-            /// ensure that all events have been flushed into the ring buffer.
-            /// </summary>
-            public System.Xml.XmlDocument GetEvents()
-            {
-                string xEventQuery = _isAzureSql
-                    ? $@"SELECT xet.target_data
-                        FROM sys.dm_xe_database_session_targets AS xet
-                        INNER JOIN sys.dm_xe_database_sessions AS xe
-                           ON (xe.address = xet.event_session_address)
-                        WHERE xe.name = '{SessionName}'"
-                    : $@"SELECT xet.target_data
-                        FROM sys.dm_xe_session_targets AS xet
-                        INNER JOIN sys.dm_xe_sessions AS xe
-                           ON (xe.address = xet.event_session_address)
-                        WHERE xe.name = '{SessionName}'";
-
-                using SqlCommand command = new SqlCommand(xEventQuery, _connection);
-
-                // Wait for maximum dispatch latency to ensure all events
-                // have been flushed to the ring buffer.
-                Thread.Sleep(MaxDispatchLatencySeconds * 1000);
-
-                string? targetData = command.ExecuteScalar() as string;
-                Assert.NotNull(targetData);
-
-                System.Xml.XmlDocument xmlDocument = new System.Xml.XmlDocument();
-
-                xmlDocument.LoadXml(targetData);
-                return xmlDocument;
-            }
-
-            #endregion
-        }
-
         /// <summary>
         /// Resolves the machine's fully qualified domain name if it is applicable.
         /// </summary>
@@ -1505,7 +1243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return fqdn.ToString();
         }
-    }
 
-    #nullable disable
+        #nullable restore
+    }
 }
