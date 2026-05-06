@@ -34,7 +34,9 @@ Defined in `stages/build-stages.yml`. Four build stages plus validation, ordered
 - **`build_abstractions`** (Stage 2) — Abstractions; `dependsOn: build_independent`; downloads Logging artifact
 - **`build_dependent`** (Stage 3) — SqlClient and Extensions.Azure in parallel; `dependsOn: build_abstractions`; downloads Abstractions + Logging artifacts
 - **`build_addons`** (Stage 4) — AKV Provider; `dependsOn: build_dependent`; downloads SqlClient + Abstractions + Logging artifacts
-- **`mds_package_validation`** — Validates signed SqlClient package; `dependsOn: build_dependent`; runs in parallel with Stage 4
+- **`sqlclient_package_validation`** — Validates signed SqlClient package; `dependsOn: build_dependent`; runs in parallel with Stage 4
+
+Each build job copies PDB files into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published pipeline artifact alongside the NuGet packages in `$(JOB_OUTPUT)/packages/`.
 
 Stage conditional rules:
 - Wrap stages/jobs in `${{ if }}` compile-time conditionals based on build parameters
@@ -45,16 +47,30 @@ Stage conditional rules:
 
 ## Job Templates
 
-- **`build-signed-csproj-package-job.yml`** — Generic job for csproj-based packages (Logging, SqlServer.Server, Abstractions, Azure, AKV Provider). Flow: Build DLLs → ESRP DLL signing → NuGet pack (`NoBuild=true`) → ESRP NuGet signing
-- **`build-signed-sqlclient-package-job.yml`** — SqlClient-specific job (nuspec-based). Flow: Build all configurations → ESRP DLL signing (main + resource DLLs) → NuGet pack via nuspec → ESRP NuGet signing
+- **`build-buildproj-job.yml`** — Shared build.proj-driven package job used for all shipped packages. Flow: build via `build.proj` → optional ESRP DLL signing → pack via `build.proj` → optional ESRP NuGet signing → copy outputs for APIScan/artifacts
 - **`validate-signed-package-job.yml`** — Validates signed MDS package (signature, strong names, folder structure, target frameworks)
 - **`publish-nuget-package-job.yml`** — Reusable release job using OneBranch `templateContext.type: releaseJob` with `inputs` for artifact download; pushes via `NuGetCommand@2`
+- **`publish-symbols-job.yml`** — Reusable symbols job: downloads a build artifact, locates PDBs under `symbols/`, and invokes `publish-symbols-step.yml`
 
-When adding a new csproj-based package:
-- Use `build-signed-csproj-package-job.yml` with appropriate `packageName`, `packageFullName`, `versionProperties`, and `downloadArtifacts`
-- Add build and pack targets to `build.proj`
+When adding a new package to the OneBranch flow:
+- Extend `build-buildproj-job.yml` inputs with the new package metadata and dependency artifacts
+- Add or update the corresponding build/pack targets in `build.proj`
 - Add version variables to `variables/common-variables.yml`
-- Add artifact name variable to `variables/onebranch-variables.yml`
+- Add artifact name variables to `variables/onebranch-variables.yml`
+
+## Symbols Publishing Stage
+
+- Defined in `stages/publish-symbols-stage.yml`; produces stage `publish_symbols`
+- Entire stage excluded at compile time when `publishSymbols` is false
+- `dependsOn` is conditional based on which `build*` parameters are set, mirroring the build stage dependency graph
+- One job per package (`publish-symbols-job.yml`), each downloading its build artifact and publishing PDBs from `symbols/`
+- Each package's PDBs are published separately with unique artifact names and version information
+- Build jobs copy PDBs into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published artifact
+- The `publish-symbols-step.yml` accepts a `symbolsFolder` parameter to point at the downloaded PDB location
+- The publish step calls an extracted `publish-symbols.ps1` script with structured error handling and diagnostic logging
+- Symbols publishing credentials come from the `Symbols Publishing` variable group
+- In the official pipeline, symbol server destination follows `releaseToProduction`: Production when true, PPE when false
+- Non-official pipeline always targets the PPE symbol server
 
 ## Release Stage
 
@@ -84,7 +100,9 @@ Release parameters (all boolean, default `false`):
 - `releaseSqlServerServer`, `releaseLogging`, `releaseAbstractions`, `releaseSqlClient`, `releaseAzure`, `releaseAKVProvider`
 
 Official-only parameter:
-- `releaseToProduction` — push to NuGet Production feed (default `false`)
+- `releaseToProduction` — controls both NuGet target feed and symbol server destination (default `false`):
+  - `true` → NuGet Production feed + Production symbol server
+  - `false` → NuGet Test feed + PPE symbol server
 
 When `isPreview` is true, pipeline resolves `effective*Version` variables to preview versions; otherwise GA versions. All versions defined in `variables/common-variables.yml`.
 
@@ -98,16 +116,14 @@ When `isPreview` is true, pipeline resolves `effective*Version` variables to pre
 - When adding a new package, add GA version, preview version, and assembly file version entries
 
 Variable groups:
-- `Release Variables` — release configuration (in `common-variables.yml`)
-- `Symbols publishing` — symbol publishing credentials (in `common-variables.yml`)
+- `Symbols Publishing` — symbol publishing credentials (in `onebranch-variables.yml`)
 - `ESRP Federated Creds (AME)` — ESRP signing credentials (in `common-variables.yml`)
 
 ## Code Signing (ESRP)
 
 - Uses ESRP v6 tasks (`EsrpMalwareScanning@6`, `EsrpCodeSigning@6`) with MSI/federated identity authentication
 - Signing only runs when `isOfficial: true` — non-official pipelines skip ESRP steps
-- csproj-based packages: sign DLLs first → pack with `NoBuild=true` → sign NuGet package (ensures NuGet contains signed DLLs)
-- SqlClient: sign DLLs (including resource DLLs) → nuspec pack → sign NuGet package
+- The shared OneBranch job signs DLLs before packing and signs the resulting NuGet package afterward so the published package contains signed binaries
 - DLL signing uses keyCode `CP-230012` (Authenticode); NuGet signing uses keyCode `CP-401405`
 - All ESRP credentials come from variable groups — never hardcode secrets in YAML
 
@@ -115,7 +131,7 @@ Variable groups:
 
 - TSA: enabled only in official pipeline; disabled in non-official to avoid spurious alerts
 - ApiScan: enabled in both; currently `break: false` pending package registration
-- Each build job sets `ob_sdl_apiscan_*` variables pointing to `$(Build.SourcesDirectory)/apiScan/<PackageName>/`
+- Each build job sets `ob_sdl_apiscan_softwareFolder` to `$(JOB_OUTPUT)/assemblies` and `ob_sdl_apiscan_symbolsFolder` to `$(JOB_OUTPUT)/symbols`
 - CodeQL, SBOM, Policheck (`break: true`): enabled in both pipelines
 - asyncSdl `enabled: false` in both; individual sub-tools (CredScan, BinSkim, Armory, Roslyn) configured underneath
 - Policheck exclusions: `$(REPO_ROOT)\.config\PolicheckExclusions.xml`
@@ -123,7 +139,11 @@ Variable groups:
 
 ## Artifact Conventions
 
-- `ob_outputDirectory` set to `$(PACK_OUTPUT)` (= `$(REPO_ROOT)/output`) — OneBranch auto-publishes this directory
+- `ob_outputDirectory` set to `$(JOB_OUTPUT)` (= `$(REPO_ROOT)/output`) — OneBranch auto-publishes this directory
+- Each published artifact uses subdirectories to separate file types:
+  - `assemblies/` — DLL assemblies for APIScan (preserving TFM folder structure)
+  - `packages/` — NuGet packages (`.nupkg`, `.snupkg`)
+  - `symbols/` — PDB symbol files (preserving TFM folder structure, shared by APIScan and symbol publishing)
 - Artifact names follow `drop_<stageName>_<jobName>` — defined in `variables/onebranch-variables.yml`
 - Downstream jobs download artifacts via `DownloadPipelineArtifact@2` into `$(Build.SourcesDirectory)/packages`
 - Downloaded packages serve as a local NuGet source for `dotnet restore`

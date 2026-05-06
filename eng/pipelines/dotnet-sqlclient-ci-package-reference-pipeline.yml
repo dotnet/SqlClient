@@ -14,8 +14,8 @@
 # It runs via CI push triggers and schedules and uses the Release build
 # configuration:
 #
-#   - Commits to GitHub main
-#   - Commits to ADO internal/main
+#   - Commits to GitHub main and release/* branches
+#   - Commits to ADO internal/main and internal/release/* branches
 #   - Weekdays at 03:00 UTC on GitHub main
 #   - Thursdays at 07:00 UTC on ADO internal/main
 #
@@ -55,13 +55,15 @@ trigger:
 
   branches:
     include:
-    # GitHub main branch.
-    - main
+      # GitHub main and release branches.
+      - main
+      - release/*
 
-    # ADO internal/main branch.
-    - internal/main
+      # ADO main and release branches.
+      - internal/main
+      - internal/release/*
 
-# Trigger this pipline on a schedule.
+# Trigger this pipeline on a schedule.
 schedules:
 
   # GitHub main on weekdays
@@ -100,12 +102,6 @@ parameters:
   # True to emit debug information and steps.
   - name: debug
     displayName: Enable debug output
-    type: boolean
-    default: false
-
-  # True to run the stress tests stage.
-  - name: enableStressTests
-    displayName: Enable Stress Tests
     type: boolean
     default: false
 
@@ -173,7 +169,6 @@ extends:
     referenceType: Package
     debug: ${{ parameters.debug }}
     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-    enableStressTests: ${{ parameters.enableStressTests }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}

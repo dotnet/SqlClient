@@ -591,7 +591,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlDataReader reader1 = command.ExecuteReader())
                     {
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() =>
                         {
                             SqlDataReader reader2 = command.ExecuteReader();
                         }, openReaderExistsMessage);
@@ -611,7 +611,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlDataReader reader1 = command1.ExecuteReader())
                     {
-                        DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() =>
                         {
                             SqlDataReader reader2 = command2.ExecuteReader();
                         }, openReaderExistsMessage);

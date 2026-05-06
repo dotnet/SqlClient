@@ -23,6 +23,7 @@ on:
       - main
       - feat/**
       - dev/**
+      - release/**
 
   # Scan weekly on Saturdays at 23:33 UTC
   schedule:

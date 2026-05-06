@@ -95,9 +95,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentNull(nameof(destinationType));
                 }
-                if ((typeof(InstanceDescriptor) == destinationType) && (value is SqlParameter))
+                if (destinationType == typeof(InstanceDescriptor) && value is SqlParameter parameter)
                 {
-                    return ConvertToInstanceDescriptor(value as SqlParameter);
+                    return ConvertToInstanceDescriptor(parameter);
                 }
                 return base.ConvertTo(context, culture, value, destinationType);
             }
@@ -1261,7 +1261,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey.Length > 0)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {
@@ -1951,9 +1951,9 @@ namespace Microsoft.Data.SqlClient
                     _value = _value.ToString();
                     valueType = typeof(string);
                 }
-                else if (valueType == typeof(char[]))
+                else if (_value is char[] chars)
                 {
-                    _value = new string((char[])_value);
+                    _value = new string(chars);
                     valueType = typeof(string);
                 }
                 return MetaType.GetMetaTypeFromType(valueType);
@@ -2390,11 +2390,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {
-                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                            throw ADP.InvalidJsonStringForVector((string)value, ex);
                         }
                     }
                     else if (

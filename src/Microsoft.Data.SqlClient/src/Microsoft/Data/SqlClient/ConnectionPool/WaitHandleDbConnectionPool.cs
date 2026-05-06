@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
@@ -62,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, DbConnectionOptions userOptions)
+            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, SqlConnectionOptions userOptions)
             {
                 DueTime = dueTime;
                 Owner = owner;
@@ -72,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             public long DueTime { get; private set; }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
-            public DbConnectionOptions UserOptions { get; private set; }
+            public SqlConnectionOptions UserOptions { get; private set; }
         }
 
         private sealed class PoolWaitHandles
@@ -259,7 +258,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return PoolGroupOptions.CreationTimeout; }
         }
 
+        /// <inheritdoc/>
         public int Count => _totalObjects;
+
+        /// <inheritdoc/>
+        public int IdleCount => _stackNew.Count + _stackOld.Count;
 
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
@@ -290,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return true;
                 }
 
-                int freeObjects = _stackNew.Count + _stackOld.Count;
+                int freeObjects = IdleCount;
                 int waitingRequests = _waitCount;
                 bool needToReplenish = (freeObjects < waitingRequests) || ((freeObjects == waitingRequests) && (totalObjects > 1));
 
@@ -305,9 +308,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return State is Running; }
         }
 
-        private int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
+        internal int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
 
-        private int MinPoolSize => PoolGroupOptions.MinPoolSize;
+        internal int MinPoolSize => PoolGroupOptions.MinPoolSize;
 
         public DbConnectionPoolGroup PoolGroup => _connectionPoolGroup;
 
@@ -323,6 +326,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
         private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
+
+        public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
         private void CleanupCallback(object state)
         {
@@ -486,7 +491,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private bool IsBlockingPeriodEnabled()
         {
-            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions as SqlConnectionString;
+            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions;
             if (poolGroupConnectionOptions == null)
             {
                 return true;
@@ -517,7 +522,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        private DbConnectionInternal CreateObject(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             DbConnectionInternal newObj = null;
 
@@ -526,8 +531,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 newObj = _connectionFactory.CreatePooledConnection(
                     owningObject,
                     this,
-                    _connectionPoolGroup.PoolKey,
-                    _connectionPoolGroup.ConnectionOptions, 
                     userOptions);
 
                 lock (_objectList)
@@ -872,7 +875,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } while (_pendingOpens.TryPeek(out next));
         }
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, SqlConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
@@ -931,7 +934,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 #if NETFRAMEWORK
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")] // copied from Triaged.cs
 #endif
-        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, SqlConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             DbConnectionInternal obj = null;
             Transaction transaction = null;
@@ -940,6 +943,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // If automatic transaction enlistment is required, then we try to
             // get the connection from the transacted connection pool first.
+            // If automatic enlistment is not enabled, then we cannot vend connections
+            // from the transacted pool.
             if (HasTransactionAffinity)
             {
                 obj = GetFromTransactedPool(out transaction);
@@ -1129,7 +1134,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">Options used to create the new connection</param>
         /// <param name="oldConnection">Inner connection that will be replaced</param>
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
-        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
             DbConnectionInternal newConnection = UserCreateRequest(owningObject, userOptions, oldConnection);
@@ -1517,7 +1522,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private DbConnectionInternal UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection = null)
+        private DbConnectionInternal UserCreateRequest(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection = null)
         {
             // called by user when they were not able to obtain a free object but
             // instead obtained creation mutex

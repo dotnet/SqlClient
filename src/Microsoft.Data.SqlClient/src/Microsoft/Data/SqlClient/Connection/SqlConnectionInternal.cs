@@ -285,18 +285,18 @@ namespace Microsoft.Data.SqlClient.Connection
         ///   new Login7 packet will always write out the new password (or a length of zero and no
         ///   bytes if not present).
         /// - userConnectionOptions may be different to connectionOptions if the connection string
-        ///   has been expanded (see SqlConnectionString.Expand)
+        ///   has been expanded (see SqlConnectionOptions.Expand)
         /// </remarks>
         // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
         internal SqlConnectionInternal(
             DbConnectionPoolIdentity identity,
-            SqlConnectionString connectionOptions,
+            SqlConnectionOptions connectionOptions,
             SqlCredential credential,
             DbConnectionPoolGroupProviderInfo providerInfo,
             string newPassword,
             SecureString newSecurePassword,
             bool redirectedUserInstance,
-            SqlConnectionString userConnectionOptions = null,
+            SqlConnectionOptions userConnectionOptions = null,
             SessionData reconnectSessionData = null,
             bool applyTransientFaultHandling = false,
             string accessToken = null,
@@ -478,7 +478,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// The connection options to be used for this connection.
         /// </summary>
-        internal SqlConnectionString ConnectionOptions { get; }
+        internal SqlConnectionOptions ConnectionOptions { get; }
 
         /// <summary>
         /// The current database for this connection. Null if the connection is not open yet.
@@ -900,7 +900,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             if (enlistedTransaction != null)
             {
-                if (ConnectionOptions.TransactionBinding is SqlConnectionString.TransactionBindingEnum.ExplicitUnbind)
+                if (ConnectionOptions.TransactionBinding is SqlConnectionOptions.TransactionBindingEnum.ExplicitUnbind)
                 {
                     Transaction currentTransaction = Transaction.Current;
                     if (enlistedTransaction.TransactionInformation.Status != TransactionStatus.Active || !enlistedTransaction.Equals(currentTransaction))
@@ -1638,7 +1638,7 @@ namespace Microsoft.Data.SqlClient.Connection
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            SqlConnectionOptions userOptions)
         {
             return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
         }
@@ -1900,7 +1900,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to meet naming conventions
         private bool AttemptRetryADAuthWithTimeoutError(
             SqlException sqlex,
-            SqlConnectionString connectionOptions, // @TODO: this is not used
+            SqlConnectionOptions connectionOptions, // @TODO: this is not used
             TimeoutTimer timeout)
         {
             if (!_activeDirectoryAuthTimeoutRetryHelper.CanRetryWithSqlException(sqlex))
@@ -2807,7 +2807,7 @@ namespace Microsoft.Data.SqlClient.Connection
             string newPassword,
             SecureString newSecurePassword,
             bool redirectedUserInstance,
-            SqlConnectionString connectionOptions,
+            SqlConnectionOptions connectionOptions,
             SqlCredential credential,
             TimeoutTimer timeout)
         {
@@ -3131,7 +3131,7 @@ namespace Microsoft.Data.SqlClient.Connection
             string newPassword,
             SecureString newSecurePassword,
             bool redirectedUserInstance,
-            SqlConnectionString connectionOptions,
+            SqlConnectionOptions connectionOptions,
             SqlCredential credential, // @TODO: This isn't used anywhere
             TimeoutTimer timeout)
         {
@@ -3446,7 +3446,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private void OpenLoginEnlist(
             TimeoutTimer timeout,
-            SqlConnectionString connectionOptions,
+            SqlConnectionOptions connectionOptions,
             SqlCredential credential,
             string newPassword,
             SecureString newSecurePassword,
@@ -3572,7 +3572,7 @@ namespace Microsoft.Data.SqlClient.Connection
             }
         }
 
-        private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionString options)
+        private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionOptions options)
         {
             // @TODO: Invert to save on indentation
             if (serverInfo.ExtendedServerName == null)
@@ -3613,7 +3613,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     if (options.EnforceLocalHost)
                     {
                         // Verify LocalHost for |DataDirectory| usage
-                        SqlConnectionString.VerifyLocalHostAndFixup(
+                        SqlConnectionOptions.VerifyLocalHostAndFixup(
                             ref host,
                             enforceLocalHost: true,
                             fixup: true);
@@ -3625,7 +3625,7 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         #if NETFRAMEWORK
-        private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
+        private bool ShouldDisableTnir(SqlConnectionOptions connectionOptions)
         {
             bool isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 

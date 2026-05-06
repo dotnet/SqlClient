@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient
 
             Initialize();
 
-            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(
+            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionOptions connString, string serverSpn) => new(
                 resource: serverSpn,
                 serverName: connString.DataSource,
                 databaseName: connString.InitialCatalog,

@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient
             if (obj != null &&
                 obj is SqlConnectionEncryptOption option)
             {
-                return ToString().Equals(option.ToString());
+                return _value.Equals(option._value);
             }
 
             return false;
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/GetHashCode/*' />
         public override int GetHashCode()
         {
-            return ToString().GetHashCode();
+            return _value.GetHashCode();
         }
     }
 
