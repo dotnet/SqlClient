@@ -19,6 +19,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -184,7 +185,7 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Make auto-property, also make nullable.
         private SqlCommandColumnEncryptionSetting _columnEncryptionSetting =
             SqlCommandColumnEncryptionSetting.UseConnectionSetting;
-        
+
         /// <summary>
         /// Text to execute when executing the command.
         /// </summary>
@@ -194,7 +195,7 @@ namespace Microsoft.Data.SqlClient
         /// Maximum amount of time, in seconds, the command will execute before timing out.
         /// </summary>
         private int? _commandTimeout;
-        
+
         /// <summary>
         /// Type of the command to execute.
         /// </summary>
@@ -250,7 +251,7 @@ namespace Microsoft.Data.SqlClient
         /// causes a hidden prepare.
         /// </summary>
         private bool _hiddenPrepare = false;
-        
+
         /// <summary>
         /// _inPrepare will be set immediately before the actual prepare is done. The OnReturnValue
         /// function will test this flag to determine whether the returned value is a
@@ -265,12 +266,12 @@ namespace Microsoft.Data.SqlClient
         private volatile bool _internalEndExecuteInitiated;
 
         private SqlNotificationRequest _notification;
-        
+
         #if NETFRAMEWORK
         // @TODO: Make auto-property
         private bool _notificationAutoEnlist = true;
         #endif
-        
+
         /// <summary>
         /// Parameters that have been added to the current instance.
         /// </summary>
@@ -369,7 +370,7 @@ namespace Microsoft.Data.SqlClient
         /// Current transaction the command is participating in.
         /// </summary>
         private SqlTransaction _transaction;
-        
+
         /// <summary>
         /// How command results are applied to a DataRow when used by the update method of
         /// DbDataAdapter.
@@ -397,6 +398,7 @@ namespace Microsoft.Data.SqlClient
         public SqlCommand(string cmdText)
             : this()
         {
+            // CodeQL [SM03934] Executing user-supplied SQL commands is a core feature of a SQL driver.
             CommandText = cmdText;
         }
 
@@ -404,6 +406,7 @@ namespace Microsoft.Data.SqlClient
         public SqlCommand(string cmdText, SqlConnection connection)
             : this()
         {
+            // CodeQL [SM03934] Executing user-supplied SQL commands is a core feature of a SQL driver.
             CommandText = cmdText;
             Connection = connection;
         }
@@ -412,6 +415,7 @@ namespace Microsoft.Data.SqlClient
         public SqlCommand(string cmdText, SqlConnection connection, SqlTransaction transaction)
             : this()
         {
+            // CodeQL [SM03934] Executing user-supplied SQL commands is a core feature of a SQL driver.
             CommandText = cmdText;
             Connection = connection;
             Transaction = transaction;
@@ -425,6 +429,7 @@ namespace Microsoft.Data.SqlClient
             SqlCommandColumnEncryptionSetting columnEncryptionSetting)
             : this()
         {
+            // CodeQL [SM03934] Executing user-supplied SQL commands is a core feature of a SQL driver.
             CommandText = cmdText;
             Connection = connection;
             Transaction = transaction;
@@ -433,6 +438,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCommand(SqlCommand from)
         {
+            // CodeQL [SM03934] Executing user-supplied SQL commands is a core feature of a SQL driver.
             CommandText = from.CommandText;
             CommandTimeout = from.CommandTimeout;
             CommandType = from.CommandType;
@@ -455,7 +461,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Events
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
         [ResCategory(nameof(Strings.DataCategory_StatementCompleted))]
         [ResDescription(nameof(Strings.DbCommand_StatementCompleted))]
@@ -470,28 +476,28 @@ namespace Microsoft.Data.SqlClient
                 _statementCompletedEventHandler -= value;
             }
         }
-        
+
         #endregion
-        
+
         #region Enums
-        
+
         // @TODO: Rename to match naming conventions
         private enum EXECTYPE
         {
             /// <summary>
             /// Execute unprepared commands, all server versions (results in sp_execsql call)
             /// </summary>
-            UNPREPARED, 
-            
+            UNPREPARED,
+
             /// <summary>
             /// Prepare and execute command, 8.0 and above only  (results in sp_prepexec call)
             /// </summary>
             PREPAREPENDING,
-            
+
             /// <summary>
             /// execute prepared commands, all server versions   (results in sp_exec call)
             /// </summary>
-            PREPARED,           
+            PREPARED,
         }
 
         // Index into indirection arrays for columns of interest to DeriveParameters
@@ -524,7 +530,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlCommand_ColumnEncryptionSetting))]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
         [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.DbCommand_CommandTimeout))]
@@ -543,7 +549,7 @@ namespace Microsoft.Data.SqlClient
                     PropertyChanging();
                     _commandTimeout = value;
                 }
-                
+
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlCommand.Set_CommandTimeout | API | " +
                     $"Object Id {ObjectID}, " +
@@ -551,7 +557,7 @@ namespace Microsoft.Data.SqlClient
                     $"Client Connection Id {Connection?.ClientConnectionId}");
             }
         }
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)]
@@ -710,7 +716,7 @@ namespace Microsoft.Data.SqlClient
                     $"Object Id {ObjectID}");
             }
         }
-        
+
         #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
         [DefaultValue(true)]
@@ -722,7 +728,7 @@ namespace Microsoft.Data.SqlClient
             set => _notificationAutoEnlist = value;
         }
         #endif
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [ResCategory(nameof(Strings.DataCategory_Data))]
@@ -737,7 +743,7 @@ namespace Microsoft.Data.SqlClient
                 return _parameters;
             }
         }
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -810,7 +816,7 @@ namespace Microsoft.Data.SqlClient
                     default:
                         throw ADP.InvalidUpdateRowSource(value);
                 }
-                
+
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlCommand.UpdatedRowSource | API | " +
                     $"Object Id {ObjectID}, " +
@@ -925,7 +931,7 @@ namespace Microsoft.Data.SqlClient
         {
             get => Parameters;
         }
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
         protected override DbTransaction DbTransaction
         {
@@ -990,7 +996,7 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: Factor out closeCount/reconnectCount checks to properties and clean up.
                 // To wit: closeCount checks whether the connection has been closed after preparation,
                 //    reconnectCount, the same only with reconnections.
-                
+
                 // only dirty if prepared
                 // @TODO: we probably do not need to store this as a temp variable.
                 var activeConnection = _activeConnection;
@@ -1003,7 +1009,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // @TODO: Consider reworking to do this in a helper method, since setting, sets to the
                 // _dirty, but that's not the only consideration when determining dirtiness.
-                
+
                 // only mark the command as dirty if it is already prepared
                 // but always clear the value if we are clearing the dirty flag
                 _dirty = value ? IsPrepared : false;
@@ -1057,7 +1063,7 @@ namespace Microsoft.Data.SqlClient
             // cancel because immediately after checking the connection can be closed or removed
             // via another thread.
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.Cancel | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.Cancel | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.Cancel | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -1169,7 +1175,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnection.ExecutePermission.Demand();
             #endif
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.Prepare | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.Prepare | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.Prepare | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -1291,11 +1297,9 @@ namespace Microsoft.Data.SqlClient
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog,
             // Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(
-                name: CommandText,
-                leftQuote: "[\"",
-                rightQuote: "]\"",
+                identifier: CommandText,
                 property: Strings.SQL_SqlCommandCommandText,
-                ThrowOnEmptyMultipartName: false);
+                throwOnEmptyMultipartIdentifier: false);
 
             if (string.IsNullOrEmpty(parsedSProc[3]))
             {
@@ -1346,7 +1350,7 @@ namespace Microsoft.Data.SqlClient
                 useManagedDataType = false;
             }
 
-            SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
+            using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -2269,7 +2273,7 @@ namespace Microsoft.Data.SqlClient
                             s = val as string;
                             if (s is null)
                             {
-                                SqlString sval = val is SqlString ? (SqlString)val : SqlString.Null;
+                                SqlString sval = val is SqlString sqlVal ? sqlVal : SqlString.Null;
                                 if (!sval.IsNull)
                                 {
                                     s = sval.Value;
@@ -2809,10 +2813,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(
                                 parameter.TypeName,
-                                leftQuote: "[\"",
-                                rightQuote: "]\"",
                                 property: Strings.SQL_TDSParserTableName,
-                                ThrowOnEmptyMultipartName: false);
+                                throwOnEmptyMultipartIdentifier: false);
                             // @TODO: Combine this and inner if statement
                             if (parts?.Length == 4)
                             {

@@ -365,7 +365,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // ConnectionOpenDisableRetry relies on error 4060 for automatic retry, which is not returned when using AAD auth
+        // ConnectionOpenDisableRetry relies on error 4060 for automatic retry, which is not returned when using Entra ID auth
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
         public static void ConnectionOpenDisableRetry()
         {

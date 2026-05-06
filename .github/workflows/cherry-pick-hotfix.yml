@@ -1,0 +1,113 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Cherry-pick Hotfix to Release Branch
+#
+# Automatically cherry-picks merged PRs into release branches when a
+# "Hotfix <version>" label is present. Supports multiple hotfix labels on
+# a single PR — each one produces an independent cherry-pick PR targeting
+# the corresponding release/<version> branch.
+#
+# Usage:
+#   1. Merge a PR to the default branch.
+#   2. Add a "Hotfix <version>" label (e.g. "Hotfix 7.0.1") either before
+#      or after merging.
+#   3. The workflow derives the release branch from the label's major.minor
+#      version (e.g. "Hotfix 7.0.1" → release/7.0) and creates a cherry-pick
+#      PR prefixed with "[<version> Cherry-pick]".
+#   4. If the cherry-pick has conflicts, a placeholder PR is opened with
+#      "[<version> Cherry-pick - CONFLICTS]" and manual resolution steps.
+#
+#################################################################################
+
+name: Cherry-pick Hotfix to release branch
+
+# Triggers:
+#   - 'closed': fires at merge time — if a "Hotfix <version>" label is already present,
+#     the cherry-pick runs immediately.
+#   - 'labeled': fires when a label is added after merge — allows retroactive cherry-picks
+#     by adding the label to an already-merged PR.
+on:
+  pull_request_target:
+    types: [closed, labeled]
+
+# 'contents: write' is needed to push the cherry-pick branch.
+# 'pull-requests: write' is needed to create the new PR via the GitHub CLI.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # First job: extract all hotfix versions from the PR labels and emit them as
+  # a JSON array so the matrix strategy can fan out one job per version.
+  detect-versions:
+    runs-on: ubuntu-latest
+    # Only fire for merged PRs targeting the default branch that have at least
+    # one "Hotfix *" label.  The default-branch guard prevents recursive
+    # cherry-picks when a cherry-pick PR is merged into a release branch.
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
+      join(github.event.pull_request.labels.*.name, ' ') != '' &&
+      contains(join(github.event.pull_request.labels.*.name, ','), 'Hotfix ')
+    outputs:
+      versions: ${{ steps.extract.outputs.versions }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Extract hotfix versions from labels
+        id: extract
+        env:
+          # Pass label names via env to avoid script injection from label text.
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          # For the 'labeled' event, this is the single label that was just added.
+          # For the 'closed' event this is empty, meaning all labels are processed.
+          EVENT_LABEL: ${{ github.event.label.name || '' }}
+          EVENT_ACTION: ${{ github.event.action }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/extract-hotfix-versions.sh"
+
+  # Second job: runs once per detected version, cherry-picking the merge commit
+  # into each target release branch.
+  cherry-pick:
+    needs: detect-versions
+    if: needs.detect-versions.outputs.versions != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel other cherry-picks if one version fails.
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.detect-versions.outputs.versions) }}
+    name: Cherry-pick to release branch (${{ matrix.version }})
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          # Full history is required so the merge commit and target branch are available
+          # for the cherry-pick operation.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Cherry-pick and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          VERSION: ${{ matrix.version }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/cherry-pick-to-release.sh"

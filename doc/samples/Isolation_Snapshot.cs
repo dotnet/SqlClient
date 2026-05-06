@@ -1,3 +1,5 @@
+namespace Isolation_Snapshot;
+
 using System;
 using System.Data;
 // <Snippet1>

@@ -2,7 +2,7 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace SqlCommandCS
+namespace SqlCommand_ExecuteNonQuery_SP_DML
 {
     class Program
     {
@@ -39,8 +39,6 @@ namespace SqlCommandCS
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                SqlCommand command = new SqlCommand(connection);
-
                 // <Snippet1>
                 // Assumes connection is a valid SqlConnection.
                 connection.Open();

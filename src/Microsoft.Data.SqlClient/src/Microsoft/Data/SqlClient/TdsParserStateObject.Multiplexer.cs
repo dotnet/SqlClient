@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -199,7 +200,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_partialPacket != null && packet != null)
             {
-                throw new InvalidOperationException("partial packet cannot be non-null when setting to non=null");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_Multiplexer_PartialPacketNotNull));
             }
             _partialPacket = packet;
         }
@@ -488,7 +489,7 @@ namespace Microsoft.Data.SqlClient
 
             if (consumePartialPacket && consumeInputDirectly)
             {
-                throw new InvalidOperationException($"MultiplexPackets cannot return both {nameof(consumePartialPacket)} and {nameof(consumeInputDirectly)}");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_Multiplexer_ConflictingConsumeModes));
             }
         }
 

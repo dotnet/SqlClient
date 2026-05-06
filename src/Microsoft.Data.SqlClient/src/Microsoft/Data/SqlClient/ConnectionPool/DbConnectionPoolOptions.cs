@@ -39,6 +39,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _hasTransactionAffinity = hasTransactionAffinity;
         }
 
+        /// <summary>
+        /// The time (in milliseconds) to wait for a connection to be created/returned before terminating the attempt.
+        /// </summary>
         public int CreationTimeout
         {
             get { return _creationTimeout; }

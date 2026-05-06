@@ -667,7 +667,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -676,7 +676,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
                              + "Integrated Security=SSPI";
                   ReadGetOrdinal(str);
               }
-          
+
               private static void ReadGetOrdinal(string connectionString)
               {
                   string queryString = "SELECT DISTINCT CustomerID FROM dbo.Orders;";
@@ -684,18 +684,18 @@ No conversions are performed; therefore. the data retrieved must already be a ch
                   {
                       SqlCommand command = new SqlCommand(queryString, connection);
                       connection.Open();
-          
+
                       SqlDataReader reader = command.ExecuteReader();
-          
+
                       // Call GetOrdinal and assign value to variable.
                       int customerID = reader.GetOrdinal("CustomerID");
-          
+
                       // Use variable with GetString inside of loop.
                       while (reader.Read())
                       {
                           Console.WriteLine("CustomerID={0}", reader.GetString(customerID));
                       }
-          
+
                       // Call Close when done reading.
                       reader.Close();
                   }
@@ -967,10 +967,10 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
     <GetSqlVector>
       <param name="i"></param>
       <summary>
-        Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlVector"/>.
+        Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlVector`1" />.
       </summary>
       <returns>
-        A <see cref="T:Microsoft.Data.SqlTypes.SqlVector"/> object representing the column at the given ordinal.
+        A <see cref="T:Microsoft.Data.SqlTypes.SqlVector`1"/> object representing the column at the given ordinal.
       </returns>
       <exception cref="T:System.ArgumentOutOfRangeException">
         The index passed was outside the range of 0 to <see cref="P:System.Data.DataTableReader.FieldCount" /> - 1
@@ -979,7 +979,7 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         An attempt was made to read or access columns in a closed <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </exception>
       <exception cref="T:System.InvalidCastException">
-        The retrieved data is not compatible with the <see cref="T:Microsoft.Data.SqlTypes.SqlVector" /> type.
+        The retrieved data is not compatible with the <see cref="T:Microsoft.Data.SqlTypes.SqlVector`1" /> type.
       </exception>
       <remarks>
         No conversions are performed; therefore, the data retrieved must already be a vector value, or an exception is generated.
@@ -1193,7 +1193,7 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
           <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
           <item><description>Tried to read a previously-read column in sequential mode.</description></item>
           <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
-        </list>         
+        </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
         Trying to read a column that does not exist.
@@ -1282,21 +1282,21 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
               // enough for all the columns.
               Object[] values = new Object[reader.FieldCount];
               int fieldCount = reader.GetValues(values);
-      
+
               Console.WriteLine("reader.GetValues retrieved {0} columns.",
                   fieldCount);
               for (int i = 0; i &lt; fieldCount; i++)
               {
                   Console.WriteLine(values[i]);
               }
-      
+
               Console.WriteLine();
-      
-              // Now repeat, using an array that may contain a different 
+
+              // Now repeat, using an array that may contain a different
               // number of columns than the original data. This should work correctly,
-              // whether the size of the array is larger or smaller than 
+              // whether the size of the array is larger or smaller than
               // the number of columns.
-      
+
               // Attempt to retrieve three columns of data.
               values = new Object[3];
               fieldCount = reader.GetValues(values);
@@ -1334,7 +1334,7 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
           <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
           <item><description>Trying to read a previously read column in sequential mode.</description></item>
           <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
-        </list>         
+        </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
         Trying to read a column that does not exist.
@@ -1394,7 +1394,7 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
           using System;
           using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main(string[] args)
@@ -1448,7 +1448,7 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
           <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
           <item><description>Trying to read a previously read column in sequential mode.</description></item>
           <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
-        </list>         
+        </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
         Trying to read a column that does not exist.

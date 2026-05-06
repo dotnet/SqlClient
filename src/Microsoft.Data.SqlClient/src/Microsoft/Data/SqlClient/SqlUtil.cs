@@ -18,11 +18,7 @@ using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 
-#if NETFRAMEWORK
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using Interop.Windows.Kernel32;
-#else
+#if NET
 using System.Net.Sockets;
 #endif
 
@@ -515,29 +511,31 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
         }
 
-        internal static Exception CannotFindAuthProvider(string authentication)
+        internal static Exception CannotFindAuthProvider(SqlAuthenticationMethod authentication)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authentication));
-        }
+            string authName = authentication.ToString();
 
-        internal static Exception ParameterCannotBeEmpty(string paramName)
-        {
-            return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
+            return authentication switch
+            {
+#pragma warning disable 0618
+                SqlAuthenticationMethod.ActiveDirectoryPassword or
+#pragma warning restore 0618
+                SqlAuthenticationMethod.ActiveDirectoryIntegrated or
+                SqlAuthenticationMethod.ActiveDirectoryInteractive or
+                SqlAuthenticationMethod.ActiveDirectoryServicePrincipal or
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow or
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity or
+                SqlAuthenticationMethod.ActiveDirectoryMSI or
+                SqlAuthenticationMethod.ActiveDirectoryDefault or
+                SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                    => ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindActiveDirectoryAuthProvider, authName)),
+                _ => ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authName)),
+            };
         }
 
         internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
-        }
-
-        internal static Exception ActiveDirectoryInteractiveTimeout()
-        {
-            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_Interactive_Authentication);
-        }
-
-        internal static Exception ActiveDirectoryDeviceFlowTimeout()
-        {
-            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
         internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
@@ -817,9 +815,14 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception ConversionOverflow()
+        {
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_ConversionOverflowMessage));
+        }
+
         internal static Exception DateTimeOverflow()
         {
-            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+            return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_DateTimeOverflowMessage));
         }
 
         //
@@ -1181,6 +1184,15 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
+            exc._doNotReconnect = true;
+            return exc;
+        }
+
+        internal static Exception ROR_InvalidEnhancedRoutingInfo(SqlConnectionInternal internalConnection)
+        {
+            SqlErrorCollection errors = new SqlErrorCollection();
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidEnhancedRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
@@ -1904,9 +1916,8 @@ namespace Microsoft.Data.SqlClient
             Exception exceptionToInclude = e.InnerException != null ? e.InnerException : e;
             sqlErs.Add(new SqlError(infoNumber: 0, errorState: (byte)0x00, errorClass: (byte)TdsEnums.MIN_ERROR_CLASS, server: serverName, errorMessage: errorMessage, procedure: null, lineNumber: 0));
 
-            if (e is SqlException)
+            if (e is SqlException exThrown)
             {
-                SqlException exThrown = (SqlException)e;
                 SqlErrorCollection errorList = exThrown.Errors;
                 for (int i = 0; i < exThrown.Errors.Count; i++)
                 {
@@ -2129,11 +2140,6 @@ namespace Microsoft.Data.SqlClient
         {
             return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
-#else
-        static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
-        }
 #endif
 
     }
@@ -2262,6 +2268,10 @@ namespace Microsoft.Data.SqlClient
         internal static string ExRoutingDestination()
         {
             return StringsHelper.GetString(Strings.SQL_ExRoutingDestination);
+        }
+        internal static string NullString()
+        {
+            return StringsHelper.GetString(Strings.SqlMisc_NullString);
         }
     }
 

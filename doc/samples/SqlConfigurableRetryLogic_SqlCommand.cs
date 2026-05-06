@@ -1,3 +1,5 @@
+namespace SqlConfigurableRetryLogic_SqlCommand;
+
 using System;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -148,6 +150,8 @@ class RetryLogicSample
         cmd.ExecuteNonQuery();
     }
 // </Snippet2>
+private class RetryCommandSample2
+{
 // <Snippet3>
     private static void RetryCommand(SqlRetryLogicBaseProvider provider)
     {
@@ -195,6 +199,9 @@ class RetryLogicSample
         await cmd.ExecuteNonQueryAsync();
     }
 // </Snippet3>
+}
+private class RetryCommandSample3
+{ 
 // <Snippet4>
     private static void RetryCommand(SqlRetryLogicBaseProvider provider)
     {
@@ -242,4 +249,5 @@ class RetryLogicSample
         await provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery));
     }
 // </Snippet4>
+}
 }

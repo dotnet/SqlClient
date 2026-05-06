@@ -1,3 +1,5 @@
+namespace SqlConnection_Pooling;
+
 using System;
 using Microsoft.Data.SqlClient;
 

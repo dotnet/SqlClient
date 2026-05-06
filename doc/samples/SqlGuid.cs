@@ -1,3 +1,5 @@
+namespace SqlGuidCS;
+
 using System;
 using System.Data;
 // <Snippet1>

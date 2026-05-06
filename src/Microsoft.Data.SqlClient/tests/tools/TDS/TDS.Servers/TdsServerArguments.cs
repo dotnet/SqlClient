@@ -16,18 +16,19 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class TdsServerArguments
     {
         /// <summary>
-        /// Service Principal Name, representing Azure SQL Database in Azure Active Directory.
+        /// Service Principal Name, representing Azure SQL Database in Entra ID.
         /// </summary>
         public const string AzureADServicePrincipalName = @"https://database.windows.net/";
 
         /// <summary>
-        /// The Azure Active Directory production token endpoint to re-direct the client to fetch a token from.
+        /// The Entra ID production token endpoint to re-direct the client to fetch a token from.
         /// </summary>
         public const string AzureADProductionTokenEndpoint = @"https://login.windows.net/common";
 
         /// <summary>
         /// Log to which send TDS conversation
         /// </summary>
+        /// TODO: change this to expect ITestOutputHelper?
         public TextWriter Log { get; set; } = null;
 
         /// <summary>

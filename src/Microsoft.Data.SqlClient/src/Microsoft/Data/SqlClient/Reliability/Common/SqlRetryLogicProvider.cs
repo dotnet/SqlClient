@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {

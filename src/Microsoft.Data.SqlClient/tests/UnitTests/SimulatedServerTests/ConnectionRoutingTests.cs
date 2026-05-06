@@ -10,7 +10,6 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Trait("Category", "flaky")]
     [Collection("SimulatedServerTests")]
     public class ConnectionRoutingTests
     {
@@ -58,8 +57,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, router.PreLoginCount);
-            Assert.Equal(2, server.PreLoginCount);
+            Assert.Equal(2, router.PreLoginCount - router.AbandonedPreLoginCount);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
         [Theory]
@@ -157,6 +156,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
+        [Trait("Category", "flaky")]
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange

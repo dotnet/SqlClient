@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                 string expectedErrorMsg = string.Format(
                                     SystemDataResourceManager.Instance.SQL_BulkLoadOrderHintDuplicateColumn, destColumn);
-                                DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(
+                                DataTestUtility.AssertThrows<InvalidOperationException>(
                                     () => bulkcopy.ColumnOrderHints.Add(destColumn, SortOrder.Ascending),
                                     exceptionMessage: expectedErrorMsg);
 

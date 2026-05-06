@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ADP_Ascending" xml:space="preserve">
-    <value>Vzestupně</value>
-  </data>
   <data name="ADP_CollectionIndexInt32" xml:space="preserve">
     <value>Index {0} pro {1} je neplatný (Count={2}).</value>
   </data>
@@ -132,17 +129,11 @@
   <data name="ADP_CollectionIsNotParent" xml:space="preserve">
     <value>{0} už obsahuje jiná kolekce {1}.</value>
   </data>
-  <data name="ADP_CollectionIsParent" xml:space="preserve">
-    <value>Index {0} je již v této kolekci {1} obsažen.</value>
-  </data>
   <data name="ADP_CollectionNullValue" xml:space="preserve">
     <value>{0} přijímá pouze objekty typu {1}, které nejsou null.</value>
   </data>
   <data name="ADP_CollectionRemoveInvalidObject" xml:space="preserve">
     <value>Došlo k pokusu o odebrání objektu {0}, který není obsažen v této kolekci {1}.</value>
-  </data>
-  <data name="ADP_CollectionUniqueValue" xml:space="preserve">
-    <value>Hodnota {0}.{1} musí být jedinečná. Hodnota {2} již v kolekci existuje.</value>
   </data>
   <data name="ADP_ConnectionAlreadyOpen" xml:space="preserve">
     <value>Připojení nebylo zavřeno. {0}</value>
@@ -171,12 +162,6 @@
   <data name="ADP_DataReaderClosed" xml:space="preserve">
     <value>Pokus o volání {0} je neplatný, je-li zavřeno čtecí zařízení.</value>
   </data>
-  <data name="ADP_DelegatedTransactionPresent" xml:space="preserve">
-    <value>Nelze zařadit do transakce, protože připojení je primárním připojením pro delegovanou nebo povýšenou transakci.</value>
-  </data>
-  <data name="ADP_Descending" xml:space="preserve">
-    <value>Sestupně</value>
-  </data>
   <data name="ADP_EmptyString" xml:space="preserve">
     <value>Byl očekáván neprázdný řetězec pro parametr {0}.</value>
   </data>
@@ -203,9 +188,6 @@
   </data>
   <data name="ADP_NoConnectionString" xml:space="preserve">
     <value>Vlastnost ConnectionString nebyla inicializována.</value>
-  </data>
-  <data name="ADP_NonCLSException" xml:space="preserve">
-    <value>Byla zachycena výjimka Exception neodpovídající specifikaci CLS.</value>
   </data>
   <data name="ADP_NotAPermissionElement" xml:space="preserve">
     <value>Daný element zabezpečení není elementem oprávnění.</value>
@@ -252,9 +234,6 @@
   <data name="DataCategory_Data" xml:space="preserve">
     <value>Data</value>
   </data>
-  <data name="DataCategory_StateChange" xml:space="preserve">
-    <value>StateChange</value>
-  </data>
   <data name="DataCategory_Update" xml:space="preserve">
     <value>Aktualizovat</value>
   </data>
@@ -264,47 +243,11 @@
   <data name="DbConnection_State" xml:space="preserve">
     <value>Vlastnost ConnectionState udávající, zda je připojení otevřeno nebo zavřeno.</value>
   </data>
-  <data name="DbConnection_StateChange" xml:space="preserve">
-    <value>Událost aktivovaná při změně stavu připojení.</value>
-  </data>
-  <data name="DbParameter_DbType" xml:space="preserve">
-    <value>Obecný typ parametru.</value>
-  </data>
-  <data name="DbParameter_Direction" xml:space="preserve">
-    <value>Vstupní, výstupní nebo obousměrný parametr</value>
-  </data>
-  <data name="DbParameter_IsNullable" xml:space="preserve">
-    <value>vlastnost existující v době návrhu použitá pro generování kódu silného typu.</value>
-  </data>
-  <data name="DbParameter_Offset" xml:space="preserve">
-    <value>Posun v datových typech proměnné délky.</value>
-  </data>
-  <data name="DbParameter_ParameterName" xml:space="preserve">
-    <value>Název parametru</value>
-  </data>
-  <data name="DbParameter_Size" xml:space="preserve">
-    <value>Velikost datových typů proměnné délky (řetězce a pole)</value>
-  </data>
-  <data name="DbParameter_SourceColumn" xml:space="preserve">
-    <value>Při použití v metodě DataAdapter.Update se jedná o název zdrojového sloupce, který slouží k vyhledání názvu DataSetColumn ve vlastnosti ColumnMappings. Používá se ke kopírování hodnoty mezi parametrem a řádkem dat.</value>
-  </data>
-  <data name="DbParameter_SourceVersion" xml:space="preserve">
-    <value>Při použití v metodě DataAdapter.Update (pouze vlastnost UpdateCommand) se jedná o verzi hodnoty objektu DataRow, která slouží k aktualizaci zdroje dat.</value>
-  </data>
-  <data name="DbParameter_SourceColumnNullMapping" xml:space="preserve">
-    <value>Při použití v metodě DataAdapter.Update je hodnota parametru změněna z DBNull.Value na (Int32)1 nebo (Int32)0, pokud je hodnota jiná než null.</value>
-  </data>
-  <data name="DbParameter_Value" xml:space="preserve">
-    <value>Hodnota parametru.</value>
-  </data>
   <data name="MDF_QueryFailed" xml:space="preserve">
     <value>Kolekci {0} se nepovedlo sestavit, protože se nepovedlo spustit příkaz jazyka SQL. Podrobnosti naleznete v popisu vnitřní výjimky.</value>
   </data>
   <data name="MDF_TooManyRestrictions" xml:space="preserve">
     <value>Bylo zadáno více omezení, než podporuje požadované schéma ({0}).</value>
-  </data>
-  <data name="MDF_InvalidRestrictionValue" xml:space="preserve">
-    <value>{2} není platná hodnota pro omezení {1} kolekce schématu {0}.</value>
   </data>
   <data name="MDF_UndefinedCollection" xml:space="preserve">
     <value>Požadovaná kolekce ({0}) není definována.</value>
@@ -314,15 +257,6 @@
   </data>
   <data name="MDF_UnsupportedVersion" xml:space="preserve">
     <value>Požadovaná kolekce ({0}) není podporována touto verzí zprostředkovatele.</value>
-  </data>
-  <data name="MDF_MissingDataSourceInformationColumn" xml:space="preserve">
-    <value>Chybí jeden z požadovaných sloupců tabulek DataSourceInformation.</value>
-  </data>
-  <data name="MDF_IncorrectNumberOfDataSourceInformationRows" xml:space="preserve">
-    <value>Tabulka DataSourceInformation musí obsahovat přesně jeden řádek.</value>
-  </data>
-  <data name="MDF_MissingRestrictionColumn" xml:space="preserve">
-    <value>Chybí minimálně jeden z požadovaných sloupců kolekce omezení.</value>
   </data>
   <data name="MDF_MissingRestrictionRow" xml:space="preserve">
     <value>Existuje omezení, pro které v kolekci omezení neexistuje odpovídající řádek.</value>
@@ -342,20 +276,8 @@
   <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
     <value>V kódu XML metadat chybí kolekce {0}.</value>
   </data>
-  <data name="MDF_InvalidXml" xml:space="preserve">
-    <value>Jazyk XML metadat je neplatný.</value>
-  </data>
-  <data name="MDF_InvalidXmlMissingColumn" xml:space="preserve">
-    <value>Jazyk XML metadat je neplatný. Kolekce {0} musí obsahovat sloupec {1} a musí se jednat o sloupec řetězce.</value>
-  </data>
   <data name="MDF_InvalidXmlInvalidValue" xml:space="preserve">
     <value>Jazyk XML metadat je neplatný. Sloupec {1} kolekce {0} musí obsahovat neprázdný řetězec.</value>
-  </data>
-  <data name="DataCategory_Action" xml:space="preserve">
-    <value>Akce</value>
-  </data>
-  <data name="DataCategory_Behavior" xml:space="preserve">
-    <value>Chování</value>
   </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>Výplň</value>
@@ -363,20 +285,11 @@
   <data name="DataCategory_InfoMessage" xml:space="preserve">
     <value>InfoMessage</value>
   </data>
-  <data name="DataCategory_Mapping" xml:space="preserve">
-    <value>Mapování</value>
-  </data>
   <data name="DataCategory_StatementCompleted" xml:space="preserve">
     <value>StatementCompleted</value>
   </data>
-  <data name="DataCategory_Udt" xml:space="preserve">
-    <value>UDT</value>
-  </data>
   <data name="DataCategory_Notification" xml:space="preserve">
     <value>Oznámení</value>
-  </data>
-  <data name="DataCategory_Schema" xml:space="preserve">
-    <value>Schéma</value>
   </data>
   <data name="DataCategory_Xml" xml:space="preserve">
     <value>XML</value>
@@ -393,9 +306,6 @@
   <data name="DataCategory_Pooling" xml:space="preserve">
     <value>Sdružování</value>
   </data>
-  <data name="DataCategory_NamedConnectionString" xml:space="preserve">
-    <value>Pojmenovaný připojovací řetězec ConnectionString</value>
-  </data>
   <data name="DataCategory_Security" xml:space="preserve">
     <value>Zabezpečení</value>
   </data>
@@ -408,1352 +318,11 @@
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Odolnost připojení</value>
   </data>
-  <data name="ExtendedPropertiesDescr" xml:space="preserve">
-    <value>Kolekce obsahující vlastní uživatelské informace.</value>
-  </data>
-  <data name="DataSetCaseSensitiveDescr" xml:space="preserve">
-    <value>Určuje, zda se při porovnání řetězců v rámci objektu DataSet rozlišují malá a velká písmena.</value>
-  </data>
-  <data name="DataSetDataSetNameDescr" xml:space="preserve">
-    <value>Název tohoto objektu DataSet</value>
-  </data>
-  <data name="DataSetDefaultViewDescr" xml:space="preserve">
-    <value>Určuje vlastní zobrazení dat obsažených v objektu DataSet. Toto zobrazení umožňuje filtrování, hledání a navigaci ve vlastním zobrazení dat.</value>
-  </data>
-  <data name="DataSetEnforceConstraintsDescr" xml:space="preserve">
-    <value>Určuje, zda musí být dodržována pravidla omezení.</value>
-  </data>
-  <data name="DataSetHasErrorsDescr" xml:space="preserve">
-    <value>Určuje, zda objekt DataSet obsahuje chyby.</value>
-  </data>
-  <data name="DataSetLocaleDescr" xml:space="preserve">
-    <value>Určuje národní prostředí, ve kterém bude probíhat porovnávání řetězců v rámci objektu DataSet.</value>
-  </data>
-  <data name="DataSetNamespaceDescr" xml:space="preserve">
-    <value>Určuje obor názvů jazyka XML určený identifikátorem URI pro kořenový element, na který odkazuje tento objekt DataSet.</value>
-  </data>
-  <data name="DataSetPrefixDescr" xml:space="preserve">
-    <value>Určuje předponu oboru názvů použitého pro tento objekt DataSet.</value>
-  </data>
-  <data name="DataSetRelationsDescr" xml:space="preserve">
-    <value>Kolekce obsahující relace pro tento objekt DataSet.</value>
-  </data>
-  <data name="DataSetTablesDescr" xml:space="preserve">
-    <value>Kolekce obsahující tabulky pro tento objekt DataSet</value>
-  </data>
-  <data name="DataSetMergeFailedDescr" xml:space="preserve">
-    <value>Vyvolá se, když není možné sloučit schémata pro dvě tabulky se stejným názvem.</value>
-  </data>
-  <data name="DataSetInitializedDescr" xml:space="preserve">
-    <value>Proběhne po dokončení Initialization.</value>
-  </data>
-  <data name="DataSetDescr" xml:space="preserve">
-    <value>Představuje mezipaměť dat v paměti.</value>
-  </data>
-  <data name="DataTableCaseSensitiveDescr" xml:space="preserve">
-    <value>Určuje, zda se při porovnávání řetězců v rámci tabulky rozlišují malá a velká písmena.</value>
-  </data>
-  <data name="DataTableChildRelationsDescr" xml:space="preserve">
-    <value>Vrací podřízené relace pro tuto tabulku.</value>
-  </data>
-  <data name="DataTableColumnsDescr" xml:space="preserve">
-    <value>Kolekce obsahující sloupce této tabulky</value>
-  </data>
-  <data name="DataTableConstraintsDescr" xml:space="preserve">
-    <value>Kolekce obsahující omezení této tabulky</value>
-  </data>
-  <data name="DataTableDataSetDescr" xml:space="preserve">
-    <value>Určuje objekt DataSet, do kterého patří tato tabulka</value>
-  </data>
-  <data name="DataTableDefaultViewDescr" xml:space="preserve">
-    <value>Toto je výchozí objekt DataView pro tabulku.</value>
-  </data>
-  <data name="DataTableDisplayExpressionDescr" xml:space="preserve">
-    <value>Výraz určený k výpočtu datově závislé hodnoty pro tento řádek</value>
-  </data>
-  <data name="DataTableHasErrorsDescr" xml:space="preserve">
-    <value>Určuje, zda tato tabulka obsahuje chyby.</value>
-  </data>
-  <data name="DataTableLocaleDescr" xml:space="preserve">
-    <value>Určuje národní prostředí, v němž probíhá porovnání řetězců v rámci tabulky.</value>
-  </data>
-  <data name="DataTableMinimumCapacityDescr" xml:space="preserve">
-    <value>Určuje počáteční velikost této tabulky.</value>
-  </data>
-  <data name="DataTableNamespaceDescr" xml:space="preserve">
-    <value>Určuje obor názvů jazyka XML určený identifikátorem URI pro elementy obsažené v této tabulce.</value>
-  </data>
-  <data name="DataTablePrefixDescr" xml:space="preserve">
-    <value>Určuje vlastnost Prefix oboru názvů použitého pro tuto tabulku v reprezentaci XML.</value>
-  </data>
-  <data name="DataTableParentRelationsDescr" xml:space="preserve">
-    <value>Vrací nadřazené relace pro tuto tabulku.</value>
-  </data>
-  <data name="DataTablePrimaryKeyDescr" xml:space="preserve">
-    <value>Určuje sloupce představující primární klíč pro tuto tabulku.</value>
-  </data>
-  <data name="DataTableRowsDescr" xml:space="preserve">
-    <value>Určuje kolekci obsahující řádky dat pro tuto tabulku.</value>
-  </data>
-  <data name="DataTableTableNameDescr" xml:space="preserve">
-    <value>Určuje název, který se bude používat při hledání této tabulky v kolekci Tables objektu DataSet.</value>
-  </data>
-  <data name="DataTableRowChangedDescr" xml:space="preserve">
-    <value>Vyvolá se po úspěšné úpravě řádku v tabulce.</value>
-  </data>
-  <data name="DataTableRowChangingDescr" xml:space="preserve">
-    <value>Vyvolá se při změně řádku, aby mohla obslužná rutina události změnu změnit nebo zrušit. Uživatel může upravit hodnoty v řádku a pro zrušení úpravy by měl vyvolat výjimku.</value>
-  </data>
-  <data name="DataTableRowDeletedDescr" xml:space="preserve">
-    <value>Vyvolá se po úspěšném odstranění řádku v tabulce.</value>
-  </data>
-  <data name="DataTableRowDeletingDescr" xml:space="preserve">
-    <value>Vyvolá se v případě, že je řádek v tabulce označen k odstranění.  Vyvoláním výjimky zrušíte odstranění.</value>
-  </data>
-  <data name="DataTableColumnChangingDescr" xml:space="preserve">
-    <value>Vyvolá se při odeslání hodnoty pro tento sloupec.  Uživatel může změnit navrhovanou hodnotu a zrušit úpravy vyvoláním výjimky.</value>
-  </data>
-  <data name="DataTableColumnChangedDescr" xml:space="preserve">
-    <value>Vyvolá se při změně hodnoty tohoto sloupce.</value>
-  </data>
-  <data name="DataTableRowsClearingDescr" xml:space="preserve">
-    <value>Proběhne před vymazáním všech řádků z tabulky.</value>
-  </data>
-  <data name="DataTableRowsClearedDescr" xml:space="preserve">
-    <value>Proběhne po úspěšném vymazání všech řádků v tabulce.</value>
-  </data>
-  <data name="DataTableRowsNewRowDescr" xml:space="preserve">
-    <value>Proběhne po vytvoření nové instance objektu DataRow.</value>
-  </data>
-  <data name="DataRelationRelationNameDescr" xml:space="preserve">
-    <value>Název použitý při vyhledávání této relace v kolekci Relations tohoto objektu DataSet</value>
-  </data>
-  <data name="DataRelationChildColumnsDescr" xml:space="preserve">
-    <value>Určuje podřízené sloupce této relace.</value>
-  </data>
-  <data name="DataRelationParentColumnsDescr" xml:space="preserve">
-    <value>Určuje nadřazené sloupce této relace.</value>
-  </data>
-  <data name="DataRelationNested" xml:space="preserve">
-    <value>Určuje, zda jsou relace vnořené.</value>
-  </data>
-  <data name="ForeignKeyConstraintDeleteRuleDescr" xml:space="preserve">
-    <value>Určuje, jaká kaskádová akce má být provedena nad touto relací při odstranění.</value>
-  </data>
-  <data name="ForeignKeyConstraintUpdateRuleDescr" xml:space="preserve">
-    <value>Určuje, jaká kaskádová akce má být provedena nad touto relací při aktualizaci.</value>
-  </data>
-  <data name="ForeignKeyConstraintAcceptRejectRuleDescr" xml:space="preserve">
-    <value>Určuje, jaká kaskádová akce má být provedena nad touto relací při potvrzení nebo zamítnutí změn.</value>
-  </data>
-  <data name="ForeignKeyConstraintChildColumnsDescr" xml:space="preserve">
-    <value>Určuje podřízené sloupce tohoto omezení.</value>
-  </data>
-  <data name="ForeignKeyConstraintParentColumnsDescr" xml:space="preserve">
-    <value>Určuje nadřazené sloupce tohoto omezení.</value>
-  </data>
-  <data name="ForeignKeyRelatedTableDescr" xml:space="preserve">
-    <value>Určuje podřízenou tabulku tohoto omezení.</value>
-  </data>
-  <data name="KeyConstraintColumnsDescr" xml:space="preserve">
-    <value>Určuje sloupce tohoto omezení.</value>
-  </data>
-  <data name="KeyConstraintIsPrimaryKeyDescr" xml:space="preserve">
-    <value>Určuje, zda je toto omezení primárním klíčem.</value>
-  </data>
-  <data name="ConstraintNameDescr" xml:space="preserve">
-    <value>Určuje název tohoto omezení.</value>
-  </data>
-  <data name="ConstraintTableDescr" xml:space="preserve">
-    <value>Určuje tabulku tohoto omezení.</value>
-  </data>
-  <data name="DataColumnAllowNullDescr" xml:space="preserve">
-    <value>Určuje, zda jsou v tomto sloupci povoleny hodnoty null.</value>
-  </data>
-  <data name="DataColumnAutoIncrementDescr" xml:space="preserve">
-    <value>Označuje, zda se sloupec pro nové řádky přidané do tabulky automaticky sám inkrementuje.  Typ tohoto sloupce musí být Int16, Int32 nebo Int64.</value>
-  </data>
-  <data name="DataColumnAutoIncrementSeedDescr" xml:space="preserve">
-    <value>Určuje počáteční hodnotu pro sloupec AutoIncrement.</value>
-  </data>
-  <data name="DataColumnAutoIncrementStepDescr" xml:space="preserve">
-    <value>Určuje přírůstek pro sloupec AutoIncrement.</value>
-  </data>
-  <data name="DataColumnCaptionDescr" xml:space="preserve">
-    <value>Určuje výchozí titulek pro tento sloupec zobrazovaný v uživatelském rozhraní.</value>
-  </data>
-  <data name="DataColumnColumnNameDescr" xml:space="preserve">
-    <value>Určuje název, který se použije při hledání tohoto sloupce v kolekci Columns objektu DataTable.</value>
-  </data>
-  <data name="DataColumnDataTableDescr" xml:space="preserve">
-    <value>Vrací objekt DataTable, do kterého patří tento sloupec.</value>
-  </data>
-  <data name="DataColumnDataTypeDescr" xml:space="preserve">
-    <value>Určuje typ dat uložených v tomto sloupci.</value>
-  </data>
-  <data name="DataColumnDefaultValueDescr" xml:space="preserve">
-    <value>Určuje výchozí hodnotu sloupce, která se použije při přidání nových řádků do tabulky.</value>
-  </data>
-  <data name="DataColumnExpressionDescr" xml:space="preserve">
-    <value>Určuje hodnotu, která je pro každý řádek tohoto sloupce vypočtena na základě hodnot ostatních sloupců a která nahradí zadání uživatele.</value>
-  </data>
-  <data name="DataColumnMappingDescr" xml:space="preserve">
-    <value>Určuje způsob, jakým je tento sloupec uložen v kódu XML: jako atribut, element, uzel s jednoduchým obsahem nebo bez uložení.</value>
-  </data>
-  <data name="DataColumnNamespaceDescr" xml:space="preserve">
-    <value>Určuje identifikátor URI v kódu XML pro elementy nebo atributy uložené v tomto sloupci.</value>
-  </data>
-  <data name="DataColumnPrefixDescr" xml:space="preserve">
-    <value>Určuje vlastnost Prefix, která se použije pro tento objekt DataColumn v reprezentaci xml.</value>
-  </data>
-  <data name="DataColumnOrdinalDescr" xml:space="preserve">
-    <value>Určuje index tohoto sloupce v kolekci Columns.</value>
-  </data>
-  <data name="DataColumnReadOnlyDescr" xml:space="preserve">
-    <value>Určuje, zda tento sloupec povoluje změny po přidání řádku do tabulky.</value>
-  </data>
-  <data name="DataColumnUniqueDescr" xml:space="preserve">
-    <value>Určuje, zda tento sloupec vynutí jedinečnost svých hodnot v jednotlivých řádcích tabulky.</value>
-  </data>
-  <data name="DataColumnMaxLengthDescr" xml:space="preserve">
-    <value>Určuje maximální délku hodnoty povolenou tímto sloupcem.</value>
-  </data>
-  <data name="DataColumnDateTimeModeDescr" xml:space="preserve">
-    <value>Označuje vlastnost DateTimeMode tohoto objektu DataColumn.</value>
-  </data>
-  <data name="DataViewAllowDeleteDescr" xml:space="preserve">
-    <value>Určuje, zda tento objekt DataView a jemu přidružené uživatelské rozhraní povolují odstranění.</value>
-  </data>
-  <data name="DataViewAllowEditDescr" xml:space="preserve">
-    <value>Určuje, zda tento objekt DataView a jemu přidružené uživatelské rozhraní povolují úpravy.</value>
-  </data>
-  <data name="DataViewAllowNewDescr" xml:space="preserve">
-    <value>Určuje, zda tento objekt DataView a jemu přidružené uživatelské rozhraní povolují přidání nových řádků.</value>
-  </data>
-  <data name="DataViewCountDescr" xml:space="preserve">
-    <value>Vrací počet položek aktuálně obsažených v tomto zobrazení.</value>
-  </data>
-  <data name="DataViewDataViewManagerDescr" xml:space="preserve">
-    <value>Vrací ukazatel na objekt DataViewManager, který je vlastníkem tohoto objektu DataSet (pokud existuje).</value>
-  </data>
-  <data name="DataViewIsOpenDescr" xml:space="preserve">
-    <value>Určuje, zda je toto zobrazení otevřeno.</value>
-  </data>
-  <data name="DataViewRowFilterDescr" xml:space="preserve">
-    <value>Určuje výraz, který se použije k filtrování dat vrácených tímto objektem DataView.</value>
-  </data>
-  <data name="DataViewRowStateFilterDescr" xml:space="preserve">
-    <value>Určuje verzi dat vrácených tímto objektem DataView.</value>
-  </data>
-  <data name="DataViewSortDescr" xml:space="preserve">
-    <value>Určuje názvy sloupců a řazení, v němž jsou tímto objektem DataView vracena data.</value>
-  </data>
-  <data name="DataViewApplyDefaultSortDescr" xml:space="preserve">
-    <value>Určuje, zda se v případě, že není nastavena vlastnost Sort, použije výchozí řazení.</value>
-  </data>
-  <data name="DataViewTableDescr" xml:space="preserve">
-    <value>Určuje tabulku, kterou tento objekt DataView použije k získání dat.</value>
-  </data>
-  <data name="DataViewListChangedDescr" xml:space="preserve">
-    <value>Určuje, zda data vrácená tímto objektem DataView byla nějakým způsobem změněna.</value>
-  </data>
-  <data name="DataViewManagerDataSetDescr" xml:space="preserve">
-    <value>Určuje zdroj dat pro tento objekt DataViewManager.</value>
-  </data>
-  <data name="DataViewManagerTableSettingsDescr" xml:space="preserve">
-    <value>Určuje nastavení řazení, filtrování a stavu pro jakoukoli tabulku v odpovídajícím objektu DataSet.</value>
-  </data>
-  <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
-    <value>DataSet nepodporuje pro simpleType atributy union a list.</value>
-  </data>
-  <data name="Xml_MissingAttribute" xml:space="preserve">
-    <value>Neplatná syntaxe {0}: Chybí povinný atribut {1}.</value>
-  </data>
-  <data name="Xml_ValueOutOfRange" xml:space="preserve">
-    <value>Hodnota {1} je pro atribut {0} neplatná.</value>
-  </data>
-  <data name="Xml_AttributeValues" xml:space="preserve">
-    <value>Hodnota atributu {0} musí být {1} nebo {2}.</value>
-  </data>
-  <data name="Xml_ElementTypeNotFound" xml:space="preserve">
-    <value>Název vlastnosti ElementType name={0} nebyl nalezen.</value>
-  </data>
-  <data name="Xml_RelationParentNameMissing" xml:space="preserve">
-    <value>V relaci {0} chybí název nadřazené tabulky.</value>
-  </data>
-  <data name="Xml_RelationChildNameMissing" xml:space="preserve">
-    <value>V relaci {0} chybí název podřízené tabulky.</value>
-  </data>
-  <data name="Xml_RelationTableKeyMissing" xml:space="preserve">
-    <value>V relaci {0} chybí klíč nadřazené tabulky.</value>
-  </data>
-  <data name="Xml_RelationChildKeyMissing" xml:space="preserve">
-    <value>V relaci {0} chybí klíč podřízené tabulky.</value>
-  </data>
-  <data name="Xml_UndefinedDatatype" xml:space="preserve">
-    <value>Nedefinovaný datový typ: {0}</value>
-  </data>
-  <data name="Xml_DatatypeNotDefined" xml:space="preserve">
-    <value>Není definován datový typ.</value>
-  </data>
-  <data name="Xml_InvalidField" xml:space="preserve">
-    <value>Neplatný výběr XPath uvnitř uzlu pole. Nelze najít: {0}.</value>
-  </data>
-  <data name="Xml_InvalidSelector" xml:space="preserve">
-    <value>Neplatný výběr XPath uvnitř uzlu selektoru: {0}</value>
-  </data>
-  <data name="Xml_InvalidKey" xml:space="preserve">
-    <value>Neplatný uzel Key uvnitř omezení s názvem {0}.</value>
-  </data>
-  <data name="Xml_DuplicateConstraint" xml:space="preserve">
-    <value>Název omezení {0} je již ve schématu použit.</value>
-  </data>
-  <data name="Xml_CannotConvert" xml:space="preserve">
-    <value>Typ {0} nejde převést na typ {1}.</value>
-  </data>
-  <data name="Xml_MissingRefer" xml:space="preserve">
-    <value>Chybí část {0} v omezení {1} s názvem {2}.</value>
-  </data>
-  <data name="Xml_MismatchKeyLength" xml:space="preserve">
-    <value>Neplatná definice relace: Délky klíčů jsou různé.</value>
-  </data>
-  <data name="Xml_CircularComplexType" xml:space="preserve">
-    <value>DataSet nepovoluje cyklický odkaz v elementu ComplexType s názvem {0}.</value>
-  </data>
-  <data name="Xml_CannotInstantiateAbstract" xml:space="preserve">
-    <value>DataSet nemůže vytvářet instance abstraktního elementu ComplexType pro uzel {0}.</value>
-  </data>
-  <data name="Xml_MultipleTargetConverterError" xml:space="preserve">
-    <value>Při zápisu schématu XML došlo k chybě s převaděčem více cílů.  Podrobnosti nejdete v popisu vnitřní výjimky.</value>
-  </data>
-  <data name="Xml_MultipleTargetConverterEmpty" xml:space="preserve">
-    <value>Při zápisu schématu XML došlo k chybě s převaděčem více cílů.  Byl vrácen řetězec s hodnotou null nebo prázdný řetězec.</value>
-  </data>
-  <data name="Xml_MergeDuplicateDeclaration" xml:space="preserve">
-    <value>Duplicitní deklarace {0}</value>
-  </data>
-  <data name="Xml_MissingTable" xml:space="preserve">
-    <value>Nelze načíst diffGram. V cílové datové sadě chybí tabulka {0}.</value>
-  </data>
-  <data name="Xml_MissingSQL" xml:space="preserve">
-    <value>Nelze načíst diffGram. Chybí uzel sql.</value>
-  </data>
-  <data name="Xml_ColumnConflict" xml:space="preserve">
-    <value>Název sloupce {0} je definován pro jiné typy mapování.</value>
-  </data>
-  <data name="Xml_InvalidPrefix" xml:space="preserve">
-    <value>Předpona {0} je neplatná, protože obsahuje speciální znaky.</value>
-  </data>
-  <data name="Xml_NestedCircular" xml:space="preserve">
-    <value>V tabulce {0} vnořené sama do sebe byl zjištěn cyklický odkaz.</value>
-  </data>
-  <data name="Xml_FoundEntity" xml:space="preserve">
-    <value>DataSet nemůže rozšířit entity. Použijte objekt XmlValidatingReader a nastavte vlastnost EntityHandling příslušným způsobem.</value>
-  </data>
-  <data name="Xml_PolymorphismNotSupported" xml:space="preserve">
-    <value>Typ {0} neimplementuje rozhraní IXmlSerializable. Nelze proto pokračovat v serializaci.</value>
-  </data>
-  <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Nejde pokračovat v deserializaci. Data neimplementují rozhraní IXMLSerializable, není proto podporován polymorfismus.</value>
-  </data>
-  <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
-    <value>DataTable nepodporuje odvozování schématu z kódu Xml.</value>
-  </data>
-  <data name="Xml_MultipleParentRows" xml:space="preserve">
-    <value>Nelze pokračovat v serializaci objektu DataTable {0}. Obsahuje objekt DataRow, který má několik nadřazených řádků na stejném cizím klíči.</value>
-  </data>
-  <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
-    <value>Ve vstupním schématu chybí atribut IsDataSet.</value>
-  </data>
-  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
-    <value>Nelze určit element DataSet. Atribut IsDataSet existuje více než jednou.</value>
-  </data>
-  <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>DataSet nebude serializovat typy, které implementují rozhraní IDynamicMetaObjectProvider, ale neimplementují také rozhraní IXmlSerializable.</value>
-  </data>
-  <data name="Expr_NYI" xml:space="preserve">
-    <value>Funkce není implementována. {0}.</value>
-  </data>
-  <data name="Expr_MissingOperand" xml:space="preserve">
-    <value>Chyba syntaxe: Za operátorem {0} chybí operand.</value>
-  </data>
-  <data name="Expr_TypeMismatch" xml:space="preserve">
-    <value>Ve výrazu {0} byla zjištěna neshoda typů.</value>
-  </data>
-  <data name="Expr_ExpressionTooComplex" xml:space="preserve">
-    <value>Výraz je příliš složitý.</value>
-  </data>
-  <data name="Expr_UnboundName" xml:space="preserve">
-    <value>Sloupec [{0}] nelze najít.</value>
-  </data>
-  <data name="Expr_InvalidString" xml:space="preserve">
-    <value>Výraz obsahuje neplatnou řetězcovou konstantu: {0}.</value>
-  </data>
-  <data name="Expr_UndefinedFunction" xml:space="preserve">
-    <value>Výraz obsahuje nedefinované volání funkce {0}().</value>
-  </data>
-  <data name="Expr_Syntax" xml:space="preserve">
-    <value>Ve výrazu byla zjištěna chyba syntaxe.</value>
-  </data>
-  <data name="Expr_FunctionArgumentCount" xml:space="preserve">
-    <value>Neplatný počet argumentů: funkce {0}().</value>
-  </data>
-  <data name="Expr_MissingRightParen" xml:space="preserve">
-    <value>Ve výrazu chybí pravá závorka.</value>
-  </data>
-  <data name="Expr_UnknownToken" xml:space="preserve">
-    <value>Token {0} na pozici {1} nelze interpretovat.</value>
-  </data>
-  <data name="Expr_UnknownToken1" xml:space="preserve">
-    <value>Token na pozici {2} je {1} místo očekávaného {0}.</value>
-  </data>
-  <data name="Expr_DatatypeConversion" xml:space="preserve">
-    <value>Nelze převést z {0} na {1}.</value>
-  </data>
-  <data name="Expr_DatavalueConversion" xml:space="preserve">
-    <value>Hodnotu {0} nejde převést na typ {1}.</value>
-  </data>
-  <data name="Expr_InvalidName" xml:space="preserve">
-    <value>Neplatný název sloupce: [{0}].</value>
-  </data>
-  <data name="Expr_InvalidDate" xml:space="preserve">
-    <value>Výraz obsahuje neplatnou konstantu typu Date {0}.</value>
-  </data>
-  <data name="Expr_NonConstantArgument" xml:space="preserve">
-    <value>V seznamu výrazů pro operátor IN jsou povoleny pouze konstantní výrazy.</value>
-  </data>
-  <data name="Expr_InvalidPattern" xml:space="preserve">
-    <value>Chyba v operátoru Like: Řetězcový vzorek {0} je neplatný.</value>
-  </data>
-  <data name="Expr_InWithoutParentheses" xml:space="preserve">
-    <value>Chyba syntaxe: Položky následující po klíčovém slovu IN musí být odděleny čárkami a uzavřeny v závorkách.</value>
-  </data>
-  <data name="Expr_ArgumentType" xml:space="preserve">
-    <value>Neshoda typů v argumentu funkce: {0}(), argument: {1}, očekáváno: {2}.</value>
-  </data>
-  <data name="Expr_ArgumentTypeInteger" xml:space="preserve">
-    <value>Neshoda typů v argumentu funkce: {0}(), argument {1}. Byl očekáván některý z typů integer.</value>
-  </data>
-  <data name="Expr_TypeMismatchInBinop" xml:space="preserve">
-    <value>Operaci {0} nelze provést na typech {1} a {2}.</value>
-  </data>
-  <data name="Expr_AmbiguousBinop" xml:space="preserve">
-    <value>Operátor {0} je nejednoznačný na operandech typu {1} a {2}. Nelze kombinovat typy se znaménkem a bez něj. Použijte prosím explicitní funkci Convert().</value>
-  </data>
-  <data name="Expr_InWithoutList" xml:space="preserve">
-    <value>Chyba syntaxe: Po klíčovém slovu IN musí následovat neprázdný seznam výrazů, které jsou oddělené čárkami a uzavřené v závorkách.</value>
-  </data>
-  <data name="Expr_UnsupportedOperator" xml:space="preserve">
-    <value>Výraz obsahuje nepodporovaný operátor {0}.</value>
-  </data>
-  <data name="Expr_InvalidNameBracketing" xml:space="preserve">
-    <value>Výraz obsahuje neplatný název: {0}.</value>
-  </data>
-  <data name="Expr_MissingOperandBefore" xml:space="preserve">
-    <value>Chyba syntaxe: Před operátorem {0} chybí operand.</value>
-  </data>
-  <data name="Expr_TooManyRightParentheses" xml:space="preserve">
-    <value>Výraz obsahuje příliš mnoho pravých závorek.</value>
-  </data>
-  <data name="Expr_UnresolvedRelation" xml:space="preserve">
-    <value>Tabulka [{0}] je zapojená do více než jedné relace. Ve výrazu {1} je nutné explicitně zmínit název relace.</value>
-  </data>
-  <data name="Expr_AggregateArgument" xml:space="preserve">
-    <value>Chyba syntaxe v agregačním argumentu: Jako argument je očekáván jediný sloupec s případným kvalifikátorem Child.</value>
-  </data>
-  <data name="Expr_AggregateUnbound" xml:space="preserve">
-    <value>Nevázaný odkaz v agregačním výrazu {0}.</value>
-  </data>
-  <data name="Expr_EvalNoContext" xml:space="preserve">
-    <value>Nelze vyhodnotit nekonstantní výraz bez aktuálního řádku.</value>
-  </data>
-  <data name="Expr_ExpressionUnbound" xml:space="preserve">
-    <value>Ve výrazu {0} byl zjištěn nevázaný odkaz.</value>
-  </data>
-  <data name="Expr_ComputeNotAggregate" xml:space="preserve">
-    <value>Nejde vyhodnotit. Výraz {0} není agregace.</value>
-  </data>
-  <data name="Expr_FilterConversion" xml:space="preserve">
-    <value>Výraz filtru {0} není vyhodnocen jako výraz typu Boolean.</value>
-  </data>
-  <data name="Expr_InvalidType" xml:space="preserve">
-    <value>Neplatný název typu {0}.</value>
-  </data>
-  <data name="Expr_LookupArgument" xml:space="preserve">
-    <value>Chyba syntaxe ve výrazu Lookup: Očekává se klíčové slovo Parent následované argumentem s jediným sloupcem a případným kvalifikátorem relace: Parent[(&lt;název_relace&gt;)].&lt;název_sloupce&gt;.</value>
-  </data>
-  <data name="Expr_InvokeArgument" xml:space="preserve">
-    <value>Metoda Invoke objektu DataFilter vyžaduje řádek nebo tabulku.</value>
-  </data>
-  <data name="Expr_ArgumentOutofRange" xml:space="preserve">
-    <value>Argument {0}() je mimo rozsah.</value>
-  </data>
-  <data name="Expr_IsSyntax" xml:space="preserve">
-    <value>Chyba syntaxe: Neplatné použití operátoru Is. Správná syntaxe: &lt;expression&gt; [není] Null.</value>
-  </data>
-  <data name="Expr_Overflow" xml:space="preserve">
-    <value>Hodnota je pro typ {0} buď příliš velká, nebo příliš malá.</value>
-  </data>
-  <data name="Expr_DivideByZero" xml:space="preserve">
-    <value>Došlo k chybě dělení nulou.</value>
-  </data>
-  <data name="Expr_BindFailure" xml:space="preserve">
-    <value>Nadřazená relace {0} nebyla nalezena.</value>
-  </data>
-  <data name="Expr_InvalidHoursArgument" xml:space="preserve">
-    <value>Argument hours je mimo rozsah. Hodnota musí být v rozsahu od -14 do +14.</value>
-  </data>
-  <data name="Expr_InvalidMinutesArgument" xml:space="preserve">
-    <value>Argument minutes je mimo rozsah. Hodnota musí být v rozsahu od -59 do +59.</value>
-  </data>
-  <data name="Expr_InvalidTimeZoneRange" xml:space="preserve">
-    <value>Zadaný rozsah času jedna překračuje 14 hodin.</value>
-  </data>
-  <data name="Expr_MismatchKindandTimeSpan" xml:space="preserve">
-    <value>Vlastnost druh zadaného argumentu DateTime nesouhlasí s argumenty 'hodiny' a 'minuty'.</value>
-  </data>
-  <data name="Expr_UnsupportedType" xml:space="preserve">
-    <value>DataColumn typu {0} nepodporuje výraz.</value>
-  </data>
-  <data name="Data_EnforceConstraints" xml:space="preserve">
-    <value>Nepovedlo se povolit omezení. Jeden nebo více řádků obsahuje hodnoty porušující tato omezení: hodnota jiná než null, jedinečná hodnota nebo cizí klíč.</value>
-  </data>
-  <data name="Data_CannotModifyCollection" xml:space="preserve">
-    <value>Samotnou kolekci nelze upravovat.</value>
-  </data>
-  <data name="Data_CaseInsensitiveNameConflict" xml:space="preserve">
-    <value>Zadaný název {0} odpovídá nejméně dvěma názvům v objektu kolekce, pokud nejsou rozlišována malá a velká písmena, ale neodpovídá ani jednomu z nich, pokud malá a velká písmena rozlišována jsou.</value>
-  </data>
-  <data name="Data_NamespaceNameConflict" xml:space="preserve">
-    <value>Daný název {0} se shoduje s nejméně dvěma názvy v objektu kolekce s různými obory názvů.</value>
-  </data>
   <data name="Data_InvalidOffsetLength" xml:space="preserve">
     <value>Posun a délka byly mimo rozsah pro dané pole nebo je počet vyšší než počet elementů z indexu do konce zdrojové kolekce.</value>
   </data>
-  <data name="Data_ArgumentOutOfRange" xml:space="preserve">
-    <value>Argument {0} je mimo rozsah.</value>
-  </data>
-  <data name="Data_ArgumentNull" xml:space="preserve">
-    <value>Argument {0} nemůže být null.</value>
-  </data>
-  <data name="Data_ArgumentContainsNull" xml:space="preserve">
-    <value>Argument {0} obsahuje hodnotu null.</value>
-  </data>
-  <data name="DataColumns_OutOfRange" xml:space="preserve">
-    <value>Sloupec {0} nebyl nalezen.</value>
-  </data>
-  <data name="DataColumns_Add1" xml:space="preserve">
-    <value>Sloupec {0} již patří do této tabulky DataTable.</value>
-  </data>
-  <data name="DataColumns_Add2" xml:space="preserve">
-    <value>Sloupec {0} již patří do jiné tabulky DataTable.</value>
-  </data>
-  <data name="DataColumns_Add3" xml:space="preserve">
-    <value>Objekt DataTable nemůže obsahovat více než jeden sloupec SimpleContent.</value>
-  </data>
-  <data name="DataColumns_Add4" xml:space="preserve">
-    <value>Do tabulky obsahující sloupce elementů nebo vnořené relace nelze přidat sloupec SimpleContent.</value>
-  </data>
-  <data name="DataColumns_AddDuplicate" xml:space="preserve">
-    <value>Sloupec s názvem {0} již patří do této tabulky DataTable.</value>
-  </data>
-  <data name="DataColumns_AddDuplicate2" xml:space="preserve">
-    <value>Sloupec s názvem {0} nelze přidat. Do tohoto objektu DataTable již patří vnořená tabulka se stejným názvem.</value>
-  </data>
-  <data name="DataColumns_AddDuplicate3" xml:space="preserve">
-    <value>Sloupec s názvem {0} již patří do tohoto objektu DataTable. Název vnořené tabulky nelze nastavit na stejný název.</value>
-  </data>
-  <data name="DataColumns_Remove" xml:space="preserve">
-    <value>Nelze odebrat sloupec, který nepatří do této tabulky.</value>
-  </data>
-  <data name="DataColumns_RemovePrimaryKey" xml:space="preserve">
-    <value>Tento sloupec nelze odebrat, protože je částí primárního klíče.</value>
-  </data>
-  <data name="DataColumns_RemoveChildKey" xml:space="preserve">
-    <value>Tento sloupec nelze odebrat, protože je součástí nadřazeného klíče pro relaci {0}.</value>
-  </data>
-  <data name="DataColumns_RemoveConstraint" xml:space="preserve">
-    <value>Tento sloupec nelze odebrat, protože je součástí omezení {0} v tabulce {1}.</value>
-  </data>
-  <data name="DataColumns_RemoveExpression" xml:space="preserve">
-    <value>Tento sloupec nelze odebrat, protože je součástí výrazu: {0} = {1}.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementAndExpression" xml:space="preserve">
-    <value>Vlastnost AutoIncrement nelze nastavit pro vypočítaný sloupec.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementAndDefaultValue" xml:space="preserve">
-    <value>Vlastnost AutoIncrement nelze nastavit pro sloupec s nastavenou vlastností DefaultValue.</value>
-  </data>
-  <data name="DataColumn_DefaultValueAndAutoIncrement" xml:space="preserve">
-    <value>Nelze nastavit hodnotu DefaultValue pro sloupec AutoIncrement.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementSeed" xml:space="preserve">
-    <value>Hodnota AutoIncrementStep musí být nenulová.</value>
-  </data>
-  <data name="DataColumn_NameRequired" xml:space="preserve">
-    <value>Vlastnost ColumnName je požadována v případě, že je součástí objektu DataTable.</value>
-  </data>
-  <data name="DataColumn_ChangeDataType" xml:space="preserve">
-    <value>Jakmile sloupec obsahuje data, nelze vlastnost DataType sloupce již změnit.</value>
-  </data>
-  <data name="DataColumn_NullDataType" xml:space="preserve">
-    <value>Sloupec vyžaduje platnou vlastnost DataType.</value>
-  </data>
-  <data name="DataColumn_DefaultValueDataType" xml:space="preserve">
-    <value>Vlastnost DefaultValue sloupce {0} je typu {1} a nelze ji převést na typ {2}.</value>
-  </data>
-  <data name="DataColumn_DefaultValueDataType1" xml:space="preserve">
-    <value>Vlastnost DefaultValue sloupce je typu {0} a nelze ji převést na typ {1}.</value>
-  </data>
-  <data name="DataColumn_DefaultValueColumnDataType" xml:space="preserve">
-    <value>Vlastnost DefaultValue sloupce {0} je typu {1}, ale sloupec je typu {2}.</value>
-  </data>
-  <data name="DataColumn_ReadOnlyAndExpression" xml:space="preserve">
-    <value>Vlastnost ReadOnly sloupce výrazu nelze změnit.</value>
-  </data>
-  <data name="DataColumn_UniqueAndExpression" xml:space="preserve">
-    <value>Nelze změnit vlastnost Unique pro sloupec výrazu.</value>
-  </data>
-  <data name="DataColumn_ExpressionAndUnique" xml:space="preserve">
-    <value>Nelze vytvořit výraz v sloupci typu AutoIncrement nebo Unique.</value>
-  </data>
-  <data name="DataColumn_ExpressionAndReadOnly" xml:space="preserve">
-    <value>Výraz nelze nastavit, protože sloupec nemůže být typu ReadOnly.</value>
-  </data>
-  <data name="DataColumn_ExpressionAndConstraint" xml:space="preserve">
-    <value>Vlastnost Expression pro sloupec {0} nelze nastavit, protože sloupec je součástí omezení.</value>
-  </data>
-  <data name="DataColumn_ExpressionInConstraint" xml:space="preserve">
-    <value>Omezení založené na sloupci Expression {0} nelze vytvořit.</value>
-  </data>
-  <data name="DataColumn_ExpressionCircular" xml:space="preserve">
-    <value>Vlastnost Expression nelze nastavit, protože výraz obsahuje cyklický odkaz.</value>
-  </data>
-  <data name="DataColumn_NullKeyValues" xml:space="preserve">
-    <value>Sloupec {0} obsahuje hodnoty null.</value>
-  </data>
-  <data name="DataColumn_NullValues" xml:space="preserve">
-    <value>Sloupec {0} nesmí obsahovat hodnoty null.</value>
-  </data>
-  <data name="DataColumn_ReadOnly" xml:space="preserve">
-    <value>Sloupec {0} je jen pro čtení.</value>
-  </data>
-  <data name="DataColumn_NonUniqueValues" xml:space="preserve">
-    <value>Sloupec {0} obsahuje hodnoty, které nejsou jedinečné.</value>
-  </data>
-  <data name="DataColumn_NotInTheTable" xml:space="preserve">
-    <value>Sloupec {0} nepatří do tabulky {1}.</value>
-  </data>
-  <data name="DataColumn_NotInAnyTable" xml:space="preserve">
-    <value>Sloupec musí patřit do tabulky.</value>
-  </data>
-  <data name="DataColumn_SetFailed" xml:space="preserve">
-    <value>Nepovedlo se uložit &lt;{0}&gt; do sloupce {1}.  Očekávaný typ je {2}.</value>
-  </data>
-  <data name="DataColumn_CannotSetToNull" xml:space="preserve">
-    <value>Sloupec {0} nelze nastavit na hodnotu null. Místo toho prosím použijte DBNull.</value>
-  </data>
-  <data name="DataColumn_LongerThanMaxLength" xml:space="preserve">
-    <value>Sloupec {0} nelze nastavit. Hodnota překračuje omezení MaxLength tohoto sloupce.</value>
-  </data>
-  <data name="DataColumn_HasToBeStringType" xml:space="preserve">
-    <value>Vlastnost MaxLength platí pouze pro datový typ řetězce. Nelze nastavit vlastnost MaxLength sloupce {0} na nezáporné celé číslo.</value>
-  </data>
-  <data name="DataColumn_CannotSetMaxLength" xml:space="preserve">
-    <value>Vlastnost MaxLength sloupce {0} nelze nastavit na {1}. V tabulce se nachází alespoň jeden řetězec delší než nové omezení.</value>
-  </data>
-  <data name="DataColumn_CannotSetMaxLength2" xml:space="preserve">
-    <value>Vlastnost MaxLength sloupce {0} nelze nastavit. Jde o sloupec SimpleContent.</value>
-  </data>
-  <data name="DataColumn_CannotSimpleContentType" xml:space="preserve">
-    <value>Vlastnost DataType sloupce {0} nelze nastavit na hodnotu {1}. Jde o sloupec SimpleContent.</value>
-  </data>
-  <data name="DataColumn_CannotSimpleContent" xml:space="preserve">
-    <value>Vlastnost MappingType sloupce {0} nelze nastavit na hodnotu SimpleContent. Datový typ sloupce je {1}.</value>
-  </data>
-  <data name="DataColumn_ExceedMaxLength" xml:space="preserve">
-    <value>Sloupec {0} překračuje omezení MaxLength.</value>
-  </data>
-  <data name="DataColumn_NotAllowDBNull" xml:space="preserve">
-    <value>Sloupec {0} nepovoluje hodnotu DBNull.Value.</value>
-  </data>
-  <data name="DataColumn_CannotChangeNamespace" xml:space="preserve">
-    <value>Vlastnost Namespace sloupce {0} nelze změnit. Jde o sloupec SimpleContent.</value>
-  </data>
-  <data name="DataColumn_AutoIncrementCannotSetIfHasData" xml:space="preserve">
-    <value>Vlastnost AutoIncrement objektu DataColumn s typem {0} nelze změnit, jakmile obsahuje data.</value>
-  </data>
-  <data name="DataColumn_NotInTheUnderlyingTable" xml:space="preserve">
-    <value>Sloupec {0} nepatří do příslušné tabulky {1}.</value>
-  </data>
-  <data name="DataColumn_InvalidDataColumnMapping" xml:space="preserve">
-    <value>Objekt DataColumn s typem {0} je typu complexType. Hodnotu složitého typu nelze serializovat jako Attribute.</value>
-  </data>
-  <data name="DataColumn_CannotSetDateTimeModeForNonDateTimeColumns" xml:space="preserve">
-    <value>Vlastnost DateTimeMode lze nastavit pouze u objektů DataColumns typu DateTime.</value>
-  </data>
-  <data name="DataColumn_InvalidDateTimeMode" xml:space="preserve">
-    <value>{0} je neplatná hodnota DataSetDateTime.</value>
-  </data>
-  <data name="DataColumn_DateTimeMode" xml:space="preserve">
-    <value>Vlastnost DateTimeMode nelze změnit z {0} na {1}, jakmile tabulka obsahuje data.</value>
-  </data>
-  <data name="DataColumn_INullableUDTwithoutStaticNull" xml:space="preserve">
-    <value>Typ {0} neobsahuje statické vlastnosti nebo pole Null.</value>
-  </data>
-  <data name="DataColumn_UDTImplementsIChangeTrackingButnotIRevertible" xml:space="preserve">
-    <value>Typ {0} neimplementuje rozhraní IRevertibleChangeTracking. Nelze proto pokračovat s metodou RejectChanges().</value>
-  </data>
-  <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
-    <value>Metody SetAdded a SetModified lze volat pouze u objektů DataRows s nezměněnou hodnotou DataRowState.</value>
-  </data>
-  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
-    <value>Řadová číslovka {0} je větší než maximální číslo.</value>
-  </data>
-  <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
-    <value>Objekt DataSet nepodporuje strukturu System.Nullable&lt;&gt;.</value>
-  </data>
-  <data name="DataConstraint_NoName" xml:space="preserve">
-    <value>Název omezení nelze změnit na prázdný řetězec, pokud je omezení obsaženo v objektu ConstraintCollection.</value>
-  </data>
-  <data name="DataConstraint_Violation" xml:space="preserve">
-    <value>Nelze vynutit omezení pro omezení {0}.</value>
-  </data>
-  <data name="DataConstraint_ViolationValue" xml:space="preserve">
-    <value>Sloupec {0} je omezen na jedinečné hodnoty.  Hodnota {1} již existuje.</value>
-  </data>
-  <data name="DataConstraint_NotInTheTable" xml:space="preserve">
-    <value>Omezení {0} nepatří do této tabulky DataTable.</value>
-  </data>
-  <data name="DataConstraint_OutOfRange" xml:space="preserve">
-    <value>Nelze najít omezení {0}.</value>
-  </data>
-  <data name="DataConstraint_Duplicate" xml:space="preserve">
-    <value>Omezení se shoduje s jiným omezením (název: {0}), které se již nachází v kolekci.</value>
-  </data>
-  <data name="DataConstraint_DuplicateName" xml:space="preserve">
-    <value>Omezení s názvem {0} již patří do této tabulky DataTable.</value>
-  </data>
-  <data name="DataConstraint_UniqueViolation" xml:space="preserve">
-    <value>Tyto sloupce nyní nemají jedinečné hodnoty.</value>
-  </data>
-  <data name="DataConstraint_ForeignTable" xml:space="preserve">
-    <value>Tyto sloupce neodkazují na tuto tabulku.</value>
-  </data>
-  <data name="DataConstraint_ParentValues" xml:space="preserve">
-    <value>Toto omezení nelze povolit, protože některé z hodnot nemají odpovídající nadřazené hodnoty.</value>
-  </data>
-  <data name="DataConstraint_AddFailed" xml:space="preserve">
-    <value>Toto omezení nelze přidat, protože klíč ForeignKey nepatří do tabulky {0}.</value>
-  </data>
-  <data name="DataConstraint_RemoveFailed" xml:space="preserve">
-    <value>Nelze odebrat omezení, které nepatří do této tabulky.</value>
-  </data>
-  <data name="DataConstraint_NeededForForeignKeyConstraint" xml:space="preserve">
-    <value>Nelze odebrat unikátní omezení '{0}' nelze odebrat. Odeberte nejprve omezení cizího klíče '{1}'.</value>
-  </data>
-  <data name="DataConstraint_CascadeDelete" xml:space="preserve">
-    <value>Tento řádek nelze odstranit, protože pro relaci {0} jsou vynucena omezení a odstranění tohoto řádku by způsobilo osiření podřízených řádků.</value>
-  </data>
-  <data name="DataConstraint_CascadeUpdate" xml:space="preserve">
-    <value>Tuto změnu nelze provést, protože pro relaci {0} jsou vynucena omezení a změna této hodnoty by způsobila osiření podřízených řádků.</value>
-  </data>
-  <data name="DataConstraint_ClearParentTable" xml:space="preserve">
-    <value>Tabulku {0} nelze vymazat, protože objekt ForeignKeyConstraint {1} vynucuje omezení a {2} obsahuje podřízené řádky.</value>
-  </data>
-  <data name="DataConstraint_ForeignKeyViolation" xml:space="preserve">
-    <value>Objekt ForeignKeyConstraint {0} vyžaduje, aby v nadřazené tabulce existovaly hodnoty podřízeného klíče ({1}).</value>
-  </data>
-  <data name="DataConstraint_BadObjectPropertyAccess" xml:space="preserve">
-    <value>Vlastnost není k dispozici. Důvod: {0}</value>
-  </data>
-  <data name="DataConstraint_RemoveParentRow" xml:space="preserve">
-    <value>Tento řádek nelze odebrat, protože má podřízené řádky a pro relaci {0} jsou vynucena omezení.</value>
-  </data>
-  <data name="DataConstraint_AddPrimaryKeyConstraint" xml:space="preserve">
-    <value>Omezení primárního klíče nelze přidat, protože v tabulce je již nastaven primární klíč.</value>
-  </data>
-  <data name="DataConstraint_CantAddConstraintToMultipleNestedTable" xml:space="preserve">
-    <value>Nelze přidat omezení do objektu DataTable {0}, který představuje podřízenou tabulku ve dvou vnořených relacích.</value>
-  </data>
-  <data name="DataKey_TableMismatch" xml:space="preserve">
-    <value>Klíč nelze vytvořit ze sloupců, které patří jiným tabulkám.</value>
-  </data>
-  <data name="DataKey_NoColumns" xml:space="preserve">
-    <value>Počet sloupců nemůže být 0.</value>
-  </data>
-  <data name="DataKey_TooManyColumns" xml:space="preserve">
-    <value>Počet sloupců nemůže být větší než {0}.</value>
-  </data>
-  <data name="DataKey_DuplicateColumns" xml:space="preserve">
-    <value>Klíč nelze vytvořit, pokud je tentýž sloupec uveden více než jednou: {0}.</value>
-  </data>
-  <data name="DataKey_RemovePrimaryKey" xml:space="preserve">
-    <value>Jedinečné omezení nelze odebrat, protože představuje primární klíč tabulky.</value>
-  </data>
-  <data name="DataKey_RemovePrimaryKey1" xml:space="preserve">
-    <value>Jedinečné omezení nelze odebrat, protože představuje primární klíč tabulky {0}.</value>
-  </data>
-  <data name="DataRelation_ColumnsTypeMismatch" xml:space="preserve">
-    <value>Nadřazené a podřízené sloupce nemají shodné typy.</value>
-  </data>
-  <data name="DataRelation_KeyColumnsIdentical" xml:space="preserve">
-    <value>Vlastnosti ParentKey a ChildKey jsou identické.</value>
-  </data>
-  <data name="DataRelation_KeyLengthMismatch" xml:space="preserve">
-    <value>Vlastnosti ParentColumns a ChildColumns musí mít stejnou délku.</value>
-  </data>
-  <data name="DataRelation_KeyZeroLength" xml:space="preserve">
-    <value>Vlastnosti ParentColumns a ChildColumns nesmí mít nulovou délku.</value>
-  </data>
-  <data name="DataRelation_ForeignRow" xml:space="preserve">
-    <value>Řádek nepatří do stejného objektu DataSet jako tato relace.</value>
-  </data>
-  <data name="DataRelation_NoName" xml:space="preserve">
-    <value>Vlastnost RelationName je vyžadována, pokud je součástí objektu DataSet.</value>
-  </data>
-  <data name="DataRelation_ForeignTable" xml:space="preserve">
-    <value>Metoda GetChildRows vyžaduje řádek z tabulky {0}, ale byla zadána tabulka Table {1}.</value>
-  </data>
-  <data name="DataRelation_ForeignDataSet" xml:space="preserve">
-    <value>Relace by měla propojit dvě tabulky v tomto objektu DataSet a přidat je do objektu DataSet.</value>
-  </data>
-  <data name="DataRelation_GetParentRowTableMismatch" xml:space="preserve">
-    <value>Metoda GetParentRow vyžaduje řádek z tabulky {0}, ale byla zadána tabulka {1}.</value>
-  </data>
-  <data name="DataRelation_SetParentRowTableMismatch" xml:space="preserve">
-    <value>Metoda SetParentRow vyžaduje podřízený řádek z tabulky {0}, ale pro řádek byla zadána tabulka {1}.</value>
-  </data>
-  <data name="DataRelation_DataSetMismatch" xml:space="preserve">
-    <value>Nelze vytvořit relaci mezi tabulkami v různých objektech DataSets.</value>
-  </data>
-  <data name="DataRelation_TablesInDifferentSets" xml:space="preserve">
-    <value>Mezi tabulkami v různých objektech DataSets nelze vytvořit relaci.</value>
-  </data>
-  <data name="DataRelation_AlreadyExists" xml:space="preserve">
-    <value>Relace pro tyto podřízené sloupce již existuje.</value>
-  </data>
-  <data name="DataRelation_DoesNotExist" xml:space="preserve">
-    <value>Relace nepatří do této kolekce relací.</value>
-  </data>
-  <data name="DataRelation_AlreadyInOtherDataSet" xml:space="preserve">
-    <value>Tato relace již patří jinému objektu DataSet.</value>
-  </data>
-  <data name="DataRelation_AlreadyInTheDataSet" xml:space="preserve">
-    <value>Tato relace již patří tomuto objektu DataSet.</value>
-  </data>
-  <data name="DataRelation_DuplicateName" xml:space="preserve">
-    <value>Relace s názvem {0} již patří do této datové sady DataSet.</value>
-  </data>
-  <data name="DataRelation_NotInTheDataSet" xml:space="preserve">
-    <value>Relace {0} nepatří do tohoto objektu DataSet.</value>
-  </data>
-  <data name="DataRelation_OutOfRange" xml:space="preserve">
-    <value>Relace {0} nebyla nalezena.</value>
-  </data>
-  <data name="DataRelation_TableNull" xml:space="preserve">
-    <value>Na prázdné tabulce s hodnotou null nelze vytvořit kolekci.</value>
-  </data>
-  <data name="DataRelation_TableWasRemoved" xml:space="preserve">
-    <value>Tabulka, pro kterou tato kolekce zobrazuje relace, byla ze svého objektu DataSet odebrána.</value>
-  </data>
-  <data name="DataRelation_ChildTableMismatch" xml:space="preserve">
-    <value>Do kolekce ParentRelation této tabulky lze přidat pouze takovou relaci, kde tato tabulka vystupuje jako podřízená tabulka.</value>
-  </data>
-  <data name="DataRelation_ParentTableMismatch" xml:space="preserve">
-    <value>Do kolekce ChildRelation této tabulky lze přidat pouze relaci, ve které tato tabulka vystupuje jako nadřazená tabulka.</value>
-  </data>
-  <data name="DataRelation_RelationNestedReadOnly" xml:space="preserve">
-    <value>Vlastnost Nested této relace nelze nastavit na hodnotu false.</value>
-  </data>
-  <data name="DataRelation_TableCantBeNestedInTwoTables" xml:space="preserve">
-    <value>Stejná tabulka {0} nemůže být podřízenou tabulkou ve dvou podřízených relacích.</value>
-  </data>
-  <data name="DataRelation_LoopInNestedRelations" xml:space="preserve">
-    <value>Tabulka ({0}) nemůže být ve vnořených relací podřízenou tabulkou sama sobě.</value>
-  </data>
-  <data name="DataRelation_CaseLocaleMismatch" xml:space="preserve">
-    <value>Nelze přidat objekt DataRelation nebo Constraint, který obsahuje jiné nastavení Locale nebo CaseSensitive mezi svými nadřazenými a podřízenými tabulkami.</value>
-  </data>
-  <data name="DataRelation_ParentOrChildColumnsDoNotHaveDataSet" xml:space="preserve">
-    <value>Nelze vytvořit objekt DataRelation, pokud objekt DataSet neobsahuje nadřazený a podřízený sloupec.</value>
-  </data>
-  <data name="DataRelation_InValidNestedRelation" xml:space="preserve">
-    <value>Vnořená tabulka {0}, která dědí svůj obor názvů, nemůže mít více nadřazených tabulek v různých oborech názvů.</value>
-  </data>
-  <data name="DataRelation_InValidNamespaceInNestedRelation" xml:space="preserve">
-    <value>Vnořená tabulka {0} s prázdným oborem názvů nemůže mít více nadřazených tabulek v různých oborech názvů.</value>
-  </data>
-  <data name="DataRow_NotInTheDataSet" xml:space="preserve">
-    <value>Řádek nepatří do stejného objektu DataSet jako tato relace.</value>
-  </data>
-  <data name="DataRow_NotInTheTable" xml:space="preserve">
-    <value>Tuto operaci nelze provést na řádku, který není v tabulce.</value>
-  </data>
-  <data name="DataRow_ParentRowNotInTheDataSet" xml:space="preserve">
-    <value>Tato relace a podřízený řádek nepatří do stejného objektu DataSet.</value>
-  </data>
-  <data name="DataRow_EditInRowChanging" xml:space="preserve">
-    <value>Navrhovanou hodnotu v události RowChanging nelze změnit.</value>
-  </data>
-  <data name="DataRow_EndEditInRowChanging" xml:space="preserve">
-    <value>Metodu EndEdit() nelze volat v rámci události OnRowChanging.</value>
-  </data>
-  <data name="DataRow_BeginEditInRowChanging" xml:space="preserve">
-    <value>Metodu BeginEdit() nelze volat v rámci události RowChanging.</value>
-  </data>
-  <data name="DataRow_CancelEditInRowChanging" xml:space="preserve">
-    <value>Metodu CancelEdit() nelze volat v rámci události OnRowChanging.  Aktualizaci lze zrušit vyvoláním výjimky.</value>
-  </data>
-  <data name="DataRow_DeleteInRowDeleting" xml:space="preserve">
-    <value>Metodu Delete nelze volat v rámci události OnRowDeleting.  Odstranění lze zrušit vyvoláním výjimky.</value>
-  </data>
-  <data name="DataRow_ValuesArrayLength" xml:space="preserve">
-    <value>Vstupní pole je delší než počet sloupců této tabulky.</value>
-  </data>
-  <data name="DataRow_NoCurrentData" xml:space="preserve">
-    <value>Nelze získat přístup k žádným aktuálním datům.</value>
-  </data>
-  <data name="DataRow_NoOriginalData" xml:space="preserve">
-    <value>Nelze získat přístup k žádným původním datům.</value>
-  </data>
-  <data name="DataRow_NoProposedData" xml:space="preserve">
-    <value>Nelze získat přístup k žádným navrhovaným datům.</value>
-  </data>
-  <data name="DataRow_RemovedFromTheTable" xml:space="preserve">
-    <value>Tento řádek byl z tabulky odebrán a neobsahuje žádná data.  Metoda BeginEdit() umožní v tomto řádku vytvořit nová data.</value>
-  </data>
-  <data name="DataRow_DeletedRowInaccessible" xml:space="preserve">
-    <value>K informacím o odstraněném řádku nelze přistupovat prostřednictvím řádku.</value>
-  </data>
-  <data name="DataRow_InvalidVersion" xml:space="preserve">
-    <value>Pole Version musí mít hodnotu Original, Current nebo Proposed.</value>
-  </data>
-  <data name="DataRow_OutOfRange" xml:space="preserve">
-    <value>Na pozici {0} se nenachází žádný řádek.</value>
-  </data>
-  <data name="DataRow_RowInsertOutOfRange" xml:space="preserve">
-    <value>Pozice {0} vložení řádku je neplatná.</value>
-  </data>
-  <data name="DataRow_RowInsertTwice" xml:space="preserve">
-    <value>Hodnota atributu rowOrder ({0}) byla v tabulce s názvem {1} nalezena dvakrát.</value>
-  </data>
-  <data name="DataRow_RowInsertMissing" xml:space="preserve">
-    <value>Hodnoty v pořadí rowOrder pro tabulku {0} nebyly nalezeny.</value>
-  </data>
-  <data name="DataRow_RowOutOfRange" xml:space="preserve">
-    <value>Objekt DataRow není obsažen v aktuální kolekci DataRowCollection.</value>
-  </data>
-  <data name="DataRow_AlreadyInOtherCollection" xml:space="preserve">
-    <value>Tento řádek již patří do jiné tabulky.</value>
-  </data>
-  <data name="DataRow_AlreadyInTheCollection" xml:space="preserve">
-    <value>Tento řádek již patří do této tabulky.</value>
-  </data>
-  <data name="DataRow_AlreadyDeleted" xml:space="preserve">
-    <value>Tento řádek nelze odstranit, protože již byl odstraněn.</value>
-  </data>
-  <data name="DataRow_Empty" xml:space="preserve">
-    <value>Tento řádek je prázdný.</value>
-  </data>
-  <data name="DataRow_AlreadyRemoved" xml:space="preserve">
-    <value>Nelze odebrat řádek, který již byl odebrán.</value>
-  </data>
-  <data name="DataRow_MultipleParents" xml:space="preserve">
-    <value>Podřízený řádek má více nadřazených objektů.</value>
-  </data>
-  <data name="DataRow_InvalidRowBitPattern" xml:space="preserve">
-    <value>Nerozpoznaný bitový vzorek stavu řádků</value>
-  </data>
-  <data name="DataSet_SetNameToEmpty" xml:space="preserve">
-    <value>Nelze změnit název objektu DataSet na prázdný řetězec.</value>
-  </data>
-  <data name="DataSet_SetDataSetNameConflicting" xml:space="preserve">
-    <value>Název {0} je neplatný. Objekt DataSet nemůže mít stejný název jako objekt DataTable.</value>
-  </data>
-  <data name="DataSet_UnsupportedSchema" xml:space="preserve">
-    <value>Obor názvů schématu je neplatný. Doporučený obor: {0}</value>
-  </data>
-  <data name="DataSet_CannotChangeCaseLocale" xml:space="preserve">
-    <value>Vlastnost CaseSensitive ani Locale nelze změnit. Tato změna by způsobila, že by minimálně jeden objekt DataRelation nebo Constraint měl různá nastavení vlastností Locale nebo CaseSensitive pro odpovídající tabulky.</value>
-  </data>
-  <data name="DataSet_CannotChangeSchemaSerializationMode" xml:space="preserve">
-    <value>Vlastnost SchemaSerializationMode lze nastavit pouze v případě, že je přepsána odvozeným objektem DataSet.</value>
-  </data>
-  <data name="DataTable_ForeignPrimaryKey" xml:space="preserve">
-    <value>Sloupce PrimaryKey nepatří do této tabulky.</value>
-  </data>
-  <data name="DataTable_CannotAddToSimpleContent" xml:space="preserve">
-    <value>Do tabulky obsahující sloupec SimpleContent nelze přidat vnořenou relaci ani sloupec elementů.</value>
-  </data>
-  <data name="DataTable_NoName" xml:space="preserve">
-    <value>Vlastnost TableName je vyžadována, pokud je částí objektu DataSet.</value>
-  </data>
-  <data name="DataTable_MultipleSimpleContentColumns" xml:space="preserve">
-    <value>Objekt DataTable již obsahuje sloupec s jednoduchým obsahem.</value>
-  </data>
-  <data name="DataTable_MissingPrimaryKey" xml:space="preserve">
-    <value>Tabulka neobsahuje primární klíč.</value>
-  </data>
-  <data name="DataTable_InvalidSortString" xml:space="preserve">
-    <value>{0} není platnou položkou řetězce Sort.</value>
-  </data>
-  <data name="DataTable_CanNotSerializeDataTableHierarchy" xml:space="preserve">
-    <value>DataTable není možné serializovat. Objekt DataTable používaný minimálně v jednom výrazu DataColumn není potomkem aktuálního objektu DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotRemoteDataTable" xml:space="preserve">
-    <value>Tento objekt DataTable lze vzdáleně použít pouze jako součást objektu DataSet. Nejméně jeden sloupec výrazu odkazuje na jiné objekty DataTable.</value>
-  </data>
-  <data name="DataTable_CanNotSetRemotingFormat" xml:space="preserve">
-    <value>Pro objekt DataSet a DataTable nemohou existovat různé hodnoty vlastnosti vzdáleného formátu.</value>
-  </data>
-  <data name="DataTable_CanNotSerializeDataTableWithEmptyName" xml:space="preserve">
-    <value>DataTable není možné serializovat. Název objektu DataTable není nastaven.</value>
-  </data>
-  <data name="DataTable_DuplicateName" xml:space="preserve">
-    <value>Objekt DataTable s názvem {0} již patří do tohoto objektu DataSet.</value>
-  </data>
-  <data name="DataTable_DuplicateName2" xml:space="preserve">
-    <value>Objekt DataTable s názvem {0} se stejným oborem názvů Namespace {1} již do tohoto objektu DataSet náleží.</value>
-  </data>
-  <data name="DataTable_SelfnestedDatasetConflictingName" xml:space="preserve">
-    <value>Tabulka ({0}) nemůže ve vnořené relaci vystupovat jako tabulka podřízená sobě samé – název objektu DataSet je v konfliktu s názvem tabulky.</value>
-  </data>
-  <data name="DataTable_DatasetConflictingName" xml:space="preserve">
-    <value>Název {0} je neplatný. Objekt DataTable nemůže mít stejný název objektu DataSet.</value>
-  </data>
-  <data name="DataTable_AlreadyInOtherDataSet" xml:space="preserve">
-    <value>Objekt DataTable již patří jinému objektu DataSet.</value>
-  </data>
-  <data name="DataTable_AlreadyInTheDataSet" xml:space="preserve">
-    <value>Objekt DataTable již patří tomuto objektu DataSet.</value>
-  </data>
-  <data name="DataTable_NotInTheDataSet" xml:space="preserve">
-    <value>Tabulka {0} nepatří do tohoto objektu DataSet.</value>
-  </data>
-  <data name="DataTable_OutOfRange" xml:space="preserve">
-    <value>Tabulka {0} nebyla nalezena.</value>
-  </data>
-  <data name="DataTable_InRelation" xml:space="preserve">
-    <value>Tabulku, která má existující relace, nelze odebrat.  Nejprve odeberte relace.</value>
-  </data>
-  <data name="DataTable_InConstraint" xml:space="preserve">
-    <value>Tabulku {0} nelze odebrat, protože na ni odkazuje omezení ForeignKeyConstraint {1}.  Nejprve odeberte omezení.</value>
-  </data>
-  <data name="DataTable_TableNotFound" xml:space="preserve">
-    <value>Objekt DataTable {0} neodpovídá žádnému objektu DataTable ve zdroji.</value>
-  </data>
-  <data name="DataMerge_MissingDefinition" xml:space="preserve">
-    <value>V cílovém objektu DataSet nebyla nalezena definice pro {0}.</value>
-  </data>
-  <data name="DataMerge_MissingConstraint" xml:space="preserve">
-    <value>V cílovém objektu DataSet nebylo nalezeno omezení {0} {1}.</value>
-  </data>
-  <data name="DataMerge_DataTypeMismatch" xml:space="preserve">
-    <value>&lt;target&gt;.{0} a &lt;source&gt;.{0} mají konfliktní vlastnosti: Vlastnost DataType se neshoduje.</value>
-  </data>
-  <data name="DataMerge_PrimaryKeyMismatch" xml:space="preserve">
-    <value>Vlastnosti &lt;target&gt;.PrimaryKey a &lt;source&gt;.PrimaryKey mají různou hodnotu Length.</value>
-  </data>
-  <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
-    <value>Neshoda sloupců ve vlastnosti PrimaryKey: &lt;target&gt;.{0} oproti &lt;source&gt;.{1}</value>
-  </data>
-  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
-    <value>Vztah {0} nelze sloučit, protože klíče obsahují neshodné sloupce.</value>
-  </data>
-  <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
-    <value>V cílové tabulce {0} nebyla nalezena definice sloupce {1}.</value>
-  </data>
-  <data name="DataMerge_MissingPrimaryKeyColumnInSource" xml:space="preserve">
-    <value>Sloupec PrimaryKey {0} neexistuje ve zdrojové tabulce.</value>
-  </data>
-  <data name="DataIndex_RecordStateRange" xml:space="preserve">
-    <value>Parametr RowStates musí být nastaven na platnou kombinaci hodnot z výčtu DataViewRowState.</value>
-  </data>
-  <data name="DataIndex_FindWithoutSortOrder" xml:space="preserve">
-    <value>Funkce Find vyhledává řádek na základě pořadí řazení. Pořadí řazení však nebylo určeno.</value>
-  </data>
-  <data name="DataIndex_KeyLength" xml:space="preserve">
-    <value>Pro indexovaný klíč se očekával tento počet hodnot: {0}, ale byl přijat tento počet hodnot: {1}.</value>
-  </data>
-  <data name="DataStorage_AggregateException" xml:space="preserve">
-    <value>Neplatné použití agregační funkce {0}() a typu: {1}</value>
-  </data>
-  <data name="DataStorage_InvalidStorageType" xml:space="preserve">
-    <value>Neplatný typ úložiště: {0}</value>
-  </data>
-  <data name="DataStorage_ProblematicChars" xml:space="preserve">
-    <value>Při trvalém uložení objektu DataSet Xml není hodnota {0} podporována jako typ Char. Uložte ji jako typ Byte.</value>
-  </data>
-  <data name="DataStorage_SetInvalidDataType" xml:space="preserve">
-    <value>Typ hodnoty neodpovídá typu sloupce.</value>
-  </data>
-  <data name="DataStorage_IComparableNotDefined" xml:space="preserve">
-    <value>Typ {0} neimplementuje rozhraní IComparable. Porovnání nelze provést.</value>
-  </data>
-  <data name="DataView_SetFailed" xml:space="preserve">
-    <value>Nelze nastavit {0}.</value>
-  </data>
-  <data name="DataView_SetDataSetFailed" xml:space="preserve">
-    <value>Nelze změnit nastavení DataSet objektu DataViewManager aktuálně představující výchozí zobrazení objektu DataSet.</value>
-  </data>
-  <data name="DataView_SetRowStateFilter" xml:space="preserve">
-    <value>Vlastnost RowStateFilter nemůže najednou zobrazit položky ModifiedOriginals a ModifiedCurrents.</value>
-  </data>
-  <data name="DataView_SetTable" xml:space="preserve">
-    <value>Nelze změnit vlastnost Table objektu DefaultView nebo DataView pocházející z objektu DataViewManager.</value>
-  </data>
-  <data name="DataView_CanNotSetDataSet" xml:space="preserve">
-    <value>Jakmile je vlastnost DataSet nastavena, nelze ji změnit.</value>
-  </data>
-  <data name="DataView_CanNotUseDataViewManager" xml:space="preserve">
-    <value>Před použitím objektu DataViewManager je nutné nastavit objekt DataSet.</value>
-  </data>
-  <data name="DataView_CanNotSetTable" xml:space="preserve">
-    <value>Jakmile je vlastnost Table nastavena, nelze ji změnit.</value>
-  </data>
-  <data name="DataView_CanNotUse" xml:space="preserve">
-    <value>Před použitím objektu DataView je nutné nastavit vlastnost DataTable.</value>
-  </data>
-  <data name="DataView_CanNotBindTable" xml:space="preserve">
-    <value>Nelze vytvořit vazbu s objektem DataTable, který nemá název.</value>
-  </data>
-  <data name="DataView_SetIListObject" xml:space="preserve">
-    <value>Do tohoto seznamu nelze nastavit objekt.</value>
-  </data>
-  <data name="DataView_AddNewNotAllowNull" xml:space="preserve">
-    <value>Pro objekt DataView nelze volat metodu AddNew, pokud vlastnost AllowNew má hodnotu false.</value>
-  </data>
-  <data name="DataView_NotOpen" xml:space="preserve">
-    <value>Objekt DataView není otevřen.</value>
-  </data>
-  <data name="DataView_CreateChildView" xml:space="preserve">
-    <value>Relace není nadřazena tabulce, na kterou ukazuje tento objekt DataView.</value>
-  </data>
-  <data name="DataView_CanNotDelete" xml:space="preserve">
-    <value>Vlastnost DataSource nelze odstranit, pokud vlastnost AllowDelete má hodnotu false.</value>
-  </data>
-  <data name="DataView_CanNotEdit" xml:space="preserve">
-    <value>Vlastnost DataSource nelze upravit, pokud vlastnost AllowEdit má hodnotu false.</value>
-  </data>
-  <data name="DataView_GetElementIndex" xml:space="preserve">
-    <value>Index {0} je záporný nebo je počet jeho položek vyšší než počet řádků.</value>
-  </data>
-  <data name="DataView_AddExternalObject" xml:space="preserve">
-    <value>Do tohoto seznamu nelze přidávat externí objekty.</value>
-  </data>
-  <data name="DataView_CanNotClear" xml:space="preserve">
-    <value>Tento seznam nelze vymazat.</value>
-  </data>
-  <data name="DataView_InsertExternalObject" xml:space="preserve">
-    <value>Do tohoto seznamu nelze vkládat externí objekty.</value>
-  </data>
-  <data name="DataView_RemoveExternalObject" xml:space="preserve">
-    <value>Odebírat lze pouze objekty, které jsou uvedeny v seznamu.</value>
-  </data>
-  <data name="DataROWView_PropertyNotFound" xml:space="preserve">
-    <value>Vlastnost {0} není pro tabulku {1} objektem DataColumn ani DataRelation.</value>
-  </data>
-  <data name="Range_Argument" xml:space="preserve">
-    <value>V objektu Range musí být hodnota Min ({0}) menší nebo rovna hodnotě max ({1}).</value>
-  </data>
-  <data name="Range_NullRange" xml:space="preserve">
-    <value>Tento rozsah má hodnotu null.</value>
-  </data>
-  <data name="RecordManager_MinimumCapacity" xml:space="preserve">
-    <value>Vlastnost MinimumCapacity musí mít nezápornou hodnotu.</value>
-  </data>
-  <data name="CodeGen_InvalidIdentifier" xml:space="preserve">
-    <value>Identifikátor pro název '{0}' nelze generovat.</value>
-  </data>
-  <data name="CodeGen_DuplicateTableName" xml:space="preserve">
-    <value>Existuje více tabulek se stejným názvem {0} (přestože obor názvů se může lišit).</value>
-  </data>
-  <data name="CodeGen_TypeCantBeNull" xml:space="preserve">
-    <value>Sloupec {0}: Typ {1} nemůže nabývat hodnoty NULL.</value>
-  </data>
-  <data name="CodeGen_NoCtor0" xml:space="preserve">
-    <value>Sloupec {0}: Typ {1} neobsahuje konstruktor bez parametrů.</value>
-  </data>
-  <data name="CodeGen_NoCtor1" xml:space="preserve">
-    <value>Sloupec {0}: Typ {1} neobsahuje konstruktor s řetězcovým argumentem.</value>
-  </data>
   <data name="SqlConvert_ConvertFailed" xml:space="preserve">
     <value>Objekt typu {0} není možné převést na objekt typu {1}.</value>
-  </data>
-  <data name="DataSet_DefaultDataException" xml:space="preserve">
-    <value>Data Exception.</value>
-  </data>
-  <data name="DataSet_DefaultConstraintException" xml:space="preserve">
-    <value>Constraint Exception.</value>
-  </data>
-  <data name="DataSet_DefaultDeletedRowInaccessibleException" xml:space="preserve">
-    <value>Odstraněné řádky jsou nedostupné.</value>
-  </data>
-  <data name="DataSet_DefaultDuplicateNameException" xml:space="preserve">
-    <value>Duplicitní název není povolen.</value>
-  </data>
-  <data name="DataSet_DefaultInRowChangingEventException" xml:space="preserve">
-    <value>Operace není podporována v události RowChanging.</value>
-  </data>
-  <data name="DataSet_DefaultInvalidConstraintException" xml:space="preserve">
-    <value>Neplatné omezení</value>
-  </data>
-  <data name="DataSet_DefaultMissingPrimaryKeyException" xml:space="preserve">
-    <value>Chybí primární klíč.</value>
-  </data>
-  <data name="DataSet_DefaultNoNullAllowedException" xml:space="preserve">
-    <value>Hodnota Null není povolena.</value>
-  </data>
-  <data name="DataSet_DefaultReadOnlyException" xml:space="preserve">
-    <value>Sloupec je označen jen pro čtení.</value>
-  </data>
-  <data name="DataSet_DefaultRowNotInTableException" xml:space="preserve">
-    <value>Řádek nebyl v tabulce nalezen.</value>
-  </data>
-  <data name="DataSet_DefaultVersionNotFoundException" xml:space="preserve">
-    <value>Verze nebyla nalezena.</value>
-  </data>
-  <data name="Load_ReadOnlyDataModified" xml:space="preserve">
-    <value>Byla změněna data ReadOnly.</value>
-  </data>
-  <data name="DataTableReader_InvalidDataTableReader" xml:space="preserve">
-    <value>Třída DataTableReader je neplatná pro aktuální objekt DataTable {0}.</value>
-  </data>
-  <data name="DataTableReader_SchemaInvalidDataTableReader" xml:space="preserve">
-    <value>Schéma aktuálního objektu DataTable {0} ve třídě DataTableReader se změnilo, třída DataTableReader je neplatná.</value>
-  </data>
-  <data name="DataTableReader_CannotCreateDataReaderOnEmptyDataSet" xml:space="preserve">
-    <value>DataTableReader nelze vytvořit. V objektu DataSet není žádný objekt DataTable.</value>
-  </data>
-  <data name="DataTableReader_DataTableReaderArgumentIsEmpty" xml:space="preserve">
-    <value>DataTableReader není možné vytvořit. Argument je prázdný.</value>
-  </data>
-  <data name="DataTableReader_ArgumentContainsNullValue" xml:space="preserve">
-    <value>DataTableReader není možné vytvořit. Argumenty obsahují hodnotu null.</value>
-  </data>
-  <data name="DataTableReader_InvalidRowInDataTableReader" xml:space="preserve">
-    <value>Aktuální objekt DataRow je ve stavu Deleted nebo Detached.</value>
-  </data>
-  <data name="DataTableReader_DataTableCleared" xml:space="preserve">
-    <value>Aktuální objekt DataTable {0} je prázdný. V objektu DataTable není žádný objekt DataRow.</value>
-  </data>
-  <data name="RbTree_InvalidState" xml:space="preserve">
-    <value>Vnitřní index DataTable je poškozen: {0}.</value>
-  </data>
-  <data name="RbTree_EnumerationBroken" xml:space="preserve">
-    <value>Kolekce byla změněna, operace výčtu pravděpodobně nebude spuštěna.</value>
-  </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
-    <value>Jednoduchý typ {0} již byl deklarován s jinou hodnotou {1}.</value>
-  </data>
-  <data name="DataDom_Foliation" xml:space="preserve">
-    <value>Neplatné číslování listů</value>
-  </data>
-  <data name="DataDom_TableNameChange" xml:space="preserve">
-    <value>Jakmile je přidružený objekt DataSet mapován na načtený dokument XML, název tabulky nelze změnit.</value>
-  </data>
-  <data name="DataDom_TableNamespaceChange" xml:space="preserve">
-    <value>Jakmile je přidružený objekt DataSet mapován na načtený dokument XML, obor názvů tabulky nelze změnit.</value>
-  </data>
-  <data name="DataDom_ColumnNameChange" xml:space="preserve">
-    <value>Jakmile je přidružený objekt DataSet mapován na načtený dokument XML, název sloupce nelze změnit.</value>
-  </data>
-  <data name="DataDom_ColumnNamespaceChange" xml:space="preserve">
-    <value>Jakmile je přidružený objekt DataSet mapován na načtený dokument XML, obor názvů sloupce nelze změnit.</value>
-  </data>
-  <data name="DataDom_ColumnMappingChange" xml:space="preserve">
-    <value>Jakmile je přidružený objekt DataSet mapován na načtený dokument XML, vlastnost ColumnMapping nelze změnit.</value>
-  </data>
-  <data name="DataDom_TableColumnsChange" xml:space="preserve">
-    <value>Jakmile je objekt DataSet mapován na načtený dokument XML, nelze v tabulce přidat ani odebrat sloupec.</value>
-  </data>
-  <data name="DataDom_DataSetTablesChange" xml:space="preserve">
-    <value>Jakmile je objekt DataSet mapován na načtený dokument XML, v objektu DataSet nelze přidat ani odebrat tabulku.</value>
-  </data>
-  <data name="DataDom_DataSetNestedRelationsChange" xml:space="preserve">
-    <value>Jakmile je objekt DataSet mapován na načtený dokument XML, nelze v objektu DataSet přidat, odebrat ani měnit vnořené relace.</value>
-  </data>
-  <data name="DataDom_DataSetNull" xml:space="preserve">
-    <value>Parametr DataSet je neplatný. Nemůže být null.</value>
-  </data>
-  <data name="DataDom_DataSetNameChange" xml:space="preserve">
-    <value>Jakmile je objekt DataSet mapován na načtený dokument XML, název objektu DataSet nelze změnit.</value>
-  </data>
-  <data name="DataDom_CloneNode" xml:space="preserve">
-    <value>Tento typ uzlu nelze klonovat: {0}.</value>
-  </data>
-  <data name="DataDom_MultipleLoad" xml:space="preserve">
-    <value>Objekt XmlDataDocument nelze načíst, pokud již obsahuje data. Použijte prosím nový objekt XmlDataDocument.</value>
-  </data>
-  <data name="DataDom_MultipleDataSet" xml:space="preserve">
-    <value>Objekt DataSet lze přidružit nejvýše k jednomu objektu XmlDataDocument. Objekt DataSet nelze přidružit k aktuálnímu objektu XmlDataDocument, protože objekt DataSet je již přidružen k jinému objektu XmlDataDocument.</value>
-  </data>
-  <data name="DataDom_EnforceConstraintsShouldBeOff" xml:space="preserve">
-    <value>Před úpravou objektu XmlDataDocument pomocí operací XML je nutné nastavit vlastnost DataSet.EnforceConstraints == false.</value>
-  </data>
-  <data name="DataDom_NotSupport_GetElementById" xml:space="preserve">
-    <value>Metoda GetElementById() není podporována v objektu DataDocument.</value>
-  </data>
-  <data name="DataDom_NotSupport_EntRef" xml:space="preserve">
-    <value>Nelze vytvořit odkazy na entity v objektu DataDocument.</value>
-  </data>
-  <data name="DataDom_NotSupport_Clear" xml:space="preserve">
-    <value>Třída XmlDataDocument nepodporuje funkci Clear u objektu DateSet a DataTable.</value>
-  </data>
-  <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
-    <value>Sloupec nelze odebrat, protože je do této sady dataSet integrován.</value>
-  </data>
-  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
-    <value>Relaci nelze odebrat, protože je do tohoto elementu dataSet integrována.</value>
-  </data>
-  <data name="propertyChangedEventDescr" xml:space="preserve">
-    <value>Vyvolá se, když dojde ke změně vlastnosti tohoto ovládacího prvku.</value>
-  </data>
-  <data name="collectionChangedEventDescr" xml:space="preserve">
-    <value>Vyvolá se vždy, když je změněno členství této kolekce.</value>
-  </data>
-  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Nelze získat hodnotu, protože je DBNull.</value>
-  </data>
-  <data name="ADP_PropertyNotSupported" xml:space="preserve">
-    <value>Vlastnost {0} vyžaduje operační systém Microsoft Windows NT nebo operační systém typu WindowsNT.</value>
-  </data>
-  <data name="ConfigProviderNotFound" xml:space="preserve">
-    <value>Nelze najít požadovaného zprostředkovatele dat .NET Framework.  Je možné, že není nainstalovaný.</value>
-  </data>
-  <data name="ConfigProviderInvalid" xml:space="preserve">
-    <value>Požadovaná implementace zprostředkovatele dat .NET Framework nemá pole Instance odvozeného typu System.Data.Common.DbProviderFactory.</value>
-  </data>
-  <data name="ConfigProviderNotInstalled" xml:space="preserve">
-    <value>Nelze najít nebo načíst registrovaného zprostředkovatele dat .NET Framework.</value>
-  </data>
-  <data name="ConfigProviderMissing" xml:space="preserve">
-    <value>Chybí požadovaný kvalifikovaný název sestavení zprostředkovatele dat .NET Framework.</value>
-  </data>
-  <data name="ConfigBaseElementsOnly" xml:space="preserve">
-    <value>Povoleny jsou pouze elementy.</value>
-  </data>
-  <data name="ConfigBaseNoChildNodes" xml:space="preserve">
-    <value>Podřízené uzly nejsou povoleny.</value>
-  </data>
-  <data name="ConfigUnrecognizedAttributes" xml:space="preserve">
-    <value>Nerozpoznaný atribut{0}</value>
-  </data>
-  <data name="ConfigUnrecognizedElement" xml:space="preserve">
-    <value>Nerozpoznaný element</value>
-  </data>
-  <data name="ConfigSectionsUnique" xml:space="preserve">
-    <value>Oddíl {0} může být v konfiguračním souboru pouze jednou.</value>
-  </data>
-  <data name="ConfigRequiredAttributeMissing" xml:space="preserve">
-    <value>Nenašel se povinný atribut {0}.</value>
-  </data>
-  <data name="ConfigRequiredAttributeEmpty" xml:space="preserve">
-    <value>Požadovaný atribut {0} nesmí být prázdný.</value>
-  </data>
-  <data name="ADP_EmptyArray" xml:space="preserve">
-    <value>Bylo očekáváno neprázdné pole pro parametr {0}.</value>
   </data>
   <data name="ADP_SingleValuedProperty" xml:space="preserve">
     <value>Jedinou platnou hodnotu pro vlastnost {0} je {1}.</value>
@@ -1767,9 +336,6 @@
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
     <value>Délka argumentu {0} překračuje limit {1}.</value>
   </data>
-  <data name="SQL_WrongType" xml:space="preserve">
-    <value>Byl očekáván argument typu {1}, byl však přijat typ {0}.</value>
-  </data>
   <data name="ADP_InvalidConnectionOptionValue" xml:space="preserve">
     <value>Hodnota klíče {0} není platná.</value>
   </data>
@@ -1782,23 +348,8 @@
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Klíčové slovo není podporované: {0}.</value>
   </data>
-  <data name="ADP_UdlFileError" xml:space="preserve">
-    <value>Soubor UDL nelze načíst.</value>
-  </data>
-  <data name="ADP_InvalidUDL" xml:space="preserve">
-    <value>Soubor UDL je neplatný.</value>
-  </data>
   <data name="ADP_InternalProviderError" xml:space="preserve">
     <value>Došlo k vnitřní chybě zprostředkovatele dat .NET Framework {0}.</value>
-  </data>
-  <data name="ADP_NoQuoteChange" xml:space="preserve">
-    <value>Po vygenerování příkazu Insert, Update nebo Delete již nelze vlastnosti QuotePrefix a QuoteSuffix změnit.</value>
-  </data>
-  <data name="ADP_MissingSourceCommand" xml:space="preserve">
-    <value>Vlastnost DataAdapter.SelectCommand musí být inicializována.</value>
-  </data>
-  <data name="ADP_MissingSourceCommandConnection" xml:space="preserve">
-    <value>Vlastnost DataAdapter.SelectCommand.Connection musí být inicializována;</value>
   </data>
   <data name="ADP_InvalidMultipartName" xml:space="preserve">
     <value>{0} "{1}".</value>
@@ -1824,53 +375,14 @@
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
     <value>Metoda SqlCommand.DeriveParameters se nezdařila, protože hodnota vlastnosti SqlCommand.CommandText představuje neplatný název s více částmi.</value>
   </data>
-  <data name="ODBC_ODBCCommandText" xml:space="preserve">
-    <value>Metoda OdbcCommandBuilder.DeriveParameters se nezdařila, protože hodnota vlastnosti OdbcCommand.CommandText představuje neplatný název s více částmi.</value>
-  </data>
-  <data name="OLEDB_OLEDBCommandText" xml:space="preserve">
-    <value>Metoda OleDbCommandBuilder.DeriveParameters se nezdařila, protože hodnota vlastnosti OleDbCommandBuilder.CommandText představuje neplatný název s více částmi.</value>
-  </data>
   <data name="SQLMSF_FailoverPartnerNotSupported" xml:space="preserve">
     <value>Připojení k zrcadlené instanci systému SQL Server s použitím možnosti připojení MultiSubnetFailover není podporováno.</value>
-  </data>
-  <data name="ADP_ColumnSchemaExpression" xml:space="preserve">
-    <value>Mapování sloupce ze SourceColumn {0} se nezdařilo, protože DataColumn {1} je vypočítaný sloupec.</value>
-  </data>
-  <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
-    <value>Neshodné typy SourceColumn {0} z(e) {1} a DataColumn {2} z(e) {3} nelze převést.</value>
-  </data>
-  <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
-    <value>V objektu DataTable {1} pro vlastnost SourceColumn {2} chybí objekt DataColumn {0}.</value>
-  </data>
-  <data name="ADP_InvalidSourceColumn" xml:space="preserve">
-    <value>Hodnota SourceColumn musí být neprázdný řetězec.</value>
-  </data>
-  <data name="ADP_MissingColumnMapping" xml:space="preserve">
-    <value>Mapování vlastnosti SourceColumn pro {0} nebylo nalezeno.</value>
   </data>
   <data name="ADP_NotSupportedEnumerationValue" xml:space="preserve">
     <value>Hodnota výčtu {0}, {1}, není podporována metodou {2}.</value>
   </data>
-  <data name="ODBC_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>Hodnota výčtu {0}, {1}, není podporována zprostředkovatelem dat .Net Framework Odbc.</value>
-  </data>
-  <data name="OLEDB_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>Hodnota výčtu {0}, {1}, není podporována zprostředkovatelem dat .Net Framework OleDb.</value>
-  </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
     <value>Hodnota výčtu {0}, {1}, není podporována zprostředkovatelem dat .NET Framework SqlClient.</value>
-  </data>
-  <data name="ADP_ComputerNameEx" xml:space="preserve">
-    <value>Nelze načíst ComputerNameDnsFullyQualified, {0}.</value>
-  </data>
-  <data name="ADP_MissingTableSchema" xml:space="preserve">
-    <value>Chybí objekt DataTable {0} pro SourceTable {1}.</value>
-  </data>
-  <data name="ADP_InvalidSourceTable" xml:space="preserve">
-    <value>Hodnota SourceTable musí být neprázdný řetězec.</value>
-  </data>
-  <data name="ADP_MissingTableMapping" xml:space="preserve">
-    <value>Mapování vlastnosti SourceTable {0} nebylo nalezeno.</value>
   </data>
   <data name="ADP_CommandTextRequired" xml:space="preserve">
     <value>{0}: Vlastnost CommandText nebyla inicializována.</value>
@@ -1881,50 +393,8 @@
   <data name="ADP_OpenConnectionRequired" xml:space="preserve">
     <value>{0} vyžaduje otevřený a dostupný element Connection. {1}</value>
   </data>
-  <data name="ADP_ConnectionRequired_Fill" xml:space="preserve">
-    <value>Fill: Vlastnost SelectCommand.Connection nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_FillPage" xml:space="preserve">
-    <value>FillPage: Vlastnost SelectCommand.Connection nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_FillSchema" xml:space="preserve">
-    <value>FillSchema: Vlastnost SelectCommand.Connection nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Insert" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby událost InsertCommand měla objekt připojení. Vlastnost Connection události InsertCommand nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Update" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby událost UpdateCommand měla objekt připojení. Vlastnost Connection události UpdateCommand nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Delete" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby událost DeleteCommand měla objekt připojení. Vlastnost Connection události DeleteCommand nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Batch" xml:space="preserve">
-    <value>Metoda Update vyžaduje objekt připojení.  Vlastnost Connection nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby klon příkazu obsahoval objekt připojení. Vlastnost Connection klonu příkazu nebyla inicializována.</value>
-  </data>
-  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
-    <value>Aktualizace vyžaduje připojení.</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby událost {0}Command měla otevřený objekt připojení. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Update" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby událost {0}Command měla otevřený objekt připojení. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Delete" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby událost {0}Command měla otevřený objekt připojení. {1}</value>
-  </data>
-  <data name="ADP_OpenConnectionRequired_Clone" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby aktualizační příkaz disponoval objektem otevřeného připojení. {1}</value>
-  </data>
   <data name="ADP_NoStoredProcedureExists" xml:space="preserve">
     <value>Uložená procedura {0} neexistuje.</value>
-  </data>
-  <data name="ADP_TransactionCompleted" xml:space="preserve">
-    <value>Transakce přiřazená tomuto příkazu musí být nejvíce vnořená čekající místní transakce.</value>
   </data>
   <data name="ADP_TransactionConnectionMismatch" xml:space="preserve">
     <value>Transakce není přidružena k aktuálnímu připojení nebo byla dokončena.</value>
@@ -1935,9 +405,6 @@
   <data name="ADP_TransactionRequired" xml:space="preserve">
     <value>{0} vyžaduje, aby měl příkaz transakci, pokud je připojení přiřazeno k příkazu v místní transakci čekající na dokončení.  Vlastnost Transaction příkazu nebyla inicializována.</value>
   </data>
-  <data name="ADP_OpenResultSetExists" xml:space="preserve">
-    <value>Již existuje otevřená třída SqlResultSet asociovaná s tímto příkazem, kterou je nutné nejdříve zavřít.</value>
-  </data>
   <data name="ADP_OpenReaderExists" xml:space="preserve">
     <value>K tomuto objektu {0} je již přidružen otevřený objekt DataReader, který musí být nejprve zavřen.</value>
   </data>
@@ -1946,81 +413,6 @@
   </data>
   <data name="ADP_CalledTwice" xml:space="preserve">
     <value>Metodu {0} lze pro stejné provádění volat pouze jednou.</value>
-  </data>
-  <data name="ADP_IncorrectAsyncResult" xml:space="preserve">
-    <value>Nesprávný asynchronní výsledek</value>
-  </data>
-  <data name="ADP_MissingSelectCommand" xml:space="preserve">
-    <value>Vlastnost SelectCommand nebyla před voláním {0} inicializována.</value>
-  </data>
-  <data name="ADP_UnwantedStatementType" xml:space="preserve">
-    <value>Třída StatementType {0} zde není očekávána.</value>
-  </data>
-  <data name="ADP_FillSchemaRequiresSourceTableName" xml:space="preserve">
-    <value>FillSchema: V názvu SourceTable byl očekáván neprázdný řetězec.</value>
-  </data>
-  <data name="ADP_InvalidMaxRecords" xml:space="preserve">
-    <value>Hodnota MaxRecords {0} je neplatná. Hodnota musí být větší nebo rovna 0.</value>
-  </data>
-  <data name="ADP_InvalidStartRecord" xml:space="preserve">
-    <value>Hodnota StartRecord {0} je neplatná. Hodnota musí být větší nebo rovna 0.</value>
-  </data>
-  <data name="ADP_FillRequiresSourceTableName" xml:space="preserve">
-    <value>Fill: V názvu SourceTable byl očekáván neprázdný řetězec.</value>
-  </data>
-  <data name="ADP_FillChapterAutoIncrement" xml:space="preserve">
-    <value>Hierarchické sloupce kapitol musí být mapovány na vlastnost AutoIncrement objektu DataColumn.</value>
-  </data>
-  <data name="ADP_MissingDataReaderFieldType" xml:space="preserve">
-    <value>Metoda DataReader.GetFieldType({0}) vrátila hodnotu null.</value>
-  </data>
-  <data name="ADP_OnlyOneTableForStartRecordOrMaxRecords" xml:space="preserve">
-    <value>Do pole dataTables zadejte při použití nenulových hodnot pro vlastnost startRecords nebo maxRecords pouze jednu položku.</value>
-  </data>
-  <data name="ADP_UpdateRequiresSourceTable" xml:space="preserve">
-    <value>Metoda Update nenalezla element TableMapping[{0}] ani objekt DataTable {0}.</value>
-  </data>
-  <data name="ADP_UpdateRequiresSourceTableName" xml:space="preserve">
-    <value>Update: Byl očekáván neprázdný název SourceTable.</value>
-  </data>
-  <data name="ADP_MissingTableMappingDestination" xml:space="preserve">
-    <value>Vlastnost TableMapping při hodnotě TableMapping.DataSetTable={0} nebyla nalezena.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandClone" xml:space="preserve">
-    <value>Metoda Update vyžaduje, aby klon příkazu byl platný.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandSelect" xml:space="preserve">
-    <value>Automatické generování SQL v průběhu metody Update vyžaduje platnou událost SelectCommand.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandInsert" xml:space="preserve">
-    <value>Metoda Update vyžaduje při předání kolekce DataRow s novými řádky platnou událost InsertCommand.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandUpdate" xml:space="preserve">
-    <value>Metoda Update vyžaduje při předání kolekce DataRow se změněnými řádky platnou událost UpdateCommand.</value>
-  </data>
-  <data name="ADP_UpdateRequiresCommandDelete" xml:space="preserve">
-    <value>Metoda Update vyžaduje při předání kolekce DataRow s odstraněnými řádky platnou událost DeleteCommand.</value>
-  </data>
-  <data name="ADP_UpdateMismatchRowTable" xml:space="preserve">
-    <value>Element DataRow[{0}] pochází z jiného objektu DataTable než element DataRow[0].</value>
-  </data>
-  <data name="ADP_RowUpdatedErrors" xml:space="preserve">
-    <value>RowUpdatedEvent: Došlo k chybám. Další informace nejsou k dispozici.</value>
-  </data>
-  <data name="ADP_RowUpdatingErrors" xml:space="preserve">
-    <value>RowUpdatingEvent: Došlo k chybám. Další informace nejsou k dispozici.</value>
-  </data>
-  <data name="ADP_ResultsNotAllowedDuringBatch" xml:space="preserve">
-    <value>Při dávkovém zpracování není hodnota vlastnosti UpdatedRowSource UpdateRowSource.FirstReturnedRecord nebo UpdateRowSource.Both příkazu platná.</value>
-  </data>
-  <data name="ADP_UpdateConcurrencyViolation_Update" xml:space="preserve">
-    <value>Narušení souběžného zpracování: Událost UpdateCommand ovlivnila {0} z(e) {1} očekávaných záznamů.</value>
-  </data>
-  <data name="ADP_UpdateConcurrencyViolation_Delete" xml:space="preserve">
-    <value>Narušení souběžného zpracování: Událost DeleteCommand ovlivnila {0} z(e) {1} očekávaných záznamů.</value>
-  </data>
-  <data name="ADP_UpdateConcurrencyViolation_Batch" xml:space="preserve">
-    <value>Narušení souběžného zpracování: Dávkový příkaz ovlivnil {0} z(e) {1} očekávaných záznamů.</value>
   </data>
   <data name="ADP_InvalidCommandTimeout" xml:space="preserve">
     <value>Neplatná hodnota CommandTimeout {0}. Hodnota musí být větší nebo rovna 0.</value>
@@ -2043,9 +435,6 @@
   <data name="ADP_ClosedConnectionError" xml:space="preserve">
     <value>Neplatná operace Připojení je zavřené.</value>
   </data>
-  <data name="ADP_ConnectionIsDisabled" xml:space="preserve">
-    <value>Připojení bylo zakázáno.</value>
-  </data>
   <data name="ADP_LocalTransactionPresent" xml:space="preserve">
     <value>Nelze zařadit do transakce, protože v rámci připojení probíhá místní transakce.  Dokončete místní transakci a zkuste to znovu.</value>
   </data>
@@ -2055,20 +444,11 @@
   <data name="ADP_EmptyDatabaseName" xml:space="preserve">
     <value>Databáze nemůže nabývat hodnoty NULL, prázdného řetězce ani řetězce, který obsahuje pouze prázdné znaky.</value>
   </data>
-  <data name="ADP_DatabaseNameTooLong" xml:space="preserve">
-    <value>Argument je příliš dlouhý.</value>
-  </data>
-  <data name="ADP_InvalidConnectTimeoutValue" xml:space="preserve">
-    <value>Neplatná hodnota Connect Timeout. Hodnota musí být celočíselná a větší nebo rovna 0.</value>
-  </data>
   <data name="ADP_InvalidSourceBufferIndex" xml:space="preserve">
     <value>Neplatný posun zdrojové vyrovnávací paměti (velikost: {0}, posun: {1})</value>
   </data>
   <data name="ADP_InvalidDestinationBufferIndex" xml:space="preserve">
     <value>Neplatný posun cílové vyrovnávací paměti (velikost: {0}, posun: {1})</value>
-  </data>
-  <data name="ADP_NumericToDecimalOverflow" xml:space="preserve">
-    <value>Číselná hodnota je příliš velká. Nemůže ji obsahovat desítková 96bitová hodnota.</value>
   </data>
   <data name="ADP_StreamClosed" xml:space="preserve">
     <value>Pokus o {0} při zavřeném datovém proudu je neplatný.</value>
@@ -2076,56 +456,8 @@
   <data name="ADP_InvalidSeekOrigin" xml:space="preserve">
     <value>Zadaná hodnota SeekOrigin je neplatná.</value>
   </data>
-  <data name="ADP_DynamicSQLJoinUnsupported" xml:space="preserve">
-    <value>Dynamické generování SQL není podporováno pro více základních tabulek.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoTableInfo" xml:space="preserve">
-    <value>Dynamické generování SQL není podporováno pro vlastnost SelectCommand, která nevrací žádné informace o základní tabulce.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoDelete" xml:space="preserve">
-    <value>Dynamické generování SQL pro vlastnost DeleteCommand není podporováno pro vlastnost SelectCommand, která nevrací žádné informace o sloupci klíče.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoUpdate" xml:space="preserve">
-    <value>Dynamické generování SQL pro vlastnost UpdateCommand není podporováno pro vlastnost SelectCommand, která nevrací žádné informace o sloupci klíče.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoRowVersionDelete" xml:space="preserve">
-    <value>Dynamické generování SQL pro vlastnost DeleteCommand není podporováno pro vlastnost SelectCommand, která neobsahuje sloupec verze řádku.</value>
-  </data>
-  <data name="ADP_DynamicSQLNoKeyInfoRowVersionUpdate" xml:space="preserve">
-    <value>Dynamické generování SQL pro vlastnost UpdateCommand není podporováno pro vlastnost SelectCommand, která neobsahuje sloupec verze řádku.</value>
-  </data>
-  <data name="ADP_DynamicSQLNestedQuote" xml:space="preserve">
-    <value>Dynamické generování SQL není podporováno pro názvy tabulek {0} obsahující znak {1} QuotePrefix nebo QuoteSuffix.</value>
-  </data>
   <data name="ADP_NonSequentialColumnAccess" xml:space="preserve">
     <value>Pokus o čtení ze sloupce s ordinálním číslem {0} se nezdařil.  S vlastností CommandBehavior.SequentialAccess lze číst pouze ze sloupce s pořadovým číslem{1} a vyšším.</value>
-  </data>
-  <data name="ADP_InvalidDateTimeDigits" xml:space="preserve">
-    <value>Datový typ {0} nelze formátovat jako literál, protože má neplatné číslice data a času.</value>
-  </data>
-  <data name="ADP_InvalidFormatValue" xml:space="preserve">
-    <value>Hodnotu nelze formátovat jako literál požadovaného typu.</value>
-  </data>
-  <data name="ADP_InvalidMaximumScale" xml:space="preserve">
-    <value>Datový typ {0} nelze formátovat jako literál, protože obsahuje neplatný maximální rozsah.</value>
-  </data>
-  <data name="ADP_LiteralValueIsInvalid" xml:space="preserve">
-    <value>Zadaná hodnota literálu není platná hodnota literálu pro datový typ {0}.</value>
-  </data>
-  <data name="ADP_EvenLengthLiteralValue" xml:space="preserve">
-    <value>{0}:Délka hodnoty literálu musí být sudá.</value>
-  </data>
-  <data name="ADP_HexDigitLiteralValue" xml:space="preserve">
-    <value>{0}:Hodnota literálu musí být řetězec s šestnáctkovými číslicemi.</value>
-  </data>
-  <data name="ADP_QuotePrefixNotSet" xml:space="preserve">
-    <value>{0} vyžaduje otevřené připojení, pokud nebyla nastavena předpona řetězce v uvozovkách.</value>
-  </data>
-  <data name="ADP_UnableToCreateBooleanLiteral" xml:space="preserve">
-    <value>Nelze určit správné logické hodnoty literálu. Nelze vytvářet logické literály.</value>
-  </data>
-  <data name="ADP_UnsupportedNativeDataTypeOleDb" xml:space="preserve">
-    <value>Literály nativního datového typu přidružené k datovému typu {0} nejsou podporovány.</value>
   </data>
   <data name="ADP_InvalidDataType" xml:space="preserve">
     <value>Datový typ parametru {0} je neplatný.</value>
@@ -2148,9 +480,6 @@
   <data name="ADP_BadParameterName" xml:space="preserve">
     <value>Zadaný název parametru {0} není platný.</value>
   </data>
-  <data name="ADP_MultipleReturnValue" xml:space="preserve">
-    <value>Více parametrů vrácené hodnoty není podporováno.</value>
-  </data>
   <data name="ADP_InvalidSizeValue" xml:space="preserve">
     <value>Neplatná hodnota {0} parametru Size. Hodnota musí být větší nebo rovna 0.</value>
   </data>
@@ -2159,9 +488,6 @@
   </data>
   <data name="ADP_InvalidMetaDataValue" xml:space="preserve">
     <value>Neplatná hodnota pro tato metadata</value>
-  </data>
-  <data name="ADP_NotRowType" xml:space="preserve">
-    <value>Metadata musí být SqlDbType.Row</value>
   </data>
   <data name="ADP_ParameterConversionFailed" xml:space="preserve">
     <value>Hodnotu parametru nelze převést z {0} na {1}.</value>
@@ -2172,308 +498,23 @@
   <data name="ADP_TransactionZombied" xml:space="preserve">
     <value>Tato transakce {0} byla dokončena a nelze ji již použít.</value>
   </data>
-  <data name="ADP_DbRecordReadOnly" xml:space="preserve">
-    <value>{0} nelze volat, pokud je záznam určen jen pro čtení.</value>
-  </data>
-  <data name="ADP_DbDataUpdatableRecordReadOnly" xml:space="preserve">
-    <value>{0} nelze volat, pokud je třída DbDataRecord určena jen pro čtení.</value>
-  </data>
-  <data name="ADP_InvalidImplicitConversion" xml:space="preserve">
-    <value>Implicitní převod objektu typu {0} na datový typ {1} není podporován.</value>
-  </data>
-  <data name="ADP_InvalidBufferSizeOrIndex" xml:space="preserve">
-    <value>Posun vyrovnávací paměti {1} zvýšený o počet dostupných bajtů {0} je vyšší než délka předané vyrovnávací paměti.</value>
-  </data>
-  <data name="ADP_InvalidDataLength" xml:space="preserve">
-    <value>Délka dat {0} je menší než 0.</value>
-  </data>
   <data name="ADP_InvalidDataLength2" xml:space="preserve">
     <value>Zadaná délka {0} je mimo rozsah.</value>
   </data>
   <data name="ADP_NonSeqByteAccess" xml:space="preserve">
     <value>Pokus {2} (dataIndex:{0}) je neplatný.  Pomocí pole CommandBehavior.SequentialAccess lze číst pouze od hodnoty dataIndex {1} nebo vyšší.</value>
   </data>
-  <data name="ADP_OffsetOutOfRangeException" xml:space="preserve">
-    <value>Hodnota posunu musí odkazovat na umístění ve stejné hodnotě.</value>
-  </data>
-  <data name="ODBC_GetSchemaRestrictionRequired" xml:space="preserve">
-    <value>Zprostředkovatel spravovaný rozhraním ODBC vyžaduje, aby bylo zadáno omezení TABLE_NAME a nebylo null pro kolekci indexů GetSchema.</value>
-  </data>
-  <data name="ADP_InvalidArgumentValue" xml:space="preserve">
-    <value>Neplatná hodnota argumentu pro metodu {0}</value>
-  </data>
-  <data name="ADP_OdbcNoTypesFromProvider" xml:space="preserve">
-    <value>Zprostředkovatel dat ODBC nevrátil výsledky z rozhraní SQLGETTYPEINFO.</value>
-  </data>
-  <data name="ADP_NullDataTable" xml:space="preserve">
-    <value>Neočekávaný argument DataTable s hodnotou null</value>
-  </data>
-  <data name="ADP_NullDataSet" xml:space="preserve">
-    <value>Neočekávaný argument DataSet s hodnotou null</value>
-  </data>
-  <data name="OdbcConnection_ConnectionStringTooLong" xml:space="preserve">
-    <value>Připojovací řetězec překročil maximální povolenou délku {0}.</value>
-  </data>
-  <data name="Odbc_GetTypeMapping_UnknownType" xml:space="preserve">
-    <value>{0} – nelze mapovat typ.</value>
-  </data>
-  <data name="Odbc_UnknownSQLType" xml:space="preserve">
-    <value>Neznámý typ SQL: {0}.</value>
-  </data>
-  <data name="Odbc_UnknownURTType" xml:space="preserve">
-    <value>Neznámý typ URT: {0}.</value>
-  </data>
-  <data name="Odbc_NegativeArgument" xml:space="preserve">
-    <value>Neplatný záporný argument</value>
-  </data>
-  <data name="Odbc_CantSetPropertyOnOpenConnection" xml:space="preserve">
-    <value>Nelze nastavit vlastnost otevřeného připojení.</value>
-  </data>
-  <data name="Odbc_NoMappingForSqlTransactionLevel" xml:space="preserve">
-    <value>Neexistuje platné mapování pro SQL_TRANSACTION {0} na hodnotu výčtu System.Data.IsolationLevel.</value>
-  </data>
-  <data name="Odbc_CantEnableConnectionpooling" xml:space="preserve">
-    <value>{0} – nelze povolit sdružování připojení…</value>
-  </data>
-  <data name="Odbc_CantAllocateEnvironmentHandle" xml:space="preserve">
-    <value>{0} – nelze přidělit popisovač prostředí.</value>
-  </data>
-  <data name="Odbc_FailedToGetDescriptorHandle" xml:space="preserve">
-    <value>{0} – nelze získat popisovač popisovače.</value>
-  </data>
-  <data name="Odbc_NotInTransaction" xml:space="preserve">
-    <value>Bez účasti v transakci</value>
-  </data>
-  <data name="Odbc_UnknownOdbcType" xml:space="preserve">
-    <value>Neplatná hodnota výčtu OdbcType: {0}.</value>
-  </data>
-  <data name="Odbc_NullData" xml:space="preserve">
-    <value>Použijte metodu IsDBNull, pokud jsou očekávána data DBNull.Value.</value>
-  </data>
-  <data name="Odbc_ExceptionMessage" xml:space="preserve">
-    <value>{0} [{1}] {2}</value>
-  </data>
-  <data name="Odbc_ExceptionNoInfoMsg" xml:space="preserve">
-    <value>{0} – informace o chybě není k dispozici.</value>
-  </data>
-  <data name="Odbc_ConnectionClosed" xml:space="preserve">
-    <value>Připojení je zavřené.</value>
-  </data>
-  <data name="Odbc_OpenConnectionNoOwner" xml:space="preserve">
-    <value>Interní připojení nemá vlastníka.</value>
-  </data>
-  <data name="Odbc_MDACWrongVersion" xml:space="preserve">
-    <value>Zprostředkovatel dat .NET Framework rozhraní ODBC vyžaduje součásti rozhraní MDAC (Microsoft Data Access Components) verze 2.6 nebo novější.  Našla se aktuálně nainstalovaná verze {0}.</value>
-  </data>
-  <data name="OleDb_MDACWrongVersion" xml:space="preserve">
-    <value>Zprostředkovatel dat .NET Framework rozhraní OLEDB vyžaduje součásti rozhraní MDAC (Microsoft Data Access Components) verze 2.6 nebo novější.  Našla se aktuálně nainstalovaná verze {0}.</value>
-  </data>
-  <data name="OleDb_SchemaRowsetsNotSupported" xml:space="preserve">
-    <value>Rozhraní {0} není zprostředkovatelem {1} podporováno.  GetOleDbSchemaTable není u aktuálního zprostředkovatele k dispozici.</value>
-  </data>
-  <data name="OleDb_NoErrorInformation2" xml:space="preserve">
-    <value>Došlo k chybě {0}. K dispozici není žádná chybová zpráva, kód výsledku: {1}.</value>
-  </data>
-  <data name="OleDb_NoErrorInformation" xml:space="preserve">
-    <value>K dispozici není žádná chybová zpráva, kód výsledku: {0}.</value>
-  </data>
-  <data name="OleDb_MDACNotAvailable" xml:space="preserve">
-    <value>Zprostředkovatelé dat .NET Framework vyžadují rozhraní MDAC (Microsoft Data Access Components).  Nainstalujte rozhraní MDAC (Microsoft Data Access Components) verze 2.6 nebo novější.</value>
-  </data>
-  <data name="OleDb_MSDASQLNotSupported" xml:space="preserve">
-    <value>Zprostředkovatel dat .NET Framework pro OLEDB (Microsoft.Data.OleDb) nepodporuje zprostředkovatele Microsoft OLE DB pro ovladače ODBC (MSDASQL). Použijte zprostředkovatele dat .NET Framework pro ODBC (System.Data.Odbc).</value>
-  </data>
-  <data name="OleDb_PossiblePromptNotUserInteractive" xml:space="preserve">
-    <value>Zprostředkovatel dat .NET Framework pro OLEDB nepovolí zprostředkovateli OLE DB Provider zobrazovat uživateli výzvy v neinteraktivním prostředí.</value>
-  </data>
-  <data name="OleDb_ProviderUnavailable" xml:space="preserve">
-    <value>Zprostředkovatel {0} není registrován v místním počítači.</value>
-  </data>
-  <data name="OleDb_CommandTextNotSupported" xml:space="preserve">
-    <value>Rozhraní ICommandText není podporováno zprostředkovatelem {0}. Místo toho použijte CommandType.TableDirect.</value>
-  </data>
-  <data name="OleDb_TransactionsNotSupported" xml:space="preserve">
-    <value>Rozhraní ITransactionLocal není podporováno zprostředkovatelem {0}.  Místní transakce nejsou u aktuálního zprostředkovatele k dispozici.</value>
-  </data>
-  <data name="OleDb_ConnectionStringSyntax" xml:space="preserve">
-    <value>Formát inicializačního řetězce neodpovídá specifikaci OLE DB.  Začíná kolem char[{0}] v připojovacím řetězci.</value>
-  </data>
-  <data name="OleDb_AsynchronousNotSupported" xml:space="preserve">
-    <value>Asynchronní zpracování není podporovanou funkcí zprostředkovatele dat .NET Framework OLE DB (Microsoft.Data.OleDb).</value>
-  </data>
-  <data name="OleDb_NoProviderSpecified" xml:space="preserve">
-    <value>V ConnectionString nebyl zadán zprostředkovatel OLE DB.  Příkladem může být Provider=SQLOLEDB;.</value>
-  </data>
-  <data name="OleDb_InvalidProviderSpecified" xml:space="preserve">
-    <value>Zprostředkovatel dat OLE DB zadaný ve vlastnosti ConnectionString je příliš dlouhý.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsDbInfoKeywords" xml:space="preserve">
-    <value>Pro pole DbInfoKeywords objektu OleDbSchemaGuid se neočekávají žádná omezení.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsDbInfoLiteral" xml:space="preserve">
-    <value>Pro pole DbInfoLiterals objektu OleDbSchemaGuid se neočekávají žádná omezení.</value>
-  </data>
-  <data name="OleDb_InvalidRestrictionsSchemaGuids" xml:space="preserve">
-    <value>Pro objekt OleDbSchemaGuid identifikátoru guid schématu se neočekávají žádná omezení.</value>
-  </data>
-  <data name="OleDb_NotSupportedSchemaTable" xml:space="preserve">
-    <value>Zprostředkovatel {1} nepodporuje schéma OleDbSchemaGuid {0}.</value>
-  </data>
-  <data name="OleDb_ConfigWrongNumberOfValues" xml:space="preserve">
-    <value>Nastavení konfigurace {0} má nesprávný počet hodnot.</value>
-  </data>
-  <data name="OleDb_ConfigUnableToLoadXmlMetaDataFile" xml:space="preserve">
-    <value>Nelze načíst soubor XML zadaný v nastavení konfigurace {0}.</value>
-  </data>
-  <data name="OleDb_CommandParameterBadAccessor" xml:space="preserve">
-    <value>Parametr příkazu [{0}] {1} je neplatný.</value>
-  </data>
-  <data name="OleDb_CommandParameterCantConvertValue" xml:space="preserve">
-    <value>Hodnotu dat parametru příkazu [{0}] {1} nebylo možné převést z jiných důvodů, než je neshoda ve znaménku nebo přetečení dat.</value>
-  </data>
-  <data name="OleDb_CommandParameterSignMismatch" xml:space="preserve">
-    <value>Převod parametru příkazu [{0}] {1} se nezdařil, protože hodnota dat je typu se znaménkem a typ použitý zprostředkovatelem je bez znaménka.</value>
-  </data>
-  <data name="OleDb_CommandParameterDataOverflow" xml:space="preserve">
-    <value>Převod parametru příkazu [{0}] {1} se nezdařil, protože hodnota dat přesáhla typ použitý zprostředkovatelem.</value>
-  </data>
-  <data name="OleDb_CommandParameterUnavailable" xml:space="preserve">
-    <value>Zprostředkovatel zjistil chybu při odesílání hodnoty parametru příkazu [{0}] {1} a zastavil zpracování.</value>
-  </data>
-  <data name="OleDb_CommandParameterDefault" xml:space="preserve">
-    <value>Parametr [{0}] {1} nemá výchozí hodnotu.</value>
-  </data>
-  <data name="OleDb_CommandParameterError" xml:space="preserve">
-    <value>Došlo k chybě v parametru [{0}]: {1}.</value>
-  </data>
-  <data name="OleDb_BadStatus_ParamAcc" xml:space="preserve">
-    <value>Vnitřní chyba objektu Microsoft.Data.OleDb.OleDbDataAdapter: neplatný přistupující objekt parametru: {0} {1}.</value>
-  </data>
-  <data name="OleDb_UninitializedParameters" xml:space="preserve">
-    <value>Parameter[{0}]: Vlastnost OleDbType není inicializována: OleDbType.{1}.</value>
-  </data>
-  <data name="OleDb_NoProviderSupportForParameters" xml:space="preserve">
-    <value>Rozhraní ICommandWithParameters není podporováno zprostředkovatelem {0}.  Parametry příkazu nejsou u aktuálního zprostředkovatele podporovány.</value>
-  </data>
-  <data name="OleDb_NoProviderSupportForSProcResetParameters" xml:space="preserve">
-    <value>Zprostředkovatel {0} nepodporuje načítání informací o parametrech procedury.</value>
-  </data>
-  <data name="OleDb_CanNotDetermineDecimalSeparator" xml:space="preserve">
-    <value>Nelze určit oddělovač desetinných míst serveru. Číselné literály, které nejsou typu integer, nelze vytvořit.</value>
-  </data>
-  <data name="OleDb_Fill_NotADODB" xml:space="preserve">
-    <value>Objekt není typu ADODB.RecordSet ani ADODB.Record.</value>
-  </data>
-  <data name="OleDb_Fill_EmptyRecordSet" xml:space="preserve">
-    <value>Z objektu ADODB.RecordSet nelze získat rozhraní {0}.</value>
-  </data>
-  <data name="OleDb_Fill_EmptyRecord" xml:space="preserve">
-    <value>Z objektu ADODB.Record nelze získat rozhraní IRow.</value>
-  </data>
-  <data name="OleDb_ISourcesRowsetNotSupported" xml:space="preserve">
-    <value>Typ nepodporuje rozhraní OLE DB ISourcesRowset.</value>
-  </data>
-  <data name="OleDb_IDBInfoNotSupported" xml:space="preserve">
-    <value>Nelze vytvořit kolekci schématu ReservedWords, protože zprostředkovatel nepodporuje rozhraní IDBInfo.</value>
-  </data>
-  <data name="OleDb_PropertyNotSupported" xml:space="preserve">
-    <value>Hodnota vlastnosti nebyla nastavena, protože zprostředkovatel nepodporoval vlastnost {0} nebo se uživatel pokusil získat nebo nastavit hodnoty vlastností neexistující ve skupině vlastností Initialization a objekt zdroje dat není inicializován.</value>
-  </data>
-  <data name="OleDb_PropertyBadValue" xml:space="preserve">
-    <value>Inicializace vlastnosti {0} se nezdařila z jednoho z následujících důvodů:
-	Datový typ hodnoty nebyl datovým typem vlastnosti nebo nebyl null. Vlastnost byla například DBPROP_MEMORYUSAGE, která má datový typ Int32 a datový typ byl Int64.
-	Hodnota nebyla platná. Vlastnost byla například DBPROP_MEMORYUSAGE a hodnota byla záporná.
-	Hodnota byla platnou hodnotou vlastnosti a zprostředkovatel podporuje vlastnost jako nastavitelnou vlastnost, ale zprostředkovatel zadanou hodnotu nepodporuje. To zahrnuje případ, kdy byla hodnota přidána do vlastnosti v OLE DB po zápisu zprostředkovatele.</value>
-  </data>
-  <data name="OleDb_PropertyBadOption" xml:space="preserve">
-    <value>Hodnota Options byla neplatná.</value>
-  </data>
-  <data name="OleDb_PropertyBadColumn" xml:space="preserve">
-    <value>Element ColumnID byl neplatný.</value>
-  </data>
-  <data name="OleDb_PropertyNotAllSettable" xml:space="preserve">
-    <value>Byla zadána vlastnost {0}, která by měla být použita pro všechny sloupce, minimálně u jednoho z nich však být použita nemohla.</value>
-  </data>
-  <data name="OleDb_PropertyNotSettable" xml:space="preserve">
-    <value>Vlastnost {0} byla jen pro čtení nebo se uživatel pokusil nastavit hodnoty vlastností ve skupině vlastností Initialization po inicializaci objektu zdroje dat. Uživatelé mohou nastavit hodnotu vlastnosti jen pro čtení na aktuální hodnotu. Tento stav se vrátí také v případě, že nebylo možné pro daný sloupec nastavit nastavitelnou hodnotu sloupce.</value>
-  </data>
-  <data name="OleDb_PropertyNotSet" xml:space="preserve">
-    <value>Volitelná hodnota vlastnosti {0} nebyla nastavena na zadanou hodnotu. Vlastnost tedy nebylo možné nastavit na zadanou hodnotu.</value>
-  </data>
-  <data name="OleDb_PropertyConflicting" xml:space="preserve">
-    <value>Hodnota vlastnosti {0} nebyla nastavena, protože tím by došlo ke konfliktu s existující vlastností.</value>
-  </data>
-  <data name="OleDb_PropertyNotAvailable" xml:space="preserve">
-    <value>(Rezervováno).</value>
-  </data>
-  <data name="OleDb_PropertyStatusUnknown" xml:space="preserve">
-    <value>Zprostředkovatel vrátil neznámou hodnotu DBPROPSTATUS_ {0}.</value>
-  </data>
-  <data name="OleDb_BadAccessor" xml:space="preserve">
-    <value>Ověření přistupujícího objektu bylo odloženo a bylo provedeno v době, kdy metoda vrátila data. Vazba byla pro tento sloupec nebo parametr neplatná.</value>
-  </data>
-  <data name="OleDb_BadStatusRowAccessor" xml:space="preserve">
-    <value>Vnitřní chyba objektu OleDbDataAdapter: Neplatný přístupový objekt k sadě řádků: Ordinal={0} Status={1}.</value>
-  </data>
-  <data name="OleDb_CantConvertValue" xml:space="preserve">
-    <value>Hodnotu dat nebylo možné převést z jiných důvodů, než je neshoda ve znaménku nebo přetečení dat. Data byla například poškozena v úložišti dat, ale řádek bylo stále možné načíst.</value>
-  </data>
-  <data name="OleDb_CantCreate" xml:space="preserve">
-    <value>Zprostředkovatel nemohl přidělit paměť ke vrácení dat {0}.</value>
-  </data>
-  <data name="OleDb_DataOverflow" xml:space="preserve">
-    <value>Převod se nezdařil, protože hodnota dat {0} přesáhla typ určený pro část hodnoty {0} ve vyrovnávací paměti uživatele.</value>
-  </data>
-  <data name="OleDb_GVtUnknown" xml:space="preserve">
-    <value>Vnitřní chyba objektu OleDbDataAdapter: [get] Neznámý datový typ OLE DB: 0x{0} ({1}).</value>
-  </data>
-  <data name="OleDb_SignMismatch" xml:space="preserve">
-    <value>Převod se nezdařil, protože hodnota dat {0} je typu se znaménkem a typ zadaný pro část hodnoty {0} ve vyrovnávací paměti uživatele je bez znaménka.</value>
-  </data>
-  <data name="OleDb_SVtUnknown" xml:space="preserve">
-    <value>Vnitřní chyba objektu OleDbDataAdapter: [set] Neznámý datový typ OLE DB: 0x{0} ({1}).</value>
-  </data>
-  <data name="OleDb_Unavailable" xml:space="preserve">
-    <value>Zprostředkovatel nedokázal určit hodnotu {0}. Řádek byl například právě vytvořen, výchozí hodnota pro sloupec {0} nebyla k dispozici a uživatel ještě nenastavil novou hodnotu {0}.</value>
-  </data>
-  <data name="OleDb_UnexpectedStatusValue" xml:space="preserve">
-    <value>Zprostředkovatel dat OLE DB vrátil neočekávanou stavovou hodnotu {0}.</value>
-  </data>
-  <data name="OleDb_ThreadApartmentState" xml:space="preserve">
-    <value>Metoda OleDbDataReader.Read musí být volána ze stejného vlákna, ve kterém byla vytvořena. To platí v případě, že vlastnost ApartmentState tohoto vlákna nemá hodnotu ApartmentState.MTA.</value>
-  </data>
-  <data name="OleDb_NoErrorMessage" xml:space="preserve">
-    <value>Nespecifikovaná chyba: {0}</value>
-  </data>
-  <data name="OleDb_FailedGetDescription" xml:space="preserve">
-    <value>Funkce IErrorInfo.GetDescription selhala – {0}.</value>
-  </data>
-  <data name="OleDb_FailedGetSource" xml:space="preserve">
-    <value>Funkce IErrorInfo.GetSource selhala – {0}.</value>
-  </data>
-  <data name="OleDb_DBBindingGetVector" xml:space="preserve">
-    <value>Zprostředkovatel dat OLE DB .NET Framework (Microsoft.Data.OleDb) nepodporuje data typu DBTYPE_VECTOR.</value>
-  </data>
   <data name="ADP_InvalidMinMaxPoolSizeValues" xml:space="preserve">
     <value>Neplatné hodnoty maximální a minimální velikosti fondu. Minimální velikost fondu nemůže být větší než maximální.</value>
   </data>
-  <data name="ADP_ObsoleteKeyword" xml:space="preserve">
-    <value>Klíčové slovo {0} je zastaralé. Místo toho použijte možnost {1}.</value>
-  </data>
   <data name="SQL_CannotGetDTCAddress" xml:space="preserve">
     <value>Ze serveru nelze získat adresu DTC (Distributed Transaction Coordinator) pro server.  Je na serveru povolená služba DTC?</value>
-  </data>
-  <data name="SQL_InvalidOptionLength" xml:space="preserve">
-    <value>Délka hodnoty parametru připojení &lt;{0}&gt; překročila povolený počet 65535 znaků.</value>
   </data>
   <data name="SQL_InvalidPacketSizeValue" xml:space="preserve">
     <value>Neplatná hodnota velikosti paketu.  Hodnota musí být celé číslo &gt;= 512 a &lt;= 32768.</value>
   </data>
   <data name="SQL_NullEmptyTransactionName" xml:space="preserve">
     <value>Neplatná transakce nebo neplatný název bodu pro uložení v rámci transakce.</value>
-  </data>
-  <data name="SQL_SnapshotNotSupported" xml:space="preserve">
-    <value>Hodnota výčtu {0}, {1}, není podporována systémem SQL Server 7.0 ani systémem SQL Server 2000.</value>
   </data>
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
     <value>User Instance a Failover nejsou kompatibilní možnosti.  V připojovacím řetězci zvolte pouze jednu z obou možností.</value>
@@ -2499,17 +540,11 @@
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
     <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Integrated, nejde nastavit vlastnost Credential.</value>
   </data>
-  <data name="SQL_Certificate" xml:space="preserve">
-    <value>Byly zadány nesprávné parametry ověřování pro ověřování certifikátem.</value>
-  </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
     <value>Instance systému SQL Server, ke které jste se pokusili připojit, vyžaduje šifrování, ale tento počítač ho nepodporuje.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByServer" xml:space="preserve">
     <value>Instance systému SQL Server, ke které jste se pokusili připojit, nepodporuje šifrování.</value>
-  </data>
-  <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
-    <value>Instance serveru SQL Server, ke které jste se pokusili připojit, nepodporuje CTAIP.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
     <value>Verze systému SQL Server není podporovaná.  Zprostředkovatele dat .NET Framework SqlClient lze použít pouze se systémem SQL Server verze 7.0 nebo novější.</value>
@@ -2517,14 +552,8 @@
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>{0} nelze změnit, pokud probíhá asynchronní operace.</value>
   </data>
-  <data name="SQL_AsyncConnectionRequired" xml:space="preserve">
-    <value>Tento příkaz vyžaduje asynchronní připojení. Nastavte v připojovacím řetězci hodnotu Asynchronous Processing=true.</value>
-  </data>
   <data name="SQL_ConnectTimeout" xml:space="preserve">
     <value>Časový limit pokusu o připojení vypršel.</value>
-  </data>
-  <data name="SQL_FatalTimeout" xml:space="preserve">
-    <value>Časový limit vypršel.  V důsledku toho bylo připojení přerušeno.</value>
   </data>
   <data name="SQL_InstanceFailure" xml:space="preserve">
     <value>Chyba instance</value>
@@ -2556,17 +585,11 @@
   <data name="SQL_MSALInnerException" xml:space="preserve">
     <value>Kód chyby: 0x{0}</value>
   </data>
-  <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
-    <value>ChangePassword vyžaduje SQL Server 9.0 nebo vyšší verzi.</value>
-  </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Přesměrování instance SSE není podporováno u uživatelských instancí, které nejsou místní.</value>
   </data>
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>Ověřování {0} není podporované.</value>
-  </data>
-  <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
-    <value>Metoda ověřování SQL {0} není podporována.</value>
   </data>
   <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>Pro {0} se nepodařilo vytvořit instanci zprostředkovatele ověřování s typem {1}.</value>
@@ -2574,32 +597,23 @@
   <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
     <value>Nepodařilo se vytvořit instanci SqlAuthenticationInitializer s typem {0}.</value>
   </data>
-  <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
-    <value>Při inicializaci zprostředkovatele {0} došlo k výjimce.</value>
-  </data>
   <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
     <value>Zprostředkovatel {0} nepodporuje ověřování {1}.</value>
   </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
   </data>
-  <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
-    <value>Nepodařilo se přečíst konfigurační oddíl zprostředkovatelů ověřování.</value>
+  <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
+    <value>Pro {0} nelze najít zprostředkovatele ověřování. Nainstalujte balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), abyste mohli používat metody ověřování Active Directory (Entra ID).</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
-  </data>
-  <data name="SQL_AsyncOperationCompleted" xml:space="preserve">
-    <value>Asynchronní operace již byla dokončena.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
     <value>V provádění příkazu nelze pokračovat, protože probíhá asynchronní operace čekající na dokončení.</value>
   </data>
   <data name="SQL_NonXmlResult" xml:space="preserve">
     <value>Metodě ExecuteXmlReader byl odeslán neplatný příkaz.  Příkaz musí vracet výsledek Xml.</value>
-  </data>
-  <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
-    <value>Upozornění vyžadují SQL Server 9.0 nebo vyšší verze.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">
     <value>Neplatný formát názvu sestávajícího ze 3 částí pro vlastnost UdtTypeName.</value>
@@ -2694,9 +708,6 @@
   <data name="SQL_SSPIInitializeError" xml:space="preserve">
     <value>Balíček SSPI nelze inicializovat.</value>
   </data>
-  <data name="SQL_Timeout" xml:space="preserve">
-    <value>Časový limit vypršel.  Před dokončením operace vypršel časový limit nebo server neodpovídá.</value>
-  </data>
   <data name="SQL_Timeout_PreLogin_Begin" xml:space="preserve">
     <value>Vypršel časový limit připojení.  Časový limit vypršel na začátku fáze před přihlášením.  Důvodem může být to, že pro časový limit připojení byl určen nedostatečný časový interval.</value>
   </data>
@@ -2742,12 +753,6 @@
   <data name="SQL_UserInstanceFailure" xml:space="preserve">
     <value>V připojovacím řetězci byla vyžadována uživatelská instance, ale zadaný server tuto možnost nepodporuje.</value>
   </data>
-  <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>Certifikát serveru neprošel ověřením aplikace.</value>
-  </data>
-  <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
-    <value>Zadaná délka dat {0} překračuje maximální povolenou délku {1}.</value>
-  </data>
   <data name="SQL_InvalidRead" xml:space="preserve">
     <value>Došlo k neplatnému pokusu o čtení, protože data nebyla k dispozici.</value>
   </data>
@@ -2771,9 +776,6 @@
   </data>
   <data name="SQL_InvalidDataLength" xml:space="preserve">
     <value>Délka dat {0} je menší než 0.</value>
-  </data>
-  <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
-    <value>{0} nelze volat, pokud je třída SqlDataRecord určena jen pro čtení.</value>
   </data>
   <data name="SQL_BulkLoadMappingInaccessible" xml:space="preserve">
     <value>Namapovaná kolekce se používá a nelze k ní momentálně získat přístup;</value>
@@ -2844,21 +846,6 @@
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
     <value>Připojení ke kontextu pomocí Microsoft.Data.SqlClient není podporováno.</value>
   </data>
-  <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
-    <value>Vnořené objekty TransactionScopes nejsou podporovány.</value>
-  </data>
-  <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
-    <value>Neočekávaná událost serveru: {0}</value>
-  </data>
-  <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
-    <value>Délka argumentu {0} se musí shodovat s délkou argumentu {1}.</value>
-  </data>
-  <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>Hodnota SqlDbType {0} je pro {1} neplatná.  Podporuje se pouze {2}.</value>
-  </data>
-  <data name="SQL_TooManyValues" xml:space="preserve">
-    <value>Příliš mnoho hodnot</value>
-  </data>
   <data name="SQL_StreamWriteNotSupported" xml:space="preserve">
     <value>Stream nepodporuje zápis.</value>
   </data>
@@ -2883,44 +870,11 @@
   <data name="SqlMisc_NullString" xml:space="preserve">
     <value>Null</value>
   </data>
-  <data name="SqlMisc_MessageString" xml:space="preserve">
-    <value>Zpráva</value>
-  </data>
-  <data name="SqlMisc_ArithOverflowMessage" xml:space="preserve">
-    <value>Aritmetické přetečení</value>
-  </data>
-  <data name="SqlMisc_DivideByZeroMessage" xml:space="preserve">
-    <value>Došlo k chybě dělení nulou.</value>
-  </data>
-  <data name="SqlMisc_NullValueMessage" xml:space="preserve">
-    <value>Data mají hodnotu Null. Tuto metodu nebo vlastnost nelze volat s hodnotami Null.</value>
-  </data>
-  <data name="SqlMisc_TruncationMessage" xml:space="preserve">
-    <value>Číselná aritmetika způsobila zkrácení.</value>
-  </data>
   <data name="SqlMisc_DateTimeOverflowMessage" xml:space="preserve">
     <value>Přetečení SqlDateTime. Hodnota musí být v rozsahu od 1.1.1753 12:00:00 do 31.12.9999 23:59:59.</value>
   </data>
-  <data name="SqlMisc_ConcatDiffCollationMessage" xml:space="preserve">
-    <value>Dva řetězce určené ke zřetězení mají různé kolace.</value>
-  </data>
-  <data name="SqlMisc_CompareDiffCollationMessage" xml:space="preserve">
-    <value>Dva řetězce určené k porovnání mají různé kolace.</value>
-  </data>
-  <data name="SqlMisc_InvalidFlagMessage" xml:space="preserve">
-    <value>Neplatná hodnota příznaku</value>
-  </data>
-  <data name="SqlMisc_NumeToDecOverflowMessage" xml:space="preserve">
-    <value>Přetečení převodu z typu SqlDecimal na typ Decimal</value>
-  </data>
   <data name="SqlMisc_ConversionOverflowMessage" xml:space="preserve">
     <value>Přetečení převodu</value>
-  </data>
-  <data name="SqlMisc_InvalidDateTimeMessage" xml:space="preserve">
-    <value>Neplatná hodnota SqlDateTime</value>
-  </data>
-  <data name="SqlMisc_TimeZoneSpecifiedMessage" xml:space="preserve">
-    <value>Bylo zadáno časové pásmo. SqlDateTime nepodporuje časová pásma.</value>
   </data>
   <data name="SqlMisc_InvalidArraySizeMessage" xml:space="preserve">
     <value>Neplatná velikost pole</value>
@@ -2928,65 +882,11 @@
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
     <value>Neplatná číselná přesnost nebo exponent</value>
   </data>
-  <data name="SqlMisc_FormatMessage" xml:space="preserve">
-    <value>Vstup nebyl ve správném formátu.</value>
-  </data>
-  <data name="SqlMisc_SqlTypeMessage" xml:space="preserve">
-    <value>Chyba SqlType</value>
-  </data>
-  <data name="SqlMisc_LenTooLargeMessage" xml:space="preserve">
-    <value>Třída SqlBytes ani třída SqlChars v této verzi nepodporuje délku větší než 2 GB.</value>
-  </data>
   <data name="SqlMisc_StreamErrorMessage" xml:space="preserve">
     <value>Při čtení došlo k chybě.</value>
   </data>
-  <data name="SqlMisc_StreamClosedMessage" xml:space="preserve">
-    <value>Stream byl zavřen nebo zrušen.</value>
-  </data>
-  <data name="SqlMisc_NoBufferMessage" xml:space="preserve">
-    <value>Není k dispozici žádná vyrovnávací paměť. Operace čtení nebo zápisu se nezdařila.</value>
-  </data>
-  <data name="SqlMisc_SetNonZeroLenOnNullMessage" xml:space="preserve">
-    <value>Nelze nastavit na nenulovou délku, protože aktuální hodnota je Null.</value>
-  </data>
-  <data name="SqlMisc_BufferInsufficientMessage" xml:space="preserve">
-    <value>Velikost vyrovnávací paměti není dostatečná. Operace čtení nebo zápisu se nezdařila.</value>
-  </data>
-  <data name="SqlMisc_WriteNonZeroOffsetOnNullMessage" xml:space="preserve">
-    <value>Nelze zapisovat do nenulového posunu, protože aktuální hodnota je Null.</value>
-  </data>
-  <data name="SqlMisc_WriteOffsetLargerThanLenMessage" xml:space="preserve">
-    <value>Nelze zapisovat z posunu, který je větší než aktuální délka. Neinicializovaná data by zůstala ve vyrovnávací paměti.</value>
-  </data>
   <data name="SqlMisc_TruncationMaxDataMessage" xml:space="preserve">
     <value>Vrácená data mají velikost větší než 2 GB. Pokud chcete získat všechna data, použijte chování příkazu SequentialAccess.</value>
-  </data>
-  <data name="SqlMisc_InvalidFirstDayMessage" xml:space="preserve">
-    <value>Argument pro metodu GetDayOfWeek musí být celé číslo v rozmezí od 1 do 7.</value>
-  </data>
-  <data name="SqlMisc_NotFilledMessage" xml:space="preserve">
-    <value>Pro datový typ SQL ještě nebyla načtena data.</value>
-  </data>
-  <data name="SqlMisc_AlreadyFilledMessage" xml:space="preserve">
-    <value>Pro datový typ SQL již byla načtena data.</value>
-  </data>
-  <data name="SqlMisc_ClosedXmlReaderMessage" xml:space="preserve">
-    <value>Neplatný pokus o přístup k zavřenému objektu XmlReader</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamClosed" xml:space="preserve">
-    <value>Pokus o volání metody {0} při zavřeném streamu je neplatný.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonWritable" xml:space="preserve">
-    <value>Pokus o volání metody {0} při nezapisovatelném streamu je neplatný.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonReadable" xml:space="preserve">
-    <value>Pokus o volání metody {0} při nečitelném streamu je neplatný.</value>
-  </data>
-  <data name="SqlMisc_InvalidOpStreamNonSeekable" xml:space="preserve">
-    <value>Pokus o volání metody {0} při neprohledávatelném streamu je neplatný.</value>
-  </data>
-  <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
-    <value>Podtřída nepřepsala požadovanou metodu.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>Nelze vytvořit normalizátor pro {0}.</value>
@@ -2994,80 +894,11 @@
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Vnitřní chyba</value>
   </data>
-  <data name="Sql_NullCommandText" xml:space="preserve">
-    <value>Parametr příkazu musí mít text příkazu, který není null a není prázdný.</value>
-  </data>
-  <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
-    <value>Pole parametru MetaData musí mít délku odpovídající argumentu pole ParameterDirection.</value>
-  </data>
-  <data name="ADP_AdapterMappingExceptionMessage" xml:space="preserve">
-    <value>Chyba mapování datového adaptéru.</value>
-  </data>
-  <data name="ADP_DataAdapterExceptionMessage" xml:space="preserve">
-    <value>Chyba datového adaptéru.</value>
-  </data>
-  <data name="ADP_DBConcurrencyExceptionMessage" xml:space="preserve">
-    <value>Porušení souběžnosti databáze.</value>
-  </data>
   <data name="ADP_OperationAborted" xml:space="preserve">
     <value>Operace byla přerušena.</value>
   </data>
   <data name="ADP_OperationAbortedExceptionMessage" xml:space="preserve">
     <value>Operace byla přerušena z důvodu výjimky. (Podrobnosti naleznete u vlastnosti InnerException.)</value>
-  </data>
-  <data name="DataAdapter_AcceptChangesDuringFill" xml:space="preserve">
-    <value>Určuje, zda bude vlastnost Fill volat metodu DataRow.AcceptChanges.</value>
-  </data>
-  <data name="DataAdapter_AcceptChangesDuringUpdate" xml:space="preserve">
-    <value>Zda bude metoda Update volat metodu DataRow.AcceptChanges</value>
-  </data>
-  <data name="DataAdapter_ContinueUpdateOnError" xml:space="preserve">
-    <value>Určuje, zda bude aktualizace pokračovat na dalším řádku DataRow v případě, že vlastnost Status událostí RowUpdating a RowUpdated metody Update je UpdateStatus.ErrorsOccurred.</value>
-  </data>
-  <data name="DataAdapter_FillLoadOption" xml:space="preserve">
-    <value>Jakým způsobem adaptér naplňuje objekt DataTable z objektu DataReader</value>
-  </data>
-  <data name="DataAdapter_MissingMappingAction" xml:space="preserve">
-    <value>Akce provedená v případě, že ve vlastnosti TableMappings chybí tabulka nebo sloupec</value>
-  </data>
-  <data name="DataAdapter_MissingSchemaAction" xml:space="preserve">
-    <value>Akce provedená v případě, že v objektu DataSet chybí tabulka nebo sloupec</value>
-  </data>
-  <data name="DataAdapter_TableMappings" xml:space="preserve">
-    <value>Způsob mapování zdrojové tabulky na tabulku DataSet</value>
-  </data>
-  <data name="DataAdapter_FillError" xml:space="preserve">
-    <value>Událost aktivovaná při výskytu opravitelné chyby během příkazu Fill</value>
-  </data>
-  <data name="DataAdapter_ReturnProviderSpecificTypes" xml:space="preserve">
-    <value>Zda by měl příkaz Fill vrátit hodnoty pro konkrétního zprostředkovatele nebo běžné hodnoty CLSCompliant.</value>
-  </data>
-  <data name="DataColumnMapping_DataSetColumn" xml:space="preserve">
-    <value>DataColumn.ColumnName</value>
-  </data>
-  <data name="DataColumnMapping_SourceColumn" xml:space="preserve">
-    <value>Název zdrojového sloupce (s rozlišením malých a velkých písmen)</value>
-  </data>
-  <data name="DataColumnMappings_Count" xml:space="preserve">
-    <value>Počet položek v kolekci</value>
-  </data>
-  <data name="DataColumnMappings_Item" xml:space="preserve">
-    <value>Zadaný objekt DataColumnMapping</value>
-  </data>
-  <data name="DataTableMapping_ColumnMappings" xml:space="preserve">
-    <value>Jednotlivá mapování sloupců v případě, že dojde ke shodě mapování této tabulky.</value>
-  </data>
-  <data name="DataTableMapping_DataSetTable" xml:space="preserve">
-    <value>DataTable.TableName</value>
-  </data>
-  <data name="DataTableMapping_SourceTable" xml:space="preserve">
-    <value>Název zdrojové tabulky objektu DataTableMapping. V tomto názvu se rozlišují velká a malá písmena.</value>
-  </data>
-  <data name="DataTableMappings_Count" xml:space="preserve">
-    <value>Počet položek v kolekci</value>
-  </data>
-  <data name="DataTableMappings_Item" xml:space="preserve">
-    <value>Zadaný objekt DataTableMapping</value>
   </data>
   <data name="DbDataAdapter_DeleteCommand" xml:space="preserve">
     <value>Používá se při provádění metody Update pro odstraněné řádky v objektu DataSet.</value>
@@ -3087,62 +918,8 @@
   <data name="DbDataAdapter_RowUpdating" xml:space="preserve">
     <value>Událost aktivovaná při provádění metody Update po každém objektu DataRow.</value>
   </data>
-  <data name="DbDataAdapter_UpdateBatchSize" xml:space="preserve">
-    <value>Počet řádků, které mají být společně zpracovány v dávce před spuštěním s použitím zdroje dat.</value>
-  </data>
-  <data name="DbTable_Connection" xml:space="preserve">
-    <value>Připojení použité v případě, že události Select/Insert/Update/DeleteCommands ještě nemají připojení.</value>
-  </data>
-  <data name="DbTable_DeleteCommand" xml:space="preserve">
-    <value>Používá se během události Update pro odstraněné řádky v objektu DataTable.</value>
-  </data>
-  <data name="DbTable_InsertCommand" xml:space="preserve">
-    <value>Používá se během události Update pro nové řádky v objektu DataTable.</value>
-  </data>
-  <data name="DbTable_SelectCommand" xml:space="preserve">
-    <value>Používá se během příkazu Fill.</value>
-  </data>
-  <data name="DbTable_UpdateCommand" xml:space="preserve">
-    <value>Používá se během události Update pro upravené řádky v objektu DataTable.</value>
-  </data>
-  <data name="DbTable_ReturnProviderSpecificTypes" xml:space="preserve">
-    <value>Zda by měl příkaz Fill vrátit hodnoty pro konkrétního zprostředkovatele nebo běžné hodnoty CLSCompliant.</value>
-  </data>
-  <data name="DbTable_TableMapping" xml:space="preserve">
-    <value>Jakým způsobem má být mapována zdrojová tabulka na objekt DataTable.</value>
-  </data>
-  <data name="DbTable_ConflictDetection" xml:space="preserve">
-    <value>Jakým způsobem jsou generovány události Insert/Update/DeleteCommands, pokud uživatel nezadá nastavení.</value>
-  </data>
-  <data name="DbTable_UpdateBatchSize" xml:space="preserve">
-    <value>Počet řádků, které mají být společně zpracovány v dávce před spuštěním s použitím zdroje dat.</value>
-  </data>
-  <data name="DbConnectionString_ConnectionString" xml:space="preserve">
-    <value>Řetězec připojení používaný k připojení k objektu Data Source.</value>
-  </data>
-  <data name="DbConnectionString_Driver" xml:space="preserve">
-    <value>Název ovladače ODBC, který má být použit při připojování k objektu Data Source.</value>
-  </data>
-  <data name="DbConnectionString_DSN" xml:space="preserve">
-    <value>Název DSN, který má být použit při připojování k objektu Data Source.</value>
-  </data>
-  <data name="DbConnectionString_AdoNetPooler" xml:space="preserve">
-    <value>V případě hodnoty true označuje, že je potřeba používat fond spravovaného připojení.</value>
-  </data>
-  <data name="DbConnectionString_FileName" xml:space="preserve">
-    <value>Soubor UDL, který se má používat při připojování k objektu Data Source.</value>
-  </data>
-  <data name="DbConnectionString_OleDbServices" xml:space="preserve">
-    <value>Určuje, které služby OLE DB Services má zprostředkovatel OleDb Provider povolit nebo zakázat.</value>
-  </data>
-  <data name="DbConnectionString_Provider" xml:space="preserve">
-    <value>Název zprostředkovatele OLE DB, který má být použit při připojování k objektu Data Source.</value>
-  </data>
   <data name="DbConnectionString_ApplicationName" xml:space="preserve">
     <value>Název aplikace.</value>
-  </data>
-  <data name="DbConnectionString_AsynchronousProcessing" xml:space="preserve">
-    <value>V případě hodnoty true umožňuje použití asynchronní funkce ve zprostředkovateli dat .NET Framework.</value>
   </data>
   <data name="DbConnectionString_AttachDBFilename" xml:space="preserve">
     <value>Název primárního souboru, včetně úplné cesty, připojitelné databáze.</value>
@@ -3152,9 +929,6 @@
   </data>
   <data name="DbConnectionString_ConnectionReset" xml:space="preserve">
     <value>V případě hodnoty true označuje, že stav připojení je při odebrání z fondu obnoven.</value>
-  </data>
-  <data name="DbConnectionString_ContextConnection" xml:space="preserve">
-    <value>Při hodnotě true označuje, že připojení by mělo pocházet z kontextu serveru SQL Server.  K dispozici pouze při spuštění v procesu serveru SQL Server.</value>
   </data>
   <data name="DbConnectionString_CurrentLanguage" xml:space="preserve">
     <value>Název záznamu jazyka serveru SQL Server.</value>
@@ -3249,53 +1023,8 @@
   <data name="DbConnectionString_Authentication" xml:space="preserve">
     <value>Určuje metodu ověřování pomocí serveru SQL Server.</value>
   </data>
-  <data name="DbConnectionString_Certificate" xml:space="preserve">
-    <value>Zadaný klientský certifikát pro ověřování pomocí serveru SQL Server.  </value>
-  </data>
-  <data name="OdbcConnection_ConnectionString" xml:space="preserve">
-    <value>Informace použitá pro připojení ke zdroji dat.</value>
-  </data>
-  <data name="OdbcConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Aktuální hodnota časového limitu připojení. Tuto hodnotu nelze nastavit ve vlastnosti ConnectionString.</value>
-  </data>
-  <data name="OdbcConnection_Database" xml:space="preserve">
-    <value>Katalogová hodnota aktuálního zdroje dat, část Database=X připojovacího řetězce.</value>
-  </data>
-  <data name="OdbcConnection_DataSource" xml:space="preserve">
-    <value>Aktuální zdroj dat, část Server=X připojovacího řetězce.</value>
-  </data>
-  <data name="OdbcConnection_Driver" xml:space="preserve">
-    <value>Aktuální ovladač ODBC.</value>
-  </data>
-  <data name="OdbcConnection_ServerVersion" xml:space="preserve">
-    <value>Verze produktu, ke kterému přistupuje ovladač ODBC.</value>
-  </data>
-  <data name="OleDbConnection_ConnectionString" xml:space="preserve">
-    <value>Informace použitá pro připojení ke zdroji dat.</value>
-  </data>
-  <data name="OleDbConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Hodnota časového limitu aktuálního připojení, část Connect Timeout=X v řetězci ConnectionString.</value>
-  </data>
-  <data name="OleDbConnection_Database" xml:space="preserve">
-    <value>Katalogová hodnota aktuálního zdroje dat, část Initial Catalog=X připojovacího řetězce.</value>
-  </data>
-  <data name="OleDbConnection_DataSource" xml:space="preserve">
-    <value>Aktuální zdroj dat, část Data Source=X připojovacího řetězce.</value>
-  </data>
-  <data name="OleDbConnection_Provider" xml:space="preserve">
-    <value>Identifikátor ProgID aktuálního zprostředkovatele dat OLE DB, část Provider=X připojovacího řetězce.</value>
-  </data>
-  <data name="OleDbConnection_ServerVersion" xml:space="preserve">
-    <value>Verze produktu, k němuž přistupuje zprostředkovatel dat OLE DB.</value>
-  </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
     <value>Přístupový token pro ověření</value>
-  </data>
-  <data name="SqlConnection_Asynchronous" xml:space="preserve">
-    <value>Stav připojení, synchronní nebo asynchronní.  Asynchronous Processing=x v připojovacím řetězci</value>
-  </data>
-  <data name="SqlConnection_Replication" xml:space="preserve">
-    <value>Informace použité k připojení pro replikaci</value>
   </data>
   <data name="SqlConnection_ConnectionString" xml:space="preserve">
     <value>Informace použité pro připojení k objektu DataSource, například Data Source=x;Initial Catalog=x;Integrated Security=SSPI</value>
@@ -3320,9 +1049,6 @@
   </data>
   <data name="SqlConnection_StatisticsEnabled" xml:space="preserve">
     <value>Shromáždit statistiku pro toto připojení.</value>
-  </data>
-  <data name="SqlConnection_CustomColumnEncryptionKeyStoreProviders" xml:space="preserve">
-    <value>Vlastní zprostředkovatelé úložišť šifrovacích klíčů sloupců</value>
   </data>
   <data name="SqlConnection_ClientConnectionId" xml:space="preserve">
     <value>Identifikátor GUID představující fyzické připojení</value>
@@ -3360,98 +1086,8 @@
   <data name="SqlCommand_NotificationAutoEnlist" xml:space="preserve">
     <value>Automatické zařazení do upozornění použitých systémem Microsoft SQL Server</value>
   </data>
-  <data name="DbCommandBuilder_ConflictOption" xml:space="preserve">
-    <value>Jakým způsobem je automaticky generována klauzule where pro příkazy Update a Delete v případě, že uživatel nezadá nastavení.</value>
-  </data>
-  <data name="DbCommandBuilder_CatalogLocation" xml:space="preserve">
-    <value>Označuje pozici názvu katalogu v úplném názvu tabulky v textovém příkazu.</value>
-  </data>
-  <data name="DbCommandBuilder_CatalogSeparator" xml:space="preserve">
-    <value>Znak oddělující název katalogu od zbývající části identifikátoru v textovém příkazu.</value>
-  </data>
-  <data name="DbCommandBuilder_SchemaSeparator" xml:space="preserve">
-    <value>Znak oddělující název schématu od zbývající části identifikátoru v textovém příkazu.</value>
-  </data>
-  <data name="DbCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Řetězec předpony připojený před objekty sql.</value>
-  </data>
-  <data name="DbCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Řetězec přípony připojený za objekty sql.</value>
-  </data>
-  <data name="DbCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>Objekt DataAdapter, pro který mají být automaticky generovány příkazy.</value>
-  </data>
-  <data name="DbCommandBuilder_SchemaLocation" xml:space="preserve">
-    <value>Použijte schéma z objektu DataTable nebo vlastnosti SelectCommand.</value>
-  </data>
-  <data name="DbCommandBuilder_SetAllValues" xml:space="preserve">
-    <value>Jakým způsobem je automaticky generována klauzule set pro příkaz Update v případě, že uživatel nezadá nastavení.</value>
-  </data>
-  <data name="OdbcCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>Vlastnost DataAdapter, pro kterou budou automaticky generovány příkazy OdbcCommands</value>
-  </data>
-  <data name="OdbcCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Znak použitý v textovém příkazu jako úvodní uvozovka pro uvedení identifikátorů obsahujících speciální znaky.</value>
-  </data>
-  <data name="OdbcCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Znak použitý v textovém příkazu jako koncová uvozovka pro uvádění identifikátorů obsahujících speciální znaky.</value>
-  </data>
-  <data name="OleDbCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>Vlastnost DataAdapter, pro kterou budou automaticky generovány příkazy OleDbCommands</value>
-  </data>
-  <data name="OleDbCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>Oddělovač desetinných míst použitý v číselných literálech.</value>
-  </data>
-  <data name="OleDbCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Řetězec předpony připojený před objekty sql</value>
-  </data>
-  <data name="OleDbCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Řetězec přípony připojený za objekty sql</value>
-  </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
     <value>Vlastnost DataAdapter, pro kterou budou automaticky generovány příkazy SqlCommands</value>
-  </data>
-  <data name="SqlCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>Oddělovač desetinných míst použitý v číselných literálech.</value>
-  </data>
-  <data name="SqlCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>Znak použitý v textovém příkazu jako úvodní uvozovka pro uvedení identifikátorů obsahujících speciální znaky.</value>
-  </data>
-  <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>Znak použitý v textovém příkazu jako koncová uvozovka pro uvádění identifikátorů obsahujících speciální znaky.</value>
-  </data>
-  <data name="DbDataParameter_Precision" xml:space="preserve">
-    <value>Nutné nastavovat pouze pro parametry desetinných míst a číselné parametry při použití se scénáři Prepare, FillSchema a CommandBuilder.</value>
-  </data>
-  <data name="DbDataParameter_Scale" xml:space="preserve">
-    <value>Nutné nastavovat pouze pro parametry desetinných míst a číselné parametry při použití se scénáři Prepare, FillSchema a CommandBuilder.</value>
-  </data>
-  <data name="OdbcParameter_OdbcType" xml:space="preserve">
-    <value>Nativní typ parametru.</value>
-  </data>
-  <data name="OleDbParameter_OleDbType" xml:space="preserve">
-    <value>Nativní typ parametru.</value>
-  </data>
-  <data name="SqlParameter_ParameterName" xml:space="preserve">
-    <value>Název parametru, například @p1</value>
-  </data>
-  <data name="SqlParameter_SqlDbType" xml:space="preserve">
-    <value>Nativní typ parametru.</value>
-  </data>
-  <data name="SqlParameter_TypeName" xml:space="preserve">
-    <value>Název serveru typu.</value>
-  </data>
-  <data name="SqlParameter_Offset" xml:space="preserve">
-    <value>Posun v datových typech proměnné délky.</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionDatabase" xml:space="preserve">
-    <value>XmlSchemaCollectionDatabase</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionOwningSchema" xml:space="preserve">
-    <value>XmlSchemaCollectionOwningSchema</value>
-  </data>
-  <data name="SqlParameter_XmlSchemaCollectionName" xml:space="preserve">
-    <value>XmlSchemaCollectionName</value>
   </data>
   <data name="SqlParameter_UnsupportedTVPOutputParameter" xml:space="preserve">
     <value>ParameterDirection {0} zadaný pro parametr {1} není podporován. Parametry s hodnotou tabulky (table-valued parameter) podporují pouze ParameterDirection.Input.</value>
@@ -3465,9 +1101,6 @@
   <data name="SqlParameter_UnexpectedTypeNameForNonStruct" xml:space="preserve">
     <value>TypeName zadaný pro parametr {0}.  TypeName musí být nastaven pouze pro parametry Structured.</value>
   </data>
-  <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
-    <value>Typ SqlDbType.Structured je podporován pouze u typů s více hodnotami.</value>
-  </data>
   <data name="NullSchemaTableDataTypeNotSupported" xml:space="preserve">
     <value>Sloupec DateType pro pole {0} v tabulce schématu má hodnotu null.  DataType nesmí mít hodnotu null.</value>
   </data>
@@ -3480,17 +1113,8 @@
   <data name="SQL_EnumeratedRecordFieldCountChanged" xml:space="preserve">
     <value>Počet polí v záznamu {0} neodpovídá počtu v původním záznamu.</value>
   </data>
-  <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
-    <value>rozsah: 0 až 8000</value>
-  </data>
   <data name="SQLUDT_Unexpected" xml:space="preserve">
     <value>Ve zprostředkovateli dat SqlClient došlo k neočekávané chybě. {0}</value>
-  </data>
-  <data name="SQLUDT_InvalidDbId" xml:space="preserve">
-    <value>Nelze získat Type Info pro {0},{1}</value>
-  </data>
-  <data name="SQLUDT_CantLoadAssembly" xml:space="preserve">
-    <value>Zprostředkovateli se nepodařilo načíst následující sestavení: {0}.</value>
   </data>
   <data name="SQLUDT_InvalidUdtTypeName" xml:space="preserve">
     <value>Vlastnost UdtTypeName musí být nastavena pro parametry UDT.</value>
@@ -3501,71 +1125,8 @@
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
     <value>Zadaný typ není registrován na cílovém serveru.{0}.</value>
   </data>
-  <data name="SQLUDT_InWhereClause" xml:space="preserve">
-    <value>Parametry UDT jsou povoleny v klauzulích where pouze v případě, že jsou součástí primárního klíče.</value>
-  </data>
-  <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
-    <value>{0} je neplatný uživatelsky definovaný typ, důvod: {1}.</value>
-  </data>
-  <data name="SqlUdtReason_MultipleSerFormats" xml:space="preserve">
-    <value>podporuje formáty v paměti i uživatelsky definované formáty.</value>
-  </data>
-  <data name="SqlUdtReason_CannotSupportNative" xml:space="preserve">
-    <value>Nativní formát nelze podporovat.</value>
-  </data>
-  <data name="SqlUdtReason_CannotSupportUserDefined" xml:space="preserve">
-    <value>neimplementuje rozhraní IBinarySerialize.</value>
-  </data>
-  <data name="SqlUdtReason_NotSerializable" xml:space="preserve">
-    <value>neserializovatelné</value>
-  </data>
-  <data name="SqlUdtReason_NoPublicConstructors" xml:space="preserve">
-    <value>žádné veřejné konstruktory</value>
-  </data>
-  <data name="SqlUdtReason_NotNullable" xml:space="preserve">
-    <value>neimplementuje rozhraní INullable.</value>
-  </data>
-  <data name="SqlUdtReason_NoPublicConstructor" xml:space="preserve">
-    <value>nemá veřejný konstruktor</value>
-  </data>
   <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
     <value>žádný atribut UDT</value>
-  </data>
-  <data name="SqlUdtReason_MaplessNotYetSupported" xml:space="preserve">
-    <value>Serializace bez mapování ještě není podporována.</value>
-  </data>
-  <data name="SqlUdtReason_ParseMethodMissing" xml:space="preserve">
-    <value>chybí metoda public static x Parse(System.Data.SqlTypes.SqlString).</value>
-  </data>
-  <data name="SqlUdtReason_ToStringMethodMissing" xml:space="preserve">
-    <value>chybí metoda public override string ToString().</value>
-  </data>
-  <data name="SqlUdtReason_NullPropertyMissing" xml:space="preserve">
-    <value>chybí metoda public static x Null { get; }.</value>
-  </data>
-  <data name="SqlUdtReason_NativeFormatNoFieldSupport" xml:space="preserve">
-    <value>Nativní formát nepodporuje pole (přímo nebo prostřednictvím jiného pole) typu {0}.</value>
-  </data>
-  <data name="SqlUdtReason_TypeNotPublic" xml:space="preserve">
-    <value>Typ není veřejný.</value>
-  </data>
-  <data name="SqlUdtReason_NativeUdtNotSequentialLayout" xml:space="preserve">
-    <value>Parametr Native UDT nepředstavuje sekvenční rozložení vzhledem k typu {0}.</value>
-  </data>
-  <data name="SqlUdtReason_NativeUdtMaxByteSize" xml:space="preserve">
-    <value>Parametr Native UDT určuje maximální velikost v bajtech (byte).</value>
-  </data>
-  <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
-    <value>pole {0} je označeno jako neserializované.</value>
-  </data>
-  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
-    <value>Typ pole {0} je označen jako explicitní rozložení, což není ve formátu Native povoleno.</value>
-  </data>
-  <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
-    <value>Odkazy na sestavení s více hodnotami musí mít nenulové ID sestavení.</value>
-  </data>
-  <data name="SQLTVP_TableTypeCanOnlyBeParameter" xml:space="preserve">
-    <value>Strukturované typy s více hodnotami lze použít pouze u parametrů a nemohou být vnořeny v jiném typu.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
     <value>Název cesty není platný.</value>
@@ -3582,9 +1143,6 @@
   <data name="SqlDelegatedTransaction_PromotionFailed" xml:space="preserve">
     <value>Chyba při pokusu o zvýšení úrovně transakce</value>
   </data>
-  <data name="SqlDependency_SqlDependency" xml:space="preserve">
-    <value>Objekt závislosti používaný pro příjem upozornění na dotazy</value>
-  </data>
   <data name="SqlDependency_HasChanges" xml:space="preserve">
     <value>Vlastnost umožňující označit, zda je tato závislost neplatná.</value>
   </data>
@@ -3596,9 +1154,6 @@
   </data>
   <data name="SqlDependency_AddCommandDependency" xml:space="preserve">
     <value>K přidání příkazu k existujícímu objektu závislosti</value>
-  </data>
-  <data name="SqlDependency_Duplicate" xml:space="preserve">
-    <value>Objekt Command je již spojen s jiným objektem závislosti. Nastavení nelze přepsat.</value>
   </data>
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Tento objekt SqlCommand je již spojen s jiným objektem SqlDependency.</value>
@@ -3626,12 +1181,6 @@
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
     <value>Zadaný časový limit je neplatný. Časový limit nesmí být menší než nula.</value>
-  </data>
-  <data name="SQLNotify_ErrorFormat" xml:space="preserve">
-    <value>Chyba oznámení. Typ ={0}, Informace ={1}, Zdroj ={2}.</value>
-  </data>
-  <data name="SqlMetaData_NoMetadata" xml:space="preserve">
-    <value>Metoda GetMetaData není pro tuto hodnotu SqlDbType platná.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
     <value>Hodnota dbType {0} je pro tento konstruktor neplatná.</value>
@@ -4101,9 +1650,6 @@
   <data name="TCE_NullPlainText" xml:space="preserve">
     <value>Vnitřní chyba. Hodnota prostého textu nemůže být null.</value>
   </data>
-  <data name="TCE_VeryLargeCiphertext" xml:space="preserve">
-    <value>Nelze zašifrovat. Výsledkem šifrování je {0} bajtů šifrovaného textu, což je více než maximální povolený limit {1} bajtů. Zadaná hodnota prostého textu je pravděpodobně příliš velká (velikost prostého textu je: {2} bajtů).</value>
-  </data>
   <data name="TCE_NullCipherText" xml:space="preserve">
     <value>Vnitřní chyba. Hodnota šifrovaného textu nemůže být null.</value>
   </data>
@@ -4221,9 +1767,6 @@
   <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
     <value>SQL Server nevrátil informace o ověření identity. Typ enklávy je {0} a adresa URL pro ověření identity enklávy je {1}.</value>
   </data>
-  <data name="TCE_UnableToEstablishSecureChannel" xml:space="preserve">
-    <value>Nelze vytvořit zabezpečený kanál (zprostředkovatel Schannel). Chybová zpráva: {0}</value>
-  </data>
   <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
     <value>Vnitřní chyba. Při vytváření objektu typu {1} se zadal argument {0} s hodnotou null. Argument {0} nemůže mít hodnotu null.</value>
   </data>
@@ -4239,15 +1782,6 @@
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
     <value>Určuje koncový bod služby ověření identity enklávy, pomocí kterého se ověří, jestli enkláva nakonfigurovaná v instanci systému SQL Server pro výpočty se sloupci databáze šifrovanými funkcí Always Encrypted je platná a zabezpečená.</value>
   </data>
-  <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>Nepovedlo se přečíst oddíl konfigurace pro zprostředkovatele enkláv. Ujistěte se, že oddíl má v konfiguračním souboru vaší aplikace správný formát. Chybová zpráva: {0}</value>
-  </data>
-  <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
-    <value>Nepovedlo se vytvořit instanci zprostředkovatele enklávy s typem {1} pro název {0}. Chybová zpráva: {2} </value>
-  </data>
-  <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
-    <value>Vnitřní chyba. Parametr SqlColumnEncryptionEnclaveProviderName nemůže mít hodnotu null nebo být prázdný.</value>
-  </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
     <value>Při čtení sady výsledků dotazu {0} došlo k chybě. V připojovacím řetězci se nezadala adresa URL pro ověření identity, ale dotaz vyžaduje výpočty v enklávě.  Typ enklávy je {1}. </value>
   </data>
@@ -4256,9 +1790,6 @@
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Vnitřní chyba. Při spouštění dotazu, který vyžaduje výpočty v enklávě, je typ enklávy přijatý ze systému SQL Server null nebo prázdný.</value>
-  </data>
-  <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>Aby se dotaz mohl spustit, vyžadují se výpočty v enklávě, ale v konfiguraci aplikace chybí oddíl zprostředkovatele enklávy.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Pro typu enklávy {0} a protokol ověření identity {1} se nenašel žádný zprostředkovatel enklávy. Zadejte prosím v připojovacím řetězci správný protokol ověření identity. </value>
@@ -4317,9 +1848,6 @@
   <data name="TCE_DbConnectionString_ColumnEncryptionSetting" xml:space="preserve">
     <value>Výchozí nastavení šifrování sloupce pro všechny příkazy v rámci připojení</value>
   </data>
-  <data name="TCE_SqlParameter_ForceColumnEncryption" xml:space="preserve">
-    <value>Vynutí, aby se parametry před posláním citlivých dat na server zašifrovaly. </value>
-  </data>
   <data name="TCE_SqlConnection_TrustedColumnMasterKeyPaths" xml:space="preserve">
     <value>Objekt slovníku obsahující názvy systémů SQL Server a jejich důvěryhodné cesty k hlavnímu klíči sloupce</value>
   </data>
@@ -4329,11 +1857,11 @@
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Připojení k zrcadlené instanci systému SQL Server s použitím možnosti připojení ApplicationIntent ReadOnly není podporováno.</value>
   </data>
-  <data name="SQLROR_UnexpectedRoutingInfo" xml:space="preserve">
-    <value>Byly přijaty neočekávané informace o směrování.</value>
-  </data>
   <data name="SQLROR_InvalidRoutingInfo" xml:space="preserve">
     <value>Byly přijaty neplatné informace o směrování.</value>
+  </data>
+  <data name="SQLROR_InvalidEnhancedRoutingInfo" xml:space="preserve">
+    <value>Byly přijaty neplatné informace o rozšířeném směrování.</value>
   </data>
   <data name="SQLROR_TimeoutAfterRoutingInfo" xml:space="preserve">
     <value>Server poskytl informace o směrování, ale časový limit již vypršel.</value>
@@ -4479,9 +2007,6 @@
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
     <value>V tomto kontextu je zadáno nepodporované ověřování: {0}</value>
   </data>
-  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Vypršel časový limit interaktivního ověřování služby Active Directory. Odpověď uživatele na žádost o ověření trvala příliš dlouho.</value>
-  </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
     <value>Pokud je nastavená vlastnost Credential, nejde použít možnost Authentication=Active Directory Interactive.</value>
   </data>
@@ -4490,9 +2015,6 @@
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
     <value>ID procesu serveru (SPID) aktivního připojení</value>
-  </data>
-  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Vypršel časový limit ověřování typu Active Directory Device Code Flow. Odpověď uživatele na žádost o ověření trvala příliš dlouho.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Device Code Flow, nejde nastavit vlastnost Credential.</value>
@@ -4527,9 +2049,6 @@
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
     <value>Pro požadovanou akci jsou podporována jen jednorozměrná pole.</value>
   </data>
-  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Zadanou položku nelze odebrat, protože nebyla nalezena v zadané kolekci.</value>
-  </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Vyžaduje se nezáporné číslo.</value>
   </data>
@@ -4557,20 +2076,8 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Default, nejde nastavit vlastnost AccessTokenCallback.</value>
   </data>
-  <data name="event_OperationReturnedSomething" xml:space="preserve">
-    <value>Operace {0} vrátila {1}.</value>
-  </data>
-  <data name="net_auth_message_not_encrypted" xml:space="preserve">
-    <value>Chyba protokolu: Přijatá zpráva obsahuje platný podpis, ale nebyla zašifrována podle požadavků platné úrovně ochrany.</value>
-  </data>
-  <data name="net_log_operation_failed_with_error" xml:space="preserve">
-    <value>{0} – došlo k selhání s chybou {1}.</value>
-  </data>
   <data name="net_MethodNotImplementedException" xml:space="preserve">
     <value>Tato metoda není touto třídou implementována.</value>
-  </data>
-  <data name="net_securitypackagesupport" xml:space="preserve">
-    <value>Požadovaný balíček zabezpečení není podporován.</value>
   </data>
   <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
     <value>Nesprávný typ physicalConnection.</value>
@@ -4578,14 +2085,8 @@
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Při pokusu o nastavení přepínače AppContext {0}={1} došlo k výjimce.</value>
   </data>
-  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
-    <value>Typ {0} se na této platformě nepodporuje.</value>
-  </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Invariantní režim globalizace není podporován.</value>
-  </data>
-  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
-    <value>Nelze provést ověření pomocí protokolu Kerberos. Ujistěte se, že se v klientovi inicializoval protokol Kerberos pomocí příkazu kinit a že pro SQL Server byl zaregistrovaný hlavní název služby, aby bylo možné ověřování protokolem Kerberos.</value>
   </data>
   <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
     <value>Klíčové slovo „Network Library“ se na této platformě nepodporuje. Místo toho zadejte k „Data Source“ jako předponu požadovaný protokol (tcp: pro připojení TCP nebo np: pro připojení typu pojmenovaný kanál).</value>
@@ -4593,50 +2094,17 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Soket nevyvolal očekávanou výjimku {0} s kódem chyby {1}.</value>
   </data>
-  <data name="SQL_UnsupportedFeature" xml:space="preserve">
-    <value>Server se pokouší použít funkci, která není na této platformě podporována.</value>
-  </data>
   <data name="SQL_UnsupportedKeyword" xml:space="preserve">
     <value>Klíčové slovo {0} není na této platformě podporováno.</value>
   </data>
   <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
     <value>Aktuálně načtená knihovna System.Transactions.dll nepodporuje globální transakce.</value>
   </data>
-  <data name="SQL_UnsupportedToken" xml:space="preserve">
-    <value>Při čtení dat ze serveru byl přijat nepodporovaný token {0}.</value>
-  </data>
-  <data name="SSPIInvalidHandleType" xml:space="preserve">
-    <value>{0} není podporovaný typ popisovače.</value>
-  </data>
   <data name="SqlFileStream_NotSupported" xml:space="preserve">
     <value>SqlFileStream se na této platformě nepodporuje.</value>
   </data>
   <data name="LocalDBNotSupported" xml:space="preserve">
     <value>LocalDB se na této platformě nepodporuje.</value>
-  </data>
-  <data name="net_context_buffer_too_small" xml:space="preserve">
-    <value>Nedostatek místa ve vyrovnávací paměti. Vyžadováno: {0}; Skutečnost: {1}.</value>
-  </data>
-  <data name="net_gssapi_operation_failed" xml:space="preserve">
-    <value>Operace GSSAPI se nezdařila se stavem: {0} (Dílčí stav: {1}).</value>
-  </data>
-  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
-    <value>Operace GSSAPI se nezdařila s chybou – {0} ({1}).</value>
-  </data>
-  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
-    <value>Podpora vazeb kanálů v jiných operačních systémech než Windows není podporována.</value>
-  </data>
-  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
-    <value>Název cíle by neměl být prázdný, pokud jsou předány výchozí přihlašovací údaje.</value>
-  </data>
-  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
-    <value>Požadovaná úroveň ochrany není podporovaná s aktuálně nainstalovanou implementací rozhraní GSSAPI.</value>
-  </data>
-  <data name="net_nego_server_not_supported" xml:space="preserve">
-    <value>Implementace serveru není podporována.</value>
-  </data>
-  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
-    <value>Ověřování NTLM není možné s výchozími přihlašovacími údaji na této platformě.</value>
   </data>
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>Při použití v metodě DataAdapter.Update je hodnota parametru změněna z DBNull.Value na (Int32)1 nebo (Int32)0, pokud je hodnota jiná než null.</value>
@@ -4662,9 +2130,6 @@
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
     <value>Byla překročena maximální velikost vyrovnávací paměti: {0}</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Nebyl nalezen objekt DataColumn {0} pro SourceColumn {2}.</value>
-  </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
     <value>Seznam SqlBatchCommand nebyl inicializován.</value>
   </data>
@@ -4682,5 +2147,65 @@
   </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0}: Neplatný řetězec JSON pro vektor.</value>
+  </data>
+  <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
+    <value>Ve fondu připojení se nepovedlo najít prázdný slot.</value>
+  </data>
+  <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
+    <value>Fond připojení byl vypnut.</value>
+  </data>
+  <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
+    <value>Nelze získat RequiredLength, pokud HasDataLength je false.</value>
+  </data>
+  <data name="SQL_Multiplexer_PartialPacketNotNull" xml:space="preserve">
+    <value>Částečný paket nemůže být null při nastavování na jinou hodnotu než null.</value>
+  </data>
+  <data name="SQL_Multiplexer_ConflictingConsumeModes" xml:space="preserve">
+    <value>MultiplexPackets nemůže vrátit současně consumePartialPacket i consumeInputDirectly.</value>
+  </data>
+  <data name="SQL_FailAsyncPendsEnabled" xml:space="preserve">
+    <value>Došlo k pokusu o uvedení operace čtení do čekajícího stavu, když bylo povoleno testovací volání pro selhání asynchronních čekajících operací.</value>
+  </data>
+  <data name="SQL_PacketHashNullWithNonNullBuffer" xml:space="preserve">
+    <value>Byla zjištěna úprava paketu. Hodnota hash je null, ale paket obsahuje vyrovnávací paměť, která není null.</value>
+  </data>
+  <data name="SQL_PacketHashMismatch" xml:space="preserve">
+    <value>Byla zjištěna úprava paketu. Hodnota hash z vytvoření paketu neodpovídá hodnotě hash z kontroly paketů.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
+    <value>Nelze přejít ze stavu {0} do stavu {1}.</value>
+  </data>
+  <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
+    <value>Nepodporovaný stav: {0}</value>
+  </data>
+  <data name="SQLCR_RetryMethodNullOrEmpty" xml:space="preserve">
+    <value>Nepodařilo se vytvořit objekt SqlRetryLogicBaseProvider, protože hodnota retryMethod je null nebo prázdná.</value>
+  </data>
+  <data name="SQLCR_RetryMethodException" xml:space="preserve">
+    <value>Při spuštění metody {0}.{1}() došlo k výjimce.</value>
+  </data>
+  <data name="SQLCR_ResolveMethodFailed" xml:space="preserve">
+    <value>Nepodařilo se přeložit metodu {0} z typu {1}.</value>
+  </data>
+  <data name="SQLCR_InvalidReturnType" xml:space="preserve">
+    <value>Neplatný návratový typ; návratový typ musí být typu {0}.</value>
+  </data>
+  <data name="SQLCR_InvalidRetryParameters" xml:space="preserve">
+    <value>Nepodařilo se vytvořit objekt SqlRetryLogicBaseProvider kvůli neplatným parametrům {0}.{1}Funkce musí mít parametr typu SqlRetryLogicOption.</value>
+  </data>
+  <data name="SQLCR_InvalidParameterNoDefault" xml:space="preserve">
+    <value>Objekt SqlRetryLogicBaseProvider se nepodařilo vytvořit kvůli neplatným parametrům retryMethod.{0}Parametr {1} {2} nemá výchozí hodnotu.</value>
+  </data>
+  <data name="SQLCR_SequenceMoreThanOneMatch" xml:space="preserve">
+    <value>Posloupnost obsahuje více než jeden odpovídající prvek.</value>
+  </data>
+  <data name="SQLCR_SequenceNoMatch" xml:space="preserve">
+    <value>Posloupnost neobsahuje žádný odpovídající prvek.</value>
+  </data>
+  <data name="SQL_ObjectPoolNoCreateDelegate" xml:space="preserve">
+    <value>Z fondu si můžete vypůjčit pouze v případě, že je k dispozici delegát onCreate.</value>
+  </data>
+  <data name="SQL_InvalidUdtSize" xml:space="preserve">
+    <value>Typ {0} má neplatnou velikost.</value>
   </data>
 </root>

@@ -2,6 +2,30 @@
 
 ## [Release Type] [Version] - [Release Date]
 
+### Added
+
+#### [Feature Name]
+
+*What Changed:*
+
+- [Detailed description of what changed, including PR reference]
+
+*Who Benefits:*
+
+- [Description of who benefits from this change]
+- [Additional beneficiaries or use cases]
+
+*Impact:*
+
+- [Description of impact and how to use the feature]
+- [Code example if applicable]
+
+```c#
+// Code example
+```
+
+- [Additional impact notes or migration guidance]
+
 ### Changed
 
 #### [Breaking Change or Major Change Title]
@@ -42,50 +66,28 @@
 - [Description of bug fix]
   ([#PRNUM](https://github.com/dotnet/SqlClient/pull/PRNUM))
 
-### Added
+#### Other fixes
 
-#### [Feature Name]
-
-*What Changed:*
-
-- [Detailed description of what changed, including PR reference]
-
-*Who Benefits:*
-
-- [Description of who benefits from this change]
-- [Additional beneficiaries or use cases]
-
-*Impact:*
-
-- [Description of impact and how to use the feature]
-- [Code example if applicable]
-
-```c#
-// Code example
-```
-
-- [Additional impact notes or migration guidance]
-
-#### Other Additions
-
-- [Description of other additions]
+- [Description of other fixes]
   ([#PRNUM](https://github.com/dotnet/SqlClient/pull/PRNUM))
 
 ## Contributors
-(Only list public contributors. Do not list core team or bot contributors.)
 
+(Only list public contributors. Do not list core team or bot contributors.)
 
 We thank the following public contributors. Their efforts toward this project are very much appreciated.
 
 - [username](https://github.com/username)
 
 ## Target Platform Support
-(Look at target frameworks in the netcore and netfx project files.)
+
+(Look at target frameworks in the project file for the package being released.)
 
 - [Target Framework Version] ([Supported Operating Systems])
 
 ### Dependencies
-(Use the dependencies listed at tools\specs\Microsoft.Data.SqlClient.nuspec)
+
+(Use the dependencies listed in the package's NuGet spec under tools/specs/ or the project file.)
 
 #### [Target Framework Version]
 

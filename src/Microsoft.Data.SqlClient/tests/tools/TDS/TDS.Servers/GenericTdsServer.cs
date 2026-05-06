@@ -61,6 +61,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool EnableUserAgentFeatureExt { get; set; } = false;
 
         /// <summary>
+        /// Property for setting server enhanced routing enablement state.
+        /// </summary>
+        public FeatureExtensionBehavior EnhancedRoutingBehavior { get; set; } = FeatureExtensionBehavior.Disabled;
+
+        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
@@ -89,6 +94,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Counts pre-login requests to the server.
         /// </summary>
         private int _preLoginCount = 0;
+
+        /// <summary>
+        /// Counts Login7 requests to the server.
+        /// </summary>
+        protected int _login7Count = 0;
 
         private TDSServerEndPoint _endpoint;
 
@@ -132,6 +142,18 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public int PreLoginCount => _preLoginCount;
 
+        /// <summary>
+        /// Counts Login7 requests to the server.
+        /// </summary>
+        public int Login7Count => _login7Count;
+
+        /// <summary>
+        /// Counts pre-login requests that did not result in a Login7 request,
+        /// which indicates the client abandoned the connection (e.g. interval
+        /// timer timeout during TNIR or failover).
+        /// </summary>
+        public int AbandonedPreLoginCount => _preLoginCount - _login7Count;
+
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
         public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
@@ -143,9 +165,12 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 throw new InvalidOperationException("Server is already started");
             }
-            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            _endpoint.EndpointName = methodName;
-            _endpoint.EventLog = Arguments.Log;
+            _endpoint = new TDSServerEndPoint(this)
+            {
+                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
+                EndpointName = methodName,
+                EventLog = Arguments.Log
+            };
             _endpoint.Start();
         }
 
@@ -240,6 +265,8 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
         {
+            Interlocked.Increment(ref _login7Count);
+
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
 
@@ -336,6 +363,12 @@ namespace Microsoft.SqlServer.TDS.Servers
                                     // Enable User Agent Support
                                     session.IsUserAgentSupportEnabled = true;
                                 }
+                                break;
+                            }
+
+                        case TDSFeatureID.EnhancedRoutingSupport:
+                            {
+                                session.IsEnhancedRoutingSupportRequested = true;
                                 break;
                             }
 
@@ -645,6 +678,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             CheckJsonSupported(session, responseMessage);
             CheckVectorSupport(session, responseMessage);
             CheckUserAgentSupport(session, responseMessage);
+            CheckEnhancedRoutingSupport(session, responseMessage);
 
             if (!string.IsNullOrEmpty(Arguments.FailoverPartner))
             {
@@ -796,6 +830,41 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
+        }
+
+        /// <summary>
+        /// Check if Enhanced Routing support is enabled
+        /// </summary>
+        /// <param name="session">Server session</param>
+        /// <param name="responseMessage">Response message</param>
+        protected void CheckEnhancedRoutingSupport(ITDSServerSession session, TDSMessage responseMessage)
+        {
+            if (session.IsEnhancedRoutingSupportRequested &&
+                EnhancedRoutingBehavior != FeatureExtensionBehavior.DoNotAcknowledge)
+            {
+                // Create ack data (1 byte: IsEnabled)
+                byte[] data = EnhancedRoutingBehavior == FeatureExtensionBehavior.Enabled
+                    ? [1]
+                    : [0];
+
+                // Create enhanced routing support as a generic feature extension option
+                TDSFeatureExtAckGenericOption enhancedRoutingSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.EnhancedRoutingSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(enhancedRoutingSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(enhancedRoutingSupportOption);
+                }
+            }
         }
 
         /// <summary>

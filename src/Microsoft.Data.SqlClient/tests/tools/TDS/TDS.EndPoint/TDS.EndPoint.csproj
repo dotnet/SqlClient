@@ -2,11 +2,8 @@
   <PropertyGroup>
     <RootNamespace>Microsoft.SqlServer.TDS.EndPoint</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS.EndPoint</AssemblyName>
-    <ProjectGuid>{1FF891B4-D3DE-4CCE-887C-CB48F5351A45}</ProjectGuid>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FederatedAuthentication\FederatedAuthenticationTicketService.cs" />
@@ -40,19 +37,21 @@
     <Compile Include="TDSServerEndPointConnection.cs" />
     <Compile Include="TDSServerParser.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
+
+  <!-- Windows Only Files -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
     <Compile Include="SSPI\SSPIContext.Windows.cs" />
     <Compile Include="SSPI\SecurityWrapper.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' != 'true'">
+
+  <!-- Unix Only Files -->
+  <ItemGroup Condition="'$(OS)' == 'Unix'">
     <Compile Include="SSPI\SSPIContext.Unix.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
-      <Name>TDS</Name>
-    </ProjectReference>
-  </ItemGroup>
+
+  <!-- References ====================================================== -->
   <ItemGroup>
     <PackageReference Include="System.Security.Principal.Windows" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
   </ItemGroup>
 </Project>

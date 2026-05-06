@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 
@@ -34,13 +35,6 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string EnableMultiSubnetFailoverByDefaultString =
         "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault";
-
-    /// <summary>
-    /// The name of the app context switch that controls whether
-    /// the user agent feature is enabled.
-    /// </summary>
-    private const string EnableUserAgentString =
-        "Switch.Microsoft.Data.SqlClient.EnableUserAgent";
 
     #if NET
     /// <summary>
@@ -175,11 +169,6 @@ internal static class LocalAppContextSwitches
     /// The cached value of the EnableMultiSubnetFailoverByDefault switch.
     /// </summary>
     private static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
-
-    /// <summary>
-    /// The cached value of the EnableUserAgent switch.
-    /// </summary>
-    private static SwitchValue s_enableUserAgent = SwitchValue.None;
 
     #if NET
     /// <summary>
@@ -317,18 +306,6 @@ internal static class LocalAppContextSwitches
             EnableMultiSubnetFailoverByDefaultString,
             defaultValue: false,
             ref s_enableMultiSubnetFailoverByDefault);
-
-    /// <summary>
-    /// When set to true, the user agent feature is enabled and the driver will
-    /// send the user agent string to the server.
-    ///
-    /// The default value of this switch is false.
-    /// </summary>
-    public static bool EnableUserAgent =>
-        AcquireAndReturn(
-            EnableUserAgentString,
-            defaultValue: false,
-            ref s_enableUserAgent);
 
     #if NET
     /// <summary>

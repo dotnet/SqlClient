@@ -7,7 +7,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
 namespace Interop.Windows.Sni
 {
@@ -17,8 +16,6 @@ namespace Interop.Windows.Sni
         private static IntPtr s_data;
         private static int s_size;
 
-        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         public static byte[] NativeGetData()
         {
             byte[] result = null;
@@ -31,8 +28,6 @@ namespace Interop.Windows.Sni
             return result;
         }
 
-        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         internal static void NativeSetData(byte[] data)
         {
             lock (s_lockObj)

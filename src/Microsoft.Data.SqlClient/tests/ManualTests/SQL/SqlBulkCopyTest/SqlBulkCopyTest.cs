@@ -308,5 +308,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             OrderHintIdentityColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn"));
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataTest()
+        {
+            CacheMetadata.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CacheMetadata"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataInvalidateTest()
+        {
+            CacheMetadataInvalidate.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CacheMetadataInvalidate"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataDestinationChangeTest()
+        {
+            CacheMetadataDestinationChange.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CacheMetadataDstChange0"), AddGuid("SqlBulkCopyTest_CacheMetadataDstChange1"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataWithoutFlagTest()
+        {
+            CacheMetadataWithoutFlag.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CacheMetadataNoFlag"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataWithDataTableTest()
+        {
+            CacheMetadataWithDataTable.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataDT"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataColumnMappingsChangeTest()
+        {
+            CacheMetadataColumnMappingsChange.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataColMap"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataColumnSubsetChangeTest()
+        {
+            CacheMetadataColumnSubsetChange.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataSubset"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataCombinedWithKeepNullsTest()
+        {
+            CacheMetadataCombinedWithKeepNulls.Test(_connStr, AddGuid("SqlBulkCopyTest_CacheMetadataKeepNulls"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void CacheMetadataAsyncTest()
+        {
+            CacheMetadataAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CacheMetadataAsync"));
+        }
     }
 }

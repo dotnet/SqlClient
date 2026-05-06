@@ -4,6 +4,7 @@
 
 using System.Security;
 using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -16,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private PermissionSet _failoverPermissionSet;
 #endif
 
-        internal SqlConnectionPoolGroupProviderInfo(SqlConnectionString connectionOptions)
+        internal SqlConnectionPoolGroupProviderInfo(SqlConnectionOptions connectionOptions)
         {
             // This is for the case where the user specified the failover partner
             // in the connection string and we have not yet connected to get the
@@ -53,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        internal void FailoverCheck(bool actualUseFailoverPartner, SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        internal void FailoverCheck(bool actualUseFailoverPartner, SqlConnectionOptions userConnectionOptions, string actualFailoverPartner)
         {
             if (UseFailoverPartner != actualUseFailoverPartner)
             {
@@ -86,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
 #if NETFRAMEWORK
-        private PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        private PermissionSet CreateFailoverPermission(SqlConnectionOptions userConnectionOptions, string actualFailoverPartner)
         {
             string keywordToReplace;
 
@@ -104,8 +105,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //       the server, we will use that name over what was specified  
             //       in the original connection string.
 
-            if (userConnectionOptions.ContainsKey(DbConnectionStringKeywords.FailoverPartner) &&
-                userConnectionOptions[DbConnectionStringKeywords.FailoverPartner] == null)
+            if (userConnectionOptions.TryGetParsetableValue(DbConnectionStringKeywords.FailoverPartner, out string failoverPartnerValue) &&
+                failoverPartnerValue == null)
             {
                 keywordToReplace = DbConnectionStringKeywords.DataSource;
             }
@@ -115,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             string failoverConnectionString = userConnectionOptions.ExpandKeyword(keywordToReplace, actualFailoverPartner);
-            return (new SqlConnectionString(failoverConnectionString)).CreatePermissionSet();
+            return (new SqlConnectionOptions(failoverConnectionString)).CreatePermissionSet();
         }
 
         internal void FailoverPermissionDemand()
