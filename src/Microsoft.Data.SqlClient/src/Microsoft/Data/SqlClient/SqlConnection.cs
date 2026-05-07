@@ -2228,14 +2228,14 @@ namespace Microsoft.Data.SqlClient
         {
             if (ForceNewConnection)
             {
-                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry))
                 {
                     return false;
                 }
             }
             else
             {
-                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry))
                 {
                     return false;
                 }

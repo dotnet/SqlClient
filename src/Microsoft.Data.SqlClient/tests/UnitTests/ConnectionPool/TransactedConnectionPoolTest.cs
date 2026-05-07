@@ -676,12 +676,12 @@ public class TransactedConnectionPoolTest
 
         public void Clear() => throw new NotImplementedException();
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, SqlConnectionOptions userOptions, out DbConnectionInternal? connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, out DbConnectionInternal? connection)
         {
             throw new NotImplementedException();
         }
 
-        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, SqlConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection)
         {
             throw new NotImplementedException();
         }
