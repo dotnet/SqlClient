@@ -749,10 +749,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = true,
             };
 
-            // Warm up the pool.
+            // Keep one connection open so the next Open() cannot reuse it and must perform login.
             using SqlConnection warmup = new(builder.ConnectionString);
             warmup.Open();
-            warmup.Close();
 
             // Enable the transient error for the next login attempt.
             server.SetErrorBehavior(true, errorCode);
@@ -760,11 +759,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // ConnectRetryCount > 0 (default 1) so the client retries and succeeds.
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
-
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+
+            connection.Close();
+            warmup.Close();
+
+            // If the pool is not cleared, this open should reuse a pooled connection without a new login.
+            using SqlConnection pooledConnection = new(builder.ConnectionString);
+            pooledConnection.Open();
+
+            Assert.Equal(ConnectionState.Open, pooledConnection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", pooledConnection.DataSource);
+
+            // 1 warmup login + 1 failed login + 1 retry login.
+            Assert.Equal(3, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(3, server.Login7Count);
             // Failover server must never have been contacted.
-            Assert.Equal(0, failoverServer.PreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+            Assert.Equal(0, failoverServer.Login7Count);
         }
 
         /// <summary>

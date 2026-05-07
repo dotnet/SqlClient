@@ -28,8 +28,9 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         /// <summary>
         /// Error class (severity) to emit in ERROR token.
-        /// Fatal starts at 20 (TdsEnums.FATAL_ERROR_CLASS), so use values below 20
-        /// to avoid automatic break/doom behavior in the client.
+        /// The default is 20 to preserve existing fatal-error behavior.
+        /// Fatal starts at 20 (TdsEnums.FATAL_ERROR_CLASS), so set values below 20
+        /// when a test needs to avoid automatic break/doom behavior in the client.
         /// </summary>
         public byte ErrorClass { get; set; } = 20;
     }
