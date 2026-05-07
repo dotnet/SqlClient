@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
         }
 
         /// <summary>
@@ -1320,7 +1320,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
-            
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1396,7 +1396,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlStatistics statistics = null;
                 Exception e = null;
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1889,7 +1889,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken) 
+        public override Task OpenAsync(CancellationToken cancellationToken)
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
@@ -2224,7 +2224,16 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        private bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
+        /// <summary>
+        /// Completes the inner open/replace operation and initializes parser state for the active inner connection.
+        /// </summary>
+        /// <param name="retry">Retry continuation used by async open paths.</param>
+        /// <returns><see langword="true"/> when open initialization completed synchronously; otherwise <see langword="false"/>.</returns>
+        /// <remarks>
+        /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
+        /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
+        /// </remarks>
+        internal bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
         {
             if (ForceNewConnection)
             {
@@ -2242,7 +2251,12 @@ namespace Microsoft.Data.SqlClient
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            var tdsInnerConnection = (SqlConnectionInternal)InnerConnection;
+            DbConnectionInternal currentInnerConnection = InnerConnection;
+            if (currentInnerConnection is not SqlConnectionInternal tdsInnerConnection)
+            {
+                // Another transition won the race after TryOpen/TryReplace; surface a stable closed-connection error.
+                throw ADP.ClosedConnectionError();
+            }
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
 
@@ -2375,11 +2389,32 @@ namespace Microsoft.Data.SqlClient
 
         // ClosedBusy->Closed (never opened)
         // Connecting->Closed (exception during open, return to previous closed state)
+        /// <summary>
+        /// Finalizes a non-evented transition from a transitional inner state to a stable closed state.
+        /// </summary>
+        /// <param name="to">The target inner connection state object.</param>
+        /// <remarks>
+        /// This path is restricted to transition sources that intentionally serialize external callers while state is
+        /// being updated. A compare-and-swap prevents stale writers from overwriting a newer inner connection state.
+        /// </remarks>
         internal void SetInnerConnectionTo(DbConnectionInternal to)
         {
             Debug.Assert(_innerConnection != null, "null InnerConnection");
             Debug.Assert(to != null, "to null InnerConnection");
-            _innerConnection = to;
+
+            DbConnectionInternal originalInnerConnection = _innerConnection;
+            if (originalInnerConnection != DbConnectionClosedBusy.SingletonInstance &&
+                originalInnerConnection != DbConnectionClosedConnecting.SingletonInstance)
+            {
+                // SetInnerConnectionTo is only valid while leaving a known transitional state.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+            }
+
+            if (originalInnerConnection != Interlocked.CompareExchange(ref _innerConnection, to, originalInnerConnection))
+            {
+                // Reject stale writers when another thread already advanced the state machine.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+            }
         }
 
         // Closed->Connecting: prevent set_ConnectionString during Open
@@ -2397,13 +2432,36 @@ namespace Microsoft.Data.SqlClient
 
         // OpenBusy->Closed (previously opened)
         // Connecting->Open
+        /// <summary>
+        /// Finalizes an evented state transition from a transitional inner state to a stable target state.
+        /// </summary>
+        /// <param name="to">The target inner connection state object.</param>
+        /// <remarks>
+        /// This path is intentionally restricted to the expected transition sources (<see cref="DbConnectionOpenBusy"/>
+        /// and <see cref="DbConnectionClosedConnecting"/>). A compare-and-swap enforces that the transition commits only
+        /// if no concurrent writer has already changed <see cref="_innerConnection"/>.
+        /// </remarks>
         internal void SetInnerConnectionEvent(DbConnectionInternal to)
         {
             Debug.Assert(_innerConnection != null, "null InnerConnection");
             Debug.Assert(to != null, "to null InnerConnection");
 
-            ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
+            DbConnectionInternal originalInnerConnection = _innerConnection;
+            if (originalInnerConnection != DbConnectionOpenBusy.SingletonInstance &&
+                originalInnerConnection != DbConnectionClosedConnecting.SingletonInstance)
+            {
+                // Evented transitions are valid only from the two expected transitional sources.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+            }
+
+            ConnectionState originalState = originalInnerConnection.State & ConnectionState.Open;
             ConnectionState currentState = to.State & ConnectionState.Open;
+
+            if (originalInnerConnection != Interlocked.CompareExchange(ref _innerConnection, to, originalInnerConnection))
+            {
+                // Ensure event and close-count side effects are tied to a committed transition only.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+            }
 
             if ((originalState != currentState) && (ConnectionState.Closed == currentState))
             {
@@ -2412,8 +2470,6 @@ namespace Microsoft.Data.SqlClient
                     _closeCount++;
                 }
             }
-
-            _innerConnection = to;
 
             if (ConnectionState.Closed == originalState && ConnectionState.Open == currentState)
             {
@@ -2541,9 +2597,10 @@ namespace Microsoft.Data.SqlClient
                 flag = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
                 if (flag)
                 {
+                    // Publish option/pool metadata before releasing the busy state back to a stable closed state.
                     _userConnectionOptions = connectionOptions;
                     _poolGroup = poolGroup;
-                    _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+                    SetInnerConnectionTo(DbConnectionClosedNeverOpened.SingletonInstance);
                 }
             }
             if (!flag)
