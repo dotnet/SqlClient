@@ -1116,6 +1116,10 @@ namespace Microsoft.Data.Common
             GetConnectionReturnsNull,
             ConnectionOptionsMissing,
             CouldNotSwitchToClosedPreviouslyOpenedState,
+            InvalidSourceStateForSetInnerConnectionTo,
+            FailedToCommitSetInnerConnectionTo,
+            InvalidSourceStateForSetInnerConnectionEvent,
+            FailedToCommitSetInnerConnectionEvent,
         }
 
         internal static Exception InternalConnectionError(ConnectionError internalError)

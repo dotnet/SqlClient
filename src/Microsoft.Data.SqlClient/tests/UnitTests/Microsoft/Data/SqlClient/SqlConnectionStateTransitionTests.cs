@@ -30,6 +30,7 @@ public class SqlConnectionStateTransitionTests
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => connection.TryOpenInner(null));
         Assert.NotNull(exception);
+        Assert.Same(DbConnectionClosedPreviouslyOpened.SingletonInstance, connection.InnerConnection);
     }
 
     /// <summary>
@@ -45,6 +46,7 @@ public class SqlConnectionStateTransitionTests
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => connection.TryOpenInner(null));
         Assert.NotNull(exception);
+        Assert.Same(DbConnectionClosedPreviouslyOpened.SingletonInstance, connection.InnerConnection);
     }
 
     /// <summary>
@@ -191,14 +193,14 @@ public class SqlConnectionStateTransitionTests
         /// <param name="outerConnection">Owning outer connection.</param>
         /// <param name="connectionFactory">Factory used to mutate inner state.</param>
         /// <param name="retry">Retry continuation.</param>
-        /// <param name="userOptions">User connection options.</param>
         /// <returns>Always <see langword="true"/>.</returns>
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
+            // Mirror the real open path by committing through a valid transitional source state first.
+            connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this);
             connectionFactory.SetInnerConnectionTo(outerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance);
             return true;
         }
@@ -209,14 +211,14 @@ public class SqlConnectionStateTransitionTests
         /// <param name="outerConnection">Owning outer connection.</param>
         /// <param name="connectionFactory">Factory used to mutate inner state.</param>
         /// <param name="retry">Retry continuation.</param>
-        /// <param name="userOptions">User connection options.</param>
         /// <returns>Always <see langword="true"/>.</returns>
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
+            // Mirror the real replace path by committing through a valid transitional source state first.
+            connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedBusy.SingletonInstance, this);
             connectionFactory.SetInnerConnectionTo(outerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance);
             return true;
         }
