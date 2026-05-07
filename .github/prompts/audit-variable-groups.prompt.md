@@ -125,7 +125,7 @@ Present a clear summary table to the user **before making any changes**. The sum
 
 **This is a mandatory gate — do NOT skip or auto-approve.**
 
-Ask the user to confirm before applying any changes. Use the ask-questions tool to present the options so the user must actively choose. Offer options:
+Ask the user to confirm before applying any changes and require an explicit selection from the options below (do not infer approval from ambiguous replies). Offer options:
 - **Apply all** — apply every proposed change from step 4
 - **Apply subset** — let the user specify which groups to update (by name or ID)
 - **Export script** — write all update commands to a shell script file for the user to inspect and run manually. Do NOT execute any updates. Save the script to a path the user specifies (default: `./audit-variable-group-updates.sh`). The script must include the full `az` CLI commands and REST API `curl` fallbacks (for AzureKeyVault-type groups) with comments identifying each group by name and ID. Mark the file executable.
