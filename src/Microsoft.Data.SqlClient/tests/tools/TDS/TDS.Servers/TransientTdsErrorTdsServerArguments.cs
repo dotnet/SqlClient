@@ -25,5 +25,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// The number of times the transient error should be raised.
         /// </summary>
         public int RepeatCount { get; set; } = 1;
+
+        /// <summary>
+        /// Error class (severity) to emit in ERROR token.
+        /// Fatal starts at 20 (TdsEnums.FATAL_ERROR_CLASS), so use values below 20
+        /// to avoid automatic break/doom behavior in the client.
+        /// </summary>
+        public byte ErrorClass { get; set; } = 20;
     }
 }
