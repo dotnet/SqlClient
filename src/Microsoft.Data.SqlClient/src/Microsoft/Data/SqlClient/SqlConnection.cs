@@ -2423,13 +2423,13 @@ namespace Microsoft.Data.SqlClient
                 originalInnerConnection != DbConnectionClosedConnecting.SingletonInstance)
             {
                 // SetInnerConnectionTo is only valid while leaving a known transitional state.
-                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+                throw ADP.InternalConnectionError(ADP.ConnectionError.InvalidSourceStateForSetInnerConnectionTo);
             }
 
             if (originalInnerConnection != Interlocked.CompareExchange(ref _innerConnection, to, originalInnerConnection))
             {
                 // Reject stale writers when another thread already advanced the state machine.
-                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+                throw ADP.InternalConnectionError(ADP.ConnectionError.FailedToCommitSetInnerConnectionTo);
             }
         }
 
@@ -2467,7 +2467,7 @@ namespace Microsoft.Data.SqlClient
                 originalInnerConnection != DbConnectionClosedConnecting.SingletonInstance)
             {
                 // Evented transitions are valid only from the two expected transitional sources.
-                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+                throw ADP.InternalConnectionError(ADP.ConnectionError.InvalidSourceStateForSetInnerConnectionEvent);
             }
 
             ConnectionState originalState = originalInnerConnection.State & ConnectionState.Open;
@@ -2476,7 +2476,7 @@ namespace Microsoft.Data.SqlClient
             if (originalInnerConnection != Interlocked.CompareExchange(ref _innerConnection, to, originalInnerConnection))
             {
                 // Ensure event and close-count side effects are tied to a committed transition only.
-                throw ADP.InternalConnectionError(ADP.ConnectionError.CouldNotSwitchToClosedPreviouslyOpenedState);
+                throw ADP.InternalConnectionError(ADP.ConnectionError.FailedToCommitSetInnerConnectionEvent);
             }
 
             if ((originalState != currentState) && (ConnectionState.Closed == currentState))
