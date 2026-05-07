@@ -50,7 +50,7 @@ steps:
     retryCountOnTaskFailure: 1
     inputs:
       command: build
-      projects: build.proj
+      projects: build2.proj
       arguments: >-
         -t:${{ parameters.buildTarget }}
         -p:Configuration=Release
@@ -65,9 +65,9 @@ steps:
     retryCountOnTaskFailure: 2
     inputs:
       command: build
-      projects: build.proj
-      arguments: >-
-        -t:TestSqlClientUnit
+      projects: build2.proj
+      arguments: >
+        -t:TestMdsUnit
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
 
@@ -77,9 +77,9 @@ steps:
     retryCountOnTaskFailure: 2
     inputs:
       command: build
-      projects: build.proj
-      arguments: >-
-        -t:TestSqlClientFunctional
+      projects: build2.proj
+      arguments: >
+        -t:TestMdsFunctional
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
 
@@ -89,9 +89,9 @@ steps:
     retryCountOnTaskFailure: 2
     inputs:
       command: build
-      projects: build.proj
-      arguments: >-
-        -t:TestSqlClientManual
+      projects: build2.proj
+      arguments: >
+        -t:TestMdsManual
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
 
