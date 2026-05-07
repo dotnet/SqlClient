@@ -676,7 +676,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
-                    FailoverPartner = "localhost:1234",
+                    FailoverPartner = "localhost,1234",
                 });
             failoverServer.Start();
 
@@ -685,7 +685,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
-                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
 
@@ -696,7 +696,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
-                FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
@@ -797,7 +797,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using TdsServer failoverServer = new(
                 new TdsServerArguments
                 {
-                    FailoverPartner = "localhost:1234",
+                    FailoverPartner = "localhost,1234",
                 });
             failoverServer.Start();
 
@@ -806,7 +806,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
-                    FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
 
@@ -818,7 +818,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0,
                 Encrypt = false,
-                FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}",
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
