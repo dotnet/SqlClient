@@ -387,7 +387,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
-            // The fix: login-phase errors must NOT trigger failover alternation
+            // Login-phase errors must NOT trigger failover alternation
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
@@ -490,7 +490,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
-            // The fix: login-phase errors must NOT trigger failover alternation
+            // Login-phase errors must NOT trigger failover alternation
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
@@ -655,7 +655,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
-            // The fix: login-phase errors must NOT trigger failover alternation
+            // Login-phase errors must NOT trigger failover alternation
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
@@ -706,7 +706,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
-            // The fix: login-phase errors must NOT trigger failover alternation
+            // Login-phase errors must NOT trigger failover alternation
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
