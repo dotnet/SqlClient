@@ -80,7 +80,7 @@
   <PropertyGroup>
 
     <!-- Spec and proj paths. -->
-    <SqlClientPackNuspecTemplatePath>$(RepoRoot)tools/specs/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
+    <SqlClientPackNuspecTemplatePath>$(MSBuildProjectDirectory)/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
     <SqlClientPackNuspecGeneratedPath>$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
 
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
@@ -98,11 +98,10 @@
     <!--
       Root used to resolve relative file paths in the nuspec (for example lib/ and runtimes/).
       The SDK pack targets do not provide a default value; PackTask receives this value as-is.
-      This project packs from a generated nuspec under obj/, but template file paths are authored
-      relative to tools/specs, so this must point to the template directory. Clearing this causes
-      path resolution failures (for example looking under src/Microsoft.Data.SqlClient/src/icons).
+      Artifact entries in this nuspec are authored relative to the repo artifacts directory so
+      this must point to $(RepoRoot)artifacts.
     -->
-    <NuspecBasePath>$([System.IO.Path]::GetDirectoryName('$(SqlClientPackNuspecTemplatePath)'))</NuspecBasePath>
+    <NuspecBasePath>$(RepoRoot)artifacts</NuspecBasePath>
 
     <!--
       Semicolon-separated key=value substitutions for $KEY$ tokens in nuspec metadata.
