@@ -1,0 +1,71 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # General Parameters =====================================================
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  - name: buildSuffix
+    type: string
+
+  # Platform Parameters ====================================================
+
+  - name: platformDisplayName
+    type: string
+
+  - name: platformDotnet
+    type: string
+
+  - name: platformImage
+    type: string
+
+  # Test Parameters ========================================================
+
+  - name: packageShortName
+    type: string
+    values:
+      - Azure
+      - AkvProvider
+      - Abstractions
+      - Logging
+      - SqlClient
+      - SqlServer
+
+  - name: testDisplayName
+    type: string
+
+  - name: testProject
+    type: string
+    default: ''
+
+jobs:
+  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
+    displayName: "${{ parameters.testDisplayName}}_${{ parameters.platformDisplayName }}"
+
+    pool:
+      vmImage: ${{ parameters.platformImage }}
+
+    steps:
+      # @TODO: Include retry
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          ${{ if not(contains(parameters.platformDotnet, 'net4')) }}:
+            runtimes:
+              - "${{ replace(parameters.platformDotnet, 'net', '') }}.x"
+
+      - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          buildSuffix: ${{ parameters.buildSuffix }}
+
+          packageShortName: ${{ parameters.packageShortName }}
+          targetFramework: ${{ parameters.platformDotnet }}
+          testProject: ${{ parameters.testProject }}

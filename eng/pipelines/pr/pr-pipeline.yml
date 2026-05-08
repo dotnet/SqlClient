@@ -1,0 +1,52 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(DayOfYear)$(Rev:rr)
+
+#parameters:
+
+variables:
+  - template: /eng/pipelines/common/variables/common-variables.yml@self
+
+stages:
+  # Stage 1: Build and pack all projects in the repository
+  - template: /eng/pipelines/pr/stages/build-and-pack-stage.yml
+    parameters:
+      buildConfiguration: Debug
+      buildSuffix: pr
+
+  # Stage 2: Execute tests
+  - template: /eng/pipelines/pr/stages/test-stages.yml
+    parameters:
+      buildConfiguration: Debug
+      buildSuffix: pr
+      platforms:
+        # @TODO: Expand to cover different SQL Server targets
+        - displayName: "windows_net462"
+          image: "windows-latest"
+          dotnet: "net462"
+        - displayName: "windows_net8"
+          image: "windows-latest"
+          dotnet: "net8.0"
+        - displayName: "windows_net9"
+          image: "windows-latest"
+          dotnet: "net9.0"
+        - displayName: "windows_net10"
+          image: "windows-latest"
+          dotnet: "net10.0"
+
+        - displayName: "linux_net8"
+          image: "ubuntu-latest"
+          dotnet: "net8.0"
+        - displayName: "linux_net9"
+          image: "ubuntu-latest"
+          dotnet: "net9.0"
+        - displayName: "linux_net10"
+          image: "ubuntu-latest"
+          dotnet: "net10.0"
+
+  # Stage 3: Collect and report code coverage
+  # @TODO: ^^^

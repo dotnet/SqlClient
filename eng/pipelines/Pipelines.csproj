@@ -27,6 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="prci\variables\" />
+    <Folder Include="pr\variables\" />
   </ItemGroup>
 </Project>

@@ -45,7 +45,7 @@ stages:
 
           # ################################################################
           # Build/Pack Microsoft.Data.SqlClient
-          - template: /eng/pipelines/prci/steps/pack-buildproj-step.yml
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeeded() # Only run if dotnet was installed successfully
 
@@ -55,7 +55,7 @@ stages:
 
           # ################################################################
           # Build/Pack Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-          - template: /eng/pipelines/prci/steps/pack-buildproj-step.yml
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
 
@@ -65,7 +65,7 @@ stages:
 
           # ################################################################
           # Build/Pack Microsoft.Data.SqlClient.Extensions.Abstractions
-          - template: /eng/pipelines/prci/steps/pack-buildproj-step.yml
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
 
@@ -75,7 +75,7 @@ stages:
 
           # ################################################################
           # Build/Pack Microsoft.Data.SqlClient.Extensions.Azure
-          - template: /eng/pipelines/prci/steps/pack-buildproj-step.yml
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
 
@@ -85,7 +85,7 @@ stages:
 
           # ################################################################
           # Build/Pack Microsoft.Data.SqlClient.Internal.Logging
-          - template: /eng/pipelines/prci/steps/pack-buildproj-step.yml
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
 
@@ -95,7 +95,7 @@ stages:
 
           # ################################################################
           # Build/Pack Microsoft.SqlServer.Server
-          - template: /eng/pipelines/prci/steps/pack-buildproj-step.yml
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
 

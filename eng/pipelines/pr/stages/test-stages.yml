@@ -1,0 +1,102 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# These stages are meant to validate a PR against a battery of tests to ensure confidence in the
+# changes the PR presents. There is, however, a balance to be struck between completeness of
+# confidence and expedience of validation.
+
+parameters:
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  - name: buildSuffix
+    type: string
+
+  # This is an array of objects with the following fields:
+  # - displayName - Friendly name to use when displaying the stage name and job names. This must
+  #                 only contain alphanumeric characters and '_'. It will be used for both display
+  #                 name fields and stage/job names.
+  # - dotnet      - Version of dotnet runtime to use to execute the tests
+  # - image       - Image to use to execute the test jobs in the pipeline
+  #
+  # Each one of the objects in this parameter will become a stage that executes all test projects
+  # available.
+  - name: platforms
+    type: object
+    default: []
+
+stages:
+  - ${{ each platform in parameters.platforms }}:
+      - stage: "test_${{ platform.displayName }}"
+        displayName: "Test: ${{ platform.displayName }}"
+        dependsOn: "build_and_pack_projects"
+
+        jobs:
+          # TestAbstractions
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+
+              packageShortName: "Abstractions"
+              testDisplayName: "abstractions"
+
+          # TestAzure
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+
+              packageShortName: "Azure"
+              testDisplayName: "azure"
+
+          # TestSqlClientFunctional
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+
+              packageShortName: "SqlClient"
+              testDisplayName: "sqlclient_functional"
+              testProject: "Functional"
+
+          # TestSqlClientManual - PR subset
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+
+              packageShortName: "SqlClient"
+              testDisplayName: "sqlclient_manual"
+              testProject: "Manual"
+
+          # TestSqlClientUnit
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+
+              packageShortName: "SqlClient"
+              testDisplayName: "sqlclient_unit"
+              testProject: "Unit"
