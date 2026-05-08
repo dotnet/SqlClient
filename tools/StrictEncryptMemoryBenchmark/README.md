@@ -1,6 +1,6 @@
 # Strict Encrypt Memory Benchmark
 
-Detects the **SChannel TLS session ticket cache leak** (native memory OOM) when using `Encrypt=Strict` with SQL Authentication. The leak causes ~45 KB of native heap per TLS connection to accumulate unboundedly.
+Detects the **SChannel TLS session ticket cache leak** (native memory OOM) when using `Encrypt=Strict` with SQL Authentication. The leak causes ~88–108 KB of native heap per unique TLS 1.3 connection to accumulate unboundedly in SChannel's process-global session ticket cache.
 
 Two modes:
 1. **Long-running** (recommended) — simulates production workload: thousands of connections tracking private bytes growth over time
@@ -78,6 +78,7 @@ dotnet run -c Release -- --long-running --connections 10000 --encrypt Strict --n
 | `--no-pooling` | Disable pooling (forces TLS handshake each time) | pooling enabled |
 | `--hostname-in-certificate <host>` | Expected hostname in server cert | from env var |
 | `--server-certificate <path>` | Path to CA certificate for Strict validation | from env var |
+| `--managed-sni` | Use managed SNI (SslStream) instead of native SChannel | native SNI |
 | `--csv <file>` | Append results to CSV for comparison | — |
 
 ### Output Columns
@@ -102,12 +103,18 @@ dotnet run -c Release -- --long-running --connections 10000 --encrypt Strict --n
 - **Both Strict and Mandatory leak**: Issue is in general TLS teardown
 - **Only Strict leaks**: Issue is specific to TDS 8.0 code path
 
-### Expected Results
+### Expected Results (May 2026)
 
-| Encrypt Mode | Private MB at 2400 conns | Per-Conn KB | Leak? |
-|-------------|--------------------------|-------------|-------|
-| **Strict** | ~133 MB (growing) | ~52 KB | **YES** |
-| **Mandatory** | ~26 MB (flat) | ~4 KB | No |
+| Driver / Mode | Encrypt | TLS | Pooling | Per-Conn KB | Leak? |
+|---------------|---------|-----|---------|-------------|-------|
+| SqlClient Native SNI | Strict | 1.3 | Off | **~108 KB** | **YES** |
+| SqlClient Native SNI | Strict | 1.3 | On | ~1.17 KB | No |
+| SqlClient Managed SNI | Strict | 1.3 | Off | flat | No |
+| SqlClient Native SNI | Mandatory | 1.2 | Off | ~4 KB | No |
+| ODBC Driver 18 | Strict | 1.3 | Off | **~88.6 KB** | **YES** |
+| ODBC Driver 18 | Strict | 1.3 | On | ~0.76 KB | No |
+
+Both ODBC and SqlClient native SNI leak equally without pooling — the issue is in Windows SChannel's TLS 1.3 session ticket cache, not driver-specific. See [ODBC benchmark](../OdbcMemoryBenchmark/) for comparison.
 
 ## BenchmarkDotNet Mode
 

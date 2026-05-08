@@ -19,7 +19,14 @@ internal static class NativeMemoryLeakDetector
         int batchSize = GetArgValue(args, "--batch", 100);
         string encryptMode = GetArgString(args, "--encrypt", "Strict");
         bool pooling = !args.Any(a => a.Equals("--no-pooling", StringComparison.OrdinalIgnoreCase));
+        bool useManagedSni = args.Any(a => a.Equals("--managed-sni", StringComparison.OrdinalIgnoreCase));
         string? csvPath = GetArgString(args, "--csv", null);
+
+        // Force managed SNI if requested (bypasses SChannel entirely)
+        if (useManagedSni)
+        {
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+        }
 
         var server = Environment.GetEnvironmentVariable("BENCHMARK_SERVER")!;
         var database = Environment.GetEnvironmentVariable("BENCHMARK_DATABASE") ?? "master";
@@ -62,6 +69,7 @@ internal static class NativeMemoryLeakDetector
 
         Console.WriteLine("=== SChannel TLS Session Cache Leak Detector ===");
         Console.WriteLine($"Microsoft.Data.SqlClient: {typeof(SqlConnection).Assembly.GetName().Version}");
+        Console.WriteLine($"SNI:             {(useManagedSni ? "Managed (.NET SslStream)" : "Native (SChannel)")}");
         Console.WriteLine($"Server:          {server}");
         Console.WriteLine($"Database:        {database}");
         Console.WriteLine($"User:            {user}");
