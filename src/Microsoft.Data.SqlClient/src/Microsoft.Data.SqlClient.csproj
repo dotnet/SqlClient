@@ -178,9 +178,9 @@
     </PropertyGroup>
 
     <Error Condition="'$(_AbstractionsPackageVersionTrimmed)' == ''"
-      Text="AbstractionsPackageVersion is required for SqlClient packaging. Specify -p:AbstractionsPackageVersion=&lt;version&gt; or ensure the Abstractions Versions.props import can resolve a value." />
+      Text="AbstractionsPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionAbstractions=&lt;version&gt;; when packing the project directly, set -p:AbstractionsPackageVersion=&lt;version&gt;; otherwise ensure the Abstractions Versions.props import can resolve a value." />
     <Error Condition="'$(_LoggingPackageVersionTrimmed)' == ''"
-      Text="LoggingPackageVersion is required for SqlClient packaging. Specify -p:LoggingPackageVersion=&lt;version&gt; or ensure the Logging Versions.props import can resolve a value." />
+      Text="LoggingPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionLogging=&lt;version&gt;; when packing the project directly, set -p:LoggingPackageVersion=&lt;version&gt;; otherwise ensure the Logging Versions.props import can resolve a value." />
 
     <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>

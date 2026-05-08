@@ -29,9 +29,9 @@
     <tags>sqlclient microsoft.data.sqlclient</tags>
 
     <!--
-      We require the $AbstractionsPackageVersion$ and $LoggingPackageVersion$
-      properties to be supplied on the nuget pack command line to indicate which
-      version of the Abstractions and Logging packages we depend on.
+      Dependency versions are materialized before dotnet pack runs. They may be
+      supplied explicitly by the caller or resolved from the sibling Versions.props
+      fallback used by the SqlClient pack flow.
     -->
 
     <dependencies>
@@ -121,8 +121,11 @@
     <file src="..\src\Microsoft.Data.SqlClient\src\PackageReadme.md" target="README.md" />
 
     <!--
-      We require the $ReferenceType$ property to be supplied on the nuget pack
-      command line to indicate where the DLLs are.
+      All file paths are relative to the artifacts directory created by the build, so
+      the pack flow sets NuspecBasePath to that artifacts directory.
+
+      The pack flow supplies $ReferenceType$ to indicate which build output layout
+      should be packaged.
     -->
 
     <!-- Lib Binaries ================================================== -->
