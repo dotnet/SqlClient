@@ -13,7 +13,7 @@ variables:
 
 stages:
   # Stage 1: Build and pack all projects in the repository
-  - template: /eng/pipelines/pr/stages/build-and-pack-stage.yml
+  - template: /eng/pipelines/pr/stages/pack-stage.yml
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
