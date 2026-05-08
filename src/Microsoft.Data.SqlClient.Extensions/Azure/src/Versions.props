@@ -66,9 +66,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <AzurePackageVersion>$(AzureVersionDefault)-$(BuildSuffix)</AzurePackageVersion>
+        <AzurePackageVersion>$(AzureVersionDefault)-dev</AzurePackageVersion>
         <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </Otherwise>

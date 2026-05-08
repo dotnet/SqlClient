@@ -67,9 +67,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <AbstractionsPackageVersion>$(AbstractionsVersionDefault)-$(BuildSuffix)</AbstractionsPackageVersion>
+        <AbstractionsPackageVersion>$(AbstractionsVersionDefault)-dev</AbstractionsPackageVersion>
         <AbstractionsFileVersion>$(AbstractionsVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AbstractionsFileVersion>
       </PropertyGroup>
     </Otherwise>
