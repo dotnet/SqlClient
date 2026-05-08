@@ -12,10 +12,10 @@
 #
 # Schedule: daily at 08:00 UTC on release/6.1.
 #
-# Job breakdown (11 total):
-#   Stage: windows           → 6 jobs  (net8/9/10 × NativeSNI/ManagedSNI)
+# Job breakdown (8 total):
+#   Stage: windows           → 4 jobs  (net8/9 × NativeSNI/ManagedSNI)
 #   Stage: windows_netfx     → 1 job   (net462 NativeSNI)
-#   Stage: linux             → 3 jobs  (net8, net9, net10 — ManagedSNI only)
+#   Stage: linux             → 2 jobs  (net8, net9 — ManagedSNI only)
 #   Stage: Merge-Code-Coverage → 1 job
 #
 # Shared steps:
@@ -75,7 +75,7 @@ variables:
 stages:
 
   # ===========================================================================
-  # Stage 1 - Windows .NET (6 jobs = net8/9/10 × NativeSNI/ManagedSNI)
+  # Stage 1 - Windows .NET (4 jobs = net8/9 × NativeSNI/ManagedSNI)
   # ===========================================================================
   - stage: windows
     displayName: Windows
@@ -87,7 +87,7 @@ stages:
     jobs:
 
       # -----------------------------------------------------------------------
-      # .NET Windows jobs (net8 / net9 / net10, Native + Managed SNI)
+      # .NET Windows jobs (net8 / net9, Native + Managed SNI)
       # -----------------------------------------------------------------------
       - job: windows_netcore
         displayName: Windows .NET
@@ -111,12 +111,6 @@ stages:
               managedSNI: 'false'
             net9_ManagedSNI:
               testFramework: net9.0
-              managedSNI: 'true'
-            net10_NativeSNI:
-              testFramework: net10.0
-              managedSNI: 'false'
-            net10_ManagedSNI:
-              testFramework: net10.0
               managedSNI: 'true'
         pool:
           name: ADO-Trusted-Domain-Win-WestUS2
@@ -269,7 +263,7 @@ stages:
               artifactName: net462-NativeSNI-$(System.JobId)
 
   # ===========================================================================
-  # Stage 3 - Linux - .NET + Kerberos (3 jobs = 3 TFs)
+  # Stage 3 - Linux - .NET + Kerberos (2 jobs = 2 TFs)
   # ===========================================================================
   - stage: linux
     displayName: Linux
@@ -290,8 +284,6 @@ stages:
               testFramework: net8.0
             net9:
               testFramework: net9.0
-            net10:
-              testFramework: net10.0
         pool:
           name: ADO-Trusted-Linux-WestUS2
           demands:
@@ -377,5 +369,5 @@ stages:
         parameters:
           image: ADO-MMS22-SQL19
           pool: ADO-Trusted-Domain-Win-WestUS2
-          targetFrameworks: [net462, net8.0, net9.0, net10.0]
+          targetFrameworks: [net462, net8.0, net9.0]
           upload: false
