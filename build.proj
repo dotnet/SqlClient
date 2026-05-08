@@ -86,11 +86,6 @@
     <PackBuildArgument Condition="'$(PackBuild.ToLower())' != 'true'">
       --no-build
     </PackBuildArgument>
-    <!--
-      SqlClient packaging uses dotnet pack and keeps this dependency gate so signed-binary workflows
-      can still set PackBuild=false and package pre-built artifacts.
-    -->
-    <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
 
     <!--
       PackageVersionAbstractions
@@ -518,25 +513,23 @@
 
   <!-- Pack SqlClient Target ===================================================== -->
   <!--
+    SqlClient packaging uses the output from multiple projects, so we cannot simply ask dotnet
+    pack to package the SqlClient project alone.  We must ensure that all of the satellite
+    projects are built as well.  To achieve this, when PackBuild is true, we add the compound
+    BuildSqlClient target as a dependency of PackSqlClient.  This ensures all SqlClient targets are
+    built before packing.
+  -->
+  <PropertyGroup>
+    <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
+  </PropertyGroup>
+
+  <!--
     PackSqlClient: Packages SqlClient binaries with dotnet pack.
     The package layout is defined by a nuspec file because we package the artifacts from multiple
     projects into a single .nupkg file.
   -->
   <Target Name="PackSqlClient" DependsOnTargets="$(PackSqlClientDependsOn)">
     <PropertyGroup>
-      <GitCommand>
-        git rev-parse HEAD
-      </GitCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <GitCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GitCommand), "\s+", " "))</GitCommand>
-    </PropertyGroup>
-    <Message Text=">>> Fetching latest git commit hash via command: $(GitCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(GitCommand)">
-      <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
-    </Exec>
-
-    <PropertyGroup>
-      <CommitId>$([System.Text.RegularExpressions.Regex]::Replace($(CommitId), "\s", ""))</CommitId>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(SqlClientProjectPath)"
         -p:Configuration=$(Configuration)
@@ -554,7 +547,6 @@
         $(PackageVersionLoggingArgument)
 
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
-        -p:CommitId="$(CommitId)"
         -p:PackageOutputPath="$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->

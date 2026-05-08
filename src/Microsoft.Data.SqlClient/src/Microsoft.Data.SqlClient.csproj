@@ -111,7 +111,7 @@
       version attribute tokens are not reliably substituted and are pre-expanded in
       PrepareSqlClientPackNuspec.
     -->
-    <NuspecProperties>Version=$(Version);COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
+    <NuspecProperties>Version=$(Version);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
 
     <!-- Emit a .snupkg symbols package alongside the main .nupkg. -->
     <IncludeSymbols>true</IncludeSymbols>
@@ -165,7 +165,15 @@
     * dotnet/sdk#15407
     * dotnet/sdk#16816
   -->
-  <Target Name="PrepareSqlClientPackNuspec" BeforeTargets="GenerateNuspec">
+  <Target Name="PrepareSqlClientPackNuspec"
+          BeforeTargets="GenerateNuspec"
+          DependsOnTargets="InitializeSourceControlInformation">
+
+    <!-- Mirror SDK pack behavior: default CommitId from SourceRevisionId when not explicitly set. -->
+    <PropertyGroup>
+      <CommitId Condition="'$(CommitId)' == ''">$(SourceRevisionId)</CommitId>
+      <NuspecProperties>$(NuspecProperties);COMMITID=$(CommitId)</NuspecProperties>
+    </PropertyGroup>
 
     <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>
