@@ -67,9 +67,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <LoggingPackageVersion>$(LoggingVersionDefault)-$(BuildSuffix)</LoggingPackageVersion>
+        <LoggingPackageVersion>$(LoggingVersionDefault)-dev</LoggingPackageVersion>
         <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
       </PropertyGroup>
     </Otherwise>

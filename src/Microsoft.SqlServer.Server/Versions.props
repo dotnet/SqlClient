@@ -67,9 +67,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <SqlServerPackageVersion>$(SqlServerVersionDefault)-$(BuildSuffix)</SqlServerPackageVersion>
+        <SqlServerPackageVersion>$(SqlServerVersionDefault)-dev</SqlServerPackageVersion>
         <SqlServerFileVersion>$(SqlServerVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
       </PropertyGroup>
     </Otherwise>
