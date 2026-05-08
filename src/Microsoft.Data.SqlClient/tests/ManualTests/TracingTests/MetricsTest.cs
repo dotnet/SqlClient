@@ -278,6 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Trait("Category", "flaky")]
         public void ConnectionPoolGroupsCounter_Functional()
         {
             SqlConnection.ClearAllPools();

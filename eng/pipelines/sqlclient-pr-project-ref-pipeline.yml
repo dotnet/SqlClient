@@ -46,12 +46,12 @@ pr:
       - tools/*
       - azurepipelines-coverage.yml
       - build.proj
-      - build2.proj
       - Directory.Packages.props
       - dotnet-tools.json
       - global.json
       - NuGet.config
     exclude:
+      - eng/pipelines/kerberos/*
       - eng/pipelines/onebranch/*
       - eng/pipelines/stress/*
 
