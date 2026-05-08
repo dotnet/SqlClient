@@ -292,4 +292,7 @@ stages:
     jobs:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
         parameters:
+          image: ADO-MMS22-SQL19
+          pool: ADO-Trusted-Domain-Win-WestUS2
+          targetFrameworks: [net462, net8.0, net9.0, net10.0]
           upload: false
