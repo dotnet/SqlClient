@@ -34,9 +34,6 @@ package the project. The `build.proj` file provides convenient targets to accomp
 > is recommended that `build.proj` is used for local development, as well.
 
 > [!TIP]
-> Use `dotnet build` with `build.proj` for local and CI workflows in this repository.
-
-> [!TIP]
 > This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is available in
 > [`build.proj`](build.proj).
 
