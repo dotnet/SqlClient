@@ -12,10 +12,9 @@
 #
 # Schedule: daily at 08:00 UTC on release/6.1.
 #
-# Job breakdown (10 total):
-#   Stage: windows
-#     windows_netcore → 6 jobs  (net8/9/10 × NativeSNI/ManagedSNI)
-#     windows_netfx   → 1 job   (net462 NativeSNI)
+# Job breakdown (11 total):
+#   Stage: windows           → 6 jobs  (net8/9/10 × NativeSNI/ManagedSNI)
+#   Stage: windows_netfx     → 1 job   (net462 NativeSNI) — runs in parallel
 #   Stage: linux             → 3 jobs  (net8, net9, net10 — ManagedSNI only)
 #   Stage: Merge-Code-Coverage → 1 job
 #
@@ -76,9 +75,7 @@ variables:
 stages:
 
   # ===========================================================================
-  # Stage 1 - Windows
-  #   windows_netcore: net8/9/10 × NativeSNI/ManagedSNI  (6 jobs)
-  #   windows_netfx:   net462 NativeSNI only              (1 job)
+  # Stage 1 - Windows .NET Core (6 jobs = net8/9/10 × NativeSNI/ManagedSNI)
   # ===========================================================================
   - stage: windows
     displayName: Windows
@@ -190,11 +187,17 @@ stages:
               testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
               artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
 
-      # -----------------------------------------------------------------------
-      # .NET Framework Windows job (net462, NativeSNI only)
-      # -----------------------------------------------------------------------
+  # ===========================================================================
+  # Stage 2 - Windows .NET Framework (1 job — runs in parallel with windows/linux)
+  # ===========================================================================
+  - stage: windows_netfx
+    displayName: Windows .NET Framework
+    dependsOn: []
+    variables:
+      - group: kv-sqldrivers-shared
+    jobs:
       - job: windows_netfx
-        displayName: Windows .NET Framework
+        displayName: Windows .NET Framework (net462)
         timeoutInMinutes: 90
         workspace:
           clean: all
@@ -266,7 +269,7 @@ stages:
               artifactName: net462-NativeSNI-$(System.JobId)
 
   # ===========================================================================
-  # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
+  # Stage 3 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
   # ===========================================================================
   - stage: linux
     displayName: Linux
@@ -360,12 +363,13 @@ stages:
               kerberosDomainPassword: $(KerberosDomainPassword)
 
   # ===========================================================================
-  # Stage 3 — Merge Code Coverage (1 job)
+  # Stage 4 — Merge Code Coverage (1 job)
   # ===========================================================================
   - stage: merge
     displayName: Merge Code Coverage
     dependsOn:
       - windows
+      - windows_netfx
       - linux
     condition: succeededOrFailed()
     jobs:
