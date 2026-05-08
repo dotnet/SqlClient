@@ -181,7 +181,8 @@ stages:
               buildTargets:
                 - BuildNetCore
                 - BuildNetFx
-                - BuildTests
+                - BuildTestsNetCore
+                - BuildTestsNetFx
               testFramework: $(testFramework)
               testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
               artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)

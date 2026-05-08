@@ -55,6 +55,7 @@ steps:
         arguments: >-
           -t:${{ target }}
           -p:Configuration=Release
+          -p:TF=${{ parameters.testFramework }}
 
   # ---------------------------------------------------------------------------
   # Run tests in separate steps to permit focused retries.
