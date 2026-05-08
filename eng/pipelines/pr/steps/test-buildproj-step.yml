@@ -34,7 +34,7 @@ parameters:
       - SqlClient
       - SqlServer
 
-  - name: targetFramework
+  - name: testFramework
     type: string
 
   # If the project to test has multiple projects supported by build.proj, use this optional
@@ -55,4 +55,4 @@ steps:
         -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
         -p:BuildNumber='$(Build.BuildNumber)'
         -p:BuildSuffix='${{ parameters.buildSuffix }}'
-        -p:TargetFramework='${{ parameters.targetFramework }}'
+        -p:TestFramework=${{ parameters.testFramework }}

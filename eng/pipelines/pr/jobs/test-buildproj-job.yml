@@ -67,5 +67,5 @@ jobs:
           buildSuffix: ${{ parameters.buildSuffix }}
 
           packageShortName: ${{ parameters.packageShortName }}
-          targetFramework: ${{ parameters.platformDotnet }}
+          testFramework: ${{ parameters.platformDotnet }}
           testProject: ${{ parameters.testProject }}
