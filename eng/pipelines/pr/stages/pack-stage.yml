@@ -104,7 +104,7 @@ stages:
               packageShortName: SqlServer
 
           # Emit the build output
-          - script: tree /a /f $(BUILD_OUTPUT)
+          - script: tree -a $(BUILD_OUTPUT)
             displayName: Output Build Output Tree
             condition: succeededOrFailed()
 
