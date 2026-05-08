@@ -85,6 +85,8 @@
 
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
+    <AbstractionsVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props</AbstractionsVersionsPropsPath>
+    <LoggingVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props</LoggingVersionsPropsPath>
 
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
 
@@ -127,6 +129,15 @@
   </PropertyGroup>
 
   <!--
+    Conditionally import the Abstractions and Logging Versions.props files to obtain their
+    calculated package version values.
+  -->
+  <Import Project="$(AbstractionsVersionsPropsPath)"
+    Condition="'$(AbstractionsPackageVersion)' == '' AND Exists('$(AbstractionsVersionsPropsPath)')" />
+  <Import Project="$(LoggingVersionsPropsPath)"
+    Condition="'$(LoggingPackageVersion)' == '' AND Exists('$(LoggingVersionsPropsPath)')" />
+
+  <!--
     SDK pack does not reliably substitute dependency version tokens in this nuspec flow.
     We materialize those dependency versions into an intermediate nuspec before PackTask runs.
 
@@ -135,10 +146,10 @@
     * During SDK-style packing, dependency token substitution is not consistently applied in this flow.
     * Expanding tokens up front guarantees deterministic dependency versions in the final package metadata.
 
-    Why sibling package versions are evaluated here:
+    Why sibling package versions are resolved here:
     * Pack entrypoints may call this project directly and omit Abstractions/Logging version overrides.
     * Those versions must still align with sibling projects' versioning rules (BuildNumber/BuildSuffix and defaults).
-    * Querying each sibling project for its computed package version preserves a single source of version truth.
+    * Conditional imports of sibling Versions.props preserve a single source of version truth.
 
     Known SDK behavior (SDK 10.0.107):
     * Tokens in NuspecProperties are substituted for string-valued metadata fields (for example $Version$).
@@ -155,46 +166,6 @@
     * dotnet/sdk#16816
   -->
   <Target Name="PrepareSqlClientPackNuspec" BeforeTargets="GenerateNuspec">
-
-    <!-- Calculate AbstractionsPackageVersion if not already set. -->
-    <PropertyGroup Condition="'$(AbstractionsPackageVersion)' == ''">
-      <GetAbstractionsPackageVersionCommand>
-        "$(DOTNET_HOST_PATH)" msbuild "$(AbstractionsProjectPath)"
-        -nologo
-        -verbosity:quiet
-        -getProperty:AbstractionsPackageVersion
-        -p:BuildNumber=$(BuildNumber)
-        -p:BuildSuffix=$(BuildSuffix)
-      </GetAbstractionsPackageVersionCommand>
-      <GetAbstractionsPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetAbstractionsPackageVersionCommand), "\s+", " "))</GetAbstractionsPackageVersionCommand>
-    </PropertyGroup>
-    <Exec ConsoleToMsBuild="true" Command="$(GetAbstractionsPackageVersionCommand)"
-      Condition="'$(AbstractionsPackageVersion)' == ''">
-      <Output TaskParameter="ConsoleOutput" PropertyName="AbstractionsPackageVersion" />
-    </Exec>
-    <PropertyGroup Condition="'$(GetAbstractionsPackageVersionCommand)' != ''">
-      <AbstractionsPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(AbstractionsPackageVersion), "\s", ""))</AbstractionsPackageVersion>
-    </PropertyGroup>
-
-    <!-- Calculate LoggingPackageVersion if not already set. -->
-    <PropertyGroup Condition="'$(LoggingPackageVersion)' == ''">
-      <GetLoggingPackageVersionCommand>
-        "$(DOTNET_HOST_PATH)" msbuild "$(LoggingProjectPath)"
-        -nologo
-        -verbosity:quiet
-        -getProperty:LoggingPackageVersion
-        -p:BuildNumber=$(BuildNumber)
-        -p:BuildSuffix=$(BuildSuffix)
-      </GetLoggingPackageVersionCommand>
-      <GetLoggingPackageVersionCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GetLoggingPackageVersionCommand), "\s+", " "))</GetLoggingPackageVersionCommand>
-    </PropertyGroup>
-    <Exec ConsoleToMsBuild="true" Command="$(GetLoggingPackageVersionCommand)"
-      Condition="'$(LoggingPackageVersion)' == ''">
-      <Output TaskParameter="ConsoleOutput" PropertyName="LoggingPackageVersion" />
-    </Exec>
-    <PropertyGroup Condition="'$(GetLoggingPackageVersionCommand)' != ''">
-      <LoggingPackageVersion>$([System.Text.RegularExpressions.Regex]::Replace($(LoggingPackageVersion), "\s", ""))</LoggingPackageVersion>
-    </PropertyGroup>
 
     <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>
