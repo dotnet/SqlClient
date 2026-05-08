@@ -91,9 +91,9 @@
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
 
     <!--
-      Path to the nuspec to pack from. Initialized to the template path so
-      PrepareSqlClientPackNuspec can detect that it is still the template and switch to the
-      generated intermediate nuspec before GenerateNuspec runs.
+      Path to the nuspec to pack from. Initialized to the template path. During
+      PrepareSqlClientPackNuspec this is always switched to the generated intermediate nuspec
+      before GenerateNuspec runs.
     -->
     <NuspecFile>$(SqlClientPackNuspecTemplatePath)</NuspecFile>
 
@@ -122,7 +122,7 @@
     <!--
       Keep dependency information sourced from the nuspec; do not auto-generate from project
       references.  This is necessary because, with NuspecFile-based pack, all dependency information
-      must come from the nuspec file.  The SDK will not auotmatically populate dependencies for us.
+      must come from the nuspec file.  The SDK will not automatically populate dependencies for us.
     -->
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
 
@@ -173,7 +173,14 @@
     <PropertyGroup>
       <CommitId Condition="'$(CommitId)' == ''">$(SourceRevisionId)</CommitId>
       <NuspecProperties>$(NuspecProperties);COMMITID=$(CommitId)</NuspecProperties>
+      <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
+      <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>
     </PropertyGroup>
+
+    <Error Condition="'$(_AbstractionsPackageVersionTrimmed)' == ''"
+      Text="AbstractionsPackageVersion is required for SqlClient packaging. Specify -p:AbstractionsPackageVersion=&lt;version&gt; or ensure the Abstractions Versions.props import can resolve a value." />
+    <Error Condition="'$(_LoggingPackageVersionTrimmed)' == ''"
+      Text="LoggingPackageVersion is required for SqlClient packaging. Specify -p:LoggingPackageVersion=&lt;version&gt; or ensure the Logging Versions.props import can resolve a value." />
 
     <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>
