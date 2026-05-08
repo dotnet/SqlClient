@@ -13,7 +13,9 @@
 # Schedule: daily at 08:00 UTC on release/6.1.
 #
 # Job breakdown (10 total):
-#   Stage: windows           → 7 jobs  (net462 + net8/9/10 × NativeSNI/ManagedSNI)
+#   Stage: windows
+#     windows_netcore → 6 jobs  (net8/9/10 × NativeSNI/ManagedSNI)
+#     windows_netfx   → 1 job   (net462 NativeSNI)
 #   Stage: linux             → 3 jobs  (net8, net9, net10 — ManagedSNI only)
 #   Stage: Merge-Code-Coverage → 1 job
 #
@@ -74,7 +76,9 @@ variables:
 stages:
 
   # ===========================================================================
-  # Stage 1 - Windows (7 jobs = net462 + 3 TFs × 2 ManagedSNI)
+  # Stage 1 - Windows
+  #   windows_netcore: net8/9/10 × NativeSNI/ManagedSNI  (6 jobs)
+  #   windows_netfx:   net462 NativeSNI only              (1 job)
   # ===========================================================================
   - stage: windows
     displayName: Windows
@@ -84,20 +88,21 @@ stages:
       # exposed by this variable group.
       - group: kv-sqldrivers-shared
     jobs:
-      - job: windows
-        displayName: Windows
+
+      # -----------------------------------------------------------------------
+      # .NET Core Windows jobs (net8 / net9 / net10, Native + Managed SNI)
+      # -----------------------------------------------------------------------
+      - job: windows_netcore
+        displayName: Windows .NET
         timeoutInMinutes: 90
         workspace:
-          clean: all    # Purge obj/artifacts from prior runs on self-hosted agents
+          clean: all
         strategy:
           matrix:
             # Azure Pipelines exposes matrix variables as environment variables for each step.
             # Do not use the name targetFramework here: MSBuild imports environment variables as
             # properties, and TargetFramework would leak into dotnet build build.proj, forcing
             # transitive project references onto an invalid TFM (for example SqlServer.Server -> net9.0).
-            net462_NativeSNI:
-              testFramework: net462
-              managedSNI: 'false'
             net8_NativeSNI:
               testFramework: net8.0
               managedSNI: 'false'
@@ -180,12 +185,85 @@ stages:
             parameters:
               buildTargets:
                 - BuildNetCore
-                - BuildNetFx
                 - BuildTestsNetCore
-                - BuildTestsNetFx
               testFramework: $(testFramework)
               testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
               artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
+
+      # -----------------------------------------------------------------------
+      # .NET Framework Windows job (net462, NativeSNI only)
+      # -----------------------------------------------------------------------
+      - job: windows_netfx
+        displayName: Windows .NET Framework
+        timeoutInMinutes: 90
+        workspace:
+          clean: all
+        variables:
+          testFramework: net462
+          managedSNI: 'false'
+        pool:
+          name: ADO-Trusted-Domain-Win-WestUS2
+          demands:
+            - ImageOverride -equals ADO-MMS22-SQL19
+        steps:
+
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            fetchTags: false
+
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+            parameters:
+              runtimes: [8.x, 9.x]
+
+          # --- Update test configuration ---
+          - pwsh: |
+              $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+              foreach ($p in $jdata) {
+                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
+                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
+                  $p.SupportsIntegratedSecurity = $true
+                  $p.UseManagedSNIOnWindows    = $false
+              }
+              $jdata | ConvertTo-Json | Set-Content "config.json"
+            workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+            displayName: Update test config.json
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+
+          # --- Prepare Windows services ---
+          - powershell: |
+              $svc = Get-Service -Name SQLBrowser -ErrorAction SilentlyContinue
+              if ($null -ne $svc) {
+                  Set-Service -StartupType Automatic SQLBrowser
+                  if ($svc.Status -ne 'Running') { Start-Service SQLBrowser }
+                  Get-Service SQLBrowser | Select-Object Name, StartType, Status
+              }
+            displayName: Start SQL Server Browser
+
+          - powershell: |
+              Set-DtcNetworkSetting -DtcName "Local" `
+                -InboundTransactionsEnabled $true `
+                -OutboundTransactionsEnabled $true `
+                -RemoteClientAccessEnabled $true `
+                -Confirm:$false
+
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC)"      | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC-EPMAP)" | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-Out)"   | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+            displayName: Enable Network DTC Access
+
+          # --- Build and test ---
+          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+            parameters:
+              buildTargets:
+                - BuildNetFx
+                - BuildTestsNetFx
+              testFramework: $(testFramework)
+              testRunTitle: Windows-net462-NativeSNI
+              artifactName: net462-NativeSNI-$(System.JobId)
 
   # ===========================================================================
   # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
