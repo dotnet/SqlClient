@@ -7,8 +7,8 @@
 # Shared build-and-test steps used by both the Windows and Linux Kerberos jobs.
 #
 # Parameters:
-#   buildTarget   — The build.proj target that builds SqlClient for the current
-#                   OS (e.g. BuildSqlClientWindows or BuildSqlClientUnix).
+#   buildTargets  — Ordered build.proj targets to run before tests (for
+#                   example BuildNetCore, BuildNetFx, BuildTestsNetCore).
 #   testFramework — The TFM to test against (e.g. net9.0, net462).
 #   testRunTitle  — Title for the published test results (displayed in the ADO
 #                   Tests tab).
@@ -17,9 +17,9 @@
 
 parameters:
 
-  # build.proj target to build SqlClient for the current OS.
-  - name: buildTarget
-    type: string
+  # Ordered build.proj targets to run before test execution.
+  - name: buildTargets
+    type: object
 
   # TFM to pass to the test targets (-p:TestFramework).
   - name: testFramework
@@ -39,21 +39,22 @@ steps:
   # Build
   # ---------------------------------------------------------------------------
 
-  # Build the given target.
+  # Build the configured targets in order.
   #
   # The test stages build as part of their targets, but this separate step isolates build failures
   # so we can fail fast before running tests. Retries are enabled intentionally (1 attempt for
   # build, 2 attempts for test steps) to reduce transient infrastructure-related failures.
   #
-  - task: DotNetCoreCLI@2
-    displayName: Build SqlClient
-    retryCountOnTaskFailure: 1
-    inputs:
-      command: build
-      projects: build.proj
-      arguments: >-
-        -t:${{ parameters.buildTarget }}
-        -p:Configuration=Release
+  - ${{ each target in parameters.buildTargets }}:
+    - task: DotNetCoreCLI@2
+      displayName: Build (${{ target }})
+      retryCountOnTaskFailure: 1
+      inputs:
+        command: build
+        projects: build.proj
+        arguments: >-
+          -t:${{ target }}
+          -p:Configuration=Release
 
   # ---------------------------------------------------------------------------
   # Run tests in separate steps to permit focused retries.
@@ -67,8 +68,8 @@ steps:
       command: build
       projects: build.proj
       arguments: >-
-        -t:TestSqlClientUnit
-        -p:TestFramework=${{ parameters.testFramework }}
+        -t:RunUnitTests
+        -p:TF=${{ parameters.testFramework }}
         -p:Configuration=Release
 
   # Run the Functional Test suite.
@@ -79,8 +80,8 @@ steps:
       command: build
       projects: build.proj
       arguments: >-
-        -t:TestSqlClientFunctional
-        -p:TestFramework=${{ parameters.testFramework }}
+        -t:RunFunctionalTests
+        -p:TF=${{ parameters.testFramework }}
         -p:Configuration=Release
 
   # Run the Manual Test suite.
@@ -91,8 +92,8 @@ steps:
       command: build
       projects: build.proj
       arguments: >-
-        -t:TestSqlClientManual
-        -p:TestFramework=${{ parameters.testFramework }}
+        -t:RunManualTests
+        -p:TF=${{ parameters.testFramework }}
         -p:Configuration=Release
 
   # ---------------------------------------------------------------------------

@@ -28,6 +28,7 @@ pr:
       - build.proj
       - NuGet.config
     exclude:
+      - eng/pipelines/kerberos/*
       - eng/pipelines/onebranch/*
 
 # Commit triggers for CI runs on specified branches.

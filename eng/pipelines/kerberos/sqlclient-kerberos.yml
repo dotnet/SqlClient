@@ -10,7 +10,7 @@
 # Daily Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
 # Replaces the Classic "Test-SqlClient-Kerberos-Azure" pipeline.
 #
-# Schedule: daily at 07:00 UTC on main, release/6.1, and release/7.0.
+# Schedule: daily at 08:00 UTC on release/6.1.
 #
 # Job breakdown (10 total):
 #   Stage: windows           → 7 jobs  (net462 + net8/9/10 × NativeSNI/ManagedSNI)
@@ -38,13 +38,11 @@ trigger: none   # Scheduled runs only — no CI trigger
 pr: none        # Not triggered by PRs
 
 schedules:
-  - cron: '0 7 * * *'
-    displayName: Daily run (07:00 UTC)
+  - cron: '0 8 * * *'
+    displayName: Daily run (08:00 UTC)
     branches:
       include:
-        - main
         - release/6.1
-        - release/7.0
     always: true
 
 name: $(date:yyyyMMdd)$(rev:.r)
@@ -180,7 +178,10 @@ stages:
           # --- Build and test ---
           - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
             parameters:
-              buildTarget: BuildSqlClientWindows
+              buildTargets:
+                - BuildNetCore
+                - BuildNetFx
+                - BuildTests
               testFramework: $(testFramework)
               testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
               artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
@@ -265,7 +266,9 @@ stages:
           # --- Build and test ---
           - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
             parameters:
-              buildTarget: BuildSqlClientUnix
+              buildTargets:
+                - BuildNetCore
+                - BuildTestsNetCore
               testFramework: $(testFramework)
               testRunTitle: Linux-$(testFramework)
               artifactName: $(testFramework)-linux-$(System.JobId)
