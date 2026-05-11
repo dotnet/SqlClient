@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -98,7 +99,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (cipherAlgorithmName == null)
                 {
-                    throw SQL.NullColumnEncryptionAlgorithm(SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetRegisteredCipherAlgorithmNames());
+                    throw SQL.NullColumnEncryptionAlgorithm(EncryptionAlgorithmFactoryList.RegisteredCipherAlgorithmNames);
                 }
 
                 return cipherAlgorithmName;
@@ -206,7 +207,7 @@ namespace Microsoft.Data.SqlClient
             md.CipherAlgorithm = null;
             SqlClientEncryptionAlgorithm cipherAlgorithm = null;
             string algorithmName = ValidateAndGetEncryptionAlgorithmName(md.CipherAlgorithmId, md.CipherAlgorithmName); // may throw
-            SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetAlgorithm(symKey, md.EncryptionType, algorithmName, out cipherAlgorithm); // will validate algorithm name and type
+            EncryptionAlgorithmFactoryList.GetAlgorithm(symKey, md.EncryptionType, algorithmName, out cipherAlgorithm); // will validate algorithm name and type
             Debug.Assert(cipherAlgorithm is not null);
             md.CipherAlgorithm = cipherAlgorithm;
             md.EncryptionKeyInfo = encryptionkeyInfoChosen;
