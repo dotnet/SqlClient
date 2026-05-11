@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <Import Project="Versions.props" Condition="'$(AbstractionsVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(AbstractionsAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(AbstractionsFileVersion)</FileVersion>

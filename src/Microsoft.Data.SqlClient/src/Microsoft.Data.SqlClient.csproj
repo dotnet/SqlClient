@@ -50,7 +50,7 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../Versions.props" />
+  <Import Project="../Versions.props" Condition="'$(SqlClientVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlClientFileVersion)</FileVersion>

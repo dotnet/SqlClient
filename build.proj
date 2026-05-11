@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
-
-  <!-- Import each project's Versions.props to apply default version numbers in Package mode. -->
-  <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />
-  <Import Project="src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props" />
-  <Import Project="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props" />
-  <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
-  <Import Project="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Versions.props" />
-  <Import Project="src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props" />
 
   <!-- Build Parameters ================================================ -->
   <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
@@ -112,7 +105,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''">$(AbstractionsPackageVersion)</PackageVersionAbstractions>
+    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''" />
     <PackageVersionAbstractionsArgument Condition="'$(PackageVersionAbstractions)' != ''">
       -p:AbstractionsPackageVersion=$(PackageVersionAbstractions)
     </PackageVersionAbstractionsArgument>
@@ -128,7 +121,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''">$(AkvProviderPackageVersion)</PackageVersionAkvProvider>
+    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''" />
     <PackageVersionAkvProviderArgument Condition="'$(PackageVersionAkvProvider)' != ''">
       -p:AkvProviderPackageVersion=$(PackageVersionAkvProvider)
     </PackageVersionAkvProviderArgument>
@@ -144,7 +137,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''">$(AzurePackageVersion)</PackageVersionAzure>
+    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
     <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
       -p:AzurePackageVersion=$(PackageVersionAzure)
     </PackageVersionAzureArgument>
@@ -169,7 +162,7 @@
       Default value:  [blank]
       Example:        1.0.1-dev2345
     -->
-    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''">$(LoggingPackageVersion)</PackageVersionLogging>
+    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''" />
     <PackageVersionLoggingArgument Condition="'$(PackageVersionLogging)' != ''">
       -p:LoggingPackageVersion=$(PackageVersionLogging)
     </PackageVersionLoggingArgument>
@@ -193,7 +186,7 @@
       Default value:  [blank]
       Example:        7.0.0-preview4
     -->
-    <PackageVersionSqlClient Condition="'$(PackageVersionSqlClient)' == ''">$(SqlClientPackageVersion)</PackageVersionSqlClient>
+    <PackageVersionSqlClient Condition="'$(PackageVersionSqlClient)' == ''" />
     <PackageVersionSqlClientArgument Condition="'$(PackageVersionSqlClient)' != ''">
       -p:SqlClientPackageVersion=$(PackageVersionSqlClient)
     </PackageVersionSqlClientArgument>
@@ -207,7 +200,7 @@
       Default value:  [blank]
       Example:        1.0.0-dev2345
     -->
-    <PackageVersionSqlServer Condition="'$(PackageVersionSqlServer)' == ''">$(SqlServerPackageVersion)</PackageVersionSqlServer>
+    <PackageVersionSqlServer Condition="'$(PackageVersionSqlServer)' == ''" />
     <PackageVersionSqlServerArgument Condition="'$(PackageVersionSqlServer)' != ''">
       -p:SqlServerPackageVersion=$(PackageVersionSqlServer)
     </PackageVersionSqlServerArgument>
@@ -216,13 +209,15 @@
       ReferenceType
       Applies to:     BuildSqlClient, BuildSqlClientUnix, BuildSqlClientWindows
       Description:    Determines how to build SqlClient. If set to "Project", any cross-project
-                      references (eg, Abstractions from SqlClient) will be made as project references. If
-                      set to "Package", package references will be made instead. When running in
-                      package mode, target versions can be specified via PackageVersion* build
-                      parameters. If these are not provided, defaults are evaluated from each
-                      package's Versions.props and applied via Directory.Packages.props. When
-                      running in project mode, the
-                      dependencies will be built automatically.
+                      references (eg, Abstractions from SqlClient) will be made as project
+                      references. If set to "Package", package references will be made instead. When
+                      running in package mode, target versions can be specified via PackageVersion*
+                      build parameters. If these are not provided, the central feed version will be
+                      used instead (see Directory.Packages.props). In package mode, all Pack*
+                      targets also mirror their .nupkg/.snupkg output into the local NuGet feed
+                      directory (packages/) so that downstream builds in the same invocation can
+                      restore them without a separate feed publish step. When running in project
+                      mode, the dependencies will be built automatically.
 
       Applies to:     TestSqlClientFunctional, TestSqlClientManual
       Description:    Determines whether to test against a project reference or a package version
@@ -235,6 +230,7 @@
     <ReferenceTypeArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
       -p:ReferenceType=Package
     </ReferenceTypeArgument>
+
     <!--
       SigningKeyPath
       Applies to:     Build*, Pack*
@@ -378,6 +374,7 @@
     <SqlClientProjectPath>$(SqlClientSrcRoot)src/Microsoft.Data.SqlClient.csproj</SqlClientProjectPath>
     <SqlClientRefProjectPath>$(SqlClientSrcRoot)ref/Microsoft.Data.SqlClient.csproj</SqlClientRefProjectPath>
     <SqlClientNotSupportedProjectPath>$(SqlClientSrcRoot)notsupported/Microsoft.Data.SqlClient.csproj</SqlClientNotSupportedProjectPath>
+    <SqlClientPackageArtifactRoot>$(SqlClientArtifactRoot)$(ReferenceType)-$(Configuration)/</SqlClientPackageArtifactRoot>
 
     <!-- Test Project Paths -->
     <SqlClientFunctionalTestProjectPath>$(SqlClientSrcRoot)tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</SqlClientFunctionalTestProjectPath>
@@ -570,13 +567,24 @@
         $(PackageVersionLoggingArgument)
 
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
-        -p:PackageOutputPath="$(SqlClientArtifactRoot)/$(ReferenceType)-$(Configuration)"
+        -p:PackageOutputPath="$(SqlClientPackageArtifactRoot)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Text=">>> Packing SqlClient via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
+    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+      <SqlClientPackedArtifacts Include="$(SqlClientPackageArtifactRoot)*.nupkg" />
+      <SqlClientPackedArtifacts Include="$(SqlClientPackageArtifactRoot)*.snupkg" />
+    </ItemGroup>
+    <Copy
+      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      SourceFiles="@(SqlClientPackedArtifacts)"
+      DestinationFolder="$(PackagesDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 
   <!-- Test SqlClient Targets ==================================================== -->
@@ -677,6 +685,7 @@
   <PropertyGroup>
     <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
     <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
+    <AkvProviderArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/$(Configuration)/</AkvProviderArtifactRoot>
   </PropertyGroup>
 
   <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider -->
@@ -735,14 +744,27 @@
 
     <Message Text=">>> Packaging Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
+    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+      <AkvProviderPackedArtifacts Include="$(AkvProviderArtifactRoot)*.nupkg" />
+      <AkvProviderPackedArtifacts Include="$(AkvProviderArtifactRoot)*.snupkg" />
+    </ItemGroup>
+    <Copy
+      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      SourceFiles="@(AkvProviderPackedArtifacts)"
+      DestinationFolder="$(PackagesDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
+
   <PropertyGroup>
     <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
     <AbstractionsProjectPath>$(AbstractionsSrcRoot)src/Abstractions.csproj</AbstractionsProjectPath>
     <AbstractionsTestProjectPath>$(AbstractionsSrcRoot)test/Abstractions.Test.csproj</AbstractionsTestProjectPath>
+    <AbstractionsArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.Extensions.Abstractions/$(Configuration)/</AbstractionsArtifactRoot>
   </PropertyGroup>
 
   <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
@@ -797,6 +819,17 @@
 
     <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
+    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+      <AbstractionsPackedArtifacts Include="$(AbstractionsArtifactRoot)*.nupkg" />
+      <AbstractionsPackedArtifacts Include="$(AbstractionsArtifactRoot)*.snupkg" />
+    </ItemGroup>
+    <Copy
+      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      SourceFiles="@(AbstractionsPackedArtifacts)"
+      DestinationFolder="$(PackagesDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 
   <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
@@ -833,6 +866,7 @@
     <AzureSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/</AzureSrcRoot>
     <AzureProjectPath>$(AzureSrcRoot)src/Azure.csproj</AzureProjectPath>
     <AzureTestProjectPath>$(AzureSrcRoot)test/Azure.Test.csproj</AzureTestProjectPath>
+    <AzureArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.Extensions.Azure/$(Configuration)/</AzureArtifactRoot>
   </PropertyGroup>
 
   <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
@@ -887,6 +921,17 @@
 
     <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
+    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+      <AzurePackedArtifacts Include="$(AzureArtifactRoot)*.nupkg" />
+      <AzurePackedArtifacts Include="$(AzureArtifactRoot)*.snupkg" />
+    </ItemGroup>
+    <Copy
+      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      SourceFiles="@(AzurePackedArtifacts)"
+      DestinationFolder="$(PackagesDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 
   <!-- TestAzure: Runs Microsoft.Data.SqlClient.Extensions.Azure.Tests -->
@@ -923,6 +968,7 @@
   <PropertyGroup>
     <LoggingSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/src/</LoggingSrcRoot>
     <LoggingProjectPath>$(LoggingSrcRoot)Logging.csproj</LoggingProjectPath>
+    <LoggingArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.Internal.Logging/$(Configuration)/</LoggingArtifactRoot>
   </PropertyGroup>
 
   <!-- BuildLogging: Builds Microsoft.Data.SqlClient.Internal.Logging -->
@@ -966,6 +1012,17 @@
 
     <Message Text=">>> Packaging Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
+    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+      <LoggingPackedArtifacts Include="$(LoggingArtifactRoot)*.nupkg" />
+      <LoggingPackedArtifacts Include="$(LoggingArtifactRoot)*.snupkg" />
+    </ItemGroup>
+    <Copy
+      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      SourceFiles="@(LoggingPackedArtifacts)"
+      DestinationFolder="$(PackagesDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 
   <!-- ================================================================= -->
@@ -1017,5 +1074,16 @@
 
     <Message Text=">>> Packaging Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+
+    <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
+    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+      <SqlServerPackedArtifacts Include="$(PackagesDir)Microsoft.SqlServer.Server*.nupkg" />
+      <SqlServerPackedArtifacts Include="$(PackagesDir)Microsoft.SqlServer.Server*.snupkg" />
+    </ItemGroup>
+    <Copy
+      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      SourceFiles="@(SqlServerPackedArtifacts)"
+      DestinationFolder="$(PackagesDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 </Project>
