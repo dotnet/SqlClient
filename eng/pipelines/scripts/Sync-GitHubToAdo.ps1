@@ -169,15 +169,13 @@ if ($remoteExists) {
 
 git fetch github $GitHubBranch --verbose
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to fetch '$GitHubBranch' from GitHub."
-    exit 1
+    throw "Failed to fetch '$GitHubBranch' from GitHub."
 }
 
 # Resolve the SHA of the fetched GitHub branch.
 $githubSha = git rev-parse "github/$GitHubBranch"
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to resolve SHA for 'github/$GitHubBranch'."
-    exit 1
+    throw "Failed to resolve SHA for 'github/$GitHubBranch'."
 }
 Write-Host "GitHub HEAD : $githubSha"
 
@@ -204,14 +202,12 @@ Write-Host ""
 Write-Host "Updating sync branch '$SyncBranchName' to GitHub HEAD..."
 git checkout -B $SyncBranchName "github/$GitHubBranch" --quiet
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to create sync branch."
-    exit 1
+    throw "Failed to create sync branch."
 }
 
 git push origin $SyncBranchName --force --quiet
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to push sync branch to ADO."
-    exit 1
+    throw "Failed to push sync branch to ADO."
 }
 Write-Host "Sync branch pushed successfully."
 
