@@ -24,6 +24,10 @@ parameters:
     - name: mdsPackageVersion
       type: string
 
+    - name: mdsArtifactName
+      type: string
+      default: ''
+
     - name: publishSymbols
       type: boolean
 
@@ -92,7 +96,7 @@ jobs:
           type: windows
 
       variables:
-          ob_outputDirectory: '$(ARTIFACT_PATH)'
+          ob_outputDirectory: '$(artifactDirectory)'
 
       steps:
           - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
@@ -102,8 +106,30 @@ jobs:
                 $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
+          - ${{ if ne(parameters.mdsArtifactName, '') }}:
+            - download: current
+              artifact: '${{ parameters.mdsArtifactName }}'
+              patterns: '**/*.*nupkg'
+              displayName: 'Download MDS NuGet Package'
+
+            - powershell: |
+                  $downloadedPath = Resolve-Path "$(Pipeline.Workspace)/${{ parameters.mdsArtifactName }}"
+                  Write-Host "Adding local NuGet source: $downloadedPath"
+
+                  [Xml] $nugetConfig = Get-Content -Path "$(REPOROOT)/NuGet.config"
+                  $newAdd = $nugetConfig.CreateElement("add")
+                  $newAdd.SetAttribute("key", "MDS Local Package")
+                  $newAdd.SetAttribute("value", "$downloadedPath")
+                  $nugetConfig.configuration.packageSources.AppendChild($newAdd)
+                  $nugetConfig.Save("$(REPOROOT)/NuGet.config")
+
+                  Write-Host "Updated NuGet.config:"
+                  Get-Content -Path "$(REPOROOT)/NuGet.config"
+              displayName: 'Add MDS package as local NuGet source'
+
           - template: /eng/pipelines/onebranch/steps/compound-build-akv-step.yml@self
             parameters:
+                referenceType: 'Package'
                 assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
@@ -114,7 +140,7 @@ jobs:
                     buildConfiguration: '${{ parameters.buildConfiguration }}'
                     dllPath: '${{ parameters.apiScanDllPath }}'
                     pdbPath: '${{ parameters.apiScanPdbPath }}'
-                    referenceType: Package
+                    referenceType: 'Package'
                     targetFramework: '${{ targetFramework }}'
 
           - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-akv-step.yml@self
@@ -134,7 +160,7 @@ jobs:
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.nugetPackageVersion }}'
                 nuspecPath: '$(REPOROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
-                outputDirectory: '$(ARTIFACT_PATH)'
+                outputDirectory: '$(artifactDirectory)'
                 referenceType: 'Package'
 
           - ${{ if eq(parameters.isOfficialBuild, true) }}:

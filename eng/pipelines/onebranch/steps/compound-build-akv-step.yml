@@ -22,6 +22,10 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  - name: referenceType
+    type: string
+    default: 'Package'
+
 steps:
   - task: DownloadSecureFile@1
     displayName: 'Download Signing Key'
@@ -42,8 +46,8 @@ steps:
             -t:BuildAkv
             -p:AssemblyFileVersion=${{ parameters.assemblyFileVersion }}
             -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
-            -p:ReferenceType=Package
+            -p:ReferenceType=${{ parameters.referenceType }}
             -p:SigningKeyPath=$(signingKey.secureFilePath)
 
-  - script: tree /a /f $(BUILD_OUTPUT)
-    displayName: Output Build Output Tree
+  - script: tree /a /f $(Build.SourcesDirectory)/artifacts/
+    displayName: Output Build Artifacts directory

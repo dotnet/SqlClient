@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <!--Generating Strong Name-->
-  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)'=='Official' Or '$(CDP_BUILD_TYPE)'=='Buddy'">
+  <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
