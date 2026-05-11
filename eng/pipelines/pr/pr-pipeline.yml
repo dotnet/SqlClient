@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-name: $(DayOfYear).$(Rev:rr)
+name: $(DayOfYear)$(Rev:rr)
 
 variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
