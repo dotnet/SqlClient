@@ -26,7 +26,7 @@
 #
 #   https://sqlclientdrivers.visualstudio.com/ADO.Net/_build?definitionId=2263
 
-# Set the pipeline run name to the day-of-year and the daily run counter.
+# Set the pipeline run name to the calendar date (yyyyMMdd) and the daily run counter.
 name: Sync-$(Date:yyyyMMdd)$(Rev:.r)
 
 # Do not trigger this pipeline on commits or PRs.
