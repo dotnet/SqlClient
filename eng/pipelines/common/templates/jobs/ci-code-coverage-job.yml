@@ -124,6 +124,11 @@ jobs:
                 }
             }
 
+            if ($jobs.Count -eq 0) {
+                Write-Error "No .coverage files found in $InputDirectoryPath. Cannot merge."
+                exit 1
+            }
+
             Write-Host "Merging started..."
             Wait-Job -Job $jobs
 

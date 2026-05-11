@@ -61,6 +61,11 @@ steps:
   # Run tests in separate steps to permit focused retries.
   # ---------------------------------------------------------------------------
 
+  # Set a shared job variable so all test and publish steps use one results path.
+  - pwsh: |
+      Write-Host "##vso[task.setvariable variable=ResultsDirectory]$(Build.SourcesDirectory)/TestResults"
+    displayName: Set test results directory variable
+
   # Run the Unit Test suite.
   - task: DotNetCoreCLI@2
     displayName: Run Unit Tests (${{ parameters.testFramework }})
@@ -72,6 +77,7 @@ steps:
         -t:RunUnitTests
         -p:TF=${{ parameters.testFramework }}
         -p:Configuration=Release
+        -p:ResultsDirectory=$(ResultsDirectory)
 
   # Run the Functional Test suite.
   - task: DotNetCoreCLI@2
@@ -84,6 +90,7 @@ steps:
         -t:RunFunctionalTests
         -p:TF=${{ parameters.testFramework }}
         -p:Configuration=Release
+        -p:ResultsDirectory=$(ResultsDirectory)
 
   # Run the Manual Test suite.
   - task: DotNetCoreCLI@2
@@ -96,41 +103,42 @@ steps:
         -t:RunManualTests
         -p:TF=${{ parameters.testFramework }}
         -p:Configuration=Release
+        -p:ResultsDirectory=$(ResultsDirectory)
 
   # ---------------------------------------------------------------------------
   # Publish results & coverage
   # ---------------------------------------------------------------------------
 
-  # Publish the TRX test results to the pipeline run.
-  - task: PublishTestResults@2
-    displayName: Publish Test Results
-    condition: succeededOrFailed()
-    inputs:
-      testResultsFormat: VSTest
-      # build.proj defines TestResultsFolderPath which defaults to
-      # $(Build.SourcesDirectory)/test_results, so we look there for the results and coverage files.
-      testResultsFiles:  $(Build.SourcesDirectory)/test_results/**/*.trx
-      mergeTestResults: true
-      testRunTitle: ${{ parameters.testRunTitle }}
-      buildConfiguration: Release
-
   # Azure Pipelines task conditions do not support path existence checks directly,
   # so compute this once and gate later steps on the variable.
   - pwsh: |
-      $resultsDir = "$(Build.SourcesDirectory)/test_results"
+      $resultsDir = "$(ResultsDirectory)"
       if (Test-Path -LiteralPath $resultsDir) {
         Write-Host "##vso[task.setvariable variable=HasTestResultsDir]true"
       }
       else {
         Write-Host "##vso[task.setvariable variable=HasTestResultsDir]false"
       }
-    displayName: Detect test_results directory
+    displayName: Detect TestResults directory
     condition: succeededOrFailed()
+
+  # Publish the TRX test results to the pipeline run.
+  - task: PublishTestResults@2
+    displayName: Publish Test Results
+    condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
+    inputs:
+      testResultsFormat: VSTest
+      # build.proj defaults ResultsDirectory to 'TestResults' (relative to the source root).
+      # We override it to an absolute path in the test steps above.
+      testResultsFiles: $(ResultsDirectory)/**/*.trx
+      mergeTestResults: true
+      testRunTitle: ${{ parameters.testRunTitle }}
+      buildConfiguration: Release
 
   # Give our coverage files a unique name to make it clear where they originated when we download
   # the artifacts from all jobs in the merge stage.
   - pwsh: |
-      cd $(Build.SourcesDirectory)/test_results
+      cd $(ResultsDirectory)
       Get-ChildItem -Filter "*.coverage" -Recurse |
         Rename-Item -NewName { "${{ parameters.testFramework }}" + $_.Name }
     displayName: Rename coverage files
@@ -142,5 +150,5 @@ steps:
     displayName: Publish Test Artifacts
     condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
     inputs:
-      targetPath: $(Build.SourcesDirectory)/test_results
+      targetPath: $(ResultsDirectory)
       artifact: ${{ parameters.artifactName }}
