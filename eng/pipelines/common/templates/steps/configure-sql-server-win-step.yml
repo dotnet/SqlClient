@@ -62,8 +62,21 @@ parameters:
     type: string
     default: $(LocalDbSharedInstanceName)
 
+# Step execution order:
+#   1. Enable TCP, NP & Firewall   — Enable TCP and Named Pipes protocols, open firewall ports
+#   2. Create SQL user              — Create test login/user, grant sysadmin, enable SA; restarts SQL if needed
+#   3. Enable FileStream [Win]      — (conditional) Enable FileStream via WMI; sp_configure deferred to step 8
+#   4. Create FileStreamFolder      — (conditional) Create the FileStream data directory
+#   5. Setup SQL Alias              — Register TCP aliases in x86/x64 registry paths
+#   6. Add SQL Certificate          — Generate self-signed cert, trust it, bind to SQL Server, grant key access
+#   7. Restart SQL Server           — Restart to pick up protocol, cert, and FileStream WMI changes; wait for readiness
+#   8. Configure FileStream Access  — (conditional) Run sp_configure filestream_access_level after restart
+#   9. Start SQL Server Browser     — Start the Browser service for named-instance discovery
+#  10. Enable LocalDB               — (conditional) Start and share the LocalDB instance
+
 steps:
 
+  # Step 1: Enable TCP, Named Pipes protocols and configure Windows Firewall rules.
   # GOTCHA: We must use the Windows-only powershell task here instead of the cross-platform pwsh
   # task because we call some Windows-specific cmdlets.
   - powershell: |
@@ -108,6 +121,9 @@ steps:
     displayName: 'Enable TCP, NP & Firewall [Win]'
     retryCountOnTaskFailure: 2
 
+  # Step 2: Create test login and user with sysadmin privileges, enable and set the SA password.
+  # If SQL Server is unresponsive (e.g. after protocol changes), this step will restart it once
+  # and retry before failing.
   - powershell: |
       $password = "${{ parameters.saPassword }}"
 
@@ -150,7 +166,7 @@ steps:
                   Start-Sleep -Seconds 5
                   continue
               }
-              if ($tries -ge 10) {
+              if ($tries -ge 10) {  
                   Write-Host "##[error]Failed to create database user after $tries tries (including a restart)."
                   throw
               }
@@ -163,6 +179,9 @@ steps:
       SQL_USER: ${{parameters.user }}
       SQL_PASSWD: ${{ parameters.saPassword }}
 
+  # Step 3: Enable FileStream at the OS/WMI level (conditional on SQLRootPath being set).
+  # Only the WMI flag is toggled here. The T-SQL sp_configure call happens in step 8,
+  # after the full SQL Server restart in step 7, to avoid needing a double restart.
   - ${{ if ne(parameters.SQLRootPath, '') }}:
     - powershell: |
         #Enable FileStream via WMI.
@@ -174,6 +193,7 @@ steps:
         Write-Host "FileStream enabled via WMI for instance '$instance'."
       displayName: 'Enable FileStream [Win]'
 
+  # Step 4: Create the FileStream data directory (conditional on fileStreamDirectory being set).
   - ${{ if ne(parameters.FileStreamDirectory, '') }}:
     - powershell: |
         New-Item -Path ${{ parameters.fileStreamDirectory }} -ItemType Directory
@@ -181,6 +201,8 @@ steps:
       retryCountOnTaskFailure: 1
       continueOnError: true
 
+  # Step 5: Register TCP-based SQL Server aliases in both x86 and x64 registry hives
+  # so test connections using the alias name resolve to the correct host and port.
   - powershell: |
       $SQLServerName = ("{0}" -f [System.Net.Dns]::GetHostByName($env:computerName).HostName)
       Write-Host  FQDN is: $SQLServerName
@@ -199,6 +221,9 @@ steps:
       New-ItemProperty -Path ${{parameters.x64AliasRegistryPath }} -Name ${{parameters.SQLAliasName }} -PropertyType string -Value $TCPAliasName
     displayName: 'Setup SQL Alias [Win]'
 
+  # Step 6: Generate a self-signed TLS certificate, add it to the trusted root store,
+  # bind it to all SQL Server instances, and grant the SQL service account read access
+  # to the private key.
   - powershell: |
       # Create Certificate
       $computerDnsName = [System.Net.Dns]::Resolve($null).HostName
@@ -236,6 +261,9 @@ steps:
       }
     displayName: 'Add SQL Certificate [Win]'
 
+  # Step 7: Restart SQL Server to apply all preceding configuration changes (protocols,
+  # certificate, FileStream WMI). Waits for SQL Server to accept connections before
+  # proceeding (up to ~160s).
   - powershell: |
       # You need to restart SQL Server for the change to persist
       # -Force takes care of any dependent services, like SQL Agent.
@@ -280,8 +308,8 @@ steps:
 
     displayName: 'Restart SQL Server [Win]'
 
-  # Configure FileStream access level after the restart so we don't need a
-  # separate restart in the "Enable FileStream [Win]" step.
+  # Step 8: Configure FileStream access level via T-SQL after the restart so we don't
+  # need a separate restart in the "Enable FileStream [Win]" step.
   - ${{ if ne(parameters.SQLRootPath, '') }}:
     - powershell: |
         $machineName = $env:COMPUTERNAME
@@ -299,6 +327,8 @@ steps:
         Write-Host "FileStream access level configured successfully."
       displayName: 'Configure FileStream Access Level [Win]'
 
+  # Step 9: Start the SQL Server Browser service so that named instances can be
+  # discovered by clients.
   - powershell: |
       $arrService = Get-Service -Name "SQLBrowser"
       $arrService
@@ -318,6 +348,7 @@ steps:
       }
     displayName: 'Start Sql Server Browser [Win]'
 
+  # Step 10: Start and share the LocalDB instance (conditional on enableLocalDB).
   - ${{ if parameters.enableLocalDB }}:
     - powershell: |
         #script to enable local db
