@@ -59,7 +59,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         );
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-            new DbConnectionOptions("DataSource=localhost;", null),
+            new SqlConnectionOptions("Data Source=localhost;"),
             new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
             poolGroupOptions
         );
@@ -82,7 +82,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: null,
-            new DbConnectionOptions("", null),
             out DbConnectionInternal? connection);
         return connection!;
     }
@@ -95,7 +94,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: tcs,
-            new DbConnectionOptions("", null),
             out DbConnectionInternal? connection);
         return connection ?? await tcs.Task;
     }
@@ -900,12 +898,11 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
     internal class MockSqlConnectionFactory : SqlConnectionFactory
     {
         protected override DbConnectionInternal CreateConnection(
-            DbConnectionOptions options,
+            SqlConnectionOptions options,
             ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection,
-            DbConnectionOptions userOptions)
+            DbConnection owningConnection)
         {
             return new MockDbConnectionInternal();
         }

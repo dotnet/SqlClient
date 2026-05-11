@@ -140,16 +140,29 @@ jobs:
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create MDS NuGet Package'
-      generateSymbolsPackage: true
-      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  - task: DotNetCoreCLI@2
+    displayName: 'Create MDS NuGet Package'
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackSqlClient
+        -p:PackBuild=false
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+
+  # PackSqlClient outputs to artifacts/Microsoft.Data.SqlClient/<ReferenceType>-<Configuration>/.
+  # Downstream steps (local feed copy, AKV pack, artifact publish) all expect packages at
+  # $(packagePath), so copy them there.
+  - task: CopyFiles@2
+    displayName: Copy MDS Package to Output Directory
+    inputs:
+      sourceFolder: $(Build.SourcesDirectory)/artifacts/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-${{ parameters.buildConfiguration }}
+      contents: 'Microsoft.Data.SqlClient.*'
+      targetFolder: $(packagePath)
 
   # When building in Package mode, the AKV Provider restore needs to find the MDS package
   # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.

@@ -134,14 +134,21 @@ The most commonly used test parameters are:
 
 Examples:
 
+Run a single test by fully-qualified name:
+
 ```bash
-# Run a single test by fully-qualified name.
 dotnet build -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+```
 
-# Run only flaky tests while investigating quarantine failures.
+Run only flaky tests while investigating quarantine failures:
+
+```bash
 dotnet build -t:TestSqlClientManual -p:TestFilters=category=flaky
+```
 
-# Disable the default filter.
+Disable the default filter:
+
+```bash
 dotnet build -t:TestSqlClientFunctional -p:TestFilters=none
 ```
 
@@ -290,7 +297,8 @@ If `TestSet` is omitted, all sets are compiled and run. You can combine sets by 
 
 ## Results and Diagnostics
 
-Test results are written to `test_results` by default. Override the location with `TestResultsFolderPath`:
+Test results are written to the `test_results` directory by default. Override the location with
+`TestResultsFolderPath`:
 
 ```bash
 dotnet build -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
