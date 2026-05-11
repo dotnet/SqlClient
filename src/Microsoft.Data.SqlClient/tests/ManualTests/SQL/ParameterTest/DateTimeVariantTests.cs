@@ -66,30 +66,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+            TestResult? result = null;
+            Exception? caughtException = null;
             try
             {
-                TestResult result = action(paramValue, expectedBaseTypeName, connStr);
-
-                expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
-                expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
-                
-                Assert.Equal(expectedValueOverride ?? paramValue, result.Value);
-                Assert.Equal(expectedBaseTypeOverride ?? expectedBaseTypeName, result.BaseTypeName);
+                result = action(paramValue, expectedBaseTypeName, connStr);
             }
             catch (Exception e)
             {
-                if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
-                {
-                    Assert.True(isExpectedException(e, paramValue), e.Message);
-                }
-                else
-                {
-                    Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
-                }
+                caughtException = e;
             }
             finally
             {
                 Thread.CurrentThread.CurrentCulture = previousCulture;
+            }
+
+            if (caughtException != null)
+            {
+                if (expectedExceptions.TryGetValue(tag, out var isExpectedException))
+                {
+                    Assert.True(isExpectedException(caughtException, paramValue), caughtException.Message);
+                }
+                else
+                {
+                    Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {caughtException}");
+                }
+            }
+            else
+            {
+                expectedValueOverrides.TryGetValue(tag, out var expectedValueOverride);
+                expectedBaseTypeOverrides.TryGetValue(tag, out var expectedBaseTypeOverride);
+
+                TestResult testResult = result!.Value;
+                Assert.Equal(expectedValueOverride ?? paramValue, testResult.Value);
+                Assert.Equal(expectedBaseTypeOverride ?? expectedBaseTypeName, testResult.BaseTypeName);
             }
         }
 
@@ -931,8 +941,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// Gets parameter combinations as indices for MemberData.
-        /// Using indices for xUnit serialization compatibility.
+        /// Gets parameter combinations for MemberData. Each entry yields the full parameter value,
+        /// expected base type name, expected exceptions, expected value overrides, and expected base
+        /// type overrides. <see cref="MemberDataAttribute.DisableDiscoveryEnumeration"/> is set to
+        /// avoid xUnit serialization issues with the complex types used in each row.
         /// </summary>
         public static IEnumerable<object[]> GetParameterCombinations()
         {
