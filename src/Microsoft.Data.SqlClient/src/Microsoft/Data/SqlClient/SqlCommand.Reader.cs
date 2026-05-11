@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
             // @TODO: Do we want to have a correlation trace event here like nonquery and xml?
             // @TODO: Basically, this doesn't follow the same pattern as nonquery, scalar, or xml. Doesn't seem right.
 

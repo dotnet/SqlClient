@@ -4,6 +4,8 @@
 
 using System.Diagnostics;
 
+#nullable enable
+
 namespace System.Text;
 
 internal static class EncodingExtensions
@@ -69,4 +71,61 @@ internal static class EncodingExtensions
             return encoding.GetString(pBytes, preNullBytes);
         }
     }
+
+    #if NETFRAMEWORK
+    public static int GetByteCount(this Encoding encoding, string? s, int offset, int count)
+    {
+        if (s is null)
+        {
+            throw new ArgumentNullException(nameof(s));
+        }
+
+        ReadOnlySpan<char> slicedString = s.AsSpan(offset, count);
+
+        if (slicedString.Length == 0)
+        {
+            return 0;
+        }
+
+        unsafe
+        {
+            fixed (char* str = slicedString)
+            {
+                return encoding.GetByteCount(str, slicedString.Length);
+            }
+        }
+    }
+
+    public static byte[] GetBytes(this Encoding encoding, string? s, int index, int count)
+    {
+        if (s is null)
+        {
+            throw new ArgumentNullException(nameof(s));
+        }
+
+        ReadOnlySpan<char> slicedString = s.AsSpan(index, count);
+
+        if (slicedString.Length == 0)
+        {
+            return Array.Empty<byte>();
+        }
+
+        unsafe
+        {
+            fixed (char* str = slicedString)
+            {
+                int byteCount = encoding.GetByteCount(str, slicedString.Length);
+                byte[] bytes = new byte[byteCount];
+
+                fixed (byte* destArray = &bytes[0])
+                {
+                    int bytesWritten = encoding.GetBytes(str, slicedString.Length, destArray, bytes.Length);
+
+                    Debug.Assert(bytesWritten == byteCount);
+                    return bytes;
+                }
+            }
+        }
+    }
+    #endif
 }
