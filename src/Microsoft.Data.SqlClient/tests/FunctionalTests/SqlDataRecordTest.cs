@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.TestCommon;
 using Microsoft.SqlServer.Types;
 using Xunit;
 
@@ -332,7 +333,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<NotSupportedException>(() => record.GetChar(0));
         }
 
-        [Theory]
+        [ConditionalTheory(typeof(SqlServerStrongNameTestCondition), nameof(SqlServerStrongNameTestCondition.IsUnsignedSqlServerAssemblyUsable))]
         [MemberData(
             nameof(GetUdtTypeTestData.Get),
             MemberType = typeof(GetUdtTypeTestData),
@@ -350,7 +351,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(value.ToString(), record.GetValue(0).ToString());
         }
-
         [Theory]
         [MemberData(
             nameof(GetXXXBadTypeTestData.Get),
