@@ -27,16 +27,44 @@ parameters:
 
   # Test Configuration Parameters ==========================================
 
+  # The SA password to set when expanding local SQL Server connection strings.
+  - name: saPassword
+    type: string
+
   - name: azureKeyVaultTenantId
     type: string
 
   - name: azureKeyVaultUrl
     type: string
 
+  - name: aliasName
+    type: string
+
   - name: connectionStringNp
     type: string
 
   - name: connectionStringTcp
+    type: string
+
+  - name: fileStreamDirectory
+    type: string
+
+  - name: localDbAppName
+    type: string
+
+  - name: localDbSharedInstanceName
+    type: string
+
+  - name: managedIdentitySupported
+    type: string
+
+  - name: supportsFileStream
+    type: string
+
+  - name: supportsIntegratedSecurity
+    type: string
+
+  - name: useManagedSNIOnWindows
     type: string
 
 jobs:
@@ -51,14 +79,48 @@ jobs:
         parameters:
           runtimeVersion: ${{ parameters.platformDotnet }}
 
-      - # @TODO: Config genration step will go here.
+      # @TODO: Document these thingies
+
+      - pwsh: |
+          $password = "${{ parameters.saPassword }}"
+          Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
+        displayName: Set Connection String Password
+
+      - pwsh: |
+          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
+          $configDirectory = "$(Agent.TempDirectory)/mds-config"
+          $configPath = Join-Path $configDirectory "config.json"
+
+          New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
+
+          $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
+
+          $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
+          $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
+          $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
+          $config.AzureKeyVaultTenantId = "${{ parameters.azureKeyVaultTenantId }}"
+          $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
+          $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
+          $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
+          $config.AliasName = "${{ parameters.aliasName }}"
+
+          $config.SupportsIntegratedSecurity = [System.Convert]::ToBoolean("${{ parameters.supportsIntegratedSecurity }}")
+          $config.SupportsFileStream = [System.Convert]::ToBoolean("${{ parameters.supportsFileStream }}")
+          $config.UseManagedSNIOnWindows = [System.Convert]::ToBoolean("${{ parameters.useManagedSNIOnWindows }}")
+          $config.ManagedIdentitySupported = [System.Convert]::ToBoolean("${{ parameters.managedIdentitySupported }}")
+
+          $config | ConvertTo-Json | Set-Content $configPath
+
+          #Write-Host "##vso[task.setvariable variable=MDS_CONFIG_FILE]$configPath"
+          Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
+        displayName: 'Generate manual test config'
 
       - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           buildSuffix: ${{ parameters.buildSuffix }}
 
-          packageShortName: ${{ parameters.packageShortName }}
+          packageShortName: "SqlClient"
           testFramework: ${{ parameters.platformDotnet }}
-          testProject: ${{ parameters.testProject }}
+          testProject: "Manual"
 

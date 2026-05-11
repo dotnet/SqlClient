@@ -18,6 +18,47 @@ parameters:
   - name: buildSuffix
     type: string
 
+  # Manual Test Configuration Parameters ==================================
+
+  - name: manualTestConnectionStringTcp
+    type: string
+
+  - name: manualTestConnectionStringNp
+    type: string
+
+  - name: manualTestAzureKeyVaultUrl
+    type: string
+
+  - name: manualTestAzureKeyVaultTenantId
+    type: string
+
+  - name: manualTestFileStreamDirectory
+    type: string
+
+  - name: manualTestLocalDbAppName
+    type: string
+
+  - name: manualTestLocalDbSharedInstanceName
+    type: string
+
+  - name: manualTestAliasName
+    type: string
+
+  - name: manualTestSupportsIntegratedSecurity
+    type: string
+
+  - name: manualTestSupportsFileStream
+    type: string
+
+  - name: manualTestUseManagedSNIOnWindows
+    type: string
+
+  - name: manualTestManagedIdentitySupported
+    type: string
+
+  - name: manualTestSaPassword
+    type: string
+
   # This is an array of objects with the following fields:
   # - displayName - Friendly name to use when displaying the stage name and job names. This must
   #                 only contain alphanumeric characters and '_'. It will be used for both display
@@ -76,7 +117,7 @@ stages:
               testProject: "Functional"
 
           # TestSqlClientManual - PR subset
-          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
@@ -84,9 +125,19 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
 
-              packageShortName: "SqlClient"
-              testDisplayName: "sqlclient_manual"
-              testProject: "Manual"
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNp }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcp }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              aliasName: ${{ parameters.manualTestAliasName }}
+              supportsIntegratedSecurity: ${{ parameters.manualTestSupportsIntegratedSecurity }}
+              supportsFileStream: ${{ parameters.manualTestSupportsFileStream }}
+              useManagedSNIOnWindows: ${{ parameters.manualTestUseManagedSNIOnWindows }}
+              managedIdentitySupported: ${{ parameters.manualTestManagedIdentitySupported }}
+              saPassword: ${{ parameters.manualTestSaPassword }}
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
