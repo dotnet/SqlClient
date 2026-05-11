@@ -47,9 +47,10 @@
     <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
   </ItemGroup>
 
-  <Target Name="ValidateReferenceType" BeforeTargets="Restore;PrepareForBuild"
-          Condition="'$(ReferenceType)' == 'Package'">
-    <Error Text="Microsoft.Data.SqlClient.UnitTests.csproj does not support ReferenceType=Package. Use project references for unit tests." />
+  <Target Name="ValidateReferenceType"
+          BeforeTargets="Restore;PrepareForBuild"
+          Condition="'$(ReferenceType)' != 'Project'">
+    <Error Text="Microsoft.Data.SqlClient.UnitTests.csproj only supports ReferenceType=Project." />
   </Target>
 
   <!-- References for netframework -->

@@ -175,7 +175,7 @@
       <NuspecProperties>$(NuspecProperties);COMMITID=$(CommitId)</NuspecProperties>
     </PropertyGroup>
 
-    <!-- Checkc for empty sibling package versions. -->
+    <!-- Check for empty sibling package versions. -->
     <PropertyGroup>
       <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
       <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>

@@ -28,7 +28,7 @@
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
-  <!-- The driver packages need versions numbers when we build via Package references. -->
+  <!-- The driver packages need version numbers when we build via Package references. -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.SqlServer.Server"
