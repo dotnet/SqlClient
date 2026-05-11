@@ -1,3 +1,5 @@
+namespace SqlConfigurableRetryLogic_StepByStep_OpenConnection;
+
 using System;
 using Microsoft.Data.SqlClient;
 

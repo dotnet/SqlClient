@@ -4,7 +4,7 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Classic_WebData_SqlError.StateCS
+namespace SqlError_State
 {
     class Program
     {

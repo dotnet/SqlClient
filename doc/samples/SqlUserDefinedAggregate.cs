@@ -1,3 +1,5 @@
+namespace SqlUserDefinedAggregate;
+
 using System;
 //<Snippet1>
 using Microsoft.SqlServer.Server;

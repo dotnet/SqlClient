@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    This is an ultra-hack. We have a lot of files in the /eng/pipelines directory, and it would be
+    nice to manage these inside an IDE. However, MSBuild doesn't have a good solution for including
+    recursive folder trees of non-compilable files, with the only solution to be manually adding
+    each file as a linked file in the solution. This is a terrible situation because it means each
+    time a file is added or removed from this folder, it must be manually updated in the solution.
+    It is also the case that most engineers forget to do this step, and it comes down to more
+    diligent engineers to keep the pipelines folder up to date. Well, the diligent engineers have
+    had enough and are tired of doing it.
+
+    So, this project was added as a way to automatically keep the pipelines directory up-to-date in
+    the solution. It is *not built* in any configuration, and exists purely to collect all files
+    under the /eng/pipelines folder.
+
+    No changes should be made to this project, perhaps updating the TargetFramework property if
+    the framework specified goes out of support.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <NoBuild>true</NoBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="**/*" />
+  </ItemGroup>
+</Project>

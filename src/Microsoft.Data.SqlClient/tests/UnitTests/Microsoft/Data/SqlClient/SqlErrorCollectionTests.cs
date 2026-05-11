@@ -13,16 +13,16 @@ namespace Microsoft.Data.SqlClient
     {
         private const int ErrorsInTestCollection = 3;
         private static readonly Exception ReusableException = new();
-        
+
         [Fact]
         public void Constructor_PropertiesInitialized()
         {
             // Act
             SqlErrorCollection collection = new();
-            
+
             // Assert
             Assert.Empty(collection);
-            
+
             // - ICollection properties
             ICollection collection2 = collection;
             Assert.Same(collection2, collection2.SyncRoot);
@@ -42,9 +42,10 @@ namespace Microsoft.Data.SqlClient
             // Act
             for (int i = 0; i < itemsToAdd; i++)
             {
-                collection.Add(error);
+                var chain = collection.Add(error);
+                Assert.Same(collection, chain);
             }
-            
+
             // Assert
             Assert.Equal(itemsToAdd, collection.Count);
         }
@@ -59,29 +60,29 @@ namespace Microsoft.Data.SqlClient
             // Arrange
             (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
             SqlError[] copyDestination = new SqlError[destinationSize];
-            
+
             // Act
             // - Uses SqlErrorCollection.CopyTo
             collection.CopyTo(copyDestination, offset);
-            
+
             // Assert
             AssertCopiedCollection(errors, copyDestination, offset);
         }
 
         [Theory]
         [InlineData(ErrorsInTestCollection, -1)]    // Offset is negative
-        [InlineData(ErrorsInTestCollection - 1, 0)] // Destination is too small 
+        [InlineData(ErrorsInTestCollection - 1, 0)] // Destination is too small
         [InlineData(ErrorsInTestCollection, 1)]     // Destination is big enough, but offset pushes it over edge
         public void CopyTo_SqlErrorArray_OutOfRange(int destinationSize, int offset)
         {
             // Arrange
             (SqlErrorCollection collection, SqlError[] _) = GetTestErrorCollection();
             SqlError[] copyDestination = new SqlError[destinationSize];
-            
+
             // Act
             // - Uses SqlErrorCollection.CopyTo
             Action action = () => collection.CopyTo(copyDestination, offset);
-            
+
             // Assert
             Assert.ThrowsAny<ArgumentException>(action);
         }
@@ -96,29 +97,29 @@ namespace Microsoft.Data.SqlClient
             // Arrange
             (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
             object[] copyDestination = new object[destinationSize];
-            
+
             // Act
             // - Uses ICollection.CopyTo
             collection.CopyTo(copyDestination, offset);
-            
+
             // Assert
             AssertCopiedCollection(errors, copyDestination, offset);
         }
 
         [Theory]
         [InlineData(ErrorsInTestCollection, -1)]    // Offset is negative
-        [InlineData(ErrorsInTestCollection - 1, 0)] // Destination is too small 
+        [InlineData(ErrorsInTestCollection - 1, 0)] // Destination is too small
         [InlineData(ErrorsInTestCollection, 1)]     // Destination is big enough, but offset pushes it over edge
         public void CopyTo_ObjectArray_OutOfRange(int destinationSize, int offset)
         {
             // Arrange
             (SqlErrorCollection collection, SqlError[] _) = GetTestErrorCollection();
             object[] copyDestination = new object[destinationSize];
-            
+
             // Act
             // - Uses ICollection.CopyTo
             Action action = () => collection.CopyTo(copyDestination, offset);
-            
+
             // Assert
             Assert.ThrowsAny<ArgumentException>(action);
         }
@@ -129,10 +130,10 @@ namespace Microsoft.Data.SqlClient
             // Arrange
             (SqlErrorCollection collection, SqlError[] errors) = GetTestErrorCollection();
             int[] destination = new int[errors.Length];
-            
+
             // Act
             Action action = () => collection.CopyTo(destination, 0);
-            
+
             // Assert
             Assert.Throws<InvalidCastException>(action);
         }
@@ -209,7 +210,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-        
+
         private static SqlError GetTestError()
         {
             return new SqlError(

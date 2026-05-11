@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_KeepIdentity;
+
 using System;
 using System.Data;
 // <Snippet1>

@@ -1,3 +1,5 @@
+namespace SqlConnectionStringBuilder3;
+
 using System;
 using System.Data;
 // <Snippet1>

@@ -1,4 +1,6 @@
-﻿//<Snippet1>
+﻿namespace DataWorks_SqlUserDefinedAggregateAttribute_Sample;
+
+//<Snippet1>
 using System;
 using System.IO;
 using Microsoft.SqlServer.Server;

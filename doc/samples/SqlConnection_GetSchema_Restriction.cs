@@ -1,3 +1,5 @@
+namespace SqlConnection_GetSchema_Restriction;
+
 // <Snippet1>
 using System;
 using System.Data;

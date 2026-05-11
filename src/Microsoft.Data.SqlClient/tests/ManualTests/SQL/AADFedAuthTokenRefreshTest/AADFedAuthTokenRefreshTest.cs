@@ -22,10 +22,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         public void FedAuthTokenRefreshTest()
         {
-            string connectionString = DataTestUtility.AADPasswordConnectionString;
+            #pragma warning disable 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
+            #pragma warning restore 0618 // Type or member is obsolete
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
+                #pragma warning disable 0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
+                #pragma warning restore 0618 // Type or member is obsolete
+ 
+                string connectionString = DataTestUtility.AADPasswordConnectionString;
+
+                using SqlConnection connection = new SqlConnection(connectionString);
                 connection.Open();
 
                 string oldTokenHash = "";
@@ -63,6 +72,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     Assert.True(oldTokenHash == newTokenHash, "The token's hash before and after token refresh must be identical.");
                     Assert.True(newLocalExpiryTime > oldLocalExpiryTime, "The refreshed token must have a new or later expiry time.");
+                }
+            }
+            finally
+            {
+                if (original is not null)
+                {
+                    // Reset to driver internal provider.
+                    #pragma warning disable 0618 // Type or member is obsolete
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
+                    #pragma warning restore 0618 // Type or member is obsolete
                 }
             }
         }

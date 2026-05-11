@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient
             
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteNonQuery | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteNonQuery | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteNonQuery | API | Correlation | " +
                 $"Object Id {ObjectID}, " +

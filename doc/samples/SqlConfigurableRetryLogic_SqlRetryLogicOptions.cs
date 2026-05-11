@@ -1,3 +1,5 @@
+namespace SqlConfigurableRetryLogic_SqlRetryLogicOptions;
+
 using System;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;

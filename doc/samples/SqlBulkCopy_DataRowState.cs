@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_DataRowState;
+
 using System;
 using System.Data;
 // <Snippet1>

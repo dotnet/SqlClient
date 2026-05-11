@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.

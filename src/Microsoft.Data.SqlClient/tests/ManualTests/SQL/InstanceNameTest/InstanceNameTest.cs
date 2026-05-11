@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private const char SemicolonSeparator = ';';
 
+        [SkipOnPlatform(TestPlatforms.OSX, "Flaky on macOS: https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42301")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectToSQLWithInstanceNameTest()
         {

@@ -4,15 +4,15 @@
 
 .DESCRIPTION
   Special handling is required for ARM64 due to a bug in UseDotNet@2:
- 
+
   [BUG]: UseDotNet@2 task installs x86 build
   https://github.com/microsoft/azure-pipelines-tasks/issues/20300
- 
+
   The downloaded dotnet-install.ps1 script is kept in the $InstallDir to avoid
   downloading it multiple times during the pipeline job.
- 
+
   The following environment variables are set for subsequent steps in the pipeline:
- 
+
     DOTNET_ROOT: Set to $InstallDir.
     PATH: $DOTNET_ROOT is prepended to the PATH environment variable.
 
@@ -58,6 +58,72 @@ param
 # Stop on all errors.
 $ErrorActionPreference = 'Stop'
 
+# Maximum number of retry attempts for transient install failures (e.g.
+# corrupt downloads, network timeouts).
+$maxAttempts = 3
+$retryDelaySec = 10
+
+#------------------------------------------------------------------------------
+# Invoke dotnet-install.ps1 with retry logic.  On each attempt the script is
+# called with the supplied $Params.  If a non-zero exit code is returned, or
+# if the optional $Verify script-block throws, the attempt is considered failed
+# and will be retried after a short delay.
+
+function Invoke-DotNetInstall
+{
+  param
+  (
+    [Parameter(Mandatory)]
+    [string]$Description,
+
+    [Parameter(Mandatory)]
+    [hashtable]$Params,
+
+    [scriptblock]$Verify = $null
+  )
+
+  for ($attempt = 1; $attempt -le $maxAttempts; $attempt++)
+  {
+    try
+    {
+      Write-Host "$Description (attempt $attempt of $maxAttempts)"
+
+      $global:LASTEXITCODE = 0
+      & "$InstallDir/dotnet-install.ps1" -Verbose:$Debug -DryRun:$DryRun @Params
+      $installSucceeded = $?
+
+      if (-not $installSucceeded)
+      {
+        throw "dotnet-install.ps1 failed."
+      }
+
+      if ($global:LASTEXITCODE -ne 0)
+      {
+        throw "dotnet-install.ps1 failed with exit code $global:LASTEXITCODE"
+      }
+
+      if ($Verify)
+      {
+        & $Verify
+      }
+
+      return
+    }
+    catch
+    {
+      Write-Warning "Attempt $attempt failed: $_"
+
+      if ($attempt -ge $maxAttempts)
+      {
+        throw "$Description failed after $maxAttempts attempts. Last error: $_"
+      }
+
+      Write-Host "Retrying in $retryDelaySec seconds..."
+      Start-Sleep -Seconds $retryDelaySec
+    }
+  }
+}
+
 #------------------------------------------------------------------------------
 # Emit our command-line arguments.
 
@@ -80,7 +146,7 @@ if (-not (Test-Path -Path "$InstallDir/dotnet-install.ps1" -PathType Leaf))
   }
 
   Write-Host "Downloading dotnet-install.ps1..."
-  
+
   $params =
   @{
     Uri = "https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1"
@@ -113,8 +179,6 @@ if ($Debug)
 #------------------------------------------------------------------------------
 # Install the SDK.
 
-Write-Host "Installing .NET SDK version: $sdkVersion"
-
 $installParams =
 @{
   Architecture = "arm64"
@@ -128,15 +192,40 @@ if ($Debug)
   Write-Host ($installParams | ConvertTo-Json -Depth 1)
 }
 
-& "$InstallDir/dotnet-install.ps1" -Verbose:$Debug -DryRun:$DryRun @installParams
+# Verify the SDK was actually installed.  dotnet-install.ps1 can silently fail
+# with exit code 0 when the package download is corrupt or the size cannot be
+# measured.
+$verifySdk =
+  if (-not $DryRun)
+  {
+    {
+      $dotnetExe = Join-Path $InstallDir "dotnet"
+      $installedSdks = & $dotnetExe --list-sdks 2>&1
+      $installedSdksText = [string]::Join("`n", @($installedSdks))
+
+      Write-Host "Installed SDKs:`n$installedSdksText"
+
+      $sdkPattern = "(?m)^$([regex]::Escape($sdkVersion))\s+\["
+
+      if (-not [regex]::IsMatch($installedSdksText, $sdkPattern))
+      {
+        throw "SDK $sdkVersion is not present after installation."
+      }
+
+      Write-Host "Verified SDK $sdkVersion is installed."
+    }
+  }
+
+Invoke-DotNetInstall `
+  -Description "Installing .NET SDK version: $sdkVersion" `
+  -Params $installParams `
+  -Verify $verifySdk
 
 #------------------------------------------------------------------------------
 # Install the Runtimes, if any.
 
 foreach ($channel in $Runtimes)
 {
-  Write-Host "Installing .NET Runtime GA channel: $channel"
-
   $installParams =
   @{
     Architecture = "arm64"
@@ -152,7 +241,36 @@ foreach ($channel in $Runtimes)
     Write-Host ($installParams | ConvertTo-Json -Depth 1)
   }
 
-  & "$InstallDir/dotnet-install.ps1" -Verbose:$Debug -DryRun:$DryRun @installParams
+  # Verify the runtime was actually installed.  Use the same guard against
+  # silent corruption that we use for the SDK.
+  $verifyRuntime =
+    if (-not $DryRun)
+    {
+      # Capture $channel in a local variable so the script-block closure
+      # binds to the current iteration value.
+      $ch = $channel
+      {
+        $dotnetExe = Join-Path $InstallDir "dotnet"
+        $installedRuntimes = & $dotnetExe --list-runtimes 2>&1
+        $installedRuntimesText = [string]::Join("`n", @($installedRuntimes))
+
+        Write-Host "Installed runtimes:`n$installedRuntimesText"
+
+        $runtimePattern = "Microsoft\.NETCore\.App $([regex]::Escape($ch))\."
+
+        if (-not [regex]::IsMatch($installedRuntimesText, $runtimePattern))
+        {
+          throw "Runtime $ch is not present after installation."
+        }
+
+        Write-Host "Verified runtime $ch is installed."
+      }
+    }
+
+  Invoke-DotNetInstall `
+    -Description "Installing .NET Runtime GA channel: $channel" `
+    -Params $installParams `
+    -Verify $verifyRuntime
 }
 
 #------------------------------------------------------------------------------

@@ -11,17 +11,18 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project is structured to support both .NET Framework and .NET Core, with platform-specific implementations in `netfx/` and `netcore/` directories.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. It targets `net8.0` and `net9.0` on all supported hosts, and adds `net462` only when building on Windows. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
 The project includes:
-- **Public APIs**: Defined in `ref/` directories for both .NET Framework and .NET Core.
-- **Implementations**: Actual code in `src/` directories for both platforms.
+- **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
+- **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
-  - **Unit Tests**: Located in `tests/UnitTests/` directory, which includes tests for individual components and methods.
-  - **Functional Tests**: Located in `tests/FunctionalTests/` directory, which includes tests for various features and functionalities that can be run without a SQL Server instance.
-  - **Manual Tests**: Located in `tests/ManualTests/` directory, which includes tests that require a SQL Server instance to run.
+  - **Unit Tests**: Located in `src/Microsoft.Data.SqlClient/tests/UnitTests/`.
+  - **Functional Tests**: Located in `src/Microsoft.Data.SqlClient/tests/FunctionalTests/`.
+  - **Manual Tests**: Located in `src/Microsoft.Data.SqlClient/tests/ManualTests/`.
+  - **Performance/Stress Tests**: Located in `src/Microsoft.Data.SqlClient/tests/PerformanceTests/` and `src/Microsoft.Data.SqlClient/tests/StressTests/`.
 - **Documentation**: Found in the `doc/` directory, including API documentation, usage examples.
 - **Policies**: Contribution guidelines, coding standards, and review policies in the `policy/` directory.
-- **Building**: The project uses MSBuild for building and testing, with configurations and targets defined in the `build.proj` file, whereas instructions are provided in the `BUILDGUIDE.md` file.
+- **Building**: The repo uses `build.proj` for orchestrated build/test/pack workflows, `src/Microsoft.Data.SqlClient.slnx` for solution-centric development tooling, and Azure DevOps YAML under `eng/pipelines/` plus `eng/pipelines/onebranch/` for CI and official release flows. See `BUILDGUIDE.md` for local build details.
 - **CI/CD**: ADO Pipelines for CI/CD and Pull request validation are defined in the `eng/` directory, ensuring code quality and automated testing.
 
 ## 📦 Products
@@ -31,7 +32,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Microsoft.SqlServer.Server**: Supplies APIs for SQL Server-specific features, including user-defined types (UDTs) and SQL Server-specific attributes.
 
 ## 🛠️ Key Features
-- **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Azure Active Directory authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
+- **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Entra ID authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
 - **Connection Resiliency**: Implements connection resiliency features to handle transient faults and network issues, ensuring reliable database connectivity.
 - **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are: 
   - **Optional**: Encryption is used if available, but not required.
@@ -92,13 +93,15 @@ When a new issue is created, follow these steps:
     - If the issue is a feature request, review the proposal and assess its feasibility.
     - If the issue is a task, follow the instructions provided in the issue description.
     - If the issue is an epic, break it down into smaller tasks or bugs and create sub-issues as needed.
-- Cross-reference issue descriptions with code in `src/` folders, especially in `netfx/src/` and `netcore/src/`.
+- Cross-reference issue descriptions with code in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to the legacy `netfx/src/` or `netcore/src/` directories.
 - If public APIs are changed, update corresponding `ref/` projects.
 - Add or update tests in `tests/` to validate the fix.
 
 ### 🧪 Writing Tests
 - For every bug fix, ensure there are unit tests and manual (integration) tests that cover the scenario.
 - For new features, write tests that validate the functionality.
+- Follow a test-driven approach: write failing tests before implementing fixes.
+- **Cover both sync and async code paths** where the API exposes both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async implementations often differ internally.
 - Use the existing test framework in the `tests/` directory.
 - Follow the naming conventions and structure of existing tests.
 - Ensure tests are comprehensive and cover edge cases.
@@ -123,12 +126,18 @@ When a new issue is created, follow these steps:
 - Add a comment summarizing the fix and referencing the PR 
 
 ### ⚙️ Automating Workflows
-- Auto-label PRs based on folder paths (e.g., changes in `netcore/src` → `area-netcore`) and whether they add new public APIs or introduce a breaking change.
-- Suggest changelog entries for fixes in `CHANGELOG.md`
+- Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
+- Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
 
+## 🌿 Branch Naming
+- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
+- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+
 ## 🧠 Contextual Awareness
-- Always check for platform-specific differences between `netfx` and `netcore`
+- All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
+- Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.
+- Check for platform-specific differences using file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) and conditional compilation (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`).
 - Respect API compatibility rules across .NET versions
 - Do not introduce breaking changes without proper justification and documentation
 - Use the `doc/` directory for any new documentation or updates to existing documentation
@@ -138,8 +147,16 @@ When a new issue is created, follow these steps:
 
 ## Constraints
 - Do not modify the `CODEOWNERS` file directly.
-- Do not modify the `CHANGELOG.md` file directly.
+- Do not modify `CHANGELOG.md` unless executing a release workflow (see `release-notes` prompt).
 - Do not close issues without a fix or without providing a clear reason.
+
+## Terminal Execution Safety
+- Treat any non-zero shell exit code as a failed step that requires correction before proceeding.
+- If a bash process exits, do not wait for more output from that process; rerun the command in a fresh terminal session.
+- Validate that expected command output was produced before using it as evidence for conclusions.
+- When terminal execution fails, surface the failure immediately and retry with a corrected command.
+- Avoid `set -e` in this automation workflow; use focused commands and verify each result explicitly so shell exits are observable and attributable.
+- Prefer short, single-purpose terminal commands over long chained scripts when debugging or gathering state.
 
 ## 📝 Notes
 - Update policies and guidelines in the `policy/` directory as needed based on trending practices and team feedback.

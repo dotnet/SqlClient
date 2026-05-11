@@ -1,0 +1,2 @@
+# This directory must exist in order for NuGet restores to succeed prior to our builds generating
+# any NuGet package files here.

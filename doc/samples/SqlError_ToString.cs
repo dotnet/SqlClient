@@ -1,3 +1,5 @@
+namespace SqlError_ToString;
+
 using System;
 using System.Data;
 // <Snippet1>

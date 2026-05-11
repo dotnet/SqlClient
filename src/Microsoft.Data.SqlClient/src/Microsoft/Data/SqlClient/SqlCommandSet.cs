@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -242,7 +243,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #endif
-            using (TryEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
+            using (SqlClientEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
             {
                 ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 

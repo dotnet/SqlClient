@@ -5,25 +5,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using Xunit;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Microsoft.Win32;
-
-#if NET
-using System.Runtime.Versioning;
-#endif
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public CspProvider Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-#if !NETFRAMEWORK
-    [SupportedOSPlatform("windows")]
-#endif
+    // TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
@@ -66,7 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                  @$"FROM [{sqlSetupStrategyCsp.ApiTestTable.Name}] " +
                                  @$"WHERE FirstName = @firstName";
             using SqlCommand sqlCommand = new(commandText, sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
-            
+
             SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
             customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
@@ -78,6 +72,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             get
             {
+                // xUnit evaluates MemberData during discovery, before [PlatformSpecific]
+                // can skip execution. Guard here to prevent Registry access on non-Windows.
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    yield break;
+                }
+
                 const string providerRegistryKeyPath = @"SOFTWARE\Microsoft\Cryptography\Defaults\Provider";
                 using RegistryKey defaultProviderRegistryKey = Registry.LocalMachine.OpenSubKey(providerRegistryKeyPath);
                 if (defaultProviderRegistryKey is null)
@@ -85,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     // No test cases can be generated if the registry key doesn't exist.
                     yield break;
                 }
-                
+
                 foreach (string subKeyName in defaultProviderRegistryKey.GetSubKeyNames())
                 {
                     // Skip inappropriate providers
@@ -100,17 +101,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         continue;
                     }
-                    
+
                     // Read provider name
                     string providerName = Path.GetFileName(providerKey.Name);
-                    
+
                     // Read provider type
                     object providerTypeValue = providerKey.GetValue(@"Type");
                     if (providerTypeValue is not int providerType)
                     {
                         continue;
                     }
-                    
+
                     // Combine with AE connection strings
                     foreach (string aeConnectionString in DataTestUtility.AEConnStrings)
                     {

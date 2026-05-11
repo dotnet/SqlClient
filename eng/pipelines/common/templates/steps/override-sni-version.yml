@@ -22,26 +22,26 @@ steps:
       # define file to update
       $NugetCfg = Join-Path -Path '.' -ChildPath 'NuGet.config'
       type $NugetCfg
-            
+
       # load content of xml from file defined above
       $xml = New-Object XML
       $xml.Load($NugetCfg)
-              
+
       # define namespace used to read a node
       $nsm = New-Object Xml.XmlNamespaceManager($xml.NameTable)
       $nsm.AddNamespace('ns', $xml.DocumentElement.NamespaceURI)
-              
+
       # get the package sources node
       $packageSources = $xml.SelectSingleNode('//ns:packageSources', $nsm)
-              
+
       # define new package source
       $newSource = $xml.CreateElement("add")
       $newSource.SetAttribute("key","SNIValidation")
       $newSource.SetAttribute("value","${{parameters.SNIValidationFeed}}")
-              
+
       # add the new package source
       $packageSources.AppendChild($newSource)
-              
+
       # save the xml file
       $xml.Save($NugetCfg)
       type $NugetCfg
@@ -49,6 +49,9 @@ steps:
   displayName: Update SNI Version in Versions.props
   inputs:
     targetType: inline
+    # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42204):
+    # Package dependency versions have moved to Directory.Packages.props, so the below script no
+    # longer functions.
     script: |
       Write-Host "SNI Version to test = ${{parameters.SNIVersion}}"
 
@@ -60,7 +63,7 @@ steps:
       $xml = New-Object XML
       $xml.Load($PropsPath)
 
-      # define namespace used to read a node 
+      # define namespace used to read a node
       $nsm = New-Object Xml.XmlNamespaceManager($xml.NameTable)
       $nsm.AddNamespace('ns', $xml.DocumentElement.NamespaceURI)
 
