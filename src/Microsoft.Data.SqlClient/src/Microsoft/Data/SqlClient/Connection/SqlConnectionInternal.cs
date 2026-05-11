@@ -317,6 +317,7 @@ namespace Microsoft.Data.SqlClient.Connection
         internal SqlConnectionInternal(
             DbConnectionPoolIdentity identity,
             SqlConnectionOptions connectionOptions,
+            TimeoutTimer timeout,
             SqlCredential credential,
             DbConnectionPoolGroupProviderInfo providerInfo,
             string newPassword,
@@ -399,8 +400,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                _timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout));
-
+                
+                _timeout = timeout;
                 // If transient fault handling is enabled then we can retry the login up to the
                 // ConnectRetryCount.
                 int connectionEstablishCount = applyTransientFaultHandling

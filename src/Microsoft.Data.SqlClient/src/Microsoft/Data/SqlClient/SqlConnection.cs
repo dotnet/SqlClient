@@ -2729,6 +2729,7 @@ namespace Microsoft.Data.SqlClient
                 con = new SqlConnectionInternal(
                     identity: null,
                     connectionOptions,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout)),
                     credential,
                     providerInfo: null,
                     newPassword,

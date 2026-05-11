@@ -138,7 +138,8 @@ namespace Microsoft.Data.SqlClient
 
         internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
-            IDbConnectionPool pool)
+            IDbConnectionPool pool,
+            TimeoutTimer timeout)
         {
             Debug.Assert(pool != null, "null pool?");
 
@@ -147,7 +148,8 @@ namespace Microsoft.Data.SqlClient
                 pool.PoolGroup.PoolKey,
                 pool.PoolGroup.ProviderInfo,
                 pool,
-                owningConnection);
+                owningConnection,
+                timeout);
 
             if (newConnection is null)
             {
@@ -573,7 +575,8 @@ namespace Microsoft.Data.SqlClient
             ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection)
+            DbConnection owningConnection,
+            TimeoutTimer timeout)
         {
             SqlConnectionOptions opt = options;
             ConnectionPoolKey key = poolKey;
@@ -688,7 +691,8 @@ namespace Microsoft.Data.SqlClient
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback,
-                key.SspiContextProvider);
+                key.SspiContextProvider,
+                timeout);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)

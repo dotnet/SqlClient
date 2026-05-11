@@ -283,7 +283,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
             out DbConnectionInternal? connection)
         {
-            var timeout = TimeSpan.FromSeconds(owningObject.ConnectionTimeout);
+            // Create a single TimeoutTimer that represents the overall connection timeout budget.
+            // This timer is threaded through all layers (pool wait, physical connection creation) so that
+            // time spent waiting in the pool is deducted from the budget available for physical connection
+            // establishment. Without this, each layer would start its own fresh timeout and the total wait
+            // could exceed the configured ConnectTimeout.
+            // Note: TimeoutTimer treats 0 seconds as infinite timeout, which matches ConnectTimeout=0 semantics.
+            var timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(owningObject.ConnectionTimeout));
 
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
@@ -372,13 +378,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningConnection">The owning connection.</param>
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+        /// <param name="timeout">The overall timeout budget. Passed through to the physical connection 
+        /// so it uses the remaining budget rather than starting a fresh timeout.</param>
         /// <returns>A task representing the asynchronous operation, with a result of the new internal connection.</returns>
         /// <exception cref="OperationCanceledException">
         /// Thrown when the cancellation token is cancelled before the connection operation completes.
         /// </exception>
         private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection, 
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            TimeoutTimer timeout)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -397,9 +406,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
                     // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
                     // when this support is added to DbConnectionInternal.
+                    // TODO: ultimately, the connection factory should also accept our cancellation token.
                     var connection = ConnectionFactory.CreatePooledConnection(
                         owningConnection,
-                        this);
+                        this,
+                        timeout);
 
                     if (connection is not null)
                     {
@@ -492,7 +503,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningConnection">The DbConnection that will own this internal connection</param>
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
-        /// <param name="timeout">The timeout for the operation.</param>
+        /// <param name="timeout">The overall timeout budget for this connection request. Time spent waiting
+        /// in the pool is deducted from the budget available for physical connection creation.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when an OperationCanceledException is caught, indicating that the timeout period 
@@ -505,10 +517,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection, 
             bool async, 
-            TimeSpan timeout)
+            TimeoutTimer timeout)
         {
             DbConnectionInternal? connection = null;
-            using CancellationTokenSource cancellationTokenSource = new(timeout);
+
+            // Derive a CancellationTokenSource from the TimeoutTimer so pool-internal wait operations
+            // (channel reads, semaphore waits) are cancelled when the overall budget expires.
+            using CancellationTokenSource cancellationTokenSource = timeout.CreateCancellationTokenSource();
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
             // Continue looping until we create or retrieve a connection
@@ -524,7 +539,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we didn't find an idle connection, try to open a new one.  
                     connection ??= OpenNewInternalConnection(
                         owningConnection,
-                        cancellationToken);
+                        cancellationToken,
+                        timeout);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync

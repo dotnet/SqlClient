@@ -5,6 +5,7 @@
 using Microsoft.Data.Common;
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -204,6 +205,35 @@ namespace Microsoft.Data.ProviderBase
         /// </param>
         /// <returns>A new <see cref="TimeoutTimer"/> instance that has already started.</returns>
         internal static TimeoutTimer StartNew(TimeSpan expiration) => new TimeoutTimer(expiration);
+
+        /// <summary>
+        /// Creates a new <see cref="CancellationTokenSource"/> that will be canceled
+        /// when this timer expires.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="CancellationTokenSource"/> scheduled to cancel after
+        /// <see cref="MillisecondsRemainingInt"/> milliseconds. When
+        /// <see cref="IsInfinite"/> is <see langword="true"/>, the returned source
+        /// is never automatically canceled. When the timer has already expired, the
+        /// returned source is already canceled.
+        /// </returns>
+        internal CancellationTokenSource CreateCancellationTokenSource()
+        {
+            if (IsInfinite)
+            {
+                return new CancellationTokenSource();
+            }
+
+            int remaining = MillisecondsRemainingInt;
+            if (remaining == 0)
+            {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                cts.Cancel();
+                return cts;
+            }
+
+            return new CancellationTokenSource(remaining);
+        }
 
         /// <summary>
         /// Resets the timeout to its original duration.

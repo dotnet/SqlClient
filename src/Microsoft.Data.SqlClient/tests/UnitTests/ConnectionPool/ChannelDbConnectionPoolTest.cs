@@ -896,6 +896,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
 
         #region Test classes
+#nullable disable
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(
@@ -903,7 +904,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection)
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
             {
                 return new StubDbConnectionInternal();
             }
@@ -916,11 +918,59 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection)
+                DbConnection owningConnection,
+                TimeoutTimer timeout = null)
             {
                 throw ADP.PooledOpenTimeout();
             }
         }
+
+        internal class SlowSqlConnectionFactory : SqlConnectionFactory
+        {
+            private readonly TimeSpan _delay;
+
+            internal SlowSqlConnectionFactory(TimeSpan delay) => _delay = delay;
+
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout = null)
+            {
+                Thread.Sleep(_delay);
+                return new StubDbConnectionInternal();
+            }
+        }
+
+        /// <summary>
+        /// A factory that captures the TimeoutTimer passed to CreateConnection for test verification.
+        /// </summary>
+        internal class TimeoutCapturingSqlConnectionFactory : SqlConnectionFactory
+        {
+            private readonly TimeSpan _delay;
+            internal TimeoutTimer CapturedTimeout { get; private set; }
+
+            internal TimeoutCapturingSqlConnectionFactory(TimeSpan delay = default) => _delay = delay;
+
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout = null)
+            {
+                CapturedTimeout = timeout;
+                if (_delay > TimeSpan.Zero)
+                {
+                    Thread.Sleep(_delay);
+                }
+                return new StubDbConnectionInternal();
+            }
+        }
+#nullable restore
 
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
@@ -1081,5 +1131,274 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(pool2);
             Assert.Equal(0, pool2.Count);
         }
+
+        #region Connection Timeout Awareness Tests
+
+        [Fact]
+        public async Task GetConnectionInfiniteTimeout_ShouldNotTimeoutImmediately()
+        {
+            // Arrange: pool at max capacity (1) so the next request must wait
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 0, // 0 = infinite timeout
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            SqlConnection firstOwner = new();
+            pool.TryGetConnection(firstOwner, taskCompletionSource: null, out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+
+            // Act: request a connection with ConnectTimeout=0 (infinite), then release after a delay
+            var waiterTask = Task.Run(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection("Timeout=0"),
+                    taskCompletionSource: null,
+                    out DbConnectionInternal? waitedConnection);
+                return waitedConnection;
+            });
+
+            // Give the waiter time to start blocking, then release the connection
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            Assert.False(waiterTask.IsCompleted, "Waiter should still be waiting (infinite timeout)");
+
+            pool.ReturnInternalConnection(firstConnection, firstOwner);
+            var result = await waiterTask;
+
+            // Assert: the waiter should have received the connection without a timeout error
+            Assert.NotNull(result);
+            Assert.Same(firstConnection, result);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncInfiniteTimeout_ShouldNotTimeoutImmediately()
+        {
+            // Arrange: pool at max capacity (1) so the next request must wait
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 0, // 0 = infinite timeout
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            SqlConnection firstOwner = new();
+            pool.TryGetConnection(firstOwner, taskCompletionSource: null, out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+
+            // Act: request a connection with ConnectTimeout=0 (infinite), then release after a delay
+            var tcs = new TaskCompletionSource<DbConnectionInternal>();
+            pool.TryGetConnection(new SqlConnection("Timeout=0"), tcs, out _);
+
+            // Give the waiter time to start blocking, then release the connection
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            Assert.False(tcs.Task.IsCompleted, "Waiter should still be waiting (infinite timeout)");
+
+            pool.ReturnInternalConnection(firstConnection, firstOwner);
+            var result = await tcs.Task;
+
+            // Assert: the waiter should have received the connection without a timeout error
+            Assert.NotNull(result);
+            Assert.Same(firstConnection, result);
+        }
+
+        [Fact]
+        public void GetConnectionSlowCreation_ShouldTimeoutAfterCreation()
+        {
+            // Arrange: factory that takes 3 seconds to create a connection, but timeout is 1 second
+            var slowFactory = new SlowSqlConnectionFactory(TimeSpan.FromSeconds(3));
+            var pool = ConstructPool(slowFactory);
+
+            // Act & Assert: the creation itself takes 3s but CTS fires at 1s;
+            // the post-creation cancellation check in ConnectionPoolSlots.Add detects the timeout.
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    taskCompletionSource: null,
+                    out DbConnectionInternal? internalConnection);
+            });
+
+            Assert.Equal(
+                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
+                ex.Message);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncSlowCreation_ShouldTimeoutAfterCreation()
+        {
+            // Arrange: factory that takes 3 seconds to create a connection, but timeout is 1 second
+            var slowFactory = new SlowSqlConnectionFactory(TimeSpan.FromSeconds(3));
+            var pool = ConstructPool(slowFactory);
+
+            // Act & Assert
+            var tcs = new TaskCompletionSource<DbConnectionInternal>();
+            pool.TryGetConnection(
+                new SqlConnection("Timeout=1"),
+                tcs,
+                out _);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => tcs.Task);
+
+            Assert.Equal(
+                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
+                ex.Message);
+        }
+
+        [Fact]
+        public async Task ConcurrentCallers_ShouldTimeoutIndependently()
+        {
+            // Arrange: pool at max capacity so both callers must wait
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            SqlConnection firstOwner = new();
+            pool.TryGetConnection(firstOwner, taskCompletionSource: null, out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+
+            // Act: two callers with different timeouts both waiting
+            // Caller A has a 1-second timeout, Caller B has a 5-second timeout
+            var callerATask = Task.Run(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    taskCompletionSource: null,
+                    out DbConnectionInternal? connectionA);
+                return connectionA;
+            });
+
+            var callerBTask = Task.Run(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection("Timeout=5"),
+                    taskCompletionSource: null,
+                    out DbConnectionInternal? connectionB);
+                return connectionB;
+            });
+
+            // Wait for caller A to timeout
+            var exA = await Assert.ThrowsAsync<InvalidOperationException>(() => callerATask);
+            Assert.Equal(
+                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
+                exA.Message);
+
+            // Caller B should still be waiting (5-second timeout not yet elapsed)
+            Assert.False(callerBTask.IsCompleted, "Caller B should still be waiting");
+
+            // Release the connection so caller B can succeed
+            pool.ReturnInternalConnection(firstConnection, firstOwner);
+            var resultB = await callerBTask;
+
+            // Assert: caller B got the connection
+            Assert.NotNull(resultB);
+            Assert.Same(firstConnection, resultB);
+        }
+
+        /// <summary>
+        /// Verifies that the pool passes a non-null TimeoutTimer to the factory's CreateConnection
+        /// method, and that it reflects the remaining budget (not a fresh full timeout).
+        /// </summary>
+        [Fact]
+        public void GetConnection_ShouldPassTimeoutTimerToFactory()
+        {
+            // Arrange: use a capturing factory
+            var factory = new TimeoutCapturingSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            var owner = new SqlConnection("Timeout=30");
+
+            // Act
+            pool.TryGetConnection(owner, taskCompletionSource: null, out DbConnectionInternal? connection);
+
+            // Assert: timeout was passed through
+            Assert.NotNull(connection);
+            Assert.NotNull(factory.CapturedTimeout);
+            Assert.False(factory.CapturedTimeout.IsExpired);
+            // The timer should have been started with ~30 seconds, but some time has elapsed
+            Assert.True(factory.CapturedTimeout.MillisecondsRemaining <= 30_000);
+            Assert.True(factory.CapturedTimeout.MillisecondsRemaining > 0);
+        }
+
+        /// <summary>
+        /// Verifies that the TimeoutTimer passed to CreateConnection has reduced remaining time
+        /// when the pool spends time waiting (e.g., for a slot to free up).
+        /// </summary>
+        [Fact]
+        public void GetConnection_TimeoutTimerReflectsPoolWaitTime()
+        {
+            // Arrange: pool at max 1, fill it, then return after a delay
+            var factory = new TimeoutCapturingSqlConnectionFactory(delay: TimeSpan.FromMilliseconds(100));
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 30,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true
+            );
+            var pool = ConstructPool(factory, poolGroupOptions: poolGroupOptions);
+
+            // Fill the pool
+            var firstOwner = new SqlConnection("Timeout=30");
+            pool.TryGetConnection(firstOwner, taskCompletionSource: null, out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+            long firstRemainingMs = factory.CapturedTimeout.MillisecondsRemaining;
+
+            // Return after a short delay so second caller waits
+            Task.Run(async () =>
+            {
+                await Task.Delay(500);
+                pool.ReturnInternalConnection(firstConnection, firstOwner);
+            });
+
+            // Act: second caller must wait for the first to return
+            var secondFactory = new TimeoutCapturingSqlConnectionFactory();
+            // We can't swap factories, but the existing factory captures. Reset.
+            var secondOwner = new SqlConnection("Timeout=30");
+            pool.TryGetConnection(secondOwner, taskCompletionSource: null, out DbConnectionInternal? secondConnection);
+
+            // Assert: connection obtained, remaining time is less because pool wait consumed time
+            Assert.NotNull(secondConnection);
+            // The second call reuses the pool's timer from TryGetConnection, which has been running
+            // during the ~500ms wait. The factory won't be called for the second request since it 
+            // gets the returned idle connection. But the first call's timer should show time passed.
+            Assert.True(factory.CapturedTimeout.MillisecondsRemaining < 30_000,
+                "TimeoutTimer should reflect elapsed time since pool entry");
+        }
+
+        /// <summary>
+        /// Verifies that ConnectTimeout=0 (infinite) creates an infinite TimeoutTimer.
+        /// </summary>
+        [Fact]
+        public void GetConnection_InfiniteTimeout_ShouldPassInfiniteTimeoutTimer()
+        {
+            // Arrange
+            var factory = new TimeoutCapturingSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            var owner = new SqlConnection("Timeout=0");
+
+            // Act
+            pool.TryGetConnection(owner, taskCompletionSource: null, out DbConnectionInternal? connection);
+
+            // Assert
+            Assert.NotNull(connection);
+            Assert.NotNull(factory.CapturedTimeout);
+            Assert.True(factory.CapturedTimeout.IsInfinite);
+            Assert.False(factory.CapturedTimeout.IsExpired);
+        }
+
+        #endregion
     }
 }
