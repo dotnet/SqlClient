@@ -1,12 +1,10 @@
-#################################################################################
+﻿#################################################################################
 # Licensed to the .NET Foundation under one or more agreements.                 #
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
 parameters:
-  # General Parameters =====================================================
-
   - name: buildConfiguration
     type: string
     values:
@@ -27,28 +25,23 @@ parameters:
   - name: platformImage
     type: string
 
-  # Test Parameters ========================================================
+  # Test Configuration Parameters ==========================================
 
-  - name: packageShortName
-    type: string
-    values:
-      - Azure
-      - AkvProvider
-      - Abstractions
-      - Logging
-      - SqlClient
-      - SqlServer
-
-  - name: testDisplayName
+  - name: azureKeyVaultTenantId
     type: string
 
-  - name: testProject
+  - name: azureKeyVaultUrl
     type: string
-    default: ''
+
+  - name: connectionStringNp
+    type: string
+
+  - name: connectionStringTcp
+    type: string
 
 jobs:
-  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
-    displayName: "${{ parameters.testDisplayName }}_${{ parameters.platformDisplayName }}"
+  - job: "test_${{ parameters.platformDisplayName }}_sqlclient_manual"
+    displayName: "sqlclient_manual_${{ parameters.platformDisplayName }}"
 
     pool:
       vmImage: ${{ parameters.platformImage }}
@@ -58,6 +51,8 @@ jobs:
         parameters:
           runtimeVersion: ${{ parameters.platformDotnet }}
 
+      - # @TODO: Config genration step will go here.
+
       - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -66,3 +61,4 @@ jobs:
           packageShortName: ${{ parameters.packageShortName }}
           testFramework: ${{ parameters.platformDotnet }}
           testProject: ${{ parameters.testProject }}
+

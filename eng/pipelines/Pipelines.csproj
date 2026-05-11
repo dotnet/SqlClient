@@ -25,8 +25,4 @@
   <ItemGroup>
     <None Include="**/*" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="pr\variables\" />
-  </ItemGroup>
 </Project>

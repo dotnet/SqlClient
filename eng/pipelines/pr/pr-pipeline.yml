@@ -26,26 +26,26 @@ stages:
       platforms:
         # @TODO: Expand to cover different SQL Server targets
         - displayName: "windows_net462"
-          image: "windows-latest"
+          image: "ADO-MMS22-SQL22"
           dotnet: "net462"
         - displayName: "windows_net8"
-          image: "windows-latest"
+          image: "ADO-MMS22-SQL22"
           dotnet: "net8.0"
         - displayName: "windows_net9"
-          image: "windows-latest"
+          image: "ADO-MMS22-SQL22"
           dotnet: "net9.0"
         - displayName: "windows_net10"
-          image: "windows-latest"
+          image: "ADO-MMS22-SQL22"
           dotnet: "net10.0"
 
         - displayName: "linux_net8"
-          image: "ubuntu-latest"
+          image: "ADO-UB22-SQL22"
           dotnet: "net8.0"
         - displayName: "linux_net9"
-          image: "ubuntu-latest"
+          image: "ADO-UB22-SQL22"
           dotnet: "net9.0"
         - displayName: "linux_net10"
-          image: "ubuntu-latest"
+          image: "ADO-UB22-SQL22"
           dotnet: "net10.0"
 
   # Stage 3: Collect and report code coverage

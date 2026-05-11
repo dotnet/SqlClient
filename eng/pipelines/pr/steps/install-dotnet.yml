@@ -1,0 +1,22 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This is a step to wrap the install-dotnet step for use in the PR pipeline. It will always install
+# the SDK version specified in the global.json file, and if the runtime version specified does not
+# begin with "net4" (ie, indicating netfx runtime is being used), the version will be passed in as
+# part of the runtime parameters.
+
+parameters:
+  - name: runtimeVersion
+    type: string
+
+steps:
+  # @TODO: Include retry
+  - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+    parameters:
+      ${{ if not(contains(parameters.runtimeVersion, 'net4')) }}:
+        runtimes:
+          - "${{ replace(parameters.runtimeVersion, 'net', '') }}.x"
