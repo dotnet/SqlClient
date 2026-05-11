@@ -881,5 +881,55 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
             Assert.Equal(0, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
         }
+
+        /// <summary>
+        /// Verifies opt-in legacy behavior: login-phase SQL errors can alternate to the
+        /// failover partner when UseLegacyFailoverAlternationOnLoginSqlErrors is enabled.
+        /// </summary>
+        [Fact]
+        public void NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = true;
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = 40613,
+                    // Keep the login token non-fatal so parser state, not break/doom behavior,
+                    // drives this branch decision.
+                    ErrorClass = 16,
+                    RepeatCount = 1,
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                Pooling = false,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+        }
     }
 }
