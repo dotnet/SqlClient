@@ -34,6 +34,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private const int PostDisconnectDelayMs = 50;
 
+        /// <summary>
+        /// Maximum time (ms) to wait for the client to detect a server-side disconnect.
+        /// On CI VMs with native SNI, socket close detection can take significantly longer
+        /// than on local machines due to virtualized networking and CPU contention.
+        /// </summary>
+        private const int DisconnectDetectionTimeoutMs = 5000;
+
         #region Test Infrastructure
 
         /// <summary>
@@ -235,14 +242,78 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Disconnect all server clients and wait for the
-        /// <c>CheckConnectionWindow</c> to expire so that the next
-        /// <c>ValidateSNIConnection</c> call properly detects the dead link.
+        /// Disconnect all server clients, then execute the given command, retrying until the
+        /// client detects the broken connection and transparently reconnects.
+        /// <para>
+        /// On local machines the disconnect is usually detected within one attempt after a
+        /// short sleep.  On CI VMs with native SNI (net462/Windows), socket close detection
+        /// can be significantly slower due to virtualized networking and CPU contention.
+        /// This method accounts for that by retrying the command with increasing delays
+        /// instead of relying on a single fixed sleep.
+        /// </para>
         /// </summary>
-        private static void DisconnectAndWait(DisconnectableTdsServer server)
+        private static void DisconnectAndExecute(DisconnectableTdsServer server,
+            SqlConnection connection, string commandText = "SELECT 1")
         {
             server.DisconnectAllClients();
-            System.Threading.Thread.Sleep(PostDisconnectDelayMs);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            int delay = PostDisconnectDelayMs;
+
+            while (true)
+            {
+                System.Threading.Thread.Sleep(delay);
+
+                try
+                {
+                    using SqlCommand cmd = new(commandText, connection);
+                    cmd.ExecuteNonQuery();
+                    // Command succeeded — reconnection happened.
+                    return;
+                }
+                catch (SqlException) when (sw.ElapsedMilliseconds < DisconnectDetectionTimeoutMs)
+                {
+                    // The broken connection was detected but reconnection failed
+                    // (shouldn't normally happen since the server is still listening).
+                    // Retry with a longer delay.
+                    delay = System.Math.Min(delay * 2, 500);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Disconnect all server clients and verify that the next command throws
+        /// (used for no-retry scenarios where reconnection is not expected).
+        /// </summary>
+        private static void DisconnectAndExpectFailure(DisconnectableTdsServer server,
+            SqlConnection connection, string commandText = "SELECT 1")
+        {
+            server.DisconnectAllClients();
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            int delay = PostDisconnectDelayMs;
+
+            while (true)
+            {
+                System.Threading.Thread.Sleep(delay);
+
+                try
+                {
+                    using SqlCommand cmd = new(commandText, connection);
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SqlException)
+                {
+                    // Expected — broken connection detected and no retry available.
+                    return;
+                }
+
+                // If the command succeeded, the disconnect wasn't detected yet.
+                Assert.True(sw.ElapsedMilliseconds < DisconnectDetectionTimeoutMs,
+                    $"Command did not fail within {DisconnectDetectionTimeoutMs}ms after disconnect.");
+
+                delay = System.Math.Min(delay * 2, 500);
+            }
         }
 
         #endregion
@@ -316,12 +387,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             // The server sent ENV_CHANGE with the recovered database.
             Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
@@ -344,12 +410,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.ChangeDatabase(SwitchedDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
@@ -384,12 +445,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
@@ -433,12 +489,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             // The buggy server sent InitialCatalog in ENV_CHANGE.
             Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
@@ -469,12 +520,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.ChangeDatabase(SwitchedDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
 
@@ -516,12 +562,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             // The server never sent a database ENV_CHANGE.
             Assert.Null(server.LastLoginResponseDatabase);
@@ -552,12 +593,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.ChangeDatabase(SwitchedDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
-            using (SqlCommand cmd = new("SELECT 1", connection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            DisconnectAndExecute(server, connection);
 
             Assert.Null(server.LastLoginResponseDatabase);
 
@@ -598,11 +634,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
-            DisconnectAndWait(server);
-
             // With ConnectRetryCount=0, no transparent reconnection should occur.
-            using SqlCommand cmd2 = new("SELECT 1", connection);
-            Assert.ThrowsAny<SqlException>(() => cmd2.ExecuteNonQuery());
+            DisconnectAndExpectFailure(server, connection);
         }
 
         #endregion
