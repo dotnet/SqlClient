@@ -109,7 +109,6 @@ jobs:
       - name: buildArguments
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
-          --artifacts-path $(dotnetArtifactsDir)
           -p:Configuration=${{ parameters.buildConfiguration }}
 
       # dotnet CLI arguments for run.
