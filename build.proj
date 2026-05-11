@@ -444,7 +444,7 @@
 
   <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
   <PropertyGroup>
-    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions</BuildSqlClientRefDependsOn>
+    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientRef" DependsOnTargets="$(BuildSqlClientRefDependsOn)">
     <PropertyGroup>
@@ -461,6 +461,7 @@
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>

@@ -113,7 +113,7 @@
 
   <!--
     Reference to SqlServer and Abstractions packages. Even though the ref project has a reference to
-    these package, their binaries will not be copied into this project's output, so we need to make
+    these packages, their binaries will not be copied into this project's output, so we need to make
     our own reference to them to ensure they are brought in for compilation.
   -->
   <ItemGroup>
