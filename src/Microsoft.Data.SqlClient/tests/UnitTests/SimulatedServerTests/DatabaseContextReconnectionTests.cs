@@ -251,10 +251,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// This method accounts for that by retrying the command with increasing delays
         /// instead of relying on a single fixed sleep.
         /// </para>
+        /// <para>
+        /// The method also verifies reconnection via <see cref="GenericTdsServer.Login7Count"/>
+        /// because on some CI VMs the server-side socket close may not have fully propagated
+        /// to the client, allowing the command to succeed on the stale connection without
+        /// triggering reconnection.  In that case the method re-disconnects and retries.
+        /// </para>
         /// </summary>
         private static void DisconnectAndExecute(DisconnectableTdsServer server,
             SqlConnection connection, string commandText = "SELECT 1")
         {
+            int loginCountBefore = server.Login7Count;
             server.DisconnectAllClients();
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -268,8 +275,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     using SqlCommand cmd = new(commandText, connection);
                     cmd.ExecuteNonQuery();
-                    // Command succeeded — reconnection happened.
-                    return;
                 }
                 catch (SqlException) when (sw.ElapsedMilliseconds < DisconnectDetectionTimeoutMs)
                 {
@@ -277,7 +282,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     // (shouldn't normally happen since the server is still listening).
                     // Retry with a longer delay.
                     delay = System.Math.Min(delay * 2, 500);
+                    continue;
                 }
+
+                // Command succeeded.  Verify that reconnection actually happened by
+                // checking whether the server saw a new Login7 handshake.  On slow CI VMs
+                // the TCP FIN may not have propagated yet, allowing the command to succeed
+                // on the stale connection without triggering reconnection.
+                if (server.Login7Count > loginCountBefore)
+                {
+                    return; // Reconnection confirmed.
+                }
+
+                Assert.True(sw.ElapsedMilliseconds < DisconnectDetectionTimeoutMs,
+                    $"Reconnection did not occur within {DisconnectDetectionTimeoutMs}ms after disconnect.");
+
+                // Re-disconnect any new server-side handlers and retry.
+                server.DisconnectAllClients();
+                delay = System.Math.Min(delay * 2, 500);
             }
         }
 
@@ -312,6 +334,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.True(sw.ElapsedMilliseconds < DisconnectDetectionTimeoutMs,
                     $"Command did not fail within {DisconnectDetectionTimeoutMs}ms after disconnect.");
 
+                // Re-disconnect any new server-side handlers and retry.
+                server.DisconnectAllClients();
                 delay = System.Math.Min(delay * 2, 500);
             }
         }
