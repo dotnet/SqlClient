@@ -8,12 +8,14 @@ using System.Data;
 using System.Globalization;
 using System.Threading;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 #nullable enable
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public enum TestVariations {
+    public enum TestVariations
+    {
         TestSimpleParameter_Type,
         TestSimpleParameter_Variant,
         TestSqlDataRecordParameterToTVP_Type,
@@ -30,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         SqlBulkCopyDataTable_Variant,
         SqlBulkCopyDataRow_Type,
         SqlBulkCopyDataRow_Variant
-    };
+    }
 
     public struct TestResult
     {
@@ -49,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// <summary>
     /// Tests for DateTime variant parameters with different date/time types.
     /// </summary>
+    [Trait("Category", "flaky")]
     public class DateTimeVariantTests
     {
         private static void RunTest(
@@ -79,7 +82,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Assert.True(isExpectedException(e, paramValue), e.Message);
                 }
-                else {
+                else
+                {
                     Assert.Fail($"Unexpected exception was thrown for test variation {tag} with parameter value {paramValue}. Exception: {e}");
                 }
             }
@@ -110,23 +114,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.ExecuteNonQuery();
         }
 
-        private static void DropStoredProcedure(SqlConnection conn, string procName)
-        {
-            xsql(conn, string.Format("if exists(select 1 from sys.procedures where name='{0}') begin drop proc {1} end", procName.Substring(1, procName.Length - 2), procName));
-        }
-
-        private static void DropTable(SqlConnection conn, string tableName)
-        {
-            xsql(conn, string.Format("if exists(select 1 from sys.tables where name='{0}') begin drop table {1} end", tableName.Substring(1, tableName.Length - 2), tableName));
-        }
-
-        private static void DropType(SqlConnection conn, string typeName)
-        {
-            xsql(conn, string.Format("if exists(select 1 from sys.types where name='{0}') begin drop type {1} end", typeName.Substring(1, typeName.Length - 2), typeName));
-        }
-
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleParameter_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -138,29 +127,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleParameter_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string procName = DataTestUtility.GetLongName("paramProc1");
-
                     using SqlConnection conn = new(connStr);
-                    try
-                    {
-                        conn.Open();
-                        DropStoredProcedure(conn, procName);
-                        xsql(conn, string.Format("create proc {0} (@param {1}) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName, expectedBaseTypeName));
+                    conn.Open();
+                    using StoredProcedure proc = new(conn, "paramProc1", $"(@param {expectedBaseTypeName}) AS BEGIN SELECT @param, sql_variant_property(@param,'BaseType') AS BaseType END;");
 
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = procName;
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        SqlParameter p = cmd.Parameters.AddWithValue("@param", paramValue);
-                        cmd.Parameters[0].SqlDbType = GetSqlDbType(expectedBaseTypeName);
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            return new TestResult(dr[0], dr.GetString(1));
-                        }
-                    }
-                    finally
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = proc.Name;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter p = cmd.Parameters.AddWithValue("@param", paramValue);
+                    cmd.Parameters[0].SqlDbType = GetSqlDbType(expectedBaseTypeName);
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        DropStoredProcedure(conn, procName);
+                        dr.Read();
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 },
                 paramValue, 
@@ -172,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleParameter_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -184,29 +163,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleParameter_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string procName = DataTestUtility.GetLongName("paramProc2");
-
                     using SqlConnection conn = new(connStr);
-                    try
-                    {
-                        conn.Open();
-                        DropStoredProcedure(conn, procName);
-                        xsql(conn, string.Format("create proc {0} (@param sql_variant) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName));
+                    conn.Open();
+                    using StoredProcedure proc = new(conn, "paramProc2", "(@param sql_variant) AS BEGIN SELECT @param, sql_variant_property(@param,'BaseType') AS BaseType END;");
 
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = procName;
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        SqlParameter p = cmd.Parameters.AddWithValue("@param", paramValue);
-                        cmd.Parameters[0].SqlDbType = SqlDbType.Variant;
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            return new TestResult(dr[0], dr.GetString(1));
-                        }
-                    }
-                    finally
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = proc.Name;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter p = cmd.Parameters.AddWithValue("@param", paramValue);
+                    cmd.Parameters[0].SqlDbType = SqlDbType.Variant;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        DropStoredProcedure(conn, procName);
+                        dr.Read();
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 },
                 paramValue, 
@@ -218,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataRecordParameterToTVP_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -230,36 +199,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataRecordParameterToTVP_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string tvpTypeName = DataTestUtility.GetLongName("tvpType");
-
                     using SqlConnection conn = new(connStr);
-                    try
-                    {
-                        conn.Open();
-                        DropType(conn, tvpTypeName);
-                        xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
+                    conn.Open();
+                    using UserDefinedType tvpType = new(conn, "tvpType", $"TABLE (f1 {expectedBaseTypeName})");
 
-                        // Send TVP using SqlMetaData.
-                        SqlMetaData[] metadata = new SqlMetaData[1];
-                        metadata[0] = new SqlMetaData("f1", GetSqlDbType(expectedBaseTypeName));
-                        SqlDataRecord[] record = new SqlDataRecord[1];
-                        record[0] = new SqlDataRecord(metadata);
-                        record[0].SetValue(0, paramValue);
+                    // Send TVP using SqlMetaData.
+                    SqlMetaData[] metadata = new SqlMetaData[1];
+                    metadata[0] = new SqlMetaData("f1", GetSqlDbType(expectedBaseTypeName));
+                    SqlDataRecord[] record = new SqlDataRecord[1];
+                    record[0] = new SqlDataRecord(metadata);
+                    record[0].SetValue(0, paramValue);
 
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
-                        SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", record);
-                        p.SqlDbType = SqlDbType.Structured;
-                        p.TypeName = string.Format("dbo.{0}", tvpTypeName);
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            return new TestResult(dr[0], dr.GetString(1));
-                        }
-                    }
-                    finally
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
+                    SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", record);
+                    p.SqlDbType = SqlDbType.Structured;
+                    p.TypeName = tvpType.Name;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        DropType(conn, tvpTypeName);
+                        dr.Read();
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 },
                 paramValue, 
@@ -271,7 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataRecordParameterToTVP_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -283,36 +242,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataRecordParameterToTVP_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
-
                     using SqlConnection conn = new(connStr);
-                    try
-                    {
-                        conn.Open();
-                        DropType(conn, tvpTypeName);
-                        xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
+                    conn.Open();
+                    using UserDefinedType tvpType = new(conn, "tvpVariant", "TABLE (f1 sql_variant)");
 
-                        // Send TVP using SqlMetaData.
-                        SqlMetaData[] metadata = new SqlMetaData[1];
-                        metadata[0] = new SqlMetaData("f1", SqlDbType.Variant);
-                        SqlDataRecord[] record = new SqlDataRecord[1];
-                        record[0] = new SqlDataRecord(metadata);
-                        record[0].SetValue(0, paramValue);
+                    // Send TVP using SqlMetaData.
+                    SqlMetaData[] metadata = new SqlMetaData[1];
+                    metadata[0] = new SqlMetaData("f1", SqlDbType.Variant);
+                    SqlDataRecord[] record = new SqlDataRecord[1];
+                    record[0] = new SqlDataRecord(metadata);
+                    record[0].SetValue(0, paramValue);
 
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
-                        SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", record);
-                        p.SqlDbType = SqlDbType.Structured;
-                        p.TypeName = string.Format("dbo.{0}", tvpTypeName);
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            return new TestResult(dr[0], dr.GetString(1));
-                        }
-                    }
-                    finally
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
+                    SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", record);
+                    p.SqlDbType = SqlDbType.Structured;
+                    p.TypeName = tvpType.Name;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        DropType(conn, tvpTypeName);
+                        dr.Read();
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 },
                 paramValue, 
@@ -324,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReaderParameterToTVP_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -336,39 +285,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReaderParameterToTVP_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string tvpTypeName = DataTestUtility.GetLongName("tvpType");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+                    using UserDefinedType tvpType = new(conn, "tvpType", $"TABLE (f1 {expectedBaseTypeName})");
+                    using (SqlConnection connInput = new(connStr))
                     {
-                        conn.Open();
-                        DropType(conn, tvpTypeName);
-                        xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
-                        using (SqlConnection connInput = new(connStr))
+                        connInput.Open();
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
-                            connInput.Open();
-                            using (SqlCommand cmdInput = connInput.CreateCommand())
+                            cmdInput.CommandText = "select @p1 as f1";
+                            cmdInput.Parameters.Add("@p1", GetSqlDbType(expectedBaseTypeName));
+                            cmdInput.Parameters["@p1"].Value = paramValue;
+                            using SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection);
+                            using SqlCommand cmd = conn.CreateCommand();
+                            cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
+                            SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
+                            p.SqlDbType = SqlDbType.Structured;
+                            p.TypeName = tvpType.Name;
+                            using (SqlDataReader dr = cmd.ExecuteReader())
                             {
-                                cmdInput.CommandText = "select @p1 as f1";
-                                cmdInput.Parameters.Add("@p1", GetSqlDbType(expectedBaseTypeName));
-                                cmdInput.Parameters["@p1"].Value = paramValue;
-                                using SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection);
-                                using SqlCommand cmd = conn.CreateCommand();
-                                cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
-                                SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
-                                p.SqlDbType = SqlDbType.Structured;
-                                p.TypeName = string.Format("dbo.{0}", tvpTypeName);
-                                using (SqlDataReader dr = cmd.ExecuteReader())
-                                {
-                                    dr.Read();
-                                    return new TestResult(dr[0], dr.GetString(1));
-                                }
+                                dr.Read();
+                                return new TestResult(dr[0], dr.GetString(1));
                             }
                         }
-                    }
-                    finally
-                    {
-                        DropType(conn, tvpTypeName);
                     }
                 },
                 paramValue, 
@@ -380,7 +319,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReaderParameterToTVP_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -392,41 +331,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReaderParameterToTVP_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string tvpTypeName = DataTestUtility.GetLongName("tvpVariant");
-
                     using SqlConnection conn = new(connStr);
-                    try
-                    {
-                        conn.Open();
-                        DropType(conn, tvpTypeName);
-                        xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
+                    conn.Open();
+                    using UserDefinedType tvpType = new(conn, "tvpVariant", "TABLE (f1 sql_variant)");
 
-                        // Send TVP using SqlDataReader.
-                        using (SqlConnection connInput = new(connStr))
+                    // Send TVP using SqlDataReader.
+                    using (SqlConnection connInput = new(connStr))
+                    {
+                        connInput.Open();
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
-                            connInput.Open();
-                            using (SqlCommand cmdInput = connInput.CreateCommand())
+                            cmdInput.CommandText = "select @p1 as f1";
+                            cmdInput.Parameters.Add("@p1", SqlDbType.Variant);
+                            cmdInput.Parameters["@p1"].Value = paramValue;
+                            using SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection);
+                            using SqlCommand cmd = conn.CreateCommand();
+                            cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
+                            SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
+                            p.SqlDbType = SqlDbType.Structured;
+                            p.TypeName = tvpType.Name;
+                            using (SqlDataReader dr = cmd.ExecuteReader())
                             {
-                                cmdInput.CommandText = "select @p1 as f1";
-                                cmdInput.Parameters.Add("@p1", SqlDbType.Variant);
-                                cmdInput.Parameters["@p1"].Value = paramValue;
-                                using SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection);
-                                using SqlCommand cmd = conn.CreateCommand();
-                                cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
-                                SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
-                                p.SqlDbType = SqlDbType.Structured;
-                                p.TypeName = string.Format("dbo.{0}", tvpTypeName);
-                                using (SqlDataReader dr = cmd.ExecuteReader())
-                                {
-                                    dr.Read();
-                                    return new TestResult(dr[0], dr.GetString(1));
-                                }
+                                dr.Read();
+                                return new TestResult(dr[0], dr.GetString(1));
                             }
                         }
-                    }
-                    finally
-                    {
-                        DropType(conn, tvpTypeName);
                     }
                 },
                 paramValue, 
@@ -438,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReader_TVP_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -450,72 +379,52 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReader_TVP_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string tvpTypeName = DataTestUtility.GetLongName("tvpType");
-                    string InputTableName = DataTestUtility.GetLongName("InputTable");
-                    string OutputTableName = DataTestUtility.GetLongName("OutputTable");
-                    string ProcName = DataTestUtility.GetLongName("spTVPProc");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using UserDefinedType tvpType = new(conn, "tvpType", $"TABLE (f1 {expectedBaseTypeName})");
+                    using Table inputTable = new(conn, "InputTable", $"(f1 {expectedBaseTypeName})");
+                    using Table outputTable = new(conn, "OutputTable", $"(f1 {expectedBaseTypeName})");
+
+                    string value = string.Empty;
+                    if (paramValue.GetType() == typeof(DateTimeOffset))
                     {
-                        conn.Open();
-
-                        DropStoredProcedure(conn, ProcName);
-                        DropTable(conn, InputTableName);
-                        DropTable(conn, OutputTableName);
-                        DropType(conn, $"dbo.{tvpTypeName}");
-
-                        xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
-                        xsql(conn, string.Format("create table {0} (f1 {1})", InputTableName, expectedBaseTypeName));
-                        xsql(conn, string.Format("create table {0} (f1 {1})", OutputTableName, expectedBaseTypeName));
-
-                        string value = string.Empty;
-                        if (paramValue.GetType() == typeof(DateTimeOffset))
-                        {
-                            DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                            value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-                        }
-                        else if (paramValue.GetType() == typeof(TimeSpan))
-                        {
-                            value = ((TimeSpan)paramValue).ToString();
-                        }
-                        else
-                        {
-                            value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-                        }
-                        xsql(conn, string.Format("insert into {0} values(CAST('{1}' AS {2}))", InputTableName, value, expectedBaseTypeName));
-                        xsql(conn, string.Format("create proc {0} (@P {1} READONLY) as begin insert into {2} select * from @P; end", ProcName, tvpTypeName, OutputTableName));
-
-                        SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = string.Format("SELECT * FROM {0}", InputTableName);
-                        using SqlDataReader r = cmd.ExecuteReader();
-                        using (SqlConnection conn2 = new(connStr))
-                        {
-                            conn2.Open();
-                            SqlCommand cmd2 = new(ProcName, conn2)
-                            {
-                                CommandType = CommandType.StoredProcedure
-                            };
-                            SqlParameter p = cmd2.Parameters.AddWithValue("@P", r);
-                            p.SqlDbType = SqlDbType.Structured;
-                            p.TypeName = tvpTypeName;
-                            cmd2.ExecuteNonQuery();
-
-                            cmd2.CommandText = string.Format("SELECT f1, sql_variant_property(f1,'BaseType') as BaseType FROM {0}", OutputTableName);
-                            cmd2.CommandType = CommandType.Text;
-                            using (SqlDataReader dr = cmd2.ExecuteReader())
-                            {
-                                dr.Read();
-                                return new TestResult(dr[0], dr.GetString(1));
-                            }
-                        }
+                        DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
-                    finally
+                    else if (paramValue.GetType() == typeof(TimeSpan))
                     {
-                        DropStoredProcedure(conn, ProcName);
-                        DropTable(conn, InputTableName);
-                        DropTable(conn, OutputTableName);
-                        DropType(conn, tvpTypeName);
+                        value = ((TimeSpan)paramValue).ToString();
+                    }
+                    else
+                    {
+                        value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
+                    }
+                    xsql(conn, string.Format("insert into {0} values(CAST('{1}' AS {2}))", inputTable.Name, value, expectedBaseTypeName));
+                    using StoredProcedure proc = new(conn, "spTVPProc", $"(@P {tvpType.Name} READONLY) AS BEGIN INSERT INTO {outputTable.Name} SELECT * FROM @P; END");
+
+                    SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = string.Format("SELECT * FROM {0}", inputTable.Name);
+                    using SqlDataReader r = cmd.ExecuteReader();
+                    using (SqlConnection conn2 = new(connStr))
+                    {
+                        conn2.Open();
+                        SqlCommand cmd2 = new(proc.Name, conn2)
+                        {
+                            CommandType = CommandType.StoredProcedure
+                        };
+                        SqlParameter p = cmd2.Parameters.AddWithValue("@P", r);
+                        p.SqlDbType = SqlDbType.Structured;
+                        p.TypeName = tvpType.Name;
+                        cmd2.ExecuteNonQuery();
+
+                        cmd2.CommandText = string.Format("SELECT f1, sql_variant_property(f1,'BaseType') as BaseType FROM {0}", outputTable.Name);
+                        cmd2.CommandType = CommandType.Text;
+                        using (SqlDataReader dr = cmd2.ExecuteReader())
+                        {
+                            dr.Read();
+                            return new TestResult(dr[0], dr.GetString(1));
+                        }
                     }
                 },
                 paramValue, 
@@ -527,7 +436,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReader_TVP_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -539,72 +448,52 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSqlDataReader_TVP_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string tvpTypeName = DataTestUtility.GetLongName("tvpVariant_DRdrTVPVar");
-                    string InputTableName = DataTestUtility.GetLongName("InputTable");
-                    string OutputTableName = DataTestUtility.GetLongName("OutputTable");
-                    string ProcName = DataTestUtility.GetLongName("spTVPProc_DRdrTVPVar");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using UserDefinedType tvpType = new(conn, "tvpVariant_DRdrTVPVar", "TABLE (f1 sql_variant)");
+                    using Table inputTable = new(conn, "InputTable", "(f1 sql_variant)");
+                    using Table outputTable = new(conn, "OutputTable", "(f1 sql_variant)");
+
+                    string value = string.Empty;
+                    if (paramValue.GetType() == typeof(DateTimeOffset))
                     {
-                        conn.Open();
+                        DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
+                    }
+                    else if (paramValue.GetType() == typeof(TimeSpan))
+                    {
+                        value = ((TimeSpan)paramValue).ToString();
+                    }
+                    else
+                    {
+                        value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
+                    }
+                    xsql(conn, string.Format("insert into {0} values(CAST('{1}' AS {2}))", inputTable.Name, value, expectedBaseTypeName));
+                    using StoredProcedure proc = new(conn, "spTVPProc_DRdrTVPVar", $"(@P {tvpType.Name} READONLY) AS BEGIN INSERT INTO {outputTable.Name} SELECT * FROM @P; END");
 
-                        DropStoredProcedure(conn, ProcName);
-                        DropTable(conn, InputTableName);
-                        DropTable(conn, OutputTableName);
-                        DropType(conn, tvpTypeName);
+                    SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = string.Format("SELECT * FROM {0}", inputTable.Name);
+                    using SqlDataReader r = cmd.ExecuteReader();
+                    using (SqlConnection conn2 = new(connStr))
+                    {
+                        conn2.Open();
+                        using (SqlCommand cmd2 = new(proc.Name, conn2))
+                        {
+                            cmd2.CommandType = CommandType.StoredProcedure;
+                            SqlParameter p = cmd2.Parameters.AddWithValue("@P", r);
+                            p.SqlDbType = SqlDbType.Structured;
+                            p.TypeName = tvpType.Name;
+                            cmd2.ExecuteNonQuery();
 
-                        xsql(conn, string.Format("create type {0} as table (f1 sql_variant)", tvpTypeName));
-                        xsql(conn, string.Format("create table {0} (f1 sql_variant)", InputTableName));
-                        xsql(conn, string.Format("create table {0} (f1 sql_variant)", OutputTableName));
-
-                        string value = string.Empty;
-                        if (paramValue.GetType() == typeof(DateTimeOffset))
-                        {
-                            DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                            value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-                        }
-                        else if (paramValue.GetType() == typeof(TimeSpan))
-                        {
-                            value = ((TimeSpan)paramValue).ToString();
-                        }
-                        else
-                        {
-                            value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-                        }
-                        xsql(conn, string.Format("insert into {0} values(CAST('{1}' AS {2}))", InputTableName, value, expectedBaseTypeName));
-                        xsql(conn, string.Format("create proc {0} (@P {1} READONLY) as begin insert into {2} select * from @P; end", ProcName, tvpTypeName, OutputTableName));
-
-                        SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = string.Format("SELECT * FROM {0}", InputTableName);
-                        using SqlDataReader r = cmd.ExecuteReader();
-                        using (SqlConnection conn2 = new(connStr))
-                        {
-                            conn2.Open();
-                            using (SqlCommand cmd2 = new(ProcName, conn2))
+                            cmd2.CommandText = string.Format("SELECT f1, sql_variant_property(f1,'BaseType') as BaseType FROM {0}", outputTable.Name);
+                            cmd2.CommandType = CommandType.Text;
+                            using (SqlDataReader dr = cmd2.ExecuteReader())
                             {
-                                cmd2.CommandType = CommandType.StoredProcedure;
-                                SqlParameter p = cmd2.Parameters.AddWithValue("@P", r);
-                                p.SqlDbType = SqlDbType.Structured;
-                                p.TypeName = tvpTypeName;
-                                cmd2.ExecuteNonQuery();
-
-                                cmd2.CommandText = string.Format("SELECT f1, sql_variant_property(f1,'BaseType') as BaseType FROM {0}", OutputTableName);
-                                cmd2.CommandType = CommandType.Text;
-                                using (SqlDataReader dr = cmd2.ExecuteReader())
-                                {
-                                    dr.Read();
-                                    return new TestResult(dr[0], dr.GetString(1));
-                                }
+                                dr.Read();
+                                return new TestResult(dr[0], dr.GetString(1));
                             }
                         }
-                    }
-                    finally
-                    {
-                        DropStoredProcedure(conn, ProcName);
-                        DropTable(conn, InputTableName);
-                        DropTable(conn, OutputTableName);
-                        DropType(conn, tvpTypeName);
                     }
                 },
                 paramValue, 
@@ -616,7 +505,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleDataReader_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -628,47 +517,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleDataReader_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string inputTable = DataTestUtility.GetLongName("inputTable");
-                    string procName = DataTestUtility.GetLongName("paramProc3");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table inputTable = new(conn, "inputTable", $"(f1 {expectedBaseTypeName})");
+                    string value = string.Empty;
+                    if (paramValue.GetType() == typeof(DateTimeOffset))
                     {
-                        conn.Open();
-                        DropTable(conn, inputTable);
-                        DropStoredProcedure(conn, procName);
-
-                        string value = string.Empty;
-                        if (paramValue.GetType() == typeof(DateTimeOffset))
-                        {
-                            DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                            value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-                        }
-                        else if (paramValue.GetType() == typeof(TimeSpan))
-                        {
-                            value = ((TimeSpan)paramValue).ToString();
-                        }
-                        else
-                        {
-                            value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-                        }
-                        xsql(conn, string.Format("create table {0} (f1 {1})", inputTable, expectedBaseTypeName));
-                        xsql(conn, string.Format("insert into {0}(f1) values('{1}');", inputTable, value));
-                        xsql(conn, string.Format("create proc {0} as begin select f1, sql_variant_property(f1,'BaseType') as BaseType from {1} end;", procName, inputTable));
-
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = procName;
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            return new TestResult(dr[0], dr.GetString(1));
-                        }
+                        DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
-                    finally
+                    else if (paramValue.GetType() == typeof(TimeSpan))
                     {
-                        DropStoredProcedure(conn, procName);
-                        DropTable(conn, inputTable);
+                        value = ((TimeSpan)paramValue).ToString();
+                    }
+                    else
+                    {
+                        value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
+                    }
+                    xsql(conn, string.Format("insert into {0}(f1) values('{1}');", inputTable.Name, value));
+                    using StoredProcedure proc = new(conn, "paramProc3", $"AS BEGIN SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM {inputTable.Name} END;");
+
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = proc.Name;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        dr.Read();
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 },
                 paramValue, 
@@ -680,7 +556,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleDataReader_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -692,47 +568,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.TestSimpleDataReader_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string inputTable = DataTestUtility.GetLongName("inputTable");
-                    string procName = DataTestUtility.GetLongName("paramProc4");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table inputTable = new(conn, "inputTable", "(f1 sql_variant)");
+                    string value = string.Empty;
+                    if (paramValue.GetType() == typeof(DateTimeOffset))
                     {
-                        conn.Open();
-                        DropTable(conn, inputTable);
-                        DropStoredProcedure(conn, procName);
-
-                        string value = string.Empty;
-                        if (paramValue.GetType() == typeof(DateTimeOffset))
-                        {
-                            DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                            value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-                        }
-                        else if (paramValue.GetType() == typeof(TimeSpan))
-                        {
-                            value = ((TimeSpan)paramValue).ToString();
-                        }
-                        else
-                        {
-                            value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-                        }
-                        xsql(conn, string.Format("create table {0} (f1 sql_variant)", inputTable));
-                        xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", inputTable, value, expectedBaseTypeName));
-                        xsql(conn, string.Format("create proc {0} as begin select f1, sql_variant_property(f1,'BaseType') as BaseType from {1} end;", procName, inputTable));
-
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = procName;
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            return new TestResult(dr[0], dr.GetString(1));
-                        }
+                        DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
-                    finally
+                    else if (paramValue.GetType() == typeof(TimeSpan))
                     {
-                        DropStoredProcedure(conn, procName);
-                        DropTable(conn, inputTable);
+                        value = ((TimeSpan)paramValue).ToString();
+                    }
+                    else
+                    {
+                        value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
+                    }
+                    xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", inputTable.Name, value, expectedBaseTypeName));
+                    using StoredProcedure proc = new(conn, "paramProc4", $"AS BEGIN SELECT f1, sql_variant_property(f1,'BaseType') AS BaseType FROM {inputTable.Name} END;");
+
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = proc.Name;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        dr.Read();
+                        return new TestResult(dr[0], dr.GetString(1));
                     }
                 },
                 paramValue, 
@@ -744,7 +607,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopySqlDataReader_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -756,63 +619,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopySqlDataReader_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
-                    string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table bulkCopyDestTable = new(conn, "bulkDestTable", $"(f1 {expectedBaseTypeName})");
+                    using Table bulkCopySrcTable = new(conn, "bulkSrcTable", $"(f1 {expectedBaseTypeName})");
+                    string value = string.Empty;
+                    if (paramValue.GetType() == typeof(DateTimeOffset))
                     {
-                        conn.Open();
-                        DropTable(conn, bulkCopyTableName);
-                        xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
-
-                        DropTable(conn, bulkCopySrcTableName);
-                        xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopySrcTableName, expectedBaseTypeName));
-                        string value = string.Empty;
-                        if (paramValue.GetType() == typeof(DateTimeOffset))
-                        {
-                            DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                            value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-                        }
-                        else if (paramValue.GetType() == typeof(TimeSpan))
-                        {
-                            value = ((TimeSpan)paramValue).ToString();
-                        }
-                        else
-                        {
-                            value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-                        }
-                        xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
-
-                        using SqlConnection connInput = new(connStr);
-                        connInput.Open();
-                        using (SqlCommand cmdInput = connInput.CreateCommand())
-                        {
-                            cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTableName);
-                            using SqlDataReader drInput = cmdInput.ExecuteReader();
-                            // Perform bulk copy to target.
-                            using (SqlBulkCopy bulkCopy = new(conn))
-                            {
-                                bulkCopy.BulkCopyTimeout = 60;
-                                bulkCopy.BatchSize = 1;
-                                bulkCopy.DestinationTableName = bulkCopyTableName;
-                                bulkCopy.WriteToServer(drInput);
-                            }
-
-                            // Verify target.
-                            using SqlCommand cmd = conn.CreateCommand();
-                            cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                            using (SqlDataReader drVerify = cmd.ExecuteReader())
-                            {
-                                drVerify.Read();
-                                return new TestResult(drVerify[0], drVerify.GetString(1));
-                            }
-                        }
+                        DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
                     }
-                    finally
+                    else if (paramValue.GetType() == typeof(TimeSpan))
                     {
-                        DropTable(conn, bulkCopyTableName);
-                        DropTable(conn, bulkCopySrcTableName);
+                        value = ((TimeSpan)paramValue).ToString();
+                    }
+                    else
+                    {
+                        value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
+                    }
+                    xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTable.Name, value, expectedBaseTypeName));
+
+                    using SqlConnection connInput = new(connStr);
+                    connInput.Open();
+                    using (SqlCommand cmdInput = connInput.CreateCommand())
+                    {
+                        cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTable.Name);
+                        using SqlDataReader drInput = cmdInput.ExecuteReader();
+                        // Perform bulk copy to target.
+                        using (SqlBulkCopy bulkCopy = new(conn))
+                        {
+                            bulkCopy.BulkCopyTimeout = 60;
+                            bulkCopy.BatchSize = 1;
+                            bulkCopy.DestinationTableName = bulkCopyDestTable.Name;
+                            bulkCopy.WriteToServer(drInput);
+                        }
+
+                        // Verify target.
+                        using SqlCommand cmd = conn.CreateCommand();
+                        cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyDestTable.Name);
+                        using (SqlDataReader drVerify = cmd.ExecuteReader())
+                        {
+                            drVerify.Read();
+                            return new TestResult(drVerify[0], drVerify.GetString(1));
+                        }
                     }
                 },
                 paramValue, 
@@ -824,7 +674,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopySqlDataReader_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -836,67 +686,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopySqlDataReader_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string bulkCopySrcTableName = DataTestUtility.GetLongName("bulkSrcTable");
-                    string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestTable");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table bulkCopyDestTable = new(conn, "bulkDestTable", "(f1 sql_variant)");
+                    using Table bulkCopySrcTable = new(conn, "bulkSrcTable", $"(f1 {expectedBaseTypeName})");
+                    string value = string.Empty;
+                    if (paramValue.GetType() == typeof(DateTimeOffset))
                     {
-                        conn.Open();
-                        DropTable(conn, bulkCopyTableName);
-                        xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
+                        DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
+                        value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
+                    }
+                    else if (paramValue.GetType() == typeof(TimeSpan))
+                    {
+                        value = ((TimeSpan)paramValue).ToString();
+                    }
+                    else
+                    {
+                        value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
+                    }
+                    xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTable.Name, value, expectedBaseTypeName));
 
-                        DropTable(conn, bulkCopySrcTableName);
-                        xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopySrcTableName, expectedBaseTypeName));
-                        string value = string.Empty;
-                        if (paramValue.GetType() == typeof(DateTimeOffset))
+                    using (SqlConnection connInput = new(connStr))
+                    {
+                        connInput.Open();
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
-                            DateTime dt = ((DateTimeOffset)paramValue).UtcDateTime;
-                            value = dt.ToString("M/d/yyyy") + " " + dt.TimeOfDay;
-                        }
-                        else if (paramValue.GetType() == typeof(TimeSpan))
-                        {
-                            value = ((TimeSpan)paramValue).ToString();
-                        }
-                        else
-                        {
-                            value = ((DateTime)paramValue).ToString("M/d/yyyy") + " " + ((DateTime)paramValue).TimeOfDay;
-                        }
-                        xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
-
-                        using (SqlConnection connInput = new(connStr))
-                        {
-                            connInput.Open();
-                            using (SqlCommand cmdInput = connInput.CreateCommand())
+                            cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTable.Name);
+                            using SqlDataReader drInput = cmdInput.ExecuteReader();
                             {
-                                cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTableName);
-                                using SqlDataReader drInput = cmdInput.ExecuteReader();
+                                // Perform bulk copy to target.
+                                using (SqlBulkCopy bulkCopy = new(conn))
                                 {
-                                    // Perform bulk copy to target.
-                                    using (SqlBulkCopy bulkCopy = new(conn))
-                                    {
-                                        bulkCopy.BulkCopyTimeout = 60;
-                                        bulkCopy.BatchSize = 1;
-                                        bulkCopy.DestinationTableName = bulkCopyTableName;
-                                        bulkCopy.WriteToServer(drInput);
-                                    }
+                                    bulkCopy.BulkCopyTimeout = 60;
+                                    bulkCopy.BatchSize = 1;
+                                    bulkCopy.DestinationTableName = bulkCopyDestTable.Name;
+                                    bulkCopy.WriteToServer(drInput);
+                                }
 
-                                    // Verify target.
-                                    using SqlCommand cmd = conn.CreateCommand();
-                                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                                    using (SqlDataReader drVerify = cmd.ExecuteReader())
-                                    {
-                                        drVerify.Read();
-                                        return new TestResult(drVerify[0], drVerify.GetString(1));
-                                    }
+                                // Verify target.
+                                using SqlCommand cmd = conn.CreateCommand();
+                                cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyDestTable.Name);
+                                using (SqlDataReader drVerify = cmd.ExecuteReader())
+                                {
+                                    drVerify.Read();
+                                    return new TestResult(drVerify[0], drVerify.GetString(1));
                                 }
                             }
                         }
-                    }
-                    finally
-                    {
-                        DropTable(conn, bulkCopyTableName);
-                        DropTable(conn, bulkCopySrcTableName);
                     }
                 },
                 paramValue, 
@@ -908,7 +745,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataTable_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -920,41 +757,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataTable_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table bulkCopyTable = new(conn, "bulkDestType", $"(f1 {expectedBaseTypeName})");
+
+                    // Send using DataTable as source.
+                    DataTable t = new();
+                    t.Columns.Add("f1", paramValue.GetType());
+                    t.Rows.Add(new object[] { paramValue });
+
+                    // Perform bulk copy to target.
+                    using (SqlBulkCopy bulkCopy = new(conn))
                     {
-                        conn.Open();
-                        DropTable(conn, bulkCopyTableName);
-                        xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
-
-                        // Send using DataTable as source.
-                        DataTable t = new();
-                        t.Columns.Add("f1", paramValue.GetType());
-                        t.Rows.Add(new object[] { paramValue });
-
-                        // Perform bulk copy to target.
-                        using (SqlBulkCopy bulkCopy = new(conn))
-                        {
-                            bulkCopy.BulkCopyTimeout = 60;
-                            bulkCopy.BatchSize = 1;
-                            bulkCopy.DestinationTableName = bulkCopyTableName;
-                            bulkCopy.WriteToServer(t, DataRowState.Added);
-                        }
-
-                        // Verify target.
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                        using (SqlDataReader drVerify = cmd.ExecuteReader())
-                        {
-                            drVerify.Read();
-                            return new TestResult(drVerify[0], drVerify.GetString(1));
-                        }
+                        bulkCopy.BulkCopyTimeout = 60;
+                        bulkCopy.BatchSize = 1;
+                        bulkCopy.DestinationTableName = bulkCopyTable.Name;
+                        bulkCopy.WriteToServer(t, DataRowState.Added);
                     }
-                    finally
+
+                    // Verify target.
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTable.Name);
+                    using (SqlDataReader drVerify = cmd.ExecuteReader())
                     {
-                        DropTable(conn, bulkCopyTableName);
+                        drVerify.Read();
+                        return new TestResult(drVerify[0], drVerify.GetString(1));
                     }
                 },
                 paramValue, 
@@ -966,7 +794,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataTable_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -978,41 +806,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataTable_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table bulkCopyTable = new(conn, "bulkDestVariant", "(f1 sql_variant)");
+
+                    // Send using DataTable as source.
+                    DataTable t = new();
+                    t.Columns.Add("f1", typeof(object));
+                    t.Rows.Add(new object[] { paramValue });
+
+                    // Perform bulk copy to target.
+                    using (SqlBulkCopy bulkCopy = new(conn))
                     {
-                        conn.Open();
-                        DropTable(conn, bulkCopyTableName);
-                        xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
-
-                        // Send using DataTable as source.
-                        DataTable t = new();
-                        t.Columns.Add("f1", typeof(object));
-                        t.Rows.Add(new object[] { paramValue });
-
-                        // Perform bulk copy to target.
-                        using (SqlBulkCopy bulkCopy = new(conn))
-                        {
-                            bulkCopy.BulkCopyTimeout = 60;
-                            bulkCopy.BatchSize = 1;
-                            bulkCopy.DestinationTableName = bulkCopyTableName;
-                            bulkCopy.WriteToServer(t, DataRowState.Added);
-                        }
-
-                        // Verify target.
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                        using (SqlDataReader drVerify = cmd.ExecuteReader())
-                        {
-                            drVerify.Read();
-                            return new TestResult(drVerify[0], drVerify.GetString(1));
-                        }
+                        bulkCopy.BulkCopyTimeout = 60;
+                        bulkCopy.BatchSize = 1;
+                        bulkCopy.DestinationTableName = bulkCopyTable.Name;
+                        bulkCopy.WriteToServer(t, DataRowState.Added);
                     }
-                    finally
+
+                    // Verify target.
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTable.Name);
+                    using (SqlDataReader drVerify = cmd.ExecuteReader())
                     {
-                        DropTable(conn, bulkCopyTableName);
+                        drVerify.Read();
+                        return new TestResult(drVerify[0], drVerify.GetString(1));
                     }
                 },
                 paramValue, 
@@ -1024,7 +843,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataRow_Type(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -1036,36 +855,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataRow_Type,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestType");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table bulkCopyTable = new(conn, "bulkDestType", $"(f1 {expectedBaseTypeName})");
+                    DataTable t = new();
+                    t.Columns.Add("f1", paramValue.GetType());
+                    t.Rows.Add(new object[] { paramValue });
+                    DataRow[] rowToSend = t.Select();
+                    using (SqlBulkCopy bulkCopy = new(conn))
                     {
-                        conn.Open();
-                        DropTable(conn, bulkCopyTableName);
-                        xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
-                        DataTable t = new();
-                        t.Columns.Add("f1", paramValue.GetType());
-                        t.Rows.Add(new object[] { paramValue });
-                        DataRow[] rowToSend = t.Select();
-                        using (SqlBulkCopy bulkCopy = new(conn))
-                        {
-                            bulkCopy.BulkCopyTimeout = 60;
-                            bulkCopy.BatchSize = 1;
-                            bulkCopy.DestinationTableName = bulkCopyTableName;
-                            bulkCopy.WriteToServer(rowToSend);
-                        }
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                        using (SqlDataReader drVerify = cmd.ExecuteReader())
-                        {
-                            drVerify.Read();
-                            return new TestResult(drVerify[0], drVerify.GetString(1));
-                        }
+                        bulkCopy.BulkCopyTimeout = 60;
+                        bulkCopy.BatchSize = 1;
+                        bulkCopy.DestinationTableName = bulkCopyTable.Name;
+                        bulkCopy.WriteToServer(rowToSend);
                     }
-                    finally
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTable.Name);
+                    using (SqlDataReader drVerify = cmd.ExecuteReader())
                     {
-                        DropTable(conn, bulkCopyTableName);
+                        drVerify.Read();
+                        return new TestResult(drVerify[0], drVerify.GetString(1));
                     }
                 },
                 paramValue, 
@@ -1077,7 +887,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetParameterCombinations))]
+        [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void SqlBulkCopyDataRow_Variant(
             object paramValue, 
             string expectedBaseTypeName, 
@@ -1089,36 +899,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TestVariations.SqlBulkCopyDataRow_Variant,
                 (paramValue, expectedBaseTypeName, connStr) =>
                 {
-                    string bulkCopyTableName = DataTestUtility.GetLongName("bulkDestVariant");
-
                     using SqlConnection conn = new(connStr);
-                    try
+                    conn.Open();
+
+                    using Table bulkCopyTable = new(conn, "bulkDestVariant", "(f1 sql_variant)");
+                    DataTable t = new();
+                    t.Columns.Add("f1", typeof(object));
+                    t.Rows.Add(new object[] { paramValue });
+                    DataRow[] rowToSend = t.Select();
+                    using (SqlBulkCopy bulkCopy = new(conn))
                     {
-                        conn.Open();
-                        DropTable(conn, bulkCopyTableName);
-                        xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
-                        DataTable t = new();
-                        t.Columns.Add("f1", typeof(object));
-                        t.Rows.Add(new object[] { paramValue });
-                        DataRow[] rowToSend = t.Select();
-                        using (SqlBulkCopy bulkCopy = new(conn))
-                        {
-                            bulkCopy.BulkCopyTimeout = 60;
-                            bulkCopy.BatchSize = 1;
-                            bulkCopy.DestinationTableName = bulkCopyTableName;
-                            bulkCopy.WriteToServer(rowToSend);
-                        }
-                        using SqlCommand cmd = conn.CreateCommand();
-                        cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                        using (SqlDataReader drVerify = cmd.ExecuteReader())
-                        {
-                            drVerify.Read();
-                            return new TestResult(drVerify[0], drVerify.GetString(1));
-                        }
+                        bulkCopy.BulkCopyTimeout = 60;
+                        bulkCopy.BatchSize = 1;
+                        bulkCopy.DestinationTableName = bulkCopyTable.Name;
+                        bulkCopy.WriteToServer(rowToSend);
                     }
-                    finally
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTable.Name);
+                    using (SqlDataReader drVerify = cmd.ExecuteReader())
                     {
-                        DropTable(conn, bulkCopyTableName);
+                        drVerify.Read();
+                        return new TestResult(drVerify[0], drVerify.GetString(1));
                     }
                 },
                 paramValue, 

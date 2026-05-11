@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Initialize server info from connection options alone.
         /// </summary>
-        internal ServerInfo(SqlConnectionString userOptions)
+        internal ServerInfo(SqlConnectionOptions userOptions)
             : this(userOptions, userOptions.DataSource, userOptions.ServerSPN)
         { }
 
@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Initialize server info from connection options, but override DataSource and ServerSPN
         /// with given server name and server SPN.
         /// </summary>
-        internal ServerInfo(SqlConnectionString userOptions, string serverName, string serverSpn)
+        internal ServerInfo(SqlConnectionOptions userOptions, string serverName, string serverSpn)
             : this(userOptions, serverName)
         {
             ServerSPN = serverSpn;
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Initialize server info from connection options, but override DataSource with given
         /// server name.
         /// </summary>
-        private ServerInfo(SqlConnectionString userOptions, string serverName)
+        private ServerInfo(SqlConnectionOptions userOptions, string serverName)
         {
             Debug.Assert(userOptions != null);
             Debug.Assert(serverName != null, "server name should never be null");
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// server name.
         /// </summary>
         internal ServerInfo(
-            SqlConnectionString userOptions,
+            SqlConnectionOptions userOptions,
             RoutingInfo routing,
             string preRoutingServerName,
             string serverSpn)

@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient
             if (!string.IsNullOrEmpty(list))
             {
                 string[] parts = list.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts != null && parts.Length > 0)
+                if (parts.Length > 0)
                 {
                     HashSet<int> set = new HashSet<int>();
                     for (int index = 0; index < parts.Length; index++)

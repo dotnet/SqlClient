@@ -42,23 +42,39 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string KerberosDomainUser = null;
         public bool IsManagedInstance = false;
         public string AliasName = null;
-        
+
         public static Config Load(string configPath = @"config.json")
         {
             // Allow an override of the config path via an environment variable.
-            configPath = Environment.GetEnvironmentVariable("MDS_TEST_CONFIG") ?? configPath;
+            configPath = Environment.GetEnvironmentVariable("TEST_MDS_CONFIG") ?? configPath;
 
+            Config config;
             try
             {
                 using (StreamReader r = new StreamReader(configPath))
                 {
-                    return JsonConvert.DeserializeObject<Config>(r.ReadToEnd());
+                    config = JsonConvert.DeserializeObject<Config>(r.ReadToEnd())
+                        ?? throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'.");
                 }
             }
             catch
             {
                 throw;
             }
+
+            static void SetFromEnv(string envVar, ref string configValue)
+            {
+                string envValue = Environment.GetEnvironmentVariable(envVar);
+                if (!string.IsNullOrEmpty(envValue))
+                {
+                    configValue = envValue;
+                }
+            }
+
+            // Allow environment variables to override individual config values.
+            SetFromEnv("MDS_TCPConnectionString", ref config.TCPConnectionString);
+
+            return config;
         }
 
         public static void UpdateConfig(Config updatedConfig, string configPath = @"config.json")
