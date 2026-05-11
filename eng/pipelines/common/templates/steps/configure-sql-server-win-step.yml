@@ -119,11 +119,19 @@ steps:
 
       Write-Host $machineName
       Import-Module "sqlps"
+
+      # Determine the Windows service name for this SQL instance.
+      $serviceName = "${{parameters.instanceName }}"
+      if ("${{parameters.instanceName }}" -ne "MSSQLSERVER") {
+          $serviceName = "MSSQL`$${{parameters.instanceName }}"
+      }
+
+      $hasRestarted = $false
       $tries = 0
       while ($true) {
           $tries++
           try {
-              Invoke-Sqlcmd -ServerInstance "$machineName" @"
+              Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
                   CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
                   DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
                   CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
@@ -133,11 +141,20 @@ steps:
       "@
               break
           } catch {
-              if ($tries -ge 5) {
-                  Write-Host "##[error]Failed to create database user after $tries tries."
-                  break
+              if (-not $hasRestarted -and $tries -ge 5) {
+                  # SQL Server may need a restart after protocol changes (TCP/NP).
+                  Write-Host "Connection failed after $tries attempts. Restarting SQL Server ($serviceName) and retrying..."
+                  Restart-Service -Name $serviceName -Force -ErrorAction Stop
+                  $hasRestarted = $true
+                  $tries = 0
+                  Start-Sleep -Seconds 5
+                  continue
               }
-              Write-Host "Failed to connect to server. Retrying in 5 seconds..."
+              if ($tries -ge 10) {
+                  Write-Host "##[error]Failed to create database user after $tries tries (including a restart)."
+                  throw
+              }
+              Write-Host "Failed to connect to server (attempt $tries). Retrying in 5 seconds..."
               Start-Sleep -Seconds 5
           }
       }
@@ -148,57 +165,14 @@ steps:
 
   - ${{ if ne(parameters.SQLRootPath, '') }}:
     - powershell: |
-        #Enable FileStream
+        #Enable FileStream via WMI.
+        # The sp_configure call is deferred to after the "Restart SQL Server [Win]"
+        # step so we don't need a separate restart here.
         $instance = "${{parameters.instanceName }}"
         $wmi = Get-WmiObject -Namespace "${{parameters.SQLRootPath }}" -Class FilestreamSettings | where {$_.InstanceName -eq $instance}
         $wmi.EnableFilestream(3, $instance)
-
-        # Restart SQL Server so the WMI-level FileStream change takes effect.
-        # Without this restart, Invoke-Sqlcmd often fails because the service
-        # becomes temporarily unavailable after the WMI call.
-        $serviceName = "${{parameters.instanceName }}"
-        if ("${{parameters.instanceName }}" -ne "MSSQLSERVER") {
-            $serviceName = "MSSQL`$${{parameters.instanceName }}"
-        }
-        Write-Host "Restarting SQL Server service ($serviceName) after enabling FileStream..."
-        Restart-Service -Name $serviceName -Force
-        Write-Host "SQL Server service restarted."
-
-        $machineName = $env:COMPUTERNAME
-
-        if ("${{parameters.instanceName }}" -ne "MSSQLSERVER"){
-          $machineName += "\${{parameters.instanceName }}"
-        }
-
-        #Change the access level for FileStream for SQLServer
-        Set-ExecutionPolicy Unrestricted
-        Import-Module "sqlps"
-
-        # Retry loop: SQL Server may need time to accept connections after restart.
-        # Worst-case budget: 20 attempts x (5s connection timeout + 5s sleep) = ~200s
-        $tries = 0
-        while ($true) {
-            $tries++
-            try {
-                Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
-                    EXEC sp_configure filestream_access_level, 2;
-                    RECONFIGURE;
-        "@
-                Write-Host "FileStream access level configured successfully."
-                break
-            } catch {
-                if ($tries -ge 20) {
-                    Write-Host "##[error]Failed to configure FileStream access level after $tries tries."
-                    throw
-                }
-                Write-Host "Failed to connect to SQL Server (attempt $tries/20). Retrying in 5 seconds..."
-                Start-Sleep -Seconds 5
-            }
-        }
+        Write-Host "FileStream enabled via WMI for instance '$instance'."
       displayName: 'Enable FileStream [Win]'
-      env:
-        SQL_USER: ${{parameters.user }}
-        SQL_PASSWD: ${{ parameters.saPassword }}
 
   - ${{ if ne(parameters.FileStreamDirectory, '') }}:
     - powershell: |
@@ -305,6 +279,25 @@ steps:
       }
 
     displayName: 'Restart SQL Server [Win]'
+
+  # Configure FileStream access level after the restart so we don't need a
+  # separate restart in the "Enable FileStream [Win]" step.
+  - ${{ if ne(parameters.SQLRootPath, '') }}:
+    - powershell: |
+        $machineName = $env:COMPUTERNAME
+        if ("${{parameters.instanceName }}" -ne "MSSQLSERVER") {
+            $machineName += "\${{parameters.instanceName }}"
+        }
+
+        Set-ExecutionPolicy Unrestricted
+        Import-Module "sqlps"
+
+        Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
+            EXEC sp_configure filestream_access_level, 2;
+            RECONFIGURE;
+        "@
+        Write-Host "FileStream access level configured successfully."
+      displayName: 'Configure FileStream Access Level [Win]'
 
   - powershell: |
       $arrService = Get-Service -Name "SQLBrowser"
