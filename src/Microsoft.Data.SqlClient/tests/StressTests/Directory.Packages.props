@@ -3,12 +3,6 @@
 
   <!-- We purposely do not include any parent Directory.Packages.props files. -->
 
-  <!--
-    We do, however, include Versions.props to get some default version
-    numbers for dependent packages.
-  -->
-  <Import Project="../../../../tools/props/Versions.props" />
-
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- We enable transitive pinning here because we are an application project. -->

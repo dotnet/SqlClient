@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cts = new CancellationTokenSource();
             cts.Cancel();
             Task t = TestAsync(srcConstr, dstConstr, dstTable, cts.Token);
-            DataTestUtility.AssertThrowsWrapper<AggregateException, TaskCanceledException>(() => t.Wait());
+            DataTestUtility.AssertThrowsInner<AggregateException, TaskCanceledException>(() => t.Wait());
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
         }
 

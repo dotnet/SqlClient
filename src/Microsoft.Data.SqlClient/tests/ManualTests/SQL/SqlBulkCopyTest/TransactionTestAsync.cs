@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void Test(string srcConstr, string dstConstr, string dstTable)
         {
             Task t = TestAsync(srcConstr, dstConstr, dstTable);
-            DataTestUtility.AssertThrowsWrapper<AggregateException, InvalidOperationException>(() => t.Wait());
+            DataTestUtility.AssertThrowsInner<AggregateException, InvalidOperationException>(() => t.Wait());
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
         }
 

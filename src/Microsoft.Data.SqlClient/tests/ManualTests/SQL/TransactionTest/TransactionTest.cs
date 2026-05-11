@@ -339,13 +339,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     string executeCommandWithoutTransactionMessage = SystemDataResourceManager.Instance.ADP_TransactionRequired("ExecuteNonQuery");
                     string transactionConflictErrorMessage = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
                     string parallelTransactionErrorMessage = SystemDataResourceManager.Instance.ADP_ParallelTransactionsNotSupported("SqlConnection");
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() =>
                     {
                         SqlCommand command = new SqlCommand("sql", connection);
                         command.ExecuteNonQuery();
                     }, executeCommandWithoutTransactionMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() =>
                     {
                         using (SqlConnection con1 = new SqlConnection(_connectionString))
                         {
@@ -357,32 +357,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }, transactionConflictErrorMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() =>
                     {
                         connection.BeginTransaction(null);
                     }, parallelTransactionErrorMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
+                    DataTestUtility.AssertThrows<InvalidOperationException>(() =>
                     {
                         connection.BeginTransaction("");
                     }, parallelTransactionErrorMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<ArgumentException>(() =>
+                    DataTestUtility.AssertThrows<ArgumentException>(() =>
                     {
                         tx.Rollback(null);
                     }, invalidSaveStateMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<ArgumentException>(() =>
+                    DataTestUtility.AssertThrows<ArgumentException>(() =>
                     {
                         tx.Rollback("");
                     }, invalidSaveStateMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<ArgumentException>(() =>
+                    DataTestUtility.AssertThrows<ArgumentException>(() =>
                     {
                         tx.Save(null);
                     }, invalidSaveStateMessage);
 
-                    DataTestUtility.AssertThrowsWrapper<ArgumentException>(() =>
+                    DataTestUtility.AssertThrows<ArgumentException>(() =>
                     {
                         tx.Save("");
                     }, invalidSaveStateMessage);
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         SqlTransaction tx2 = connection2.BeginTransaction(IsolationLevel.ReadCommitted);
                         command2.Transaction = tx2;
 
-                        DataTestUtility.AssertThrowsWrapper<SqlException>(() => command2.ExecuteReader(), SystemDataResourceManager.Instance.SQL_Timeout_Execution as string);
+                        DataTestUtility.AssertThrows<SqlException>(() => command2.ExecuteReader(), SystemDataResourceManager.Instance.SQL_Timeout_Execution as string);
 
                         tx2.Rollback();
                         connection2.Close();

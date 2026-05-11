@@ -32,11 +32,11 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SecureString password = new SecureString();
                 password.MakeReadOnly();
-                _credential = new SqlCredential(Params[0] as string, password);
+                _credential = new SqlCredential((string)Params[0], password);
             }
             else
             {
-                _builder[Params[0] as string] = Params[1];
+                _builder[(string)Params[0]] = Params[1];
             }
             InvalidCombinationCheck(_credential);
         }

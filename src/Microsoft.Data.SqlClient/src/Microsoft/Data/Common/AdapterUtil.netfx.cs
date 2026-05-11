@@ -33,10 +33,6 @@ namespace Microsoft.Data.Common
         /// </summary>
         internal const int MinimumTimeoutForTnirMs = 500;
 
-        // @TODO: Use naming rules
-        // @TODO: All values but Unix and Windows32NT are used today, for netfx this should always be Win32NT. We can likely hard code this to true for netfx.
-        internal static readonly bool s_isWindowsNT = Environment.OSVersion.Platform == PlatformID.Win32NT;
-
         #endregion
 
         #region Utility Methods
@@ -66,10 +62,6 @@ namespace Microsoft.Data.Common
             Argument(StringsHelper.GetString(Strings.ADP_InvalidValue), parameterName);
 
         #endregion
-
-        // DbDataAdapter
-        internal static InvalidOperationException ComputerNameEx(int lastError) =>
-            InvalidOperation(StringsHelper.GetString(Strings.ADP_ComputerNameEx, lastError));
 
         // DBDataPermissionAttribute.KeyRestrictionBehavior
         internal static ArgumentOutOfRangeException InvalidKeyRestrictionBehavior(KeyRestrictionBehavior value)
