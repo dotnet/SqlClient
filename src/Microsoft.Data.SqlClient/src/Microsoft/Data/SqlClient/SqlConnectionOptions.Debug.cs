@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Microsoft.Data.SqlClient;
+using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient.Internal;
 
-namespace Microsoft.Data.Common.ConnectionString
+namespace Microsoft.Data.SqlClient
 {
-    internal partial class DbConnectionOptions
+    internal sealed partial class SqlConnectionOptions
     {
         #if DEBUG
         private const string ConnectionStringPattern =                     // may not contain embedded null except trailing last value
@@ -32,7 +33,7 @@ namespace Microsoft.Data.Common.ConnectionString
             + ")*"                                                     // repeat the key-value pair
             + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
         private static readonly Regex ConnectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-        
+
         private const string ConnectionStringPatternOdbc =             // may not contain embedded null except trailing last value
             "([\\s;]*"                                                 // leading whitespace and extra semicolons
             + "(?![\\s;])"                                             // key does not start with space or semicolon
@@ -49,7 +50,7 @@ namespace Microsoft.Data.Common.ConnectionString
             + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
         private static readonly Regex ConnectionStringRegexOdbc = new Regex(ConnectionStringPatternOdbc, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         #endif
-        
+
         [Conditional("DEBUG")]
         private static void DebugTraceKeyValuePair(string keyname, string keyvalue, IReadOnlyDictionary<string, string> synonyms)
         {
@@ -64,16 +65,16 @@ namespace Microsoft.Data.Common.ConnectionString
                     // don't trace passwords ever!
                     if (keyvalue != null)
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.SqlConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
                     }
                     else
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.SqlConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
                     }
                 }
             }
         }
-        
+
         #if DEBUG
         private static void ParseComparison(
             Dictionary<string, string> parseTable,
@@ -88,8 +89,8 @@ namespace Microsoft.Data.Common.ConnectionString
                 foreach (var parsedValue in parsedValues)
                 {
                     string key = parsedValue.Key;
-                    string value1 = parsedValue.Value; 
-                    
+                    string value1 = parsedValue.Value;
+
                     bool parseTableContainsKey = parseTable.TryGetValue(key, out string value2);
                     Debug.Assert(parseTableContainsKey, $"{nameof(ParseInternal)} code vs. regex mismatch keyname <{key}>");
                     Debug.Assert(value1 == value2, $"{nameof(ParseInternal)} code vs. regex mismatch keyvalue <{value1}> <{value2}>");
@@ -107,28 +108,28 @@ namespace Microsoft.Data.Common.ConnectionString
                     bool isEquivalent = msg1 == msg2;
                     if (!isEquivalent)
                     {
-                        // We also accept cases were Regex parser (debug only) reports "wrong format" and 
+                        // We also accept cases were Regex parser (debug only) reports "wrong format" and
                         // retail parsing code reports format exception in different location or "keyword not supported"
                         if (msg2.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
                         {
-                            if (msg1.StartsWith(KeywordNotSupportedMessagePrefix, StringComparison.Ordinal) || 
+                            if (msg1.StartsWith(KeywordNotSupportedMessagePrefix, StringComparison.Ordinal) ||
                                 msg1.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
                             {
                                 isEquivalent = true;
                             }
                         }
                     }
-                    
+
                     Debug.Assert(isEquivalent, "ParseInternal code vs regex message mismatch: <" + msg1 + "> <" + msg2 + ">");
                 }
                 else
                 {
                     Debug.Fail("ParseInternal code vs regex throw mismatch " + f.Message);
                 }
-                
+
                 e = null;
             }
-            
+
             if (e != null)
             {
                 Debug.Fail("ParseInternal code threw exception vs regex mismatch");
@@ -156,7 +157,7 @@ namespace Microsoft.Data.Common.ConnectionString
                 {
                     throw ADP.ConnectionStringSyntax(match.Length);
                 }
-                
+
                 int indexValue = 0;
                 CaptureCollection keyValues = match.Groups[ValueIndex].Captures;
                 foreach (Capture keypair in match.Groups[KeyIndex].Captures)
@@ -184,7 +185,7 @@ namespace Microsoft.Data.Common.ConnectionString
                     {
                         keyValue = null;
                     }
-                    
+
                     DebugTraceKeyValuePair(keyName, keyValue, synonyms);
                     string realKeyName = synonyms != null
                         ? synonyms.TryGetValue(keyName, out string synonym) ? synonym : null
@@ -194,14 +195,14 @@ namespace Microsoft.Data.Common.ConnectionString
                     {
                         throw ADP.KeywordNotSupported(keyName);
                     }
-                    
+
                     if (!firstKey || !parseTable.ContainsKey(realKeyName))
                     {
                         parseTable[realKeyName] = keyValue; // last key-value pair wins (or first)
                     }
                 }
             }
-            
+
             return parseTable;
         }
         #endif

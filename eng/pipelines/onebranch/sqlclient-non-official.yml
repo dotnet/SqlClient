@@ -96,6 +96,14 @@ variables:
     parameters:
       isPreview: ${{ parameters.isPreview }}
 
+  # Drives ContinuousIntegrationBuild=true in src/Directory.Build.props so this
+  # pipeline produces deterministic packages identical (modulo signing) to the
+  # official pipeline.  Keeping this enabled here ensures the deterministic
+  # build path is exercised on every non-official run, catching regressions
+  # before they reach the official release pipeline.
+  - name: BuildForRelease
+    value: true
+
 resources:
   repositories:
     - repository: templates

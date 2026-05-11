@@ -244,8 +244,10 @@
     <Compile Include="SQL\UdtTest\UdtTest2.cs" />
     <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
     <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
+    <Compile Include="SQL\VectorTest\Float16VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
     <Compile Include="SQL\VectorTest\VectorAPIValidationTest.cs" />
+    <Compile Include="SQL\VectorTest\VectorBackwardCompatTestBase.cs" />
     <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
@@ -356,8 +358,6 @@
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.ValueTuple" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
-                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -366,12 +366,8 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -390,8 +386,6 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime"
-                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
@@ -399,12 +393,8 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ProjectReference Include="SQL/UdtTest/UDTs/Circle/Circle.csproj" />

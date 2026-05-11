@@ -12,11 +12,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
     /// <summary>
     /// Provides parameterized test data for backward compatibility tests that exchange
-    /// vector data as varchar(max) JSON strings.
+    /// float16 vector data as varchar(max) JSON strings.
     /// </summary>
-    public static class VarcharVectorTestData
+    public static class Float16VarcharVectorTestData
     {
-        public static readonly float[] TestData = { 1.1f, 2.2f, 3.3f };
+        // Values chosen to be exactly representable in IEEE-754 binary16 (float16),
+        // so JSON round-trips through a vector(N, float16) column without precision loss.
+        public static readonly float[] TestData = { 1.0f, 2.0f, 3.0f };
 
         /// <summary>
         /// Generates test cases for all 4 SqlParameter construction patterns x 2 value types (non-null + null).
@@ -41,25 +43,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
     }
 
-    public sealed class VectorTypeBackwardCompatibilityTests : VectorBackwardCompatTestBase
+    public sealed class Float16VectorTypeBackwardCompatibilityTests : VectorBackwardCompatTestBase
     {
-        public VectorTypeBackwardCompatibilityTests(ITestOutputHelper output)
-            : base(output, columnDefinition: "vector(3)", namePrefix: "Vector")
+        public Float16VectorTypeBackwardCompatibilityTests(ITestOutputHelper output)
+            : base(output, columnDefinition: "vector(3, float16)", namePrefix: "VectorF16")
         {
         }
 
         protected override float[] GetPrepareTestValues(int i) =>
-            new float[] { i + 0.1f, i + 0.2f, i + 0.3f };
+            new float[] { i + 1, i + 2, i + 3 };
 
         #region Insert Tests
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
-        [MemberData(nameof(VarcharVectorTestData.GetVarcharVectorInsertTestData), MemberType = typeof(VarcharVectorTestData), DisableDiscoveryEnumeration = true)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
+        [MemberData(nameof(Float16VarcharVectorTestData.GetVarcharVectorInsertTestData), MemberType = typeof(Float16VarcharVectorTestData), DisableDiscoveryEnumeration = true)]
         public void TestVectorDataInsertionAsVarchar(int pattern, string jsonValue, float[] expectedData)
             => InsertAndValidateAsVarchar(pattern, jsonValue, expectedData);
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
-        [MemberData(nameof(VarcharVectorTestData.GetVarcharVectorInsertTestData), MemberType = typeof(VarcharVectorTestData), DisableDiscoveryEnumeration = true)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
+        [MemberData(nameof(Float16VarcharVectorTestData.GetVarcharVectorInsertTestData), MemberType = typeof(Float16VarcharVectorTestData), DisableDiscoveryEnumeration = true)]
         public async Task TestVectorDataInsertionAsVarcharAsync(int pattern, string jsonValue, float[] expectedData)
             => await InsertAndValidateAsVarcharAsync(pattern, jsonValue, expectedData);
 
@@ -67,35 +69,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         #region Stored Procedure Tests
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
         public void TestStoredProcParamsForVectorAsVarchar()
-            => StoredProcRoundTrip(VarcharVectorTestData.TestData);
+            => StoredProcRoundTrip(Float16VarcharVectorTestData.TestData);
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
         public async Task TestStoredProcParamsForVectorAsVarcharAsync()
-            => await StoredProcRoundTripAsync(VarcharVectorTestData.TestData);
+            => await StoredProcRoundTripAsync(Float16VarcharVectorTestData.TestData);
 
         #endregion
 
         #region Bulk Copy Tests
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
         [InlineData(1)]
         [InlineData(2)]
         public void TestSqlBulkCopyForVectorAsVarchar(int bulkCopySourceMode)
-            => BulkCopyRoundTrip(bulkCopySourceMode, VarcharVectorTestData.TestData);
+            => BulkCopyRoundTrip(bulkCopySourceMode, Float16VarcharVectorTestData.TestData);
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
         [InlineData(1)]
         [InlineData(2)]
         public async Task TestSqlBulkCopyForVectorAsVarcharAsync(int bulkCopySourceMode)
-            => await BulkCopyRoundTripAsync(bulkCopySourceMode, VarcharVectorTestData.TestData);
+            => await BulkCopyRoundTripAsync(bulkCopySourceMode, Float16VarcharVectorTestData.TestData);
 
         #endregion
 
         #region Prepared Statement Tests
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSqlVectorFloat16Supported))]
         public void TestInsertVectorsAsVarcharWithPrepare()
             => PreparedInsertRoundTrip();
 

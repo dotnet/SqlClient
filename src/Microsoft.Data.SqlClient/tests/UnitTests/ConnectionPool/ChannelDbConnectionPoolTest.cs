@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -36,8 +36,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     hasTransactionAffinity: true
             );
             dbConnectionPoolGroup ??= new DbConnectionPoolGroup(
-                new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
             return new ChannelDbConnectionPool(
@@ -63,7 +63,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -93,7 +92,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     tcs,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -119,7 +117,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -133,7 +130,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var exceeded = pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? extraConnection
                 );
             }
@@ -159,7 +155,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -174,7 +169,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var exceeded = pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     taskCompletionSource,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? extraConnection
                 );
                 await taskCompletionSource.Task;
@@ -200,7 +194,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -209,7 +202,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -225,7 +217,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var exceeded = pool.TryGetConnection(
                     new SqlConnection(""),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? extraConnection
                 );
                 return extraConnection;
@@ -247,7 +238,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -256,7 +246,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -270,7 +259,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var exceeded = pool.TryGetConnection(
                 new SqlConnection(""),
                 taskCompletionSource,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? recycledConnection
             );
             pool.ReturnInternalConnection(firstConnection!, firstOwningConnection);
@@ -291,7 +279,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -300,7 +287,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -321,7 +307,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(
                     new SqlConnection(""),
                     null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? recycledConnection
                 );
                 return recycledConnection;
@@ -334,7 +319,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? failedConnection
                 );
                 return failedConnection;
@@ -360,7 +344,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -369,7 +352,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -384,7 +366,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var exceeded = pool.TryGetConnection(
                 new SqlConnection(""),
                 recycledTaskCompletionSource,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? recycledConnection
             );
 
@@ -394,7 +375,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var exceeded2 = pool.TryGetConnection(
                 new SqlConnection("Timeout=1"),
                 failedCompletionSource,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? failedConnection
             );
 
@@ -417,7 +397,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var completed1 = pool.TryGetConnection(
                 owningConnection,
                 null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? internalConnection1
             );
 
@@ -432,7 +411,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var completed2 = pool.TryGetConnection(
                 owningConnection,
                 null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? internalConnection2
             );
 
@@ -454,7 +432,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
             });
@@ -475,7 +452,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource,
-                    new DbConnectionOptions("", null),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -500,7 +476,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     var completed = pool.TryGetConnection(
                         owningObject,
                         taskCompletionSource: null,
-                        new DbConnectionOptions("", null),
                         out DbConnectionInternal? internalConnection
                     );
                     if (completed)
@@ -534,7 +509,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     var completed = pool.TryGetConnection(
                         owningObject,
                         taskCompletionSource,
-                        new DbConnectionOptions("", null),
                         out DbConnectionInternal? internalConnection
                     );
                     internalConnection = await taskCompletionSource.Task;
@@ -614,8 +588,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TestPoolGroup()
         {
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
                     minPoolSize: 0,
@@ -692,7 +666,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TestReplaceConnection()
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, null!));
+            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!));
         }
 
         [Fact]
@@ -731,7 +705,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(
                     owningConnections[i],
                     taskCompletionSource: null,
-                    new DbConnectionOptions("", null),
                     out internalConnections[i]
                 );
                 Assert.Equal(0, internalConnections[i]!.ClearGeneration);
@@ -760,7 +733,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? busyConnection
             );
             Assert.NotNull(busyConnection);
@@ -784,7 +756,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? busyConnection
             );
             Assert.NotNull(busyConnection);
@@ -814,13 +785,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 busyOwner,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? busyConnection
             );
             pool.TryGetConnection(
                 idleOwner,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? idleConnection
             );
             Assert.NotNull(busyConnection);
@@ -853,7 +822,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? oldConnection
             );
             Assert.Equal(0, oldConnection!.ClearGeneration);
@@ -867,7 +835,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 newOwner,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? newConnection
             );
             Assert.NotNull(newConnection);
@@ -885,7 +852,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 reuseOwner,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? reusedConnection
             );
             Assert.Same(newConnection, reusedConnection);
@@ -902,7 +868,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? connection
             );
             Assert.Equal(0, connection!.ClearGeneration);
@@ -921,7 +886,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 newOwner,
                 taskCompletionSource: null,
-                new DbConnectionOptions("", null),
                 out DbConnectionInternal? newConnection
             );
             Assert.NotNull(newConnection);
@@ -935,12 +899,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(
-                DbConnectionOptions options,
-                DbConnectionPoolKey poolKey,
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection,
-                DbConnectionOptions userOptions)
+                DbConnection owningConnection)
             {
                 return new StubDbConnectionInternal();
             }
@@ -949,12 +912,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         internal class TimeoutSqlConnectionFactory : SqlConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(
-                DbConnectionOptions options,
-                DbConnectionPoolKey poolKey,
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection,
-                DbConnectionOptions userOptions)
+                DbConnection owningConnection)
             {
                 throw ADP.PooledOpenTimeout();
             }
@@ -1006,8 +968,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
 
@@ -1037,8 +999,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
 
@@ -1078,8 +1040,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
-                new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions1
             );
 
@@ -1104,8 +1066,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true
             );
             var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
-                new DbConnectionOptions("DataSource=localhost;", null),
-                new DbConnectionPoolKey("TestDataSource"),
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions2
             );
 
