@@ -8,148 +8,104 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.ProviderBase
 {
-    // Purpose:
-    //   Manages determining and tracking timeouts
-    //
-    // Intended use:
-    //   Call StartXXXXTimeout() to get a timer with the given expiration point
-    //   Get remaining time in appropriate format to pass to subsystem timeouts
-    //   Check for timeout via IsExpired for checks in managed code.
-    //   Simply abandon to GC when done.
+    /// <summary>
+    /// Manages determining and tracking timeouts for use by subsystems that perform
+    /// time-bounded operations.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Intended use:
+    /// </para>
+    /// <para>
+    /// Call <see cref="StartNew"/> to get a timer with the given expiration point.
+    /// Read the remaining time in the appropriate format to pass to subsystem timeouts.
+    /// Check for timeout via <see cref="IsExpired"/> for checks in managed code.
+    /// Simply abandon the instance to the GC when done.
+    /// </para>
+    /// </remarks>
     internal class TimeoutTimer
     {
-        //-------------------
-        // Fields
-        //-------------------
-        private long _timerExpire;
-        private bool _isInfiniteTimeout;
-        private long _originalTimerTicks;
+        #region Fields
 
-        //-------------------
-        // Timeout-setting methods
-        //-------------------
-
-        // Get a new timer that will expire in the given number of seconds
-        //  For input, a value of zero seconds indicates infinite timeout
-        internal static TimeoutTimer StartSecondsTimeout(int seconds)
-        {
-            //--------------------
-            // Preconditions: None (seconds must conform to SetTimeoutSeconds requirements)
-
-            //--------------------
-            // Method body
-            var timeout = new TimeoutTimer();
-            timeout.SetTimeoutSeconds(seconds);
-
-            //---------------------
-            // Postconditions
-            Debug.Assert(timeout != null); // Need a valid timeouttimer if no error
-
-            return timeout;
-        }
-
-        // Get a new timer that will expire in the given number of milliseconds
-        //  No current need to support infinite milliseconds timeout
-        internal static TimeoutTimer StartMillisecondsTimeout(long milliseconds)
-        {
-            //--------------------
-            // Preconditions
-            Debug.Assert(0 <= milliseconds);
-
-            //--------------------
-            // Method body
-            var timeout = new TimeoutTimer();
-            timeout._originalTimerTicks = milliseconds * TimeSpan.TicksPerMillisecond;
-            timeout._timerExpire = checked(ADP.TimerCurrent() + timeout._originalTimerTicks);
-            timeout._isInfiniteTimeout = false;
-
-            //---------------------
-            // Postconditions
-            Debug.Assert(timeout != null); // Need a valid timeouttimer if no error
-
-            return timeout;
-        }
-
-        //-------------------
-        // Methods for changing timeout
-        //-------------------
-
-        internal void SetTimeoutSeconds(int seconds)
-        {
-            //--------------------
-            // Preconditions
-            Debug.Assert(0 <= seconds || InfiniteTimeout == seconds);  // no need to support negative seconds at present
-
-            //--------------------
-            // Method body
-            if (InfiniteTimeout == seconds)
-            {
-                _isInfiniteTimeout = true;
-            }
-            else
-            {
-                // Stash current time + timeout
-                _originalTimerTicks = ADP.TimerFromSeconds(seconds);
-                _timerExpire = checked(ADP.TimerCurrent() + _originalTimerTicks);
-                _isInfiniteTimeout = false;
-            }
-
-            //---------------------
-            // Postconditions:None
-        }
-
-        // Reset timer to original duration.
-        internal void Reset()
-        {
-            if (InfiniteTimeout == _originalTimerTicks)
-            {
-                _isInfiniteTimeout = true;
-            }
-            else
-            {
-                _timerExpire = checked(ADP.TimerCurrent() + _originalTimerTicks);
-                _isInfiniteTimeout = false;
-            }
-        }
-
-        //-------------------
-        // Timeout info properties
-        //-------------------
-
-        // Indicator for infinite timeout when starting a timer
+        /// <summary>
+        /// The sentinel value (<c>0</c>) used to indicate an infinite timeout when starting a timer.
+        /// </summary>
         internal static readonly long InfiniteTimeout = 0;
 
-        // Is this timer in an expired state?
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TimeoutTimer"/> class with the
+        /// specified expiration duration.
+        /// </summary>
+        /// <param name="expiration">
+        /// The duration before the timer expires. A value whose ticks equal
+        /// <see cref="InfiniteTimeout"/> indicates an infinite timeout.
+        /// </param>
+        private TimeoutTimer(TimeSpan expiration)
+        {
+            OriginalTicks = expiration.Ticks;
+            IsInfinite = OriginalTicks == InfiniteTimeout;
+            ExpirationTicks = IsInfinite ? long.MaxValue : checked(ADP.TimerCurrent() + OriginalTicks);
+        }
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets the absolute tick value at which this timer is considered expired.
+        /// </summary>
+        /// <value>
+        /// The tick count, in <see cref="ADP.TimerCurrent"/> units, at which the timer
+        /// expires; <see cref="long.MaxValue"/> when <see cref="IsInfinite"/> is
+        /// <see langword="true"/>.
+        /// </value>
+        internal long ExpirationTicks {
+            get;
+            //TODO: Remove this when we disable Reset()
+            private set;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this timer has expired.
+        /// </summary>
+        /// <value>
+        /// <see langword="true"/> if the timer is not infinite and the current time
+        /// has passed <see cref="ExpirationTicks"/>; otherwise, <see langword="false"/>.
+        /// </value>
         internal bool IsExpired
         {
             get
             {
-                return !IsInfinite && ADP.TimerHasExpired(_timerExpire);
+                return !IsInfinite && ADP.TimerHasExpired(ExpirationTicks);
             }
         }
 
-        // is this an infinite-timeout timer?
-        internal bool IsInfinite
-        {
-            get
-            {
-                return _isInfiniteTimeout;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this timer represents an infinite timeout.
+        /// </summary>
+        /// <value>
+        /// <see langword="true"/> if the timer was created with an expiration whose
+        /// ticks equal <see cref="InfiniteTimeout"/>; otherwise, <see langword="false"/>.
+        /// </value>
+        internal bool IsInfinite { get; }
 
-        // Special accessor for TimerExpire for use when thunking to legacy timeout methods.
-        public long LegacyTimerExpire
-        {
-            get
-            {
-                return (_isInfiniteTimeout) ? long.MaxValue : _timerExpire;
-            }
-        }
-
-        // Returns milliseconds remaining trimmed to zero for none remaining
-        //  and long.MaxValue for infinite
-        // This method should be preferred for internal calculations that are not
-        //  yet common enough to code into the TimeoutTimer class itself.
+        /// <summary>
+        /// Gets the number of milliseconds remaining before this timer expires,
+        /// trimmed to <c>0</c> when none remain and to <see cref="long.MaxValue"/>
+        /// when the timer is infinite.
+        /// </summary>
+        /// <value>
+        /// A non-negative count of milliseconds remaining; <see cref="long.MaxValue"/>
+        /// when <see cref="IsInfinite"/> is <see langword="true"/>.
+        /// </value>
+        /// <remarks>
+        /// This property should be preferred for internal calculations that are not
+        /// yet common enough to code into the <see cref="TimeoutTimer"/> class itself.
+        /// </remarks>
         internal long MillisecondsRemaining
         {
             get
@@ -160,13 +116,13 @@ namespace Microsoft.Data.ProviderBase
                 //-------------------
                 // Method Body
                 long milliseconds;
-                if (_isInfiniteTimeout)
+                if (IsInfinite)
                 {
                     milliseconds = long.MaxValue;
                 }
                 else
                 {
-                    milliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
+                    milliseconds = ADP.TimerRemainingMilliseconds(ExpirationTicks);
                     if (0 > milliseconds)
                     {
                         milliseconds = 0;
@@ -181,7 +137,16 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        // Returns milliseconds remaining trimmed to zero for none remaining
+        /// <summary>
+        /// Gets the number of milliseconds remaining before this timer expires as
+        /// a 32-bit integer, trimmed to <c>0</c> when none remain and saturated to
+        /// <see cref="int.MaxValue"/> when the remaining time exceeds that value or
+        /// when the timer is infinite.
+        /// </summary>
+        /// <value>
+        /// A non-negative count of milliseconds remaining, never exceeding
+        /// <see cref="int.MaxValue"/>.
+        /// </value>
         internal int MillisecondsRemainingInt
         {
             get
@@ -189,13 +154,13 @@ namespace Microsoft.Data.ProviderBase
                 //-------------------
                 // Method Body
                 int milliseconds;
-                if (_isInfiniteTimeout)
+                if (IsInfinite)
                 {
                     milliseconds = int.MaxValue;
                 }
                 else
                 {
-                    long longMilliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
+                    long longMilliseconds = ADP.TimerRemainingMilliseconds(ExpirationTicks);
                     if (0 > longMilliseconds)
                     {
                         milliseconds = 0;
@@ -217,5 +182,45 @@ namespace Microsoft.Data.ProviderBase
                 return milliseconds;
             }
         }
+
+        /// <summary>
+        /// Gets the original timeout duration, in ticks, that was supplied when the
+        /// timer was created. Used by <see cref="Reset"/> to restore the original
+        /// expiration window.
+        /// </summary>
+        private long OriginalTicks { get; }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Creates and starts a new <see cref="TimeoutTimer"/> with the specified
+        /// expiration duration.
+        /// </summary>
+        /// <param name="expiration">
+        /// The duration before the returned timer expires. A value whose ticks equal
+        /// <see cref="InfiniteTimeout"/> produces an infinite timer.
+        /// </param>
+        /// <returns>A new <see cref="TimeoutTimer"/> instance that has already started.</returns>
+        internal static TimeoutTimer StartNew(TimeSpan expiration) => new TimeoutTimer(expiration);
+
+        /// <summary>
+        /// Resets the timeout to its original duration.
+        /// </summary>
+        /// <remarks>
+        /// This method is only used to retry after federated authentication timeouts,
+        /// which can use up the whole timeout due to MFA. Has no effect when
+        /// <see cref="IsInfinite"/> is <see langword="true"/>.
+        /// </remarks>
+        internal void Reset()
+        {
+            if (!IsInfinite)
+            {
+                ExpirationTicks = checked(ADP.TimerCurrent() + OriginalTicks);
+            }
+        }
+
+        #endregion
     }
 }

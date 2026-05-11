@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
+                _timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout));
 
                 // If transient fault handling is enabled then we can retry the login up to the
                 // ConnectRetryCount.
@@ -2204,6 +2204,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// if a cached token exists from a previous auth attempt (see GetFedAuthToken).
         /// </summary>
         // @TODO: Rename to meet naming conventions
+        // TODO: if this call timed out, what reason do we have to believe some other call succeeded? why not just fail?
         private bool AttemptRetryADAuthWithTimeoutError(
             SqlException sqlex,
             SqlConnectionOptions connectionOptions, // @TODO: this is not used
@@ -3216,7 +3217,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         nextTimeoutInterval = milliseconds;
                     }
-                    intervalTimer = TimeoutTimer.StartMillisecondsTimeout(nextTimeoutInterval);
+                    intervalTimer = TimeoutTimer.StartNew(TimeSpan.FromMilliseconds(nextTimeoutInterval));
                 }
 
                 // Re-allocate parser each time to make sure state is known.
@@ -3501,7 +3502,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     nextTimeoutInterval = milliseconds;
                 }
 
-                TimeoutTimer intervalTimer = TimeoutTimer.StartMillisecondsTimeout(nextTimeoutInterval);
+                TimeoutTimer intervalTimer = TimeoutTimer.StartNew(TimeSpan.FromMilliseconds(nextTimeoutInterval));
 
                 // Re-allocate parser each time to make sure state is known. If parser was created
                 // by previous attempt, dispose it to properly close the socket, if created.
