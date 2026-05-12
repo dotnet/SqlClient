@@ -9,7 +9,7 @@ on:
 jobs:
   load-balance-assignees:
     # Only run for assignment-eligible PRs: same-repo PRs on pull_request, or fork PRs on pull_request_target.
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -27,11 +27,12 @@ jobs:
             const prNumber = context.issue.number;
             const author = context.payload.pull_request.user.login;
             const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
-            const isForkPr = context.eventName === 'pull_request_target' && context.payload.pull_request.head.repo.fork === true;
+            const isForkPr = context.payload.pull_request.head.repo.fork === true;
             const marker = '<!-- auto-assign-fork-note -->';
             const normalizeLogin = login => login.toLowerCase();
 
             console.log(`PR Author: ${author}`);
+            console.log(`Event Name: ${context.eventName}; Is Fork PR: ${isForkPr}`);
             console.log(`Current Assignees: ${currentAssignees.join(', ')}`);
 
             if (currentAssignees.length >= 2) {
