@@ -21,6 +21,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
     /// </remarks>
     internal sealed class AeadAes256CbcHmac256Factory : EncryptionAlgorithmFactory
     {
+        private static readonly AeadAes256CbcHmac256Factory s_singletonInstance = new();
+
         /// <summary>
         /// Factory classes cache the <see cref="AeadAes256CbcHmac256EncryptionKey" /> objects to avoid recomputation of the derived keys.
         /// </summary>
@@ -32,7 +34,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <summary>
         /// Access the instance of the factory class for the AEAD_AES_256_CBC_HMAC_SHA256 encryption algorithm.
         /// </summary>
-        public static AeadAes256CbcHmac256Factory Instance => field ??= new();
+        public static AeadAes256CbcHmac256Factory Instance => s_singletonInstance;
 
         /// <summary>
         /// Creates an instance of the <see cref="SqlAeadAes256CbcHmac256Algorithm" /> class with a given root key.

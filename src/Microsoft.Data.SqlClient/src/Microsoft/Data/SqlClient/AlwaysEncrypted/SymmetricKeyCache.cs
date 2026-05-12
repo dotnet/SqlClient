@@ -17,16 +17,17 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
     /// </summary>
     internal sealed class SymmetricKeyCache
     {
-        private readonly MemoryCache _cache;
+        private static readonly SymmetricKeyCache s_singletonInstance = new();
         private static readonly SemaphoreSlim s_cacheLock = new(1, 1);
+
+        private readonly MemoryCache _cache;
 
         private SymmetricKeyCache()
         {
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
-        public static SymmetricKeyCache Instance =>
-            field ??= new();
+        public static SymmetricKeyCache Instance => s_singletonInstance;
 
         /// <summary>
         /// Retrieves Symmetric Key (in plaintext) given the encryption material.
