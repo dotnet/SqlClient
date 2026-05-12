@@ -1,6 +1,12 @@
 name: Auto-assign PR assignees
 
+# Required repository variables:
+# - AUTO_ASSIGN_ASSIGNEE_POOL: comma-separated GitHub usernames
+# - AUTO_ASSIGN_EXPECTED_POOL_SIZE: expected pool size (default: 6)
+# - AUTO_ASSIGN_TARGET_ASSIGNEES: assignees to add per PR (default: 2)
 on:
+  # pull_request_target is required because assignment needs write permissions.
+  # This workflow does not check out or execute PR code.
   pull_request_target:
     types: [opened, reopened, ready_for_review, milestoned]
 
@@ -24,7 +30,11 @@ jobs:
       - name: Pick assignees from load-balanced pool
         uses: actions/github-script@v8
         env:
+          # Comma-separated GitHub usernames; spaces are trimmed
+          # (for example: user1, user2, user3).
           ASSIGNEE_POOL: ${{ vars.AUTO_ASSIGN_ASSIGNEE_POOL }}
+          EXPECTED_POOL_SIZE: ${{ vars.AUTO_ASSIGN_EXPECTED_POOL_SIZE || '6' }}
+          TARGET_ASSIGNEES: ${{ vars.AUTO_ASSIGN_TARGET_ASSIGNEES || '2' }}
         with:
           script: |
             const pool = [...new Set(
@@ -34,14 +44,33 @@ jobs:
                 .filter(Boolean)
             )];
 
-            // This workflow intentionally load-balances across a six-person
-            // alias pool.
-            const expectedPoolSize = 6;
-            const targetAssignees = 2;
+            // This workflow intentionally load-balances across an exact pool
+            // size defined by policy for this repository.
+            const expectedPoolSize = parseInt(
+              process.env.EXPECTED_POOL_SIZE || '6',
+              10
+            );
+            const targetAssignees = parseInt(
+              process.env.TARGET_ASSIGNEES || '2',
+              10
+            );
+
+            if (
+              Number.isNaN(expectedPoolSize) ||
+              Number.isNaN(targetAssignees)
+            ) {
+              core.warning(
+                'EXPECTED_POOL_SIZE ' +
+                `(${process.env.EXPECTED_POOL_SIZE}) and TARGET_ASSIGNEES ` +
+                `(${process.env.TARGET_ASSIGNEES}) must be valid numbers.`
+              );
+              return;
+            }
 
             if (pool.length !== expectedPoolSize) {
               core.warning(
-                'AUTO_ASSIGN_ASSIGNEE_POOL must contain exactly 6 usernames.'
+                `AUTO_ASSIGN_ASSIGNEE_POOL must contain exactly ` +
+                `${expectedPoolSize} usernames, but found ${pool.length}.`
               );
               return;
             }
@@ -62,13 +91,18 @@ jobs:
               targetAssignees - existingFromPool.length
             );
             if (needed === 0) {
-              core.info('PR already has two pool assignees.');
+              core.info(
+                `PR already has ${targetAssignees} pool assignees.`
+              );
               return;
             }
 
-            const candidates = pool.filter(login =>
-              login.toLowerCase() !== author &&
-              !existing.has(login.toLowerCase()));
+            const candidates = pool.filter(login => {
+              return (
+                login.toLowerCase() !== author &&
+                !existing.has(login.toLowerCase())
+              );
+            });
 
             if (candidates.length === 0) {
               core.info(
@@ -77,27 +111,26 @@ jobs:
               return;
             }
 
-            const openPulls = await github.paginate(github.rest.pulls.list, {
-              owner,
-              repo,
-              state: 'open',
-              per_page: 100
-            });
-
-            const reviewEligiblePulls = openPulls.filter(
-              openPr => !openPr.draft
-            );
-
-            const load = candidates.map(login => {
-              const count = reviewEligiblePulls.filter(openPr =>
-                (openPr.assignees || []).some(
-                  assignee =>
-                    assignee.login.toLowerCase() === login.toLowerCase()
-                )
-              ).length;
-
-              return { login, count };
-            });
+            // This makes at most one query per candidate in the configured
+            // pool.
+            let load;
+            try {
+              load = await Promise.all(candidates.map(async login => {
+                const q =
+                  `repo:${owner}/${repo} is:pr is:open draft:false ` +
+                  `assignee:${login}`;
+                const { data } =
+                  await github.rest.search.issuesAndPullRequests({
+                    q,
+                    per_page: 1
+                  });
+                return { login, count: data.total_count };
+              }));
+            } catch (error) {
+              core.setFailed(
+                `Failed to calculate assignee load: ${error.message}`
+              );
+              return;
             }
 
             load.sort(
