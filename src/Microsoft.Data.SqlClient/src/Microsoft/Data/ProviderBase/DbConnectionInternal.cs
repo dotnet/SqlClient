@@ -686,16 +686,6 @@ namespace Microsoft.Data.ProviderBase
             Pool = connectionPool;
         }
 
-        internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
-        {
-            TimeoutTimer timeout = TimeoutTimer.StartNew(
-                TimeSpan.FromSeconds(outerConnection.ConnectionTimeout));
-            if (!TryOpenConnection(outerConnection, connectionFactory, null, timeout))
-            {
-                throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
-            }
-        }
-
         internal void PostPop(DbConnection newOwner)
         {
             // Called by IDbConnectionPool right after it pulls this from its pool, we take this

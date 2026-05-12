@@ -285,13 +285,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeoutTimer timeout,
             out DbConnectionInternal? connection)
         {
-            // The TimeoutTimer is provided by the caller and represents the overall connection timeout
-            // budget. It is threaded through all layers (pool wait, physical connection creation) so that
-            // time spent waiting in the pool is deducted from the budget available for physical connection
-            // establishment. Without this, each layer would start its own fresh timeout and the total wait
-            // could exceed the configured ConnectTimeout.
-            // Note: TimeoutTimer treats 0 seconds as infinite timeout, which matches ConnectTimeout=0 semantics.
-
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
             {
