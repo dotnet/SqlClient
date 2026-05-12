@@ -9,7 +9,7 @@ on:
 jobs:
   load-balance-assignees:
     # Only run for assignment-eligible PRs: same-repo PRs on pull_request, or fork PRs on pull_request_target.
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -20,6 +20,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Keep the candidate pool centralized in one place so both assignment paths use the same ranking.
             const pool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -28,6 +29,7 @@ jobs:
             const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
             const isForkPr = context.eventName === 'pull_request_target' && context.payload.pull_request.head.repo.fork === true;
             const marker = '<!-- auto-assign-fork-note -->';
+            const normalizeLogin = login => login.toLowerCase();
 
             console.log(`PR Author: ${author}`);
             console.log(`Current Assignees: ${currentAssignees.join(', ')}`);
@@ -40,8 +42,8 @@ jobs:
             const neededAssigneesCount = 2 - currentAssignees.length;
 
             const candidates = pool.filter(user => 
-              user.toLowerCase() !== author.toLowerCase() &&
-              !currentAssignees.some(a => a.toLowerCase() === user.toLowerCase())
+              normalizeLogin(user) !== normalizeLogin(author) &&
+              !currentAssignees.some(a => normalizeLogin(a) === normalizeLogin(user))
             );
 
             if (candidates.length === 0) {
@@ -52,12 +54,13 @@ jobs:
             const workloads = {};
             const canonicalCandidateByLower = {};
             candidates.forEach(user => {
-              const lower = user.toLowerCase();
+              const lower = normalizeLogin(user);
               workloads[lower] = 0;
               canonicalCandidateByLower[lower] = user;
             });
 
             try {
+              // Rank candidates by current assignment count across all open PRs.
               const iterator = github.paginate.iterator(github.rest.pulls.list, {
                 owner,
                 repo,
@@ -69,7 +72,7 @@ jobs:
                 for (const pr of response.data) {
                   if (pr.assignees) {
                     for (const assignee of pr.assignees) {
-                      const login = assignee.login.toLowerCase();
+                      const login = normalizeLogin(assignee.login);
                       if (workloads[login] !== undefined) {
                         workloads[login]++;
                       }
@@ -78,16 +81,16 @@ jobs:
                 }
               }
             } catch (error) {
-              console.error(`Failed to fetch open PRs: ${error.message}`);
-              return; // Safer to abort than to assign incorrectly
+              throw new Error(`Failed to fetch open PRs for auto-assignment: ${error.message}`);
             }
 
             const workloadArray = candidates.map(user => {
-              const lower = user.toLowerCase();
+              const lower = normalizeLogin(user);
               return { user: canonicalCandidateByLower[lower], count: workloads[lower] };
             });
             console.log('Current Workloads:', workloadArray);
 
+            // Shuffle before sorting so ties are broken fairly instead of favoring pool order.
             for (let i = workloadArray.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
               [workloadArray[i], workloadArray[j]] = [workloadArray[j], workloadArray[i]];
@@ -105,13 +108,15 @@ jobs:
 
             if (!isForkPr) {
               await github.rest.issues.addAssignees({
-                owner: owner,
-                repo: repo,
+                owner,
+                repo,
                 issue_number: prNumber,
                 assignees: selectedAssignees
               });
               return;
             }
+
+            // Fork PRs cannot be auto-assigned by the pull_request workflow token, so leave a tracked note instead.
             const mentions = selectedAssignees.map(user => `@${user}`).join(' ');
             const body = `${marker}
             Auto-assignment is not available to the \`pull_request\` workflow for fork-based PRs.
@@ -125,8 +130,15 @@ jobs:
               per_page: 100
             });
 
-            if (comments.some(comment => comment.body && comment.body.includes(marker))) {
-              console.log('Fork-note comment already exists. No action needed.');
+            const existingComment = comments.find(comment => comment.body && comment.body.includes(marker));
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body
+              });
+              console.log('Updated existing fork-note comment.');
               return;
             }
 
