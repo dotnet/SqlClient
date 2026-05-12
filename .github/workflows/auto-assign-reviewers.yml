@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: auto-assign-pr-${{ github.event.pull_request.number }}
@@ -23,16 +23,28 @@ jobs:
     steps:
       - name: Pick assignees from load-balanced pool
         uses: actions/github-script@v8
+        env:
+          ASSIGNEE_POOL: ${{ vars.AUTO_ASSIGN_ASSIGNEE_POOL }}
         with:
           script: |
-            const pool = [
-              'alias1',
-              'alias2',
-              'alias3',
-              'alias4',
-              'alias5',
-              'alias6'
-            ];
+            const pool = [...new Set(
+              (process.env.ASSIGNEE_POOL || '')
+                .split(',')
+                .map(login => login.trim())
+                .filter(Boolean)
+            )];
+
+            // This workflow intentionally load-balances across a six-person
+            // alias pool.
+            const expectedPoolSize = 6;
+            const targetAssignees = 2;
+
+            if (pool.length !== expectedPoolSize) {
+              core.warning(
+                'AUTO_ASSIGN_ASSIGNEE_POOL must contain exactly 6 usernames.'
+              );
+              return;
+            }
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -45,7 +57,10 @@ jobs:
             const existingFromPool = pool.filter(
               login => existing.has(login.toLowerCase())
             );
-            const needed = Math.max(0, 2 - existingFromPool.length);
+            const needed = Math.max(
+              0,
+              targetAssignees - existingFromPool.length
+            );
             if (needed === 0) {
               core.info('PR already has two pool assignees.');
               return;
@@ -62,14 +77,27 @@ jobs:
               return;
             }
 
-            const load = [];
-            for (const login of candidates) {
-              const q = `repo:${owner}/${repo} is:pr is:open assignee:${login}`;
-              const { data } = await github.rest.search.issuesAndPullRequests({
-                q,
-                per_page: 1
-              });
-              load.push({ login, count: data.total_count });
+            const openPulls = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            const reviewEligiblePulls = openPulls.filter(
+              openPr => !openPr.draft
+            );
+
+            const load = candidates.map(login => {
+              const count = reviewEligiblePulls.filter(openPr =>
+                (openPr.assignees || []).some(
+                  assignee =>
+                    assignee.login.toLowerCase() === login.toLowerCase()
+                )
+              ).length;
+
+              return { login, count };
+            });
             }
 
             load.sort(
