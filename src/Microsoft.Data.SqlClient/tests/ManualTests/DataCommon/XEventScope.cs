@@ -94,6 +94,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ? $"MAX_DURATION={_durationInMinutes} MINUTES,"
                 : string.Empty;
 
+            // MAX_MEMORY = 4 MB is a compromise which is designed to allow extended events to be recorded,
+            // while also preventing a large number of simultaneous sessions from consuming all of the 128 MB
+            // memory which Azure SQL allocates to extended events sessions.
             string xEventCreateAndStartCommandText =
                 $"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}" +
                 $"  {eventSpecification} " +
