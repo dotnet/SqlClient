@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-      issues: read
+      issues: write
     
     steps:
       - name: Calculate Workload and Assign
