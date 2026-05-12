@@ -1,0 +1,105 @@
+name: Auto Assign PR Load Balancer
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, milestoned]
+
+jobs:
+  load-balance-assignees:
+    # Only run if the PR is not a draft and has a milestone
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: read
+    
+    steps:
+      - name: Calculate Workload and Assign
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // 1. Define your 6 aliases here
+            const pool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
+            
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.issue.number;
+            const author = context.payload.pull_request.user.login;
+            const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
+
+            console.log(`PR Author: ${author}`);
+            console.log(`Current Assignees: ${currentAssignees.join(', ')}`);
+
+            // 2. Check how many assignees we need to assign (max 2 total)
+            if (currentAssignees.length >= 2) {
+              console.log('PR already has 2 or more assignees. No action needed.');
+              return;
+            }
+            
+            const neededAssigneesCount = 2 - currentAssignees.length;
+
+            // 3. Filter out the PR author and already assigned users
+            let candidates = pool.filter(user => 
+              user.toLowerCase() !== author.toLowerCase() &&
+              !currentAssignees.some(a => a.toLowerCase() === user.toLowerCase())
+            );
+
+            if (candidates.length === 0) {
+              console.log('No valid candidates left in the pool to assign.');
+              return;
+            }
+
+            // 4. Fetch all open PRs in the repository to calculate workloads locally
+            const workloads = {};
+            candidates.forEach(user => workloads[user] = 0);
+
+            try {
+              // Using pagination in case there are a lot of open PRs
+              const iterator = github.paginate.iterator(github.rest.pulls.list, {
+                owner: owner,
+                repo: repo,
+                state: 'open',
+                per_page: 100
+              });
+
+              for await (const response of iterator) {
+                for (const pr of response.data) {
+                  if (pr.assignees) {
+                    for (const assignee of pr.assignees) {
+                      const login = assignee.login;
+                      if (workloads[login] !== undefined) {
+                        workloads[login]++;
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.error(`Failed to fetch open PRs: ${error.message}`);
+              return; // Safer to abort than to assign incorrectly
+            }
+
+            const workloadArray = candidates.map(user => ({ user, count: workloads[user] }));
+            console.log('Current Workloads:', workloadArray);
+
+            // 5. Shuffle the array first for true tie-breaking randomness (Fisher-Yates)
+            for (let i = workloadArray.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [workloadArray[i], workloadArray[j]] = [workloadArray[j], workloadArray[i]];
+            }
+
+            // 6. Sort by assignment count
+            workloadArray.sort((a, b) => a.count - b.count);
+
+            // 7. Select new assignees
+            const selectedAssignees = workloadArray.slice(0, neededAssigneesCount).map(w => w.user);
+            console.log(`Selected new assignees: ${selectedAssignees.join(', ')}`);
+
+            if (selectedAssignees.length > 0) {
+              await github.rest.issues.addAssignees({
+                owner: owner,
+                repo: repo,
+                issue_number: prNumber,
+                assignees: selectedAssignees
+              });
+            }
