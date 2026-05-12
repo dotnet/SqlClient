@@ -3,11 +3,13 @@ name: Auto Assign PR Load Balancer
 on:
   pull_request:
     types: [opened, reopened, ready_for_review, milestoned]
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, milestoned]
 
 jobs:
   load-balance-assignees:
-    # Only run if the PR is not a draft and has a milestone
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
+    # Only run on pull_request events when PR is not a draft, has a milestone, and is from the same repo
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -111,3 +113,41 @@ jobs:
                 assignees: selectedAssignees
               });
             }
+
+  notify-fork-pr-assignment-skipped:
+    # On fork-origin PRs, pull_request GITHUB_TOKEN is read-only for write APIs (like assignee updates)
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == true
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Comment when assignee auto-balance is skipped for forks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+            const marker = '<!-- auto-assign-fork-note -->';
+            const body = `${marker}
+            Auto-assignment is skipped for fork-based PRs because write operations (like setting assignees) are not available to the \`pull_request\` workflow token in this context.`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100
+            });
+
+            if (comments.some(comment => comment.body && comment.body.includes(marker))) {
+              console.log('Fork-note comment already exists. No action needed.');
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body
+            });
