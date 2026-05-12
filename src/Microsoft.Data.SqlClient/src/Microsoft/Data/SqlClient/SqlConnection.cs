@@ -2242,7 +2242,18 @@ namespace Microsoft.Data.SqlClient
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            var tdsInnerConnection = (SqlConnectionInternal)InnerConnection;
+            // Capture InnerConnection once into a local to avoid a TOCTOU race: another thread
+            // concurrently calling Open() on the same SqlConnection instance can change
+            // _innerConnection to DbConnectionClosedConnecting between the TryOpenConnection()
+            // call above and the cast below. Without this local capture the second read of
+            // InnerConnection may return DbConnectionClosedConnecting, which is not assignable
+            // to SqlConnectionInternal and would produce an opaque InvalidCastException.
+            // See GitHub issue #3314.
+            var innerConnection = InnerConnection;
+            if (innerConnection is not SqlConnectionInternal tdsInnerConnection)
+            {
+                throw ADP.ConnectionAlreadyOpen(innerConnection.State);
+            }
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
 
