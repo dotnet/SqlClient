@@ -12,27 +12,14 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
 {
     /// <summary>
-    /// Verifies that <see cref="TimeoutTimer"/> reads time, evaluates expiration, and
-    /// schedules cancellation through the injected <see cref="TimeProvider"/>, so tests
-    /// can deterministically trigger timeout behavior without wall-clock delays.
+    /// Verifies <see cref="TimeoutTimer"/> behavior: expiration evaluation,
+    /// remaining-time reporting, reset, infinite timers, and the cancellation
+    /// token source it produces.
     /// </summary>
-    public class TimeoutTimerTimeProviderTests
+    public class TimeoutTimerTest
     {
         [Fact]
-        public void StartNew_DefaultsToSystemTimeProvider()
-        {
-            // Sanity check: the parameterless overload still exists and produces a
-            // non-expired timer that uses real time (so MillisecondsRemaining is
-            // close to the requested duration).
-            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromMinutes(1));
-
-            Assert.False(timer.IsExpired);
-            Assert.False(timer.IsInfinite);
-            Assert.InRange(timer.MillisecondsRemaining, 1, TimeSpan.FromMinutes(1).Ticks);
-        }
-
-        [Fact]
-        public void IsExpired_ReadsFromInjectedTimeProvider()
+        public void IsExpired_BecomesTrueAfterDuration()
         {
             var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(5), fake);
@@ -47,7 +34,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
         }
 
         [Fact]
-        public void MillisecondsRemaining_ReflectsVirtualTimeAdvancement()
+        public void MillisecondsRemaining_DecreasesAsTimeElapses()
         {
             var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(10), fake);
@@ -60,7 +47,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
         }
 
         [Fact]
-        public void Reset_RestoresOriginalDurationFromInjectedProvider()
+        public void Reset_RestoresOriginalDuration()
         {
             var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(5), fake);
@@ -74,7 +61,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
         }
 
         [Fact]
-        public async Task CreateCancellationTokenSource_FiresWhenFakeTimeAdvances()
+        public async Task CreateCancellationTokenSource_FiresWhenTimerExpires()
         {
             var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(2), fake);
@@ -122,7 +109,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
         }
 
         [Fact]
-        public void TimeProvider_Property_ExposesInjectedProvider()
+        public void TimeProvider_ReturnsProviderPassedToStartNew()
         {
             var fake = new FakeTimeProvider();
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fake);

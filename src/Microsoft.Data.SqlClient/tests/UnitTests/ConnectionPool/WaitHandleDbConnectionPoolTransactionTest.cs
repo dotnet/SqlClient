@@ -897,7 +897,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
     #region Mock Classes
 
-#nullable disable
     internal class MockSqlConnectionFactory : SqlConnectionFactory
     {
         protected override DbConnectionInternal CreateConnection(
@@ -911,7 +910,6 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             return new MockDbConnectionInternal();
         }
     }
-#nullable restore
 
     internal class MockDbConnectionInternal : DbConnectionInternal
     {

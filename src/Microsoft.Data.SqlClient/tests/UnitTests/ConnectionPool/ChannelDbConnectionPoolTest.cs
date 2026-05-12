@@ -935,7 +935,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
 
         #region Test classes
-#nullable disable
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(
@@ -958,7 +957,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
                 DbConnection owningConnection,
-                TimeoutTimer timeout = null)
+                TimeoutTimer timeout)
             {
                 throw ADP.PooledOpenTimeout();
             }
@@ -970,7 +969,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         internal class TimeoutCapturingSqlConnectionFactory : SqlConnectionFactory
         {
             private readonly TimeSpan _delay;
-            internal TimeoutTimer CapturedTimeout { get; private set; }
+            internal TimeoutTimer? CapturedTimeout { get; private set; }
 
             internal TimeoutCapturingSqlConnectionFactory(TimeSpan delay = default) => _delay = delay;
 
@@ -980,7 +979,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
                 DbConnection owningConnection,
-                TimeoutTimer timeout = null)
+                TimeoutTimer timeout)
             {
                 CapturedTimeout = timeout;
                 if (_delay > TimeSpan.Zero)
@@ -990,7 +989,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 return new StubDbConnectionInternal();
             }
         }
-#nullable restore
 
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
@@ -1270,7 +1268,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var firstOwner = new SqlConnection("Timeout=30");
             pool.TryGetConnection(firstOwner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(30)), out DbConnectionInternal? firstConnection);
             Assert.NotNull(firstConnection);
-            long firstRemainingMs = factory.CapturedTimeout.MillisecondsRemaining;
+            long firstRemainingMs = factory.CapturedTimeout!.MillisecondsRemaining;
 
             // Return after a short delay so second caller waits
             Task.Run(async () =>
