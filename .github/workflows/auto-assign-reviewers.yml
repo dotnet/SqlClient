@@ -6,8 +6,8 @@ on:
 
 jobs:
   load-balance-assignees:
-    # Only run if the PR is not a draft and has a milestone
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
+    # Only run if the PR is not a draft, has a milestone, and is from the same repo (not a fork)
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
