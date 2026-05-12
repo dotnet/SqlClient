@@ -1152,6 +1152,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Connection Timeout Awareness Tests
 
+        /// <summary>
+        /// Verifies that two concurrent callers waiting for the same exhausted
+        /// pool observe their own per-caller <see cref="TimeoutTimer"/> deadlines
+        /// independently: the caller with the shorter timeout fails with the
+        /// pool-timeout error while the caller with the longer timeout continues
+        /// to wait and eventually succeeds when a connection is returned.
+        /// </summary>
+        /// <remarks>
+        /// Both callers share a single <see cref="FakeTimeProvider"/> so that
+        /// advancing virtual time deterministically expires only the short-timeout
+        /// caller's CTS without consuming any wall-clock time.
+        /// </remarks>
         [Fact]
         public async Task ConcurrentCallers_ShouldTimeoutIndependently()
         {
@@ -1199,11 +1211,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 return connectionB;
             });
 
-            // Advance virtual time past A's 1s timeout but well within B's 10s timeout.
+            // Act: advance virtual time past A's 1s timeout but well within B's 10s timeout.
             // A's CancellationTokenSource fires (cancelling its channel wait), B's does not.
             fakeTime.Advance(TimeSpan.FromSeconds(2));
 
-            // Caller A should observe the timeout
+            // Assert: Caller A should observe the timeout
             var exA = await Assert.ThrowsAsync<InvalidOperationException>(() => callerATask);
             Assert.Equal(
                 "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
@@ -1216,7 +1228,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.ReturnInternalConnection(firstConnection, firstOwner);
             var resultB = await callerBTask;
 
-            // Assert: caller B got the connection
+            // Caller B got the connection
             Assert.NotNull(resultB);
             Assert.Same(firstConnection, resultB);
         }
