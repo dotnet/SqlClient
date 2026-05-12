@@ -5110,7 +5110,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowUnsupportedCollationEncountered(stateObj);
             }
 
-            Debug.Assert(codePage >= 0, $"Invalid code page. codePage: {codePage}. cultureId: {collation.LCID}");
+            Debug.Assert(codePage != 0, $"Invalid code page. codePage: {codePage}. cultureId: {collation.LCID}");
 
             return codePage;
         }

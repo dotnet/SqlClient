@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 #nullable enable
@@ -184,7 +183,7 @@ internal static class LocalesHelper
                 ? SortIdToCodePageMappings[sortId]
                 : 0;
 
-            Debug.Assert(codePage >= 0, $"TryGetCodePage accessed codepage data and producted 0! sortId = {sortId}");
+            Debug.Assert(codePage != 0, $"TryGetCodePage accessed codepage data and producted 0! sortId = {sortId}");
         }
         else
         {
