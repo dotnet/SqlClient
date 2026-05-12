@@ -72,6 +72,8 @@ jobs:
     displayName: "sqlclient_manual_${{ parameters.platformDisplayName }}"
 
     pool:
+      # TEST
+      name: ADO-1ES-Pool
       vmImage: ${{ parameters.platformImage }}
 
     steps:
