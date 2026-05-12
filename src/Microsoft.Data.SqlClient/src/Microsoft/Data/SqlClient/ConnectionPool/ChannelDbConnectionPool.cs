@@ -224,7 +224,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public DbConnectionInternal ReplaceConnection(
             DbConnection owningObject, 
-            DbConnectionInternal oldConnection)
+            DbConnectionInternal oldConnection,
+            TimeoutTimer timeout)
         {
             throw new NotImplementedException();
         }
@@ -281,15 +282,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool TryGetConnection(
             DbConnection owningObject, 
             TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
+            TimeoutTimer timeout,
             out DbConnectionInternal? connection)
         {
-            // Create a single TimeoutTimer that represents the overall connection timeout budget.
-            // This timer is threaded through all layers (pool wait, physical connection creation) so that
+            // The TimeoutTimer is provided by the caller and represents the overall connection timeout
+            // budget. It is threaded through all layers (pool wait, physical connection creation) so that
             // time spent waiting in the pool is deducted from the budget available for physical connection
             // establishment. Without this, each layer would start its own fresh timeout and the total wait
             // could exceed the configured ConnectTimeout.
             // Note: TimeoutTimer treats 0 seconds as infinite timeout, which matches ConnectTimeout=0 semantics.
-            var timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(owningObject.ConnectionTimeout));
 
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)

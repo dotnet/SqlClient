@@ -688,7 +688,9 @@ namespace Microsoft.Data.ProviderBase
 
         internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
         {
-            if (!TryOpenConnection(outerConnection, connectionFactory, null))
+            TimeoutTimer timeout = TimeoutTimer.StartNew(
+                TimeSpan.FromSeconds(outerConnection.ConnectionTimeout));
+            if (!TryOpenConnection(outerConnection, connectionFactory, null, timeout))
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
             }
@@ -800,7 +802,8 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry)
+            TaskCompletionSource<DbConnectionInternal> retry,
+            TimeoutTimer timeout)
         {
             throw ADP.ConnectionAlreadyOpen(State);
         }
@@ -808,7 +811,8 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry)
+            TaskCompletionSource<DbConnectionInternal> retry,
+            TimeoutTimer timeout)
         {
             throw ADP.MethodNotImplemented();
         }
@@ -910,7 +914,8 @@ namespace Microsoft.Data.ProviderBase
         protected bool TryOpenConnectionInternal(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry)
+            TaskCompletionSource<DbConnectionInternal> retry,
+            TimeoutTimer timeout)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
@@ -919,7 +924,7 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, out openConnection))
+                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, timeout, out openConnection))
                     {
                         return false;
                     }

@@ -1945,9 +1945,10 @@ namespace Microsoft.Data.SqlClient.Connection
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry)
+            TaskCompletionSource<DbConnectionInternal> retry,
+            TimeoutTimer timeout)
         {
-            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
         }
 
         internal void ValidateConnectionForExecute(SqlCommand command)
