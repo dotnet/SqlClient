@@ -13,7 +13,7 @@ The Microsoft.Data.SqlClient package supports the following environments:
 - .NET Framework 4.6.2+
 - .NET 8.0+
 
-## Download
+## Download NuGet Package
 
 The Microsoft.Data.SqlClient NuGet package is available on [NuGet.org](https://www.nuget.org/packages/Microsoft.Data.SqlClient/).
 
