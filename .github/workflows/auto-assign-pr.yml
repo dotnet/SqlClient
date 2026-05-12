@@ -130,7 +130,7 @@ jobs:
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner,
               repo,
-              issue_number,
+              issue_number: prNumber,
               per_page: 100
             });
 
@@ -149,6 +149,6 @@ jobs:
             await github.rest.issues.createComment({
               owner,
               repo,
-              issue_number,
+              issue_number: prNumber,
               body
             });
