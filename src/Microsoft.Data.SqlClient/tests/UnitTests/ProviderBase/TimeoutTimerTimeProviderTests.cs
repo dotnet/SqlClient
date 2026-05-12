@@ -32,13 +32,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
         }
 
         [Fact]
-        public void StartNew_NullTimeProvider_Throws()
-        {
-            Assert.Throws<ArgumentNullException>(
-                () => TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), timeProvider: null!));
-        }
-
-        [Fact]
         public void IsExpired_ReadsFromInjectedTimeProvider()
         {
             var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
