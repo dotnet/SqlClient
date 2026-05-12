@@ -4,6 +4,10 @@ on:
   pull_request_target:
     types: [opened, reopened, ready_for_review, milestoned]
 
+concurrency:
+  group: auto-assign-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   load-balance-assignees:
     # Only run for assignment-eligible PRs in the upstream repository. Use
@@ -13,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      pull-requests: read
     
     steps:
       - name: Calculate Workload and Apply
@@ -25,8 +30,26 @@ jobs:
             const repo = context.repo.repo;
             const prNumber = context.issue.number;
             const author = context.payload.pull_request.user.login;
-            const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
             const normalizeLogin = login => login.toLowerCase();
+
+            let latestPr;
+            try {
+              const response = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: prNumber
+              });
+              latestPr = response.data;
+            } catch (error) {
+              throw new Error(`Failed to fetch latest PR details: ${error.message}`);
+            }
+
+            if (latestPr.draft || !latestPr.milestone) {
+              console.log('PR is no longer assignment-eligible (draft or missing milestone).');
+              return;
+            }
+
+            const currentAssignees = (latestPr.assignees ?? []).map(a => a.login);
 
             console.log(`PR Author: ${author}`);
             console.log(`Event Name: ${context.eventName}; Is Fork PR: ${context.payload.pull_request.head.repo.fork === true}`);
