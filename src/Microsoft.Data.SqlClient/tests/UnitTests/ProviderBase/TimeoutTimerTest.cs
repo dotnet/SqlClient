@@ -60,11 +60,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
             Assert.Equal(5_000, timer.MillisecondsRemainingInt);
         }
 
+        /// <summary>
+        /// Verifies that the <see cref="CancellationTokenSource"/> produced by
+        /// <see cref="TimeoutTimer.CreateCancellationTokenSource"/> is wired to the
+        /// timer's <see cref="TimeProvider"/> rather than the system clock.
+        /// </summary>
+        /// <remarks>
+        /// The CTS is constructed with a one-hour delay. If it were backed by real
+        /// time, the test could not complete within the runner's per-test timeout.
+        /// Because <c>CreateCancellationTokenSource</c> passes the timer's
+        /// <see cref="TimeProvider"/> to the CTS constructor, advancing the
+        /// <see cref="FakeTimeProvider"/> by two virtual hours synchronously fires
+        /// the registered timer callback (queued to the thread pool by the fake
+        /// provider), which cancels the source. The test then polls briefly via
+        /// <see cref="WaitForAsync"/> to absorb thread-pool dispatch latency
+        /// before asserting cancellation. A successful run completes in
+        /// milliseconds, proving cancellation is driven by virtual time and not
+        /// by wall-clock elapsed time.
+        /// </remarks>
         [Fact]
         public async Task CreateCancellationTokenSource_FiresWhenTimerExpires()
         {
             var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
-            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(2), fake);
+            // Use an hour-long timer; if the CTS were backed by real time the test
+            // would never complete in the runner's timeout. It only finishes
+            // promptly because the CTS is scheduled through the fake provider.
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromHours(1), fake);
 
             using CancellationTokenSource cts = timer.CreateCancellationTokenSource();
 
@@ -72,7 +93,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
 
             // Advancing the fake provider past the expiration deadline must cause
             // the CTS to fire deterministically; no real time passes.
-            fake.Advance(TimeSpan.FromSeconds(3));
+            fake.Advance(TimeSpan.FromHours(2));
 
             // FakeTimeProvider schedules timer callbacks on the thread pool, so
             // yield briefly to let the cancellation propagate before asserting.
