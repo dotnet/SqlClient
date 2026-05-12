@@ -51,7 +51,12 @@ jobs:
 
             // 4. Fetch all open PRs in the repository to calculate workloads locally
             const workloads = {};
-            candidates.forEach(user => workloads[user] = 0);
+            const canonicalCandidateByLower = {};
+            candidates.forEach(user => {
+              const lower = user.toLowerCase();
+              workloads[lower] = 0;
+              canonicalCandidateByLower[lower] = user;
+            });
 
             try {
               // Using pagination in case there are a lot of open PRs
@@ -66,7 +71,7 @@ jobs:
                 for (const pr of response.data) {
                   if (pr.assignees) {
                     for (const assignee of pr.assignees) {
-                      const login = assignee.login;
+                      const login = assignee.login.toLowerCase();
                       if (workloads[login] !== undefined) {
                         workloads[login]++;
                       }
@@ -79,7 +84,10 @@ jobs:
               return; // Safer to abort than to assign incorrectly
             }
 
-            const workloadArray = candidates.map(user => ({ user, count: workloads[user] }));
+            const workloadArray = candidates.map(user => {
+              const lower = user.toLowerCase();
+              return { user: canonicalCandidateByLower[lower], count: workloads[lower] };
+            });
             console.log('Current Workloads:', workloadArray);
 
             // 5. Shuffle the array first for true tie-breaking randomness (Fisher-Yates)
