@@ -8,31 +8,30 @@ on:
 
 jobs:
   load-balance-assignees:
-    # Only run on pull_request events when PR is not a draft, has a milestone, and is from the same repo
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == false
+    # Only run for assignment-eligible PRs: same-repo PRs on pull_request, or fork PRs on pull_request_target.
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
       issues: write
     
     steps:
-      - name: Calculate Workload and Assign
+      - name: Calculate Workload and Apply
         uses: actions/github-script@v7
         with:
           script: |
-            // 1. Define your 6 aliases here
             const pool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
-            
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const prNumber = context.issue.number;
             const author = context.payload.pull_request.user.login;
             const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
+            const isForkPr = context.eventName === 'pull_request_target' && context.payload.pull_request.head.repo.fork === true;
+            const marker = '<!-- auto-assign-fork-note -->';
 
             console.log(`PR Author: ${author}`);
             console.log(`Current Assignees: ${currentAssignees.join(', ')}`);
 
-            // 2. Check how many assignees we need to assign (max 2 total)
             if (currentAssignees.length >= 2) {
               console.log('PR already has 2 or more assignees. No action needed.');
               return;
@@ -40,18 +39,16 @@ jobs:
             
             const neededAssigneesCount = 2 - currentAssignees.length;
 
-            // 3. Filter out the PR author and already assigned users
-            let candidates = pool.filter(user => 
+            const candidates = pool.filter(user => 
               user.toLowerCase() !== author.toLowerCase() &&
               !currentAssignees.some(a => a.toLowerCase() === user.toLowerCase())
             );
 
             if (candidates.length === 0) {
-              console.log('No valid candidates left in the pool to assign.');
+              console.log('No valid candidates left in the pool.');
               return;
             }
 
-            // 4. Fetch all open PRs in the repository to calculate workloads locally
             const workloads = {};
             const canonicalCandidateByLower = {};
             candidates.forEach(user => {
@@ -61,10 +58,9 @@ jobs:
             });
 
             try {
-              // Using pagination in case there are a lot of open PRs
               const iterator = github.paginate.iterator(github.rest.pulls.list, {
-                owner: owner,
-                repo: repo,
+                owner,
+                repo,
                 state: 'open',
                 per_page: 100
               });
@@ -92,46 +88,35 @@ jobs:
             });
             console.log('Current Workloads:', workloadArray);
 
-            // 5. Shuffle the array first for true tie-breaking randomness (Fisher-Yates)
             for (let i = workloadArray.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
               [workloadArray[i], workloadArray[j]] = [workloadArray[j], workloadArray[i]];
             }
 
-            // 6. Sort by assignment count
             workloadArray.sort((a, b) => a.count - b.count);
 
-            // 7. Select new assignees
             const selectedAssignees = workloadArray.slice(0, neededAssigneesCount).map(w => w.user);
-            console.log(`Selected new assignees: ${selectedAssignees.join(', ')}`);
+            console.log(`Selected candidates: ${selectedAssignees.join(', ')}`);
 
-            if (selectedAssignees.length > 0) {
+            if (selectedAssignees.length === 0) {
+              console.log('No assignees selected. No action needed.');
+              return;
+            }
+
+            if (!isForkPr) {
               await github.rest.issues.addAssignees({
                 owner: owner,
                 repo: repo,
                 issue_number: prNumber,
                 assignees: selectedAssignees
               });
+              return;
             }
-
-  notify-fork-pr-assignment-skipped:
-    # Mirror the same assignment-eligibility checks as the main job, but for fork PRs post an explanation comment.
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == true
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - name: Comment when assignee auto-balance is skipped for forks
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Security note: this pull_request_target job does not check out or execute PR code.
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const issue_number = context.issue.number;
-            const marker = '<!-- auto-assign-fork-note -->';
+            const mentions = selectedAssignees.map(user => `@${user}`).join(' ');
             const body = `${marker}
-            Auto-assignment is skipped for fork-based PRs because write operations (like setting assignees) are not available to the \`pull_request\` workflow token in this context.`;
+            Auto-assignment is not available to the \`pull_request\` workflow for fork-based PRs.
+
+            Potential assignees to add manually: ${mentions}`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner,
