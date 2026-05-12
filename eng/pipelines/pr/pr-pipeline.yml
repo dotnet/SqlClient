@@ -17,7 +17,7 @@ stages:
       buildConfiguration: Debug
       buildSuffix: pr
 
-  # Stage 2: Execute tests
+  # Stage 2: Execute tests and collect code coverage
   - template: /eng/pipelines/pr/stages/test-stages.yml
     parameters:
       buildConfiguration: Debug
@@ -60,5 +60,4 @@ stages:
           image: "ADO-UB22-SQL22"
           dotnet: "net10.0"
 
-  # Stage 3: Collect and report code coverage
-  # @TODO: ^^^
+

@@ -51,6 +51,8 @@ jobs:
     displayName: "${{ parameters.testDisplayName }}_${{ parameters.platformDisplayName }}"
 
     pool:
+      # TEST
+      name: ADO-1ES-Pool
       vmImage: ${{ parameters.platformImage }}
 
     steps:
