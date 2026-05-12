@@ -1,0 +1,92 @@
+name: Auto-assign PR assignees
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, milestoned]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: auto-assign-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-assign:
+    name: Assign least busy assignees
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.milestone != null
+    steps:
+      - name: Pick assignees from load-balanced pool
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pool = [
+              'alias1',
+              'alias2',
+              'alias3',
+              'alias4',
+              'alias5',
+              'alias6'
+            ];
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const author = pr.user.login.toLowerCase();
+            const existing = new Set(
+              (pr.assignees || []).map(a => a.login.toLowerCase())
+            );
+
+            const existingFromPool = pool.filter(
+              login => existing.has(login.toLowerCase())
+            );
+            const needed = Math.max(0, 2 - existingFromPool.length);
+            if (needed === 0) {
+              core.info('PR already has two pool assignees.');
+              return;
+            }
+
+            const candidates = pool.filter(login =>
+              login.toLowerCase() !== author &&
+              !existing.has(login.toLowerCase()));
+
+            if (candidates.length === 0) {
+              core.info(
+                'No eligible assignees after filtering out author and existing.'
+              );
+              return;
+            }
+
+            const load = [];
+            for (const login of candidates) {
+              const q = `repo:${owner}/${repo} is:pr is:open assignee:${login}`;
+              const { data } = await github.rest.search.issuesAndPullRequests({
+                q,
+                per_page: 1
+              });
+              load.push({ login, count: data.total_count });
+            }
+
+            load.sort(
+              (a, b) => a.count - b.count || a.login.localeCompare(b.login)
+            );
+
+            const selected = load.slice(0, needed).map(entry => entry.login);
+            if (selected.length === 0) {
+              core.info('No assignees selected.');
+              return;
+            }
+
+            await github.rest.issues.addAssignees({
+              owner,
+              repo,
+              issue_number: pr.number,
+              assignees: selected
+            });
+
+            core.info(`Assigned: ${selected.join(', ')}`);
