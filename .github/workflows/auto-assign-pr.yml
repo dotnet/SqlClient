@@ -8,14 +8,12 @@ on:
 
 jobs:
   load-balance-assignees:
-    # Only run for assignment-eligible PRs: non-draft PRs with a milestone 
-    # (indicating they're ready for review and not just a work in progress), 
-    # since those are the ones we most want to ensure get assigned and 
-    # don't want to risk assigning reviewers to PRs that aren't ready.
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
+    # Only run for assignment-eligible PRs, and keep same-repo and fork PRs on
+    # the event type that has the right token behavior for assignment.
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
+      pull-requests: read
       issues: write
     
     steps:
@@ -23,19 +21,17 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Keep the candidate pool centralized in one place so both assignment paths use the same ranking.
+            // Keep the candidate pool centralized in one place so every PR uses the same ranking.
             const pool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const prNumber = context.issue.number;
             const author = context.payload.pull_request.user.login;
             const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
-            const isForkPr = context.payload.pull_request.head.repo.fork === true;
-            const marker = '<!-- auto-assign-fork-note -->';
             const normalizeLogin = login => login.toLowerCase();
 
             console.log(`PR Author: ${author}`);
-            console.log(`Event Name: ${context.eventName}; Is Fork PR: ${isForkPr}`);
+            console.log(`Event Name: ${context.eventName}; Is Fork PR: ${context.payload.pull_request.head.repo.fork === true}`);
             console.log(`Current Assignees: ${currentAssignees.join(', ')}`);
 
             if (currentAssignees.length >= 2) {
@@ -110,45 +106,9 @@ jobs:
               return;
             }
 
-            if (!isForkPr) {
-              await github.rest.issues.addAssignees({
-                owner,
-                repo,
-                issue_number: prNumber,
-                assignees: selectedAssignees
-              });
-              return;
-            }
-
-            // Fork PRs cannot be auto-assigned by the pull_request workflow token, so leave a tracked note instead.
-            const mentions = selectedAssignees.map(user => `@${user}`).join(' ');
-            const body = `${marker}
-            Auto-assignment is not available to the \`pull_request\` workflow for fork-based PRs.
-
-            Potential assignees to add manually: ${mentions}`;
-
-            const comments = await github.paginate(github.rest.issues.listComments, {
+            await github.rest.issues.addAssignees({
               owner,
               repo,
               issue_number: prNumber,
-              per_page: 100
-            });
-
-            const existingComment = comments.find(comment => comment.body && comment.body.includes(marker));
-            if (existingComment) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existingComment.id,
-                body
-              });
-              console.log('Updated existing fork-note comment.');
-              return;
-            }
-
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body
+              assignees: selectedAssignees
             });
