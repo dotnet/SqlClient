@@ -1,16 +1,14 @@
 name: Auto Assign PR Load Balancer
 
 on:
-  pull_request:
-    types: [opened, reopened, ready_for_review, milestoned]
   pull_request_target:
     types: [opened, reopened, ready_for_review, milestoned]
 
 jobs:
   load-balance-assignees:
-    # Only run for assignment-eligible PRs, and keep same-repo and fork PRs on
-    # the event type that has the right token behavior for assignment.
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
+    # Only run for assignment-eligible PRs. Use pull_request_target for both
+    # same-repo and fork PRs so the workflow only runs once per PR event.
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
