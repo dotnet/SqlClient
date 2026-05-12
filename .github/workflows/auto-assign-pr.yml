@@ -1,0 +1,114 @@
+name: Auto Assign PR Load Balancer
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, milestoned]
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, milestoned]
+
+jobs:
+  load-balance-assignees:
+    # Only run for assignment-eligible PRs, and keep same-repo and fork PRs on
+    # the event type that has the right token behavior for assignment.
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: write
+    
+    steps:
+      - name: Calculate Workload and Apply
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Keep the candidate pool centralized in one place so every PR uses the same ranking.
+            const pool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.issue.number;
+            const author = context.payload.pull_request.user.login;
+            const currentAssignees = context.payload.pull_request.assignees.map(a => a.login);
+            const normalizeLogin = login => login.toLowerCase();
+
+            console.log(`PR Author: ${author}`);
+            console.log(`Event Name: ${context.eventName}; Is Fork PR: ${context.payload.pull_request.head.repo.fork === true}`);
+            console.log(`Current Assignees: ${currentAssignees.join(', ')}`);
+
+            if (currentAssignees.length >= 2) {
+              console.log('PR already has 2 or more assignees. No action needed.');
+              return;
+            }
+            
+            const neededAssigneesCount = 2 - currentAssignees.length;
+
+            const candidates = pool.filter(user => 
+              normalizeLogin(user) !== normalizeLogin(author) &&
+              !currentAssignees.some(a => normalizeLogin(a) === normalizeLogin(user))
+            );
+
+            if (candidates.length === 0) {
+              console.log('No valid candidates left in the pool.');
+              return;
+            }
+
+            const workloads = {};
+            const canonicalCandidateByLower = {};
+            candidates.forEach(user => {
+              const lower = normalizeLogin(user);
+              workloads[lower] = 0;
+              canonicalCandidateByLower[lower] = user;
+            });
+
+            try {
+              // Rank candidates by current assignment count across all open PRs.
+              const iterator = github.paginate.iterator(github.rest.pulls.list, {
+                owner,
+                repo,
+                state: 'open',
+                per_page: 100
+              });
+
+              for await (const response of iterator) {
+                for (const pr of response.data) {
+                  if (pr.assignees) {
+                    for (const assignee of pr.assignees) {
+                      const login = normalizeLogin(assignee.login);
+                      if (workloads[login] !== undefined) {
+                        workloads[login]++;
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              throw new Error(`Failed to fetch open PRs for auto-assignment: ${error.message}`);
+            }
+
+            const workloadArray = candidates.map(user => {
+              const lower = normalizeLogin(user);
+              return { user: canonicalCandidateByLower[lower], count: workloads[lower] };
+            });
+            console.log('Current Workloads:', workloadArray);
+
+            // Shuffle before sorting so ties are broken fairly instead of favoring pool order.
+            for (let i = workloadArray.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [workloadArray[i], workloadArray[j]] = [workloadArray[j], workloadArray[i]];
+            }
+
+            workloadArray.sort((a, b) => a.count - b.count);
+
+            const selectedAssignees = workloadArray.slice(0, neededAssigneesCount).map(w => w.user);
+            console.log(`Selected candidates: ${selectedAssignees.join(', ')}`);
+
+            if (selectedAssignees.length === 0) {
+              console.log('No assignees selected. No action needed.');
+              return;
+            }
+
+            await github.rest.issues.addAssignees({
+              owner,
+              repo,
+              issue_number: prNumber,
+              assignees: selectedAssignees
+            });
