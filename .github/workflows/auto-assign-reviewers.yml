@@ -115,17 +115,17 @@ jobs:
             }
 
   notify-fork-pr-assignment-skipped:
-    # On fork-origin PRs, pull_request GITHUB_TOKEN is read-only for write APIs (like assignee updates)
+    # Mirror the same assignment-eligibility checks as the main job, but for fork PRs post an explanation comment.
     if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == true
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
       issues: write
     steps:
       - name: Comment when assignee auto-balance is skipped for forks
         uses: actions/github-script@v7
         with:
           script: |
+            // Security note: this pull_request_target job does not check out or execute PR code.
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const issue_number = context.issue.number;
