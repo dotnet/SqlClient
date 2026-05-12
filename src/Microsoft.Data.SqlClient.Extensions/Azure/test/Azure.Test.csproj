@@ -4,23 +4,8 @@
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure.Test</AssemblyName>
     <RootNamespace>Microsoft.Data.SqlClient.Extensions.Azure.Test</RootNamespace>
 
-    <ImplicitUsings>enable</ImplicitUsings>
-    <IsTestProject>true</IsTestProject>
-    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-
-    <!--
-      Exclude Interactive tests by default since they require user interaction (e.g. browser
-      sign-in).
-
-      To run them explicitly:
-        dotnet test -filter "Category=Interactive"
-
-      Note that the "filter" argument actually requires two dashes, but that character sequence
-      isn't permitted within an XML comment, so we only show a single dash above.
-    -->
-    <!-- @TODO: Integrate this into build.proj so that filters can be composed at command line -->
-    <VSTestTestCaseFilter>Category!=Interactive</VSTestTestCaseFilter>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <!-- Target Frameworks =============================================== -->
@@ -32,6 +17,12 @@
       fulfill the MDS for net462 reference unless we are building on Windows.
     -->
     <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <!-- Global Usings =================================================== -->
@@ -56,7 +47,6 @@
                       Condition="'$(ReferenceType)' == 'Package'"/>
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
-    <!-- @TODO: Should we have a package mode reference for azure? -->
   </ItemGroup>
 
   <!-- References for netfx -->

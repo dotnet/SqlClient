@@ -497,8 +497,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     s = rdr.GetString(9); //ShipAddres;
                     s = rdr.GetString(10); //ShipCity;
                                            // should get an exception here
-                    string errorMessage = SystemDataResourceManager.Instance.SqlMisc_NullValueMessage;
-                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetString(11), errorMessage);
+                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetString(11));
 
                     s = rdr.GetString(12); //ShipPostalCode;
                     s = rdr.GetString(13); //ShipCountry;
@@ -516,8 +515,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 using (SqlCommand cmd = new SqlCommand(sqlBatch, conn))
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    string errorMessage = SystemDataResourceManager.Instance.SqlMisc_NullValueMessage;
-
                     rdr.Read();
                     // read data out of buffer
                     rdr.GetFieldValue<int>(0); //order id
@@ -534,7 +531,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     rdr.IsDBNull(10);
                     rdr.GetFieldValue<string>(10); //ShipCity;
                     // should get an exception here
-                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetFieldValue<string>(11), errorMessage);
+                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetFieldValue<string>(11));
                     rdr.IsDBNull(11);
                     rdr.GetFieldValue<SqlString>(11);
                     rdr.IsDBNull(11);
@@ -543,7 +540,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     rdr.IsDBNull(12);
                     rdr.GetFieldValue<INullable>(13);//ShipCountry;
                     rdr.GetFieldValue<string>(14);
-                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetFieldValue<string>(15), errorMessage);
+                    DataTestUtility.AssertThrows<SqlNullValueException>(() => rdr.GetFieldValue<string>(15));
 
                     rdr.Read();
                     // read data out of buffer
@@ -560,7 +557,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     Assert.False(rdr.IsDBNullAsync(10).Result, "FAILED: IsDBNull was true for a non-null value");
                     rdr.GetFieldValueAsync<string>(10).Wait(); //ShipCity;
                     // should get an exception here
-                    DataTestUtility.AssertThrowsInner<AggregateException, SqlNullValueException>(() => rdr.GetFieldValueAsync<string>(11).Wait(), innerExceptionMessage: errorMessage);
+                    DataTestUtility.AssertThrowsInner<AggregateException, SqlNullValueException>(() => rdr.GetFieldValueAsync<string>(11).Wait());
                     Assert.True(rdr.IsDBNullAsync(11).Result, "FAILED: IsDBNull was false for a null value");
 
                     rdr.IsDBNullAsync(11).Wait();
@@ -964,6 +961,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             long cb = 0;
             long di = 0;
             long cbTotal = 0;
+            long expectedTotal = 0;
             object o;
             int i;
             SqlBinary sqlbin;
@@ -971,6 +969,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
+                // Compute the expected total bytes independently of the C# APIs under test in order to compare.
+                //The inner SELECT generates the XML, CAST converts it to a Unicode string, LEN() * 2 matches s.Length * 2 in C# since UTF-16 uses 2 bytes per character.
+                // SUM() totals across all rows, matching the loop below.
+                using (SqlCommand cmdExpected = new SqlCommand("SELECT SUM(LEN(CAST(xml_data AS NVARCHAR(MAX))) * 2) FROM " +
+                                                "(SELECT CAST((SELECT * FROM orders FOR XML AUTO) AS NVARCHAR(MAX)) AS xml_data) t", conn))
+                {
+                    expectedTotal = (long)cmdExpected.ExecuteScalar();
+                }
+
                 using (SqlCommand cmd = new SqlCommand("select * from orders for xml auto", conn))
                 {
                     // Simple reads
@@ -985,7 +992,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
 
                     // Simple GetFieldValue<T>
                     cbTotal = 0;
@@ -1000,7 +1007,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
 
                     // Simple GetFieldValueAsync<T>
                     cbTotal = 0;
@@ -1015,7 +1022,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
 
                     // test sequential access reading everything
                     cbTotal = 0;
@@ -1039,7 +1046,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
                         } while (reader.NextResult());
                     }
-                    DataTestUtility.AssertEqualsWithDescription((long)536198, cbTotal, "FAILED: cbTotal result did not have expected value");
+                    DataTestUtility.AssertEqualsWithDescription(expectedTotal, cbTotal, "FAILED: cbTotal result did not have expected value");
                 }
 
                 // Test IsDBNull

@@ -95,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SQL Server capabilities
         private static bool? s_isDataClassificationSupported;
         private static bool? s_isVectorSupported;
+        private static bool? s_isVectorFloat16Supported;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -155,6 +156,68 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsSqlVectorSupported =>
             s_isVectorSupported ??= IsTCPConnStringSetup() &&
                 IsTypePresent("vector");
+
+        /// <summary>
+        /// Determines whether the SQL Server supports the 'float16' base type for the 'vector' data type.
+        /// </summary>
+        /// <remarks>
+        /// Probes the server by first executing
+        /// <c>ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;</c> and then executing
+        /// <c>DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;</c>.
+        /// As a side effect, this enables preview features for the current database. If the server does not
+        /// recognize <c>float16</c> as a vector base type, if the server does not support the required syntax,
+        /// if the current principal lacks permission to change the database scoped configuration, or if another
+        /// server-side error occurs while running the probe, this method returns
+        /// <see langword="false"/>. Implies <see cref="IsSqlVectorSupported"/>.
+        /// </remarks>
+        /// <returns><see langword="true"/> if the 'float16' vector base type is supported; otherwise, <see langword="false"/>.</returns>
+        public static bool IsSqlVectorFloat16Supported =>
+            s_isVectorFloat16Supported ??= IsTCPConnStringSetup() &&
+                IsSqlVectorSupported &&
+                CheckVectorFloat16Supported();
+
+        private static bool CheckVectorFloat16Supported()
+        {
+            try
+            {
+                using SqlConnection connection = new(TCPConnectionString);
+                // Enable preview features (required while float16 is in preview), then declare a
+                // float16 vector and select it back. Without a negotiated float16 feature extension,
+                // the server returns the value as a varchar(max) JSON string, which the client can
+                // safely read. We use 1.0 (exactly representable in IEEE-754 binary16) so the
+                // round-tripped JSON matches the input bit-for-bit. Any failure (server parse
+                // error such as Msg 195 "'float16' is not a recognized vector base type.", lack of
+                // permission to set PREVIEW_FEATURES, etc.) means we cannot exercise the float16
+                // path.
+                float[] expected = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+                using SqlCommand command = new(
+                    "ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON;" +
+                    "DECLARE @v AS VECTOR(5, float16) = '[1.0, 1.0, 1.0, 1.0, 1.0]'; SELECT @v;",
+                    connection);
+                connection.Open();
+                using SqlDataReader reader = command.ExecuteReader();
+                if (!reader.Read())
+                {
+                    return false;
+                }
+                string json = reader.GetString(0);
+                float[] actual = System.Text.Json.JsonSerializer.Deserialize<float[]>(json);
+                return actual != null && actual.Length == expected.Length
+                    && actual.AsSpan().SequenceEqual(expected);
+            }
+            catch (SqlException)
+            {
+                // Server-side failure (e.g. Msg 195 "'float16' is not a recognized vector base
+                // type.", Msg 102 syntax errors on older servers, lack of permission to set
+                // PREVIEW_FEATURES) — float16 path is unavailable.
+                return false;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Server returned a payload we can't parse as a float[] JSON array.
+                return false;
+            }
+        }
 
         static DataTestUtility()
         {

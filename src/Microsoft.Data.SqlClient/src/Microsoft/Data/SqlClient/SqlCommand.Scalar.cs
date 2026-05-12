@@ -82,7 +82,6 @@ namespace Microsoft.Data.SqlClient
             return ExecuteScalarAsyncInternal(cancellationToken);
         }
         
-        #if NET
         internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
         {
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
@@ -167,7 +166,6 @@ namespace Microsoft.Data.SqlClient
             },
             TaskScheduler.Default).Unwrap();
         }
-        #endif
         
         #endregion
         
