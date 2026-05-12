@@ -526,9 +526,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
+                // Legacy pool: start a fresh per-acquisition timeout from the owning connection's
+                // ConnectionTimeout. Time spent waiting for an idle slot in this pool is tracked
+                // independently and is not deducted from this budget.
+                TimeoutTimer timeout = TimeoutTimer.StartNew(
+                    TimeSpan.FromSeconds(owningObject.ConnectionTimeout));
+
                 newObj = _connectionFactory.CreatePooledConnection(
                     owningObject,
-                    this);
+                    this,
+                    timeout);
 
                 lock (_objectList)
                 {

@@ -120,12 +120,18 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(owningConnection is not null, "null owningConnection?");
             Debug.Assert(poolGroup is not null, "null poolGroup?");
 
+            // Non-pooled connections start a fresh timeout from the owning connection's
+            // ConnectionTimeout since there is no preceding pool wait to account for.
+            TimeoutTimer timeout = TimeoutTimer.StartNew(
+                TimeSpan.FromSeconds(owningConnection.ConnectionTimeout));
+
             DbConnectionInternal newConnection = CreateConnection(
                 poolGroup.ConnectionOptions,
                 poolGroup.PoolKey,
                 poolGroup.ProviderInfo,
                 pool: null,
-                owningConnection);
+                owningConnection,
+                timeout);
             if (newConnection is not null)
             {
                 SqlClientDiagnostics.Metrics.HardConnectRequest();
@@ -631,6 +637,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionInternal sseConnection = new SqlConnectionInternal(
                         identity,
                         sseopt,
+                        timeout,
                         key.Credential,
                         providerInfo: null,
                         newPassword: string.Empty,
@@ -681,6 +688,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlConnectionInternal(
                 identity,
                 opt,
+                timeout,
                 key.Credential,
                 poolGroupProviderInfo,
                 newPassword: string.Empty,
@@ -691,8 +699,7 @@ namespace Microsoft.Data.SqlClient
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback,
-                key.SspiContextProvider,
-                timeout);
+                key.SspiContextProvider);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)
