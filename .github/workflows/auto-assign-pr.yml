@@ -8,8 +8,11 @@ on:
 
 jobs:
   load-balance-assignees:
-    # Only run for assignment-eligible PRs: same-repo PRs on pull_request, or fork PRs on pull_request_target.
-    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true))
+    # Only run for assignment-eligible PRs: non-draft PRs with a milestone 
+    # (indicating they're ready for review and not just a work in progress), 
+    # since those are the ones we most want to ensure get assigned and 
+    # don't want to risk assigning reviewers to PRs that aren't ready.
+    if: github.event.pull_request.draft == false && github.event.pull_request.milestone != null
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
