@@ -182,8 +182,6 @@ internal static class LocalesHelper
             codePage = (uint)sortId < SortIdToCodePageMappings.Length
                 ? SortIdToCodePageMappings[sortId]
                 : 0;
-
-            Debug.Assert(codePage != 0, $"TryGetCodePage accessed codepage data and producted 0! sortId = {sortId}");
         }
         else
         {
