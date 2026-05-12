@@ -703,6 +703,22 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task GetCharsSequentialAccess_NullBufferNegativeBufferIndex_ThrowsArgumentOutOfRange()
+        {
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT CONVERT(NVARCHAR(MAX), 'test')";
+
+            using var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+            Assert.True(await reader.ReadAsync());
+
+            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => reader.GetChars(0, 0, null, -1, 0));
+            Assert.Equal("bufferIndex", ex.ParamName);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanGetCharsSequentially()
         {
             const CommandBehavior commandBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleResult;
