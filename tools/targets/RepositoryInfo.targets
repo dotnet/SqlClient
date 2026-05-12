@@ -35,6 +35,6 @@ file to you under the MIT license. -->
                     $(_TranslateUrlPattern), $(_TranslateUrlReplacement)))</ScmRepositoryUrl>
             </SourceRoot>
         </ItemGroup>
-        <Message Text="Final Translated ScmRepositoryUrl to $(ScmRepositoryUrl)" Importance="high" />    
+        <Message Text="Final Translated ScmRepositoryUrl to $(ScmRepositoryUrl)" />
     </Target>
 </Project>
