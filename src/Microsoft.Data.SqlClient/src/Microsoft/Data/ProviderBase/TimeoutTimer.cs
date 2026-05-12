@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -61,11 +63,10 @@ namespace Microsoft.Data.ProviderBase
         /// </param>
         /// <param name="timeProvider">
         /// The <see cref="TimeProvider"/> used to read the current time and schedule
-        /// cancellation. Must not be <see langword="null"/>.
+        /// cancellation.
         /// </param>
         private TimeoutTimer(TimeSpan expiration, TimeProvider timeProvider)
         {
-            Debug.Assert(timeProvider is not null, "timeProvider must not be null");
             _timeProvider = timeProvider;
             OriginalTicks = expiration.Ticks;
             IsInfinite = OriginalTicks == InfiniteTimeout;
@@ -243,11 +244,11 @@ namespace Microsoft.Data.ProviderBase
         /// <param name="timeProvider">
         /// The <see cref="TimeProvider"/> used to read the current time and schedule
         /// cancellation. Pass a fake provider in tests to deterministically control
-        /// expiration. Must not be <see langword="null"/>.
+        /// expiration.
         /// </param>
         /// <returns>A new <see cref="TimeoutTimer"/> instance that has already started.</returns>
         internal static TimeoutTimer StartNew(TimeSpan expiration, TimeProvider timeProvider)
-            => new TimeoutTimer(expiration, timeProvider ?? throw new ArgumentNullException(nameof(timeProvider)));
+            => new TimeoutTimer(expiration, timeProvider);
 
         /// <summary>
         /// Creates a new <see cref="CancellationTokenSource"/> that will be canceled
