@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <summary>
         /// Constructor that initializes the root key.
         /// </summary>
-        /// <param name="rootKey">root key</param>
+        /// <param name="rootKey">Root key</param>
         public SymmetricKey(byte[]? rootKey)
         {
             // Key validation
@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Returns a copy of the plain text key
+        /// Returns the plain text key.
         /// This is needed for actual encryption/decryption.
         /// </summary>
         public byte[] RootKey { get; }
