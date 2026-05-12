@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 $"  {targetSpecification} " +
                 $"WITH (" +
                 $"  {duration} " +
-                $"  MAX_MEMORY=16 MB," +
+                $"  MAX_MEMORY=4 MB," +
                 $"  EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS, " +
                 $"  MAX_DISPATCH_LATENCY={MaxDispatchLatencySeconds} SECONDS, " +
                 $"  MAX_EVENT_SIZE=0 KB, " +
