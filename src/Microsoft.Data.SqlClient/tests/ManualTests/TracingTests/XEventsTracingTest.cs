@@ -89,6 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
     }
 
+    [Trait("Set", "3")]
     [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {
