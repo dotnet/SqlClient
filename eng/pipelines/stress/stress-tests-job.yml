@@ -105,8 +105,14 @@ jobs:
       - name: project
         value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
 
-      # dotnet CLI arguments.
-      - name: dotnetArguments
+      # dotnet CLI arguments for build.
+      - name: buildArguments
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+
+      # dotnet CLI arguments for run.
+      - name: runArguments
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
           --configuration ${{ parameters.buildConfiguration }}
@@ -172,7 +178,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(dotnetArguments)
+          arguments: $(buildArguments)
 
       # Set a flag so test steps can distinguish a build failure from a test failure.
       - pwsh: Write-Host "##vso[task.setvariable variable=buildSucceeded]true"
@@ -202,7 +208,7 @@ jobs:
           inputs:
             command: run
             projects: $(project)
-            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
@@ -213,4 +219,4 @@ jobs:
           inputs:
             command: run
             projects: $(project)
-            arguments: $(dotnetArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
