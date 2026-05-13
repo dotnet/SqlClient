@@ -1158,37 +1158,37 @@
     <!-- Build Abstractions tests, which don't have conditional TFMs. -->
     <Message Text=">>> Building Abstractions.Tests with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(AbstractionsTestsProjectPath) $(_DotnetArguments)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AbstractionsTestsProjectPath)&quot; $(_DotnetArguments)" />
 
     <!-- Build SqlClient UnitTests (project references only, no ReferenceType). -->
     <Message Text=">>> Building SqlClient UnitTests for %(_OsValues.Identity)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(UnitTestsProjectPath) -p:Configuration=$(Configuration) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(UnitTestsProjectPath)&quot; -p:Configuration=$(Configuration) -p:OS=%(_OsValues.Identity)" />
 
     <!-- Build SqlClient FunctionalTests. -->
     <Message Text=">>> Building SqlClient FunctionalTests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(FunctionalTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(FunctionalTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
 
     <!-- Build SqlClient ManualTests. -->
     <Message Text=">>> Building SqlClient ManualTests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(ManualTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(ManualTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
 
     <!-- Build SqlClient PerformanceTests. -->
     <Message Text=">>> Building SqlClient PerformanceTests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(PerformanceTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(PerformanceTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
 
     <!-- Build SqlClient StressTests. -->
     <Message Text=">>> Building SqlClient StressTests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(StressTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(StressTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
 
     <!-- Build Azure tests. -->
     <Message Text=">>> Building Azure.Tests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(AzureTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AzureTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
 
     <!-- AKV Provider has no tests to build. -->
 
@@ -1198,14 +1198,14 @@
   <Target Name="BuildSamples">
     <Message Text=">>> Building Samples with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(SamplesProjectPath) $(_DotnetArguments)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SamplesProjectPath)&quot; $(_DotnetArguments)" />
   </Target>
 
   <!-- Build all tools projects. -->
   <Target Name="BuildTools">
     <Message Text=">>> Building GenAPI with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(GenApiProjectPath) $(_DotnetArguments)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(GenApiProjectPath)&quot; $(_DotnetArguments)" />
   </Target>
 
 </Project>
