@@ -10,7 +10,7 @@
 # Daily Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
 # Replaces the Classic "Test-SqlClient-Kerberos-Azure" pipeline.
 #
-# Schedule: daily at 07:00 UTC on main.
+# Schedule: daily at 07:00 UTC on internal/main.
 #
 # Job breakdown (10 total):
 #   Stage: windows           → 7 jobs  (net462 + net8/9/10 × NativeSNI/ManagedSNI)
@@ -42,7 +42,7 @@ schedules:
     displayName: Daily run (07:00 UTC)
     branches:
       include:
-        - main
+        - internal/main
     always: true
 
 name: $(date:yyyyMMdd)$(rev:.r)
