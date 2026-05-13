@@ -3845,7 +3845,7 @@ namespace Microsoft.Data.SqlClient
 
             // Write to DNS Cache or clean up DNS Cache for TCP protocol
             bool ret = false;
-            if (!Capabilities.DnsCaching)
+            if (_connHandler._cleanSQLDNSCaching)
             {
                 ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCache);
             }

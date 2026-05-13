@@ -143,6 +143,10 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Probably a good idea to introduce a delegate type
         internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
+        // @TODO: Should be private and accessed via internal property
+        // @TODO: Rename to match naming conventions
+        internal bool _cleanSQLDNSCaching = false;
+
         internal Guid _clientConnectionId = Guid.Empty;
 
         /// <remarks>
@@ -1602,6 +1606,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     if (data[0] == 1)
                     {
                         Parser.Capabilities.DnsCaching = true;
+                        _cleanSQLDNSCaching = false;
 
                         if (RoutingInfo != null)
                         {
@@ -1612,6 +1617,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         // we receive the IsSupported whose value is 0
                         Parser.Capabilities.DnsCaching = false;
+                        _cleanSQLDNSCaching = true;
                     }
 
                     // TODO: need to add more steps for phase 2
