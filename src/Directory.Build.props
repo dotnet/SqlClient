@@ -12,9 +12,49 @@
     <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
   </PropertyGroup>
 
-  <!-- @TODO: What is this? -->
-  <PropertyGroup Condition="$(BuildForRelease) == 'true'">
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+  <!-- Compiler Settings =============================================== -->
+  <PropertyGroup>
+    <!-- We treat all warnings as errors. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      There may be a few specific warnings that should _not_ be considered an error. This list
+      should be used sparingly to avoid important warnings being ignored.
+    -->
+    <WarningsNotAsErrors />
+
+    <!--
+      If a build is failing due to vulnerable dependencies, you may temporarily uncomment the
+      following line to treat the audit warnings as non-errors. This should only be done as a
+      temporary measure while addressing the vulnerable dependencies. See:
+      https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu1901-nu1904
+    -->
+    <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <!--
+    Versions for packages are assigned in the project's Versions.props file. Below, we provide
+    defaults for components of versions that are shared across all projects
+  -->
+  <PropertyGroup>
+    <!--
+      Build numbers from pipelines may be in the format "AABBB.CC". Where AA is the short form of
+      the current year, BBB is the current day of the year, and CC which build of the day it is
+      (eg, .4 means this was the 4th build of the day).
+
+      The build number is used in two places:
+      * FileVersion - this is of the form major.minor.patch.revision, and revision is where we
+        use the build number. The revision field of a version object is an unsigned 16-bit integer,
+        so an AABBB.CC build number will be invalid. Concatenating to AABBBCC is also out because
+        it has the potential to over flow. Instead, we simply truncate the .CC part of the build
+        number.
+      * PackageVersion - this is in the form of major.minor.patch[-prereleasesuffix], and
+        prereleasesuffix is where we use the build number. This is a free-form string, so the
+        build number AABBB.CC form is acceptable as-is.
+    -->
+    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+    <FileVersionBuildNumber>$(BuildNumber.Split('.')[0])</FileVersionBuildNumber>
   </PropertyGroup>
 
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
@@ -62,26 +102,6 @@
     <NuGetAuditLevel>low</NuGetAuditLevel>
   </PropertyGroup>
 
-  <!-- Build Warning/Error Settings -->
-  <PropertyGroup>
-    <!-- We treat all warnings as errors. -->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-
-    <!--
-      There may be a few specific warnings that should _not_ be considered an error. This list
-      should be used sparingly to avoid important warnings being ignored.
-    -->
-    <WarningsNotAsErrors />
-
-    <!--
-      If a build is failing due to vulnerable dependencies, you may temporarily uncomment the
-      following line to treat the audit warnings as non-errors. This should only be done as a
-      temporary measure while addressing the vulnerable dependencies. See:
-      https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu1901-nu1904
-    -->
-    <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
-  </PropertyGroup>
-
   <!-- Strong name signing ============================================= -->
 
   <!-- When a signing key is specified, we will perform strong name assembly signing. -->
@@ -101,10 +121,33 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
     <DisableSourceLinkTranslation Condition="'$(DisableSourceLinkTranslation)' == ''">false</DisableSourceLinkTranslation>
-  </PropertyGroup>
 
-  <!-- Provides Version properties -->
-  <Import Project="$(ToolsDir)props\Versions.props" />
+    <!--
+      BuildForRelease gates the release-only behaviors below.  It defaults to false so that
+      PR validation, scheduled CI, and local developer builds use the simpler dev-friendly
+      behavior.  Both OneBranch pipelines (official and non-official) set this to true via
+      a pipeline variable so that release packages are built deterministically and the
+      non-official pipeline exercises the same path as official before any release.
+    -->
+    <BuildForRelease Condition="'$(BuildForRelease)' == ''">false</BuildForRelease>
+
+    <!--
+      Explicit deterministic build flag.  This is also the SDK default, but we set it
+      explicitly so the build does not silently regress if a future SDK changes the default.
+    -->
+    <Deterministic>true</Deterministic>
+
+    <!--
+      ContinuousIntegrationBuild enables DeterministicSourcePaths, which remaps the source
+      root to a portable form (/_/...) inside embedded PDB paths.  Without this property
+      set to true, NuGet Package Explorer's "Deterministic (build)" check fails because
+      the PDBs embed absolute build-agent paths (e.g. C:\__w\1\s\...).
+
+      Gated on BuildForRelease so PR/CI/local builds keep their pre-#4204 behavior; both
+      OneBranch pipelines (which set BuildForRelease=true) enable this.
+    -->
+    <ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''">$(BuildForRelease)</ContinuousIntegrationBuild>
+  </PropertyGroup>
 
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" />

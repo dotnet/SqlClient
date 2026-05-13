@@ -143,16 +143,29 @@ jobs:
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create MDS NuGet Package'
-      generateSymbolsPackage: true
-      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  - task: DotNetCoreCLI@2
+    displayName: 'Create MDS NuGet Package'
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackSqlClient
+        -p:PackBuild=false
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+
+  # PackSqlClient outputs to artifacts/Microsoft.Data.SqlClient/<ReferenceType>-<Configuration>/.
+  # Downstream steps (local feed copy, AKV pack, artifact publish) all expect packages at
+  # $(packagePath), so copy them there.
+  - task: CopyFiles@2
+    displayName: Copy MDS Package to Output Directory
+    inputs:
+      sourceFolder: $(Build.SourcesDirectory)/artifacts/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-${{ parameters.buildConfiguration }}
+      contents: 'Microsoft.Data.SqlClient.*'
+      targetFolder: $(packagePath)
 
   # When building in Package mode, the AKV Provider restore needs to find the MDS package
   # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.
@@ -176,20 +189,15 @@ jobs:
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
       akvPackageVersion: ${{ parameters.akvPackageVersion }}
 
-  - task: MSBuild@1
+  - task: DotNetCoreCLI@2
     displayName: 'Create AKV Provider NuGet Package'
     inputs:
-      solution: build.proj
-      msbuildArchitecture: x64
-      platform: '${{ parameters.platform }}'
-      configuration: '${{ parameters.buildConfiguration }}'
-      msbuildArguments: >-
-        -t:PackAkvProvider
-        -p:ReferenceType=${{ parameters.referenceType }}
-        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
-        -p:AkvPackageVersion=${{ parameters.akvPackageVersion }}
-        -p:PackageOutputPath=$(packagePath)
+      command: pack
+      packagesToPack: src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
+      configurationToPack: ${{ parameters.buildConfiguration }}
+      nobuild: true
+      packDirectory: $(packagePath)
+      buildProperties: ReferenceType=${{ parameters.referenceType }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};SqlClientPackageVersion=${{ parameters.mdsPackageVersion }};AkvProviderPackageVersion=${{ parameters.akvPackageVersion }};BuildNumber=$(Build.BuildNumber);AssemblyBuildNumber=$(assemblyBuildNumber)
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'

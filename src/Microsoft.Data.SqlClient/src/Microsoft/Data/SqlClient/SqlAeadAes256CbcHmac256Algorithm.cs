@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -21,6 +21,14 @@ namespace Microsoft.Data.SqlClient
         /// Algorithm Name
         /// </summary>
         internal const string AlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
+
+        /// <summary>
+        /// Algorithm version
+        /// </summary>
+        /// <remarks>
+        /// For now, only one version exists. In future, this may be derived from the algorithm name.
+        /// </remarks>
+        public const byte CurrentVersion = 0x01;
 
         /// <summary>
         /// Key size in bytes
@@ -77,7 +85,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Byte array with algorithm version used for authentication tag computation.
         /// </summary>
-        private static readonly byte[] _version = new byte[] { 0x01 };
+        private static readonly byte[] _version = [ CurrentVersion ];
 
         /// <summary>
         /// Byte array with algorithm version size used for authentication tag computation.

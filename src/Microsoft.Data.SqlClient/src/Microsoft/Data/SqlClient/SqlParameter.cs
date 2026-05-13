@@ -1261,7 +1261,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey.Length > 0)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {

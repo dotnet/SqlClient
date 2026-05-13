@@ -2,36 +2,7 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <Configurations>Debug;Release;</Configurations>
-    <RootNamespace />
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-
-  <!-- Versioning ====================================================== -->
-  <Import Project="../MdsVersions.props" />
-  <PropertyGroup>
-    <AssemblyVersion>$(MdsAssemblyVersion)</AssemblyVersion>
-    <FileVersion>$(MdsFileVersion)</FileVersion>
-    <Version>$(MdsPackageVersion)</Version>
-  </PropertyGroup>
-
-  <!-- CLS Compliance ================================================== -->
-  <ItemGroup>
-    <AssemblyAttribute Include="System.CLSCompliantAttribute">
-      <_Parameter1>true</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
-
-  <!-- Strong name signing ============================================= -->
-  <!-- Strong naming is being done in Directory.Build.props -->
-  <!-- Otherwise, we're not signing, so we are permitted to expose our internals to tests. -->
-  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>UnitTests</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
 
   <!-- OS Constants ==================================================== -->
   <PropertyGroup>
@@ -64,9 +35,39 @@
     <TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace />
+  </PropertyGroup>
+
+  <!-- CLS Compliance ================================================== -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- Versioning ====================================================== -->
+  <Import Project="../Versions.props" />
+  <PropertyGroup>
+    <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(SqlClientFileVersion)</FileVersion>
+    <Version>$(SqlClientPackageVersion)</Version>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- Strong naming is being done in Directory.Build.props -->
+  <!-- If we're not signing, we are permitted to expose our internals to tests. -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
-    <!-- @TODO: Move to directory.build.props? -->
     <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
 
     <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
@@ -74,6 +75,126 @@
     <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
     <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
   </PropertyGroup>
+
+  <!-- NuGet Package Config ============================================ -->
+  <PropertyGroup>
+
+    <!-- Spec and proj paths. -->
+    <SqlClientPackNuspecTemplatePath>$(MSBuildProjectDirectory)/Microsoft.Data.SqlClient.nuspec</SqlClientPackNuspecTemplatePath>
+    <SqlClientPackNuspecGeneratedPath>$(BaseIntermediateOutputPath)Microsoft.Data.SqlClient.pack.nuspec</SqlClientPackNuspecGeneratedPath>
+
+    <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
+    <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
+    <AbstractionsVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props</AbstractionsVersionsPropsPath>
+    <LoggingVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props</LoggingVersionsPropsPath>
+
+    <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
+
+    <!--
+      Path to the nuspec to pack from. Initialized to the template path. During
+      PrepareSqlClientPackNuspec this is always switched to the generated intermediate nuspec
+      before GenerateNuspec runs.
+    -->
+    <NuspecFile>$(SqlClientPackNuspecTemplatePath)</NuspecFile>
+
+    <!--
+      Root used to resolve relative file paths in the nuspec (for example lib/ and runtimes/).
+      The SDK pack targets do not provide a default value; PackTask receives this value as-is.
+      Artifact entries in this nuspec are authored relative to the repo artifacts directory so
+      this must point to $(RepoRoot)artifacts.
+    -->
+    <NuspecBasePath>$(RepoRoot)artifacts</NuspecBasePath>
+
+    <!--
+      Semicolon-separated key=value substitutions for $KEY$ tokens in nuspec metadata.
+      In this flow, metadata fields like $Version$ are substituted by PackTask, but dependency
+      version attribute tokens are not reliably substituted and are pre-expanded in
+      PrepareSqlClientPackNuspec.
+    -->
+    <NuspecProperties>Version=$(Version);Configuration=$(Configuration);ReferenceType=$(ReferenceType)</NuspecProperties>
+
+    <!-- Emit a .snupkg symbols package alongside the main .nupkg. -->
+    <IncludeSymbols>true</IncludeSymbols>
+
+    <!-- Use snupkg (NuGet.org symbol package format). -->
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!--
+      Keep dependency information sourced from the nuspec; do not auto-generate from project
+      references.  This is necessary because, with NuspecFile-based pack, all dependency information
+      must come from the nuspec file.  The SDK will not automatically populate dependencies for us.
+    -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+
+  </PropertyGroup>
+
+  <!--
+    Conditionally import the Abstractions and Logging Versions.props files to obtain their
+    calculated package version values.
+  -->
+  <Import Project="$(AbstractionsVersionsPropsPath)"
+    Condition="'$(AbstractionsPackageVersion)' == '' AND Exists('$(AbstractionsVersionsPropsPath)')" />
+  <Import Project="$(LoggingVersionsPropsPath)"
+    Condition="'$(LoggingPackageVersion)' == '' AND Exists('$(LoggingVersionsPropsPath)')" />
+
+  <!--
+    SDK pack does not reliably substitute dependency version tokens in this nuspec flow.
+    We materialize those dependency versions into an intermediate nuspec before PackTask runs.
+
+    Why an intermediate nuspec is generated:
+    * The source nuspec keeps dependency versions as tokens to stay template-driven.
+    * During SDK-style packing, dependency token substitution is not consistently applied in this flow.
+    * Expanding tokens up front guarantees deterministic dependency versions in the final package metadata.
+
+    Why sibling package versions are resolved here:
+    * Pack entrypoints may call this project directly and omit Abstractions/Logging version overrides.
+    * Those versions must still align with sibling projects' versioning rules (BuildNumber/BuildSuffix and defaults).
+    * Conditional imports of sibling Versions.props preserve a single source of version truth.
+
+    Known SDK behavior (SDK 10.0.107):
+    * Tokens in NuspecProperties are substituted for string-valued metadata fields (for example $Version$).
+    * Tokens used as dependency version attribute values are not reliably substituted in this flow, which can
+      surface as: "An error occurred while trying to parse the value '' of property 'dependencies' in the
+      manifest file" and "'' is not a valid version string."
+    * Pre-materializing dependency version tokens into the generated intermediate nuspec avoids this failure.
+
+    Related upstream issues:
+    * dotnet/sdk#15482
+    * dotnet/sdk#29661
+    * dotnet/sdk#10516
+    * dotnet/sdk#15407
+    * dotnet/sdk#16816
+  -->
+  <Target Name="PrepareSqlClientPackNuspec"
+          BeforeTargets="GenerateNuspec"
+          DependsOnTargets="InitializeSourceControlInformation">
+
+    <!-- Mirror SDK pack behavior: default CommitId from SourceRevisionId when not explicitly set. -->
+    <PropertyGroup>
+      <CommitId Condition="'$(CommitId)' == ''">$(SourceRevisionId)</CommitId>
+      <NuspecProperties>$(NuspecProperties);COMMITID=$(CommitId)</NuspecProperties>
+      <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
+      <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>
+    </PropertyGroup>
+
+    <Error Condition="'$(_AbstractionsPackageVersionTrimmed)' == ''"
+      Text="AbstractionsPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionAbstractions=&lt;version&gt;; when packing the project directly, set -p:AbstractionsPackageVersion=&lt;version&gt;; otherwise ensure the Abstractions Versions.props import can resolve a value." />
+    <Error Condition="'$(_LoggingPackageVersionTrimmed)' == ''"
+      Text="LoggingPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionLogging=&lt;version&gt;; when packing the project directly, set -p:LoggingPackageVersion=&lt;version&gt;; otherwise ensure the Logging Versions.props import can resolve a value." />
+
+    <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
+    <PropertyGroup>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)'))</_SqlClientPackNuspecExpandedText>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
+                      Lines="$(_SqlClientPackNuspecExpandedText)"
+                      Overwrite="true" />
+
+    <!-- Set the NuspecFile property to the generated nuspec file. -->
+    <PropertyGroup>
+      <NuspecFile>$(SqlClientPackNuspecGeneratedPath)</NuspecFile>
+    </PropertyGroup>
+  </Target>
 
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
@@ -114,6 +235,30 @@
   </ItemGroup>
 
   <!-- References ====================================================== -->
+  <!-- Reference to Abstractions -->
+  <ItemGroup>
+    <ProjectReference Include="$(AbstractionsProjectPath)"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- Reference to Logging -->
+  <ItemGroup>
+    <ProjectReference Include="$(LoggingProjectPath)"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- Reference to SqlServer -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.SqlServer.Server"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Configuration" />
@@ -121,10 +266,7 @@
     <Reference Include="System.Transactions" />
 
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI">
-      <PrivateAssets>All</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
@@ -146,31 +288,8 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-  </ItemGroup>
-
-  <!--
-    Refer to the Abstractions package via project or package reference
-    depending on our build parameters.
-  -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
-  </ItemGroup>
-
-  <!--
-    Refer to the Logging package via project or package reference
-    depending on our build parameters.
-  -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

@@ -574,7 +574,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 // Create new connection options for demand on their connection string.  We modify the connection string
                 // and assert on our modified string when we create the container.
-                SqlConnectionString connectionStringObject = new(connectionString);
+                SqlConnectionOptions connectionStringObject = new(connectionString);
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
@@ -717,7 +717,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 // Create new connection options for demand on their connection string.  We modify the connection string
                 // and assert on our modified string when we create the container.
-                SqlConnectionString connectionStringObject = new(connectionString);
+                SqlConnectionOptions connectionStringObject = new(connectionString);
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
