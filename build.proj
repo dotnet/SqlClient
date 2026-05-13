@@ -1096,7 +1096,7 @@
   <!-- ================================================================= -->
   <!-- Ancillary Targets -->
 
-  <!-- Setup of list of the supported OSes. -->
+  <!-- Set up the list of supported OSes. -->
   <PropertyGroup>
     <_OsList>Windows_NT;Unix</_OsList>
   </PropertyGroup>
@@ -1188,6 +1188,9 @@
     <Message Text=">>> Building Azure.Tests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
           Command="&quot;$(DotnetPath)dotnet&quot; build $(AzureTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- AKV Provider has no tests to build. -->
+
   </Target>
 
   <!-- Build all sample projects. -->

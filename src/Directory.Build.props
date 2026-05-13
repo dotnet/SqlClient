@@ -34,28 +34,12 @@
 
   <!-- Versioning ====================================================== -->
   <!--
-    Versions for packages are assigned in the project's Versions.props file. Below, we provide
-    defaults for components of versions that are shared across all projects
+    Versions for packages are assigned in the project's Versions.props file. Below, we import
+    shared versioning base properties (BuildNumber, FileVersionBuildNumber) that all Versions.props
+    files depend on. In Package mode, Directory.Packages.props imports this first; the guard
+    prevents double-evaluation here.
   -->
-  <PropertyGroup>
-    <!--
-      Build numbers from pipelines may be in the format "AABBB.CC". Where AA is the short form of
-      the current year, BBB is the current day of the year, and CC which build of the day it is
-      (eg, .4 means this was the 4th build of the day).
-
-      The build number is used in two places:
-      * FileVersion - this is of the form major.minor.patch.revision, and revision is where we
-        use the build number. The revision field of a version object is an unsigned 16-bit integer,
-        so an AABBB.CC build number will be invalid. Concatenating to AABBBCC is also out because
-        it has the potential to over flow. Instead, we simply truncate the .CC part of the build
-        number.
-      * PackageVersion - this is in the form of major.minor.patch[-prereleasesuffix], and
-        prereleasesuffix is where we use the build number. This is a free-form string, so the
-        build number AABBB.CC form is acceptable as-is.
-    -->
-    <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
-    <FileVersionBuildNumber>$(BuildNumber.Split('.')[0])</FileVersionBuildNumber>
-  </PropertyGroup>
+  <Import Project="Versioning.props" Condition="'$(VersioningBaseImported)' != 'true'" />
 
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
