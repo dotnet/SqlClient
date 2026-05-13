@@ -571,6 +571,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlServerArgument)
 
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
         -p:PackageOutputPath="$(SqlClientPackageArtifactRoot)"
@@ -1159,10 +1160,10 @@
     <Exec ConsoleToMsBuild="true"
           Command="&quot;$(DotnetPath)dotnet&quot; build $(AbstractionsTestsProjectPath) $(_DotnetArguments)" />
 
-    <!-- Build SqlClient UnitTests. -->
-    <Message Text=">>> Building SqlClient UnitTests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
+    <!-- Build SqlClient UnitTests (project references only, no ReferenceType). -->
+    <Message Text=">>> Building SqlClient UnitTests for %(_OsValues.Identity)"/>
     <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build $(UnitTestsProjectPath) $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+          Command="&quot;$(DotnetPath)dotnet&quot; build $(UnitTestsProjectPath) -p:Configuration=$(Configuration) -p:OS=%(_OsValues.Identity)" />
 
     <!-- Build SqlClient FunctionalTests. -->
     <Message Text=">>> Building SqlClient FunctionalTests for %(_OsValues.Identity) with arguments: $(_DotnetArguments)"/>
