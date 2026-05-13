@@ -5,33 +5,35 @@
 namespace Microsoft.Data.SqlClient.TestCommon;
 
 /// <summary>
-/// Provides a shared xUnit conditional check for tests that depend on SQL Server UDT types.
+/// Provides a shared xUnit conditional check for tests that depend on the SqlServer assembly.
 /// </summary>
-/// <remarks>
-/// Why this exists: in PR and local project-reference builds, the <c>Microsoft.SqlServer.Server</c>
-/// assembly can be produced unsigned on .NET Framework when no signing key is available.  Some UDT
-/// tests use <c>Microsoft.SqlServer.Types</c> (a publicly published NuGet package, not owned by
-/// us), which requires a strongly named <c>Microsoft.SqlServer.Server</c> assembly and fail with
-/// <c>FileLoadException</c> ( <c>0x80131044</c>) when that requirement is not met.
-///
-/// This can also happen in package-based test runs when the consumed package was produced from an
-/// unsigned assembly (for example, package-mode restore from a local feed containing CI/dev
-/// artifacts), not only when using direct project references.
-///
-/// What this checks: on .NET Framework, it loads the UDT attribute type from
-/// <c>Microsoft.SqlServer.Server</c> and verifies that the assembly has a non-empty public key
-/// token (is strongly named). On .NET, this always returns <see langword="true"/> because runtime
-/// strong-name validation is not enforced the same way.
-///
-/// When to use it: add this condition to tests that execute SQL Server UDT paths and are known to
-/// fail in unsigned net462 runs, regardless of whether the assembly comes from project references
-/// or locally produced packages.
-/// </remarks>
 public static class SqlServerStrongNameTestCondition
 {
     /// <summary>
-    /// Gets whether SQL Server UDT tests are safe to run in the current runtime/signing context.
+    /// Returns true when an unsigned SqlServer assembly should be usable in conjunction with other
+    /// assemblies that explicitly depend on a strongly-named SqlServer assembly.
     /// </summary>
+    /// <remarks>
+    /// Why this exists: in local builds and PR pipeline runs, the <c>Microsoft.SqlServer.Server</c>
+    /// assembly is likely to be produced unsigned.  Some UDT tests reference
+    /// <c>Microsoft.SqlServer.Types</c> (a publicly published NuGet package, not owned by us),
+    /// which requires a strongly named <c>Microsoft.SqlServer.Server</c> assembly.  The .NET
+    /// runtime doesn't enforce this relationship, and the tests run without incident regardless of
+    /// the signed-ness of the SqlServer assembly.  However, .NET Framework _does_ enforce that the
+    /// SqlServer assembly us signed, and the tests fail to compile and/or run.
+    ///
+    /// This situation can occur in both Project and Package based test runs, the latter when the
+    /// consumed SqlServer package was produced from an unsigned assembly.
+    ///
+    /// What this checks: on .NET Framework, it loads the UDT attribute type from
+    /// <c>Microsoft.SqlServer.Server</c> and verifies that the assembly has a non-empty public key
+    /// token (is strongly named). On .NET, this always returns <see langword="true"/> because
+    /// runtime strong-name validation is not enforced the same way.
+    ///
+    /// When to use it: add this condition to tests that execute SQL Server UDT paths and are known
+    /// to fail in unsigned .NET Framework runs, regardless of whether the assembly comes from
+    /// project references or locally produced packages.
+    /// </remarks>
     public static bool IsUnsignedSqlServerAssemblyUsable
     {
         get
