@@ -91,6 +91,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
     <PackageReference Include="Microsoft.Identity.Client" />
+    <PackageReference Include="Microsoft.Identity.Client.Broker" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
