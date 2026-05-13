@@ -43,12 +43,6 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         internal static readonly long InfiniteTimeout = 0;
 
-        /// <summary>
-        /// The <see cref="TimeProvider"/> used to read the current time and to schedule
-        /// any <see cref="CancellationTokenSource"/> instances produced by this timer.
-        /// </summary>
-        private readonly TimeProvider _timeProvider;
-
         #endregion
 
         #region Constructors
@@ -67,7 +61,7 @@ namespace Microsoft.Data.ProviderBase
         /// </param>
         private TimeoutTimer(TimeSpan expiration, TimeProvider timeProvider)
         {
-            _timeProvider = timeProvider;
+            TimeProvider = timeProvider;
             OriginalTicks = expiration.Ticks;
             IsInfinite = OriginalTicks == InfiniteTimeout;
             ExpirationTicks = IsInfinite ? long.MaxValue : checked(NowTicks() + OriginalTicks);
@@ -214,7 +208,7 @@ namespace Microsoft.Data.ProviderBase
         /// callers that need to construct related timers or schedule cancellation
         /// against the same time source.
         /// </summary>
-        internal TimeProvider TimeProvider => _timeProvider;
+        internal TimeProvider TimeProvider { get; }
 
         #endregion
 
@@ -280,7 +274,7 @@ namespace Microsoft.Data.ProviderBase
             // Route the timer through the configured TimeProvider so that fake
             // time providers can advance virtual time and trigger cancellation
             // deterministically in tests.
-            return new CancellationTokenSource(TimeSpan.FromMilliseconds(remaining), _timeProvider);
+            return new CancellationTokenSource(TimeSpan.FromMilliseconds(remaining), TimeProvider);
         }
 
         /// <summary>
@@ -305,7 +299,7 @@ namespace Microsoft.Data.ProviderBase
         /// 1601-01-01 UTC). This keeps <see cref="ExpirationTicks"/> in the same
         /// scale historically produced by <c>DateTime.UtcNow.ToFileTimeUtc()</c>.
         /// </summary>
-        private long NowTicks() => _timeProvider.GetUtcNow().UtcDateTime.ToFileTimeUtc();
+        private long NowTicks() => TimeProvider.GetUtcNow().UtcDateTime.ToFileTimeUtc();
 
         /// <summary>
         /// Computes the remaining time, in milliseconds, between the configured
