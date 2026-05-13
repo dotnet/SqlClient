@@ -7,6 +7,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
@@ -275,7 +276,9 @@ namespace Microsoft.Data.ProviderBase
             // Route the timer through the configured TimeProvider so that fake
             // time providers can advance virtual time and trigger cancellation
             // deterministically in tests.
-            return new CancellationTokenSource(TimeSpan.FromMilliseconds(remaining), TimeProvider);
+            // Use the extension method rather than the CancellationTokenSource
+            // constructor overload, which doesn't exist on .NET Framework.
+            return TimeProvider.CreateCancellationTokenSource(TimeSpan.FromMilliseconds(remaining));
         }
 
         /// <summary>
