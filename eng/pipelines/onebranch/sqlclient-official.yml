@@ -9,20 +9,20 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 # No PR-based triggers.
 pr: none
 
-# We trigger runs on activity on the internal/main branch, but not on any other branches.  This
+# We trigger runs on activity on the internal/release/7.0 branch, but not on any other branches.  This
 # pipeline is intended to only run against the ADO.Net dotnet-sqlclient repo.
 trigger:
   branches:
     include:
-      - internal/main
+      - internal/release/7.0
 
 # We run this pipeline on a daily schedule.
 schedules:
-  - cron: "30 4 * * *"
-    displayName: Daily 04:30 UTC Build
+  - cron: "0 3 * * Wed"
+    displayName: Weekly Wednesday 03:00 UTC Build
     branches:
       include:
-        - internal/main
+        - internal/release/7.0
     always: true
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
