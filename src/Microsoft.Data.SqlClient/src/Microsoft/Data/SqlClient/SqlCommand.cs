@@ -2566,7 +2566,7 @@ namespace Microsoft.Data.SqlClient
             // to the sproc.
             Debug.Assert(CommandType is CommandType.Text,
                 "invalid call to GetCommandText for stored proc!");
-            return GetOptionsSetString(behavior) + CommandText + GetOptionsResetString(behavior);
+            return GetOptionsSetString(behavior) + CommandText;
         }
 
         private SqlParameterCollection GetCurrentParameterCollection()
