@@ -276,7 +276,7 @@ namespace Microsoft.Data.SqlClient
         #endif
         SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
-            ValidateExecuteCommandBehavior(nameof(ExecuteDbDataReader), behavior);
+            ValidateExecuteCommandBehavior(nameof(ExecuteReader), behavior);
 
             CheckDisposed();
             SetupBatchCommandExecute();
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient
         #endif
         Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken = default)
         {
-            ValidateExecuteCommandBehavior(nameof(ExecuteDbDataReaderAsync), behavior);
+            ValidateExecuteCommandBehavior(nameof(ExecuteReaderAsync), behavior);
 
             CheckDisposed();
             SetupBatchCommandExecute();

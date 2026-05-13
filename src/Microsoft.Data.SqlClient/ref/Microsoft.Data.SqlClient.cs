@@ -143,51 +143,51 @@ public class SqlBatch : System.IDisposable, System.IAsyncDisposable
     public override System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
     #else
     public System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader[@name="NoParameter"]/*'/>
     public Microsoft.Data.SqlClient.SqlDataReader ExecuteReader() => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader[@name="BehaviorParameter"]/*'/>
-#if NET
+    #if NET
     public new Microsoft.Data.SqlClient.SqlDataReader ExecuteReader(System.Data.CommandBehavior behavior) => throw null;
-#else
+    #else
     public Microsoft.Data.SqlClient.SqlDataReader ExecuteReader(System.Data.CommandBehavior behavior) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync[@name="NoParameter"]/*'/>
-#if NET
+    #if NET
     public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#else
+    #else
     public System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync[@name="BehaviorParameter"]/*'/>
-#if NET
+    #if NET
     public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken = default) => throw null;
-#else
+    #else
     public System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken = default) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalar/*'/>
-#if NET
+    #if NET
     public override object ExecuteScalar() => throw null;
-#else
+    #else
     public object ExecuteScalar() => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalarAsync/*'/>
-#if NET
+    #if NET
     public override System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#else
+    #else
     public System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Prepare/*'/>
-#if NET
+    #if NET
     public override void Prepare() => throw null;
-#else
+    #else
     public void Prepare() => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/PrepareAsync/*'/>
-#if NET
+    #if NET
     public override System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#else
+    #else
     public System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
@@ -202,49 +202,49 @@ public class SqlBatchCommand
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor2/*'/>
     public SqlBatchCommand(string commandText, System.Data.CommandType commandType = System.Data.CommandType.Text, System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.SqlParameter> parameters = null, Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting columnEncryptionSetting = Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting.UseConnectionSetting) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/Parameters/*'/>
-#if NET
+    #if NET
     public new Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
-#else
+    #else
     public Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CanCreateParameter/*'/>
-#if NET
+    #if NET
     public override bool CanCreateParameter { get { throw null; } }
-#else
+    #else
     public bool CanCreateParameter { get { throw null; } set { } }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>
-#if NET
+    #if NET
     public override string CommandText { get { throw null; } set { } }
-#else
+    #else
     public string CommandText { get { throw null; } set { } }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandType/*'/>
-#if NET
+    #if NET
     public override System.Data.CommandType CommandType { get { throw null; } set { } }
-#else
+    #else
     public System.Data.CommandType CommandType { get { throw null; } set { } }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
     public System.Data.CommandBehavior CommandBehavior { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CreateParameter/*'/>
-#if NET
+    #if NET
     public override System.Data.Common.DbParameter CreateParameter() => throw null;
-#else
+    #else
     public System.Data.Common.DbParameter CreateParameter() => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
-#if NET
+    #if NET
     public override int RecordsAffected { get { throw null; } }
-#else
+    #else
     public int RecordsAffected { get { throw null; } }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
-#if NET
+    #if NET
     protected override System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
-#else
+    #else
     protected virtual System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
-#endif
+    #endif
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ColumnEncryptionSetting/*'/>
     public Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
@@ -258,87 +258,87 @@ public class SqlBatchCommandCollection : System.Collections.Generic.IList<Micros
 #endif
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Count/*'/>
-#if NET
+    #if NET
     public override int Count => throw null;
-#else
+    #else
     public int Count => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IsReadOnly/*'/>
-#if NET
+    #if NET
     public override bool IsReadOnly => throw null;
-#else
+    #else
     public bool IsReadOnly => throw null;
-#endif
+    #endif
     System.Collections.Generic.IEnumerator<Microsoft.Data.SqlClient.SqlBatchCommand> System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.SqlBatchCommand>.GetEnumerator() => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/GetEnumerator/*'/>
     public override System.Collections.Generic.IEnumerator<System.Data.Common.DbBatchCommand> GetEnumerator() => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add1/*'/>
     public void Add(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add2/*'/>
     public override void Add(System.Data.Common.DbBatchCommand item) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Clear/*'/>
-#if NET
+    #if NET
     public override void Clear() => throw null;
-#else
+    #else
     public void Clear() => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Contains1/*'/>
     public bool Contains(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Contains2/*'/>
     public override bool Contains(System.Data.Common.DbBatchCommand item) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/CopyTo1/*'/>
     public void CopyTo(Microsoft.Data.SqlClient.SqlBatchCommand[] array, int arrayIndex) => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/CopyTo2/*'/>
     public override void CopyTo(System.Data.Common.DbBatchCommand[] array, int arrayIndex) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IndexOf1/*'/>
     public int IndexOf(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IndexOf2/*'/>
     public override int IndexOf(System.Data.Common.DbBatchCommand item) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Insert1/*'/>
     public void Insert(int index, Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Insert2/*'/>
     public override void Insert(int index, System.Data.Common.DbBatchCommand item) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Remove1/*'/>
     public bool Remove(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Remove2/*'/>
     public override bool Remove(System.Data.Common.DbBatchCommand item) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/RemoveAt/*'/>
-#if NET
+    #if NET
     public override void RemoveAt(int index) => throw null;
-#else
+    #else
     public void RemoveAt(int index) => throw null;
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this1/*'/>
     Microsoft.Data.SqlClient.SqlBatchCommand System.Collections.Generic.IList<SqlBatchCommand>.this[int index] { get => throw null; set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this2/*'/>
-#if NET
+    #if NET
     public new Microsoft.Data.SqlClient.SqlBatchCommand this[int index] { get => throw null; set { } }
-#else
+    #else
     public Microsoft.Data.SqlClient.SqlBatchCommand this[int index] { get => throw null; set { } }
-#endif
+    #endif
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => throw null;
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/GetBatchCommand/*'/>
     protected override System.Data.Common.DbBatchCommand GetBatchCommand(int index) => throw null;
-#endif
-#if NET
+    #endif
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SetBatchCommand/*'/>
     protected override void SetBatchCommand(int index, System.Data.Common.DbBatchCommand batchCommand) => throw null;
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
@@ -537,19 +537,19 @@ public sealed class SqlClientFactory : System.Data.Common.DbProviderFactory
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
     public static readonly Microsoft.Data.SqlClient.SqlClientFactory Instance;
 
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
     public override bool CanCreateBatch { get { throw null; } }
-#endif
+    #endif
 
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatch/*'/>
     public override System.Data.Common.DbBatch CreateBatch() { throw null; }
-#endif
-#if NET
+    #endif
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
     public override System.Data.Common.DbBatchCommand CreateBatchCommand() { throw null; }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommand/*'/>
     public override System.Data.Common.DbCommand CreateCommand() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommandBuilder/*'/>
@@ -565,14 +565,14 @@ public sealed class SqlClientFactory : System.Data.Common.DbProviderFactory
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateParameter/*'/>
     public override System.Data.Common.DbParameter CreateParameter() { throw null; }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
     public override System.Security.CodeAccessPermission CreatePermission(System.Security.Permissions.PermissionState state) { throw null; }
-#endif
+    #endif
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     object System.IServiceProvider.GetService(System.Type serviceType) { throw null; }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
@@ -800,44 +800,44 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     public event System.Data.StatementCompletedEventHandler StatementCompleted { add { } remove { } }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteNonQuery() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteNonQuery(System.AsyncCallback callback, object stateObject) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="default"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteReader() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndStateObject"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndStateObjectAndCommandBehavior"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject, System.Data.CommandBehavior behavior) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteReader(System.Data.CommandBehavior behavior) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteXmlReader() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public System.IAsyncResult BeginExecuteXmlReader(System.AsyncCallback callback, object stateObject) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
     public override void Cancel() { }
@@ -901,11 +901,11 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
     protected override void Dispose(bool disposing) { }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
     [System.ComponentModel.DefaultValueAttribute(true)]
     public bool NotificationAutoEnlist { get { throw null; } set { } }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
@@ -1015,28 +1015,28 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
     object System.ICloneable.Clone() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.ComponentModel.DefaultValueAttribute(null)]
-#endif
+    #endif
     public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.ComponentModel.DefaultValueAttribute(null)]
-#endif
+    #endif
     public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.ComponentModel.DefaultValueAttribute(null)]
-#endif
+    #endif
     public static System.Collections.Generic.IDictionary<string, System.Collections.Generic.IList<string>> ColumnEncryptionTrustedMasterKeyPaths { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     public int CommandTimeout { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*'/>
     [System.ComponentModel.DefaultValueAttribute("")]
-#pragma warning disable CS0618
+    #pragma warning disable CS0618
     [System.ComponentModel.RecommendedAsConfigurableAttribute(true)]
-#pragma warning restore CS0618
+    #pragma warning restore CS0618
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     [System.ComponentModel.SettingsBindableAttribute(true)]
     public override string ConnectionString { get { throw null; } set { } }
@@ -1111,21 +1111,21 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     public override System.Data.DataTable GetSchema(string collectionName) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*'/>
     public override System.Data.DataTable GetSchema(string collectionName, string[] restrictionValues) { throw null; }
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*'/>
     public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*'/>
     public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, System.Threading.CancellationToken cancellationToken = default) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValuesAsync/*'/>
     public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, System.Threading.CancellationToken cancellationToken = default) { throw null; }
-#else
+    #else
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*'/>
     public System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*'/>
     public System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, System.Threading.CancellationToken cancellationToken = default) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValuesAsync/*'/>
     public System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, System.Threading.CancellationToken cancellationToken = default) { throw null; }
-#endif
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*'/>
     public override void Open() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*'/>
@@ -1147,49 +1147,49 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
     public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*'/>
     protected override System.Data.Common.DbProviderFactory DbProviderFactory { get { throw null; } }
-#endif
+    #endif
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
     protected override void Dispose(bool disposing) { }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*'/>
     public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction) { }
-#endif
+    #endif
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*'/>
     public override void EnlistTransaction(System.Transactions.Transaction transaction) { }
-#endif
+    #endif
 
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CanCreateBatch/*'/>
     public override bool CanCreateBatch { get { throw null; } }
-#endif
+    #endif
 
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbBatch/*'/>
     protected override System.Data.Common.DbBatch CreateDbBatch() => throw null;
-#endif
+    #endif
 
-#if NET
+    #if NET
     ///
     /// for internal test only
     ///
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     internal string SQLDNSCachingSupportedState { get { throw null; } }
-#endif
+    #endif
 
-#if NET
+    #if NET
     ///
     /// for internal test only
     ///
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     internal string SQLDNSCachingSupportedStateBeforeRedirect { get { throw null; } }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
@@ -1462,28 +1462,28 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*'/>
     public override bool TryGetValue(string keyword, out object value) { throw null; }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
     [System.ComponentModel.DisplayNameAttribute("Connection Reset")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     [System.ObsoleteAttribute("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")]
     public bool ConnectionReset { get { throw null; } set { } }
-#endif
+    #endif
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*'/>
     [System.ComponentModel.DisplayNameAttribute("Network Library")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public string NetworkLibrary { get { throw null; } set { } }
-#endif
+    #endif
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*'/>
     [System.ComponentModel.DisplayNameAttribute("Transparent Network IP Resolution")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public bool TransparentNetworkIPResolution { get { throw null; } set { } }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/SqlCredential/*'/>
@@ -1543,7 +1543,7 @@ public sealed class SqlDataAdapter : System.Data.Common.DbDataAdapter, System.Da
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.ICloneable.Clone/*' />
     object System.ICloneable.Clone() { throw null; }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*'/>
     protected override int AddToBatch(System.Data.IDbCommand command) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ClearBatch/*'/>
@@ -1562,7 +1562,7 @@ public sealed class SqlDataAdapter : System.Data.Common.DbDataAdapter, System.Da
     protected override void InitializeBatching() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/TerminateBatching/*'/>
     protected override void TerminateBatching() { }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*'/>
@@ -1618,9 +1618,9 @@ public class SqlDataReader : System.Data.Common.DbDataReader, System.Data.IDataR
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*'/>
     public override System.Collections.IEnumerator GetEnumerator() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*'/>
-#if NET
+    #if NET
     [return: System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
+    #endif
     public override System.Type GetFieldType(int i) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValue/*'/>
     public override T GetFieldValue<T>(int i) { throw null; }
@@ -1641,9 +1641,9 @@ public class SqlDataReader : System.Data.Common.DbDataReader, System.Data.IDataR
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetOrdinal/*'/>
     public override int GetOrdinal(string name) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*'/>
-#if NET
+    #if NET
     [return: System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
+    #endif
     public override System.Type GetProviderSpecificFieldType(int i) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValue/*'/>
     public override object GetProviderSpecificValue(int i) { throw null; }
@@ -1727,19 +1727,19 @@ public class SqlDataReader : System.Data.Common.DbDataReader, System.Data.IDataR
 public sealed class SqlDependency
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public SqlDependency() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public SqlDependency(Microsoft.Data.SqlClient.SqlCommand command) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public SqlDependency(Microsoft.Data.SqlClient.SqlCommand command, string options, int timeout) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*'/>
     public bool HasChanges { get { throw null; } }
@@ -1750,24 +1750,24 @@ public sealed class SqlDependency
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*'/>
     public void AddCommandDependency(Microsoft.Data.SqlClient.SqlCommand command) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public static bool Start(string connectionString) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public static bool Start(string connectionString, string queue) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public static bool Stop(string connectionString) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*'/>
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
-#endif
+    #endif
     public static bool Stop(string connectionString, string queue) { throw null; }
 }
 
@@ -1827,23 +1827,23 @@ public sealed class SqlException : System.Data.Common.DbException
     internal SqlException() { }
     private SqlException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
     public new Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
-#else
+    #else
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
     public Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
-#endif
+    #endif
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*'/>
     public byte Class { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*'/>
     public System.Guid ClientConnectionId { get { throw null; } }
 
-#if NET
+    #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />
     protected override System.Data.Common.DbBatchCommand DbBatchCommand => throw null;
-#endif
+    #endif
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*'/>
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
@@ -1861,11 +1861,11 @@ public sealed class SqlException : System.Data.Common.DbException
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/State/*'/>
     public byte State { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*'/>
-#if NET
+    #if NET
     [System.Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
-#elif NETFRAMEWORK
+    #elif NETFRAMEWORK
     [System.Security.Permissions.SecurityPermissionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Flags = System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
-#endif
+    #endif
     public override void GetObjectData(System.Runtime.Serialization.SerializationInfo si, System.Runtime.Serialization.StreamingContext context) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*'/>
     public override string ToString() { throw null; }
@@ -2075,9 +2075,9 @@ public sealed class SqlParameter : System.Data.Common.DbParameter, System.Data.I
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*'/>
     public override string ToString() { throw null; }
 
-#if !NETFRAMEWORK
+    #if !NETFRAMEWORK
     internal class SqlParameterConverter { }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*'/>
@@ -2160,17 +2160,17 @@ public sealed class SqlParameterCollection : System.Data.Common.DbParameterColle
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SetParameterParameterNameValue/*'/>
     protected override void SetParameter(string parameterName, System.Data.Common.DbParameter value) { }
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameValue/*'/>
     [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
     [System.ObsoleteAttribute("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false)]
     public Microsoft.Data.SqlClient.SqlParameter Add(string parameterName, object value) { throw null; }
-#endif
+    #endif
 
-#if NETFRAMEWORK
+    #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IsSynchronized/*'/>
     public override bool IsSynchronized { get { throw null; } }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/SqlRetryingEventArgs/*' />
@@ -2333,18 +2333,18 @@ public sealed class SqlTransaction : System.Data.Common.DbTransaction
     public override void Rollback() { }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*'/>
-#if NET
+    #if NET
     public override void Rollback(string transactionName) { }
-#else
+    #else
     public void Rollback(string transactionName) { }
-#endif
+    #endif
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*'/>
-#if NET
+    #if NET
     public override void Save(string savePointName) { }
-#else
+    #else
     public void Save(string savePointName) { }
-#endif
+    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
