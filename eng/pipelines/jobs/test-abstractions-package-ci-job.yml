@@ -91,7 +91,7 @@ jobs:
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
         value: >-
-          --configuration ${{ parameters.buildConfiguration }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
