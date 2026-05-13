@@ -34,7 +34,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 ## 🛠️ Key Features
 - **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Entra ID authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
 - **Connection Resiliency**: Implements connection resiliency features to handle transient faults and network issues, ensuring reliable database connectivity.
-- **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are: 
+- **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are:
   - **Optional**: Encryption is used if available, but not required.
   - **Mandatory**: Encryption is mandatory for the connection.
   - **Strict**: Enforces strict TLS requirements, ensuring only secure connections are established.
@@ -123,7 +123,7 @@ When a new issue is created, follow these steps:
 - Ensure the PR passes all CI checks before merging.
 
 ### ✅ Closing Issues
-- Add a comment summarizing the fix and referencing the PR 
+- Add a comment summarizing the fix and referencing the PR
 
 ### ⚙️ Automating Workflows
 - Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
