@@ -7,6 +7,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -64,7 +65,7 @@ namespace Microsoft.Data.ProviderBase
             TimeProvider = timeProvider;
             OriginalTicks = expiration.Ticks;
             IsInfinite = OriginalTicks == InfiniteTimeout;
-            ExpirationTicks = IsInfinite ? long.MaxValue : checked(NowTicks() + OriginalTicks);
+            ExpirationTicks = IsInfinite ? long.MaxValue : checked(ADP.TimerCurrent() + OriginalTicks);
         }
 
         #endregion
@@ -104,7 +105,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                return !IsInfinite && NowTicks() > ExpirationTicks;
+                return !IsInfinite && ADP.TimerHasExpired(ExpirationTicks);
             }
         }
 
@@ -141,7 +142,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 else
                 {
-                    milliseconds = RemainingMilliseconds();
+                    milliseconds = ADP.TimerRemainingMilliseconds(ExpirationTicks);
                     if (0 > milliseconds)
                     {
                         milliseconds = 0;
@@ -175,7 +176,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 else
                 {
-                    long longMilliseconds = RemainingMilliseconds();
+                    long longMilliseconds = ADP.TimerRemainingMilliseconds(ExpirationTicks);
                     if (0 > longMilliseconds)
                     {
                         milliseconds = 0;
@@ -289,7 +290,7 @@ namespace Microsoft.Data.ProviderBase
         {
             if (!IsInfinite)
             {
-                ExpirationTicks = checked(NowTicks() + OriginalTicks);
+                ExpirationTicks = checked(ADP.TimerCurrent() + OriginalTicks);
             }
         }
 
@@ -300,14 +301,6 @@ namespace Microsoft.Data.ProviderBase
         /// scale historically produced by <c>DateTime.UtcNow.ToFileTimeUtc()</c>.
         /// </summary>
         private long NowTicks() => TimeProvider.GetUtcNow().UtcDateTime.ToFileTimeUtc();
-
-        /// <summary>
-        /// Computes the remaining time, in milliseconds, between the configured
-        /// time source's current reading and <see cref="ExpirationTicks"/>. May
-        /// return a negative value when the timer has already expired.
-        /// </summary>
-        private long RemainingMilliseconds()
-            => (ExpirationTicks - NowTicks()) / TimeSpan.TicksPerMillisecond;
 
         #endregion
     }
