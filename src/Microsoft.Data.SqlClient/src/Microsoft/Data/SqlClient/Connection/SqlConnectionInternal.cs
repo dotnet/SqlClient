@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Flag indicating whether enhanced routing is supported by the server.
         /// </summary>
-        internal bool IsEnhancedRoutingSupportEnabled => Parser.Capabilities.EnhancedRouting;
+        internal bool IsEnhancedRoutingSupportEnabled => Capabilities.EnhancedRouting;
 
         // @TODO: This should be private
         internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
@@ -461,7 +461,10 @@ namespace Microsoft.Data.SqlClient.Connection
 
         // @TODO: Make internal
         public override string ServerVersion =>
-            _parser.Capabilities.ServerVersion;
+            Capabilities.ServerVersion;
+
+        public override ConnectionCapabilities Capabilities =>
+            _parser.Capabilities;
 
         /// <summary>
         /// Gets the collection of async call contexts that belong to this connection.
@@ -599,13 +602,13 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Whether the server is capable of supporting a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
         /// </summary>
-        internal bool IsGlobalTransaction => _parser.Capabilities.GlobalTransactionsAvailable;
+        internal bool IsGlobalTransaction => Capabilities.GlobalTransactionsAvailable;
 
         /// <summary>
         /// Whether Global Transactions are enabled. Only supported by Azure SQL. False if disabled
         /// or connected to on-prem SQL Server.
         /// </summary>
-        internal bool IsGlobalTransactionsEnabledForServer => _parser.Capabilities.GlobalTransactionsSupported;
+        internal bool IsGlobalTransactionsEnabledForServer => Capabilities.GlobalTransactionsSupported;
 
         /// <summary>
         /// Whether this connection is locked for bulk copy operations.
@@ -619,7 +622,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Get or set if SQLDNSCaching is supported by the server.
         /// </summary>
         // @TODO: Make auto-property
-        internal bool IsSQLDNSCachingSupported => _parser.Capabilities.DnsCaching;
+        internal bool IsSQLDNSCachingSupported => Capabilities.DnsCaching;
 
         /// <summary>
         /// Get or set if we need retrying with IP received from FeatureExtAck.
@@ -1352,8 +1355,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    Parser.Capabilities.GlobalTransactionsAvailable = true;
-                    Parser.Capabilities.GlobalTransactionsSupported = (data[0] == 0x01);
+                    Capabilities.GlobalTransactionsAvailable = true;
+                    Capabilities.GlobalTransactionsSupported = (data[0] == 0x01);
                     break;
                 }
 
@@ -1481,12 +1484,12 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
                     }
 
-                    Parser.Capabilities.ColumnEncryptionVersion = supportedTceVersion;
+                    Capabilities.ColumnEncryptionVersion = supportedTceVersion;
 
                     if (data.Length > 1)
                     {
                         // Extract the type of enclave being used by the server.
-                        Parser.Capabilities.ColumnEncryptionEnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
+                        Capabilities.ColumnEncryptionEnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
                     }
                     break;
                 }
@@ -1502,11 +1505,11 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
-                    Parser.Capabilities.IsAzureSql = true;
+                    Capabilities.IsAzureSql = true;
                     // Bit 0 for RO/FP support
-                    Parser.Capabilities.ReadOnlyFailoverPartnerConnection = (data[0] & 0x01) == 0x01;
+                    Capabilities.ReadOnlyFailoverPartnerConnection = (data[0] & 0x01) == 0x01;
 
-                    if (Parser.Capabilities.ReadOnlyFailoverPartnerConnection && SqlClientEventSource.Log.IsTraceEnabled())
+                    if (Capabilities.ReadOnlyFailoverPartnerConnection && SqlClientEventSource.Log.IsTraceEnabled())
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
@@ -1558,7 +1561,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     byte enabled = data[1];
-                    Parser.Capabilities.DataClassificationVersion = enabled == 0
+                    Capabilities.DataClassificationVersion = enabled == 0
                         ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED
                         : supportedDataClassificationVersion;
 
@@ -1583,7 +1586,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                     // The server can send and receive UTF8-encoded data if bit 0 of the
                     // feature data is set.
-                    Parser.Capabilities.Utf8 = (data[0] & 0x01) == 0x01;
+                    Capabilities.Utf8 = (data[0] & 0x01) == 0x01;
                     break;
                 }
                 case TdsEnums.FEATUREEXT_SQLDNSCACHING:
@@ -1605,7 +1608,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (data[0] == 1)
                     {
-                        Parser.Capabilities.DnsCaching = true;
+                        Capabilities.DnsCaching = true;
                         _cleanSQLDNSCaching = false;
 
                         if (RoutingInfo != null)
@@ -1616,7 +1619,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     else
                     {
                         // we receive the IsSupported whose value is 0
-                        Parser.Capabilities.DnsCaching = false;
+                        Capabilities.DnsCaching = false;
                         _cleanSQLDNSCaching = true;
                     }
 
@@ -1654,7 +1657,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    Parser.Capabilities.JsonType = true;
+                    Capabilities.JsonType = true;
                     break;
                 }
                 case TdsEnums.FEATUREEXT_VECTORSUPPORT:
@@ -1686,7 +1689,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    Parser.Capabilities.Float32VectorType = true;
+                    Capabilities.Float32VectorType = true;
 
                     break;
                 }
@@ -1703,7 +1706,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     // A value of 1 indicates that the server supports the feature.
-                    Parser.Capabilities.EnhancedRouting = data[0] == 1;
+                    Capabilities.EnhancedRouting = data[0] == 1;
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
                         $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
@@ -1907,7 +1910,7 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             if (_recoverySessionData != null)
             {
-                if (_recoverySessionData._tdsVersion != Parser.Capabilities.TdsVersion)
+                if (_recoverySessionData._tdsVersion != Capabilities.TdsVersion)
                 {
                     throw SQL.CR_TDSVersionNotPreserved(this);
                 }
@@ -1915,7 +1918,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             if (_currentSessionData != null)
             {
-                _currentSessionData._tdsVersion = Parser.Capabilities.TdsVersion;
+                _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
 
@@ -3795,7 +3798,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         timeout);
                 }
 
-                if (!_parser.Capabilities.IsAzureSql)
+                if (!Capabilities.IsAzureSql)
                 {
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
