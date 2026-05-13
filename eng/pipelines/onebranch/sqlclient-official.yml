@@ -16,7 +16,7 @@ trigger:
     include:
       - internal/release/7.0
 
-# We run this pipeline on a daily schedule.
+# We run this pipeline weekly on Wednesdays at 03:00 UTC.
 schedules:
   - cron: "0 3 * * Wed"
     displayName: Weekly Wednesday 03:00 UTC Build
