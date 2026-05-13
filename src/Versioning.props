@@ -2,13 +2,11 @@
   <!--
     Shared versioning base properties consumed by every project's Versions.props file.
 
-    Imported early by Directory.Packages.props (Package mode) so that FileVersionBuildNumber
-    is available before any Versions.props computes file/assembly versions. Also imported by
-    Directory.Build.props (Project mode) with a guard to avoid double-evaluation.
+    Imported unconditionally by Directory.Build.props, which the SDK evaluates before
+    Directory.Packages.props. This ensures FileVersionBuildNumber is set before any
+    Versions.props computes file/assembly versions, regardless of build mode.
   -->
   <PropertyGroup>
-    <VersioningBaseImported>true</VersioningBaseImported>
-
     <!--
       Build numbers from pipelines may be in the format "AABBB.CC". Where AA is the short form of
       the current year, BBB is the current day of the year, and CC which build of the day it is

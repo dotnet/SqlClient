@@ -4,7 +4,6 @@
   <!-- Import Versions.props files when building via Package references -->
   <!-- This makes version properties available early for package pinning -->
   <ImportGroup Condition="'$(ReferenceType)' == 'Package'">
-    <Import Project="src/Versioning.props" />
     <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
     <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />
     <Import Project="src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props" />

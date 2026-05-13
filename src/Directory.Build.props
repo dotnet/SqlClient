@@ -36,10 +36,10 @@
   <!--
     Versions for packages are assigned in the project's Versions.props file. Below, we import
     shared versioning base properties (BuildNumber, FileVersionBuildNumber) that all Versions.props
-    files depend on. In Package mode, Directory.Packages.props imports this first; the guard
-    prevents double-evaluation here.
+    files depend on. Directory.Build.props evaluates before Directory.Packages.props, so importing
+    here ensures FileVersionBuildNumber is set before any Versions.props runs.
   -->
-  <Import Project="Versioning.props" Condition="'$(VersioningBaseImported)' != 'true'" />
+  <Import Project="Versioning.props" />
 
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
