@@ -390,6 +390,9 @@ namespace Microsoft.Data.SqlClient
             _connHandler = connHandler;
             _loginWithFailover = withFailover;
 
+            // Clean up all server capabilities from previous status.
+            Capabilities.Reset();
+
             uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)
@@ -1548,8 +1551,6 @@ namespace Microsoft.Data.SqlClient
 
             _defaultEncoding = null;
             _defaultCollation = null;
-
-            Capabilities.Reset();
         }
 
         // Fires a single InfoMessageEvent
