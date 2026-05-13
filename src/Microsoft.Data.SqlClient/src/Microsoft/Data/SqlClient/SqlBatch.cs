@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient
         #endif
         DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            ValidateCommandBehavior(nameof(ExecuteDbDataReader), behavior);
+            ValidateExecuteCommandBehavior(nameof(ExecuteDbDataReader), behavior);
 
             CheckDisposed();
             SetupBatchCommandExecute();
@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient
         #endif
         Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            ValidateCommandBehavior(nameof(ExecuteDbDataReaderAsync), behavior);
+            ValidateExecuteCommandBehavior(nameof(ExecuteDbDataReaderAsync), behavior);
 
             CheckDisposed();
             SetupBatchCommandExecute();
@@ -360,7 +360,23 @@ namespace Microsoft.Data.SqlClient
             _batchCommand.SetBatchRPCModeReadyToExecute();
         }
 
-        internal static void ValidateCommandBehavior(string method, CommandBehavior behavior)
+        /// <summary>
+        /// Validates that the provided <see cref="CommandBehavior"/> is compatible with <see cref="SqlBatch"/>.
+        /// </summary>
+        /// <param name="method">The name of the calling method for error reporting.</param>
+        /// <param name="behavior">The behavior flags to validate.</param>
+        /// <remarks>
+        /// <para>
+        /// Only <see cref="CommandBehavior.SequentialAccess"/> and <see cref="CommandBehavior.CloseConnection"/> 
+        /// are supported at the batch level.
+        /// </para>
+        /// <para>
+        /// To apply other behaviors (such as <see cref="CommandBehavior.SingleRow"/> or <see cref="CommandBehavior.SchemaOnly"/>), 
+        /// they must be set on individual <see cref="SqlBatchCommand"/> instances within the batch.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="NotSupportedException">Thrown when unsupported behavior flags are detected.</exception>
+        internal static void ValidateExecuteCommandBehavior(string method, CommandBehavior behavior)
         {
             if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))
             {

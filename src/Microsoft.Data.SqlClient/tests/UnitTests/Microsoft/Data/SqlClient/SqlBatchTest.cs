@@ -14,22 +14,22 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 public class SqlBatchTest
 {
     /// <summary>
-    /// Verifies that SqlBatch.ValidateCommandBehavior throws an ArgumentOutOfRangeException when an invalid CommandBehavior is specified.
+    /// Verifies that SqlBatch.ValidateExecuteCommandBehavior throws an ArgumentOutOfRangeException when an invalid CommandBehavior is specified.
     /// </summary>
     [Fact]
-    public void InvalidCommandBehaviorValidateCommandBehavior_Throws()
+    public void InvalidCommandBehaviorValidateExecuteCommandBehavior_Throws()
     {
-        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => SqlBatch.ValidateCommandBehavior("ExecuteNonQuery", (CommandBehavior)64));
+        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => SqlBatch.ValidateExecuteCommandBehavior("ExecuteNonQuery", (CommandBehavior)64));
         Assert.Contains("CommandBehavior", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    /// Verifies that SqlBatch.ValidateCommandBehavior throws an ArgumentOutOfRangeException when a valid but unsupported CommandBehavior is specified.
+    /// Verifies that SqlBatch.ValidateExecuteCommandBehavior throws an ArgumentOutOfRangeException when a valid but unsupported CommandBehavior is specified.
     /// </summary>
     [Fact]
-    public void NotSupportedCommandBehaviorValidateCommandBehavior_Throws()
+    public void NotSupportedCommandBehaviorValidateExecuteCommandBehavior_Throws()
     {
-        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => SqlBatch.ValidateCommandBehavior("ExecuteNonQuery", CommandBehavior.KeyInfo));
+        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => SqlBatch.ValidateExecuteCommandBehavior("ExecuteNonQuery", CommandBehavior.KeyInfo));
         Assert.Contains("not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 }
