@@ -18,19 +18,39 @@ jobs:
     permissions:
       issues: write
       pull-requests: read
+    env:
+      AUTO_ASSIGN_PR_POOL: ${{ vars.AUTO_ASSIGN_PR_POOL }}
+      AUTO_ASSIGN_PR_SKIP: ${{ vars.AUTO_ASSIGN_PR_SKIP }}
     
     steps:
       - name: Calculate Workload and Apply
         uses: actions/github-script@v7
         with:
           script: |
-            // Keep the candidate pool centralized in one place so every PR uses the same ranking.
-            const pool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const prNumber = context.issue.number;
             const author = context.payload.pull_request.user.login;
             const normalizeLogin = login => login.toLowerCase();
+            const parseCsvLogins = value => (value ?? '')
+              .split(',')
+              .map(entry => entry.trim())
+              .filter(entry => entry.length > 0);
+
+            // Fallback pool keeps behavior unchanged when no repo variable is configured.
+            const defaultPool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
+            const configuredPool = parseCsvLogins(process.env.AUTO_ASSIGN_PR_POOL);
+            const rawPool = configuredPool.length > 0 ? configuredPool : defaultPool;
+            const skipUsers = new Set(parseCsvLogins(process.env.AUTO_ASSIGN_PR_SKIP).map(normalizeLogin));
+            const seenPoolUsers = new Set();
+            const pool = [];
+            for (const user of rawPool) {
+              const lower = normalizeLogin(user);
+              if (!seenPoolUsers.has(lower)) {
+                seenPoolUsers.add(lower);
+                pool.push(user);
+              }
+            }
 
             let latestPr;
             try {
@@ -64,6 +84,7 @@ jobs:
 
             const candidates = pool.filter(user => 
               normalizeLogin(user) !== normalizeLogin(author) &&
+              !skipUsers.has(normalizeLogin(user)) &&
               !currentAssignees.some(a => normalizeLogin(a) === normalizeLogin(user))
             );
 
