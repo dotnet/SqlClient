@@ -440,7 +440,7 @@ deallocate c";
       <genre>Computer</genre>
       <price>44.95</price>
       <publish_date>2000-10-01</publish_date>
-      <description>An in-depth look at creating applications 
+      <description>An in-depth look at creating applications
       with XML.</description>
    </book>
    <book id=""bk102"">
@@ -449,8 +449,8 @@ deallocate c";
       <genre>Fantasy</genre>
       <price>5.95</price>
       <publish_date>2000-12-16</publish_date>
-      <description>A former architect battles corporate zombies, 
-      an evil sorceress, and her own childhood to become queen 
+      <description>A former architect battles corporate zombies,
+      an evil sorceress, and her own childhood to become queen
       of the world.</description>
    </book>
    <book id=""bk103"">
@@ -459,8 +459,8 @@ deallocate c";
       <genre>Fantasy</genre>
       <price>5.95</price>
       <publish_date>2000-11-17</publish_date>
-      <description>After the collapse of a nanotechnology 
-      society in England, the young survivors lay the 
+      <description>After the collapse of a nanotechnology
+      society in England, the young survivors lay the
       foundation for a new society.</description>
    </book>
    <book id=""bk104"">
@@ -469,9 +469,9 @@ deallocate c";
       <genre>Fantasy</genre>
       <price>5.95</price>
       <publish_date>2001-03-10</publish_date>
-      <description>In post-apocalypse England, the mysterious 
-      agent known only as Oberon helps to create a new life 
-      for the inhabitants of London. Sequel to Maeve 
+      <description>In post-apocalypse England, the mysterious
+      agent known only as Oberon helps to create a new life
+      for the inhabitants of London. Sequel to Maeve
       Ascendant.</description>
    </book>
    <book id=""bk105"">
@@ -480,8 +480,8 @@ deallocate c";
       <genre>Fantasy</genre>
       <price>5.95</price>
       <publish_date>2001-09-10</publish_date>
-      <description>The two daughters of Maeve, half-sisters, 
-      battle one another for control of England. Sequel to 
+      <description>The two daughters of Maeve, half-sisters,
+      battle one another for control of England. Sequel to
       Oberon's Legacy.</description>
    </book>
    <book id=""bk106"">
@@ -490,7 +490,7 @@ deallocate c";
       <genre>Romance</genre>
       <price>4.95</price>
       <publish_date>2000-09-02</publish_date>
-      <description>When Carla meets Paul at an ornithology 
+      <description>When Carla meets Paul at an ornithology
       conference, tempers fly as feathers get ruffled.</description>
    </book>
    <book id=""bk107"">
@@ -499,7 +499,7 @@ deallocate c";
       <genre>Romance</genre>
       <price>4.95</price>
       <publish_date>2000-11-02</publish_date>
-      <description>A deep sea diver finds true love twenty 
+      <description>A deep sea diver finds true love twenty
       thousand leagues beneath the sea.</description>
    </book>
    <book id=""bk108"">
@@ -518,7 +518,7 @@ deallocate c";
       <price>6.95</price>
       <publish_date>2000-11-02</publish_date>
       <description>After an inadvertant trip through a Heisenberg
-      Uncertainty Device, James Salway discovers the problems 
+      Uncertainty Device, James Salway discovers the problems
       of being quantum.</description>
    </book>
    <book id=""bk110"">
@@ -527,7 +527,7 @@ deallocate c";
       <genre>Computer</genre>
       <price>36.95</price>
       <publish_date>2000-12-09</publish_date>
-      <description>Microsoft's .NET initiative is explored in 
+      <description>Microsoft's .NET initiative is explored in
       detail in this deep programmer's reference.</description>
    </book>
    <book id=""bk111"">
@@ -536,8 +536,8 @@ deallocate c";
       <genre>Computer</genre>
       <price>36.95</price>
       <publish_date>2000-12-01</publish_date>
-      <description>The Microsoft MSXML3 parser is covered in 
-      detail, with attention to XML DOM interfaces, XSLT processing, 
+      <description>The Microsoft MSXML3 parser is covered in
+      detail, with attention to XML DOM interfaces, XSLT processing,
       SAX and more.</description>
    </book>
    <book id=""bk112"">
@@ -547,8 +547,8 @@ deallocate c";
       <price>49.95</price>
       <publish_date>2001-04-16</publish_date>
       <description>Microsoft Visual Studio 7 is explored in depth,
-      looking at how Visual Basic, Visual C++, C#, and ASP+ are 
-      integrated into a comprehensive development 
+      looking at how Visual Basic, Visual C++, C#, and ASP+ are
+      integrated into a comprehensive development
       environment.</description>
    </book>
 </catalog>";
@@ -886,13 +886,13 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         cmd.CommandText = $""""
                   SELECT
                   	[gs].[List],
-                  	[gs].[UseProtoSerializer] 
+                  	[gs].[UseProtoSerializer]
                   FROM
                   	[{tableName}] [gs]
                   WHERE
                   	([gs].[IsGlobal] = 1 OR [gs].[User_ID] = '{"80004Q4WZ1350KO8NT59RM"}') AND
                   	([gs].[ModuleNameForUse] IS NULL OR [gs].[ModuleNameForUse] = {2})
-                  
+
                   """";
 
                         var l = (string)await cmd.ExecuteScalarAsync();
@@ -960,6 +960,11 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             }
         }
 
+        // NOTE: This test is very slow (can exceed 10 minutes on macOS).  It runs 512 iterations
+        // (packet sizes 512..2045 stepping by 3), each opening a new non-pooled TCP connection and
+        // reading 21 rows that include several nvarchar(max) values tens-of-thousands of characters
+        // long.  With small packet sizes the large strings require many network round-trips, and on
+        // non-Windows platforms the managed SNI layer is used which adds further overhead.
         [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadAwkwardDataLengths()
@@ -1094,7 +1099,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                     SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                     builder.PersistSecurityInfo = true;
                     builder.Pooling = false;
-                    
+
                     for (int packetSize = 512; packetSize<2048; packetSize+=3)
                     {
                         builder.PacketSize = packetSize;

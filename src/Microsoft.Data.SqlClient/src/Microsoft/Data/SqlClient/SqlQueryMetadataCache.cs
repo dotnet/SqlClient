@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient
                         InvalidateCacheEntry(sqlCommand);
 
                         // If we get one of the expected exceptions, just fail the cache lookup, otherwise throw.
-                        if (ex is SqlException || ex is ArgumentException || ex is ArgumentNullException)
+                        if (ex is SqlException or ArgumentException)
                         {
                             foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
                             {
