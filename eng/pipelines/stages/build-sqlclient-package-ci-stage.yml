@@ -56,6 +56,16 @@ parameters:
   - name: akvPackageVersion
     type: string
 
+  # The name of the SqlServer pipeline artifacts to download.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The SqlServer package version.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
@@ -97,6 +107,8 @@ stages:
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
         akvPackageVersion: ${{ parameters.akvPackageVersion }}
+        sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+        sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
         ${{ if ne(parameters.SNIVersion, '') }}:
           prebuildSteps:
             - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self

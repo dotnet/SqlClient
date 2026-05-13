@@ -22,6 +22,10 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
   - name: platform
     type: string
     default: $(Platform)
@@ -137,6 +141,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         arguments: >-
@@ -147,6 +152,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
 
@@ -165,6 +171,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
@@ -177,6 +184,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
@@ -199,6 +207,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         arguments: >-
@@ -210,6 +219,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
@@ -230,6 +240,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
@@ -243,6 +254,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
@@ -292,6 +304,7 @@ steps:
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
 
   - task: DotNetCoreCLI@2
@@ -308,6 +321,7 @@ steps:
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
@@ -327,6 +341,7 @@ steps:
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
@@ -345,6 +360,7 @@ steps:
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false

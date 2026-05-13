@@ -77,6 +77,16 @@ parameters:
   - name: akvPackageVersion
     type: string
 
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
+  # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
 jobs:
 - job: build_mds_akv_packages_job
   displayName: Build MDS & AKV Packages
@@ -115,6 +125,12 @@ jobs:
         artifactName: ${{ parameters.loggingArtifactsName }}
         targetPath: $(localFeedPath)
 
+    - task: DownloadPipelineArtifact@2
+      displayName: Download SqlServer Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.sqlServerArtifactsName }}
+        targetPath: $(localFeedPath)
+
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
 
@@ -139,6 +155,7 @@ jobs:
       build: MDS
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+      sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Create MDS NuGet Package'
@@ -153,6 +170,7 @@ jobs:
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
 
   # PackSqlClient outputs to artifacts/Microsoft.Data.SqlClient/<ReferenceType>-<Configuration>/.
   # Downstream steps (local feed copy, AKV pack, artifact publish) all expect packages at
@@ -184,6 +202,7 @@ jobs:
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
       akvPackageVersion: ${{ parameters.akvPackageVersion }}
+      sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Create AKV Provider NuGet Package'

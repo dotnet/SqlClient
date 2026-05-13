@@ -185,14 +185,17 @@ stages:
       mdsPackageVersion: $(mdsPackageVersion)
       akvPackageVersion: $(akvPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
       SNIVersion: ${{ parameters.SNIVersion }}
       SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
-      # When building SqlClient via packages, we must depend on the Abstractions and Logging
-      # packages.
+      # When building SqlClient via packages, we must depend on the Abstractions, Logging,
+      # and SqlServer packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
+          - build_sqlserver_package_stage
 
   # Build the Azure package, and publish it to the pipeline artifacts under the
   # given artifact name.
@@ -242,14 +245,17 @@ stages:
       loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
-      # Logging, MDS, and Azure packages.
+      # Logging, SqlServer, MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
+          - build_sqlserver_package_stage
           - build_sqlclient_package_stage
           - build_azure_package_stage
 
