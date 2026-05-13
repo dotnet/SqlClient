@@ -302,7 +302,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWithMARS()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString + "MultipleActiveResultSets=True;");
+            SqlConnectionStringBuilder csbMarsEnabledTcp = new(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true };
+            using SqlConnection connection = new(csbMarsEnabledTcp.ConnectionString);
             connection.Open();
 
             using Table jsonTable1 = new(connection, nameof(TestJsonWithMARS), "(Data json)");
