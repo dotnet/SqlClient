@@ -674,7 +674,6 @@ END";
             Assert.True(schema[0].IsKey);
         }
 
-#if NET
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReaderCommandBehaviorCloseConnection()
         {
@@ -714,7 +713,7 @@ END";
             int resultSetCount = 0;
             int resultRowCount = 0;
 
-            await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             await using (SqlBatch batch = new SqlBatch(conn))
             {
                 await conn.OpenAsync();
@@ -740,7 +739,6 @@ END";
             Assert.Equal(2, resultSetCount);
             Assert.Equal(2, resultRowCount);
         }
-#endif
 
         private static SqlParameter CreateParameter<T>(string name, SqlDbType type, T value, ParameterDirection direction = ParameterDirection.Input)
         {
