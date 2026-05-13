@@ -290,7 +290,9 @@ namespace Microsoft.Data.SqlClient
         public const int TEXT_TIME_STAMP_LEN = 8;
         public const int COLLATION_INFO_LEN = 4;
 
-        // Versions to be used on login for TDS 7.x and TDS 8.0
+        // Versions to be used on login for SQL Server 2005, SQL Server 2008 R2, TDS 7.x and TDS 8.0
+        public const uint SQL2005_VERSION = 0x72_09_0002;
+        public const uint SQL2008_VERSION = 0x73_0B_0003;
         public const uint TDS7X_VERSION = 0x74_00_0004;
         public const uint TDS80_VERSION = 0x08_00_0000;
         public const string TDS8_Protocol = "tds/8.0"; //TDS8

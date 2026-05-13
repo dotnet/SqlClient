@@ -126,22 +126,6 @@ namespace Microsoft.Data.SqlClient
         internal SecureString newSecurePassword;
     }
 
-    internal readonly ref struct SqlLoginAck
-    {
-        public readonly byte MajorVersion;
-        public readonly byte MinorVersion;
-        public readonly ushort BuildNumber;
-        public readonly uint TdsVersion;
-
-        public SqlLoginAck(byte majorVersion, byte minorVersion, ushort buildNumber, uint tdsVersion)
-        {
-            MajorVersion = majorVersion;
-            MinorVersion = minorVersion;
-            BuildNumber = buildNumber;
-            TdsVersion = tdsVersion;
-        }
-    }
-
     #nullable enable
 
     internal sealed class SqlFedAuthInfo

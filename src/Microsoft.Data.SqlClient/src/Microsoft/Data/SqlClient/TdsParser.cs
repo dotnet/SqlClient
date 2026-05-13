@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient
         {
             _fMARS = MARS; // may change during Connect to pre 2005 servers
 
-            Capabilities = new(ObjectID);
+            Capabilities = new();
 
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
         }
@@ -2754,13 +2754,13 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLLOGINACK:
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryRun|SEC> Received login acknowledgement token");
-                            result = TryProcessLoginAck(stateObj, out SqlLoginAck ack);
+                            result = TryProcessLoginAck(stateObj);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
                             }
 
-                            _connHandler.OnLoginAck(ack);
+                            _connHandler.OnLoginAck();
                             break;
                         }
                     case TdsEnums.SQLFEATUREEXTACK:
@@ -3824,12 +3824,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (featureId != TdsEnums.FEATUREEXT_TERMINATOR)
                 {
-                    // Unknown feature ack
-                    if (!IsFeatureExtSupported(featureId))
-                    {
-                        throw SQL.ParsingError();
-                    }
-
                     uint dataLen;
                     result = stateObj.TryReadUInt32(out dataLen);
                     if (result != TdsOperationStatus.Done)
@@ -3845,12 +3839,7 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
                     }
-
-                    if (_connHandler.ShouldProcessFeatureExtAck(featureId))
-                    {
-                        Capabilities.ProcessFeatureExtAck(featureId, data);
-                        _connHandler.OnFeatureExtAck(featureId, data);
-                    }
+                    _connHandler.OnFeatureExtAck(featureId, data);
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
 
@@ -3917,14 +3906,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return TdsOperationStatus.Done;
-
-            static bool IsFeatureExtSupported(byte fId) =>
-                fId is TdsEnums.FEATUREEXT_SRECOVERY or TdsEnums.FEATUREEXT_FEDAUTH or TdsEnums.FEATUREEXT_TCE
-                    or TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS or TdsEnums.FEATUREEXT_AZURESQLSUPPORT
-                    or TdsEnums.FEATUREEXT_DATACLASSIFICATION or TdsEnums.FEATUREEXT_UTF8SUPPORT
-                    or TdsEnums.FEATUREEXT_SQLDNSCACHING or TdsEnums.FEATUREEXT_JSONSUPPORT
-                    or TdsEnums.FEATUREEXT_VECTORSUPPORT or TdsEnums.FEATUREEXT_USERAGENT
-                    or TdsEnums.FEATUREEXT_ENHANCEDROUTINGSUPPORT;
         }
 
         private bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
@@ -4301,10 +4282,8 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        private TdsOperationStatus TryProcessLoginAck(TdsParserStateObject stateObj, out SqlLoginAck sqlLoginAck)
+        private TdsOperationStatus TryProcessLoginAck(TdsParserStateObject stateObj)
         {
-            sqlLoginAck = default;
-
             // read past interface type and version
             TdsOperationStatus result = stateObj.TrySkipBytes(1);
             if (result != TdsOperationStatus.Done)
@@ -4327,6 +4306,14 @@ namespace Microsoft.Data.SqlClient
             // receives the server's TDS version in a big-endian layout.
             // Reference: MS-TDS, 2.2.7.14, footnote on TDSVersion field.
             uint tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
+
+            if (tdsVersion is not TdsEnums.SQL2005_VERSION
+                and not TdsEnums.SQL2008_VERSION
+                and not TdsEnums.TDS7X_VERSION
+                and not TdsEnums.TDS80_VERSION)
+            {
+                throw SQL.InvalidTDSVersion();
+            }
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -4364,9 +4351,10 @@ namespace Microsoft.Data.SqlClient
 
             ushort buildNumber = (ushort)((buildNumHi << 8) | buildNumLo);
 
-            sqlLoginAck = new SqlLoginAck(majorVersion, minorVersion, buildNumber, tdsVersion);
-
-            Capabilities.ProcessLoginAck(sqlLoginAck);
+            Capabilities.ServerMajorVersion = majorVersion;
+            Capabilities.ServerMinorVersion = minorVersion;
+            Capabilities.ServerBuildNumber = buildNumber;
+            Capabilities.TdsVersion = tdsVersion;
 
             Debug.Assert(_state == TdsParserState.OpenNotLoggedIn, "ProcessLoginAck called with state not TdsParserState.OpenNotLoggedIn");
             _state = TdsParserState.OpenLoggedIn;
