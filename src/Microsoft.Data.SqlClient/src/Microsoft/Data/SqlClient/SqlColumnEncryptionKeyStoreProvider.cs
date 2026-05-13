@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
@@ -18,15 +19,33 @@ namespace Microsoft.Data.SqlClient
         public abstract byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/DecryptColumnEncryptionKeyAsync/*'/>
-        public virtual Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
-        => Task.FromResult(DecryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, encryptedColumnEncryptionKey));
+        public virtual Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Task.FromResult(DecryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, encryptedColumnEncryptionKey));
+            }
+            catch (Exception e)
+            {
+                return Task.FromException<byte[]>(e);
+            }
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/EncryptColumnEncryptionKey/*'/>
         public abstract byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/EncryptColumnEncryptionKeyAsync/*'/>
-        public virtual Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
-        => Task.FromResult(EncryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, columnEncryptionKey));
+        public virtual Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Task.FromResult(EncryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, columnEncryptionKey));
+            }
+            catch (Exception e)
+            {
+                return Task.FromException<byte[]>(e);
+            }
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SignColumnMasterKeyMetadata/*'/>
         public virtual byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
@@ -35,8 +54,17 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SignColumnMasterKeyMetadataAsync/*'/>
-        public virtual Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations)
-        => Task.FromResult(SignColumnMasterKeyMetadata(masterKeyPath, allowEnclaveComputations));
+        public virtual Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Task.FromResult(SignColumnMasterKeyMetadata(masterKeyPath, allowEnclaveComputations));
+            }
+            catch (Exception e)
+            {
+                return Task.FromException<byte[]>(e);
+            }
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/VerifyColumnMasterKeyMetadata/*'/>
         public virtual bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
@@ -45,7 +73,16 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/VerifyColumnMasterKeyMetadataAsync/*'/>
-        public virtual Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
-        => Task.FromResult(VerifyColumnMasterKeyMetadata(masterKeyPath, allowEnclaveComputations, signature));
+        public virtual Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Task.FromResult(VerifyColumnMasterKeyMetadata(masterKeyPath, allowEnclaveComputations, signature));
+            }
+            catch (Exception e)
+            {
+                return Task.FromException<bool>(e);
+            }
+        }
     }
 }
