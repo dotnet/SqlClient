@@ -42,7 +42,7 @@ schedules:
     displayName: Daily run (07:30 UTC)
     branches:
       include:
-        - release/7.0
+        - internal/release/7.0
     always: true
 
 name: $(date:yyyyMMdd)$(rev:.r)
