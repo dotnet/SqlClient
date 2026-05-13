@@ -167,8 +167,7 @@ namespace Microsoft.Data.ProviderBase
 
         public abstract string ServerVersion { get; }
 
-        public virtual ConnectionCapabilities Capabilities =>
-            null;
+        public virtual ConnectionCapabilities Capabilities => null;
 
         // this should be abstract but until it is added to all the providers virtual will have to do RickFe
         public virtual string ServerVersionNormalized
