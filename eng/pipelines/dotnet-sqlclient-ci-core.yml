@@ -206,16 +206,18 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       # When building via packages, we must depend on the Abstractions, Logging,
-      # and MDS packages.
+      # SqlServer, and MDS packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
+          - build_sqlserver_package_stage
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
 
   # Verify that all NuGet packages comply with Microsoft metadata requirements.
   # This runs on a Windows agent after all packages have been built and

@@ -114,6 +114,14 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The name of the SqlServer pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.  MDS depends on
+  # SqlServer.Server, so the package must be available for transitive restore.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
@@ -154,6 +162,7 @@ stages:
           jobNameSuffix: linux
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -172,6 +181,7 @@ stages:
           jobNameSuffix: linux_integration
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -199,6 +209,7 @@ stages:
           jobNameSuffix: windows
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -217,6 +228,7 @@ stages:
           jobNameSuffix: windows_integration
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -253,6 +265,7 @@ stages:
           jobNameSuffix: macos
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}

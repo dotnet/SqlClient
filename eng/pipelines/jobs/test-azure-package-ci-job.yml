@@ -79,6 +79,14 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The name of the SqlServer pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.  MDS depends on
+  # SqlServer.Server, so the package must be available for transitive restore.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkRuntimes
     type: object
@@ -206,6 +214,16 @@ jobs:
           displayName: Download MDS Package Artifacts
           inputs:
             artifactName: ${{ parameters.mdsArtifactsName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
+        # Download the SqlServer package artifacts into packages/.
+        #
+        # MDS depends on SqlServer.Server, so the package must be available for
+        # transitive restore.
+        - task: DownloadPipelineArtifact@2
+          displayName: Download SqlServer Package Artifacts
+          inputs:
+            artifactName: ${{ parameters.sqlServerArtifactsName }}
             targetPath: $(Build.SourcesDirectory)/packages
 
       # Install the .NET SDK and Runtimes.
