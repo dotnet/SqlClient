@@ -1031,6 +1031,7 @@
   <PropertyGroup>
     <SqlServerSrcRoot>$(RepoRoot)src/Microsoft.SqlServer.Server/</SqlServerSrcRoot>
     <SqlServerProjectPath>$(SqlServerSrcRoot)Microsoft.SqlServer.Server.csproj</SqlServerProjectPath>
+    <SqlServerArtifactRoot>$(RepoRoot)artifacts/Microsoft.SqlServer.Server/$(Configuration)/</SqlServerArtifactRoot>
   </PropertyGroup>
 
   <!-- BuildSqlServer: Builds the Microsoft.SqlServer.Server project -->
@@ -1060,7 +1061,6 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack $(SqlServerProjectPath)
         -p:Configuration=$(Configuration)
-        -p:PackageOutputPath="$(PackagesDir)"
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
 
@@ -1078,8 +1078,8 @@
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
     <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
-      <SqlServerPackedArtifacts Include="$(PackagesDir)Microsoft.SqlServer.Server*.nupkg" />
-      <SqlServerPackedArtifacts Include="$(PackagesDir)Microsoft.SqlServer.Server*.snupkg" />
+      <SqlServerPackedArtifacts Include="$(SqlServerArtifactRoot)*.nupkg" />
+      <SqlServerPackedArtifacts Include="$(SqlServerArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
       Condition="'$(ReferenceType.ToLower())' == 'package'"
