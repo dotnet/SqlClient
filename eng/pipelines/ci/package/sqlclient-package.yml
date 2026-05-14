@@ -87,14 +87,8 @@ variables:
   # Disable codesign validation injection for CI builds.
   #
   # TODO: Should we enable this for internal/main since those builds produce signed assemblies?
-  - name: runCodesignValidationInjection
-    value: false
-
-  # Skip component governance detection for CI builds.
-  #
-  # TODO: This should never be skipped, should it?
-  #- name: skipComponentGovernanceDetection
-  #  value: true
+  #- name: runCodesignValidationInjection
+  #  value: false
 
   # Whether this is an internal (ADO.Net project) or public (Public project) build.
   - name: isInternalBuild
@@ -120,7 +114,8 @@ jobs:
 
       # Emit environment variables if debug is enabled.
       - ${{ if eq(parameters.debug, true) }}:
-        - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
+        - pwsh: |
+            Get-ChildItem Env: | Sort-Object Name | Format-Table -AutoSize -Wrap
           displayName: '[Debug] Print Environment Variables'
 
       # Install the .NET SDK from global.json.
@@ -168,8 +163,8 @@ jobs:
       # List produced packages for diagnostics.
       - pwsh: |
           Write-Host 'Packages produced:'
-          Get-ChildItem "$(Build.SourcesDirectory)/packages/*.nupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length
-          Get-ChildItem "$(Build.SourcesDirectory)/packages/*.snupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length
+          Get-ChildItem "$(Build.SourcesDirectory)/packages/*.nupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length -AutoSize -Wrap
+          Get-ChildItem "$(Build.SourcesDirectory)/packages/*.snupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length -AutoSize -Wrap
         displayName: List produced packages
 
       # Publish all .nupkg and .snupkg files from packages/ as a pipeline artifact.
