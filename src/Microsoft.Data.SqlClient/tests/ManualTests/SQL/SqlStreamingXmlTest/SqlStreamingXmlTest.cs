@@ -7,7 +7,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.Xml.Linq;
-using Microsoft.DotNet.XUnitExtensions;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -220,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(TheoryData_DataType_XML_Only)), ]
+        [MemberData(nameof(TheoryData_DataType_XML_Only))]
         [MemberData(nameof(TheoryData_DataType_NVarChar_Only), Skip = "Skip: The buffer is not required for nvarchar data type where it returns the length of the entire field.")]
         public static void GetChars_RequiresBuffer(string dataType)
         {

@@ -477,23 +477,22 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlStreamingXml
     {
-        private readonly int _columnOrdinal;   // changing this is only done through the ctor, so it is safe to be readonly
         private SqlDataReader _reader;         // reader we will stream off, becomes null when closed
         private XmlReader _xmlReader;          // XmlReader over the current column, becomes null when closed
 
         private string _currentTextNode;       // rolling buffer of text to deliver
         private int _textNodeIndex;            // index in _currentTextNode
-        private char? _pendingHighSurrogate;   // pending high surrogate for split surrogate pairs
+        private char? _pendingLowSurrogate;    // pending low surrogate for split surrogate pairs
         private long _charsReturned;           // total chars returned
         private bool _canReadChunk;            // XmlReader.CanReadValueChunk
 
         public SqlStreamingXml(int columnOrdinal, SqlDataReader reader)
         {
-            _columnOrdinal = columnOrdinal;
+            ColumnOrdinal = columnOrdinal;
             _reader = reader;
         }
 
-        public int ColumnOrdinal => _columnOrdinal;
+        public int ColumnOrdinal { get; }
 
         public void Close()
         {
@@ -503,18 +502,13 @@ namespace Microsoft.Data.SqlClient
 
             _currentTextNode = null;
             _textNodeIndex = 0;
-            _pendingHighSurrogate = null;
+            _pendingLowSurrogate = null;
             _charsReturned = 0;
             _canReadChunk = false;
         }
 
         public long GetChars(long dataIndex, char[] buffer, int bufferIndex, int length)
         {
-            if (_reader == null)
-            {
-                throw new ObjectDisposedException(nameof(SqlStreamingXml));
-            }
-
             if (buffer == null)
             {
                 return -1;
@@ -525,9 +519,15 @@ namespace Microsoft.Data.SqlClient
                 return 0;
             }
 
+            //SqlStream will throw if reader is null, short-circuit here for efficiency.
+            if (_reader == null)
+            {
+                throw ADP.StreamClosed();
+            }
+
             if (dataIndex < _charsReturned)
             {
-                throw new InvalidOperationException($"Non-sequential read: requested {dataIndex}, already returned {_charsReturned}");
+                throw ADP.NonSeqByteAccess(dataIndex, _charsReturned, nameof(GetChars));
             }
 
             EnsureReaderInitialized();
@@ -580,7 +580,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            var sqlStream = new SqlStream(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows: false, advanceReader: false);
+            SqlStream sqlStream = new(ColumnOrdinal, _reader, addByteOrderMark: true, processAllRows: false, advanceReader: false);
             _xmlReader = sqlStream.ToXmlReader();
             _canReadChunk = _xmlReader.CanReadValueChunk;
         }
@@ -592,29 +592,24 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadNextChar(out char c)
         {
             // Deliver pending high surrogate first
-            if (_pendingHighSurrogate.HasValue)
+            if (_pendingLowSurrogate.HasValue)
             {
-                c = _pendingHighSurrogate.Value;
-                _pendingHighSurrogate = null;
+                c = _pendingLowSurrogate.Value;
+                _pendingLowSurrogate = null;
                 return true;
             }
 
             // Deliver from current text node
             if (_currentTextNode != null && _textNodeIndex < _currentTextNode.Length)
             {
-                char next = _currentTextNode[_textNodeIndex++];
-                if (char.IsHighSurrogate(next))
+                c = _currentTextNode[_textNodeIndex++];
+                if (char.IsHighSurrogate(c))
                 {
                     // Surrogate Pairs could not be split across text nodes
-                    c = next;
-                    _pendingHighSurrogate = _currentTextNode[_textNodeIndex++];
-                    return true;
+                    _pendingLowSurrogate = _currentTextNode[_textNodeIndex++];
                 }
-                else
-                {
-                    c = next;
-                    return true;
-                }
+
+                return true;
             }
 
             // Fill/Refill current text node, then recurse to deliver the next char from one single node at a time;
@@ -703,31 +698,19 @@ namespace Microsoft.Data.SqlClient
         /// the current node.</returns>
         private string BuildStartOrEmptyTag()
         {
-            string prefix = _xmlReader.Prefix;
-            string tagName = string.IsNullOrEmpty(prefix) ? _xmlReader.LocalName : $"{prefix}:{_xmlReader.LocalName}";
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append('<').Append(tagName);
+            StringBuilder stringBuilder = new($"<{_xmlReader.Name}");
 
             if (_xmlReader.HasAttributes)
             {
                 for (int i = 0; i < _xmlReader.AttributeCount; i++)
                 {
                     _xmlReader.MoveToAttribute(i);
-                    string attrPrefix = _xmlReader.Prefix;
-                    string attrName = string.IsNullOrEmpty(attrPrefix) ? _xmlReader.LocalName : $"{attrPrefix}:{_xmlReader.LocalName}";
-                    stringBuilder.Append(' ').Append(attrName).Append("=\"").Append(EscapeAttribute(_xmlReader.Value)).Append('"');
+                    stringBuilder.Append($" {_xmlReader.Name}=\"").Append(EscapeAttribute(_xmlReader.Value)).Append('"');
                 }
                 _xmlReader.MoveToElement();
             }
 
-            if (_xmlReader.IsEmptyElement)
-            {
-                stringBuilder.Append(" />");
-            }
-            else
-            {
-                stringBuilder.Append('>');
-            }
+            stringBuilder.Append(_xmlReader.IsEmptyElement ? " />" : ">");
 
             return stringBuilder.ToString();
         }
@@ -735,17 +718,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Builds the closing XML tag for the current element, including the namespace prefix if present.
         /// </summary>
-        /// <remarks>
-        /// The returned tag is constructed using the prefix and local name from the underlying
-        /// XML reader. If the element has no namespace prefix, only the local name is used in the tag.
-        /// </remarks>
         /// <returns>A string that represents the closing tag of the current XML element, formatted with the appropriate
         /// namespace prefix if one exists.</returns>
         private string BuildEndTag()
         {
-            string prefix = _xmlReader.Prefix;
-            string tagName = string.IsNullOrEmpty(prefix) ? _xmlReader.LocalName : $"{prefix}:{_xmlReader.LocalName}";
-            return $"</{tagName}>";
+            return $"</{_xmlReader.Name}>";
         }
 
         /// <summary>
