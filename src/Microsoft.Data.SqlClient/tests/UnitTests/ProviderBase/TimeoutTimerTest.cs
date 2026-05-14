@@ -185,6 +185,169 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
             Assert.Same(fake, timer.TimeProvider);
         }
 
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartExpired(TimeProvider)"/>
+        /// returns a finite timer that is already expired, reports zero
+        /// remaining time, and uses the supplied <see cref="TimeProvider"/>.
+        /// </summary>
+        [Fact]
+        public void StartExpired_ReturnsFiniteAlreadyExpiredTimer()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+
+            // Act
+            TimeoutTimer timer = TimeoutTimer.StartExpired(fake);
+
+            // Assert
+            Assert.False(timer.IsInfinite);
+            Assert.True(timer.IsExpired);
+            Assert.Equal(0, timer.MillisecondsRemainingInt);
+            Assert.Same(fake, timer.TimeProvider);
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="CancellationTokenSource"/> produced by
+        /// an expired timer is already canceled.
+        /// </summary>
+        [Fact]
+        public void StartExpired_CreateCancellationTokenSource_IsAlreadyCanceled()
+        {
+            // Arrange
+            TimeoutTimer timer = TimeoutTimer.StartExpired(new FakeTimeProvider(DateTimeOffset.UtcNow));
+
+            // Act
+            using CancellationTokenSource cts = timer.CreateCancellationTokenSource();
+
+            // Assert
+            Assert.True(cts.IsCancellationRequested);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartChild"/> propagates the
+        /// parent's <see cref="TimeProvider"/> to the child so child timers see
+        /// the same virtual clock as their parent.
+        /// </summary>
+        [Fact]
+        public void StartChild_PropagatesParentTimeProvider()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider();
+            TimeoutTimer parent = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fake);
+
+            // Act
+            TimeoutTimer child = parent.StartChild(TimeSpan.FromSeconds(5));
+
+            // Assert
+            Assert.Same(fake, child.TimeProvider);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartChild"/> caps the child's
+        /// duration at the parent's remaining time when the requested duration
+        /// would otherwise outlast the parent.
+        /// </summary>
+        [Fact]
+        public void StartChild_RequestedDurationLongerThanParent_IsCappedAtParentRemaining()
+        {
+            // Arrange: parent has 5 s remaining; caller asks for 30 s.
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer parent = TimeoutTimer.StartNew(TimeSpan.FromSeconds(5), fake);
+
+            // Act
+            TimeoutTimer child = parent.StartChild(TimeSpan.FromSeconds(30));
+
+            // Assert: child remaining should match parent remaining (5 s).
+            Assert.Equal(parent.MillisecondsRemainingInt, child.MillisecondsRemainingInt);
+            Assert.False(child.IsInfinite);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartChild"/> uses the requested
+        /// duration when it is shorter than the parent's remaining time.
+        /// </summary>
+        [Fact]
+        public void StartChild_RequestedDurationShorterThanParent_UsesRequested()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer parent = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fake);
+
+            // Act
+            TimeoutTimer child = parent.StartChild(TimeSpan.FromSeconds(5));
+
+            // Assert
+            Assert.Equal(5_000, child.MillisecondsRemainingInt);
+            Assert.False(child.IsInfinite);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartChild"/> returns an
+        /// already-expired child when the parent has already expired.
+        /// </summary>
+        [Fact]
+        public void StartChild_ParentExpired_ReturnsAlreadyExpiredChild()
+        {
+            // Arrange: parent is already expired.
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer parent = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fake);
+            fake.Advance(TimeSpan.FromSeconds(2));
+            Assert.True(parent.IsExpired);
+
+            // Act
+            TimeoutTimer child = parent.StartChild(TimeSpan.FromSeconds(30));
+
+            // Assert
+            Assert.False(child.IsInfinite);
+            Assert.True(child.IsExpired);
+            Assert.Equal(0, child.MillisecondsRemainingInt);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartChild"/> with an infinite
+        /// parent honors the requested finite duration rather than producing
+        /// another infinite timer.
+        /// </summary>
+        [Fact]
+        public void StartChild_InfiniteParent_UsesRequestedDuration()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer parent = TimeoutTimer.StartNew(TimeSpan.Zero, fake);
+            Assert.True(parent.IsInfinite);
+
+            // Act
+            TimeoutTimer child = parent.StartChild(TimeSpan.FromSeconds(5));
+
+            // Assert
+            Assert.False(child.IsInfinite);
+            Assert.Equal(5_000, child.MillisecondsRemainingInt);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.StartChild"/> interprets
+        /// <see cref="TimeSpan.Zero"/> literally as "expire immediately"
+        /// rather than as the infinite-timeout sentinel, even when the parent
+        /// is infinite.
+        /// </summary>
+        [Fact]
+        public void StartChild_ZeroDuration_IsLiteralAndReturnsAlreadyExpiredChild()
+        {
+            // Arrange: an infinite parent so the only way Zero could become
+            // "infinite" would be via the sentinel; verify it does not.
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer parent = TimeoutTimer.StartNew(TimeSpan.Zero, fake);
+            Assert.True(parent.IsInfinite);
+
+            // Act
+            TimeoutTimer child = parent.StartChild(TimeSpan.Zero);
+
+            // Assert
+            Assert.False(child.IsInfinite);
+            Assert.True(child.IsExpired);
+            Assert.Equal(0, child.MillisecondsRemainingInt);
+        }
+
         // Polls the predicate on a short cadence so test runs aren't sensitive
         // to thread-pool scheduling latency when FakeTimeProvider fires its
         // registered timer callbacks.

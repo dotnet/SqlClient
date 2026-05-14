@@ -246,6 +246,93 @@ namespace Microsoft.Data.ProviderBase
             => new TimeoutTimer(expiration, timeProvider);
 
         /// <summary>
+        /// Creates a new <see cref="TimeoutTimer"/> that is already expired,
+        /// using <see cref="TimeProvider.System"/> as the time source.
+        /// </summary>
+        /// <returns>
+        /// A finite <see cref="TimeoutTimer"/> whose <see cref="IsExpired"/> is
+        /// already <see langword="true"/> and whose <see cref="MillisecondsRemaining"/>
+        /// is zero.
+        /// </returns>
+        internal static TimeoutTimer StartExpired()
+            => StartExpired(TimeProvider.System);
+
+        /// <summary>
+        /// Creates a new <see cref="TimeoutTimer"/> that is already expired.
+        /// </summary>
+        /// <param name="timeProvider">
+        /// The <see cref="TimeProvider"/> used to read the current time and schedule
+        /// cancellation.
+        /// </param>
+        /// <returns>
+        /// A finite <see cref="TimeoutTimer"/> whose <see cref="IsExpired"/> is
+        /// already <see langword="true"/> and whose <see cref="MillisecondsRemaining"/>
+        /// is zero. Useful when a code path needs to hand off an already-exhausted
+        /// timeout (for example, a child timer whose parent has no remaining
+        /// budget) without resorting to negative durations or the
+        /// <see cref="InfiniteTimeout"/> sentinel.
+        /// </returns>
+        /// <remarks>
+        /// Implemented by anchoring the expiration one tick before "now" on the
+        /// supplied <paramref name="timeProvider"/>. The timer is finite, so
+        /// <see cref="IsInfinite"/> is <see langword="false"/>.
+        /// </remarks>
+        internal static TimeoutTimer StartExpired(TimeProvider timeProvider)
+            => new TimeoutTimer(TimeSpan.FromTicks(-1), timeProvider);
+
+        /// <summary>
+        /// Creates and starts a new <see cref="TimeoutTimer"/> nested under this
+        /// (parent) timer. The child shares the parent's <see cref="TimeProvider"/>
+        /// and is capped so that it cannot outlast the parent's remaining time.
+        /// </summary>
+        /// <param name="duration">
+        /// The desired duration of the child timer, interpreted literally — a
+        /// value of <see cref="TimeSpan.Zero"/> means "expire immediately" and
+        /// is <em>not</em> treated as the <see cref="InfiniteTimeout"/>
+        /// sentinel. A non-positive value yields an already-expired child.
+        /// </param>
+        /// <returns>
+        /// A new <see cref="TimeoutTimer"/> that uses this timer's
+        /// <see cref="TimeProvider"/>. The child is finite unless the parent is
+        /// infinite, in which case the requested <paramref name="duration"/> is
+        /// honored as-is. When the parent is finite, the child's expiration is
+        /// capped at the parent's remaining time.
+        /// </returns>
+        /// <remarks>
+        /// Behavior matrix:
+        /// <list type="bullet">
+        ///   <item><description>Parent infinite → finite child with the requested duration (or already-expired when <paramref name="duration"/> ≤ 0).</description></item>
+        ///   <item><description>Parent finite, duration longer than parent's remaining → finite child capped at the parent's remaining time.</description></item>
+        ///   <item><description>Parent finite, duration shorter than parent's remaining → finite child with the requested duration.</description></item>
+        ///   <item><description>Parent finite with no remaining time, or <paramref name="duration"/> ≤ 0 → already-expired child (see <see cref="StartExpired(TimeProvider)"/>).</description></item>
+        /// </list>
+        /// To request an infinite child, call <see cref="StartNew(TimeSpan, TimeProvider)"/>
+        /// directly with <see cref="TimeSpan.Zero"/>; this method does not
+        /// produce infinite children.
+        /// </remarks>
+        internal TimeoutTimer StartChild(TimeSpan duration)
+        {
+            long requestedMs = (long)duration.TotalMilliseconds;
+
+            // Caller asked for a non-positive duration: already expired.
+            if (requestedMs <= 0)
+            {
+                return StartExpired(TimeProvider);
+            }
+
+            // Parent finite: cap at parent's remaining time. If the cap leaves
+            // no time, return an already-expired timer rather than colliding
+            // with the 0-ticks-means-infinite sentinel.
+            long childMs = Math.Min(requestedMs, MillisecondsRemaining);
+            if (childMs <= 0)
+            {
+                return StartExpired(TimeProvider);
+            }
+
+            return new TimeoutTimer(TimeSpan.FromMilliseconds(childMs), TimeProvider);
+        }
+
+        /// <summary>
         /// Creates a new <see cref="CancellationTokenSource"/> that will be canceled
         /// when this timer expires, using the same <see cref="TimeProvider"/> the
         /// timer was constructed with.

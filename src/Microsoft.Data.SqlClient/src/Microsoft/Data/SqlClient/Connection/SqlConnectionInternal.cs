@@ -3203,7 +3203,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     // Set timeout for this attempt, but don't exceed original timer
                     long nextTimeoutInterval = checked(timeoutUnitInterval * multiplier);
-                    long milliseconds = timeout.MillisecondsRemaining;
 
                     #if NETFRAMEWORK
                     // If it is the first attempt at TNIR connection, then allow at least 500ms for
@@ -3215,25 +3214,11 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                     #endif
 
-                    if (nextTimeoutInterval > milliseconds)
-                    {
-                        nextTimeoutInterval = milliseconds;
-                    }
-
-                    // Guard against TimeoutTimer's 0-ticks-means-infinite sentinel:
-                    // if the outer timer has no remaining budget, nextTimeoutInterval
-                    // would be 0 and StartNew(TimeSpan.Zero) would produce an infinite
-                    // child timer. Use 1 ms instead so the child timer is finite and
-                    // expires immediately, matching the outer timer's expired state.
-                    if (nextTimeoutInterval == 0)
-                    {
-                        nextTimeoutInterval = 1;
-                    }
-
-                    // TODO: Add a StartChild method to TimeoutTimer to propagate the parent TimeProvider down the stack.
-                    // It can also wrap the logic preventing a child timer from exceeding the parent timer's remaining time, 
-                    // which is currently duplicated in both LoginNoFailover and LoginWithFailover.
-                    intervalTimer = TimeoutTimer.StartNew(TimeSpan.FromMilliseconds(nextTimeoutInterval));
+                    // StartChild propagates the parent TimeProvider, caps the
+                    // requested duration at the parent's remaining time, and
+                    // returns an already-expired timer when the parent has no
+                    // remaining budget (no 0-means-infinite ambiguity).
+                    intervalTimer = timeout.StartChild(TimeSpan.FromMilliseconds(nextTimeoutInterval));
                 }
 
                 // Re-allocate parser each time to make sure state is known.
@@ -3512,26 +3497,12 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 // Set timeout for this attempt, but don't exceed original timer
                 long nextTimeoutInterval = checked(timeoutUnitInterval * ((attemptNumber / 2) + 1));
-                long milliseconds = timeout.MillisecondsRemaining;
-                if (nextTimeoutInterval > milliseconds)
-                {
-                    nextTimeoutInterval = milliseconds;
-                }
 
-                // Guard against TimeoutTimer's 0-ticks-means-infinite sentinel:
-                // if the outer timer has no remaining budget, nextTimeoutInterval
-                // would be 0 and StartNew(TimeSpan.Zero) would produce an infinite
-                // child timer. Use 1 ms instead so the child timer is finite and
-                // expires immediately, matching the outer timer's expired state.
-                if (nextTimeoutInterval == 0)
-                {
-                    nextTimeoutInterval = 1;
-                }
-
-                // TODO: Add a StartChild method to TimeoutTimer to propagate the parent TimeProvider down the stack.
-                // It can also wrap the logic preventing a child timer from exceeding the parent timer's remaining time, 
-                // which is currently duplicated in both LoginNoFailover and LoginWithFailover.
-                TimeoutTimer intervalTimer = TimeoutTimer.StartNew(TimeSpan.FromMilliseconds(nextTimeoutInterval));
+                // StartChild propagates the parent TimeProvider, caps the
+                // requested duration at the parent's remaining time, and
+                // returns an already-expired timer when the parent has no
+                // remaining budget (no 0-means-infinite ambiguity).
+                TimeoutTimer intervalTimer = timeout.StartChild(TimeSpan.FromMilliseconds(nextTimeoutInterval));
 
                 // Re-allocate parser each time to make sure state is known. If parser was created
                 // by previous attempt, dispose it to properly close the socket, if created.
