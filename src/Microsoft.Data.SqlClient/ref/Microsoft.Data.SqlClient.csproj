@@ -51,11 +51,11 @@
   <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
   <Target Name="TrimDocsForIntelliSense"
           AfterTargets="Build"
-          Condition="'$(TrimDocs)' != 'false' AND '$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+          Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
 
     <PropertyGroup>
-      <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
-      <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
+      <PowerShellCommand Condition="$([MSBuild]::IsOSPlatform('Windows'))">powershell.exe</PowerShellCommand>
+      <PowerShellCommand Condition="!$([MSBuild]::IsOSPlatform('Windows'))">pwsh</PowerShellCommand>
       <PowerShellCommand>
         $(PowerShellCommand)
           -NonInteractive
