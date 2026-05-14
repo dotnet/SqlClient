@@ -47,7 +47,14 @@
     <Reference Include="System.Transactions" />
 
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <!--
+      Microsoft.Extensions.TimeProvider.Testing ships a buildTransitive .targets
+      file under net462 that unconditionally emits a TFM-support warning saying
+      the package isn't tested on .NET Framework. The lib/net462 compile and
+      runtime assets are fine for our FakeTimeProvider usage, so exclude only
+      the build* assets to suppress the warning without giving up the package.
+    -->
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" ExcludeAssets="build;buildTransitive" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
