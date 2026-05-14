@@ -66,9 +66,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <AkvProviderPackageVersion>$(AkvProviderVersionDefault)-$(BuildSuffix)</AkvProviderPackageVersion>
+        <AkvProviderPackageVersion>$(AkvProviderVersionDefault)-dev</AkvProviderPackageVersion>
         <AkvProviderFileVersion>$(AkvProviderVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AkvProviderFileVersion>
       </PropertyGroup>
     </Otherwise>

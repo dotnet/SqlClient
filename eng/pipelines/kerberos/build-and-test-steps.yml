@@ -1,0 +1,144 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Shared build-and-test steps used by both the Windows and Linux Kerberos jobs.
+#
+# Parameters:
+#   buildTarget   — The build.proj target that builds SqlClient for the current
+#                   OS (e.g. BuildSqlClientWindows or BuildSqlClientUnix).
+#   testFramework — The TFM to test against (e.g. net9.0, net462).
+#   testRunTitle  — Title for the published test results (displayed in the ADO
+#                   Tests tab).
+#   artifactName  — Name of the published pipeline artifact that carries the
+#                   test results and coverage files.
+
+parameters:
+
+  # build.proj target to build SqlClient for the current OS.
+  - name: buildTarget
+    type: string
+
+  # TFM to pass to the test targets (-p:TestFramework).
+  - name: testFramework
+    type: string
+
+  # Title shown in the ADO Tests tab for this run.
+  - name: testRunTitle
+    type: string
+
+  # Pipeline artifact name for test results and coverage.
+  - name: artifactName
+    type: string
+
+steps:
+
+  # ---------------------------------------------------------------------------
+  # Build
+  # ---------------------------------------------------------------------------
+
+  # Build the given target.
+  #
+  # The test stages build as part of their targets, but this separate step isolates build failures
+  # so we can fail fast before running tests. Retries are enabled intentionally (1 attempt for
+  # build, 2 attempts for test steps) to reduce transient infrastructure-related failures.
+  #
+  - task: DotNetCoreCLI@2
+    displayName: Build SqlClient
+    retryCountOnTaskFailure: 1
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:${{ parameters.buildTarget }}
+        -p:Configuration=Release
+
+  # ---------------------------------------------------------------------------
+  # Run tests in separate steps to permit focused retries.
+  # ---------------------------------------------------------------------------
+
+  # Run the Unit Test suite.
+  - task: DotNetCoreCLI@2
+    displayName: Run Unit Tests (${{ parameters.testFramework }})
+    retryCountOnTaskFailure: 2
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:TestSqlClientUnit
+        -p:TestFramework=${{ parameters.testFramework }}
+        -p:Configuration=Release
+
+  # Run the Functional Test suite.
+  - task: DotNetCoreCLI@2
+    displayName: Run Functional Tests (${{ parameters.testFramework }})
+    retryCountOnTaskFailure: 2
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:TestSqlClientFunctional
+        -p:TestFramework=${{ parameters.testFramework }}
+        -p:Configuration=Release
+
+  # Run the Manual Test suite.
+  - task: DotNetCoreCLI@2
+    displayName: Run Manual Tests (${{ parameters.testFramework }})
+    retryCountOnTaskFailure: 2
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:TestSqlClientManual
+        -p:TestFramework=${{ parameters.testFramework }}
+        -p:Configuration=Release
+
+  # ---------------------------------------------------------------------------
+  # Publish results & coverage
+  # ---------------------------------------------------------------------------
+
+  # Publish the TRX test results to the pipeline run.
+  - task: PublishTestResults@2
+    displayName: Publish Test Results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: VSTest
+      # build.proj defines TestResultsFolderPath which defaults to
+      # $(Build.SourcesDirectory)/test_results, so we look there for the results and coverage files.
+      testResultsFiles:  $(Build.SourcesDirectory)/test_results/**/*.trx
+      mergeTestResults: true
+      testRunTitle: ${{ parameters.testRunTitle }}
+      buildConfiguration: Release
+
+  # Azure Pipelines task conditions do not support path existence checks directly,
+  # so compute this once and gate later steps on the variable.
+  - pwsh: |
+      $resultsDir = "$(Build.SourcesDirectory)/test_results"
+      if (Test-Path -LiteralPath $resultsDir) {
+        Write-Host "##vso[task.setvariable variable=HasTestResultsDir]true"
+      }
+      else {
+        Write-Host "##vso[task.setvariable variable=HasTestResultsDir]false"
+      }
+    displayName: Detect test_results directory
+    condition: succeededOrFailed()
+
+  # Give our coverage files a unique name to make it clear where they originated when we download
+  # the artifacts from all jobs in the merge stage.
+  - pwsh: |
+      cd $(Build.SourcesDirectory)/test_results
+      Get-ChildItem -Filter "*.coverage" -Recurse |
+        Rename-Item -NewName { "${{ parameters.testFramework }}" + $_.Name }
+    displayName: Rename coverage files
+    condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
+
+  # Publish TRX test results and coverage files as pipeline artifacts.  The merge stage needs the
+  # coverage files from all of the jobs.
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Test Artifacts
+    condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
+    inputs:
+      targetPath: $(Build.SourcesDirectory)/test_results
+      artifact: ${{ parameters.artifactName }}

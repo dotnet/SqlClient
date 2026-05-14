@@ -115,8 +115,7 @@ namespace Microsoft.Data.SqlClient
         
         internal DbConnectionInternal CreateNonPooledConnection(
             DbConnection owningConnection,
-            DbConnectionPoolGroup poolGroup,
-            SqlConnectionOptions userOptions)
+            DbConnectionPoolGroup poolGroup)
         {
             Debug.Assert(owningConnection is not null, "null owningConnection?");
             Debug.Assert(poolGroup is not null, "null poolGroup?");
@@ -126,8 +125,7 @@ namespace Microsoft.Data.SqlClient
                 poolGroup.PoolKey,
                 poolGroup.ProviderInfo,
                 pool: null,
-                owningConnection,
-                userOptions);
+                owningConnection);
             if (newConnection is not null)
             {
                 SqlClientDiagnostics.Metrics.HardConnectRequest();
@@ -140,8 +138,7 @@ namespace Microsoft.Data.SqlClient
 
         internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
-            IDbConnectionPool pool,
-            SqlConnectionOptions userOptions)
+            IDbConnectionPool pool)
         {
             Debug.Assert(pool != null, "null pool?");
 
@@ -150,8 +147,7 @@ namespace Microsoft.Data.SqlClient
                 pool.PoolGroup.PoolKey,
                 pool.PoolGroup.ProviderInfo,
                 pool,
-                owningConnection,
-                userOptions);
+                owningConnection);
 
             if (newConnection is null)
             {
@@ -316,7 +312,6 @@ namespace Microsoft.Data.SqlClient
         internal bool TryGetConnection(
             DbConnection owningConnection,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions,
             DbConnectionInternal oldConnection,
             out DbConnectionInternal connection)
         {
@@ -387,7 +382,6 @@ namespace Microsoft.Data.SqlClient
                                 s_pendingOpenNonPooled[idx],
                                 owningConnection,
                                 retry,
-                                userOptions,
                                 oldConnection,
                                 poolGroup,
                                 cancellationTokenSource);
@@ -413,7 +407,7 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
+                    connection = CreateNonPooledConnection(owningConnection, poolGroup);
 
                     SqlClientDiagnostics.Metrics.EnterNonPooledConnection();
                 }
@@ -423,11 +417,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(oldConnection is not DbConnectionClosed, "Force new connection, but there is no old connection");
                         
-                        connection = connectionPool.ReplaceConnection(owningConnection, userOptions, oldConnection);
+                        connection = connectionPool.ReplaceConnection(owningConnection, oldConnection);
                     }
                     else
                     {
-                        if (!connectionPool.TryGetConnection(owningConnection, retry, userOptions, out connection))
+                        if (!connectionPool.TryGetConnection(owningConnection, retry, out connection))
                         {
                             return false;
                         }
@@ -579,8 +573,7 @@ namespace Microsoft.Data.SqlClient
             ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection,
-            SqlConnectionOptions userOptions)
+            DbConnection owningConnection)
         {
             SqlConnectionOptions opt = options;
             ConnectionPoolKey key = poolKey;
@@ -588,16 +581,6 @@ namespace Microsoft.Data.SqlClient
 
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
             bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
-
-            SqlConnectionOptions userOpt = null;
-            if (userOptions != null)
-            {
-                userOpt = userOptions;
-            }
-            else if (sqlOwningConnection != null)
-            {
-                userOpt = sqlOwningConnection.UserConnectionOptions;
-            }
 
             if (sqlOwningConnection != null)
             {
@@ -700,7 +683,6 @@ namespace Microsoft.Data.SqlClient
                 newPassword: string.Empty,
                 newSecurePassword: null,
                 redirectedUserInstance,
-                userOpt,
                 recoverySessionData,
                 applyTransientFaultHandling,
                 key.AccessToken,
@@ -768,7 +750,6 @@ namespace Microsoft.Data.SqlClient
             Task<DbConnectionInternal> task,
             DbConnection owningConnection,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions,
             DbConnectionInternal oldConnection,
             DbConnectionPoolGroup poolGroup,
             CancellationTokenSource cancellationTokenSource)
@@ -781,7 +762,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         ADP.SetCurrentTransaction(retry.Task.AsyncState as System.Transactions.Transaction);
                         
-                        DbConnectionInternal newConnection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
+                        DbConnectionInternal newConnection = CreateNonPooledConnection(owningConnection, poolGroup);
                         
                         if (oldConnection?.State == ConnectionState.Open)
                         {

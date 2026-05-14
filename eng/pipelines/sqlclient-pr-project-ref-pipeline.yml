@@ -51,6 +51,7 @@ pr:
       - global.json
       - NuGet.config
     exclude:
+      - eng/pipelines/kerberos/*
       - eng/pipelines/onebranch/*
       - eng/pipelines/stress/*
 
