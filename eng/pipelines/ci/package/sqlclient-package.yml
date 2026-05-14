@@ -84,19 +84,17 @@ parameters:
       - diagnostic
 
 variables:
-  # Disable codesign validation injection for CI builds.
-  #
-  # TODO: Should we enable this for internal/main since those builds produce signed assemblies?
-  #- name: runCodesignValidationInjection
-  #  value: false
-
   # Whether this is an internal (ADO.Net project) or public (Public project) build.
   - name: isInternalBuild
     value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
-  # Package version suffix for CI builds.
-  - name: buildSuffix
-    value: ci
+  # Signing key argument passed to build.proj. On internal builds this references the secure file
+  # downloaded by DownloadSecureFile@1; on public builds it expands to empty.
+  - name: signingKeyArg
+    ${{ if eq(variables.isInternalBuild, 'True') }}:
+      value: '-p:SigningKeyPath="$(keyFile.secureFilePath)"'
+    ${{ else }}:
+      value: ''
 
 jobs:
   - job: pack_all_packages
@@ -132,7 +130,7 @@ jobs:
           Write-Host 'Done.'
         displayName: Clean packages/ directory
 
-      # On internal/main, download the strong-name signing key and setup assembly signing.
+      # On internal builds, download the strong-name signing key.
       - ${{ if eq(variables.isInternalBuild, 'True') }}:
         - task: DownloadSecureFile@1
           displayName: Download Signing Key
@@ -140,12 +138,7 @@ jobs:
             secureFile: netfxKeypair.snk
           name: keyFile
 
-        - pwsh: |
-            Write-Host "##vso[task.setvariable variable=signingKeyArg]-p:SigningKeyPath=`"$(keyFile.secureFilePath)`""
-          displayName: Set Signing Key Argument
-
       # Run the Pack target via build.proj.
-      # On internal/main the signing key path is included via $(signingKeyArg).
       - task: DotNetCoreCLI@2
         displayName: build.proj - Pack (ReferenceType=Package)
         inputs:
@@ -156,7 +149,7 @@ jobs:
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:ReferenceType=Package
             -p:BuildNumber="$(Build.BuildNumber)"
-            -p:BuildSuffix=$(buildSuffix)
+            -p:BuildSuffix=ci
             $(signingKeyArg)
             -verbosity:${{ parameters.dotnetVerbosity }}
 
