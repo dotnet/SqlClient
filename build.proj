@@ -1006,7 +1006,6 @@
   <PropertyGroup>
     <_DotnetArguments>
       -p:Configuration=$(Configuration)
-      -p:TrimDocs=false
 
       <!-- Versioning arguments -->
       $(BuildNumberArgument)
