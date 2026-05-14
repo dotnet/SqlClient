@@ -3220,6 +3220,16 @@ namespace Microsoft.Data.SqlClient.Connection
                         nextTimeoutInterval = milliseconds;
                     }
 
+                    // Guard against TimeoutTimer's 0-ticks-means-infinite sentinel:
+                    // if the outer timer has no remaining budget, nextTimeoutInterval
+                    // would be 0 and StartNew(TimeSpan.Zero) would produce an infinite
+                    // child timer. Use 1 ms instead so the child timer is finite and
+                    // expires immediately, matching the outer timer's expired state.
+                    if (nextTimeoutInterval == 0)
+                    {
+                        nextTimeoutInterval = 1;
+                    }
+
                     // TODO: Add a StartChild method to TimeoutTimer to propagate the parent TimeProvider down the stack.
                     // It can also wrap the logic preventing a child timer from exceeding the parent timer's remaining time, 
                     // which is currently duplicated in both LoginNoFailover and LoginWithFailover.
@@ -3506,6 +3516,16 @@ namespace Microsoft.Data.SqlClient.Connection
                 if (nextTimeoutInterval > milliseconds)
                 {
                     nextTimeoutInterval = milliseconds;
+                }
+
+                // Guard against TimeoutTimer's 0-ticks-means-infinite sentinel:
+                // if the outer timer has no remaining budget, nextTimeoutInterval
+                // would be 0 and StartNew(TimeSpan.Zero) would produce an infinite
+                // child timer. Use 1 ms instead so the child timer is finite and
+                // expires immediately, matching the outer timer's expired state.
+                if (nextTimeoutInterval == 0)
+                {
+                    nextTimeoutInterval = 1;
                 }
 
                 // TODO: Add a StartChild method to TimeoutTimer to propagate the parent TimeProvider down the stack.

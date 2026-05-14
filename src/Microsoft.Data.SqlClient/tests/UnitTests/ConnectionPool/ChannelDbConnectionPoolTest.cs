@@ -1202,6 +1202,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Release the connection so caller B can succeed
             pool.ReturnInternalConnection(firstConnection, firstOwner);
+
+            // Bound the wait so a regression in the pool can't hang the test suite
+            // indefinitely; a real success completes well under this budget.
+            Task completed = await Task.WhenAny(callerBTask, Task.Delay(TimeSpan.FromSeconds(30)));
+            Assert.Same(callerBTask, completed);
             var resultB = await callerBTask;
 
             // Caller B got the connection

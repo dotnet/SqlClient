@@ -882,13 +882,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (taskCompletionSource == null)
             {
-                waitForMultipleObjectsTimeout = (uint)CreationTimeout;
-
-                // Set the wait timeout to INFINITE (-1) if the SQL connection timeout is 0 (== infinite)
-                if (waitForMultipleObjectsTimeout == 0)
-                {
-                    waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
-                }
+                // Use the caller's remaining timeout budget (rather than the static
+                // CreationTimeout) so synchronous pool waits respect any time already
+                // consumed earlier in the open path and don't exceed the overall
+                // ConnectTimeout.
+                waitForMultipleObjectsTimeout = timeout.IsInfinite
+                    ? unchecked((uint)Timeout.Infinite)
+                    : (uint)timeout.MillisecondsRemainingInt;
 
                 allowCreate = true;
             }
@@ -911,9 +911,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return true;
             }
 
+            // Anchor the pending request's due time on the caller's remaining budget so
+            // the async waiter loop respects the overall ConnectTimeout. ExpirationTicks
+            // is in DateTime.ToFileTimeUtc() units, matching ADP.TimerCurrent() so it
+            // can flow through the existing TimerRemainingMilliseconds path unchanged.
             var pendingGetConnection =
                 new PendingGetConnection(
-                    CreationTimeout == 0 ? Timeout.Infinite : ADP.TimerCurrent() + ADP.TimerFromSeconds(CreationTimeout / 1000),
+                    timeout.IsInfinite ? Timeout.Infinite : timeout.ExpirationTicks,
                     owningObject,
                     taskCompletionSource,
                     timeout);
