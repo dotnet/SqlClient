@@ -488,7 +488,9 @@ internal static class SsrpPacketTestData
     /// <returns>A byte representation of one SVR_RESP message.</returns>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1"/>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/45b52721-7a48-45cf-9c84-e6db905ad6df"/>
-    private static byte[] FormatSvrRespMessage(byte header, ushort serializedResponseSize, ReadOnlySpan<byte> respData,
+    private static byte[] FormatSvrRespMessage(byte header,
+        ushort serializedResponseSize,
+        ReadOnlySpan<byte> respData,
         int? realResponseSize = null)
     {
         byte[] realRespData = realResponseSize is null
@@ -562,10 +564,18 @@ internal static class SsrpPacketTestData
     /// <param name="shuffleKeys">If true, the key/value pairs will be written in a non-sequential order.</param>
     /// <returns>A byte representation of a RESP_DATA section.</returns>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1"/>
-    private static byte[] CreateRespData(string serverName, string instanceName, bool isClustered, string version,
+    private static byte[] CreateRespData(string serverName,
+        string instanceName,
+        bool isClustered,
+        string version,
         string? protocolParameters = null,
-        bool lowercaseKey = false, bool omitTrailingSemicolons = false, bool omitKeyValueSeparators = false,
-        bool omitServerName = false, bool omitInstanceName = false, bool omitIsClustered = false, bool omitVersion = false,
+        bool lowercaseKey = false,
+        bool omitTrailingSemicolons = false,
+        bool omitKeyValueSeparators = false,
+        bool omitServerName = false,
+        bool omitInstanceName = false,
+        bool omitIsClustered = false,
+        bool omitVersion = false,
         bool shuffleKeys = false)
     {
         string serverNameKey = GenerateKeyValuePair("ServerName", serverName, omitServerName);
