@@ -8,7 +8,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -66,7 +65,7 @@ namespace Microsoft.Data.ProviderBase
             TimeProvider = timeProvider;
             OriginalTicks = expiration.Ticks;
             IsInfinite = OriginalTicks == InfiniteTimeout;
-            ExpirationTicks = IsInfinite ? long.MaxValue : checked(ADP.TimerCurrent() + OriginalTicks);
+            ExpirationTicks = IsInfinite ? long.MaxValue : checked(NowTicks() + OriginalTicks);
         }
 
         #endregion
@@ -106,7 +105,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                return !IsInfinite && ADP.TimerHasExpired(ExpirationTicks);
+                return !IsInfinite && NowTicks() > ExpirationTicks;
             }
         }
 
@@ -143,7 +142,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 else
                 {
-                    milliseconds = ADP.TimerRemainingMilliseconds(ExpirationTicks);
+                    milliseconds = TicksToMilliseconds(ExpirationTicks - NowTicks());
                     if (0 > milliseconds)
                     {
                         milliseconds = 0;
@@ -177,7 +176,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 else
                 {
-                    long longMilliseconds = ADP.TimerRemainingMilliseconds(ExpirationTicks);
+                    long longMilliseconds = TicksToMilliseconds(ExpirationTicks - NowTicks());
                     if (0 > longMilliseconds)
                     {
                         milliseconds = 0;
@@ -293,7 +292,7 @@ namespace Microsoft.Data.ProviderBase
         {
             if (!IsInfinite)
             {
-                ExpirationTicks = checked(ADP.TimerCurrent() + OriginalTicks);
+                ExpirationTicks = checked(NowTicks() + OriginalTicks);
             }
         }
 
@@ -303,7 +302,13 @@ namespace Microsoft.Data.ProviderBase
         /// 1601-01-01 UTC). This keeps <see cref="ExpirationTicks"/> in the same
         /// scale historically produced by <c>DateTime.UtcNow.ToFileTimeUtc()</c>.
         /// </summary>
-        private long NowTicks() => TimeProvider.GetUtcNow().UtcDateTime.ToFileTimeUtc();
+        internal long NowTicks() => TimeProvider.GetUtcNow().UtcDateTime.ToFileTimeUtc();
+
+        /// <summary>
+        /// Converts a tick count (100-nanosecond intervals) to milliseconds, matching
+        /// the conversion historically performed by <c>ADP.TimerToMilliseconds</c>.
+        /// </summary>
+        internal static long TicksToMilliseconds(long ticks) => ticks / TimeSpan.TicksPerMillisecond;
 
         #endregion
     }

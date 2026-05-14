@@ -5,6 +5,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -197,6 +198,90 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
                 }
                 await Task.Delay(20);
             }
+        }
+
+        /// <summary>
+        /// Verifies that the wall-clock reading the timer derives from
+        /// <see cref="TimeProvider.System"/> matches the legacy
+        /// <see cref="ADP.TimerCurrent"/> reading. Both are expected to return
+        /// UTC "now" expressed in file-time ticks (100 ns since 1601-01-01 UTC),
+        /// so two back-to-back samples should differ by no more than a small
+        /// scheduling jitter.
+        /// </summary>
+        [Fact]
+        public void SystemTimeProvider_AgreesWithAdpTimerCurrent()
+        {
+            // 50 ms in file-time ticks. Generous enough to absorb GC pauses
+            // and CI jitter while still being far smaller than any meaningful
+            // timeout this class is used for.
+            const long ToleranceTicks = 50 * TimeSpan.TicksPerMillisecond;
+
+            // Sample both clocks back-to-back, then bracket the TimeoutTimer
+            // reading between two ADP readings.
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1));
+            long adpBefore = ADP.TimerCurrent();
+            long providerNow = timer.NowTicks();
+            long adpAfter = ADP.TimerCurrent();
+
+            Assert.InRange(providerNow, adpBefore - ToleranceTicks, adpAfter + ToleranceTicks);
+        }
+
+        /// <summary>
+        /// Verifies the same equivalence end-to-end: a timer started with
+        /// <see cref="TimeProvider.System"/> places its <c>ExpirationTicks</c>
+        /// at <c>ADP.TimerCurrent() + duration</c> within scheduling jitter.
+        /// This is the relationship legacy callers depend on when comparing
+        /// <c>TimeoutTimer.ExpirationTicks</c> against <see cref="ADP.TimerCurrent"/>.
+        /// </summary>
+        [Fact]
+        public void StartNew_WithSystemTimeProvider_ExpirationMatchesAdpClock()
+        {
+            const long ToleranceTicks = 50 * TimeSpan.TicksPerMillisecond;
+            TimeSpan duration = TimeSpan.FromSeconds(30);
+
+            long adpBefore = ADP.TimerCurrent();
+            TimeoutTimer timer = TimeoutTimer.StartNew(duration);
+            long adpAfter = ADP.TimerCurrent();
+
+            Assert.InRange(
+                timer.ExpirationTicks,
+                adpBefore + duration.Ticks - ToleranceTicks,
+                adpAfter + duration.Ticks + ToleranceTicks);
+        }
+
+        /// <summary>
+        /// Verifies that the new remaining-milliseconds calculation used inside
+        /// <see cref="TimeoutTimer"/> — <c>TicksToMilliseconds(ExpirationTicks - NowTicks())</c>
+        /// — produces the same value as the legacy
+        /// <see cref="ADP.TimerRemainingMilliseconds"/> path
+        /// (<c>(ExpirationTicks - ADP.TimerCurrent()) / TicksPerMillisecond</c>)
+        /// for the same <c>ExpirationTicks</c>. Exercised across past, near-now,
+        /// and far-future expirations.
+        /// </summary>
+        [Theory]
+        [InlineData(-30L * TimeSpan.TicksPerSecond)] // already expired
+        [InlineData(-TimeSpan.TicksPerMillisecond)]  // just expired
+        [InlineData(0L)]                              // expiring now
+        [InlineData(TimeSpan.TicksPerMillisecond)]   // 1 ms remaining
+        [InlineData(TimeSpan.TicksPerSecond)]        // 1 s remaining
+        [InlineData(30L * TimeSpan.TicksPerSecond)]  // 30 s remaining
+        public void RemainingMilliseconds_MatchesAdpTimerRemainingMilliseconds(long offsetTicks)
+        {
+            // Build an absolute expiration relative to "now" so both formulas
+            // see a meaningful target instead of an arbitrary tick value.
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1));
+            long expirationTicks = timer.NowTicks() + offsetTicks;
+
+            // Legacy formula: subtracts ADP.TimerCurrent() internally.
+            long legacy = ADP.TimerRemainingMilliseconds(expirationTicks);
+
+            // New formula used by TimeoutTimer: subtracts NowTicks() (which goes
+            // through TimeProvider.System) and divides via TicksToMilliseconds.
+            long updated = TimeoutTimer.TicksToMilliseconds(expirationTicks - timer.NowTicks());
+
+            // The two formulas read the wall clock at slightly different
+            // instants, so allow ± 1 ms of slip between them.
+            Assert.InRange(updated, legacy - 1, legacy + 1);
         }
     }
 }
