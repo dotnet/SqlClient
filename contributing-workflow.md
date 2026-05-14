@@ -43,7 +43,8 @@ We use and recommend the following workflow:
 ### Commit Guidelines
 
 - It is OK for your PR to include a large number of commits.
-- Once your change is accepted, you will be asked to squash your commits into one or some appropriately small number of commits before your PR is merged.
+- PRs are merged via the default "Squash and Merge" strategy (see [Merging Pull Requests](#merging-pull-requests)), so your commit history is automatically collapsed into a single commit at merge time.
+- If the PR is planned NOT to follow the default squash-and-merge path (for example, when the author requests "Merge and Commit" to preserve a meaningful commit series), you will be asked to squash your commits into one or some appropriately small number of commits before your PR is merged.
 
 ## PR - CI Process
 
@@ -63,7 +64,9 @@ If the CI build fails for any reason, the PR issue will be updated with a link t
 
 - **Build failures**: Check the CI logs for specific error messages.
 - **Test failures**: Ensure all tests pass locally before pushing.
-- **Merge conflicts**: Rebase your branch against the latest main branch.
+- **Merge conflicts**:
+  - *Before review has started*: Rebase your branch against the latest `main` branch to keep history clean.
+  - *After a reviewer has started reviewing*: Do **not** rebase. Rebasing rewrites commit history and makes it impossible for reviewers to tell which commits they have already reviewed, forcing them to start over. Instead, resolve conflicts by merging the latest `main` into your branch (`git merge main`) so that previously reviewed commits remain intact and reviewers can pick up where they left off.
 
 ### Getting Help
 
