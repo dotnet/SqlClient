@@ -44,7 +44,7 @@ internal static class SsrpPacketTestData
     /// should be successfully processed.
     /// </summary>
     /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidSqlDataSourceResponse_ReturnsData"/>
-    public static TheoryData<ReadOnlySequence<byte>, string, int, string?> ValidSVR_RESPPacketBuffer
+    public static TheoryData<ReadOnlySequence<byte>, string, int, string?> ValidSvrRespPacketBuffer
     {
         get
         {
@@ -58,18 +58,18 @@ internal static class SsrpPacketTestData
                 adspInfo: "adsp;SQL2000",
                 bvInfo: "bv;item;group;item;group;org");
 
-            byte[] complexValidPacket = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, complexProtocolParameters));
-            byte[] validPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
-            byte[] validPacket2 = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}")));
-            byte[] validPacket3 = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort3}")));
-            byte[] validPacket4 = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
-            byte[] invalidPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, "v14", CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
+            byte[] complexValidPacket = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, complexProtocolParameters));
+            byte[] validPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
+            byte[] validPacket2 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}")));
+            byte[] validPacket3 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort3}")));
+            byte[] validPacket4 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
+            byte[] invalidPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, "v14", CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
 
             return new()
             {
@@ -124,25 +124,25 @@ internal static class SsrpPacketTestData
     /// should be successfully processed.
     /// </summary>
     /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidDacResponse_ReturnsData"/>
-    public static TheoryData<ReadOnlySequence<byte>, int> ValidSVR_RESP_DACPacketBuffer
+    public static TheoryData<ReadOnlySequence<byte>, int> ValidSvrRespDacPacketBuffer
     {
         get
         {
-            byte[] validPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+            byte[] validPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2));
-            byte[] validPacket2 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2));
+            byte[] validPacket2 = FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort3));
-            byte[] validPacket3 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort3));
+            byte[] validPacket3 = FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort4));
-            byte[] validPacket4 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort4));
+            byte[] validPacket4 = FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort5));
-            byte[] invalidPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort5));
+            byte[] invalidPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
                 serializedResponseSize: 0x03,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2));
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2));
 
             return new()
             {
@@ -202,41 +202,41 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing nothing but invalid SVR_RESP (DAC) responses.
     /// </summary>
     /// <see cref="DacResponseProcessorTest.Process_InvalidDacResponse_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> InvalidSVR_RESP_DACPackets =>
+    public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespDacPackets =>
         [
             // Invalid header byte
-            GeneratePacketBuffers(FormatSVR_RESPMessage(header: 0x00,
+            GeneratePacketBuffers(FormatSvrRespMessage(header: 0x00,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
             // Invalid size
-            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 serializedResponseSize: 0x09,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
             // Invalid protocol version
-            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(protocolVersion: 0x02, ValidTcpPort2))),
+                CreateRespData(protocolVersion: 0x02, ValidTcpPort2))),
                 
             // Invalid port
-            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, 0)))
+                CreateRespData(ValidRespDataDacProtocolVersion, 0)))
         ];
 
     /// <summary>
     /// Packets containing an SVR_RESP response which is a valid response to a CLNT_[B|U]CAST_EX message
     /// but not to a CLNT_UCAST_INST message.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponseToCLNT_UCAST_INST_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> Invalid_CLNT_UCAST_INST_SVR_RESPPackets
+    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponseToClntUcastInst_ReturnsFalse"/>
+    public static TheoryData<ReadOnlySequence<byte>> InvalidClntUcastInstSvrRespPackets
     {
         get
         {
             // The RESP_DATA section of the response to a CLNT_UCAST_INST message must be shorter than 1024 bytes.
-            byte[] longPacket = FormatSVR_RESPMessage(ValidSvrRespHeader,
-                CreateRESP_DATA(ValidServerName,
+            byte[] longPacket = FormatSvrRespMessage(ValidSvrRespHeader,
+                CreateRespData(ValidServerName,
                     ValidInstanceName,
                     isClustered: true,
                     ValidServerVersion,
@@ -251,35 +251,35 @@ internal static class SsrpPacketTestData
     /// in the top-level SVR_RESP message fields.
     /// </summary>
     /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> InvalidSVR_RESPPackets =>
+    public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespPackets =>
         [
             // Invalid SVR_RESP header field value
-            GeneratePacketBuffers(FormatSVR_RESPMessage(header: 0x04,
+            GeneratePacketBuffers(FormatSvrRespMessage(header: 0x04,
                 ValidRespDataDacResponseSize,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
             // RESP_SIZE too small (DAC response)
-            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 serializedResponseSize: 0x05,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
             // RESP_SIZE too large (DAC response)
-            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 serializedResponseSize : 0x07,
-                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
             // RESP_SIZE larger than the buffer (normal response)
-            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 serializedResponseSize: 72,
-                CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion)))
+                CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion)))
         ];
 
     /// <summary>
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
     /// fields but invalid components of the child RESP_DATA structure.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_RESP_DATA_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> InvalidRESP_DATAPackets
+    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_RespData_ReturnsFalse"/>
+    public static TheoryData<ReadOnlySequence<byte>> InvalidRespDataPackets
     {
         get
         {
@@ -287,8 +287,8 @@ internal static class SsrpPacketTestData
 
             return [
                 // Does not start with "ServerName" string
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -296,16 +296,16 @@ internal static class SsrpPacketTestData
                         omitServerName: true))),
 
                 // Server name longer than 255 bytes
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(serverName: new string('a', 256),
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(serverName: new string('a', 256),
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
                         validTcpInfo))),
 
                 // Missing semicolons between keys and values
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -313,8 +313,8 @@ internal static class SsrpPacketTestData
                         omitKeyValueSeparators: true))),
 
                 // Missing terminating pair of semicolons
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -322,8 +322,8 @@ internal static class SsrpPacketTestData
                         omitTrailingSemicolons: true))),
 
                 // Missing "InstanceName"
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -331,16 +331,16 @@ internal static class SsrpPacketTestData
                         omitInstanceName: true))),
 
                 // Instance name longer than 255 bytes
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         instanceName: new string('a', 256),
                         isClustered: true,
                         ValidServerVersion,
                         validTcpInfo))),
 
                 // Missing "IsClustered"
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -348,8 +348,8 @@ internal static class SsrpPacketTestData
                         omitIsClustered: true))),
 
                 // Invalid IsClustered value
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -357,8 +357,8 @@ internal static class SsrpPacketTestData
                         omitIsClustered: true))),
 
                 // Missing "Version"
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -366,8 +366,8 @@ internal static class SsrpPacketTestData
                         omitVersion: true))),
 
                 // Empty version string
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         version: string.Empty,
@@ -375,41 +375,41 @@ internal static class SsrpPacketTestData
                         omitVersion: true))),
 
                 // Version string longer than 16 bytes
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         version: "65535.65535.65.53",
                         validTcpInfo))),
 
                 // Version string not in the correct format: 1*[0-9"."]
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         version: "v14",
                         validTcpInfo))),
 
                 // Protocol components listed twice
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
                         CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: $"tcp;{ValidTcpPort2}")))),
 
                 // Invalid protocol components appear
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
-                    CreateRESP_DATA(ValidServerName,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
                         CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: "invalid_protocol;value")))),
 
                 // Invalid PROTOCOLVERSION field value
-                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     ValidRespDataDacResponseSize,
-                    CreateRESP_DATA(protocolVersion: 0x02, ValidTcpPort2)))
+                    CreateRespData(protocolVersion: 0x02, ValidTcpPort2)))
             ];
         }
     }
@@ -418,8 +418,8 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
     /// fields, a valid RESP_DATA child structure but an invalid TCP_INFO structure.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_TCP_INFO_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> InvalidTCP_INFOPackets
+    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_TcpInfo_ReturnsFalse"/>
+    public static TheoryData<ReadOnlySequence<byte>> InvalidTcpInfoPackets
     {
         get
         {
@@ -439,8 +439,8 @@ internal static class SsrpPacketTestData
 
             static ReadOnlySequence<byte> CreateSVR_RESPMessage(string tcpInfo) =>
                 GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(ValidSvrRespHeader,
-                        CreateRESP_DATA(ValidServerName,
+                    FormatSvrRespMessage(ValidSvrRespHeader,
+                        CreateRespData(ValidServerName,
                             ValidInstanceName,
                             isClustered: true,
                             ValidServerVersion,
@@ -473,10 +473,10 @@ internal static class SsrpPacketTestData
     /// </summary>
     /// <param name="header">The SVR_RESP header value. Expected to be 0x05.</param>
     /// <param name="respData">The serialized RESP_DATA section.</param>
-    /// <seealso cref="FormatSVR_RESPMessage(byte, ushort, ReadOnlySpan{byte}, int?)"/>
+    /// <seealso cref="FormatSvrRespMessage(byte, ushort, ReadOnlySpan{byte}, int?)"/>
     /// <returns>A byte representation of one SVR_RESP message.</returns>
-    private static byte[] FormatSVR_RESPMessage(byte header, ReadOnlySpan<byte> respData) =>
-        FormatSVR_RESPMessage(header, (ushort)respData.Length, respData);
+    private static byte[] FormatSvrRespMessage(byte header, ReadOnlySpan<byte> respData) =>
+        FormatSvrRespMessage(header, (ushort)respData.Length, respData);
 
     /// <summary>
     /// Generates an SVR_RESP message with specific characteristics.
@@ -488,7 +488,7 @@ internal static class SsrpPacketTestData
     /// <returns>A byte representation of one SVR_RESP message.</returns>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1"/>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/45b52721-7a48-45cf-9c84-e6db905ad6df"/>
-    private static byte[] FormatSVR_RESPMessage(byte header, ushort serializedResponseSize, ReadOnlySpan<byte> respData,
+    private static byte[] FormatSvrRespMessage(byte header, ushort serializedResponseSize, ReadOnlySpan<byte> respData,
         int? realResponseSize = null)
     {
         byte[] realRespData = realResponseSize is null
@@ -535,7 +535,7 @@ internal static class SsrpPacketTestData
     /// <param name="dacPort">TCP port number of the DAC.</param>
     /// <returns>A byte representation of a RESP_DATA section.</returns>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/45b52721-7a48-45cf-9c84-e6db905ad6df"/>
-    private static byte[] CreateRESP_DATA(byte protocolVersion, ushort dacPort)
+    private static byte[] CreateRespData(byte protocolVersion, ushort dacPort)
     {
         byte[] data = new byte[sizeof(byte) + sizeof(ushort)];
 
@@ -562,7 +562,7 @@ internal static class SsrpPacketTestData
     /// <param name="shuffleKeys">If true, the key/value pairs will be written in a non-sequential order.</param>
     /// <returns>A byte representation of a RESP_DATA section.</returns>
     /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1"/>
-    private static byte[] CreateRESP_DATA(string serverName, string instanceName, bool isClustered, string version,
+    private static byte[] CreateRespData(string serverName, string instanceName, bool isClustered, string version,
         string? protocolParameters = null,
         bool lowercaseKey = false, bool omitTrailingSemicolons = false, bool omitKeyValueSeparators = false,
         bool omitServerName = false, bool omitInstanceName = false, bool omitIsClustered = false, bool omitVersion = false,

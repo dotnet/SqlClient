@@ -17,35 +17,35 @@ public class SqlDataSourceResponseProcessorTest
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.InvalidSVR_RESPPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    [MemberData(nameof(SsrpPacketTestData.InvalidSvrRespPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
     public void Process_InvalidSqlDataSourceResponse_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
     {
         _ = packetBuffers;
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.InvalidRESP_DATAPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
-    public void Process_InvalidSqlDataSourceResponse_RESP_DATA_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
+    [MemberData(nameof(SsrpPacketTestData.InvalidRespDataPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    public void Process_InvalidSqlDataSourceResponse_RespData_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
     {
         _ = packetBuffers;
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.InvalidTCP_INFOPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
-    public void Process_InvalidSqlDataSourceResponse_TCP_INFO_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
+    [MemberData(nameof(SsrpPacketTestData.InvalidTcpInfoPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    public void Process_InvalidSqlDataSourceResponse_TcpInfo_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
     {
         _ = packetBuffers;
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.Invalid_CLNT_UCAST_INST_SVR_RESPPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
-    public void Process_InvalidSqlDataSourceResponseToCLNT_UCAST_INST_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
+    [MemberData(nameof(SsrpPacketTestData.InvalidClntUcastInstSvrRespPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    public void Process_InvalidSqlDataSourceResponseToClntUcastInst_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
     {
         _ = packetBuffers;
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.ValidSVR_RESPPacketBuffer), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    [MemberData(nameof(SsrpPacketTestData.ValidSvrRespPacketBuffer), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
     public void Process_ValidSqlDataSourceResponse_ReturnsData(ReadOnlySequence<byte> packetBuffers, string expectedVersion, int expectedTcpPort, string? expectedPipeName)
     {
         _ = packetBuffers;

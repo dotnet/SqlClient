@@ -17,14 +17,14 @@ public class DacResponseProcessorTest
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.InvalidSVR_RESP_DACPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    [MemberData(nameof(SsrpPacketTestData.InvalidSvrRespDacPackets), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
     public void Process_InvalidDacResponse_ReturnsFalse(ReadOnlySequence<byte> packetBuffers)
     {
         _ = packetBuffers;
     }
 
     [Theory(Skip = "Implementation in progress, see GH #3700")]
-    [MemberData(nameof(SsrpPacketTestData.ValidSVR_RESP_DACPacketBuffer), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
+    [MemberData(nameof(SsrpPacketTestData.ValidSvrRespDacPacketBuffer), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]
     public void Process_ValidDacResponse_ReturnsData(ReadOnlySequence<byte> packetBuffers, int expectedDacPort)
     {
         _ = packetBuffers;
