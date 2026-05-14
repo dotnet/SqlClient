@@ -20,7 +20,7 @@ public static class SqlServerStrongNameTestCondition
     /// which requires a strongly named <c>Microsoft.SqlServer.Server</c> assembly.  The .NET
     /// runtime doesn't enforce this relationship, and the tests run without incident regardless of
     /// the signed-ness of the SqlServer assembly.  However, .NET Framework _does_ enforce that the
-    /// SqlServer assembly us signed, and the tests fail to compile and/or run.
+    /// SqlServer assembly is signed, and the tests fail to compile and/or run.
     ///
     /// This situation can occur in both Project and Package based test runs, the latter when the
     /// consumed SqlServer package was produced from an unsigned assembly.
