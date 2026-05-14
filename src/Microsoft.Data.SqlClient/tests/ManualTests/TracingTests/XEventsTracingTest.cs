@@ -107,12 +107,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// context when executing a stored procedure.
         /// </summary>
         /// <remarks>
-        /// This test is marked as flaky because it can occasionally fail due to deadlocks on the remote SQL Server instance.
-        /// This first became apparent when running 'sp_help' on an Azure SQL instance under load. The first mitigation attempt
-        /// is to switch to a temporary stored procedure which consists of a simple 'SELECT 1' statement, which should be less
-        /// likely to cause deadlocks.
+        /// This test has historically been marked as flaky following occasional failures due to deadlocks on the remote
+        /// SQL Server instance. This first became apparent when running 'sp_help' on an Azure SQL instance under load.
+        /// This appears to have been resolved by switching to a temporary stored procedure which consists of a simple
+        /// 'SELECT 1' statement.
         /// </remarks>
-        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public void XEventActivityIDConsistentWithTracing_RpcStarting()
         {
@@ -131,11 +130,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// context when executing a SQL statement which is not a stored procedure.
         /// </summary>
         /// <remarks>
-        /// This test is marked as flaky because it can occasionally fail due to deadlocks on the remote SQL Server instance.
-        /// This first became apparent when running 'SELECT @@VERSION' on an Azure SQL instance under load. The first mitigation
-        /// attempt is to switch to a simpler 'SELECT 1' statement, which should be less likely to cause deadlocks.
+        /// This test has historically been marked as flaky following occasional failures due to deadlocks on the remote
+        /// SQL Server instance. This first became apparent when running 'SELECT @@VERSION' on an Azure SQL instance under load.
+        /// This appears to have been resolved by switching to a simpler 'SELECT 1' statement.
         /// </remarks>
-        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public void XEventActivityIDConsistentWithTracing_SqlStatementStarting() =>
             VerifyXEventActivityIDConsistentWithTracing("SELECT 1 AS [Field1]", System.Data.CommandType.Text, "sql_statement_starting");
@@ -143,12 +141,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Validates that the activity ID is consistently recorded in an XEvent session even when a command generates an error.
         /// </summary>
-        /// <remarks>
-        /// This test is marked as flaky because the other two XEvents-based tests have failed intermittently as a result of their
-        /// connection being killed to resolve deadlocks when the server is under load. While this test is not expected to cause
-        /// deadlocks, it's marked as flaky in case something specific to XEvents makes deadlocks more likely.
-        /// </remarks>
-        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public void XEventActivityIDConsistentWithTracing_ActivityIDTransferOnError() =>
             VerifyXEventActivityIDConsistentWithTracing($"THROW {CustomErrorNumber}, 'Sample message', 0", System.Data.CommandType.Text, "sql_statement_starting");
