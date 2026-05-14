@@ -66,8 +66,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
-        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_DeleteCommand))]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+        [ResDescription(nameof(Strings.DbDataAdapter_DeleteCommand))]
         new public SqlCommand DeleteCommand
         {
             get { return _deleteCommand; }
@@ -83,8 +83,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
-        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_InsertCommand))]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+        [ResDescription(nameof(Strings.DbDataAdapter_InsertCommand))]
         new public SqlCommand InsertCommand
         {
             get { return _insertCommand; }
@@ -100,8 +100,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Fill))]
-        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_SelectCommand))]
+        [ResCategory(nameof(Strings.DataCategory_Fill))]
+        [ResDescription(nameof(Strings.DbDataAdapter_SelectCommand))]
         new public SqlCommand SelectCommand
         {
             get { return _selectCommand; }
@@ -117,8 +117,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
-        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_UpdateCommand))]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+        [ResDescription(nameof(Strings.DbDataAdapter_UpdateCommand))]
         new public SqlCommand UpdateCommand
         {
             get { return _updateCommand; }
@@ -243,8 +243,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdated/*' />
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
-        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_RowUpdated))]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+        [ResDescription(nameof(Strings.DbDataAdapter_RowUpdated))]
         public event SqlRowUpdatedEventHandler RowUpdated
         {
             add
@@ -258,8 +258,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*' />
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Update))]
-        [ResDescriptionAttribute(nameof(Strings.DbDataAdapter_RowUpdating))]
+        [ResCategory(nameof(Strings.DataCategory_Update))]
+        [ResDescription(nameof(Strings.DbDataAdapter_RowUpdating))]
         public event SqlRowUpdatingEventHandler RowUpdating
         {
             add
