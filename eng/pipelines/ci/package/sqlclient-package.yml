@@ -96,9 +96,9 @@ variables:
   #- name: skipComponentGovernanceDetection
   #  value: true
 
-  # Whether this is an internal (ADO) build that should strong-name sign.
+  # Whether this is an internal (ADO.Net project) or public (Public project) build.
   - name: isInternalBuild
-    value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/internal/') }}
+    value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
   # Package version suffix for CI builds.
   - name: buildSuffix
