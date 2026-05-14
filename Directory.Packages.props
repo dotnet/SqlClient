@@ -1,8 +1,24 @@
 <Project>
 
   <!-- ===================================================================== -->
-  <!-- Import Versions.props files when building via Package references -->
-  <!-- This makes version properties available early for package pinning -->
+  <!--
+    Versions.props import strategy:
+
+    Each product has a Versions.props that computes its version properties (e.g.
+    SqlClientPackageVersion).  These files can be imported from two places:
+
+      1. Here, in Directory.Packages.props (Package mode only) — imports ALL
+         Versions.props early so that centrally-managed PackageVersion items can
+         reference the computed version values for sibling package pinning.
+
+      2. In each product's own csproj (conditional) — imports the product's own
+         Versions.props so standalone / Project-mode builds still get versions.
+
+    To prevent double-evaluation when both paths fire, every Versions.props sets
+    an import-guard property (e.g. SqlClientVersionsImported=true) on first load.
+    The csproj-level import checks that guard and becomes a no-op if the file was
+    already imported here.
+  -->
   <ImportGroup Condition="'$(ReferenceType)' == 'Package'">
     <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
     <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />

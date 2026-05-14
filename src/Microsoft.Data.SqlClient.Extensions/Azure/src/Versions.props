@@ -13,6 +13,12 @@
       form: (Major).(Minor).(Patch).(BuildNumber)
   -->
 
+  <!--
+    Import guard: set on first import so that subsequent imports of this file are skipped.
+    Directory.Packages.props imports all Versions.props early in Package mode; the guard
+    prevents each csproj's own conditional import from re-importing and re-evaluating
+    version properties.
+  -->
   <PropertyGroup>
     <AzureVersionsImported>true</AzureVersionsImported>
   </PropertyGroup>
