@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -18,6 +18,19 @@ namespace Microsoft.Data.Sql.UnitTests;
 /// </summary>
 internal static class SsrpPacketTestData
 {
+    private const byte ValidSvrRespHeader = 0x05;
+    private const byte ValidRespDataDacProtocolVersion = 0x01;
+    private const byte ValidRespDataDacResponseSize = 0x06;
+
+    private const string ValidServerName = "srv1";
+    private const string ValidInstanceName = "MSSQLSERVER";
+    private const string ValidServerVersion = "14.0.0.0";
+    private const int ValidTcpPort1 = 1433;
+    private const int ValidTcpPort2 = 1434;
+    private const int ValidTcpPort3 = 1435;
+    private const int ValidTcpPort4 = 1436;
+    private const int ValidTcpPort5 = 1437;
+
     /// <summary>
     /// One empty packet buffer, which should be successfully processed and contain zero responses.
     /// </summary>
@@ -35,49 +48,73 @@ internal static class SsrpPacketTestData
     {
         get
         {
-            byte[] complexValidPacket = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0.0",
-                    CreateProtocolParameters(tcpInfo: "tcp;1433", npInfo: @"np;\\svr1\pipe\SampléPipeName",
-                        viaInfo: "via;svr1 1:1433", rpcInfo: "rpc;svr1", spxInfo: "spx;MSSQLSERVER",
-                        adspInfo: "adsp;SQL2000", bvInfo: "bv;item;group;item;group;org", otherParameters: null)));
-            byte[] validPacket1 = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0.0",
-                    CreateProtocolParameters(tcpInfo: "tcp;1433", null, null, null, null, null, null, null)));
-            byte[] validPacket2 = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0.0",
-                    CreateProtocolParameters(tcpInfo: "tcp;1434", null, null, null, null, null, null, null)));
-            byte[] validPacket3 = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0.0",
-                    CreateProtocolParameters(tcpInfo: "tcp;1435", null, null, null, null, null, null, null)));
-            byte[] validPacket4 = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0.0",
-                    CreateProtocolParameters(tcpInfo: "tcp;1436", null, null, null, null, null, null, null)));
-            byte[] invalidPacket1 = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "v14",
-                    CreateProtocolParameters(tcpInfo: "tcp;1433", null, null, null, null, null, null, null)));
+            const string PipeName = $@"\\{ValidServerName}\pipe\SampléPipeName";
+
+            string complexProtocolParameters = CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}",
+                npInfo: $"np;{PipeName}",
+                viaInfo: $"via;{ValidServerName} 1:1433",
+                rpcInfo: $"rpc;{ValidServerName}",
+                spxInfo: $"spx;{ValidInstanceName}",
+                adspInfo: "adsp;SQL2000",
+                bvInfo: "bv;item;group;item;group;org");
+
+            byte[] complexValidPacket = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, complexProtocolParameters));
+            byte[] validPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
+            byte[] validPacket2 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}")));
+            byte[] validPacket3 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort3}")));
+            byte[] validPacket4 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
+            byte[] invalidPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                respData: CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, "v14", CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
 
             return new()
             {
-                // One buffer, one response
-                { GeneratePacketBuffers(
-                    complexValidPacket
-                ), "14.0.0.0", 1433, @"\\svr1\pipe\SampléPipeName" },
-                // One response, split into four buffers in the middle of a string
-                { GeneratePacketBuffers(
-                    complexValidPacket.AsSpan(0, 14).ToArray(),
-                    complexValidPacket.AsSpan(14, 22).ToArray(),
-                    complexValidPacket.AsSpan(36, 71).ToArray(),
-                    // Position 107 is the second byte of the é character when encoded to UTF8.
-                    complexValidPacket.AsSpan(107).ToArray()
-                ), "14.0.0.0", 1433, @"\\svr1\pipe\SampléPipeName" },
-                // Four responses, each with different methods
-                { GeneratePacketBuffers(
-                    validPacket1, validPacket2, validPacket3, validPacket4
-                ), "14.0.0.0", 1436, null },
-                // Five responses, with response three invalid
-                { GeneratePacketBuffers(
-                    complexValidPacket, validPacket2, invalidPacket1, validPacket3, validPacket4
-                ), "14.0.0.0", 1436, null }
+                {
+                    // One buffer, one response
+                    GeneratePacketBuffers(complexValidPacket),
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    PipeName
+                },
+                {
+                    // One response, split into four buffers in the middle of a string
+                    GeneratePacketBuffers(
+                        complexValidPacket.AsSpan(0, 14).ToArray(),
+                        complexValidPacket.AsSpan(14, 22).ToArray(),
+                        complexValidPacket.AsSpan(36, 71).ToArray(),
+                        // Position 107 is the second byte of the é character when encoded to UTF8.
+                        complexValidPacket.AsSpan(107).ToArray()),
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    PipeName
+                },
+                {
+                    // Four responses, each with different methods
+                    GeneratePacketBuffers(
+                        validPacket1,
+                        validPacket2,
+                        validPacket3,
+                        validPacket4),
+                    ValidServerVersion,
+                    ValidTcpPort4,
+                    null
+                },
+                {
+                    // Five responses, with response three invalid
+                    GeneratePacketBuffers(
+                        complexValidPacket,
+                        validPacket2,
+                        invalidPacket1,
+                        validPacket3,
+                        validPacket4),
+                    ValidServerVersion,
+                    ValidTcpPort4,
+                    null
+                }
             };
         }
     }
@@ -91,38 +128,72 @@ internal static class SsrpPacketTestData
     {
         get
         {
-            byte[] validPacket1 = FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x01, 1434));
-            byte[] validPacket2 = FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x01, 1435));
-            byte[] validPacket3 = FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x01, 1436));
-            byte[] validPacket4 = FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x01, 1437));
-            byte[] invalidPacket1 = FormatSVR_RESPMessage(0x05, 0x03, CreateRESP_DATA(0x01, 1434));
+            byte[] validPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2));
+            byte[] validPacket2 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort3));
+            byte[] validPacket3 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort4));
+            byte[] validPacket4 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort5));
+            byte[] invalidPacket1 = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                serializedResponseSize: 0x03,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2));
 
             return new()
             {
-                // One buffer, one response
-                { GeneratePacketBuffers(validPacket1), 1434 },
-
-                // One response, split into three buffers
-                { GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
-                    validPacket1.AsSpan(2, 2).ToArray(),
-                    validPacket1.AsSpan(4).ToArray()), 1434 },
-
-                // Two responses with trailing data
-                { GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
-                    validPacket1.AsSpan(2, 2).ToArray(),
-                    [..validPacket1.AsSpan(4).ToArray(), 0x05],
-                    validPacket2.AsSpan(0, 2).ToArray(),
-                    validPacket2.AsSpan(2).ToArray(),
-                    [0x05]), 1435 },
-
-                // Four responses, each with different DAC ports
-                { GeneratePacketBuffers(validPacket1, validPacket2, validPacket3, validPacket4), 1437 },
-
-                // Five responses, with response three invalid
-                { GeneratePacketBuffers(validPacket1, validPacket2, invalidPacket1, validPacket3, validPacket4), 1437 },
-
-                // Four responses, with three extraneous 0x05 bytes between responses 2 and 3
-                { GeneratePacketBuffers(validPacket1, [..validPacket2, 0x05], [0x05], [0x05, ..validPacket3], validPacket4), 1437 }
+                {
+                    // One buffer, one response
+                    GeneratePacketBuffers(validPacket1),
+                    ValidTcpPort2
+                },
+                {
+                    // One response, split into three buffers
+                    GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
+                        validPacket1.AsSpan(2, 2).ToArray(),
+                        validPacket1.AsSpan(4).ToArray()),
+                    ValidTcpPort2
+                },
+                {
+                    // Two responses with trailing data
+                    GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
+                        validPacket1.AsSpan(2, 2).ToArray(),
+                        [..validPacket1.AsSpan(4).ToArray(), 0x05],
+                        validPacket2.AsSpan(0, 2).ToArray(),
+                        validPacket2.AsSpan(2).ToArray(),
+                        [0x05]),
+                    ValidTcpPort3
+                },
+                {
+                    // Four responses, each with different DAC ports
+                    GeneratePacketBuffers(validPacket1,
+                        validPacket2,
+                        validPacket3,
+                        validPacket4),
+                    ValidTcpPort5
+                },
+                {
+                    // Five responses, with response three invalid
+                    GeneratePacketBuffers(validPacket1,
+                        validPacket2,
+                        invalidPacket1,
+                        validPacket3,
+                        validPacket4),
+                    ValidTcpPort5
+                },
+                {
+                    // Four responses, with three extraneous 0x05 bytes between responses 2 and 3
+                    GeneratePacketBuffers(validPacket1,
+                        [..validPacket2, 0x05],
+                        [0x05],
+                        [0x05, ..validPacket3],
+                        validPacket4),
+                    ValidTcpPort5
+                }
             };
         }
     }
@@ -131,26 +202,28 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing nothing but invalid SVR_RESP (DAC) responses.
     /// </summary>
     /// <see cref="DacResponseProcessorTest.Process_InvalidDacResponse_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> InvalidSVR_RESP_DACPackets
-    {
-        get
-        {
-            return new()
-            {
-                // Invalid header byte
-                { GeneratePacketBuffers(FormatSVR_RESPMessage(0x00, 0x06, CreateRESP_DATA(0x01, 1434))) },
+    public static TheoryData<ReadOnlySequence<byte>> InvalidSVR_RESP_DACPackets =>
+        [
+            // Invalid header byte
+            GeneratePacketBuffers(FormatSVR_RESPMessage(header: 0x00,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
-                // Invalid size
-                { GeneratePacketBuffers(FormatSVR_RESPMessage(0x05, 0x09, CreateRESP_DATA(0x01, 1434))) },
+            // Invalid size
+            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                serializedResponseSize: 0x09,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
-                // Invalid protocol version
-                { GeneratePacketBuffers(FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x02, 1434))) },
+            // Invalid protocol version
+            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(protocolVersion: 0x02, ValidTcpPort2))),
                 
-                // Invalid port
-                { GeneratePacketBuffers(FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x01, 0))) },
-            };
-        }
-    }
+            // Invalid port
+            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, 0)))
+        ];
 
     /// <summary>
     /// Packets containing an SVR_RESP response which is a valid response to a CLNT_[B|U]CAST_EX message
@@ -162,15 +235,14 @@ internal static class SsrpPacketTestData
         get
         {
             // The RESP_DATA section of the response to a CLNT_UCAST_INST message must be shorter than 1024 bytes.
-            byte[] longPacket = FormatSVR_RESPMessage(0x05,
-                CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0.0",
-                    CreateProtocolParameters(tcpInfo: "tcp;1433", npInfo: @"np;" + new string('a', 1025),
-                        null, null, null, null, null, null)));
+            byte[] longPacket = FormatSVR_RESPMessage(ValidSvrRespHeader,
+                CreateRESP_DATA(ValidServerName,
+                    ValidInstanceName,
+                    isClustered: true,
+                    ValidServerVersion,
+                    CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}", npInfo: @"np;" + new string('a', 1025))));
 
-            return new()
-            {
-                GeneratePacketBuffers(longPacket)
-            };
+            return [GeneratePacketBuffers(longPacket)];
         }
     }
 
@@ -179,34 +251,28 @@ internal static class SsrpPacketTestData
     /// in the top-level SVR_RESP message fields.
     /// </summary>
     /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_ReturnsFalse"/>
-    public static TheoryData<ReadOnlySequence<byte>> InvalidSVR_RESPPackets
-    {
-        get
-        {
-            return new(
-                // Invalid SVR_RESP header field value
-                GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(0x04, 0x06, CreateRESP_DATA(0x01, 1434))
-                ),
+    public static TheoryData<ReadOnlySequence<byte>> InvalidSVR_RESPPackets =>
+        [
+            // Invalid SVR_RESP header field value
+            GeneratePacketBuffers(FormatSVR_RESPMessage(header: 0x04,
+                ValidRespDataDacResponseSize,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
-                // RESP_SIZE too small (DAC response)
-                GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(0x05, 0x05, CreateRESP_DATA(0x01, 1434))
-                ),
+            // RESP_SIZE too small (DAC response)
+            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                serializedResponseSize: 0x05,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
-                // RESP_SIZE too large (DAC response)
-                GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(0x05, 0x07, CreateRESP_DATA(0x01, 1434))
-                ),
+            // RESP_SIZE too large (DAC response)
+            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                serializedResponseSize : 0x07,
+                CreateRESP_DATA(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
-                // RESP_SIZE larger than the buffer (normal response)
-                GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(0x05, 72,
-                        CreateRESP_DATA("svr1", "MSSQLSERVER", true, "14.0.0"))
-                )
-            );
-        }
-    }
+            // RESP_SIZE larger than the buffer (normal response)
+            GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                serializedResponseSize: 72,
+                CreateRESP_DATA(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion)))
+        ];
 
     /// <summary>
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
@@ -217,72 +283,134 @@ internal static class SsrpPacketTestData
     {
         get
         {
-            string validTcpInfo = CreateProtocolParameters("tcp;1433", null, null, null, null, null, null, null);
+            string validTcpInfo = CreateProtocolParameters($"tcp;{ValidTcpPort1}");
 
-            return new(
+            return [
                 // Does not start with "ServerName" string
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", validTcpInfo, omitServerName: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        omitServerName: true))),
 
                 // Server name longer than 255 bytes
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA(new string('a', 256), "MSSQLSERVER", true, "14.0.0.0", validTcpInfo))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(serverName: new string('a', 256),
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo))),
 
                 // Missing semicolons between keys and values
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", validTcpInfo, omitKeyValueSeparators: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        omitKeyValueSeparators: true))),
 
                 // Missing terminating pair of semicolons
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", validTcpInfo, omitTrailingSemicolons: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        omitTrailingSemicolons: true))),
 
                 // Missing "InstanceName"
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", validTcpInfo, omitInstanceName: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        omitInstanceName: true))),
 
                 // Instance name longer than 255 bytes
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", new string('a', 256), true, "14.0.0.0", validTcpInfo))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        instanceName: new string('a', 256),
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo))),
 
                 // Missing "IsClustered"
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", validTcpInfo, omitIsClustered: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        omitIsClustered: true))),
 
                 // Invalid IsClustered value
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", "IsClustered;INVALID;" + validTcpInfo, omitIsClustered: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        protocolParameters: "IsClustered;INVALID;" + validTcpInfo,
+                        omitIsClustered: true))),
 
                 // Missing "Version"
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0", validTcpInfo, omitVersion: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        omitVersion: true))),
 
                 // Empty version string
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "", validTcpInfo, omitVersion: true))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        version: string.Empty,
+                        validTcpInfo,
+                        omitVersion: true))),
 
                 // Version string longer than 16 bytes
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "65535.65535.65.53", validTcpInfo))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        version: "65535.65535.65.53",
+                        validTcpInfo))),
 
                 // Version string not in the correct format: 1*[0-9"."]
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "v14", validTcpInfo))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        version: "v14",
+                        validTcpInfo))),
 
                 // Protocol components listed twice
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0",
-                        CreateProtocolParameters("tcp;1434", null, null, null, null, null, null, "tcp;1434")))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: $"tcp;{ValidTcpPort2}")))),
 
                 // Invalid protocol components appear
-                GeneratePacketBuffers(FormatSVR_RESPMessage(0x05,
-                    CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0",
-                        CreateProtocolParameters("tcp;1434", null, null, null, null, null, null, "invalid_protocol;value")))),
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    CreateRESP_DATA(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: "invalid_protocol;value")))),
 
                 // Invalid PROTOCOLVERSION field value
-                GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(0x05, 0x06, CreateRESP_DATA(0x02, 1434))
-                )
-            );
+                GeneratePacketBuffers(FormatSVR_RESPMessage(ValidSvrRespHeader,
+                    ValidRespDataDacResponseSize,
+                    CreateRESP_DATA(protocolVersion: 0x02, ValidTcpPort2)))
+            ];
         }
     }
 
@@ -295,7 +423,7 @@ internal static class SsrpPacketTestData
     {
         get
         {
-            return new(
+            return [
                 // Port is absent
                 CreateSVR_RESPMessage("tcp"),
 
@@ -307,16 +435,16 @@ internal static class SsrpPacketTestData
 
                 // Port is < 0
                 CreateSVR_RESPMessage("tcp;-1")
-            );
+            ];
 
             static ReadOnlySequence<byte> CreateSVR_RESPMessage(string tcpInfo) =>
                 GeneratePacketBuffers(
-                    FormatSVR_RESPMessage(0x05,
-                        CreateRESP_DATA("srv1", "MSSQLSERVER", true, "14.0.0.0",
-                            CreateProtocolParameters(tcpInfo, null, null, null, null, null, null, null)
-                        )
-                    )
-                );
+                    FormatSVR_RESPMessage(ValidSvrRespHeader,
+                        CreateRESP_DATA(ValidServerName,
+                            ValidInstanceName,
+                            isClustered: true,
+                            ValidServerVersion,
+                            CreateProtocolParameters(tcpInfo))));
         }
     }
 
@@ -481,9 +609,14 @@ internal static class SsrpPacketTestData
     /// <param name="bvInfo">If non-null, the BV_INFO data.</param>
     /// <param name="otherParameters">Any additional protocol parameters to include.</param>
     /// <returns>The collated protocol parameters for a RESP_DATA section.</returns>
-    private static string CreateProtocolParameters(string? tcpInfo, string? npInfo,
-        string? viaInfo, string? rpcInfo, string? spxInfo, string? adspInfo, string? bvInfo,
-        string? otherParameters)
+    private static string CreateProtocolParameters(string? tcpInfo = null,
+        string? npInfo = null,
+        string? viaInfo = null,
+        string? rpcInfo = null,
+        string? spxInfo = null,
+        string? adspInfo = null,
+        string? bvInfo = null,
+        string? otherParameters = null)
     {
         List<string> protocolParameters = [];
         ReadOnlySpan<string?> allParams = [tcpInfo, npInfo, viaInfo, rpcInfo, spxInfo, adspInfo, bvInfo, otherParameters];
