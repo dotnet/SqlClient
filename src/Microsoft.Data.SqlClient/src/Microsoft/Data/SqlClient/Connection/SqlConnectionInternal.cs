@@ -3219,6 +3219,10 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         nextTimeoutInterval = milliseconds;
                     }
+
+                    // TODO: Add a StartChild method to TimeoutTimer to propagate the parent TimeProvider down the stack.
+                    // It can also wrap the logic preventing a child timer from exceeding the parent timer's remaining time, 
+                    // which is currently duplicated in both LoginNoFailover and LoginWithFailover.
                     intervalTimer = TimeoutTimer.StartNew(TimeSpan.FromMilliseconds(nextTimeoutInterval));
                 }
 
@@ -3504,6 +3508,9 @@ namespace Microsoft.Data.SqlClient.Connection
                     nextTimeoutInterval = milliseconds;
                 }
 
+                // TODO: Add a StartChild method to TimeoutTimer to propagate the parent TimeProvider down the stack.
+                // It can also wrap the logic preventing a child timer from exceeding the parent timer's remaining time, 
+                // which is currently duplicated in both LoginNoFailover and LoginWithFailover.
                 TimeoutTimer intervalTimer = TimeoutTimer.StartNew(TimeSpan.FromMilliseconds(nextTimeoutInterval));
 
                 // Re-allocate parser each time to make sure state is known. If parser was created
