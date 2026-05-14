@@ -462,7 +462,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 );
             });
 
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            // Use the resource-backed message rather than a hardcoded English
+            // string so the assertion stays meaningful under any localized build.
+            Assert.Equal(ADP.PooledOpenTimeout().Message, ex.Message);
         }
 
         [Fact]
@@ -485,7 +487,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 await taskCompletionSource.Task;
             });
 
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            // Use the resource-backed message rather than a hardcoded English
+            // string so the assertion stays meaningful under any localized build.
+            Assert.Equal(ADP.PooledOpenTimeout().Message, ex.Message);
         }
 
         [Fact]
