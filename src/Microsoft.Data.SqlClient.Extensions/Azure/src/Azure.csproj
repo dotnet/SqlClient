@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <Import Project="Versions.props" Condition="'$(AzureVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(AzureAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(AzureFileVersion)</FileVersion>

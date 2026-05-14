@@ -50,7 +50,7 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../Versions.props" />
+  <Import Project="../Versions.props" Condition="'$(SqlClientVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlClientFileVersion)</FileVersion>
@@ -173,10 +173,13 @@
     <PropertyGroup>
       <CommitId Condition="'$(CommitId)' == ''">$(SourceRevisionId)</CommitId>
       <NuspecProperties>$(NuspecProperties);COMMITID=$(CommitId)</NuspecProperties>
+    </PropertyGroup>
+
+    <!-- Check for empty sibling package versions. -->
+    <PropertyGroup>
       <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
       <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>
     </PropertyGroup>
-
     <Error Condition="'$(_AbstractionsPackageVersionTrimmed)' == ''"
       Text="AbstractionsPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionAbstractions=&lt;version&gt;; when packing the project directly, set -p:AbstractionsPackageVersion=&lt;version&gt;; otherwise ensure the Abstractions Versions.props import can resolve a value." />
     <Error Condition="'$(_LoggingPackageVersionTrimmed)' == ''"

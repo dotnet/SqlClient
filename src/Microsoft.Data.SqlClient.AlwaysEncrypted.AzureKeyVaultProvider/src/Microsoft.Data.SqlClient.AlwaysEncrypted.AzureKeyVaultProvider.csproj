@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <Import Project="Versions.props" Condition="'$(AkvProviderVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(AkvProviderAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(AkvProviderFileVersion)</FileVersion>

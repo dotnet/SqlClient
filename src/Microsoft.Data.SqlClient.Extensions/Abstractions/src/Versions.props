@@ -13,6 +13,10 @@
       naming. It must be in the form: (Major).0.0.0
   -->
 
+  <PropertyGroup>
+    <AbstractionsVersionsImported>true</AbstractionsVersionsImported>
+  </PropertyGroup>
+
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--

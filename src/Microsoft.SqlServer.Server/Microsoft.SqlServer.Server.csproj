@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <Import Project="Versions.props" Condition="'$(SqlServerVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlServerAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlServerFileVersion)</FileVersion>

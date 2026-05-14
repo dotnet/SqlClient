@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <Import Project="Versions.props" Condition="'$(LoggingVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(LoggingAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(LoggingFileVersion)</FileVersion>

@@ -13,6 +13,10 @@
       NuGet package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
   -->
 
+  <PropertyGroup>
+    <AkvProviderVersionsImported>true</AkvProviderVersionsImported>
+  </PropertyGroup>
+
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--

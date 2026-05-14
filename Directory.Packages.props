@@ -1,4 +1,17 @@
 <Project>
+
+  <!-- ===================================================================== -->
+  <!-- Import Versions.props files when building via Package references -->
+  <!-- This makes version properties available early for package pinning -->
+  <ImportGroup Condition="'$(ReferenceType)' == 'Package'">
+    <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
+    <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props" />
+  </ImportGroup>
+
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!--
@@ -14,21 +27,11 @@
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
-  <!-- Ordered from least dependent to most dependent, and then alphabetically. -->
-
-  <ItemGroup>
-    <!--
-      We never reference this package via its project, so we always need a
-      version specified.
-    -->
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
-  </ItemGroup>
-
-  <!--
-    We only need other driver package versions specified when building via
-    package references.
-  -->
+  <!-- The driver packages need version numbers when we build via Package references. -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageVersion
+      Include="Microsoft.SqlServer.Server"
+      Version="$(SqlServerPackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Internal.Logging"
       Version="$(LoggingPackageVersion)" />
@@ -36,11 +39,11 @@
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Version="$(AbstractionsPackageVersion)" />
     <PackageVersion
-      Include="Microsoft.Data.SqlClient.Extensions.Azure"
-      Version="$(AzurePackageVersion)" />
-    <PackageVersion
       Include="Microsoft.Data.SqlClient"
       Version="$(SqlClientPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzurePackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
       Version="$(AkvProviderPackageVersion)" />
