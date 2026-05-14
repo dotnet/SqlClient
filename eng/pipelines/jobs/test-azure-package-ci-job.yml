@@ -87,6 +87,13 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
+  # The SqlServer package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: ''
+
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkRuntimes
     type: object
@@ -162,6 +169,7 @@ jobs:
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public

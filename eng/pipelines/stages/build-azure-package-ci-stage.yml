@@ -122,6 +122,13 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
+  # The SqlServer package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: ''
+
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
@@ -163,6 +170,7 @@ stages:
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -182,6 +190,7 @@ stages:
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -210,6 +219,7 @@ stages:
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -229,6 +239,7 @@ stages:
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -266,6 +277,7 @@ stages:
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}

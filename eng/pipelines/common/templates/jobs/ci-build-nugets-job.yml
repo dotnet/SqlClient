@@ -218,6 +218,7 @@ jobs:
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
 
   - task: CopyFiles@2
