@@ -288,6 +288,12 @@
       Allowed values: (category_expression|none)
     -->
     <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
+    <!--
+      Exclude tests in the "signed" category when building unsigned assemblies.  We have some tests
+      that require signed assemblies, and they would fail with strong name validation exceptions on
+      .NET Framework.
+    -->
+    <TestFilters Condition="'$(SigningKeyPath)' == ''">$(TestFilters)&amp;category!=signed</TestFilters>
     <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
     <TestFiltersArgument Condition="'$(TestFilters)' != ''">
       --filter "$(TestFilters)"

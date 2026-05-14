@@ -11,7 +11,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Microsoft.Data.SqlClient.TestCommon;
 using Microsoft.SqlServer.Types;
 using Xunit;
 
@@ -19,23 +18,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class SqlServerTypesTest
     {
-        /// <summary>
-        /// Aggregates all gating checks for SQL Server UDT tests into a single condition member.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="ConditionalFactAttribute"/> and <see cref="ConditionalTheoryAttribute"/>
-        /// accept condition member names from a single declaring type per attribute instance, and
-        /// the attribute is not declared with multiple-use support. We therefore cannot compose
-        /// conditions from both <see cref="DataTestUtility"/> and
-        /// <see cref="SqlServerStrongNameTestCondition"/> by stacking multiple
-        /// <c>ConditionalFact</c>/<c>ConditionalTheory</c> attributes on the same test.
-        /// This helper keeps the existing environment checks and the strong-name check in one place.
-        /// </remarks>
-        private static bool IsSqlServerTypesUdtTestsEnabled =>
-            DataTestUtility.AreConnStringsSetup() &&
-            DataTestUtility.IsNotAzureSynapse() &&
-            SqlServerStrongNameTestCondition.IsUnsignedSqlServerAssemblyUsable;
-
         private const string BuiltInUdtSelectQuery =
             @"SELECT " +
             @"  hierarchyid::Parse('/1/1/3/') AS col0, " +
@@ -52,7 +34,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string HierarchyIdBytesHexString = "5ade";
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(nameof(IsSqlServerTypesUdtTestsEnabled))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void GetSchemaTableTest()
         {
             string db = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString).InitialCatalog;
@@ -78,7 +63,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(nameof(IsSqlServerTypesUdtTestsEnabled))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void GetValueTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -236,7 +224,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
-        [ConditionalFact(nameof(IsSqlServerTypesUdtTestsEnabled))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void TestUdtSchemaMetadata()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -390,7 +381,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
-        [ConditionalFact(nameof(IsSqlServerTypesUdtTestsEnabled))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void TestSqlServerTypesInsertAndRead()
         {
             string tableName = DataTestUtility.GetLongName("Type");
