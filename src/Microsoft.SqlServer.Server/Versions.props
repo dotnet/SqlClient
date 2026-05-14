@@ -30,7 +30,7 @@
       decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <SqlServerVersionDefault>1.0.0</SqlServerVersionDefault>
+    <SqlServerVersionDefault>1.1.0-preview1</SqlServerVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->

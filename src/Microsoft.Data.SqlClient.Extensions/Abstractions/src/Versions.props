@@ -30,7 +30,7 @@
       decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <AbstractionsVersionDefault>1.0.0</AbstractionsVersionDefault>
+    <AbstractionsVersionDefault>1.1.0-preview1</AbstractionsVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->

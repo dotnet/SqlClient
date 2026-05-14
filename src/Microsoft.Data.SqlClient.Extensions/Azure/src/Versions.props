@@ -29,7 +29,7 @@
       This is the *next* version to release of Azure. Update this when the next version is decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <AzureVersionDefault>1.0.0</AzureVersionDefault>
+    <AzureVersionDefault>1.1.0-preview1</AzureVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->

@@ -288,13 +288,13 @@
       Allowed values: (category_expression|none)
     -->
     <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
+    <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
     <!--
       Exclude tests in the "signed" category when building unsigned assemblies.  We have some tests
       that require signed assemblies, and they would fail with strong name validation exceptions on
       .NET Framework.
     -->
-    <TestFilters Condition="'$(SigningKeyPath)' == ''">$(TestFilters)&amp;category!=signed</TestFilters>
-    <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
+    <TestFilters Condition="'$(TestFilters)' != '' AND '$(SigningKeyPath)' == ''">$(TestFilters)&amp;category!=signed</TestFilters>
     <TestFiltersArgument Condition="'$(TestFilters)' != ''">
       --filter "$(TestFilters)"
     </TestFiltersArgument>
@@ -402,7 +402,7 @@
     the first step of this target.
   -->
   <PropertyGroup>
-    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
+    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientNotSupported" DependsOnTargets="$(BuildSqlClientNotSupportedDependsOn)">
     <PropertyGroup>
@@ -450,7 +450,7 @@
 
   <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
   <PropertyGroup>
-    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
+    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientRef" DependsOnTargets="$(BuildSqlClientRefDependsOn)">
     <PropertyGroup>
@@ -479,7 +479,7 @@
 
   <!-- BuildSqlClientUnix: Builds all unix-specific SqlClient binaries -->
   <PropertyGroup>
-    <BuildSqlClientUnixDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackLogging;PackSqlServer</BuildSqlClientUnixDependsOn>
+    <BuildSqlClientUnixDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientUnixDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientUnix" DependsOnTargets="$(BuildSqlClientUnixDependsOn)">
     <PropertyGroup>
@@ -510,7 +510,7 @@
 
   <!-- BuildSqlClientWindows: Builds all windows-specific SqlClient binaries -->
   <PropertyGroup>
-    <BuildSqlClientWindowsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackLogging;PackSqlServer</BuildSqlClientWindowsDependsOn>
+    <BuildSqlClientWindowsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientWindowsDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientWindows" DependsOnTargets="$(BuildSqlClientWindowsDependsOn)">
     <PropertyGroup>
@@ -691,14 +691,14 @@
   </Target>
 
   <!-- ================================================================= -->
-  <!-- Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider Targets -->
+  <!-- Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Targets -->
   <PropertyGroup>
     <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
     <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
     <AkvProviderArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/$(Configuration)/</AkvProviderArtifactRoot>
   </PropertyGroup>
 
-  <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider -->
+  <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider -->
   <PropertyGroup>
     <BuildAkvProviderDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackSqlClient;PackLogging</BuildAkvProviderDependsOn>
   </PropertyGroup>
@@ -725,7 +725,7 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Message Text=">>> Building Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -733,7 +733,7 @@
   <Target Name="PackAkvProvider">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" pack "$(AkvProviderProjectpath)"
+        "$(DotnetPath)dotnet" pack "$(AkvProviderProjectPath)"
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -754,7 +754,7 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Packaging Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Message Text=">>> Packaging Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
@@ -883,7 +883,7 @@
 
   <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
   <PropertyGroup>
-    <BuildAzureDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackAbstractions;PackLogging</BuildAzureDependsOn>
+    <BuildAzureDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions</BuildAzureDependsOn>
   </PropertyGroup>
   <Target Name="BuildAzure" DependsOnTargets="$(BuildAzureDependsOn)">
     <PropertyGroup>
