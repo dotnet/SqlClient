@@ -77,14 +77,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests
                 }
             }
 
-            using SqlBulkCopy edgeCopy = new SqlBulkCopy(dstConn);
+            using (SqlBulkCopy edgeCopy = new(dstConn))
+            {
+                edgeCopy.DestinationTableName = dstEdgeTable.Name;
+                edgeCopy.ColumnMappings.Add("To_ID", "$to_id");
+                edgeCopy.ColumnMappings.Add("From_ID", "$from_id");
+                edgeCopy.ColumnMappings.Add("Description", "Description");
 
-            edgeCopy.DestinationTableName = dstEdgeTable.Name;
-            edgeCopy.ColumnMappings.Add("To_ID", "$to_id");
-            edgeCopy.ColumnMappings.Add("From_ID", "$from_id");
-            edgeCopy.ColumnMappings.Add("Description", "Description");
+                edgeCopy.WriteToServer(edges);
+            }
 
-            edgeCopy.WriteToServer(edges);
+            // Read the values back, comparing to the source DataTable
+            using SqlCommand dstVerificationCommand = new($"SELECT $to_id, $from_id, [Description] FROM {dstEdgeTable.Name} ORDER BY $to_id ASC", dstConn);
+            using SqlDataReader dstVerificationReader = dstVerificationCommand.ExecuteReader();
+            int currentRow = 0;
+            DataRow[] sortedRows = edges.Select(filterExpression: null, sort: "To_ID ASC");
+
+            while (dstVerificationReader.Read())
+            {
+                string toId = dstVerificationReader.GetString(0);
+                string fromId = dstVerificationReader.GetString(1);
+                string description = dstVerificationReader.GetString(2);
+                DataRow currSourceRow = sortedRows[currentRow];
+
+                Assert.Equal(currSourceRow["To_ID"], toId);
+                Assert.Equal(currSourceRow["From_ID"], fromId);
+                Assert.Equal(currSourceRow["Description"], description);
+
+                currentRow++;
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAtLeastSQL2017))]
