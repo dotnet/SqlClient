@@ -19,6 +19,13 @@ namespace Microsoft.Data.SqlClient
         internal int _internalDestinationColumnOrdinal;
         internal int _internalSourceColumnOrdinal;   // -1 indicates an undetermined value
 
+        // Used by SqlBulkCopy to generate the correct column name after mapping alternate names.
+        internal string MappedDestinationColumn
+        {
+            get => field ?? DestinationColumn;
+            set => field = value;
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationColumn/*'/>
         public string DestinationColumn
         {
