@@ -71,3 +71,9 @@ variables:
   # WorkloadIdentityFederationServiceConnectionId
   - group: ADO Test Configuration Properties
 
+  # Well-known Variables ===================================================
+  - name: stageNamePack
+    value: "pack_stage"
+
+  - name: stageNameSecrets
+    value: "secrets_stage"

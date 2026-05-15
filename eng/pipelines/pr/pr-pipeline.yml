@@ -11,17 +11,26 @@ variables:
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
 
 stages:
-  # Stage 1: Build and pack all projects in the repository
+  # Stage 1a: Build and pack all projects in the repository
   - template: /eng/pipelines/pr/stages/pack-stage.yml
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
+      stageName: ${{ variables.stageNamePack }}
+
+  # Stage 1b: Generate secrets
+  - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml
+    parameters:
+      stageName: ${{ variables.stageNameSecrets }}
 
   # Stage 2: Execute tests and collect code coverage
   - template: /eng/pipelines/pr/stages/test-stages.yml
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
+      stageNamePack: ${{ variables.stageNamePack }}
+      stageNameSecrets: ${{ variables.stageNameSecrets }}
+
       manualTestConnectionStringTcp: $(SQL_TCP_CONN_STRING)
       manualTestConnectionStringNp: $(SQL_NP_CONN_STRING)
       manualTestAzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -60,4 +69,5 @@ stages:
           image: "ADO-UB22-SQL22"
           dotnet: "net10.0"
 
-
+  # Stage 3: Collect code coverage
+  # @TODO:

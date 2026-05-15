@@ -18,6 +18,12 @@ parameters:
   - name: buildSuffix
     type: string
 
+  - name: stageNamePack
+    type: string
+
+  - name: stageNameSecrets
+    type: string
+
   # Manual Test Configuration Parameters ==================================
 
   - name: manualTestConnectionStringTcp
@@ -76,7 +82,9 @@ stages:
   - ${{ each platform in parameters.platforms }}:
       - stage: "test_${{ platform.displayName }}"
         displayName: "Test: ${{ platform.displayName }}"
-        dependsOn: "build_and_pack_projects"
+        dependsOn:
+          - ${{ parameters.stageNamePack }}
+          - ${{ parameters.stageNameSecrets }}
 
         jobs:
           # TestAbstractions
