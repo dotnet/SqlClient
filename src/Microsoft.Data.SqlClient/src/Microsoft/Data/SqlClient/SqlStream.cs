@@ -536,8 +536,7 @@ namespace Microsoft.Data.SqlClient
             long skip = dataIndex - _charsReturned;
             while (skip > 0)
             {
-                char discard;
-                if (!TryReadNextChar(out discard))
+                if (!TryReadNextChar(out _))
                 {
                     return 0; // EOF
                 }
@@ -550,8 +549,7 @@ namespace Microsoft.Data.SqlClient
             int copied = 0;
             while (copied < length)
             {
-                char c;
-                if (!TryReadNextChar(out c))
+                if (!TryReadNextChar(out char c))
                 {
                     break;
                 }
@@ -591,7 +589,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private bool TryReadNextChar(out char c)
         {
-            // Deliver pending high surrogate first
+            // Deliver pending low surrogate first
             if (_pendingLowSurrogate.HasValue)
             {
                 c = _pendingLowSurrogate.Value;
@@ -599,63 +597,77 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            // Deliver from current text node
-            if (_currentTextNode != null && _textNodeIndex < _currentTextNode.Length)
+            // Loop to find the next char to return or EOF, filling _currentTextNode only when needed from nodes one at a time.
+            while (true)
             {
-                c = _currentTextNode[_textNodeIndex++];
-                if (char.IsHighSurrogate(c))
+                // Deliver from current text node
+                if (_currentTextNode != null && _textNodeIndex < _currentTextNode.Length)
                 {
-                    // Surrogate Pairs could not be split across text nodes
-                    _pendingLowSurrogate = _currentTextNode[_textNodeIndex++];
+                    c = _currentTextNode[_textNodeIndex++];
+                    if (char.IsHighSurrogate(c))
+                    {
+                        // Defend against corrupted/truncated database text fields
+                        if (_textNodeIndex < _currentTextNode.Length)
+                        {
+                            _pendingLowSurrogate = _currentTextNode[_textNodeIndex++];
+                        }
+                        else
+                        {
+                            // Treat as a broken character sequence unable to provide low surrogate.
+                            _pendingLowSurrogate = null;
+                        }
+                    }
+
+                    return true;
                 }
 
-                return true;
-            }
-
-            // Fill/Refill current text node, then recurse to deliver the next char from one single node at a time;
-            // will not read entire xml column if requested substring is met.
-            while (_xmlReader.Read())
-            {
-                // Not using XmlWriter since this maintains better control of allocations and prevents an intermediate buffer copy.
-                switch (_xmlReader.NodeType)
+                // Fill/Refill current text node, then loop the next char from one single node at a time;
+                // will not read entire xml column once requested substring is met.
+                if (_xmlReader.Read())
                 {
-                    case XmlNodeType.Element:
-                        _currentTextNode = BuildStartOrEmptyTag();
-                        _textNodeIndex = 0;
-                        return TryReadNextChar(out c);
+                    // Not using XmlWriter since this maintains better control of allocations and prevents an intermediate buffer copy.
+                    switch (_xmlReader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            _currentTextNode = BuildStartOrEmptyTag();
+                            _textNodeIndex = 0;
+                            break;
 
-                    case XmlNodeType.Text:
-                    case XmlNodeType.CDATA:
-                    case XmlNodeType.Whitespace:
-                    case XmlNodeType.SignificantWhitespace:
-                        _currentTextNode = ReadAllText();
-                        _textNodeIndex = 0;
-                        return TryReadNextChar(out c);
+                        case XmlNodeType.Text:
+                        case XmlNodeType.CDATA:
+                        case XmlNodeType.Whitespace:
+                        case XmlNodeType.SignificantWhitespace:
+                            _currentTextNode = ReadAllText();
+                            _textNodeIndex = 0;
+                            break;
 
-                    case XmlNodeType.ProcessingInstruction:
-                        _currentTextNode = $"<?{_xmlReader.Name} {_xmlReader.Value}?>";
-                        _textNodeIndex = 0;
-                        return TryReadNextChar(out c);
+                        case XmlNodeType.ProcessingInstruction:
+                            _currentTextNode = $"<?{_xmlReader.Name} {_xmlReader.Value}?>";
+                            _textNodeIndex = 0;
+                            break;
 
-                    case XmlNodeType.Comment:
-                        _currentTextNode = $"<!--{_xmlReader.Value}-->";
-                        _textNodeIndex = 0;
-                        return TryReadNextChar(out c);
+                        case XmlNodeType.Comment:
+                            _currentTextNode = $"<!--{_xmlReader.Value}-->";
+                            _textNodeIndex = 0;
+                            break;
 
-                    case XmlNodeType.EndElement:
-                        _currentTextNode = BuildEndTag();
-                        _textNodeIndex = 0;
-                        return TryReadNextChar(out c);
+                        case XmlNodeType.EndElement:
+                            _currentTextNode = BuildEndTag();
+                            _textNodeIndex = 0;
+                            break;
 
-                    default:
-                        // Skip EntityReference, DocumentType, XmlDeclaration which are normalized out by SQL Server
-                        continue;
+                        default:
+                            // Skip EntityReference, DocumentType, XmlDeclaration which are normalized out by SQL Server
+                            break;
+                    }
+                }
+                else
+                {
+                    // Ensure we don't return any stale chars after EOF
+                    c = '\0';
+                    return false; // EOF
                 }
             }
-
-            // Ensure we don't return any stale chars after EOF
-            c = '\0';
-            return false; // EOF
         }
 
         /// <summary>
@@ -672,16 +684,16 @@ namespace Microsoft.Data.SqlClient
             {
                 char[] buffer = new char[8192];
                 int read;
-                StringBuilder stringBuilder = new StringBuilder();
+                StringBuilder stringBuilder = new();
                 while ((read = _xmlReader.ReadValueChunk(buffer, 0, buffer.Length)) > 0)
                 {
-                    stringBuilder.Append(buffer, 0, read); // only valid chars
+                    stringBuilder.Append(buffer, 0, read); // only valid chars from the buffer
                 }
                 return stringBuilder.ToString();
             }
             else
             {
-                return _xmlReader.Value ?? string.Empty; // never null -> avoids trailing \0
+                return _xmlReader.Value ?? string.Empty; // never return null -> avoids trailing \0
             }
         }
 
