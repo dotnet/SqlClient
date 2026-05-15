@@ -24,7 +24,6 @@ parameters:
 
   - name: sqlServerPackageVersion
     type: string
-    default: $(sqlServerPackageVersion)
 
   - name: platform
     type: string
