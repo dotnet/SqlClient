@@ -229,7 +229,7 @@
 
     <!--
       SigningKeyPath
-      Applies to:     Build*, Pack*
+      Applies to:     Build*, Pack* (driver targets only)
       Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
                       will not be strong name signed.
                       For Pack* targets, this only applies to a build - ie, if PackBuild is set to
@@ -335,7 +335,7 @@
   <Target Name="Build" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
 
   <!-- Build all projects in the repo, for all supported OS and TargetFramework combinations.-->
-  <Target Name="BuildAll" DependsOnTargets="Build;BuildTests;BuildSamples;BuildTools" />
+  <Target Name="BuildAll" DependsOnTargets="Build;BuildTests;BuildSamples" />
 
   <!-- Clean: Convenience target to remove build/test output -->
   <Target Name="Clean">
@@ -1061,8 +1061,6 @@
       <AzureTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj</AzureTestsProjectPath>
 
       <SamplesProjectPath>$(RepoRoot)doc/samples/Microsoft.Data.SqlClient.Samples.csproj</SamplesProjectPath>
-
-      <GenApiProjectPath>$(RepoRoot)tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj</GenApiProjectPath>
   </PropertyGroup>
 
   <!-- Build all test projects. -->
@@ -1123,14 +1121,6 @@
     <Message Text="    Arguments: $(_DotnetArguments)"/>
     <Exec ConsoleToMsBuild="true"
           Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SamplesProjectPath)&quot; $(_DotnetArguments)" />
-  </Target>
-
-  <!-- Build all tools projects. -->
-  <Target Name="BuildTools">
-    <Message Importance="High" Text=">>> Building GenAPI"/>
-    <Message Text="    Arguments: $(_DotnetArguments)"/>
-    <Exec ConsoleToMsBuild="true"
-          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(GenApiProjectPath)&quot; $(_DotnetArguments)" />
   </Target>
 
 </Project>
