@@ -26,6 +26,13 @@ parameters:
     type: string
     default: Logging.Artifacts
 
+  # The Logging package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
   # The Abstractions package verion to depend on.
   #
   # This is used when the referenceType is 'Package'.
@@ -168,6 +175,7 @@ jobs:
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
 
