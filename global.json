@@ -4,7 +4,7 @@
     // We currently require the .NET 10 SDK to build and test the project.
     "version": "10.0.300",
 
-    // We cannot allow any roll forward due to the above MSBuild compatibility issues.
+    // Lock to the above version so that we can control when we take breaking sdk changes.
     "rollForward": "disable",
 
     // Do not allow pre-release versions.
