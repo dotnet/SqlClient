@@ -169,7 +169,7 @@ jobs:
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
           -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
