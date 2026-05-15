@@ -34,6 +34,7 @@ parameters:
 stages:
   - stage: ${{ parameters.stageName }}
     displayName: Build and Pack Projects
+    dependsOn: []
 
     jobs:
       - job: pack_job
