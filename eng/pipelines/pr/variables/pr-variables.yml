@@ -71,6 +71,18 @@ variables:
   # WorkloadIdentityFederationServiceConnectionId
   - group: ADO Test Configuration Properties
 
+  # These variables are used to construct the config file for manual tests.
+  #
+  # AzureKeyVaultTenantId
+  # AzureKeyVaultUrl
+  # ConnectionStringNp_Azure_ManagedIdentity
+  # ConnectionStringNp_LocalhostDefault_UsernamePassword
+  # ConnectionStringTcp_Azure_ManagedIdentity
+  # ConnectionStringTcp_LocalhostDefault_UsernamePassword
+  # LocalDbAppName
+  # LocalDbSharedInstanceName
+  - group: sqlclient-testconfig-v1
+
   # Well-known Variables ===================================================
   - name: stageNamePack
     value: "pack_stage"

@@ -26,16 +26,22 @@ parameters:
 
   # Manual Test Configuration Parameters ==================================
 
-  - name: manualTestConnectionStringTcp
-    type: string
-
-  - name: manualTestConnectionStringNp
+  - name: manualTestAzureKeyVaultTenantId
     type: string
 
   - name: manualTestAzureKeyVaultUrl
     type: string
 
-  - name: manualTestAzureKeyVaultTenantId
+  - name: manualTestConnectionStringNpAzure
+    type: string
+
+  - name: manualTestConnectionStringNpLocalhost
+    type: string
+
+  - name: manualTestConnectionStringTcpAzure
+    type: string
+
+  - name: manualTestConnectionStringTcpLocalhost
     type: string
 
   - name: manualTestFileStreamDirectory
@@ -45,21 +51,6 @@ parameters:
     type: string
 
   - name: manualTestLocalDbSharedInstanceName
-    type: string
-
-  - name: manualTestAliasName
-    type: string
-
-  - name: manualTestSupportsIntegratedSecurity
-    type: string
-
-  - name: manualTestSupportsFileStream
-    type: string
-
-  - name: manualTestUseManagedSNIOnWindows
-    type: string
-
-  - name: manualTestManagedIdentitySupported
     type: string
 
   - name: manualTestSaPassword
@@ -124,7 +115,7 @@ stages:
               testDisplayName: "sqlclient_functional"
               testProject: "Functional"
 
-          # TestSqlClientManual - PR subset
+          # TestSqlClientManual - Localhost
           - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -135,17 +126,26 @@ stages:
 
               azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
               azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
-              connectionStringNp: ${{ parameters.manualTestConnectionStringNp }}
-              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcp }}
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
-              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
-              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
-              aliasName: ${{ parameters.manualTestAliasName }}
-              supportsIntegratedSecurity: ${{ parameters.manualTestSupportsIntegratedSecurity }}
-              supportsFileStream: ${{ parameters.manualTestSupportsFileStream }}
-              useManagedSNIOnWindows: ${{ parameters.manualTestUseManagedSNIOnWindows }}
-              managedIdentitySupported: ${{ parameters.manualTestManagedIdentitySupported }}
               saPassword: ${{ parameters.manualTestSaPassword }}
+
+#          # TestSqlClientManual - Azure
+#          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+#            parameters:
+#              buildConfiguration: ${{ parameters.buildConfiguration }}
+#              buildSuffix: ${{ parameters.buildSuffix }}
+#              platformDisplayName: ${{ platform.displayName }}
+#              platformDotnet: ${{ platform.dotnet }}
+#              platformImage: ${{ platform.image }}
+#
+#              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+#              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+#              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
+#              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
+#              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+#              saPassword: ${{ parameters.manualTestSaPassword }}
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self

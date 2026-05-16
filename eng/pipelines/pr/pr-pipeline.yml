@@ -31,19 +31,6 @@ stages:
       stageNamePack: ${{ variables.stageNamePack }}
       stageNameSecrets: ${{ variables.stageNameSecrets }}
 
-      manualTestConnectionStringTcp: $(SQL_TCP_CONN_STRING)
-      manualTestConnectionStringNp: $(SQL_NP_CONN_STRING)
-      manualTestAzureKeyVaultUrl: $(AzureKeyVaultUrl)
-      manualTestAzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-      manualTestFileStreamDirectory: $(FileStreamDirectory)
-      manualTestLocalDbAppName: $(LocalDbAppName)
-      manualTestLocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-      manualTestAliasName: ''
-      manualTestSupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
-      manualTestSupportsFileStream: 'false'
-      manualTestUseManagedSNIOnWindows: $(UseManagedSNIOnWindows)
-      manualTestManagedIdentitySupported: 'true'
-      manualTestSaPassword: $(Password)
       platforms:
         # @TODO: Expand to cover different SQL Server targets
         - displayName: "windows_net462"
@@ -68,6 +55,16 @@ stages:
         - displayName: "linux_net10"
           image: "ADO-UB22-SQL22"
           dotnet: "net10.0"
+
+      manualTestAzureKeyVaultUrl: $(AzureKeyVaultUrl)
+      manualTestAzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+      manualTestConnectionStringLocalNp: $(ConnectionStringNp_LocalhostDefault_UsernamePassword)
+      manualTestConnectionStringLocalTcp: $(ConnectionStringTcp_LocalhostDefault_UsernamePassword)
+      manualTestConnectionStringAzureNp: $(ConnectionStringNp_Azure_ManagedIdentity)
+      manualTestConnectionStringAzureTcp: $(ConnectionStringTcp_Azure_ManagedIdentity)
+      manualTestFileStreamDirectory: "$(Pipeline.Workspace)/filestream"
+      manualTestLocalDbAppName: $(LocalDbAppName)
+      manualTestLocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
   # Stage 3: Collect code coverage
   # @TODO:

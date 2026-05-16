@@ -1,0 +1,45 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # Version of .NET to use to build and run the Ext Utilities that will install the test database.
+  - name: dotnetVersion
+    type: string
+
+  # Path to use for file stream tests. This only applies to Windows test runs.
+  - name: fileStreamDirectory
+    type: string
+
+  # Password to use for the SA account. This should be generated from the generate-secrets-stage.
+  - name: saPassword
+    type: string
+
+steps:
+  - ${{ if eq(Agent.OS, 'Windows_NT') }}:
+      - template: /eng/pipelines/pr/steps/configure-sqlserver-windows-step.yml@self
+        parameters:
+          fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+          saPassword: ${{ parameters.saPassword }}
+
+  - ${{ elseif eq(Agent.OS, 'Linux') }}:
+      - template: /eng/pipelines/common/templates/steps/configure-sqlserver-linux-step.yml@self
+        parameters:
+          saPassword: ${{ parameters.saPassword }}
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Ext Utilities'
+    inputs:
+      command: build
+      arguments: '-f ${{ parameters.dotnetVersion }}'
+      workingDirectory: 'src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities'
+    retryCountOnTaskFailure: 1
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Create Northwind Database'
+    inputs:
+      command: run
+      arguments: '-f ${{ parameters.dotnetVersion }} -- "CreateDatabase" Northwind'
+      workingDirectory: 'src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities'
