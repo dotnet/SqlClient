@@ -70,7 +70,6 @@ jobs:
 
       - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
         parameters:
-          dotnetVersion: ${{ parameters.platformDotnet }}
           fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
           operatingSystem: ${{ parameters.platformOperatingSystem }}
           saPassword: ${{ parameters.saPassword }}

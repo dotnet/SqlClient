@@ -96,4 +96,18 @@ steps:
     retryCountOnTaskFailure: 1
     continueOnError: true
 
+  - powershell: |
+      $machineName = $env:COMPUTERNAME
+      $scriptPath = "$(Build.SourcesDirectory)\tools\testsql\createNorthwindDb.sql"
+
+      Invoke-Sqlcmd -ServerInstance "$machineName" -Query "
+        IF DB_ID(N'Northwind') IS NOT NULL
+        BEGIN
+          ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+          DROP DATABASE [Northwind];
+        END"
+
+      Invoke-Sqlcmd -ServerInstance "$machineName" -InputFile $scriptPath
+    displayName: 'Create Northwind Database [Win]'
+    retryCountOnTaskFailure: 1
 
