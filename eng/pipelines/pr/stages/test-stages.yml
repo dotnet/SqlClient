@@ -125,6 +125,7 @@ stages:
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
 
               azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
               azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}

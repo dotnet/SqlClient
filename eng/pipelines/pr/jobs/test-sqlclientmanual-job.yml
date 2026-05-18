@@ -25,6 +25,9 @@ parameters:
   - name: platformImage
     type: string
 
+  - name: platformOperatingSystem
+    type: string
+
   # Test Configuration Parameters ==========================================
 
   - name: azureKeyVaultTenantId
@@ -69,6 +72,7 @@ jobs:
         parameters:
           dotnetVersion: ${{ parameters.platformDotnet }}
           fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+          operatingSystem: ${{ parameters.platformOperatingSystem }}
           saPassword: ${{ parameters.saPassword }}
 
       # @TODO: Document these thingies
@@ -95,7 +99,7 @@ jobs:
           $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = true
 
-          $enableWindowsLocalFeatures = "$(Agent.OS)" -eq "Windows_NT"
+          $enableWindowsLocalFeatures = "${{ parameters.platformOperatingSystem }}" -eq "Windows"
           $config.SupportsFileStream = $enableWindowsLocalFeatures
           $config.FileStreamDirectory = if ($enableWindowsLocalFeatures) { "${{ parameters.fileStreamDirectory }}" } else { "" }
           $config.SupportsIntegratedSecurity = $enableWindowsLocalFeatures
