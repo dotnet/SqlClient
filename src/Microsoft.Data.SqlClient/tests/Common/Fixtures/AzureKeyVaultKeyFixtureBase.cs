@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys;
 
@@ -20,20 +21,41 @@ namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 public abstract class AzureKeyVaultKeyFixtureBase : IDisposable
 {
     private readonly KeyClient _keyClient;
-    private readonly Random _randomGenerator;
+    private readonly RandomNumberGenerator _randomGenerator;
 
     private readonly List<KeyVaultKey> _createdKeys = new List<KeyVaultKey>();
 
     protected AzureKeyVaultKeyFixtureBase(Uri keyVaultUri, TokenCredential keyVaultToken)
     {
         _keyClient = new KeyClient(keyVaultUri, keyVaultToken);
-        _randomGenerator = new Random();
+        _randomGenerator = RandomNumberGenerator.Create();
     }
 
     protected Uri CreateKey(string name, int keySize)
     {
-        CreateRsaKeyOptions createOptions = new CreateRsaKeyOptions(GenerateUniqueName(name)) { KeySize = keySize };
-        KeyVaultKey created = _keyClient.CreateRsaKey(createOptions);
+        const int MaxConflictResolutions = 5;
+        KeyVaultKey created;
+        int i = 0;
+
+        while (true)
+        {
+            CreateRsaKeyOptions createOptions = new CreateRsaKeyOptions(GenerateUniqueName(name)) { KeySize = keySize };
+
+            try
+            {
+                created = _keyClient.CreateRsaKey(createOptions);
+                break;
+            }
+            // It's possible for a key to already exist with the same name, even in a deleted state. If so, CreateRsaKey
+            // will throw an exception with HTTP status code 409 (Conflict.)
+            // We can't assume we possess permissions to purge or to recover the key, so regenerate the name and try again.
+            // Only make MaxConflictResolutions attempts, to avoid possible infinite loops.
+            catch (Azure.RequestFailedException conflictException)
+                when (conflictException.Status == 409 && i < MaxConflictResolutions)
+            {
+                i++;
+            }
+        }
 
         _createdKeys.Add(created);
         return created.Id;
@@ -43,7 +65,7 @@ public abstract class AzureKeyVaultKeyFixtureBase : IDisposable
     {
         byte[] rndBytes = new byte[16];
 
-        _randomGenerator.NextBytes(rndBytes);
+        _randomGenerator.GetBytes(rndBytes);
         return name + "-" + BitConverter.ToString(rndBytes);
     }
 
@@ -66,5 +88,7 @@ public abstract class AzureKeyVaultKeyFixtureBase : IDisposable
                 continue;
             }
         }
+
+        _randomGenerator.Dispose();
     }
 }
