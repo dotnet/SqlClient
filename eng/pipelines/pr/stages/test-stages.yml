@@ -53,9 +53,6 @@ parameters:
   - name: manualTestLocalDbSharedInstanceName
     type: string
 
-  - name: manualTestSaPassword
-    type: string
-
   # This is an array of objects with the following fields:
   # - displayName - Friendly name to use when displaying the stage name and job names. This must
   #                 only contain alphanumeric characters and '_'. It will be used for both display
@@ -76,6 +73,11 @@ stages:
         dependsOn:
           - ${{ parameters.stageNamePack }}
           - ${{ parameters.stageNameSecrets }}
+
+        variables:
+          # Bring the generated SA password from the secrets stage into scope for this test stage.
+          - name: manualTestSaPassword
+            value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
 
         jobs:
           # TestAbstractions
@@ -129,7 +131,9 @@ stages:
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
-              saPassword: ${{ parameters.manualTestSaPassword }}
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              saPassword: $(manualTestSaPassword)
 
 #          # TestSqlClientManual - Azure
 #          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
@@ -145,7 +149,9 @@ stages:
 #              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
 #              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
 #              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
-#              saPassword: ${{ parameters.manualTestSaPassword }}
+#              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+#              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+#              saPassword: $(manualTestSaPassword)
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self

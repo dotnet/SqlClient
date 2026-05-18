@@ -42,6 +42,12 @@ parameters:
   - name: fileStreamDirectory
     type: string
 
+  - name: localDbAppName
+    type: string
+
+  - name: localDbSharedInstanceName
+    type: string
+
   - name: saPassword
     type: string
 
@@ -85,12 +91,14 @@ jobs:
           $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
           $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
           $config.AzureKeyVaultTenantId = "${{ parameters.azureKeyVaultTenantId }}"
-          $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
-
-          $config.SupportsIntegratedSecurity = false
-          $config.SupportsFileStream = true
-          $config.UseManagedSNIOnWindows = true
+          $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
+          $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = true
+
+          $enableWindowsLocalFeatures = "$(Agent.OS)" -eq "Windows_NT"
+          $config.SupportsFileStream = $enableWindowsLocalFeatures
+          $config.FileStreamDirectory = if ($enableWindowsLocalFeatures) { "${{ parameters.fileStreamDirectory }}" } else { "" }
+          $config.SupportsIntegratedSecurity = $enableWindowsLocalFeatures
 
           $config | ConvertTo-Json | Set-Content $configPath
 

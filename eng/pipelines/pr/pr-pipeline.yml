@@ -36,32 +36,39 @@ stages:
         - displayName: "windows_net462"
           image: "ADO-MMS22-SQL22"
           dotnet: "net462"
+          operatingSystem: "Windows"
         - displayName: "windows_net8"
           image: "ADO-MMS22-SQL22"
           dotnet: "net8.0"
+          operatingSystem: "Windows"
         - displayName: "windows_net9"
           image: "ADO-MMS22-SQL22"
           dotnet: "net9.0"
+          operatingSystem: "Windows"
         - displayName: "windows_net10"
           image: "ADO-MMS22-SQL22"
           dotnet: "net10.0"
+          operatingSystem: "Windows"
 
         - displayName: "linux_net8"
           image: "ADO-UB22-SQL22"
           dotnet: "net8.0"
+          operatingSystem: "Linux"
         - displayName: "linux_net9"
           image: "ADO-UB22-SQL22"
           dotnet: "net9.0"
+          operatingSystem: "Linux"
         - displayName: "linux_net10"
           image: "ADO-UB22-SQL22"
           dotnet: "net10.0"
+          operatingSystem: "Linux"
 
       manualTestAzureKeyVaultUrl: $(AzureKeyVaultUrl)
       manualTestAzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-      manualTestConnectionStringLocalNp: $(ConnectionStringNp_LocalhostDefault_UsernamePassword)
-      manualTestConnectionStringLocalTcp: $(ConnectionStringTcp_LocalhostDefault_UsernamePassword)
-      manualTestConnectionStringAzureNp: $(ConnectionStringNp_Azure_ManagedIdentity)
-      manualTestConnectionStringAzureTcp: $(ConnectionStringTcp_Azure_ManagedIdentity)
+      manualTestConnectionStringNpLocalhost: $(ConnectionStringNp_LocalhostDefault_UsernamePassword)
+      manualTestConnectionStringTcpLocalhost: $(ConnectionStringTcp_LocalhostDefault_UsernamePassword)
+      manualTestConnectionStringNpAzure: $(ConnectionStringNp_Azure_ManagedIdentity)
+      manualTestConnectionStringTcpAzure: $(ConnectionStringTcp_Azure_ManagedIdentity)
       manualTestFileStreamDirectory: "$(Pipeline.Workspace)/filestream"
       manualTestLocalDbAppName: $(LocalDbAppName)
       manualTestLocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
