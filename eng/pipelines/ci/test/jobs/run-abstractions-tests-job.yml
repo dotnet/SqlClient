@@ -1,0 +1,125 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# jobs/run-abstractions-tests-job.yml
+#
+# PURPOSE
+#   Reusable job template that runs Abstractions package tests via build.proj target
+#   TestAbstractions.
+#
+#   The job:
+#     1. Downloads upstream-packages so restore can resolve package dependencies.
+#     2. Downloads pre-compiled Abstractions test outputs from compile_stage.
+#     3. Installs required .NET runtimes.
+#     4. Invokes build.proj target TestAbstractions through DotNetCoreCLI@2 using command: build
+#        with TestNoBuild=true and TestNoRestore=true.
+#     5. Publishes .trx result files via publish-results-step.yml.
+#
+####################################################################################################
+
+parameters:
+  # Unique job identifier used in pipeline dependencies and conditions.
+  - name: jobName
+    type: string
+
+  # Human-readable job name shown in the Azure DevOps UI.
+  - name: jobDisplayName
+    type: string
+
+  # Agent pool name (1ES self-hosted or Azure Pipelines hosted).
+  - name: poolName
+    type: string
+
+  # The pool image name — either a vmImage (hosted) or an imageOverride demand (1ES self-hosted).
+  - name: image
+    type: string
+
+  # Target CPU architecture. Determines which dotnet runtime to invoke.
+  - name: architecture
+    type: string
+    values:
+      - x64
+      - x86
+
+  # Target framework moniker passed to build.proj (e.g. net9.0).
+  - name: targetFramework
+    type: string
+
+  # MSBuild configuration; must match the configuration used at compile time.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Pipeline artifact name containing pre-compiled Abstractions test outputs.
+  - name: compileArtifactName
+    type: string
+
+  # Enable verbose diagnostic output in SDK installation steps.
+  - name: debug
+    type: boolean
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    displayName: ${{ parameters.jobDisplayName }}
+    pool:
+      name: ${{ parameters.poolName }}
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.image }}
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.image }}
+
+    variables:
+      abstractionsPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      loggingPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
+      sqlClientPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
+      sqlServerPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
+
+    steps:
+      - checkout: self
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Upstream Packages
+        inputs:
+          artifactName: upstream-packages
+          targetPath: $(localFeedPath)
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Compiled Test Outputs
+        inputs:
+          artifactName: ${{ parameters.compileArtifactName }}
+          targetPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions
+
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: ${{ parameters.architecture }}
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x]
+
+      - task: DotNetCoreCLI@2
+        displayName: Run Abstractions Tests (build.proj)
+        inputs:
+          command: build
+          projects: $(Build.SourcesDirectory)/build.proj
+          arguments: >-
+            -t:TestAbstractions
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:TestArchitecture=${{ parameters.architecture }}
+            -p:ReferenceType=Package
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestNoBuild=true
+            -p:TestNoRestore=true
+            -p:TestResultsFolderPath=$(testResultsDirectory)
+
+      - template: /eng/pipelines/ci/test/steps/publish-results-step.yml@self
+        parameters:
+          testRunTitle: ${{ format('Abstractions_{0}', parameters.targetFramework) }}

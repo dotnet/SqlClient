@@ -312,6 +312,53 @@
     <TestFrameworkArgument Condition="'$(TestFramework)' != ''">-f $(TestFramework)</TestFrameworkArgument>
 
     <!--
+      TestArchitecture
+      Applies to:     BuildSqlClientTests*, BuildAbstractionsTests, BuildAzureTests,
+                      Test* targets
+      Description:    Architecture used by dotnet build/test commands for test projects.
+                      Leave blank to use the SDK default for the host.
+      Default value:  [blank]
+      Allowed values: (x64|x86|arm64|[blank])
+    -->
+    <TestArchitecture Condition="'$(TestArchitecture)' == ''" />
+    <TestArchitectureArgument Condition="'$(TestArchitecture)' != ''">--arch $(TestArchitecture)</TestArchitectureArgument>
+
+    <!--
+      TestNoBuild
+      Applies to:     Test* targets
+      Description:    When true, test targets pass the no-build flag to dotnet test so tests run
+                      against previously compiled binaries. This enables compile-once,
+                      run-many workflows in CI.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <TestNoBuild Condition="'$(TestNoBuild)' == ''">false</TestNoBuild>
+    <TestNoBuildArgument Condition="'$(TestNoBuild.ToLower())' == 'true'">--no-build</TestNoBuildArgument>
+
+    <!--
+      TestNoRestore
+      Applies to:     Test* targets
+      Description:    When true, test targets pass the no-restore flag to dotnet test. Use this with
+                      TestNoBuild=true when restore/build already happened in an earlier stage.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <TestNoRestore Condition="'$(TestNoRestore)' == ''">false</TestNoRestore>
+    <TestNoRestoreArgument Condition="'$(TestNoRestore.ToLower())' == 'true'">--no-restore</TestNoRestoreArgument>
+
+    <!--
+      TestBuildNoRestore
+      Applies to:     BuildSqlClientTests*
+      Description:    When true, BuildSqlClientTests* targets pass the no-restore flag to
+                      dotnet build. Use this when restore has already completed in an earlier
+                      pipeline stage.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <TestBuildNoRestore Condition="'$(TestBuildNoRestore)' == ''">false</TestBuildNoRestore>
+    <TestBuildNoRestoreArgument Condition="'$(TestBuildNoRestore.ToLower())' == 'true'">--no-restore</TestBuildNoRestoreArgument>
+
+    <!--
       TestResultsFolderPath
       Applies to:    Test* targets
       Description:   Absolute path to directory where any test results should be dumped. If not
@@ -595,6 +642,62 @@
       SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- Build SqlClient Test Targets =========================================== -->
+  <!--
+    BuildSqlClientTests: Builds SqlClient functional and manual test projects.
+    This target is intended for compile-once, run-many workflows where test execution happens
+    later (for example in separate jobs/stages) using TestNoBuild/TestNoRestore.
+  -->
+  <Target Name="BuildSqlClientTests" DependsOnTargets="BuildSqlClientTestsFunctional;BuildSqlClientTestsManual" />
+
+  <!-- BuildSqlClientTestsFunctional: Builds functional tests without executing them -->
+  <Target Name="BuildSqlClientTestsFunctional">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(SqlClientFunctionalTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestFrameworkArgument)
+        $(TestBuildNoRestoreArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Building functional tests for SqlClient via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildSqlClientTestsManual: Builds manual tests without executing them -->
+  <Target Name="BuildSqlClientTestsManual">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(SqlClientManualTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestFrameworkArgument)
+        $(TestBuildNoRestoreArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Text=">>> Building manual tests for SqlClient via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
   <!-- Test SqlClient Targets ==================================================== -->
   <!-- TestSqlClient: Runs all test projects for SqlClient -->
   <Target Name="TestSqlClient" DependsOnTargets="TestSqlClientFunctional;TestSqlClientManual;TestSqlClientUnit" />
@@ -609,6 +712,9 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientFunctionalTestProjectPath)"
         -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestNoBuildArgument)
+        $(TestNoRestoreArgument)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -640,6 +746,9 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientManualTestProjectPath)"
         -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestNoBuildArgument)
+        $(TestNoRestoreArgument)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -675,6 +784,9 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestNoBuildArgument)
+        $(TestNoRestoreArgument)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -857,18 +969,53 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AbstractionsTestProjectPath)"
         -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestNoBuildArgument)
+        $(TestNoRestoreArgument)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildAbstractionsTests: Builds Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
+  <Target Name="BuildAbstractionsTests">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AbstractionsTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestFrameworkArgument)
+        $(TestBuildNoRestoreArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building tests for Abstractions via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -955,6 +1102,9 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AzureTestProjectPath)"
         -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestNoBuildArgument)
+        $(TestNoRestoreArgument)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -974,6 +1124,31 @@
     </PropertyGroup>
 
     <Message Text=">>> Running tests for Azure via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildAzureTests: Builds Microsoft.Data.SqlClient.Extensions.Azure.Tests -->
+  <Target Name="BuildAzureTests">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AzureTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestArchitectureArgument)
+        $(TestFrameworkArgument)
+        $(TestBuildNoRestoreArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building tests for Azure via command: $(DotnetCommand)" />
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 

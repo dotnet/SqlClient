@@ -1,0 +1,42 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# PURPOSE
+#   Pipeline-wide variable definitions shared by every stage and job. Included as the first template
+#   in the top-level sqlclient-test.yml variables block. Contains infrastructure constants and
+#   secret group imports. The OS/TF execution matrix is defined in stages/matrix-stages.yml.
+#
+####################################################################################################
+
+variables:
+  # SQL Server connection strings (SQL_TCP_CONN_STRING, SQL_NP_CONN_STRING) consumed by
+  # configure-test-config-step.yml at runtime.
+  - group: ADO Test Configuration Properties
+
+  # Agent pool name, derived from the Azure DevOps project the pipeline runs in.
+  # macOS jobs use 'Azure Pipelines' (hosted) instead; see matrix-stages.yml.
+  - name: ciPoolName
+    ${{ if eq(variables['System.TeamProject'], 'Public') }}:
+      value: ADO-CI-1ES-Pool
+    ${{ else }}:
+      value: ADO-1ES-Pool
+
+  # Absolute path where upstream .nupkg files are copied to form a local NuGet feed. Used as a
+  # --source argument in 'dotnet restore' and as the source directory when publishing the
+  # 'upstream-packages' artifact.
+  - name: localFeedPath
+    value: $(Build.SourcesDirectory)/packages
+
+  # The artifact name within the upstream sqlclient-package pipeline run that holds the NuGet
+  # packages. Must match the artifact name used when the upstream pipeline publishes its packages.
+  - name: packageArtifactName
+    value: Packages
+
+  # Absolute path where dotnet test writes .trx result files. Referenced by the test steps
+  # (--results-directory) and publish-results-step.yml (testResultsFiles glob).  Uses the standard
+  # ADO agent temp directory rather than the source tree.
+  - name: testResultsDirectory
+    value: $(Common.TestResultsDirectory)

@@ -1,0 +1,152 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# jobs/run-functional-tests-job.yml
+#
+# PURPOSE
+#   Reusable job template that runs the FunctionalTests project against a live SQL Server instance
+#   on the agent. Called once per OS test stage by test-stage.yml. The job:
+#     1. Downloads upstream-packages (local NuGet feed) and the pre-compiled test artifact
+#        produced by compile-tests-job.yml.
+#     2. Installs the required .NET runtimes.
+#     3. Writes config.json with the SQL Server connection strings and OS-specific settings via
+#        configure-test-config-step.yml.
+#     4. Runs build.proj target TestSqlClientFunctional in no-build/no-restore mode against
+#        pre-compiled test binaries.
+#     5. Publishes .trx result files via publish-results-step.yml.
+#
+#   The compiled test artifact is downloaded into $(Build.SourcesDirectory)/src/
+#   Microsoft.Data.SqlClient so the path structure matches what was published (the compile job
+#   publishes the tests/ subdirectory from that same root).
+#
+#   The test step uses DotNetCoreCLI@2 (command: build) to invoke build.proj target
+#   TestSqlClientFunctional with TestNoBuild=true and TestNoRestore=true.
+#
+#   Package versions (abstractionsPackageVersion, loggingPackageVersion, sqlClientPackageVersion,
+#   sqlServerPackageVersion) are runtime output variables from setup_stage. They are mapped as
+#   job-level variables here and passed to the target in package mode.
+#
+####################################################################################################
+
+parameters:
+  # Unique ADO job identifier, e.g. functional_windows_x64_sql22.
+  - name: jobName
+    type: string
+
+  # Human-readable label shown in the pipeline UI.
+  - name: jobDisplayName
+    type: string
+
+  # Controls SupportsIntegratedSecurity in config.json (Windows Auth is only available on
+  # Windows agents) and is included in the test run title.
+  - name: operatingSystem
+    type: string
+    values:
+      - Windows
+      - Linux
+      - Mac
+
+  # Agent pool name.
+  - name: poolName
+    type: string
+
+  # The pool image name — either a vmImage (hosted) or an imageOverride demand (1ES self-hosted).
+  - name: image
+    type: string
+
+  # Dotnet/runtime architecture installed on the agent and forwarded to build.proj via
+  # TestArchitecture.
+  - name: architecture
+    type: string
+    values:
+      - x64
+      - x86
+
+  # TFM passed to build.proj via TestFramework, must match the compiled artifact.
+  - name: targetFramework
+    type: string
+
+  # Configuration passed to build.proj via Configuration, must match the compiled artifact
+  # configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Name of the pipeline artifact that holds the pre-compiled test output. Must match the
+  # artifact published by compile-tests-job.yml for this OS.
+  - name: compileArtifactName
+    type: string
+
+  # Enables verbose diagnostics in the install-dotnet step.
+  - name: debug
+    type: boolean
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    displayName: ${{ parameters.jobDisplayName }}
+    pool:
+      name: ${{ parameters.poolName }}
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.image }}
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.image }}
+
+    variables:
+      abstractionsPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      loggingPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
+      sqlClientPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
+      sqlServerPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
+
+    steps:
+      - checkout: self
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Upstream Packages
+        inputs:
+          artifactName: upstream-packages
+          targetPath: $(localFeedPath)
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Compiled Test Outputs
+        inputs:
+          artifactName: ${{ parameters.compileArtifactName }}
+          targetPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient
+
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: ${{ parameters.architecture }}
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x]
+
+      - template: /eng/pipelines/ci/test/steps/configure-test-config-step.yml@self
+        parameters:
+          operatingSystem: ${{ parameters.operatingSystem }}
+
+      - task: DotNetCoreCLI@2
+        displayName: Run Functional Tests (build.proj)
+        inputs:
+          command: build
+          projects: $(Build.SourcesDirectory)/build.proj
+          arguments: >-
+            -t:TestSqlClientFunctional
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:TestArchitecture=${{ parameters.architecture }}
+            -p:ReferenceType=Package
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestNoBuild=true
+            -p:TestNoRestore=true
+            -p:TestResultsFolderPath=$(testResultsDirectory)
+
+      - template: /eng/pipelines/ci/test/steps/publish-results-step.yml@self
+        parameters:
+          testRunTitle: ${{ format('Functional_{0}_{1}', parameters.operatingSystem, parameters.targetFramework) }}

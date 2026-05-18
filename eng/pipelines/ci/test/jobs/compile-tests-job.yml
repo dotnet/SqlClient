@@ -1,0 +1,131 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# jobs/compile-tests-job.yml
+#
+# PURPOSE
+#   Reusable job template that invokes build.proj target BuildSqlClientTests to restore and build
+#   the FunctionalTests and ManualTests projects in Package reference mode
+#   (-p:ReferenceType=Package), then publishes the compiled test binaries as a named pipeline
+#   artifact. Called once per OS+Arch+TF triple by compile-stage.yml.
+#
+#   Using ReferenceType=Package causes the projects to reference Microsoft.Data.SqlClient as a
+#   NuGet package (from the upstream local feed) rather than as a project reference to the source
+#   tree. This is the correct mode for testing published packages.
+#
+#   NuGet restore resolves packages through the sources declared in NuGet.config: the governed
+#   feed for vetted packages, and the 'packages/' local feed ($(localFeedPath)) where the
+#   upstream artifact was downloaded by setup_stage. No --source arguments are needed on the
+#   build task.
+#
+####################################################################################################
+
+parameters:
+  # Unique ADO job identifier, e.g. compile_windows_x64_net9_0.
+  - name: jobName
+    type: string
+
+  # Human-readable label shown in the pipeline UI.
+  - name: jobDisplayName
+    type: string
+
+  # Name of the 1ES agent pool (or 'Azure Pipelines' for hosted).
+  - name: poolName
+    type: string
+
+  # The pool image name — either a vmImage (hosted) or an imageOverride demand (1ES self-hosted).
+  - name: image
+    type: string
+
+  # Dotnet/runtime architecture installed on the agent and forwarded to build.proj via
+  # TestArchitecture.
+  - name: architecture
+    type: string
+    values:
+      - x64
+      - x86
+
+  # TFM passed to build.proj via TestFramework, e.g. net9.0. Determines which TFM output
+  # directory is compiled and later downloaded by test jobs.
+  - name: targetFramework
+    type: string
+
+  # Build configuration passed to build.proj via Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Name of the pipeline artifact to publish containing the compiled test output. Must match
+  # the name used in the corresponding test jobs' DownloadPipelineArtifact step, e.g.
+  # compiled-tests-windows-x64-net9-0.
+  - name: compileArtifactName
+    type: string
+
+  # Enables verbose diagnostics in the install-dotnet step.
+  - name: debug
+    type: boolean
+
+  # Verbosity level for dotnet restore/build (-v flag).
+  - name: dotnetVerbosity
+    type: string
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    displayName: ${{ parameters.jobDisplayName }}
+    pool:
+      name: ${{ parameters.poolName }}
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.image }}
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.image }}
+
+    variables:
+      abstractionsPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      loggingPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
+      sqlClientPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
+      sqlServerPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
+
+    steps:
+      - checkout: self
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Upstream Packages
+        inputs:
+          artifactName: upstream-packages
+          targetPath: $(localFeedPath)
+
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: ${{ parameters.architecture }}
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x]
+
+      - task: DotNetCoreCLI@2
+        displayName: Build SqlClient Test Projects (build.proj)
+        inputs:
+          command: build
+          projects: $(Build.SourcesDirectory)/build.proj
+          arguments: >-
+            -t:BuildSqlClientTests
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:TestArchitecture=${{ parameters.architecture }}
+            -p:ReferenceType=Package
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -verbosity:${{ parameters.dotnetVerbosity }}
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Compiled Test Outputs
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests
+          artifactName: ${{ parameters.compileArtifactName }}
+          publishLocation: pipeline

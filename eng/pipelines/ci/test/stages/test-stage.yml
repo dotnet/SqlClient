@@ -1,0 +1,109 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# stages/test-stage.yml
+#
+# PURPOSE
+#   Generates test stages from the matrix. Each matrix entry produces one stage. Within each
+#   stage, jobs are multiplied by targetFrameworks and (for SQL-dependent tests) sqlVariants:
+#     - SQL-dependent jobs (Functional, Manual) are multiplied by targetFrameworks × sqlVariants,
+#       running once per TFM per SQL Server version on the variant-specific agent image.
+#     - SQL-independent jobs (Abstractions, Azure) are multiplied by targetFrameworks only,
+#       running once per TFM using the entry-level pool/image.
+#
+#   All jobs download the pre-compiled test artifacts from compile_stage and run with --no-build
+#   — no compilation occurs on test agents.
+#
+# STAGES GENERATED (per matrix entry)
+#   test_<os>_<arch>  (dependsOn: [setup_stage, compile_stage])
+#
+# JOBS (per stage)
+#   functional_<os>_<arch>_<tfm>_<variant>  — FunctionalTests (per TFM × sqlVariant)
+#   manual_<os>_<arch>_<tfm>_<variant>      — ManualTests (per TFM × sqlVariant)
+#   abstractions_<os>_<arch>_<tfm>          — Abstractions tests (per TFM)
+#   azure_<os>_<arch>_<tfm>                 — Azure extension tests (per TFM)
+#
+####################################################################################################
+
+parameters:
+  # Passed to dotnet test -c. Must match the configuration used during compilation in
+  # compile_stage so the --no-build flag resolves the correct output directory.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Passed through to install-dotnet.yml and logging steps for verbose diagnostics.
+  - name: debug
+    type: boolean
+
+  # The test execution matrix array (from matrix-stages.yml).
+  - name: matrix
+    type: object
+
+stages:
+  - ${{ each entry in parameters.matrix }}:
+    - stage: test_${{ lower(entry.os) }}_${{ entry.arch }}
+      displayName: Test ${{ entry.os }} ${{ entry.arch }}
+      dependsOn:
+        - setup_stage
+        - compile_stage
+      jobs:
+        # --- SQL-dependent jobs: one per targetFramework × sqlVariant ---
+        - ${{ each tf in entry.targetFrameworks }}:
+          - ${{ each variant in entry.sqlVariants }}:
+            - template: /eng/pipelines/ci/test/jobs/run-functional-tests-job.yml@self
+              parameters:
+                jobName: functional_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}_${{ variant.name }}
+                jobDisplayName: Functional Tests (${{ entry.os }} ${{ entry.arch }} ${{ tf }} ${{ variant.name }})
+                operatingSystem: ${{ entry.os }}
+                poolName: ${{ variant.poolName }}
+                image: ${{ variant.image }}
+                architecture: ${{ entry.arch }}
+                targetFramework: ${{ tf }}
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+                compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+                debug: ${{ parameters.debug }}
+
+            - template: /eng/pipelines/ci/test/jobs/run-manual-tests-job.yml@self
+              parameters:
+                jobName: manual_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}_${{ variant.name }}
+                jobDisplayName: Manual Tests (${{ entry.os }} ${{ entry.arch }} ${{ tf }} ${{ variant.name }})
+                operatingSystem: ${{ entry.os }}
+                poolName: ${{ variant.poolName }}
+                image: ${{ variant.image }}
+                architecture: ${{ entry.arch }}
+                targetFramework: ${{ tf }}
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+                compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+                debug: ${{ parameters.debug }}
+
+        # --- SQL-independent jobs: one per targetFramework ---
+        - ${{ each tf in entry.targetFrameworks }}:
+          - template: /eng/pipelines/ci/test/jobs/run-abstractions-tests-job.yml@self
+            parameters:
+              jobName: abstractions_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
+              jobDisplayName: Abstractions Tests (${{ entry.os }} ${{ entry.arch }} ${{ tf }})
+              poolName: ${{ entry.poolName }}
+              image: ${{ entry.image }}
+              architecture: ${{ entry.arch }}
+              targetFramework: ${{ tf }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              compileArtifactName: compiled-tests-abstractions-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+              debug: ${{ parameters.debug }}
+
+          - template: /eng/pipelines/ci/test/jobs/run-azure-tests-job.yml@self
+            parameters:
+              jobName: azure_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
+              jobDisplayName: Azure Tests (${{ entry.os }} ${{ entry.arch }} ${{ tf }})
+              poolName: ${{ entry.poolName }}
+              image: ${{ entry.image }}
+              architecture: ${{ entry.arch }}
+              targetFramework: ${{ tf }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              compileArtifactName: compiled-tests-azure-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+              debug: ${{ parameters.debug }}

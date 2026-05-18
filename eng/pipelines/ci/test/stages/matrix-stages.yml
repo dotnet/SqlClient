@@ -1,0 +1,134 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# stages/matrix-stages.yml
+#
+# PURPOSE
+#   Defines the static OS × Architecture × Target Framework matrix and delegates to
+#   compile-stage.yml and test-stage.yml, passing the matrix as a parameter.
+#
+#   This file owns the matrix data — the set of platforms being tested is changed here and only
+#   here. The compile and test stage templates iterate over the matrix entries using ${{ each }}
+#   to generate jobs dynamically.
+#
+#   The matrix is NOT overridable at pipeline queue time. It is static configuration, changed
+#   exclusively via PRs to this file.
+#
+# MATRIX ENTRY SCHEMA
+#   Each entry in the matrix array has the following fields:
+#     os                (string)  — Operating system label: Windows, Linux, Mac
+#     arch              (string)  — CPU architecture: x64, x86, arm64
+#     targetFrameworks  (array)   — Target framework monikers to compile and test: [net8.0, net9.0]
+#     poolName          (string)  — Agent pool name (used for compile + SQL-independent tests).
+#                                   Use $(ciPoolName) for project-derived pools or a literal
+#                                   name for hosted pools (e.g. 'Azure Pipelines').
+#     image             (string)  — VM image identifier (used for compile + SQL-independent tests)
+#     sqlVariants       (array)   — SQL Server versions to test against (test stage only)
+#       Each variant has:
+#         name          (string)  — Short identifier (e.g. sql22, sql19)
+#         poolName      (string)  — Agent pool for SQL-dependent test jobs
+#         image         (string)  — Agent image with that SQL Server version installed
+#
+#   Pool addressing mode is derived automatically from the pool name:
+#     'Azure Pipelines' → vmImage addressing (hosted)
+#     anything else     → imageOverride demand (1ES self-hosted)
+#
+#   Compile jobs use the entry-level poolName/image (SQL Server is not needed for compilation).
+#   Test jobs that depend on SQL Server (Functional, Manual) iterate over sqlVariants — one set
+#   of jobs per variant. SQL-independent tests (Abstractions, Azure) run once per entry using
+#   the entry-level pool.
+#
+#   Artifact names are computed from the matrix entry fields at template compile time (not stored
+#   in the matrix), ensuring consistency between compile and test stages.
+#
+####################################################################################################
+
+parameters:
+  # The MSBuild configuration to use for all compile and test jobs.
+  - name: buildConfiguration
+    type: string
+
+  # True to emit extra diagnostic output.
+  - name: debug
+    type: boolean
+
+  # Verbosity for dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+
+  # The test execution matrix. Each entry defines one OS×Arch cell. The 'os' field uses proper
+  # casing (Windows/Linux/Mac) matching the operatingSystem parameter expected by test job
+  # templates. Use ${{ lower(entry.os) }} in job/stage/artifact names for valid identifiers.
+  #
+  # targetFrameworks lists TFMs to compile and test. Compile and test stages iterate over this
+  # list, producing one job per TFM per entry. sqlVariants defines which SQL Server versions to
+  # run SQL-dependent tests against — tests fan out per variant × per TFM.
+  - name: matrix
+    type: object
+    default:
+      - os: Windows
+        arch: x64
+        targetFrameworks: [net462, net8.0, net9.0, net10.0]
+        poolName: $(ciPoolName)
+        image: ADO-Win25
+        sqlVariants:
+          - name: sql22
+            poolName: $(ciPoolName)
+            image: ADO-MMS22-SQL22
+
+      - os: Windows
+        arch: x86
+        targetFrameworks: [net462, net8.0, net9.0, net10.0]
+        poolName: $(ciPoolName)
+        image: ADO-Win25
+        sqlVariants:
+          - name: sql22
+            poolName: $(ciPoolName)
+            image: ADO-MMS22-SQL22
+
+      - os: Windows
+        arch: arm64
+        targetFrameworks: [net462, net8.0, net9.0, net10.0]
+        poolName: $(ciPoolName)
+        image: ADO-WIN2022-ARM64
+        sqlVariants:
+          - name: sql22
+            poolName: $(ciPoolName)
+            image: ADO-WIN2022-ARM64
+
+      - os: Linux
+        arch: x64
+        targetFrameworks: [net8.0, net9.0, net10.0]
+        poolName: $(ciPoolName)
+        image: ADO-UB24
+        sqlVariants:
+          - name: sql22
+            poolName: $(ciPoolName)
+            image: ADO-UB22-SQL22
+
+      - os: Mac
+        arch: x64
+        targetFrameworks: [net8.0, net9.0, net10.0]
+        poolName: Azure Pipelines
+        image: macos-latest
+        sqlVariants:
+          - name: sql22
+            poolName: Azure Pipelines
+            image: macos-latest
+
+stages:
+  - template: /eng/pipelines/ci/test/stages/compile-stage.yml@self
+    parameters:
+      matrix: ${{ parameters.matrix }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+
+  - template: /eng/pipelines/ci/test/stages/test-stage.yml@self
+    parameters:
+      matrix: ${{ parameters.matrix }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}

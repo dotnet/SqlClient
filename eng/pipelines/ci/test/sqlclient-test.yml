@@ -1,0 +1,96 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# sqlclient-test.yml — Top-level SqlClient test pipeline
+#
+# PURPOSE
+#   Compiles and runs the SqlClient test suite (Functional, Manual, Abstractions, and Azure tests)
+#   across a matrix of OS × Architecture × Target Framework combinations.
+#
+# WHEN / WHERE IT RUNS
+#   • pr: none / trigger: none — does NOT run on PRs or branch pushes.
+#   • Triggered automatically via pipeline resources when either the "sqlclient-package" pipeline
+#     completes in the Public or ADO.Net Azure DevOps projects (trigger: true on both resources).
+#   • Can also be run manually from the Azure DevOps Pipelines UI.
+#
+# PIPELINE RESOURCES
+#   sqlclientPackagePublic  — sqlclient-package pipeline in the Public project
+#   sqlclientPackageAdo     — sqlclient-package pipeline in the ADO.Net project
+#
+#   Both provide the NuGet packages consumed during test compilation.
+#
+# STAGES
+#   1. Setup   — Environment validation and prerequisite checks.
+#   2. Compile — Builds test binaries (one job per OS×Arch×TF cell).
+#   3. Test    — Runs Functional, Manual, Abstractions, and Azure tests using the compiled
+#                artifacts from the Compile stage.
+#
+####################################################################################################
+
+name: $(DayOfYear)$(Rev:rr)
+
+pr: none
+trigger: none
+
+parameters:
+  # The MSBuild configuration to use for all compile and test jobs.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  # True to emit extra diagnostic output.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # Verbosity for dotnet CLI.  Separate from debug to permit higher fidelity than true/false.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+resources:
+  pipelines:
+    # Trigger on successful completion of the sqlclient-package pipeline in the Public project.
+    - pipeline: sqlclientPackagePublic
+      project: Public
+      source: sqlclient-package
+      trigger: true
+
+    # Trigger on successful completion of the sqlclient-package pipeline in the ADO.Net project.
+    - pipeline: sqlclientPackageAdo
+      project: ADO.Net
+      source: sqlclient-package
+      trigger: true
+
+variables:
+  - template: /eng/pipelines/ci/test/variables/common-variables.yml@self
+
+# The compile and test stages are generated from a static matrix defined in matrix-stages.yml.
+# That template owns the set of OS×Arch×TF cells and delegates to compile-stage.yml and
+# test-stage.yml, passing the matrix as a parameter. To change tested platforms, edit
+# matrix-stages.yml.
+stages:
+  # Perform setup operations (download packages, calculate versions, etc).
+  - template: /eng/pipelines/ci/test/stages/setup-stage.yml@self
+
+  # Compile and test stages are generated from the matrix defined in matrix-stages.yml.
+  - template: /eng/pipelines/ci/test/stages/matrix-stages.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

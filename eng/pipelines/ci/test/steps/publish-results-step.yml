@@ -1,0 +1,42 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# steps/publish-results-step.yml
+#
+# PURPOSE
+#   Publishes all .trx test result files produced by the current job to the ADO pipeline test
+#   results tab. Called as the last step in both run-functional-tests-job.yml and
+#   run-manual-tests-job.yml (6 call sites).
+#
+#   condition: succeededOrFailed() ensures results are uploaded even when tests fail, which is
+#   critical for diagnosing regressions.
+#
+#   mergeTestResults: true combines all .trx files under testResultsDirectory into a single test
+#   run entry in the ADO UI, keeping the summary readable when multiple test sets or shards
+#   write separate result files.
+#
+#   failTaskOnFailedTests: true causes the step to mark the job as failed if any test reported
+#   a failing result, even if dotnet test itself exited 0.
+#
+####################################################################################################
+
+parameters:
+  # Label displayed in the ADO test results tab for this run, e.g. Functional_Windows_net9.0 or
+  # Manual_Linux_net9.0.
+  - name: testRunTitle
+    type: string
+
+steps:
+  - task: PublishTestResults@2
+    displayName: Publish Test Results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: VSTest
+      testResultsFiles: '$(testResultsDirectory)/*.trx'
+      searchFolder: $(Build.SourcesDirectory)
+      mergeTestResults: true
+      failTaskOnFailedTests: true
+      testRunTitle: ${{ parameters.testRunTitle }}

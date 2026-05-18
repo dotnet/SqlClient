@@ -1,0 +1,56 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# steps/configure-test-config-step.yml
+#
+# PURPOSE
+#   Writes the config.json file consumed by Microsoft.Data.SqlClient.TestUtilities before any
+#   test job executes dotnet test. Called by both run-functional-tests-job.yml and
+#   run-manual-tests-job.yml (6 call sites across 3 OS × 2 test job types).
+#
+#   Connection strings (SQL_TCP_CONN_STRING, SQL_NP_CONN_STRING) are injected at runtime from
+#   the 'ADO Test Configuration Properties' variable group declared in common-variables.yml.
+#   SupportsIntegratedSecurity is derived from the operatingSystem parameter because Windows
+#   Authentication is only available on Windows agents.
+#
+#   The step dot-sources write-test-config.ps1 to import the Write-TestConfig function into
+#   the current PowerShell session scope before calling it. Dot-sourcing ('. path/to/script.ps1')
+#   is the PowerShell idiom for loading function definitions from an external file; it differs
+#   from '& ...' (call operator) in that the loaded symbols remain in scope after the call.
+#
+####################################################################################################
+
+parameters:
+  # Determines SupportsIntegratedSecurity. Set to true only for Windows because Kerberos/NTLM
+  # authentication is not available on Linux or macOS agents against a SQL Server container.
+  - name: operatingSystem
+    type: string
+    values:
+      - Windows
+      - Linux
+      - Mac
+
+steps:
+  - pwsh: |
+      $ErrorActionPreference = 'Stop'
+
+      $supportsIntegratedSecurity = $false
+      if ('${{ parameters.operatingSystem }}' -eq 'Windows') {
+          $supportsIntegratedSecurity = $true
+      }
+
+      . "$(Build.SourcesDirectory)/eng/pipelines/ci/test/scripts/write-test-config.ps1"
+
+        $configArgs = @{
+          ConfigPath = "$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.json"
+          TcpConnectionString = "$(SQL_TCP_CONN_STRING)"
+          NpConnectionString = "$(SQL_NP_CONN_STRING)"
+          SupportsIntegratedSecurity = $supportsIntegratedSecurity
+          UseManagedSniOnWindows = $false
+        }
+
+        Write-TestConfig @configArgs
+    displayName: Write test config.json

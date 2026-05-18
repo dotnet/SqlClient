@@ -122,3 +122,29 @@ Test timeout — `--blame-hang-timeout 10m` (configured in `build.proj` and thre
 - Enable `debug: true` and `dotnetVerbosity: diagnostic` for troubleshooting
 - Never commit credentials or secrets in pipeline files
 - Signing and release are handled by OneBranch pipelines — not these CI/PR pipelines
+
+## YAML Comment Style
+
+- All comment lines may use up to **100 characters**. Do not wrap early at 80.
+- License header borders are exactly 100 `#` characters wide.
+- License header format:
+  ```yaml
+  ####################################################################################################
+  # Licensed to the .NET Foundation under one or more agreements.                                    #
+  # The .NET Foundation licenses this file to you under the MIT license.                             #
+  # See the LICENSE file in the project root for more information.                                   #
+  ####################################################################################################
+  ```
+- PURPOSE block borders also use 100 `#` characters.
+
+## PowerShell Script Invocation
+
+- Use the `PowerShell@2` task with `filePath` and `arguments` inputs to call `.ps1` scripts.
+- Set `pwsh: true` for cross-platform PowerShell Core execution.
+- Do **not** use inline `pwsh: |` blocks for non-trivial logic; extract to script files under the pipeline's `scripts/` directory.
+
+## PowerShell Script File Style
+
+- Use `[CmdletBinding()]` with a `param()` block declaring mandatory parameters.
+- Set `$ErrorActionPreference = 'Stop'` immediately after the param block.
+- Include full comment-based help: `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`.

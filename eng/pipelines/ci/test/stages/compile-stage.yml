@@ -1,0 +1,114 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# stages/compile-stage.yml
+#
+# PURPOSE
+#   Compiles test binaries for each matrix entry × target framework using the upstream NuGet
+#   packages from setup_stage. Compiled outputs are published as named pipeline artifacts so
+#   test jobs can download and run them with --no-build.
+#
+#   Jobs are generated dynamically from the matrix parameter using nested ${{ each }} loops:
+#   outer loop over OS×Arch entries, inner loop over targetFrameworks. Artifact names are
+#   computed from matrix fields to ensure consistency between compile and test stages.
+#
+# STAGES EXPOSED
+#   compile_stage  (dependsOn: setup_stage)
+#
+# JOBS GENERATED (per matrix entry × targetFramework)
+#   compile_<os>_<arch>_<tfm>                — SqlClient Functional+Manual tests
+#   compile_abstractions_<os>_<arch>_<tfm>   — Abstractions package tests
+#   compile_azure_<os>_<arch>_<tfm>          — Azure extension tests
+#
+####################################################################################################
+
+parameters:
+  # The test execution matrix array (from matrix-stages.yml).
+  - name: matrix
+    type: object
+
+  # The MSBuild configuration passed to 'dotnet build -c'.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Passed through to install-dotnet.yml to enable verbose SDK installation diagnostics.
+  - name: debug
+    type: boolean
+
+  # Verbosity level forwarded to all 'dotnet restore' and 'dotnet build' invocations (-v flag).
+  - name: dotnetVerbosity
+    type: string
+
+stages:
+  - stage: compile_stage
+    displayName: Compile Tests
+    dependsOn:
+      - setup_stage
+    variables:
+      - name: abstractionsPackageVersion
+        value: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      - name: loggingPackageVersion
+        value: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
+      - name: sqlClientPackageVersion
+        value: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
+
+    jobs:
+      # --- SqlClient tests (FunctionalTests + ManualTests) ---
+      - ${{ each entry in parameters.matrix }}:
+        - ${{ each tf in entry.targetFrameworks }}:
+          - template: /eng/pipelines/ci/test/jobs/compile-tests-job.yml@self
+            parameters:
+              jobName: compile_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
+              jobDisplayName: Compile ${{ entry.os }} ${{ entry.arch }} ${{ tf }}
+              poolName: ${{ entry.poolName }}
+              image: ${{ entry.image }}
+              architecture: ${{ entry.arch }}
+              targetFramework: ${{ tf }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              debug: ${{ parameters.debug }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+
+      # --- Abstractions tests ---
+      - ${{ each entry in parameters.matrix }}:
+        - ${{ each tf in entry.targetFrameworks }}:
+          - template: /eng/pipelines/ci/test/jobs/compile-buildproj-target-job.yml@self
+            parameters:
+              jobName: compile_abstractions_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
+              jobDisplayName: Compile Abstractions ${{ entry.os }} ${{ entry.arch }} ${{ tf }}
+              poolName: ${{ entry.poolName }}
+              image: ${{ entry.image }}
+              architecture: ${{ entry.arch }}
+              targetFramework: ${{ tf }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              debug: ${{ parameters.debug }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              buildTarget: BuildAbstractionsTests
+              publishPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions
+              compileArtifactName: compiled-tests-abstractions-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+
+      # --- Azure extension tests ---
+      - ${{ each entry in parameters.matrix }}:
+        - ${{ each tf in entry.targetFrameworks }}:
+          - template: /eng/pipelines/ci/test/jobs/compile-buildproj-target-job.yml@self
+            parameters:
+              jobName: compile_azure_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
+              jobDisplayName: Compile Azure ${{ entry.os }} ${{ entry.arch }} ${{ tf }}
+              poolName: ${{ entry.poolName }}
+              image: ${{ entry.image }}
+              architecture: ${{ entry.arch }}
+              targetFramework: ${{ tf }}
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              debug: ${{ parameters.debug }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              buildTarget: BuildAzureTests
+              publishPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Azure
+              compileArtifactName: compiled-tests-azure-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
