@@ -9,6 +9,10 @@
 # running.
 
 parameters:
+  # TCP connection string for the local SQL Server instance used by manual tests.
+  - name: connectionStringTcp
+    type: string
+
   # Path to use for file stream tests.
   - name: fileStreamDirectory
     type: string
@@ -97,17 +101,36 @@ steps:
     continueOnError: true
 
   - powershell: |
-      $machineName = $env:COMPUTERNAME
+      $password = "${{ parameters.saPassword }}"
       $scriptPath = "$(Build.SourcesDirectory)\tools\testsql\createNorthwindDb.sql"
+      $connectionString = "${{ parameters.connectionStringTcp }}"
 
-      Invoke-Sqlcmd -ServerInstance "$machineName" -Query "
+      Import-Module "sqlps"
+      Add-Type -AssemblyName System.Data
+
+      $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder($connectionString)
+      $builder['Initial Catalog'] = 'master'
+      $builder['Password'] = $password
+
+      if (-not $builder.ContainsKey('User ID'))
+      {
+        $builder['User ID'] = 'sa'
+      }
+
+      if (-not $builder.ContainsKey('TrustServerCertificate'))
+      {
+        $builder['TrustServerCertificate'] = $true
+      }
+
+      $connectionString = $builder.ConnectionString
+
+      Invoke-Sqlcmd -ConnectionString $connectionString -Query "
         IF DB_ID(N'Northwind') IS NOT NULL
         BEGIN
           ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
           DROP DATABASE [Northwind];
         END"
 
-      Invoke-Sqlcmd -ServerInstance "$machineName" -InputFile $scriptPath
+      Invoke-Sqlcmd -ConnectionString $connectionString -InputFile $scriptPath
     displayName: 'Create Northwind Database [Win]'
     retryCountOnTaskFailure: 1
-

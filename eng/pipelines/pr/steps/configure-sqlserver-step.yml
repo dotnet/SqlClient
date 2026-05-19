@@ -5,6 +5,9 @@
 #################################################################################
 
 parameters:
+  - name: connectionStringTcp
+    type: string
+
   # Path to use for file stream tests. This only applies to Windows test runs.
   - name: fileStreamDirectory
     type: string
@@ -20,6 +23,7 @@ steps:
   - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
       - template: /eng/pipelines/pr/steps/configure-sqlserver-windows-step.yml@self
         parameters:
+          connectionStringTcp: ${{ parameters.connectionStringTcp }}
           fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
           saPassword: ${{ parameters.saPassword }}
 
