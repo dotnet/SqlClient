@@ -3,6 +3,10 @@
 ###############################################################################
 * text=auto
 
+# Shell scripts must always use LF line endings, even on Windows checkouts,
+# because they are bind-mounted into Linux containers.
+*.sh text eol=lf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #

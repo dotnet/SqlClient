@@ -376,3 +376,9 @@ MigrationBackup/
 
 # MDS "Not Supported" GenAPI code
 **/notsupported/*.cs
+
+# Devcontainer generated files (created by init.ps1)
+.devcontainer/.env
+.devcontainer/.git-overlay
+.devcontainer/docker-compose.local.yml
+.devcontainer/docker-compose.worktree.yml
