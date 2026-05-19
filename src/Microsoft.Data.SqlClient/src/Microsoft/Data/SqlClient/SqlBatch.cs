@@ -266,24 +266,54 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader/*'/>
-        public SqlDataReader ExecuteReader()
-        {
-            CheckDisposed();
-            SetupBatchCommandExecute();
-            return _batchCommand.ExecuteReader();
-        }
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader[@name="NoParameter"]/*'/>
+        public SqlDataReader ExecuteReader() => ExecuteReader(CommandBehavior.Default);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader[@name="BehaviorParameter"]/*'/>
         public
         #if NET
         new
         #endif
-        Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken = default)
+        SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
+            ValidateExecuteCommandBehavior(nameof(ExecuteReader), behavior);
+
             CheckDisposed();
             SetupBatchCommandExecute();
-            return _batchCommand.ExecuteReaderAsync(cancellationToken);
+            return _batchCommand.ExecuteReader(behavior);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync[@name="NoParameter"]/*'/>
+        public
+        #if NET
+        new
+        #endif
+        Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken = default) => ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync[@name="BehaviorParameter"]/*'/>
+        public
+        #if NET
+        new
+        #endif
+        Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken = default)
+        {
+            ValidateExecuteCommandBehavior(nameof(ExecuteReaderAsync), behavior);
+
+            CheckDisposed();
+            SetupBatchCommandExecute();
+            return _batchCommand.ExecuteReaderAsync(behavior, cancellationToken)
+                .ContinueWith((result) =>
+                {
+                    if (result.IsFaulted)
+                    {
+                        throw result.Exception.InnerException;
+                    }
+                    return result.Result;
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
+                TaskScheduler.Default
+            );
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
@@ -293,7 +323,7 @@ namespace Microsoft.Data.SqlClient
         #else
         virtual
         #endif
-        DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader();
+        DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader(behavior);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
         protected
@@ -302,24 +332,7 @@ namespace Microsoft.Data.SqlClient
         #else
         virtual
         #endif
-        Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-        {
-            CheckDisposed();
-            SetupBatchCommandExecute();
-            return _batchCommand.ExecuteReaderAsync(cancellationToken)
-                .ContinueWith<DbDataReader>((result) =>
-                {
-                    if (result.IsFaulted)
-                    {
-                        throw result.Exception.InnerException;
-                    }
-                    return result.Result;
-                }, 
-                CancellationToken.None, 
-                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
-                TaskScheduler.Default
-            );
-        }
+        async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) => await ExecuteReaderAsync(behavior, cancellationToken);
 
         private void CheckDisposed()
         {
@@ -349,6 +362,31 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.AddBatchCommand(_commands[index]);
             }
             _batchCommand.SetBatchRPCModeReadyToExecute();
+        }
+
+        /// <summary>
+        /// Validates that the provided <see cref="CommandBehavior"/> is compatible with <see cref="SqlBatch"/>.
+        /// </summary>
+        /// <param name="method">The name of the calling method for error reporting.</param>
+        /// <param name="behavior">The behavior flags to validate.</param>
+        /// <remarks>
+        /// <para>
+        /// Only <see cref="CommandBehavior.SequentialAccess"/> and <see cref="CommandBehavior.CloseConnection"/> 
+        /// are supported at the batch level.
+        /// </para>
+        /// <para>
+        /// To apply other behaviors (such as <see cref="CommandBehavior.SingleRow"/> or <see cref="CommandBehavior.SchemaOnly"/>), 
+        /// they must be set on individual <see cref="SqlBatchCommand"/> instances within the batch.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="NotSupportedException">Thrown when unsupported behavior flags are detected.</exception>
+        internal static void ValidateExecuteCommandBehavior(string method, CommandBehavior behavior)
+        {
+            if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))
+            {
+                ADP.ValidateCommandBehavior(behavior);
+                throw ADP.NotSupportedCommandBehavior(behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection), method);
+            }
         }
     }
 }

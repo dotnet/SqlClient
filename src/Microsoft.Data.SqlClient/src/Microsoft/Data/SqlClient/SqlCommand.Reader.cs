@@ -442,7 +442,6 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Can we return the RPC here like BuildExecute does?
         private void BuildExecuteSql(
             CommandBehavior behavior,
-            string commandText,
             SqlParameterCollection parameters,
             ref _SqlRPC rpc)
         {
@@ -463,13 +462,13 @@ namespace Microsoft.Data.SqlClient
             SqlParameter sqlParam;
 
             // @batch_text
-            commandText ??= GetCommandText(behavior);
+            string text = GetCommandText(behavior);
             sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = (commandText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+            sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = commandText.Length;
-            sqlParam.Value = commandText;
+            sqlParam.Size = text.Length;
+            sqlParam.Value = text;
             sqlParam.Direction = ParameterDirection.Input;
 
             // @batch_params
@@ -1455,7 +1454,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         Debug.Assert(_execType is EXECTYPE.UNPREPARED, "Invalid execType!");
-                        BuildExecuteSql(cmdBehavior, commandText: null, _parameters, ref rpc);
+                        BuildExecuteSql(cmdBehavior, _parameters, ref rpc);
                     }
 
                     rpc.options = TdsEnums.RPC_NOMETADATA;
