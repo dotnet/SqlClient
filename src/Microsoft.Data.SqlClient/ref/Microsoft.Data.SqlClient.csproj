@@ -52,6 +52,7 @@
   <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
   <Target Name="_CheckPwshToolRestored">
     <Exec Command="dotnet tool run pwsh -- -Version"
+          WorkingDirectory="$(RepoRoot)"
           ConsoleToMsBuild="true"
           IgnoreExitCode="true">
       <Output TaskParameter="ExitCode" PropertyName="_PwshExitCode" />

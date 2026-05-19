@@ -64,6 +64,7 @@
   <!-- ================================================================== -->
   <Target Name="_CheckApiCompatToolRestored">
     <Exec Command="dotnet tool run apicompat -- --version"
+          WorkingDirectory="$(RepoRoot)"
           ConsoleToMsBuild="true"
           IgnoreExitCode="true">
       <Output TaskParameter="ExitCode" PropertyName="_ApiCompatExitCode" />
