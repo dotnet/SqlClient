@@ -20,7 +20,9 @@ on operating systems that do not support .NET Framework. As such, it is not nece
 ### Miscellaneous
 
 **PowerShell** is included as a .NET local tool in this repository. Running `dotnet tool restore`
-(see below) will make it available. No separate installation is required.
+(see below) will make it available via `dotnet tool run pwsh -- <args>`. Note that `pwsh` is not
+added to PATH — it must be invoked through `dotnet tool run`. Build targets handle this
+automatically; manual invocation is only needed for ad-hoc scripting.
 
 The **NuGet** binary is optional for inspection and feed-management workflows, but build and packaging flows in this
 repository are run through `dotnet build` against `build.proj`.

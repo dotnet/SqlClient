@@ -49,14 +49,26 @@
     them in the xml files, though, because those are the source for the docs site, which needs to
     have the full documentation.
   -->
+  <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
+  <Target Name="_CheckPwshToolRestored">
+    <Exec Command="dotnet tool run pwsh -- -Version"
+          ConsoleToMsBuild="true"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_PwshExitCode" />
+    </Exec>
+    <Error Condition="'$(_PwshExitCode)' != '0'"
+           Text="The 'pwsh' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before building." />
+  </Target>
+
   <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
   <Target Name="TrimDocsForIntelliSense"
           AfterTargets="Build"
+          DependsOnTargets="_CheckPwshToolRestored"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
 
     <PropertyGroup>
       <PowerShellCommand>
-        dotnet pwsh
+        dotnet tool run pwsh --
           -NonInteractive
           -ExecutionPolicy Unrestricted
           -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
