@@ -152,7 +152,20 @@ internal static class SsrpPacketTestData
                     ValidTcpPort2
                 },
                 {
-                    // One response, split into three buffers
+                    // One response, split into three buffers.
+                    // Buffer 1: the header byte
+                    // Buffer 2: both bytes of RESP_SIZE and the first byte of RESP_DATA (protocol version).
+                    // Buffer 3: remainder.
+                    GeneratePacketBuffers(validPacket1.AsSpan(0, 1).ToArray(),
+                        validPacket1.AsSpan(1, 3).ToArray(),
+                        validPacket1.AsSpan(4).ToArray()),
+                    ValidTcpPort2
+                },
+                {
+                    // One response, split into three buffers.
+                    // Buffer 1: the header and first byte of RESP_SIZE.
+                    // Buffer 2: the second byte of RESP_SIZE and the first byte of RESP_DATA (protocol version).
+                    // Buffer 3: remainder.
                     GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
                         validPacket1.AsSpan(2, 2).ToArray(),
                         validPacket1.AsSpan(4).ToArray()),
@@ -268,9 +281,29 @@ internal static class SsrpPacketTestData
                 serializedResponseSize : 0x07,
                 CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
 
+            // RESP_SIZE zero length (DAC response)
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                serializedResponseSize: 0x00,
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+
+            // RESP_SIZE far beyond reasonable limits (normal response)
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                serializedResponseSize: ushort.MaxValue,
+                CreateRespData(ValidRespDataDacProtocolVersion, ValidTcpPort2))),
+
             // RESP_SIZE larger than the buffer (normal response)
             GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 serializedResponseSize: 72,
+                CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion))),
+
+            // RESP_SIZE zero length (normal response)
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                serializedResponseSize: 0x00,
+                CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion))),
+
+            // RESP_SIZE far beyond reasonable limits (normal response)
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                serializedResponseSize: ushort.MaxValue,
                 CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion)))
         ];
 
@@ -283,9 +316,28 @@ internal static class SsrpPacketTestData
     {
         get
         {
+            const string InvalidServerName = "sr\u0008v\u00001";
             string validTcpInfo = CreateProtocolParameters($"tcp;{ValidTcpPort1}");
 
             return [
+                // All keys lowercase
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        lowercaseKey: true))),
+
+                // Keys shuffled
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo,
+                        shuffleKeys: true))),
+
                 // Does not start with "ServerName" string
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
@@ -298,6 +350,14 @@ internal static class SsrpPacketTestData
                 // Server name longer than 255 bytes
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(serverName: new string('a', 256),
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo))),
+
+                // Server name contains invalid characters
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(serverName: InvalidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
@@ -330,6 +390,14 @@ internal static class SsrpPacketTestData
                         validTcpInfo,
                         omitInstanceName: true))),
 
+                // Duplicate "InstanceName" key with different value
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        protocolParameters: "InstanceName;DUPLICATE"))),
+
                 // Instance name longer than 255 bytes
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
@@ -347,7 +415,7 @@ internal static class SsrpPacketTestData
                         validTcpInfo,
                         omitIsClustered: true))),
 
-                // Invalid IsClustered value
+                // Invalid IsClustered value - omit the IsClustered;Yes pair and supply an invalid one.
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
                         ValidInstanceName,
@@ -355,6 +423,14 @@ internal static class SsrpPacketTestData
                         ValidServerVersion,
                         protocolParameters: "IsClustered;INVALID;" + validTcpInfo,
                         omitIsClustered: true))),
+
+                // Duplicate "IsClustered" key with different value
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        protocolParameters: "IsClustered;DUPLICATE"))),
 
                 // Missing "Version"
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
@@ -389,13 +465,21 @@ internal static class SsrpPacketTestData
                         version: "v14",
                         validTcpInfo))),
 
+                // Duplicate "Version" key with different value
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        protocolParameters: "Version;DUPLICATE"))),
+
                 // Protocol components listed twice
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
                         ValidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
-                        CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: $"tcp;{ValidTcpPort2}")))),
+                        CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: $"tcp;{ValidTcpPort3}")))),
 
                 // Invalid protocol components appear
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
@@ -404,6 +488,14 @@ internal static class SsrpPacketTestData
                         isClustered: true,
                         ValidServerVersion,
                         CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", otherParameters: "invalid_protocol;value")))),
+
+                // Empty protocol components appear
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        CreateProtocolParameters(otherParameters: ";value")))),
 
                 // Invalid PROTOCOLVERSION field value
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
@@ -425,6 +517,9 @@ internal static class SsrpPacketTestData
             return [
                 // Port is absent
                 CreateSvrRespMessage("tcp"),
+
+                // Port is zero-length
+                CreateSvrRespMessage("tcp;"),
 
                 // Port is non-numeric
                 CreateSvrRespMessage("tcp;one"),
