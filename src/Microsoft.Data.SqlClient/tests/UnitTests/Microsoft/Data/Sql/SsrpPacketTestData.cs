@@ -371,8 +371,7 @@ internal static class SsrpPacketTestData
                         ValidInstanceName,
                         isClustered: true,
                         version: string.Empty,
-                        validTcpInfo,
-                        omitVersion: true))),
+                        validTcpInfo))),
 
                 // Version string longer than 16 bytes
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
@@ -425,19 +424,19 @@ internal static class SsrpPacketTestData
         {
             return [
                 // Port is absent
-                CreateSVR_RESPMessage("tcp"),
+                CreateSvrRespMessage("tcp"),
 
                 // Port is non-numeric
-                CreateSVR_RESPMessage("tcp;one"),
+                CreateSvrRespMessage("tcp;one"),
 
                 // Port is > ushort.MaxValue
-                CreateSVR_RESPMessage("tcp;65536"),
+                CreateSvrRespMessage("tcp;65536"),
 
                 // Port is < 0
-                CreateSVR_RESPMessage("tcp;-1")
+                CreateSvrRespMessage("tcp;-1")
             ];
 
-            static ReadOnlySequence<byte> CreateSVR_RESPMessage(string tcpInfo) =>
+            static ReadOnlySequence<byte> CreateSvrRespMessage(string tcpInfo) =>
                 GeneratePacketBuffers(
                     FormatSvrRespMessage(ValidSvrRespHeader,
                         CreateRespData(ValidServerName,
