@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
 
@@ -229,7 +229,7 @@
 
     <!--
       SigningKeyPath
-      Applies to:     Build*, Pack*
+      Applies to:     Build*, Pack* (driver targets only)
       Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
                       will not be strong name signed.
                       For Pack* targets, this only applies to a build - ie, if PackBuild is set to
@@ -329,10 +329,13 @@
   <!-- Top Level/Miscellaneous Targets -->
 
   <!--
-    Build: Builds all packages
+    Build: Builds all driver projects.  This is the default target.
     Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
   -->
   <Target Name="Build" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
+
+  <!-- Build all projects in the repo, for all supported OS and TargetFramework combinations.-->
+  <Target Name="BuildAll" DependsOnTargets="Build;BuildTests;BuildSamples" />
 
   <!-- Clean: Convenience target to remove build/test output -->
   <Target Name="Clean">
@@ -346,16 +349,18 @@
   </Target>
 
   <!--
-    Pack: Packages all packages
+    Pack: Packages all driver projects.
     Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
   -->
   <Target Name="Pack" DependsOnTargets="PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider;PackSqlServer" />
 
   <!--
-    Test: Run all test targets for all packages.
-    Note: This will run for a *very* long time and it is not recommended, even in automated test
-      environments. Please consider running project specific test targets or specific test sets
-      within the project.
+    Test: Run all test targets for all driver projects.
+
+    Note: This requires local and remote SQL Server setups with corresponding JSON configuration
+    files. It will run for a *very* long time and it is not recommended, even in automated test
+    environments. Please consider running project specific test targets or specific test sets within
+    the project.
   -->
   <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
 
@@ -400,7 +405,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building GenAPI project via command: '$(DotnetCommand)'"/>
+    <Message Importance="High" Text=">>> Building GenAPI project"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- Get the path to the GenAPI artifact -->
@@ -429,7 +435,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building not supported binaries project via command: '$(DotnetCommand)'"/>
+    <Message Importance="High" Text=">>> Building not supported binaries project"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -454,7 +461,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building SqlClient ref binaries via command: $(DotnetCommand)"/>
+    <Message Importance="High" Text=">>> Building SqlClient ref binaries"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -481,7 +489,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building SqlClient for Unix via command: $(DotnetCommand)"/>
+    <Message Importance="High" Text=">>> Building SqlClient for Unix"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -507,7 +516,8 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Building SqlClient for Windows via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Building SqlClient for Windows"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -552,7 +562,8 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Packing SqlClient via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Packing SqlClient"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -586,7 +597,8 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running functional tests for SqlClient via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Running functional tests for SqlClient"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -617,7 +629,8 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running manual tests for SqlClient via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Running manual tests for SqlClient"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -645,7 +658,8 @@
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Text=">>> Running unit tests for SqlClient via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Running unit tests for SqlClient"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -679,7 +693,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Building AKV Provider"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -707,7 +722,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Packaging Microsoft.Data.SqlClient.AlwaysEncrpyted.AzureKeyVaultProvider via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Packaging AKV Provider"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -740,7 +756,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Building Abstractions"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -766,7 +783,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Abstractions via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Packaging Abstractions"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -794,7 +812,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Running tests for Abstractions"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -827,7 +846,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Building Azure"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -853,7 +873,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Extensions.Azure via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Packaging Azure"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -882,7 +903,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Running tests for Abstractions via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Running tests for Azure"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -910,7 +932,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Building Logging"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -932,7 +955,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Packaging Microsoft.Data.SqlClient.Internal.Logging via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Packaging Logging"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -960,7 +984,8 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Building Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Building SqlServer"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
@@ -982,7 +1007,120 @@
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Text=">>> Packaging Microsoft.SqlServer.Server via command: $(DotnetCommand)" />
+    <Message Importance="High" Text=">>> Packaging SqlServer"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
+
+  <!-- ================================================================= -->
+  <!-- Ancillary Targets -->
+
+  <!-- Set up the list of supported OSes. -->
+  <PropertyGroup>
+    <_OsList>Windows_NT;Unix</_OsList>
+  </PropertyGroup>
+  <ItemGroup>
+    <_OsValues Include="$(_OsList)" />
+  </ItemGroup>
+
+  <!-- Supply a common set of arguments to dotnet build. -->
+  <PropertyGroup>
+    <_DotnetArguments>
+      -p:Configuration=$(Configuration)
+
+      <!-- Versioning arguments -->
+      $(BuildNumberArgument)
+      $(BuildSuffixArgument)
+
+      <!-- Reference Type Arguments -->
+      $(ReferenceTypeArgument)
+      $(PackageVersionAbstractionsArgument)
+      $(PackageVersionAkvProviderArgument)
+      $(PackageVersionAzureArgument)
+      $(PackageVersionLoggingArgument)
+      $(PackageVersionSqlClientArgument)
+      $(PackageVersionSqlServerArgument)
+    </_DotnetArguments>
+    <!-- Convert more than one whitespace character into one space -->
+    <_DotnetArguments>$([System.Text.RegularExpressions.Regex]::Replace($(_DotnetArguments), "\s+", " "))</_DotnetArguments>
+  </PropertyGroup>
+
+  <!--
+    Define all of the ancillary project file paths.
+
+    These aren't all of the possible projects - only the top-level ones that, in turn, will
+    transitively build all ancillary projects.
+    -->
+  <PropertyGroup>
+      <AbstractionsTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj</AbstractionsTestsProjectPath>
+      <UnitTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj</UnitTestsProjectPath>
+      <FunctionalTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj</FunctionalTestsProjectPath>
+      <ManualTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj</ManualTestsProjectPath>
+      <PerformanceTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj</PerformanceTestsProjectPath>
+      <StressTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj</StressTestsProjectPath>
+      <AzureTestsProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj</AzureTestsProjectPath>
+
+      <SamplesProjectPath>$(RepoRoot)doc/samples/Microsoft.Data.SqlClient.Samples.csproj</SamplesProjectPath>
+  </PropertyGroup>
+
+  <!-- Build all test projects. -->
+  <Target Name="BuildTests">
+
+    <!-- SqlServer has no tests to build. -->
+
+    <!-- Logging has no tests to build. -->
+
+    <!-- Build Abstractions tests, which don't have conditional TFMs. -->
+    <Message Importance="High" Text=">>> Building Abstractions.Tests"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AbstractionsTestsProjectPath)&quot; $(_DotnetArguments)" />
+
+    <!-- Build SqlClient UnitTests (project references only, no ReferenceType). -->
+    <Message Importance="High" Text=">>> Building SqlClient UnitTests for %(_OsValues.Identity)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(UnitTestsProjectPath)&quot; -p:Configuration=$(Configuration) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- Build SqlClient FunctionalTests. -->
+    <Message Importance="High" Text=">>> Building SqlClient FunctionalTests for %(_OsValues.Identity)"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(FunctionalTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- Build SqlClient ManualTests. -->
+    <Message Importance="High" Text=">>> Building SqlClient ManualTests for %(_OsValues.Identity)"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(ManualTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- Build SqlClient PerformanceTests. -->
+    <Message Importance="High" Text=">>> Building SqlClient PerformanceTests for %(_OsValues.Identity)"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(PerformanceTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- Build SqlClient StressTests. -->
+    <Message Importance="High" Text=">>> Building SqlClient StressTests for %(_OsValues.Identity)"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(StressTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- Build Azure tests. -->
+    <Message Importance="High" Text=">>> Building Azure.Tests for %(_OsValues.Identity)"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AzureTestsProjectPath)&quot; $(_DotnetArguments) -p:OS=%(_OsValues.Identity)" />
+
+    <!-- AKV Provider has no tests to build. -->
+
+  </Target>
+
+  <!-- Build all sample projects. -->
+  <Target Name="BuildSamples">
+    <Message Importance="High" Text=">>> Building Samples"/>
+    <Message Text="    Arguments: $(_DotnetArguments)"/>
+    <Exec ConsoleToMsBuild="true"
+          Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SamplesProjectPath)&quot; $(_DotnetArguments)" />
+  </Target>
+
 </Project>

@@ -54,8 +54,8 @@
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
 
     <PropertyGroup>
-      <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
-      <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
+      <PowerShellCommand Condition="$([MSBuild]::IsOSPlatform('Windows'))">powershell.exe</PowerShellCommand>
+      <PowerShellCommand Condition="!$([MSBuild]::IsOSPlatform('Windows'))">pwsh</PowerShellCommand>
       <PowerShellCommand>
         $(PowerShellCommand)
           -NonInteractive
