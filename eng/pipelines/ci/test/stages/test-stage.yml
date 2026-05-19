@@ -66,7 +66,7 @@ stages:
                 architecture: ${{ entry.arch }}
                 targetFramework: ${{ tf }}
                 buildConfiguration: ${{ parameters.buildConfiguration }}
-                compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+                compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}
                 debug: ${{ parameters.debug }}
 
             - template: /eng/pipelines/ci/test/jobs/run-manual-tests-job.yml@self
@@ -79,7 +79,7 @@ stages:
                 architecture: ${{ entry.arch }}
                 targetFramework: ${{ tf }}
                 buildConfiguration: ${{ parameters.buildConfiguration }}
-                compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+                compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}
                 debug: ${{ parameters.debug }}
 
         # --- SQL-independent jobs: one per targetFramework ---
@@ -93,7 +93,7 @@ stages:
               architecture: ${{ entry.arch }}
               targetFramework: ${{ tf }}
               buildConfiguration: ${{ parameters.buildConfiguration }}
-              compileArtifactName: compiled-tests-abstractions-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+              compileArtifactName: compiled-tests-abstractions-${{ lower(entry.os) }}-${{ entry.arch }}
               debug: ${{ parameters.debug }}
 
           - template: /eng/pipelines/ci/test/jobs/run-azure-tests-job.yml@self
@@ -105,5 +105,5 @@ stages:
               architecture: ${{ entry.arch }}
               targetFramework: ${{ tf }}
               buildConfiguration: ${{ parameters.buildConfiguration }}
-              compileArtifactName: compiled-tests-azure-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+              compileArtifactName: compiled-tests-azure-${{ lower(entry.os) }}-${{ entry.arch }}
               debug: ${{ parameters.debug }}

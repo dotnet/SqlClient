@@ -7,21 +7,21 @@
 # stages/compile-stage.yml
 #
 # PURPOSE
-#   Compiles test binaries for each matrix entry × target framework using the upstream NuGet
-#   packages from setup_stage. Compiled outputs are published as named pipeline artifacts so
-#   test jobs can download and run them with --no-build.
-#
-#   Jobs are generated dynamically from the matrix parameter using nested ${{ each }} loops:
-#   outer loop over OS×Arch entries, inner loop over targetFrameworks. Artifact names are
-#   computed from matrix fields to ensure consistency between compile and test stages.
+#   Compiles test binaries for each matrix entry (OS×Arch) using the upstream NuGet packages
+#   from setup_stage. Each matrix entry produces ONE compile job that builds all test categories
+#   (SqlClient, Abstractions, Azure) for all target frameworks. Compiled outputs are published
+#   as named pipeline artifacts so test jobs can download and run them with --no-build.
 #
 # STAGES EXPOSED
 #   compile_stage  (dependsOn: setup_stage)
 #
-# JOBS GENERATED (per matrix entry × targetFramework)
-#   compile_<os>_<arch>_<tfm>                — SqlClient Functional+Manual tests
-#   compile_abstractions_<os>_<arch>_<tfm>   — Abstractions package tests
-#   compile_azure_<os>_<arch>_<tfm>          — Azure extension tests
+# JOBS GENERATED (per matrix entry)
+#   compile_<os>_<arch>  — Compiles all test projects for all TFMs
+#
+# ARTIFACTS PUBLISHED (per matrix entry)
+#   compiled-tests-<os>-<arch>              — SqlClient FunctionalTests + ManualTests
+#   compiled-tests-abstractions-<os>-<arch> — Abstractions extension tests
+#   compiled-tests-azure-<os>-<arch>        — Azure extension tests
 #
 ####################################################################################################
 
@@ -61,54 +61,16 @@ stages:
         value: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
 
     jobs:
-      # --- SqlClient tests (FunctionalTests + ManualTests) ---
       - ${{ each entry in parameters.matrix }}:
-        - ${{ each tf in entry.targetFrameworks }}:
-          - template: /eng/pipelines/ci/test/jobs/compile-tests-job.yml@self
-            parameters:
-              jobName: compile_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
-              jobDisplayName: Compile ${{ entry.os }} ${{ entry.arch }} ${{ tf }}
-              poolName: ${{ entry.poolName }}
-              image: ${{ entry.image }}
-              architecture: ${{ entry.arch }}
-              targetFramework: ${{ tf }}
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              debug: ${{ parameters.debug }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-              compileArtifactName: compiled-tests-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
-
-      # --- Abstractions tests ---
-      - ${{ each entry in parameters.matrix }}:
-        - ${{ each tf in entry.targetFrameworks }}:
-          - template: /eng/pipelines/ci/test/jobs/compile-buildproj-target-job.yml@self
-            parameters:
-              jobName: compile_abstractions_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
-              jobDisplayName: Compile Abstractions ${{ entry.os }} ${{ entry.arch }} ${{ tf }}
-              poolName: ${{ entry.poolName }}
-              image: ${{ entry.image }}
-              architecture: ${{ entry.arch }}
-              targetFramework: ${{ tf }}
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              debug: ${{ parameters.debug }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-              buildTarget: BuildAbstractionsTests
-              publishPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions
-              compileArtifactName: compiled-tests-abstractions-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
-
-      # --- Azure extension tests ---
-      - ${{ each entry in parameters.matrix }}:
-        - ${{ each tf in entry.targetFrameworks }}:
-          - template: /eng/pipelines/ci/test/jobs/compile-buildproj-target-job.yml@self
-            parameters:
-              jobName: compile_azure_${{ lower(entry.os) }}_${{ entry.arch }}_${{ replace(tf, '.', '_') }}
-              jobDisplayName: Compile Azure ${{ entry.os }} ${{ entry.arch }} ${{ tf }}
-              poolName: ${{ entry.poolName }}
-              image: ${{ entry.image }}
-              architecture: ${{ entry.arch }}
-              targetFramework: ${{ tf }}
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              debug: ${{ parameters.debug }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-              buildTarget: BuildAzureTests
-              publishPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Azure
-              compileArtifactName: compiled-tests-azure-${{ lower(entry.os) }}-${{ entry.arch }}-${{ replace(tf, '.', '-') }}
+        - template: /eng/pipelines/ci/test/jobs/compile-all-tests-job.yml@self
+          parameters:
+            jobName: compile_${{ lower(entry.os) }}_${{ entry.arch }}
+            jobDisplayName: Compile ${{ entry.os }} ${{ entry.arch }}
+            poolName: ${{ entry.poolName }}
+            image: ${{ entry.image }}
+            architecture: ${{ entry.arch }}
+            os: ${{ entry.os }}
+            arch: ${{ entry.arch }}
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

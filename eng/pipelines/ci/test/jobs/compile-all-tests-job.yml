@@ -1,0 +1,179 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                                    #
+# The .NET Foundation licenses this file to you under the MIT license.                             #
+# See the LICENSE file in the project root for more information.                                   #
+####################################################################################################
+#
+# jobs/compile-all-tests-job.yml
+#
+# PURPOSE
+#   Consolidated compile job that builds ALL test categories (SqlClient, Abstractions, Azure)
+#   for ALL target frameworks in a single job per OS+Arch combination. This replaces the
+#   previous model of one job per category × TFM.
+#
+#   By omitting the TestFramework property, build.proj compiles for every TFM the test projects
+#   target. The outputs are published as three artifacts per OS+Arch:
+#     - compiled-tests-<os>-<arch>             → SqlClient FunctionalTests + ManualTests
+#     - compiled-tests-abstractions-<os>-<arch> → Abstractions extension tests
+#     - compiled-tests-azure-<os>-<arch>       → Azure extension tests
+#
+#   Test jobs download their specific artifact and run with --no-build -f <tfm>.
+#
+####################################################################################################
+
+parameters:
+  # Unique ADO job identifier, e.g. compile_windows_x64.
+  - name: jobName
+    type: string
+
+  # Human-readable label shown in the pipeline UI.
+  - name: jobDisplayName
+    type: string
+
+  # Name of the 1ES agent pool (or 'Azure Pipelines' for hosted).
+  - name: poolName
+    type: string
+
+  # The pool image name — either a vmImage (hosted) or an imageOverride demand (1ES self-hosted).
+  - name: image
+    type: string
+
+  # Dotnet/runtime architecture installed on the agent and forwarded to build.proj via
+  # TestArchitecture.
+  - name: architecture
+    type: string
+    values:
+      - x64
+      - x86
+      - arm64
+
+  # Build configuration passed to build.proj via Configuration.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Enables verbose diagnostics in the install-dotnet step.
+  - name: debug
+    type: boolean
+
+  # Verbosity level for dotnet restore/build (-v flag).
+  - name: dotnetVerbosity
+    type: string
+
+  # Base name prefix for published artifacts. Three artifacts are published:
+  #   <baseArtifactName>
+  #   <baseArtifactName>-abstractions  (reserved for future use if needed)
+  #   <baseArtifactName>-azure         (reserved for future use if needed)
+  # Currently we use fixed naming: compiled-tests-<os>-<arch>, etc.
+  - name: os
+    type: string
+
+  - name: arch
+    type: string
+
+jobs:
+  - job: ${{ parameters.jobName }}
+    displayName: ${{ parameters.jobDisplayName }}
+    pool:
+      name: ${{ parameters.poolName }}
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.image }}
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.image }}
+
+    variables:
+      abstractionsPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      loggingPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
+      sqlClientPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
+      sqlServerPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
+
+    steps:
+      - checkout: self
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Upstream Packages
+        inputs:
+          artifactName: upstream-packages
+          targetPath: $(localFeedPath)
+
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          architecture: ${{ parameters.architecture }}
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x]
+
+      # --- Build SqlClient Tests (FunctionalTests + ManualTests, all TFMs) ---
+      - task: DotNetCoreCLI@2
+        displayName: Build SqlClient Tests (all TFMs)
+        inputs:
+          command: build
+          projects: $(Build.SourcesDirectory)/build.proj
+          arguments: >-
+            -t:BuildSqlClientTests
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:TestArchitecture=${{ parameters.architecture }}
+            -p:ReferenceType=Package
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -verbosity:${{ parameters.dotnetVerbosity }}
+
+      # --- Build Abstractions Tests (all TFMs) ---
+      - task: DotNetCoreCLI@2
+        displayName: Build Abstractions Tests (all TFMs)
+        inputs:
+          command: build
+          projects: $(Build.SourcesDirectory)/build.proj
+          arguments: >-
+            -t:BuildAbstractionsTests
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:TestArchitecture=${{ parameters.architecture }}
+            -p:ReferenceType=Package
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -verbosity:${{ parameters.dotnetVerbosity }}
+
+      # --- Build Azure Tests (all TFMs) ---
+      - task: DotNetCoreCLI@2
+        displayName: Build Azure Tests (all TFMs)
+        inputs:
+          command: build
+          projects: $(Build.SourcesDirectory)/build.proj
+          arguments: >-
+            -t:BuildAzureTests
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:TestArchitecture=${{ parameters.architecture }}
+            -p:ReferenceType=Package
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -verbosity:${{ parameters.dotnetVerbosity }}
+
+      # --- Publish artifacts ---
+      - task: PublishPipelineArtifact@1
+        displayName: Publish SqlClient Test Outputs
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests
+          artifactName: compiled-tests-${{ lower(parameters.os) }}-${{ parameters.arch }}
+          publishLocation: pipeline
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Abstractions Test Outputs
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Abstractions
+          artifactName: compiled-tests-abstractions-${{ lower(parameters.os) }}-${{ parameters.arch }}
+          publishLocation: pipeline
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Azure Test Outputs
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient.Extensions/Azure
+          artifactName: compiled-tests-azure-${{ lower(parameters.os) }}-${{ parameters.arch }}
+          publishLocation: pipeline
