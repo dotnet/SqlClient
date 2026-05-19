@@ -59,6 +59,16 @@
 			"type": "http",
 			"url": "https://mcp.bluebird-ai.net/"
 		},
+		"bluebird-mcp-dsmaindev": {
+			"headers": {
+				"x-mcp-ec-branch": "master",
+				"x-mcp-ec-organization": "msdata",
+				"x-mcp-ec-project": "Database Systems",
+				"x-mcp-ec-repository": "DsMainDev"
+			},
+			"type": "http",
+			"url": "https://mcp.bluebird-ai.net/"
+		},
 		"github": {
 			"type": "http",
 			"url": "https://api.githubcopilot.com/mcp/"

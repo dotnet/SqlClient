@@ -29,6 +29,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
         Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
         Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
+        Assert.False(LocalAppContextSwitches.VerifyRecoveredDatabaseContext);
         #if NET
         Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
         #endif

@@ -57,8 +57,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useConnectionPoolV2Original;
     #if NET && _WINDOWS
     private readonly bool? _useManagedNetworkingOriginal;
-    #endif    
+    #endif
     private readonly bool? _useMinimumLoginTimeoutOriginal;
+    private readonly bool? _verifyRecoveredDatabaseContextOriginal;
 
     #endregion
 
@@ -120,6 +121,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             #endif
             _useMinimumLoginTimeoutOriginal =
                 GetSwitchValue("s_useMinimumLoginTimeout");
+            _verifyRecoveredDatabaseContextOriginal =
+                GetSwitchValue("s_verifyRecoveredDatabaseContext");
         }
         catch
         {
@@ -155,7 +158,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "s_ignoreServerProvidedFailoverPartner",
                 _ignoreServerProvidedFailoverPartnerOriginal);
             SetSwitchValue(
-                "s_legacyRowVersionNullBehavior", 
+                "s_legacyRowVersionNullBehavior",
                 _legacyRowVersionNullBehaviorOriginal);
             SetSwitchValue(
                 "s_legacyVarTimeZeroScaleBehaviour",
@@ -186,6 +189,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useMinimumLoginTimeout",
                 _useMinimumLoginTimeoutOriginal);
+            SetSwitchValue(
+                "s_verifyRecoveredDatabaseContext",
+                _verifyRecoveredDatabaseContextOriginal);
         }
         finally
         {
@@ -334,6 +340,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_useMinimumLoginTimeout", value);
     }
 
+    /// <summary>
+    /// Get or set the VerifyRecoveredDatabaseContext switch value.
+    /// </summary>
+    public bool? VerifyRecoveredDatabaseContext
+    {
+        get => GetSwitchValue("s_verifyRecoveredDatabaseContext");
+        set => SetSwitchValue("s_verifyRecoveredDatabaseContext", value);
+    }
+
     #endregion
 
     #region Helpers
@@ -349,7 +364,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             throw new InvalidOperationException(
                 "Could not get assembly for Microsoft.Data.SqlClient");
         }
-        
+
         var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         if (type is null)
         {
@@ -396,7 +411,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             throw new InvalidOperationException(
                 "Could not get assembly for Microsoft.Data.SqlClient");
         }
-        
+
         var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         if (type is null)
         {
