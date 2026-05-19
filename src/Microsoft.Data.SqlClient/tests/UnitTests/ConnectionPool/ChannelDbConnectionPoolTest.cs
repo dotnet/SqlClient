@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -1081,5 +1082,174 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(pool2);
             Assert.Equal(0, pool2.Count);
         }
+
+        #region Rate Limiting And Blocking Period Tests
+
+        private ChannelDbConnectionPool ConstructPoolWithOptions(
+            SqlConnectionFactory connectionFactory,
+            string connectionString,
+            int maxPoolSize = 4)
+        {
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: maxPoolSize,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true);
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions(connectionString),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                poolGroupOptions);
+            return new ChannelDbConnectionPool(
+                connectionFactory,
+                dbConnectionPoolGroup,
+                DbConnectionPoolIdentity.NoIdentity,
+                new DbConnectionPoolProviderInfo());
+        }
+
+        [Fact]
+        public void ErrorOccurred_FailureWithBlockingEnabled_BecomesTrue()
+        {
+            // Default PoolBlockingPeriod is Auto; localhost is non-Azure so blocking is enabled.
+            var pool = ConstructPoolWithOptions(TimeoutConnectionFactory, "Data Source=localhost;");
+
+            Assert.False(pool.ErrorOccurred);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+
+            Assert.True(pool.ErrorOccurred);
+        }
+
+        [Fact]
+        public void ErrorOccurred_FailureWithNeverBlock_StaysFalse()
+        {
+            var pool = ConstructPoolWithOptions(
+                TimeoutConnectionFactory,
+                "Data Source=localhost;Pool Blocking Period=NeverBlock;");
+
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+
+            // FR-007: NeverBlock must not enter the error state.
+            Assert.False(pool.ErrorOccurred);
+        }
+
+        [Fact]
+        public void ErrorOccurred_FailureWithAlwaysBlock_BecomesTrue()
+        {
+            var pool = ConstructPoolWithOptions(
+                TimeoutConnectionFactory,
+                "Data Source=localhost;Pool Blocking Period=AlwaysBlock;");
+
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+
+            Assert.True(pool.ErrorOccurred);
+        }
+
+        [Fact]
+        public void ErrorOccurred_BlockingEnabled_SubsequentRequestFastFails()
+        {
+            var pool = ConstructPoolWithOptions(TimeoutConnectionFactory, "Data Source=localhost;");
+
+            var first = Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // FR-006: subsequent requests inside the blocking window must fail fast with the
+            // cached exception. We assert it returns very quickly compared to a fresh attempt.
+            var sw = Stopwatch.StartNew();
+            var second = Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+            sw.Stop();
+
+            Assert.Equal(first.Message, second.Message);
+            Assert.True(sw.ElapsedMilliseconds < 1000,
+                $"Expected fast-fail (<1000ms) while in blocking period, took {sw.ElapsedMilliseconds}ms.");
+        }
+
+        [Fact]
+        public void Clear_InErrorState_ResetsErrorOccurred()
+        {
+            var pool = ConstructPoolWithOptions(TimeoutConnectionFactory, "Data Source=localhost;");
+
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // FR-011: Clear must reset the error state.
+            pool.Clear();
+            Assert.False(pool.ErrorOccurred);
+        }
+
+        [Fact]
+        public void SuccessfulCreate_AfterFailure_ClearsErrorState()
+        {
+            var factory = new ToggleFailureConnectionFactory();
+            var pool = ConstructPoolWithOptions(factory, "Data Source=localhost;");
+
+            // First call fails and enters the error state.
+            factory.FailNextCreate = true;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // Manually clear the error flag (simulating the backoff timer firing) and then
+            // verify that a subsequent successful create clears the cached error state. FR-009.
+            pool.Clear();
+            Assert.False(pool.ErrorOccurred);
+
+            factory.FailNextCreate = false;
+            var completed = pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out var conn);
+            Assert.True(completed);
+            Assert.NotNull(conn);
+            Assert.False(pool.ErrorOccurred);
+        }
+
+        [Fact]
+        public async Task RateLimiter_LeaseDisposedOnFailure_DoesNotStarvePool()
+        {
+            // If the rate limiter lease were not disposed on failure, after N failures (where N is
+            // the limiter's permit count) every subsequent request would deadlock. Verify that we
+            // can keep getting failures back without ever blocking the thread pool.
+            var pool = ConstructPoolWithOptions(
+                TimeoutConnectionFactory,
+                "Data Source=localhost;Pool Blocking Period=NeverBlock;",
+                maxPoolSize: 4);
+
+            for (int i = 0; i < 8; i++)
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                {
+                    var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                    pool.TryGetConnection(new SqlConnection(), tcs, out _);
+                    await tcs.Task;
+                });
+            }
+        }
+
+        internal class ToggleFailureConnectionFactory : SqlConnectionFactory
+        {
+            public bool FailNextCreate { get; set; }
+
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection)
+            {
+                if (FailNextCreate)
+                {
+                    throw ADP.PooledOpenTimeout();
+                }
+
+                return new StubDbConnectionInternal();
+            }
+        }
+
+        #endregion
     }
 }

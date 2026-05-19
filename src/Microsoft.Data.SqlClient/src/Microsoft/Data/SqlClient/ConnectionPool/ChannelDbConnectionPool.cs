@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
@@ -92,6 +93,53 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
         private volatile int _isClearing;
+
+        /// <summary>
+        /// Throttles the number of concurrent physical connection creation attempts to prevent login
+        /// storms against the database server. Callers acquire a lease before creating a connection and
+        /// dispose it when creation completes (success or failure).
+        /// </summary>
+        private readonly RateLimiter _connectionCreationRateLimiter;
+
+        /// <summary>
+        /// Initial backoff (in milliseconds) used when the pool enters the error state after a
+        /// connection creation failure.
+        /// </summary>
+        private const int InitialErrorWaitMs = 5_000;
+
+        /// <summary>
+        /// Maximum backoff (in milliseconds) for the pool error state.
+        /// </summary>
+        private const int MaxErrorWaitMs = 60_000;
+
+        /// <summary>
+        /// True when the pool is currently in the error (blocking) state. When true, all new
+        /// connection requests fail fast with <see cref="_resError"/> until the error timer clears
+        /// the state.
+        /// </summary>
+        private volatile bool _errorOccurred;
+
+        /// <summary>
+        /// The cached exception from the last failed connection creation attempt. Used to fail fast
+        /// while in the error state.
+        /// </summary>
+        private Exception? _resError;
+
+        /// <summary>
+        /// Timer used to exit the error state after the current backoff interval elapses.
+        /// </summary>
+        private Timer? _errorTimer;
+
+        /// <summary>
+        /// Current backoff interval (in milliseconds) used the next time the pool enters the error
+        /// state. Doubles on each failure up to <see cref="MaxErrorWaitMs"/>.
+        /// </summary>
+        private int _errorWaitMs = InitialErrorWaitMs;
+
+        /// <summary>
+        /// Guards mutations to the error state (the error timer, cached exception, and backoff).
+        /// </summary>
+        private readonly object _errorStateLock = new();
         #endregion
 
         /// <summary>
@@ -115,6 +163,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
 
+            // Limit concurrent connection creation attempts. The cap is bounded by MaxPoolSize since
+            // we can never have more in-flight creations than the pool can hold. We use a small but
+            // non-trivial default so that callers queue (FIFO) rather than stampede the server with
+            // simultaneous logins. The QueueLimit is set to MaxPoolSize so we never silently reject
+            // a caller -- a caller that cannot acquire immediately waits until either its own
+            // ConnectTimeout elapses or capacity is available.
+            int maxConcurrentCreations = Math.Max(1, Math.Min((int)MaxPoolSize, Environment.ProcessorCount));
+            _connectionCreationRateLimiter = new ConcurrencyLimiter(new ConcurrencyLimiterOptions
+            {
+                PermitLimit = maxConcurrentCreations,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = (int)MaxPoolSize,
+            });
+
             State = Running;
         }
 
@@ -134,8 +196,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int IdleCount => _idleChannel.Count;
 
         /// <inheritdoc />
-        /// This will be implemented later when we add support for the pool blocking period after errors. For now, it always returns false.
-        public bool ErrorOccurred => false;
+        public bool ErrorOccurred => _errorOccurred;
 
         /// <inheritdoc />
         public int Id => _instanceId;
@@ -176,6 +237,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Clearing.", Id);
+
+            // Clearing the pool implies the caller wants a clean slate, so abandon any cached
+            // error state. FR-011.
+            ClearErrorState();
 
             Interlocked.Increment(ref _clearGeneration);
 
@@ -368,53 +433,261 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Opens a new internal connection to the database.
+        /// Opens a new internal connection to the database, throttled by the pool's rate limiter.
         /// </summary>
         /// <param name="owningConnection">The owning connection.</param>
+        /// <param name="async">Whether the call is in an async context.</param>
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
-        /// <returns>A task representing the asynchronous operation, with a result of the new internal connection.</returns>
+        /// <returns>The new internal connection, or null if the pool has no available slot.</returns>
         /// <exception cref="OperationCanceledException">
         /// Thrown when the cancellation token is cancelled before the connection operation completes.
         /// </exception>
-        private DbConnectionInternal? OpenNewInternalConnection(
-            DbConnection? owningConnection, 
+        private async Task<DbConnectionInternal?> OpenNewInternalConnectionAsync(
+            DbConnection? owningConnection,
+            bool async,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Opening a connection can be a slow operation and we don't want to hold a lock for the duration.
-            // Instead, we reserve a connection slot prior to attempting to open a new connection and release the slot
-            // in case of an exception.
+            // Fast-fail in the error state. FR-006.
+            ThrowIfInErrorState();
 
-            return _connectionSlots.Add(
-                createCallback: () =>
+            // Quick (racy) capacity check: if we're at MaxPoolSize there's no point waiting for the
+            // rate limiter -- the caller will have to block on the idle channel instead.
+            if (_connectionSlots.ReservationCount >= MaxPoolSize)
+            {
+                return null;
+            }
+
+            // Throttle concurrent creation attempts. Time spent waiting here counts against the
+            // caller's ConnectTimeout because the cancellation token already encodes the timeout.
+            // FR-001, FR-002, FR-003.
+            RateLimitLease lease;
+            if (async)
+            {
+                lease = await _connectionCreationRateLimiter.AcquireAsync(1, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                // The lease acquisition completes synchronously when capacity is available and only
+                // blocks (queues) otherwise. We rely on the surrounding sync-over-async semantics in
+                // the caller to bound thread pool usage on the sync path.
+                lease = _connectionCreationRateLimiter.AcquireAsync(1, cancellationToken)
+                    .AsTask().GetAwaiter().GetResult();
+            }
+
+            try
+            {
+                if (!lease.IsAcquired)
                 {
-                    // https://github.com/dotnet/SqlClient/issues/3459
-                    // TODO: This blocks the thread for several network calls!
-                    // When running async, the blocked thread is one allocated from the managed thread pool (due to 
-                    // use of Task.Run in TryGetConnection). This is why it's critical for async callers to 
-                    // pre-provision threads in the managed thread pool. Our options are limited because 
-                    // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
-                    // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
-                    // when this support is added to DbConnectionInternal.
-                    var connection = ConnectionFactory.CreatePooledConnection(
-                        owningConnection,
-                        this);
+                    // The rate limiter refused to admit us (e.g. the queue is full) but the
+                    // caller's CancellationToken has not fired, so we have not actually timed out.
+                    // Return null so the outer GetInternalConnection loop falls through to the
+                    // idle-channel wait. That wait observes the real timeout and will wake up
+                    // either when capacity frees (a peer create completes or a connection is
+                    // returned) or when the timeout elapses. The loop then cycles and re-attempts
+                    // lease acquisition.
+                    return null;
+                }
 
-                    if (connection is not null)
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Re-check the error state after acquiring the lease -- it may have been set while we
+                // waited.
+                ThrowIfInErrorState();
+
+                DbConnectionInternal? connection;
+                try
+                {
+                    connection = _connectionSlots.Add(
+                        createCallback: () =>
+                        {
+                            // https://github.com/dotnet/SqlClient/issues/3459
+                            // TODO: This blocks the thread for several network calls!
+                            // When running async, the blocked thread is one allocated from the managed thread pool (due to 
+                            // use of Task.Run in TryGetConnection). This is why it's critical for async callers to 
+                            // pre-provision threads in the managed thread pool. Our options are limited because 
+                            // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
+                            // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
+                            // when this support is added to DbConnectionInternal.
+                            var newConnection = ConnectionFactory.CreatePooledConnection(
+                                owningConnection,
+                                this);
+
+                            if (newConnection is not null)
+                            {
+                                newConnection.ClearGeneration = _clearGeneration;
+                            }
+
+                            return newConnection;
+                        },
+                        cleanupCallback: (newConnection) =>
+                        {
+                            // If we fail to open a connection, we need to write a null to the idle channel to
+                            // wake up any waiters
+                            _idleChannel?.TryWrite(null);
+                            newConnection?.Dispose();
+                        });
+                }
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+                {
+                    // Enter the blocking period error state on creation failure if configured.
+                    // FR-006, FR-007.
+                    if (IsBlockingPeriodEnabled())
                     {
-                        connection.ClearGeneration = _clearGeneration;
+                        EnterErrorState(ex);
                     }
 
-                    return connection;
-                },
-                cleanupCallback: (newConnection) =>
+                    throw;
+                }
+
+                // A successful creation clears any prior error state and resets backoff. FR-009.
+                if (connection is not null && _errorOccurred)
                 {
-                    // If we fail to open a connection, we need to write a null to the idle channel to
-                    // wake up any waiters
-                    _idleChannel?.TryWrite(null);
-                    newConnection?.Dispose();
-                });
+                    ClearErrorState();
+                }
+
+                return connection;
+            }
+            finally
+            {
+                // Disposing the lease wakes the next FIFO waiter. FR-004.
+                lease.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the blocking period is enabled for this pool based on the configured
+        /// <see cref="PoolBlockingPeriod"/> and the target data source.
+        /// </summary>
+        private bool IsBlockingPeriodEnabled()
+        {
+            var poolGroupConnectionOptions = PoolGroup?.ConnectionOptions;
+            if (poolGroupConnectionOptions is null)
+            {
+                return true;
+            }
+
+            switch (poolGroupConnectionOptions.PoolBlockingPeriod)
+            {
+                case PoolBlockingPeriod.Auto:
+                    return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
+                case PoolBlockingPeriod.AlwaysBlock:
+                    return true;
+                case PoolBlockingPeriod.NeverBlock:
+                    return false;
+                default:
+                    Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
+                    return true;
+            }
+        }
+
+        /// <summary>
+        /// Throws the cached error if the pool is currently in the error state.
+        /// </summary>
+        private void ThrowIfInErrorState()
+        {
+            if (!_errorOccurred)
+            {
+                return;
+            }
+
+            Exception? cached = _resError;
+            if (cached is null)
+            {
+                return;
+            }
+
+            // Clone SqlExceptions so stack traces are not shared across callers; other exception
+            // types are rethrown as-is.
+            throw cached is SqlException sqlEx ? sqlEx.InternalClone() : cached;
+        }
+
+        /// <summary>
+        /// Enters the pool error state, caching the supplied exception and scheduling a timer to
+        /// exit the state after the current backoff interval. Subsequent failures double the
+        /// backoff up to <see cref="MaxErrorWaitMs"/>.
+        /// </summary>
+        private void EnterErrorState(Exception ex)
+        {
+            int waitMs;
+            Timer? oldTimer;
+            Timer newTimer;
+
+            lock (_errorStateLock)
+            {
+                _resError = ex;
+                _errorOccurred = true;
+                waitMs = _errorWaitMs;
+
+                newTimer = new Timer(ExitErrorStateCallback, null, Timeout.Infinite, Timeout.Infinite);
+                oldTimer = _errorTimer;
+                _errorTimer = newTimer;
+
+                // Bump the backoff for the next failure, capped at MaxErrorWaitMs. FR-008.
+                _errorWaitMs = _errorWaitMs >= MaxErrorWaitMs
+                    ? MaxErrorWaitMs
+                    : Math.Min(_errorWaitMs * 2, MaxErrorWaitMs);
+            }
+
+            oldTimer?.Dispose();
+            newTimer.Change(waitMs, Timeout.Infinite);
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.EnterErrorState|RES|CPOOL> {0}, Entering blocking period for {1}ms.",
+                Id,
+                waitMs);
+        }
+
+        /// <summary>
+        /// Clears the cached error state and disposes the error timer.
+        /// </summary>
+        private void ClearErrorState()
+        {
+            Timer? oldTimer;
+            lock (_errorStateLock)
+            {
+                if (!_errorOccurred && _resError is null && _errorTimer is null && _errorWaitMs == InitialErrorWaitMs)
+                {
+                    return;
+                }
+
+                _errorOccurred = false;
+                _resError = null;
+                _errorWaitMs = InitialErrorWaitMs;
+                oldTimer = _errorTimer;
+                _errorTimer = null;
+            }
+
+            oldTimer?.Dispose();
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.ClearErrorState|RES|CPOOL> {0}, Error state cleared.", Id);
+        }
+
+        /// <summary>
+        /// Timer callback that exits the error state, allowing the next caller to attempt a fresh
+        /// connection creation.
+        /// </summary>
+        private void ExitErrorStateCallback(object? state)
+        {
+            // Only the flag and the timer reference are cleared here. The cached exception and
+            // current backoff are left intact so that, if the very next attempt fails, the backoff
+            // continues to grow rather than resetting. The cached exception and backoff are reset
+            // once an attempt actually succeeds (in OpenNewInternalConnectionAsync) or when the
+            // pool is cleared.
+            Timer? oldTimer;
+            lock (_errorStateLock)
+            {
+                _errorOccurred = false;
+                oldTimer = _errorTimer;
+                _errorTimer = null;
+            }
+
+            oldTimer?.Dispose();
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", Id);
         }
 
         /// <summary>
@@ -521,10 +794,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection ??= GetIdleConnection();
 
 
-                    // If we didn't find an idle connection, try to open a new one.  
-                    connection ??= OpenNewInternalConnection(
+                    // If we didn't find an idle connection, try to open a new one. The async path
+                    // also waits on the rate limiter; the sync path performs the same wait but
+                    // blocks the current thread.
+                    connection ??= await OpenNewInternalConnectionAsync(
                         owningConnection,
-                        cancellationToken);
+                        async,
+                        cancellationToken).ConfigureAwait(false);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
