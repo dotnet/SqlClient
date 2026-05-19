@@ -4,19 +4,21 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensibility;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
-public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
 {
     /// <summary>
     /// This is a static cache instance meant to hold instances of "PublicClientApplication" mapping to information available in PublicClientAppKey.
@@ -117,6 +119,24 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
     public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => _iWin32WindowFunc = iWin32WindowFunc;
     #endif
+
+    private Func<object>? _parentActivityOrWindowFunc = null;
+
+    /// <summary>
+    /// Sets a function to return the parent activity or window handle to be used for
+    /// WAM (Web Account Manager) broker authentication prompts.
+    /// </summary>
+    /// <param name="parentActivityOrWindowFunc">
+    /// A function that returns an <see cref="IntPtr"/> window handle on Windows.
+    /// </param>
+    /// <remarks>
+    /// On Windows, this handle is used to parent the WAM broker dialog.
+    /// If not set, the provider will attempt to automatically detect the console window handle.
+    /// </remarks>
+    public void SetParentActivityOrWindow(Func<object> parentActivityOrWindowFunc)
+    {
+        _parentActivityOrWindowFunc = parentActivityOrWindowFunc ?? throw new ArgumentNullException(nameof(parentActivityOrWindowFunc));
+    }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
     public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
@@ -724,9 +744,32 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
             //      tenant.
             .WithAuthority(publicClientAppKey.Authority);
 
-        #if NETFRAMEWORK
-        if (publicClientAppKey.IWin32WindowFunc is not null)
+        // Enable WAM broker on Windows for all supported authentication modes.
+        // The broker provides enhanced security by enabling device-based Conditional Access
+        // policies through the Windows Account Manager (WAM).
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
+            builder.WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows));
+
+            // Set the parent window handle for broker UI.
+            // On .NET Framework, prefer the IWin32WindowFunc if provided by the caller.
+            #if NETFRAMEWORK
+            if (publicClientAppKey.IWin32WindowFunc is not null)
+            {
+                builder.WithParentActivityOrWindow(publicClientAppKey.IWin32WindowFunc);
+            }
+            else
+            {
+                builder.WithParentActivityOrWindow(GetBrokerParentWindow);
+            }
+            #else
+            builder.WithParentActivityOrWindow(GetBrokerParentWindow);
+            #endif
+        }
+        #if NETFRAMEWORK
+        else if (publicClientAppKey.IWin32WindowFunc is not null)
+        {
+            // Not on Windows (shouldn't happen for NETFRAMEWORK, but be defensive).
             builder.WithParentActivityOrWindow(publicClientAppKey.IWin32WindowFunc);
         }
         #endif
