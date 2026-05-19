@@ -82,6 +82,8 @@ jobs:
         displayName: Set Connection String Password
 
       - pwsh: |
+          # Read existing default configuration from file
+
           $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
           $configDirectory = "$(Agent.TempDirectory)/mds-config"
           $configPath = Join-Path $configDirectory "config.json"

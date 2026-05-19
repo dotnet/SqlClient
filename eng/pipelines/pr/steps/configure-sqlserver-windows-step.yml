@@ -22,7 +22,6 @@ steps:
   # GOTCHA: We must use the Windows-only powershell task here instead of the cross-platform pwsh
   # task because we call some Windows-specific cmdlets.
 
-
   # Enable TCP and NP protocols on the default SQL Server instance
   - powershell: |
       try
@@ -69,24 +68,14 @@ steps:
       # Propagate parameters to PS variables ###############################
       $password = "${{ parameters.saPassword }}"
 
-      $machineName = $env:COMPUTERNAME
-      Write-Host $machineName
-
       # Connect to database and update SA account ##########################
-      try
-      {
-        Import-Module "sqlps"
+      Import-Module "sqlps"
+      $machineName = $env:COMPUTERNAME
 
-        Invoke-Sqlcmd -ServerInstance "$machineName" @"
-            ALTER LOGIN [sa] ENABLE;
-            ALTER LOGIN [sa] WITH PASSWORD = '$password';
+      Invoke-Sqlcmd -ServerInstance "$machineName" @"
+          ALTER LOGIN [sa] ENABLE;
+          ALTER LOGIN [sa] WITH PASSWORD = '$password';
       "@
-      }
-      catch
-      {
-        $error[0] | format-list -force
-        throw
-      }
     displayName: 'Set SA Password [Win]'
     retryCountOnTaskFailure: 5
 
@@ -97,19 +86,30 @@ steps:
     retryCountOnTaskFailure: 1
     continueOnError: true
 
+  # Install northwind database
   - powershell: |
-      $scriptPath = "$(Build.SourcesDirectory)\tools\testsql\createNorthwindDb.sql"
+      # Propagate parameters to PS variables ###############################
+      $repoRoot = $(REPO_ROOT)
+      echo "repoRoot= $repoRoot"
+
+      # Install Northwind Database #########################################
+      Import-Module "sqlps"
       $machineName = $env:COMPUTERNAME
 
-      Import-Module "sqlps"
+      # Delete any existing northwind database
+      Invoke-Sqlcmd `
+          -ServerInstance "$machineName" `
+          -Database "master" `
+          -Query @"
+              IF DB_ID(N'Northwind') IS NOT NULL
+                BEGIN
+              ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+              DROP DATABASE [Northwind];
+              END
+      "@
 
-      Invoke-Sqlcmd -ServerInstance "$machineName" -Database "master" -Query "
-        IF DB_ID(N'Northwind') IS NOT NULL
-        BEGIN
-          ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-          DROP DATABASE [Northwind];
-        END"
-
+      # Install northwind database via script
+      $scriptPath = "$repoRoot\tools\testsql\createNorthwindDb.sql"
       Invoke-Sqlcmd -ServerInstance "$machineName" -Database "master" -InputFile $scriptPath
     displayName: 'Create Northwind Database [Win]'
     retryCountOnTaskFailure: 1
