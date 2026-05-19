@@ -35,7 +35,11 @@
   <!-- Versioning ====================================================== -->
   <!--
     Versions for packages are assigned in the project's Versions.props file. Below, we provide
-    defaults for components of versions that are shared across all projects
+    defaults for components of versions that are shared across all projects.
+
+    Directory.Build.props evaluates before Directory.Packages.props, so defining these here
+    ensures FileVersionBuildNumber is set before any Versions.props runs (including those
+    imported by Directory.Packages.props in Package mode).
   -->
   <PropertyGroup>
     <!--

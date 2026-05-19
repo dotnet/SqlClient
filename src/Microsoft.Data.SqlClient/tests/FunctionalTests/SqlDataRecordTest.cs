@@ -333,6 +333,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         [MemberData(
             nameof(GetUdtTypeTestData.Get),
             MemberType = typeof(GetUdtTypeTestData),
@@ -350,7 +353,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(value.ToString(), record.GetValue(0).ToString());
         }
-
         [Theory]
         [MemberData(
             nameof(GetXXXBadTypeTestData.Get),
