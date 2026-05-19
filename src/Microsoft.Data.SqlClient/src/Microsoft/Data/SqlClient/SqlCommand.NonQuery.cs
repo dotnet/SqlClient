@@ -237,15 +237,10 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 catch (Exception e)
+                    // Exception is not catchable, the connection has already been caught and
+                    // doomed in a lower level.
+                    when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    // @TODO: Invert.
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        // Exception is not catchable, the connection has already been caught and
-                        // doomed in a lower level.
-                        throw;
-                    }
-
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
