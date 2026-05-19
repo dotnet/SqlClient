@@ -70,7 +70,6 @@ jobs:
 
       - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
         parameters:
-          connectionStringTcp: ${{ parameters.connectionStringTcp }}
           fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
           operatingSystem: ${{ parameters.platformOperatingSystem }}
           saPassword: ${{ parameters.saPassword }}

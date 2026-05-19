@@ -9,9 +9,6 @@
 # running.
 
 parameters:
-  # TCP connection string for the local SQL Server instance used by manual tests.
-  - name: connectionStringTcp
-    type: string
 
   # Path to use for file stream tests.
   - name: fileStreamDirectory
@@ -30,7 +27,7 @@ steps:
   - powershell: |
       try
       {
-        echo "> 1. Aquire WMI handle"
+        echo "> 1. Acquire WMI handle"
         Import-Module "sqlps"
         $smo = 'Microsoft.SqlServer.Management.Smo.'
         $wmi = new-object ($smo + 'Wmi.ManagedComputer')
@@ -102,18 +99,17 @@ steps:
 
   - powershell: |
       $scriptPath = "$(Build.SourcesDirectory)\tools\testsql\createNorthwindDb.sql"
-      $connectionString = "${{ parameters.connectionStringTcp }}"
+      $machineName = $env:COMPUTERNAME
 
       Import-Module "sqlps"
-      $connectionString = $connectionString -replace '(?i)(Initial Catalog\s*=\s*)[^;]*', '$1master'
 
-      Invoke-Sqlcmd -ConnectionString $connectionString -Query "
+      Invoke-Sqlcmd -ServerInstance "$machineName" -Database "master" -Query "
         IF DB_ID(N'Northwind') IS NOT NULL
         BEGIN
           ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
           DROP DATABASE [Northwind];
         END"
 
-      Invoke-Sqlcmd -ConnectionString $connectionString -InputFile $scriptPath
+      Invoke-Sqlcmd -ServerInstance "$machineName" -Database "master" -InputFile $scriptPath
     displayName: 'Create Northwind Database [Win]'
     retryCountOnTaskFailure: 1
