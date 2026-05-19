@@ -68,11 +68,12 @@ stages:
           # a manually queued run the operator selects specific resource versions via the Run
           # Pipeline UI, so one or both aliases may have a runID depending on what was chosen.
 
-          - download: sqlclientPackagePublic
-            displayName: Download Public sqlclient-package artifact
-            artifact: $(packageArtifactName)
-            # Skip if Public resource did not trigger; runID is empty when absent.
-            condition: and(succeeded(), ne(variables['resources.pipeline.sqlclientPackagePublic.runID'], ''))
+          # TODO: Uncomment once sqlclient-package pipeline exists in the Public project.
+          # - download: sqlclientPackagePublic
+          #   displayName: Download Public sqlclient-package artifact
+          #   artifact: $(packageArtifactName)
+          #   # Skip if Public resource did not trigger; runID is empty when absent.
+          #   condition: and(succeeded(), ne(variables['resources.pipeline.sqlclientPackagePublic.runID'], ''))
 
           - download: sqlclientPackageAdo
             displayName: Download ADO.Net sqlclient-package artifact

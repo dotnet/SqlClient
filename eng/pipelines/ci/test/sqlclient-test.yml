@@ -65,11 +65,12 @@ parameters:
 
 resources:
   pipelines:
-    # Trigger on successful completion of the sqlclient-package pipeline in the Public project.
-    - pipeline: sqlclientPackagePublic
-      project: Public
-      source: sqlclient-package
-      trigger: true
+    # TODO: Uncomment once sqlclient-package pipeline exists in the Public project (after merge to GitHub main).
+    # # Trigger on successful completion of the sqlclient-package pipeline in the Public project.
+    # - pipeline: sqlclientPackagePublic
+    #   project: Public
+    #   source: sqlclient-package
+    #   trigger: true
 
     # Trigger on successful completion of the sqlclient-package pipeline in the ADO.Net project.
     - pipeline: sqlclientPackageAdo
