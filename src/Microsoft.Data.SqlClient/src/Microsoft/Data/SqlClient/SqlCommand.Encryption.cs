@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -251,23 +252,22 @@ namespace Microsoft.Data.SqlClient
             bool isRetry)
         {
             returnTask = AsyncHelper.CreateContinuationTaskWithState(
-                task: fetchInputParameterEncryptionInfoTask,
+                taskToContinue: fetchInputParameterEncryptionInfoTask,
                 state: this,
-                onSuccess: state =>
+                onSuccess: this2 =>
                 {
-                    SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
 
                     try
                     {
                         // Check for any exceptions on network write, before reading.
-                        command.CheckThrowSNIException();
+                        this2.CheckThrowSNIException();
 
                         // If it is async, then TryFetchInputParameterEncryptionInfo ->
                         // RunExecuteReaderTds would have incremented the async count. Decrement it
                         // when we are about to complete async execute reader.
-                        SqlConnectionInternal internalConnectionTds = command._activeConnection.GetOpenTdsConnection();
+                        SqlConnectionInternal internalConnectionTds = this2._activeConnection.GetOpenTdsConnection();
                         if (internalConnectionTds is not null)
                         {
                             internalConnectionTds.DecrementAsyncCount();
@@ -276,13 +276,13 @@ namespace Microsoft.Data.SqlClient
 
                         // Complete executereader.
                         // @TODO: If we can remove this reference, this could be a static lambda
-                        describeParameterEncryptionDataReader = command.CompleteAsyncExecuteReader(
+                        describeParameterEncryptionDataReader = this2.CompleteAsyncExecuteReader(
                             isInternal: false,
                             forDescribeParameterEncryption: true);
-                        Debug.Assert(command._stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
+                        Debug.Assert(this2._stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
 
                         // Read the results of describe parameter encryption.
-                        command.ReadDescribeEncryptionParameterResults(
+                        this2.ReadDescribeEncryptionParameterResults(
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
                             isRetry);
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     finally
                     {
-                        command.PrepareTransparentEncryptionFinallyBlock(
+                        this2.PrepareTransparentEncryptionFinallyBlock(
                             closeDataReader: processFinallyBlockAsync,
                             decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
                             clearDataStructures: processFinallyBlockAsync,
@@ -311,10 +311,9 @@ namespace Microsoft.Data.SqlClient
                             describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
                     }
                 },
-                onFailure: static (exception, state) =>
+                onFailure: static (this2, exception) =>
                 {
-                    SqlCommand command = (SqlCommand)state;
-                    command.CachedAsyncState?.ResetAsyncState();
+                    this2.CachedAsyncState?.ResetAsyncState();
 
                     if (exception is not null)
                     {

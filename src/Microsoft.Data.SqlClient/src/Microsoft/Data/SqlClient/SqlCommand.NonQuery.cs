@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
@@ -82,11 +83,11 @@ namespace Microsoft.Data.SqlClient
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
             #endif
-            
+
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-            
+
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteNonQuery | API | Object Id {ObjectID}");
@@ -150,9 +151,9 @@ namespace Microsoft.Data.SqlClient
             IsProviderRetriable
                 ? InternalExecuteNonQueryWithRetryAsync(cancellationToken)
                 : InternalExecuteNonQueryAsync(cancellationToken);
-        
+
         #endregion
-        
+
         #region Private Methods
 
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
@@ -164,7 +165,7 @@ namespace Microsoft.Data.SqlClient
                 $"Activity Id {ActivityCorrelator.Current}, " +
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
-            
+
             return BeginExecuteNonQueryInternal(
                 CommandBehavior.Default,
                 callback,
@@ -222,14 +223,12 @@ namespace Microsoft.Data.SqlClient
                     if (execNonQuery is not null)
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            task: execNonQuery,
-                            completion: localCompletion,
-                            state: Tuple.Create(this, localCompletion),
-                            onSuccess: static state =>
-                            {
-                                var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                                parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
-                            });
+                            taskToContinue: execNonQuery,
+                            taskCompletionSource: localCompletion,
+                            state1: this,
+                            state2: localCompletion,
+                            onSuccess: static (this2, localCompletion2) =>
+                                this2.BeginExecuteNonQueryInternalReadStage(localCompletion2));
                     }
                     else
                     {
@@ -254,7 +253,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                // @TODO: store this method call in a variable, it's faaaaar too big to be used in an if statement 
+                // @TODO: store this method call in a variable, it's faaaaar too big to be used in an if statement
                 if (
                     !TriggerInternalEndAndRetryIfNecessary(
                         behavior,
@@ -277,7 +276,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     globalCompletion = localCompletion;
                 }
-                
+
                 // Add callback after work is done to avoid overlapping Begin/End methods
                 if (callback is not null)
                 {
@@ -324,31 +323,31 @@ namespace Microsoft.Data.SqlClient
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
-                
+
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                
+
                 source.SetException(e);
             }
             else if (task.IsCanceled)
             {
                 s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                
+
                 source.SetCanceled();
             }
             else
             {
                 // Task successful
                 s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                
+
                 source.SetResult(task.Result);
             }
         }
-        
+
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
         private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
-            
+
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -364,7 +363,7 @@ namespace Microsoft.Data.SqlClient
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
-            
+
             ThrowIfReconnectionHasBeenCanceled();
             // lock on _stateObj prevents races with close/cancel.
             // If we have already initiated the End call internally, we have already done that, so
@@ -376,7 +375,7 @@ namespace Microsoft.Data.SqlClient
                     return EndExecuteNonQueryInternal(asyncResult);
                 }
             }
-            
+
             return EndExecuteNonQueryInternal(asyncResult);
         }
 
@@ -420,7 +419,7 @@ namespace Microsoft.Data.SqlClient
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: false);
             }
         }
-        
+
         // @TODO: Return int?
         private object InternalEndExecuteNonQuery(
             IAsyncResult asyncResult,
@@ -433,17 +432,17 @@ namespace Microsoft.Data.SqlClient
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"MARS={_activeConnection?.Parser.MARSOn}, " +
                 $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
-            
+
             VerifyEndExecuteState((Task)asyncResult, endMethod);
             WaitForAsyncResults(asyncResult, isInternal);
-            
+
             // If column encryption is enabled, also check the state after waiting for the task.
             // It would be better to do this for all cases, but avoiding for compatibility reasons.
             if (IsColumnEncryptionEnabled)
             {
                 VerifyEndExecuteState((Task)asyncResult, endMethod, fullCheckForColumnEncryption: true);
             }
-            
+
             bool processFinallyBlock = true;
             try
             {
@@ -515,13 +514,13 @@ namespace Microsoft.Data.SqlClient
                     PutStateObject();
                 }
             }
-            
+
             Debug.Assert(_stateObj == null, "non-null state object in EndExecuteNonQuery");
-            
+
             return _rowsAffected;
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
-        
+
         // @TODO: Restructure to make this a sync-only method
         private Task InternalExecuteNonQuery(
             TaskCompletionSource<object> completion,
@@ -543,7 +542,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = Statistics;
             _rowsAffected = -1;
-            
+
             // @TODO: Break into smaller methods ("full" and "simple")
 
             // This function may throw for an invalid connection
@@ -637,16 +636,16 @@ namespace Microsoft.Data.SqlClient
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
             #endif
-            
+
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
                 $"Activity Id {ActivityCorrelator.Current}, " +
                 $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
-            
+
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-            
+
             // Connection can be used as state in RegisterForConnectionCloseNotification continuation
             // to avoid an allocation so use it as the state value if possible but it can be changed if
             // you need it for a more important piece of data that justifies the tuple allocation later
@@ -705,14 +704,14 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                
+
                 source.SetException(e);
                 context.Dispose();
             }
 
             return returnedTask;
         }
-        
+
         private Task InternalExecuteNonQueryWithRetry( // @TODO: Task is ignored
             bool sendToPipe,
             int timeout,
@@ -732,7 +731,7 @@ namespace Microsoft.Data.SqlClient
                     asyncWrite,
                     isRetry,
                     methodName));
-            
+
             usedCache = innerUsedCache;
             return result;
         }
@@ -742,7 +741,7 @@ namespace Microsoft.Data.SqlClient
                 sender: this,
                 function: () => InternalExecuteNonQueryAsync(cancellationToken),
                 cancellationToken);
-        
+
         // @TODO: Sort args, drop TDS from name
         // @TODO: Restructure to make this the common method for sync and async methods (not InternalExecuteNonQuery)
         private Task RunExecuteNonQueryTds(string methodName, bool isAsync, int timeout, bool asyncWrite)
@@ -762,7 +761,7 @@ namespace Microsoft.Data.SqlClient
                         TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                         _activeConnection.RegisterWaitingForReconnect(completion.Task);
                         _reconnectionCompletionSource = completion;
-                        
+
                         // Basically, this RunExecuteNonQueryTds onto the end of the reconnection
                         RunExecuteNonQueryTdsSetupReconnnectContinuation(
                             methodName,
@@ -849,12 +848,12 @@ namespace Microsoft.Data.SqlClient
 
             return null;
         }
-        
+
         /// <remarks>
         /// Since we use CompareExchange, we cannot make the reconnect success continuation static.
         /// Thus, we cannot use the "WithState" continuation helper. If this was part of
         /// RunExecuteNonQueryTds, we would be allocating the lambda each time. So, we make this a
-        /// separate method. 
+        /// separate method.
         /// </remarks>
         // @TODO: Sort args, fix name
         private void RunExecuteNonQueryTdsSetupReconnnectContinuation(
@@ -872,17 +871,17 @@ namespace Microsoft.Data.SqlClient
                 timeout,
                 static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
-            
+
             AsyncHelper.ContinueTask(
-                reconnectTask,
-                completion,
+                taskToContinue: reconnectTask,
+                taskCompletionSource: completion,
                 onSuccess: () =>
                 {
                     if (completion.Task.IsCompleted)
                     {
                         return;
                     }
-                    
+
                     Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
                     timeoutCts.Cancel();
 
@@ -899,21 +898,21 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            subTask,
-                            completion,
+                            taskToContinue: subTask,
+                            taskCompletionSource: completion,
                             state: completion,
-                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                            onSuccess: static state => state.SetResult(null));
                     }
                 });
         }
-        
+
         #endregion
 
         internal sealed class ExecuteNonQueryAsyncCallContext
             : AAsyncCallContext<SqlCommand, int, CancellationTokenRegistration>
         {
             public SqlCommand Command => _owner;
-            
+
             public Guid OperationId { get; set; }
 
             public TaskCompletionSource<int> TaskCompletionSource => _source;

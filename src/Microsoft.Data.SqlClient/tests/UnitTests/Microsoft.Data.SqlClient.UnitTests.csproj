@@ -49,6 +49,7 @@
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="Moq" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="xunit" />
@@ -66,6 +67,7 @@
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="Moq" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
