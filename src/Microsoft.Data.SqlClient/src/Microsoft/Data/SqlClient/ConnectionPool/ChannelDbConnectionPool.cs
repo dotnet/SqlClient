@@ -102,15 +102,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly RateLimiter _connectionCreationRateLimiter;
 
         /// <summary>
-        /// Initial backoff (in milliseconds) used when the pool enters the error state after a
-        /// connection creation failure.
+        /// Initial backoff used when the pool enters the error state after a connection creation
+        /// failure.
         /// </summary>
-        private const int InitialErrorWaitMs = 5_000;
+        private static readonly TimeSpan InitialErrorWait = TimeSpan.FromSeconds(5);
 
         /// <summary>
-        /// Maximum backoff (in milliseconds) for the pool error state.
+        /// Maximum backoff for the pool error state.
         /// </summary>
-        private const int MaxErrorWaitMs = 60_000;
+        private static readonly TimeSpan MaxErrorWait = TimeSpan.FromSeconds(60);
 
         /// <summary>
         /// True when the pool is currently in the error (blocking) state. When true, all new
@@ -131,10 +131,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private Timer? _errorTimer;
 
         /// <summary>
-        /// Current backoff interval (in milliseconds) used the next time the pool enters the error
-        /// state. Doubles on each failure up to <see cref="MaxErrorWaitMs"/>.
+        /// Current backoff interval used the next time the pool enters the error state. Doubles on
+        /// each failure up to <see cref="MaxErrorWait"/>.
         /// </summary>
-        private int _errorWaitMs = InitialErrorWaitMs;
+        private TimeSpan _errorWait = InitialErrorWait;
 
         /// <summary>
         /// Guards mutations to the error state (the error timer, cached exception, and backoff).
@@ -606,11 +606,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Enters the pool error state, caching the supplied exception and scheduling a timer to
         /// exit the state after the current backoff interval. Subsequent failures double the
-        /// backoff up to <see cref="MaxErrorWaitMs"/>.
+        /// backoff up to <see cref="MaxErrorWait"/>.
         /// </summary>
         private void EnterErrorState(Exception ex)
         {
-            int waitMs;
+            TimeSpan wait;
             Timer? oldTimer;
             Timer newTimer;
 
@@ -618,25 +618,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 _resError = ex;
                 _errorOccurred = true;
-                waitMs = _errorWaitMs;
+                wait = _errorWait;
 
-                newTimer = new Timer(ExitErrorStateCallback, null, Timeout.Infinite, Timeout.Infinite);
+                newTimer = new Timer(ExitErrorStateCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
                 oldTimer = _errorTimer;
                 _errorTimer = newTimer;
 
-                // Bump the backoff for the next failure, capped at MaxErrorWaitMs. FR-008.
-                _errorWaitMs = _errorWaitMs >= MaxErrorWaitMs
-                    ? MaxErrorWaitMs
-                    : Math.Min(_errorWaitMs * 2, MaxErrorWaitMs);
+                // Bump the backoff for the next failure, capped at MaxErrorWait. FR-008.
+                TimeSpan doubled = _errorWait + _errorWait;
+                _errorWait = doubled >= MaxErrorWait ? MaxErrorWait : doubled;
             }
 
             oldTimer?.Dispose();
-            newTimer.Change(waitMs, Timeout.Infinite);
+            newTimer.Change(wait, Timeout.InfiniteTimeSpan);
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.EnterErrorState|RES|CPOOL> {0}, Entering blocking period for {1}ms.",
                 Id,
-                waitMs);
+                (int)wait.TotalMilliseconds);
         }
 
         /// <summary>
@@ -647,14 +646,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Timer? oldTimer;
             lock (_errorStateLock)
             {
-                if (!_errorOccurred && _resError is null && _errorTimer is null && _errorWaitMs == InitialErrorWaitMs)
+                if (!_errorOccurred && _resError is null && _errorTimer is null && _errorWait == InitialErrorWait)
                 {
                     return;
                 }
 
                 _errorOccurred = false;
                 _resError = null;
-                _errorWaitMs = InitialErrorWaitMs;
+                _errorWait = InitialErrorWait;
                 oldTimer = _errorTimer;
                 _errorTimer = null;
             }
