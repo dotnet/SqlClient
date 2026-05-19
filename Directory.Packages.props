@@ -89,6 +89,7 @@
   <!-- SqlClient Dependencies -->
 
   <ItemGroup>
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />

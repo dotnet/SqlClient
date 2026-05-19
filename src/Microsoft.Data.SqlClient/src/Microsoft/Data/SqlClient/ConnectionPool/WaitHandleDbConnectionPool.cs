@@ -61,15 +61,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion)
+            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
             {
                 DueTime = dueTime;
                 Owner = owner;
                 Completion = completion;
+                Timeout = timeout;
             }
             public long DueTime { get; private set; }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
+            public TimeoutTimer Timeout { get; private set; }
         }
 
         private sealed class PoolWaitHandles
@@ -520,7 +522,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection)
+        private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
 
@@ -528,7 +530,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 newObj = _connectionFactory.CreatePooledConnection(
                     owningObject,
-                    this);
+                    this,
+                    timeout);
 
                 lock (_objectList)
                 {
@@ -834,6 +837,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 delay,
                                 allowCreate: true,
                                 onlyOneCheckConnection: false,
+                                next.Timeout,
                                 out connection);
                         }
                         // @TODO: CER Exception Handling was removed here (see GH#3581)
@@ -871,20 +875,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } while (_pendingOpens.TryPeek(out next));
         }
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, out DbConnectionInternal connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
             if (taskCompletionSource == null)
             {
-                waitForMultipleObjectsTimeout = (uint)CreationTimeout;
-
-                // Set the wait timeout to INFINITE (-1) if the SQL connection timeout is 0 (== infinite)
-                if (waitForMultipleObjectsTimeout == 0)
-                {
-                    waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
-                }
+                // Use the caller's remaining timeout budget (rather than the static
+                // CreationTimeout) so synchronous pool waits respect any time already
+                // consumed earlier in the open path and don't exceed the overall
+                // ConnectTimeout.
+                waitForMultipleObjectsTimeout = timeout.IsInfinite
+                    ? unchecked((uint)Timeout.Infinite)
+                    : (uint)timeout.MillisecondsRemainingInt;
 
                 allowCreate = true;
             }
@@ -897,7 +901,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             bool onlyOneCheckConnection = true;
-            if (TryGetConnection(owningObject, waitForMultipleObjectsTimeout, allowCreate, onlyOneCheckConnection, out connection))
+            if (TryGetConnection(owningObject, waitForMultipleObjectsTimeout, allowCreate, onlyOneCheckConnection, timeout, out connection))
             {
                 return true;
             }
@@ -907,11 +911,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return true;
             }
 
+            // Anchor the pending request's due time on the caller's remaining budget so
+            // the async waiter loop respects the overall ConnectTimeout. ExpirationTicks
+            // is in DateTime.ToFileTimeUtc() units, matching ADP.TimerCurrent() so it
+            // can flow through the existing TimerRemainingMilliseconds path unchanged.
             var pendingGetConnection =
                 new PendingGetConnection(
-                    CreationTimeout == 0 ? Timeout.Infinite : ADP.TimerCurrent() + ADP.TimerFromSeconds(CreationTimeout / 1000),
+                    timeout.IsInfinite ? Timeout.Infinite : timeout.ExpirationTicks,
                     owningObject,
-                    taskCompletionSource);
+                    taskCompletionSource,
+                    timeout);
             _pendingOpens.Enqueue(pendingGetConnection);
 
             // it is better to StartNew too many times than not enough
@@ -929,7 +938,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 #if NETFRAMEWORK
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")] // copied from Triaged.cs
 #endif
-        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, out DbConnectionInternal connection)
+        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
             DbConnectionInternal obj = null;
             Transaction transaction = null;
@@ -980,7 +989,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
                                 try
                                 {
-                                    obj = UserCreateRequest(owningObject);
+                                    obj = UserCreateRequest(owningObject, timeout);
                                 }
                                 catch
                                 {
@@ -1040,7 +1049,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         if (semaphoreHolder.Obtained)
                                         {
                                             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
-                                            obj = UserCreateRequest(owningObject);
+                                            obj = UserCreateRequest(owningObject, timeout);
                                         }
                                         else
                                         {
@@ -1127,11 +1136,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningObject">Outer connection that currently owns <paramref name="oldConnection"/></param>
         /// <param name="oldConnection">Inner connection that will be replaced</param>
+        /// <param name="timeout">Overall timeout budget for this connection request.</param>
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
-        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
-            DbConnectionInternal newConnection = UserCreateRequest(owningObject, oldConnection);
+            DbConnectionInternal newConnection = UserCreateRequest(owningObject, timeout, oldConnection);
 
             if (newConnection != null)
             {
@@ -1271,7 +1281,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         {
                                             try
                                             {
-                                                newObj = CreateObject(owningObject: null, oldConnection: null);
+                                                // Pool replenishment runs on a background worker without an
+                                                // owning Open() call, so use a fresh per-attempt timeout based on
+                                                // the pool's CreationTimeout (matches the original behavior).
+                                                TimeoutTimer replenishTimeout = TimeoutTimer.StartNew(
+                                                    TimeSpan.FromMilliseconds(CreationTimeout));
+                                                newObj = CreateObject(owningObject: null, oldConnection: null, timeout: replenishTimeout);
                                             }
                                             catch
                                             {
@@ -1515,7 +1530,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private DbConnectionInternal UserCreateRequest(DbConnection owningObject, DbConnectionInternal oldConnection = null)
+        private DbConnectionInternal UserCreateRequest(DbConnection owningObject, TimeoutTimer timeout, DbConnectionInternal oldConnection = null)
         {
             // called by user when they were not able to obtain a free object but
             // instead obtained creation mutex
@@ -1535,7 +1550,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
                     if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
                     {
-                        obj = CreateObject(owningObject, oldConnection);
+                        obj = CreateObject(owningObject, oldConnection, timeout);
                     }
                 }
                 return obj;
