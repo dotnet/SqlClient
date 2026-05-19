@@ -65,22 +65,6 @@ namespace Microsoft.Data.Common
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
 
-        /// <summary>
-        /// This member returns true if the current OS platform is Windows.
-        /// </summary>
-        /// <remarks>
-        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
-        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
-        /// code when published to non-Windows platforms.
-        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
-        /// rather than in a throw helper.
-        /// </remarks>
-        #if NETFRAMEWORK
-        public const bool IsWindows = true;
-        #else
-        public static bool IsWindows => OperatingSystem.IsWindows();
-        #endif
-
         #region UDT
 
         #if NETFRAMEWORK
@@ -159,10 +143,10 @@ namespace Microsoft.Data.Common
                 state,
                 TimeSpan.FromMilliseconds(dueTimeMilliseconds),
                 TimeSpan.FromMilliseconds(periodMilliseconds));
-        
+
         internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
         {
-            // Don't capture the current ExecutionContext and its AsyncLocals onto 
+            // Don't capture the current ExecutionContext and its AsyncLocals onto
             // a global timer causing them to live forever
             bool restoreFlow = false;
             try
@@ -184,7 +168,7 @@ namespace Microsoft.Data.Common
                 }
             }
         }
-            
+
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
@@ -451,7 +435,7 @@ namespace Microsoft.Data.Common
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
             #if NET
-            if (!IsWindows)
+            if (!OsConstants.IsWindows)
             {
                 // No registry in non-Windows environments
                 return null;
@@ -639,7 +623,7 @@ namespace Microsoft.Data.Common
         {
             StringBuilder bld = new();
             // Assume we want to build a full multi-part name with all parts except trimming separators for
-            // leading empty names (null or empty strings, but not whitespace). Separators in the middle 
+            // leading empty names (null or empty strings, but not whitespace). Separators in the middle
             // should be added, even if the name part is null/empty, to maintain proper location of the parts.
             for (int i = 0; i < strings.Length; i++)
             {
@@ -839,14 +823,14 @@ namespace Microsoft.Data.Common
         /// Represents a collection of Azure SQL Server endpoint URLs for various regions and environments.
         /// </summary>
         /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
-        /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
+        /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services
         /// in their respective regions or environments.</remarks>
         internal static readonly List<string> s_azureSqlServerEndpoints = new() { AZURE_SQL,
                                                                         AZURE_SQL_GERMANY,
                                                                         AZURE_SQL_USGOV,
                                                                         AZURE_SQL_CHINA,
                                                                         AZURE_SQL_FABRIC };
-        
+
         /// <summary>
         /// Contains endpoint strings for Azure SQL Server on-demand services.
         /// Each entry is a combination of the ONDEMAND_PREFIX and a specific Azure SQL endpoint string.
@@ -872,9 +856,9 @@ namespace Microsoft.Data.Common
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
-                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
+                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0;
         }
-        
+
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
@@ -1088,7 +1072,7 @@ namespace Microsoft.Data.Common
 
             SqlDependencyObtainProcessDispatcherFailureObjectHandle = 50,
             SqlDependencyProcessDispatcherFailureCreateInstance = 51,
-            
+
             SqlDependencyCommandHashIsNotAssociatedWithNotification = 53,
 
             UnknownTransactionFailure = 60,

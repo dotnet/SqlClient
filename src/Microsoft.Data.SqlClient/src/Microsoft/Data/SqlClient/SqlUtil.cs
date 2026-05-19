@@ -1376,7 +1376,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception NullCertificatePath(string[] validLocations, bool isSystemOp)
         {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            if (OsConstants.IsWindows)
             {
                 Debug.Assert(validLocations.Length == 2);
                 if (isSystemOp)
@@ -1428,7 +1428,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            if (OsConstants.IsWindows)
             {
                 Debug.Assert(validLocations.Length == 2);
                 if (isSystemOp)
@@ -1564,7 +1564,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            if (OsConstants.IsWindows)
             {
                 Debug.Assert(validLocations.Length == 2);
                 if (isSystemOp)

@@ -4,7 +4,6 @@
 
 using System;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -173,7 +172,7 @@ namespace Microsoft.Data.SqlClient
 
             byte[] nicAddress = null;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (OsConstants.IsWindows)
             {
                 // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
                 // has a value that is not zero, then we cannot use the NetworkAddress key and must
