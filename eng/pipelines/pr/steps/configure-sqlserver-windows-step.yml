@@ -101,28 +101,11 @@ steps:
     continueOnError: true
 
   - powershell: |
-      $password = "${{ parameters.saPassword }}"
       $scriptPath = "$(Build.SourcesDirectory)\tools\testsql\createNorthwindDb.sql"
       $connectionString = "${{ parameters.connectionStringTcp }}"
 
       Import-Module "sqlps"
-      Add-Type -AssemblyName System.Data
-
-      $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder($connectionString)
-      $builder['Initial Catalog'] = 'master'
-      $builder['Password'] = $password
-
-      if (-not $builder.ContainsKey('User ID'))
-      {
-        $builder['User ID'] = 'sa'
-      }
-
-      if (-not $builder.ContainsKey('TrustServerCertificate'))
-      {
-        $builder['TrustServerCertificate'] = $true
-      }
-
-      $connectionString = $builder.ConnectionString
+      $connectionString = $connectionString -replace '(?i)(Initial Catalog\s*=\s*)[^;]*', '$1master'
 
       Invoke-Sqlcmd -ConnectionString $connectionString -Query "
         IF DB_ID(N'Northwind') IS NOT NULL
