@@ -1,0 +1,169 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This pipeline builds all packages using the build.proj Pack target with ReferenceType=Package,
+# then publishes the resulting .nupkg and .snupkg files as a single pipeline artifact.
+#
+# It runs:
+#   - On pushes to GitHub main and ADO internal/main (batched)
+#   - Nightly at 00:00 UTC on both branches
+#
+# On internal/main the strong-name signing key is downloaded and used to sign assemblies during the
+# build.
+#
+# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We distinguish the two via
+# branch filters:
+#
+#   - Only the GitHub repo has a 'main' branch.
+#   - Only the ADO repo has an 'internal/main' branch.
+
+name: $(DayOfYear)$(Rev:rr)
+
+# Do not trigger this pipeline for PRs.
+pr: none
+
+# Trigger on pushes to main and internal/main, batching concurrent commits.
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+      - internal/main
+
+# Nightly schedule at 00:00 UTC.
+schedules:
+  - cron: '0 0 * * *'
+    displayName: Nightly Build
+    branches:
+      include:
+        - main
+        - internal/main
+    always: true
+
+# Pipeline parameters visible in the Azure DevOps UI.
+parameters:
+
+  # The agent image to use for the build.  This must exist in both the ADO-1ES-Pool and
+  # ADO-CI-1ES-Pool agent pools.
+  - name: agentImage
+    displayName: Agent Image
+    type: string
+    default: ADO-UB24
+    values:
+      - ADO-UB24
+      - ADO-Win25
+
+  # The build configuration to use, either Debug or Release.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  # True to enable debug steps and output.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # The verbosity level of dotnet CLI commands.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+variables:
+  # Whether this is an internal (ADO.Net project) or public (Public project) build.
+  - name: isInternalBuild
+    value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
+
+  # Signing key argument passed to build.proj. On internal builds this references the secure file
+  # downloaded by DownloadSecureFile@1; on public builds it expands to empty.
+  - name: signingKeyArg
+    ${{ if eq(variables.isInternalBuild, 'True') }}:
+      value: '-p:SigningKeyPath="$(keyFile.secureFilePath)"'
+    ${{ else }}:
+      value: ''
+
+jobs:
+  - job: pack_all_packages
+    displayName: Pack All Packages
+
+    pool:
+      ${{ if eq(variables.isInternalBuild, 'True') }}:
+        name: ADO-1ES-Pool
+      ${{ else }}:
+        name: ADO-CI-1ES-Pool
+      demands:
+        - ImageOverride -equals ${{ parameters.agentImage }}
+
+    steps:
+
+      # Emit environment variables if debug is enabled.
+      - ${{ if eq(parameters.debug, true) }}:
+        - pwsh: |
+            Get-ChildItem Env: | Sort-Object Name | Format-Table -AutoSize -Wrap
+          displayName: '[Debug] Print Environment Variables'
+
+      # Install the .NET SDK from global.json.
+      - template: /eng/pipelines/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+
+      # Clean any pre-existing .nupkg / .snupkg files from the packages/ directory
+      # to ensure we only publish packages produced by this run.
+      - pwsh: |
+          Write-Host 'Cleaning packages/ directory...'
+          Remove-Item -Force "$(Build.SourcesDirectory)/packages/*.nupkg" -ErrorAction SilentlyContinue
+          Remove-Item -Force "$(Build.SourcesDirectory)/packages/*.snupkg" -ErrorAction SilentlyContinue
+          Write-Host 'Done.'
+        displayName: Clean packages/ directory
+
+      # On internal builds, download the strong-name signing key.
+      - ${{ if eq(variables.isInternalBuild, 'True') }}:
+        - task: DownloadSecureFile@1
+          displayName: Download Signing Key
+          inputs:
+            secureFile: netfxKeypair.snk
+          name: keyFile
+
+      # Run the Pack target via build.proj.
+      - task: DotNetCoreCLI@2
+        displayName: build.proj - Pack (ReferenceType=Package)
+        inputs:
+          command: build
+          projects: '$(Build.SourcesDirectory)/build.proj'
+          arguments: >-
+            -t:Pack
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:ReferenceType=Package
+            -p:BuildNumber="$(Build.BuildNumber)"
+            -p:BuildSuffix=ci
+            $(signingKeyArg)
+            -verbosity:${{ parameters.dotnetVerbosity }}
+
+      # List produced packages for diagnostics.
+      - pwsh: |
+          Write-Host 'Packages produced:'
+          Get-ChildItem "$(Build.SourcesDirectory)/packages/*.nupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length -AutoSize -Wrap
+          Get-ChildItem "$(Build.SourcesDirectory)/packages/*.snupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length -AutoSize -Wrap
+        displayName: List produced packages
+
+      # Publish all .nupkg and .snupkg files from packages/ as a pipeline artifact.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish NuGet Packages
+        inputs:
+          targetPath: '$(Build.SourcesDirectory)/packages'
+          artifactName: Packages
+          publishLocation: pipeline
