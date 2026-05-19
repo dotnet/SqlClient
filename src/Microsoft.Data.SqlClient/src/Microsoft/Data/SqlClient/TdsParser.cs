@@ -4308,13 +4308,7 @@ namespace Microsoft.Data.SqlClient
             // Reference: MS-TDS, 2.2.7.14, footnote on TDSVersion field.
             uint tdsVersion = BinaryPrimitives.ReadUInt32BigEndian(b);
 
-            if (tdsVersion is not TdsEnums.SQL2005_VERSION
-                and not TdsEnums.SQL2008_VERSION
-                and not TdsEnums.TDS7X_VERSION
-                and not TdsEnums.TDS80_VERSION)
-            {
-                throw SQL.InvalidTDSVersion();
-            }
+            ADP.ValidateTdsVersion(tdsVersion);
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
