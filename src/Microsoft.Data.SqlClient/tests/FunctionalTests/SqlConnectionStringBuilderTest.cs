@@ -251,6 +251,52 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void IdleTimeout_DefaultIsZero()
+        {
+            // Default-constructed builder should have IdleTimeout == 0 (disabled).
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            Assert.Equal(0, builder.IdleTimeout);
+        }
+
+        [Fact]
+        public void IdleTimeout_RoundTripsThroughConnectionString()
+        {
+            // Set via property, observe in ConnectionString; parse back and observe via property.
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder
+            {
+                IdleTimeout = 45
+            };
+            Assert.Contains("Connection Idle Timeout=45", builder.ConnectionString, StringComparison.OrdinalIgnoreCase);
+
+            SqlConnectionStringBuilder parsed = new SqlConnectionStringBuilder(builder.ConnectionString);
+            Assert.Equal(45, parsed.IdleTimeout);
+        }
+
+        [Fact]
+        public void IdleTimeout_CanonicalKeyword_Parses()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder("Connection Idle Timeout=120");
+            Assert.Equal(120, builder.IdleTimeout);
+        }
+
+        [Fact]
+        public void IdleTimeout_SynonymPoolIdleTimeout_Parses()
+        {
+            // "Pool Idle Timeout" is a registered synonym -> same canonical property.
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder("Pool Idle Timeout=75");
+            Assert.Equal(75, builder.IdleTimeout);
+        }
+
+        [Fact]
+        public void SetInvalidIdleTimeout_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.IdleTimeout = -1);
+            Assert.Contains("idle", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void SetInvalidMaxPoolSize_Throws()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();

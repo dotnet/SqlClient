@@ -1429,6 +1429,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded on its next retrieval. A value of 0 disables idle expiration..
+        /// </summary>
+        internal static string DbConnectionString_IdleTimeout {
+            get {
+                return ResourceManager.GetString("DbConnectionString_IdleTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The maximum number of connections allowed in the pool..
         /// </summary>
         internal static string DbConnectionString_MaxPoolSize {

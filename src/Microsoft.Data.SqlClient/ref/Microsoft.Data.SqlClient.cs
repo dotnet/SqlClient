@@ -1368,6 +1368,10 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     [System.ComponentModel.DisplayNameAttribute("Load Balance Timeout")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public int LoadBalanceTimeout { get { throw null; } set { } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IdleTimeout/*'/>
+    [System.ComponentModel.DisplayNameAttribute("Connection Idle Timeout")]
+    [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+    public int IdleTimeout { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*'/>
     [System.ComponentModel.DisplayNameAttribute("Max Pool Size")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

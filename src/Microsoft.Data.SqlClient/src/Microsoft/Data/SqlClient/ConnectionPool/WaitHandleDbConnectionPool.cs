@@ -1028,7 +1028,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 Interlocked.Decrement(ref _waitCount);
                                 obj = GetFromGeneralPool();
 
-                                if ((obj != null) && (!obj.IsConnectionAlive()))
+                                if ((obj != null) && (!obj.IsConnectionAlive() || IsIdleExpired(obj)))
                                 {
                                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Connection {1}, found dead and removed.", Id, obj.ObjectID);
                                     DestroyObject(obj);
@@ -1207,7 +1207,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             throw;
                         }
                     }
-                    else if (!obj.IsConnectionAlive())
+                    else if (!obj.IsConnectionAlive() || IsIdleExpired(obj))
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", Id, obj.ObjectID);
                         DestroyObject(obj);
@@ -1329,11 +1329,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {0}, Connection {1}, Pushing to general pool.", Id, obj.ObjectID);
 
+            // Stamp the idle-since timestamp immediately before placing the connection on the idle stack
+            // so that idle-expiry checks on later retrieval can decide whether it has sat unused too long.
+            obj.MarkPooledIdle();
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
 
             SqlClientDiagnostics.Metrics.EnterFreeConnection();
 
+        }
+
+        /// <summary>
+        /// Returns true when the supplied connection has been sitting idle in the pool longer than the
+        /// configured <see cref="DbConnectionPoolGroupOptions.IdleTimeout"/>. Returns false when idle timeout
+        /// is disabled (zero).
+        /// </summary>
+        private bool IsIdleExpired(DbConnectionInternal obj)
+        {
+            TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
+            return idleTimeout != TimeSpan.Zero && DateTime.UtcNow > obj.IdleSinceUtc + idleTimeout;
         }
 
         public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)

@@ -82,6 +82,11 @@ namespace Microsoft.Data.ProviderBase
             ShouldHidePassword = hidePassword;
             State = state;
             CreateTime = DateTime.UtcNow;
+            // Initialize the idle-since stamp to creation time so that a freshly built connection is treated
+            // as "just used" by idle-expiry checks until the pool's return path stamps it again on first return.
+            // Without this initialization, IdleSinceUtc would default to DateTime.MinValue, which would cause
+            // IsLiveConnection to immediately evict every new connection whenever IdleTimeout is configured.
+            IdleSinceUtc = CreateTime;
         }
 
         #region Properties
@@ -90,6 +95,13 @@ namespace Microsoft.Data.ProviderBase
         /// When the connection was created.
         /// </summary>
         internal DateTime CreateTime { get; }
+
+        /// <summary>
+        /// UTC timestamp of when this connection was last placed into the pool's idle state.
+        /// Stamped by <see cref="MarkPooledIdle"/> from the pool's return-to-pool path.
+        /// Used by the pool to discard connections that have sat unused longer than the configured idle timeout.
+        /// </summary>
+        internal DateTime IdleSinceUtc { get; private set; }
 
         /// <summary>
         /// The pool generation at the time this connection was created or added to the pool.
@@ -732,6 +744,16 @@ namespace Microsoft.Data.ProviderBase
         internal virtual void PrepareForReplaceConnection()
         {
             // By default, there is no preparation required
+        }
+
+        /// <summary>
+        /// Stamps <see cref="IdleSinceUtc"/> with the current UTC time. Called by the pool's return-to-pool path
+        /// (after the connection has been deactivated and is about to enter the idle pool) so that the pool can later
+        /// decide whether the connection has sat idle for too long and should be discarded.
+        /// </summary>
+        internal void MarkPooledIdle()
+        {
+            IdleSinceUtc = DateTime.UtcNow;
         }
 
         internal void PrePush(DbConnection expectedOwner)

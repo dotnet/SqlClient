@@ -731,7 +731,8 @@ namespace Microsoft.Data.SqlClient
                     opt.MaxPoolSize,
                     connectionTimeout,
                     opt.LoadBalanceTimeout,
-                    opt.Enlist);
+                    opt.Enlist,
+                    opt.IdleTimeout);
             }
             return poolingOptions;
         }

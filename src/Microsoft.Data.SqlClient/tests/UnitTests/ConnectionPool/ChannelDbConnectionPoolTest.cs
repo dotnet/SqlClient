@@ -895,6 +895,160 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Idle Timeout Tests
+
+        // Helper: build a pool whose IdleTimeout is the given number of seconds.
+        private ChannelDbConnectionPool ConstructPoolWithIdleTimeout(int idleTimeoutSeconds)
+        {
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 50,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: idleTimeoutSeconds);
+            return ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+        }
+
+        [Fact]
+        public void IdleTimeout_PoolGroupOptions_ConvertsSecondsToTimeSpan()
+        {
+            // 30 seconds in -> TimeSpan(0, 0, 30) out.
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 50,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 30);
+
+            Assert.Equal(TimeSpan.FromSeconds(30), poolGroupOptions.IdleTimeout);
+        }
+
+        [Fact]
+        public void IdleTimeout_DefaultIsZero_DisablesExpiry()
+        {
+            // Default ctor argument keeps idle expiry off.
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 50,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true);
+
+            Assert.Equal(TimeSpan.Zero, poolGroupOptions.IdleTimeout);
+        }
+
+        [Fact]
+        public void IdleTimeout_StampedOnReturn()
+        {
+            // Arrange - long idle timeout so the return path stamps (not evicts).
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 3600);
+            SqlConnection owningConnection = new();
+            pool.TryGetConnection(owningConnection, taskCompletionSource: null,
+                out DbConnectionInternal? connection);
+            Assert.NotNull(connection);
+
+            // Backdate by a small amount that's still well inside the idle window so the return path
+            // doesn't decide to evict instead of stamp.
+            BackdateIdleSince(connection, TimeSpan.FromSeconds(5));
+            DateTime stampedBack = connection.IdleSinceUtc;
+
+            // Act
+            DateTime before = DateTime.UtcNow;
+            pool.ReturnInternalConnection(connection, owningConnection);
+            DateTime after = DateTime.UtcNow;
+
+            // Assert: stamp falls within the return window and is strictly newer than the backdated value.
+            Assert.InRange(connection.IdleSinceUtc, before, after);
+            Assert.True(connection.IdleSinceUtc > stampedBack);
+        }
+
+        [Fact]
+        public void IdleTimeout_Zero_DoesNotExpire()
+        {
+            // Arrange - pool with idle expiry disabled
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 0);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+
+            // Return + back-date IdleSinceUtc to simulate a long sit.
+            pool.ReturnInternalConnection(first, owner);
+            BackdateIdleSince(first, TimeSpan.FromHours(1));
+
+            // Act
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                out DbConnectionInternal? second);
+
+            // Assert - same instance, idle expiry disabled
+            Assert.Same(first, second);
+            Assert.Equal(1, pool.Count);
+        }
+
+        [Fact]
+        public void IdleTimeout_Set_ExpiresOldConnection()
+        {
+            // Arrange - pool with 1-second idle timeout
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+
+            // Return + back-date IdleSinceUtc beyond the timeout.
+            pool.ReturnInternalConnection(first, owner);
+            BackdateIdleSince(first, TimeSpan.FromSeconds(5));
+
+            // Act - request another connection
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                out DbConnectionInternal? second);
+
+            // Assert - the expired one is discarded; a new one is minted.
+            Assert.NotNull(second);
+            Assert.NotSame(first, second);
+            Assert.Equal(1, pool.Count);
+        }
+
+        [Fact]
+        public void IdleTimeout_Set_KeepsFreshConnection()
+        {
+            // Arrange - 60-second idle timeout, connection just returned
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 60);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+            pool.ReturnInternalConnection(first, owner);
+
+            // Act - immediately request another connection
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                out DbConnectionInternal? second);
+
+            // Assert - same instance reused, well within idle window
+            Assert.Same(first, second);
+        }
+
+        // Forcibly rewinds a connection's IdleSinceUtc by the given amount so tests don't have to sleep.
+        // Uses reflection because the setter is private by design (only the pool's return path stamps it).
+        private static void BackdateIdleSince(DbConnectionInternal connection, TimeSpan delta)
+        {
+            var prop = typeof(DbConnectionInternal).GetProperty(
+                nameof(DbConnectionInternal.IdleSinceUtc),
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            Assert.NotNull(prop);
+            prop!.SetValue(connection, DateTime.UtcNow - delta);
+        }
+
+        #endregion
+
         #region Test classes
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {

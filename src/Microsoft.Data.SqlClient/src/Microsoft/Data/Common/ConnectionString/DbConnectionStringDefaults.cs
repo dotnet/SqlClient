@@ -36,6 +36,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const bool IntegratedSecurity = false;
         internal const SqlConnectionIPAddressPreference IpAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
+        internal const int IdleTimeout = 0; // default of 0 means don't expire idle connections
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
         internal const bool MultipleActiveResultSets = false;
