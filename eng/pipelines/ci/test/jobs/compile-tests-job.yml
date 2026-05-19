@@ -47,6 +47,7 @@ parameters:
     values:
       - x64
       - x86
+      - arm64
 
   # TFM passed to build.proj via TestFramework, e.g. net9.0. Determines which TFM output
   # directory is compiled and later downloaded by test jobs.

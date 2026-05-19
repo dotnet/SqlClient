@@ -43,6 +43,7 @@ parameters:
     values:
       - x64
       - x86
+      - arm64
 
   # Target framework moniker passed to build.proj (e.g. net9.0).
   - name: targetFramework

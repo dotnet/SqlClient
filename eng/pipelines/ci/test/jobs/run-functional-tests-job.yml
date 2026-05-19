@@ -64,6 +64,7 @@ parameters:
     values:
       - x64
       - x86
+      - arm64
 
   # TFM passed to build.proj via TestFramework, must match the compiled artifact.
   - name: targetFramework
