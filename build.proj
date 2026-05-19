@@ -232,6 +232,19 @@
     </ReferenceTypeArgument>
 
     <!--
+      SkipDependencyPack
+      Applies to:     Build* targets in Package mode
+      Description:    When true, suppresses the automatic DependsOnTargets that pack sibling
+                      packages before building a downstream package. This is intended for CI
+                      systems (e.g. OneBranch) that build each package in a separate job and
+                      supply pre-built dependency packages externally. Without this flag,
+                      Build targets in Package mode will first run Pack targets for their
+                      dependencies to populate the local NuGet feed.
+      Default value:  false
+    -->
+    <SkipDependencyPack Condition="'$(SkipDependencyPack)' == ''">false</SkipDependencyPack>
+
+    <!--
       SigningKeyPath
       Applies to:     Build*, Pack*
       Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
@@ -402,7 +415,7 @@
     the first step of this target.
   -->
   <PropertyGroup>
-    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
+    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientNotSupported" DependsOnTargets="$(BuildSqlClientNotSupportedDependsOn)">
     <PropertyGroup>
@@ -450,7 +463,7 @@
 
   <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
   <PropertyGroup>
-    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
+    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientRef" DependsOnTargets="$(BuildSqlClientRefDependsOn)">
     <PropertyGroup>
@@ -479,7 +492,7 @@
 
   <!-- BuildSqlClientUnix: Builds all unix-specific SqlClient binaries -->
   <PropertyGroup>
-    <BuildSqlClientUnixDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientUnixDependsOn>
+    <BuildSqlClientUnixDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientUnixDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientUnix" DependsOnTargets="$(BuildSqlClientUnixDependsOn)">
     <PropertyGroup>
@@ -510,7 +523,7 @@
 
   <!-- BuildSqlClientWindows: Builds all windows-specific SqlClient binaries -->
   <PropertyGroup>
-    <BuildSqlClientWindowsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientWindowsDependsOn>
+    <BuildSqlClientWindowsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientWindowsDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientWindows" DependsOnTargets="$(BuildSqlClientWindowsDependsOn)">
     <PropertyGroup>
@@ -700,7 +713,7 @@
 
   <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider -->
   <PropertyGroup>
-    <BuildAkvProviderDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackSqlClient;PackLogging</BuildAkvProviderDependsOn>
+    <BuildAkvProviderDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackSqlClient;PackLogging</BuildAkvProviderDependsOn>
   </PropertyGroup>
   <Target Name="BuildAkvProvider" DependsOnTargets="$(BuildAkvProviderDependsOn)">
     <PropertyGroup>
@@ -781,7 +794,7 @@
 
   <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
   <PropertyGroup>
-    <BuildAbstractionsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging</BuildAbstractionsDependsOn>
+    <BuildAbstractionsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging</BuildAbstractionsDependsOn>
   </PropertyGroup>
   <Target Name="BuildAbstractions" DependsOnTargets="$(BuildAbstractionsDependsOn)">
     <PropertyGroup>
@@ -883,7 +896,7 @@
 
   <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
   <PropertyGroup>
-    <BuildAzureDependsOn Condition="'$(ReferenceType.ToLower())' == 'package'">PackLogging;PackAbstractions</BuildAzureDependsOn>
+    <BuildAzureDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions</BuildAzureDependsOn>
   </PropertyGroup>
   <Target Name="BuildAzure" DependsOnTargets="$(BuildAzureDependsOn)">
     <PropertyGroup>
