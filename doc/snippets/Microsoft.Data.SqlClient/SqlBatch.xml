@@ -272,7 +272,7 @@
                   }
           
                   var results = new List&lt;int&gt;(count);
-                  using (SqlDataReader reader = batch.ExecuteReader())
+                  using (SqlDataReader reader = batch.ExecuteReader(CommandBehavior.CloseConnection))
                   {
                       do
                       {
