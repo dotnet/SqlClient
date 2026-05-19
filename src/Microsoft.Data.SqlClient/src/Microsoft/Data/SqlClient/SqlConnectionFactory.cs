@@ -742,8 +742,8 @@ namespace Microsoft.Data.SqlClient
 
             Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
-            
-            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
+
+            return new SqlMetaDataFactory(xmlStream, internalConnection.Capabilities);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(

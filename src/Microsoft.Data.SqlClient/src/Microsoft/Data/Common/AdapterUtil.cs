@@ -492,6 +492,17 @@ namespace Microsoft.Data.Common
             }
         }
 
+        internal static void ValidateTdsVersion(uint tdsVersion)
+        {
+            if (tdsVersion is not TdsEnums.SQL2005_VERSION
+                and not TdsEnums.SQL2008_VERSION
+                and not TdsEnums.TDS7X_VERSION
+                and not TdsEnums.TDS80_VERSION)
+            {
+                throw SQL.InvalidTDSVersion();
+            }
+        }
+
         internal static ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Format value)
         {
 #if DEBUG

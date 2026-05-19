@@ -178,22 +178,9 @@ namespace Microsoft.Data.SqlClient.Connection
         internal bool _federatedAuthenticationRequested;
 
         /// <summary>
-        /// Flag indicating whether JSON objects are supported by the server.
-        /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal bool IsJsonSupportEnabled = false;
-
-        /// <summary>
-        /// Flag indicating whether vector objects are supported by the server.
-        /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal bool IsVectorSupportEnabled = false;
-
-        /// <summary>
         /// Flag indicating whether enhanced routing is supported by the server.
         /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal bool IsEnhancedRoutingSupportEnabled = false;
+        internal bool IsEnhancedRoutingSupportEnabled => Capabilities.EnhancedRouting;
 
         // @TODO: This should be private
         internal readonly SyncAsyncLock _parserLock = new SyncAsyncLock();
@@ -203,12 +190,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
         // @TODO: Should be private and accessed via internal property
         internal readonly SspiContextProvider _sspiContextProvider;
-
-        /// <summary>
-        /// TCE flags supported by the server.
-        /// </summary>
-        // @TODO: Should be private and accessed via internal property
-        internal byte _tceVersionSupported;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
@@ -250,8 +231,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private string _instanceName = string.Empty;
 
-        private SqlLoginAck _loginAck;
-
         /// <summary>
         /// This is used to preserve the authentication context object if we decide to cache it for
         /// subsequent connections in the same pool. This will finally end up in
@@ -285,9 +264,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
-
-        // @TODO: Rename to match naming conventions
-        private bool _serverSupportsDNSCaching = false;
 
         private bool _sessionRecoveryRequested;
 
@@ -458,10 +434,11 @@ namespace Microsoft.Data.SqlClient.Connection
         #region Properties
 
         // @TODO: Make internal
-        public override string ServerVersion
-        {
-            get => $"{_loginAck.majorVersion:00}.{(short)_loginAck.minorVersion:00}.{_loginAck.buildNum:0000}";
-        }
+        public override string ServerVersion =>
+            Capabilities.ServerVersion;
+
+        public override ConnectionCapabilities Capabilities =>
+            _parser.Capabilities;
 
         /// <summary>
         /// Gets the collection of async call contexts that belong to this connection.
@@ -597,16 +574,15 @@ namespace Microsoft.Data.SqlClient.Connection
         internal bool IsEnlistedInTransaction { get; private set; }
 
         /// <summary>
-        /// Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
-        /// TODO: overlaps with IsGlobalTransactionsEnabledForServer, need to consolidate to avoid bugs
+        /// Whether the server is capable of supporting a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
         /// </summary>
-        internal bool IsGlobalTransaction { get; private set; }
+        internal bool IsGlobalTransaction => Capabilities.GlobalTransactionsAvailable;
 
         /// <summary>
         /// Whether Global Transactions are enabled. Only supported by Azure SQL. False if disabled
         /// or connected to on-prem SQL Server.
         /// </summary>
-        internal bool IsGlobalTransactionsEnabledForServer { get; private set; }
+        internal bool IsGlobalTransactionsEnabledForServer => Capabilities.GlobalTransactionsSupported;
 
         /// <summary>
         /// Whether this connection is locked for bulk copy operations.
@@ -620,11 +596,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Get or set if SQLDNSCaching is supported by the server.
         /// </summary>
         // @TODO: Make auto-property
-        internal bool IsSQLDNSCachingSupported
-        {
-            get => _serverSupportsDNSCaching;
-            set => _serverSupportsDNSCaching = value;
-        }
+        internal bool IsSQLDNSCachingSupported => Capabilities.DnsCaching;
 
         /// <summary>
         /// Get or set if we need retrying with IP received from FeatureExtAck.
@@ -759,12 +731,6 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             get => _parser._fResetConnection ? null : CurrentTransaction;
         }
-
-        /// <summary>
-        /// Whether this connection is to an Azure SQL Database.
-        /// </summary>
-        // @TODO: Make private field.
-        private bool IsAzureSqlConnection { get; set; }
 
         #endregion
 
@@ -971,8 +937,6 @@ namespace Microsoft.Data.SqlClient.Connection
             finally
             {
                 // Close will always close, even if exception is thrown.
-                // Remember to null out any object references.
-                _loginAck = null;
 
                 // Mark internal connection as closed
                 _fConnectionOpen = false;
@@ -1365,12 +1329,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    IsGlobalTransaction = true;
-                    if (data[0] == 0x01)
-                    {
-                        IsGlobalTransactionsEnabledForServer = true;
-                    }
-
+                    Capabilities.GlobalTransactionsAvailable = true;
+                    Capabilities.GlobalTransactionsSupported = (data[0] == 0x01);
                     break;
                 }
 
@@ -1498,19 +1458,12 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
                     }
 
-                    _tceVersionSupported = supportedTceVersion;
-
-                    Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION,
-                        "Client support TCE version 2");
-
-                    _parser.IsColumnEncryptionSupported = true;
-                    _parser.TceVersionSupported = _tceVersionSupported;
-                    _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3;
+                    Capabilities.ColumnEncryptionVersion = supportedTceVersion;
 
                     if (data.Length > 1)
                     {
                         // Extract the type of enclave being used by the server.
-                        _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
+                        Capabilities.ColumnEncryptionEnclaveType = Encoding.Unicode.GetString(data, 2, data.Length - 2);
                     }
                     break;
                 }
@@ -1526,11 +1479,11 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
-                    IsAzureSqlConnection = true;
-
+                    Capabilities.IsAzureSql = true;
                     // Bit 0 for RO/FP support
-                    // @TODO: Add a constant somewhere for that
-                    if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
+                    Capabilities.ReadOnlyFailoverPartnerConnection = (data[0] & 0x01) == 0x01;
+
+                    if (Capabilities.ReadOnlyFailoverPartnerConnection && SqlClientEventSource.Log.IsTraceEnabled())
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
@@ -1582,7 +1535,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     byte enabled = data[1];
-                    _parser.DataClassificationVersion = enabled == 0
+                    Capabilities.DataClassificationVersion = enabled == 0
                         ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED
                         : supportedDataClassificationVersion;
 
@@ -1605,6 +1558,9 @@ namespace Microsoft.Data.SqlClient.Connection
 
                         throw SQL.ParsingError();
                     }
+                    // The server can send and receive UTF8-encoded data if bit 0 of the
+                    // feature data is set.
+                    Capabilities.Utf8 = (data[0] & 0x01) == 0x01;
                     break;
                 }
                 case TdsEnums.FEATUREEXT_SQLDNSCACHING:
@@ -1626,7 +1582,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (data[0] == 1)
                     {
-                        IsSQLDNSCachingSupported = true;
+                        Capabilities.DnsCaching = true;
                         _cleanSQLDNSCaching = false;
 
                         if (RoutingInfo != null)
@@ -1637,7 +1593,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     else
                     {
                         // we receive the IsSupported whose value is 0
-                        IsSQLDNSCachingSupported = false;
+                        Capabilities.DnsCaching = false;
                         _cleanSQLDNSCaching = true;
                     }
 
@@ -1675,7 +1631,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    IsJsonSupportEnabled = true;
+                    Capabilities.JsonType = true;
                     break;
                 }
                 case TdsEnums.FEATUREEXT_VECTORSUPPORT:
@@ -1707,7 +1663,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    IsVectorSupportEnabled = true;
+                    Capabilities.Float32VectorType = true;
 
                     break;
                 }
@@ -1724,7 +1680,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     // A value of 1 indicates that the server supports the feature.
-                    IsEnhancedRoutingSupportEnabled = data[0] == 1;
+                    Capabilities.EnhancedRouting = data[0] == 1;
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
                         $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
@@ -1924,12 +1880,11 @@ namespace Microsoft.Data.SqlClient.Connection
             _parser.SendFedAuthToken(_fedAuthToken);
         }
 
-        internal void OnLoginAck(SqlLoginAck rec)
+        internal void OnLoginAck()
         {
-            _loginAck = rec;
             if (_recoverySessionData != null)
             {
-                if (_recoverySessionData._tdsVersion != rec.tdsVersion)
+                if (_recoverySessionData._tdsVersion != Capabilities.TdsVersion)
                 {
                     throw SQL.CR_TDSVersionNotPreserved(this);
                 }
@@ -1937,7 +1892,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             if (_currentSessionData != null)
             {
-                _currentSessionData._tdsVersion = rec.tdsVersion;
+                _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
 
@@ -3816,7 +3771,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         timeout);
                 }
 
-                if (!IsAzureSqlConnection)
+                if (!Capabilities.IsAzureSql)
                 {
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)

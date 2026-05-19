@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
@@ -229,6 +230,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         private class StubDbConnectionInternal : DbConnectionInternal
         {
             public override string ServerVersion => throw new NotImplementedException();
+
+            public override ConnectionCapabilities Capabilities => throw new NotImplementedException();
 
             public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
                 => throw new NotImplementedException();
