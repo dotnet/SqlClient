@@ -102,44 +102,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly RateLimiter _connectionCreationRateLimiter;
 
         /// <summary>
-        /// Initial backoff used when the pool enters the error state after a connection creation
-        /// failure.
+        /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
+        /// backoff timer, and synchronization. See <see cref="BlockingPeriodErrorState"/>.
         /// </summary>
-        private static readonly TimeSpan InitialErrorWait = TimeSpan.FromSeconds(5);
-
-        /// <summary>
-        /// Maximum backoff for the pool error state.
-        /// </summary>
-        private static readonly TimeSpan MaxErrorWait = TimeSpan.FromSeconds(60);
-
-        /// <summary>
-        /// True when the pool is currently in the error (blocking) state. When true, all new
-        /// connection requests fail fast with <see cref="_resError"/> until the error timer clears
-        /// the state.
-        /// </summary>
-        private volatile bool _errorOccurred;
-
-        /// <summary>
-        /// The cached exception from the last failed connection creation attempt. Used to fail fast
-        /// while in the error state.
-        /// </summary>
-        private Exception? _resError;
-
-        /// <summary>
-        /// Timer used to exit the error state after the current backoff interval elapses.
-        /// </summary>
-        private Timer? _errorTimer;
-
-        /// <summary>
-        /// Current backoff interval used the next time the pool enters the error state. Doubles on
-        /// each failure up to <see cref="MaxErrorWait"/>.
-        /// </summary>
-        private TimeSpan _errorWait = InitialErrorWait;
-
-        /// <summary>
-        /// Guards mutations to the error state (the error timer, cached exception, and backoff).
-        /// </summary>
-        private readonly object _errorStateLock = new();
+        private readonly BlockingPeriodErrorState _errorState;
         #endregion
 
         /// <summary>
@@ -162,6 +128,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
+            _errorState = new BlockingPeriodErrorState(_instanceId);
 
             // Limit concurrent connection creation attempts. The cap is bounded by MaxPoolSize since
             // we can never have more in-flight creations than the pool can hold. We use a small but
@@ -196,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int IdleCount => _idleChannel.Count;
 
         /// <inheritdoc />
-        public bool ErrorOccurred => _errorOccurred;
+        public bool ErrorOccurred => _errorState.HasError;
 
         /// <inheritdoc />
         public int Id => _instanceId;
@@ -240,7 +207,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Clearing the pool implies the caller wants a clean slate, so abandon any cached
             // error state. FR-011.
-            ClearErrorState();
+            _errorState.Clear();
 
             Interlocked.Increment(ref _clearGeneration);
 
@@ -450,7 +417,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             cancellationToken.ThrowIfCancellationRequested();
 
             // Fast-fail in the error state. FR-006.
-            ThrowIfInErrorState();
+            _errorState.ThrowIfActive();
 
             // Quick (racy) capacity check: if we're at MaxPoolSize there's no point waiting for the
             // rate limiter -- the caller will have to block on the idle channel instead.
@@ -494,7 +461,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // Re-check the error state after acquiring the lease -- it may have been set while we
                 // waited.
-                ThrowIfInErrorState();
+                _errorState.ThrowIfActive();
 
                 DbConnectionInternal? connection;
                 try
@@ -535,16 +502,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // FR-006, FR-007.
                     if (IsBlockingPeriodEnabled())
                     {
-                        EnterErrorState(ex);
+                        _errorState.Enter(ex);
                     }
 
                     throw;
                 }
 
                 // A successful creation clears any prior error state and resets backoff. FR-009.
-                if (connection is not null && _errorOccurred)
+                if (connection is not null && _errorState.HasError)
                 {
-                    ClearErrorState();
+                    _errorState.Clear();
                 }
 
                 return connection;
@@ -583,110 +550,140 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Throws the cached error if the pool is currently in the error state.
+        /// Encapsulates the pool's blocking-period error state: cached exception, exponential
+        /// backoff timer, and synchronization. Kept as a private nested class so the pool's
+        /// connection-acquisition path remains focused on capacity/queue concerns and stays
+        /// decoupled from the (independent) rate limiting policy.
         /// </summary>
-        private void ThrowIfInErrorState()
+        private sealed class BlockingPeriodErrorState
         {
-            if (!_errorOccurred)
+            // Mirrors the values used by WaitHandleDbConnectionPool (5s initial, 60s cap).
+            private static readonly TimeSpan InitialWait = TimeSpan.FromSeconds(5);
+            private static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(60);
+
+            private readonly int _ownerPoolId;
+            private readonly object _lock = new();
+            private volatile bool _hasError;
+            private Exception? _cachedException;
+            private Timer? _exitTimer;
+            private TimeSpan _nextWait = InitialWait;
+
+            internal BlockingPeriodErrorState(int ownerPoolId)
             {
-                return;
+                _ownerPoolId = ownerPoolId;
             }
 
-            Exception? cached = _resError;
-            if (cached is null)
+            /// <summary>
+            /// True while the pool is in the blocking period. Subsequent acquisition attempts
+            /// should fast-fail with the cached exception.
+            /// </summary>
+            internal bool HasError => _hasError;
+
+            /// <summary>
+            /// Throws the cached error if the pool is currently in the blocking period.
+            /// </summary>
+            internal void ThrowIfActive()
             {
-                return;
-            }
-
-            // Clone SqlExceptions so stack traces are not shared across callers; other exception
-            // types are rethrown as-is.
-            throw cached is SqlException sqlEx ? sqlEx.InternalClone() : cached;
-        }
-
-        /// <summary>
-        /// Enters the pool error state, caching the supplied exception and scheduling a timer to
-        /// exit the state after the current backoff interval. Subsequent failures double the
-        /// backoff up to <see cref="MaxErrorWait"/>.
-        /// </summary>
-        private void EnterErrorState(Exception ex)
-        {
-            TimeSpan wait;
-            Timer? oldTimer;
-            Timer newTimer;
-
-            lock (_errorStateLock)
-            {
-                _resError = ex;
-                _errorOccurred = true;
-                wait = _errorWait;
-
-                newTimer = new Timer(ExitErrorStateCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-                oldTimer = _errorTimer;
-                _errorTimer = newTimer;
-
-                // Bump the backoff for the next failure, capped at MaxErrorWait. FR-008.
-                TimeSpan doubled = _errorWait + _errorWait;
-                _errorWait = doubled >= MaxErrorWait ? MaxErrorWait : doubled;
-            }
-
-            oldTimer?.Dispose();
-            newTimer.Change(wait, Timeout.InfiniteTimeSpan);
-
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.EnterErrorState|RES|CPOOL> {0}, Entering blocking period for {1}ms.",
-                Id,
-                (int)wait.TotalMilliseconds);
-        }
-
-        /// <summary>
-        /// Clears the cached error state and disposes the error timer.
-        /// </summary>
-        private void ClearErrorState()
-        {
-            Timer? oldTimer;
-            lock (_errorStateLock)
-            {
-                if (!_errorOccurred && _resError is null && _errorTimer is null && _errorWait == InitialErrorWait)
+                if (!_hasError)
                 {
                     return;
                 }
 
-                _errorOccurred = false;
-                _resError = null;
-                _errorWait = InitialErrorWait;
-                oldTimer = _errorTimer;
-                _errorTimer = null;
+                Exception? cached = _cachedException;
+                if (cached is null)
+                {
+                    return;
+                }
+
+                // Clone SqlExceptions so stack traces are not shared across callers; other
+                // exception types are rethrown as-is.
+                throw cached is SqlException sqlEx ? sqlEx.InternalClone() : cached;
             }
 
-            oldTimer?.Dispose();
-
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.ClearErrorState|RES|CPOOL> {0}, Error state cleared.", Id);
-        }
-
-        /// <summary>
-        /// Timer callback that exits the error state, allowing the next caller to attempt a fresh
-        /// connection creation.
-        /// </summary>
-        private void ExitErrorStateCallback(object? state)
-        {
-            // Only the flag and the timer reference are cleared here. The cached exception and
-            // current backoff are left intact so that, if the very next attempt fails, the backoff
-            // continues to grow rather than resetting. The cached exception and backoff are reset
-            // once an attempt actually succeeds (in OpenNewInternalConnectionAsync) or when the
-            // pool is cleared.
-            Timer? oldTimer;
-            lock (_errorStateLock)
+            /// <summary>
+            /// Enters the blocking period, caching the supplied exception and scheduling a timer
+            /// to exit the period after the current backoff interval. Subsequent failures double
+            /// the backoff up to <see cref="MaxWait"/>.
+            /// </summary>
+            internal void Enter(Exception ex)
             {
-                _errorOccurred = false;
-                oldTimer = _errorTimer;
-                _errorTimer = null;
+                TimeSpan wait;
+                Timer? oldTimer;
+                Timer newTimer;
+
+                lock (_lock)
+                {
+                    _cachedException = ex;
+                    _hasError = true;
+                    wait = _nextWait;
+
+                    newTimer = new Timer(ExitCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                    oldTimer = _exitTimer;
+                    _exitTimer = newTimer;
+
+                    // Bump the backoff for the next failure, capped at MaxWait. FR-008.
+                    TimeSpan doubled = _nextWait + _nextWait;
+                    _nextWait = doubled >= MaxWait ? MaxWait : doubled;
+                }
+
+                oldTimer?.Dispose();
+                newTimer.Change(wait, Timeout.InfiniteTimeSpan);
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.EnterErrorState|RES|CPOOL> {0}, Entering blocking period for {1}ms.",
+                    _ownerPoolId,
+                    (int)wait.TotalMilliseconds);
             }
 
-            oldTimer?.Dispose();
+            /// <summary>
+            /// Clears the cached error state, disposes the exit timer, and resets the backoff to
+            /// its initial value.
+            /// </summary>
+            internal void Clear()
+            {
+                Timer? oldTimer;
+                lock (_lock)
+                {
+                    if (!_hasError && _cachedException is null && _exitTimer is null && _nextWait == InitialWait)
+                    {
+                        return;
+                    }
 
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", Id);
+                    _hasError = false;
+                    _cachedException = null;
+                    _nextWait = InitialWait;
+                    oldTimer = _exitTimer;
+                    _exitTimer = null;
+                }
+
+                oldTimer?.Dispose();
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.ClearErrorState|RES|CPOOL> {0}, Error state cleared.", _ownerPoolId);
+            }
+
+            /// <summary>
+            /// Timer callback that exits the blocking period, allowing the next caller to attempt
+            /// a fresh connection creation. The cached exception and current backoff are left
+            /// intact so that, if the very next attempt fails, the backoff continues to grow
+            /// rather than resetting. They are reset only on a successful creation or on
+            /// <see cref="Clear"/>.
+            /// </summary>
+            private void ExitCallback(object? state)
+            {
+                Timer? oldTimer;
+                lock (_lock)
+                {
+                    _hasError = false;
+                    oldTimer = _exitTimer;
+                    _exitTimer = null;
+                }
+
+                oldTimer?.Dispose();
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", _ownerPoolId);
+            }
         }
 
         /// <summary>
