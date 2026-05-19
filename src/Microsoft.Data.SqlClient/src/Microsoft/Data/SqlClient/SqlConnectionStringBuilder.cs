@@ -50,6 +50,7 @@ namespace Microsoft.Data.SqlClient
             ServerCertificate,
             TrustServerCertificate,
             LoadBalanceTimeout,
+            IdleTimeout,
             PacketSize,
             TypeSystemVersion,
             Authentication,
@@ -101,6 +102,7 @@ namespace Microsoft.Data.SqlClient
         private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
+        private int _idleTimeout = DbConnectionStringDefaults.IdleTimeout;
         private int _maxPoolSize = DbConnectionStringDefaults.MaxPoolSize;
         private int _minPoolSize = DbConnectionStringDefaults.MinPoolSize;
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
@@ -155,6 +157,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.InitialCatalog] = DbConnectionStringKeywords.InitialCatalog;
             validKeywords[(int)Keywords.IntegratedSecurity] = DbConnectionStringKeywords.IntegratedSecurity;
             validKeywords[(int)Keywords.LoadBalanceTimeout] = DbConnectionStringKeywords.LoadBalanceTimeout;
+            validKeywords[(int)Keywords.IdleTimeout] = DbConnectionStringKeywords.IdleTimeout;
             validKeywords[(int)Keywords.MaxPoolSize] = DbConnectionStringKeywords.MaxPoolSize;
             validKeywords[(int)Keywords.MinPoolSize] = DbConnectionStringKeywords.MinPoolSize;
             validKeywords[(int)Keywords.MultipleActiveResultSets] = DbConnectionStringKeywords.MultipleActiveResultSets;
@@ -212,6 +215,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.InitialCatalog, Keywords.InitialCatalog },
                 { DbConnectionStringKeywords.IntegratedSecurity, Keywords.IntegratedSecurity },
                 { DbConnectionStringKeywords.LoadBalanceTimeout, Keywords.LoadBalanceTimeout },
+                { DbConnectionStringKeywords.IdleTimeout, Keywords.IdleTimeout },
                 { DbConnectionStringKeywords.MultipleActiveResultSets, Keywords.MultipleActiveResultSets },
                 { DbConnectionStringKeywords.MaxPoolSize, Keywords.MaxPoolSize },
                 { DbConnectionStringKeywords.MinPoolSize, Keywords.MinPoolSize },
@@ -268,6 +272,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.TrustedConnection, Keywords.IntegratedSecurity },
                 { DbConnectionStringSynonyms.TrustServerCertificate, Keywords.TrustServerCertificate },
                 { DbConnectionStringSynonyms.ConnectionLifetime, Keywords.LoadBalanceTimeout },
+                { DbConnectionStringSynonyms.PoolIdleTimeout, Keywords.IdleTimeout },
                 { DbConnectionStringSynonyms.Pwd, Keywords.Password },
                 { DbConnectionStringSynonyms.PersistSecurityInfo, Keywords.PersistSecurityInfo },
                 { DbConnectionStringSynonyms.Uid, Keywords.UserID },
@@ -349,6 +354,8 @@ namespace Microsoft.Data.SqlClient
                     return IntegratedSecurity;
                 case Keywords.LoadBalanceTimeout:
                     return LoadBalanceTimeout;
+                case Keywords.IdleTimeout:
+                    return IdleTimeout;
                 case Keywords.MultipleActiveResultSets:
                     return MultipleActiveResultSets;
                 case Keywords.MaxPoolSize:
@@ -480,6 +487,9 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.LoadBalanceTimeout:
                     _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
+                    break;
+                case Keywords.IdleTimeout:
+                    _idleTimeout = DbConnectionStringDefaults.IdleTimeout;
                     break;
                 case Keywords.MultipleActiveResultSets:
                     _multipleActiveResultSets = DbConnectionStringDefaults.MultipleActiveResultSets;
@@ -979,6 +989,9 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.LoadBalanceTimeout:
                             LoadBalanceTimeout = ConvertToInt32(value);
                             break;
+                        case Keywords.IdleTimeout:
+                            IdleTimeout = ConvertToInt32(value);
+                            break;
                         case Keywords.MaxPoolSize:
                             MaxPoolSize = ConvertToInt32(value);
                             break;
@@ -1470,6 +1483,25 @@ namespace Microsoft.Data.SqlClient
                 }
                 SetValue(DbConnectionStringKeywords.LoadBalanceTimeout, value);
                 _loadBalanceTimeout = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IdleTimeout/*' />
+        [DisplayName(DbConnectionStringKeywords.IdleTimeout)]
+        [ResCategory(nameof(Strings.DataCategory_Pooling))]
+        [ResDescription(nameof(Strings.DbConnectionString_IdleTimeout))]
+        [RefreshProperties(RefreshProperties.All)]
+        public int IdleTimeout
+        {
+            get => _idleTimeout;
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IdleTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.IdleTimeout, value);
+                _idleTimeout = value;
             }
         }
 

@@ -254,6 +254,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
+                // Stamp the idle-since timestamp immediately before putting the connection back in the
+                // pool so that IsLiveConnection can later evict it if it sits idle past the configured limit.
+                connection.MarkPooledIdle();
                 var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
             }
@@ -432,6 +435,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Connection has been alive longer than the load balance timeout
             if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
+            {
+                return false;
+            }
+
+            // Connection has been sitting idle longer than the configured idle timeout.
+            // IdleSinceUtc is stamped by ReturnInternalConnection on each return; if it is the default
+            // (DateTime.MinValue), the connection has never been pooled yet and the check is a no-op.
+            TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
+            if (idleTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
             {
                 return false;
             }
