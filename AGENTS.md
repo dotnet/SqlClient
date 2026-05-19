@@ -79,10 +79,11 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 ### Bug Fix Workflow
 1. Understand the issue from the bug report
 2. Locate relevant code in `src/Microsoft.Data.SqlClient/src/` (do NOT modify legacy `netcore/src/` or `netfx/src/`)
-3. Write a failing test that reproduces the issue
-4. Implement the fix
-5. Ensure all tests pass
-6. Update documentation if behavior changes
+3. Check `.github/instructions/features.instructions.md` for existing AppContext switches (including failover compatibility switches) before introducing behavior changes
+4. Write a failing test that reproduces the issue
+5. Implement the fix
+6. Ensure all tests pass
+7. Update documentation if behavior changes
 
 ### Feature Implementation
 1. Review the feature specification
