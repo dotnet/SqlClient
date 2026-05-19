@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
         /// <devnote>SqlServer only supports CatalogLocation.Start</devnote>
         [
         Browsable(false),
-        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        EditorBrowsable(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
         public override CatalogLocation CatalogLocation
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
         /// <devnote>SqlServer only supports '.'</devnote>
         [
         Browsable(false),
-        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        EditorBrowsable(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
         public override string CatalogSeparator
@@ -80,8 +80,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
         [
         DefaultValue(null),
-        ResCategoryAttribute(nameof(Strings.DataCategory_Update)),
-        ResDescriptionAttribute(nameof(Strings.SqlCommandBuilder_DataAdapter)),
+        ResCategory(nameof(Strings.DataCategory_Update)),
+        ResDescription(nameof(Strings.SqlCommandBuilder_DataAdapter)),
         ]
         public new SqlDataAdapter DataAdapter
         {
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient
         /// <devnote>SqlServer only supports '.'</devnote>
         [
         Browsable(false),
-        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        EditorBrowsable(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
         public override string QuotePrefix
@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
         [
         Browsable(false),
-        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        EditorBrowsable(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
         public override string QuoteSuffix
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
         [
         Browsable(false),
-        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        EditorBrowsable(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
         public override string SchemaSeparator

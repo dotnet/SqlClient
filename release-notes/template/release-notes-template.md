@@ -87,7 +87,7 @@ We thank the following public contributors. Their efforts toward this project ar
 
 ### Dependencies
 
-(Use the dependencies listed in the package's NuGet spec under tools/specs/ or the project file.)
+(Use the dependencies listed in the package's NuGet spec beside the SqlClient project file, or in the project file.)
 
 #### [Target Framework Version]
 
