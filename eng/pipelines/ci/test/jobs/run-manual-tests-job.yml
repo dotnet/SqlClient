@@ -96,6 +96,7 @@ jobs:
 
     variables:
       abstractionsPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      akvProviderPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.akvProviderPackageVersion'] ]
       loggingPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
       sqlClientPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
       sqlServerPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
@@ -138,6 +139,7 @@ jobs:
             -p:TestSet=1
             -p:ReferenceType=Package
             -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionAkvProvider=$(akvProviderPackageVersion)
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
@@ -158,6 +160,7 @@ jobs:
             -p:TestSet=2
             -p:ReferenceType=Package
             -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionAkvProvider=$(akvProviderPackageVersion)
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
@@ -178,6 +181,7 @@ jobs:
             -p:TestSet=3
             -p:ReferenceType=Package
             -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionAkvProvider=$(akvProviderPackageVersion)
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
@@ -198,6 +202,7 @@ jobs:
             -p:TestSet=AE
             -p:ReferenceType=Package
             -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionAkvProvider=$(akvProviderPackageVersion)
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)

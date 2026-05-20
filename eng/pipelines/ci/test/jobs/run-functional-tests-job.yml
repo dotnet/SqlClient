@@ -100,6 +100,7 @@ jobs:
 
     variables:
       abstractionsPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.abstractionsPackageVersion'] ]
+      akvProviderPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.akvProviderPackageVersion'] ]
       loggingPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.loggingPackageVersion'] ]
       sqlClientPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlClientPackageVersion'] ]
       sqlServerPackageVersion: $[ stageDependencies.setup_stage.setup_artifacts.outputs['resolve_versions.sqlServerPackageVersion'] ]
@@ -141,6 +142,7 @@ jobs:
             -p:TestArchitecture=${{ parameters.architecture }}
             -p:ReferenceType=Package
             -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionAkvProvider=$(akvProviderPackageVersion)
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)

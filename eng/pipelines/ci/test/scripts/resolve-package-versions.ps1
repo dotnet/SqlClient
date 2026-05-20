@@ -60,6 +60,8 @@ function Get-PackageVersion {
 
 $versions = [pscustomobject]@{
     Abstractions = Get-PackageVersion -PackagesPath $LocalFeedPath -PackageId 'Microsoft.Data.SqlClient.Extensions.Abstractions'
+    AkvProvider  = Get-PackageVersion -PackagesPath $LocalFeedPath -PackageId 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+    Azure        = Get-PackageVersion -PackagesPath $LocalFeedPath -PackageId 'Microsoft.Data.SqlClient.Extensions.Azure'
     Logging      = Get-PackageVersion -PackagesPath $LocalFeedPath -PackageId 'Microsoft.Data.SqlClient.Internal.Logging'
     Mds          = Get-PackageVersion -PackagesPath $LocalFeedPath -PackageId 'Microsoft.Data.SqlClient'
     SqlServer    = Get-PackageVersion -PackagesPath $LocalFeedPath -PackageId 'Microsoft.SqlServer.Server'
@@ -67,12 +69,16 @@ $versions = [pscustomobject]@{
 
 # Emit ADO output variables (isOutput=true makes them available to downstream stages).
 Write-Host "##vso[task.setvariable variable=abstractionsPackageVersion;isOutput=true]$($versions.Abstractions)"
+Write-Host "##vso[task.setvariable variable=akvProviderPackageVersion;isOutput=true]$($versions.AkvProvider)"
+Write-Host "##vso[task.setvariable variable=azurePackageVersion;isOutput=true]$($versions.Azure)"
 Write-Host "##vso[task.setvariable variable=loggingPackageVersion;isOutput=true]$($versions.Logging)"
 Write-Host "##vso[task.setvariable variable=sqlClientPackageVersion;isOutput=true]$($versions.Mds)"
 Write-Host "##vso[task.setvariable variable=sqlServerPackageVersion;isOutput=true]$($versions.SqlServer)"
 
 Write-Host "Resolved package versions:"
-Write-Host "  Microsoft.Data.SqlClient.Extensions.Abstractions: $($versions.Abstractions)"
-Write-Host "  Microsoft.Data.SqlClient.Internal.Logging:        $($versions.Logging)"
-Write-Host "  Microsoft.Data.SqlClient:                         $($versions.Mds)"
-Write-Host "  Microsoft.SqlServer.Server:                       $($versions.SqlServer)"
+Write-Host "  Microsoft.Data.SqlClient.Extensions.Abstractions:                  $($versions.Abstractions)"
+Write-Host "  Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider:     $($versions.AkvProvider)"
+Write-Host "  Microsoft.Data.SqlClient.Extensions.Azure:                          $($versions.Azure)"
+Write-Host "  Microsoft.Data.SqlClient.Internal.Logging:                          $($versions.Logging)"
+Write-Host "  Microsoft.Data.SqlClient:                                           $($versions.Mds)"
+Write-Host "  Microsoft.SqlServer.Server:                                         $($versions.SqlServer)"
