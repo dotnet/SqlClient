@@ -12,6 +12,12 @@ namespace Microsoft.Data.SqlClient.TestUtilities
 {
     public class Config
     {
+        private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+        {
+            AllowTrailingCommas = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+        };
+
         public string? TCPConnectionString = null;
         public string? NPConnectionString = null;
         public string? TCPConnectionStringHGSVBS = null;
@@ -86,7 +92,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
             try
             {
                 using StreamReader sr = new StreamReader(configPath);
-                return JsonSerializer.Deserialize<Config>(sr.ReadToEnd()) ??
+                return JsonSerializer.Deserialize<Config>(sr.ReadToEnd(), JsonSerializerOptions) ??
                        throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'");
             }
             catch (FileNotFoundException)
