@@ -195,22 +195,22 @@ conditional tests are skipped.
 ## Manual Test Configuration
 
 Edit the source configuration file at `src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/
-config.json`. The test utilities project copies that file to the test output directory, where the manual tests load it
+config.jsonc`. The test utilities project copies that file to the test output directory, where the manual tests load it
 by default.
 
 The template file is:
 
-[src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json)
+[src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc)
 
-`config.json` is git-ignored. If it does not exist, the test utilities project copies `config.default.json` to
-`config.json` before compile. You can also create it manually:
+`config.jsonc` is git-ignored. If it does not exist, the test utilities project copies `config.default.jsonc` to
+`config.jsonc` before compile. You can also create it manually:
 
 ```bash
-cp src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json \
-  src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.json
+cp src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc \
+  src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.jsonc
 ```
 
-Update `config.json` for your environment before running manual tests. The most important values for a basic run are `TCPConnectionString` and `NPConnectionString`.
+Update `config.jsonc` for your environment before running manual tests. The most important values for a basic run are `TCPConnectionString` and `NPConnectionString`.
 
 ```jsonc
 {
@@ -233,13 +233,13 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 You can override the config file path with the `MDS_TEST_CONFIG` environment variable:
 
 ```bash
-MDS_TEST_CONFIG=/path/to/config.json dotnet build -t:TestSqlClientManual -p:TestSet=2
+MDS_TEST_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
-$env:MDS_TEST_CONFIG = "C:\path\to\config.json"
+$env:MDS_TEST_CONFIG = "C:\path\to\config.jsonc"
 dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 

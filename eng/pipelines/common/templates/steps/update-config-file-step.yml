@@ -151,9 +151,9 @@ steps:
       Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
     displayName: Set Connection String Password
 
-  # All properties should be added here, and this template should be used for any manipulation of the config.json file.
+  # All properties should be added here, and this template should be used for any manipulation of the config.jsonc file.
   - pwsh: |
-      $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+      $jdata = Get-Content -Raw "config.default.jsonc" | ConvertFrom-Json
       foreach ($p in $jdata)
       {
           $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
@@ -208,13 +208,13 @@ steps:
           $p.EnclaveEnabled=[System.Convert]::ToBoolean("${{parameters.EnclaveEnabled }}")
           $p.WorkloadIdentityFederationServiceConnectionId="${{parameters.WorkloadIdentityFederationServiceConnectionId }}"
       }
-      $jdata | ConvertTo-Json | Set-Content "config.json"
+      $jdata | ConvertTo-Json | Set-Content "config.jsonc"
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-    displayName: 'Update config.json'
+    displayName: 'Update config.jsonc'
 
   - ${{ if eq(parameters.debug, true) }}:
     - pwsh: |
-        $jdata = Get-Content -Raw "config.json" | ConvertFrom-Json
+        $jdata = Get-Content -Raw "config.jsonc" | ConvertFrom-Json
         foreach ($p in $jdata)
         {
             foreach ($prop in $p.PSObject.Properties)
@@ -223,4 +223,4 @@ steps:
             }
         }
       workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-      displayName: '[Debug] Emit config.json'
+      displayName: '[Debug] Emit config.jsonc'

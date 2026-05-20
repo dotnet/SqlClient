@@ -14,8 +14,8 @@ src/Microsoft.Data.SqlClient/tests/
 ├── UnitTests/                # Unit tests with minimal dependencies
 └── tools/
     └── Microsoft.Data.SqlClient.TestUtilities/
-        ├── config.default.json   # Template configuration
-        └── config.json           # Local test configuration (git-ignored)
+        ├── config.default.jsonc  # Template configuration
+        └── config.jsonc          # Local test configuration (git-ignored)
 ```
 
 ## Test Categories
@@ -34,14 +34,14 @@ src/Microsoft.Data.SqlClient/tests/
 
 ### Manual Tests (`ManualTests/`)
 - Full integration tests with SQL Server
-- Require `config.json` setup
+- Require `config.jsonc` setup
 - Test real database operations
 - Include Always Encrypted, Entra ID tests
 
 ## Test Configuration
 
-### Setting Up `config.json`
-Copy `config.default.json` to `config.json` and configure:
+### Setting Up `config.jsonc`
+Copy `config.default.jsonc` to `config.jsonc` and configure:
 
 ```json
 {

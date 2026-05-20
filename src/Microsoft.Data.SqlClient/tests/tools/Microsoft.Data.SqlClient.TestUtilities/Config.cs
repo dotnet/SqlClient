@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
             return config;
         }
 
-        public static void UpdateConfig(Config updatedConfig, string configPath = @"config.json")
+        public static void UpdateConfig(Config updatedConfig, string configPath = @"config.jsonc")
         {
             string config = JsonConvert.SerializeObject(updatedConfig);
             File.WriteAllText(configPath, config);
