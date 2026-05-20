@@ -370,6 +370,7 @@ MigrationBackup/
 
 # Config Json file
 **/config.json
+**/config.jsonc
 
 # Generated Milestone PR metadata files
 .milestone-prs/
