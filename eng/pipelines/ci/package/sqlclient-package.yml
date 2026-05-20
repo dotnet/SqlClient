@@ -91,7 +91,7 @@ variables:
   # Signing key argument passed to build.proj. On internal builds this references the secure file
   # downloaded by DownloadSecureFile@1; on public builds it expands to empty.
   - name: signingKeyArg
-    ${{ if eq(variables.isInternalBuild, 'True') }}:
+    ${{ if eq(variables.isInternalBuild, true) }}:
       value: '-p:SigningKeyPath="$(keyFile.secureFilePath)"'
     ${{ else }}:
       value: ''
@@ -101,7 +101,7 @@ jobs:
     displayName: Pack All Packages
 
     pool:
-      ${{ if eq(variables.isInternalBuild, 'True') }}:
+      ${{ if eq(variables.isInternalBuild, true) }}:
         name: ADO-1ES-Pool
       ${{ else }}:
         name: ADO-CI-1ES-Pool
@@ -131,7 +131,7 @@ jobs:
         displayName: Clean packages/ directory
 
       # On internal builds, download the strong-name signing key.
-      - ${{ if eq(variables.isInternalBuild, 'True') }}:
+      - ${{ if eq(variables.isInternalBuild, true) }}:
         - task: DownloadSecureFile@1
           displayName: Download Signing Key
           inputs:
@@ -151,7 +151,7 @@ jobs:
             -p:BuildNumber="$(Build.BuildNumber)"
             -p:BuildSuffix=ci
             $(signingKeyArg)
-            -verbosity:${{ parameters.dotnetVerbosity }}
+            --verbosity ${{ parameters.dotnetVerbosity }}
 
       # List produced packages for diagnostics.
       - pwsh: |
