@@ -236,16 +236,14 @@ namespace Microsoft.Data.SqlClient
                         BeginExecuteNonQueryInternalReadStage(localCompletion);
                     }
                 }
-                catch (Exception e)
-                    // Exception is not catchable, the connection has already been caught and
-                    // doomed in a lower level.
-                    when (ADP.IsCatchableOrSecurityExceptionType(e))
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
                     throw;
                 }
+                // Allow other exceptions to bubble up as-is.
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.

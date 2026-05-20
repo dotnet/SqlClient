@@ -249,15 +249,14 @@ namespace Microsoft.Data.SqlClient
 
                     // @TODO: NonQuery pathway has the continueTaskWithState block inside this try. One or the other seems wrong 
                 }
-                catch (Exception e)
-                    // If not catchable - the connection has already been caught and doomed in RunExecuteReader.
-                    when (ADP.IsCatchableOrSecurityExceptionType(e))
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
                     throw;
                 }
+                // Allow other exceptions to bubble up as-is.
 
                 if (writeTask is not null)
                 {

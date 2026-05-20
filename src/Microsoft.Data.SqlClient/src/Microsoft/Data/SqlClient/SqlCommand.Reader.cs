@@ -290,9 +290,7 @@ namespace Microsoft.Data.SqlClient
                         isRetry,
                         nameof(BeginExecuteReader));
                 }
-                catch (Exception e)
-                    // If not catchable - the connection has already been caught and doomed in RunExecuteReader.
-                    when (ADP.IsCatchableOrSecurityExceptionType(e))
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
@@ -302,6 +300,7 @@ namespace Microsoft.Data.SqlClient
                         throw;
                     }
                 }
+                // Allow other exceptions to bubble up as-is.
 
                 if (writeTask is not null)
                 {

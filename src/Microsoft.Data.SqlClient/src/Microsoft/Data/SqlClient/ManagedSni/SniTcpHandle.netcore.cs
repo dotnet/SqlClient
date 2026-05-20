@@ -171,6 +171,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             _socket = Connect(serverName, port, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
                         }
                     }
+                    // Connection failed with a retryable exception and we have cached DNS info: retry using cached IPs.
                     catch (Exception ex)
                         when (!timeout.IsExpired &&
                               hasCachedDNSInfo &&
@@ -230,8 +231,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             throw;
                         }
                     }
+                    // Connection failed with a retryable exception but no cached DNS info available: log and rethrow.
                     catch (Exception ex)
                         when (!timeout.IsExpired &&
+                              !hasCachedDNSInfo &&
                               ex is
                                   SocketException or
                                   ArgumentException or
