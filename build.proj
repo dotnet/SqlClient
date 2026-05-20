@@ -877,6 +877,10 @@
   <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
   <Target Name="TestAbstractions">
     <PropertyGroup>
+      <!--
+        Note: This test exclusively uses project references, so neither ReferenceType nor any
+        package version arguments are specified in this command.
+      -->
       <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
@@ -887,9 +891,6 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(ReferenceTypeArgument)
-        $(TestSigningKeyPathArgument)
-        $(PackageVersionAbstractionsArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
@@ -993,9 +994,7 @@
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(TestSigningKeyPathArgument)
         $(PackageVersionAbstractionsArgument)
-        $(PackageVersionAzureArgument)
         $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
