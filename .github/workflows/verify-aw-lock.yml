@@ -1,0 +1,32 @@
+name: Verify gh aw lock files
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**/*.md'
+      - '.github/workflows/**/*.lock.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gh-aw extension
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh extension install githubnext/gh-aw
+
+      - name: Recompile agentic workflows
+        run: gh aw compile
+
+      - name: Fail if any .lock.yml is stale
+        run: |
+          if ! git diff --exit-code -- '.github/workflows/**/*.lock.yml'; then
+            echo "::error::A .github/workflows/**/*.md file changed but its .lock.yml is stale."
+            echo "::error::Run 'gh aw compile' locally and commit the regenerated .lock.yml in this PR."
+            exit 1
+          fi
