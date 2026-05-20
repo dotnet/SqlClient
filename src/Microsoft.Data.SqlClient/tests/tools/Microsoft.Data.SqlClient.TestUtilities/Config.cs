@@ -4,7 +4,7 @@
 
 using System;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 #nullable enable
 
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
 
         public static void UpdateConfig(Config updatedConfig, string configPath = @"config.jsonc")
         {
-            string config = JsonConvert.SerializeObject(updatedConfig);
+            string config = JsonSerializer.Serialize(updatedConfig);
             File.WriteAllText(configPath, config);
         }
 
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
             try
             {
                 using StreamReader sr = new StreamReader(configPath);
-                return JsonConvert.DeserializeObject<Config>(sr.ReadToEnd()) ??
+                return JsonSerializer.Deserialize<Config>(sr.ReadToEnd()) ??
                        throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'");
             }
             catch (FileNotFoundException)

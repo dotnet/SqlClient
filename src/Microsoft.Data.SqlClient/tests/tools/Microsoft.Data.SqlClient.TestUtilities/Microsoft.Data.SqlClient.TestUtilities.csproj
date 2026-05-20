@@ -2,13 +2,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <!-- Copy config file ================================================ -->
   <Target Name="CopyConfig" BeforeTargets="Compile">
     <Copy SourceFiles="config.default.jsonc" DestinationFiles="config.jsonc" Condition="!Exists('config.jsonc')" />
   </Target>
   <ItemGroup>
-    <None Update="config.jsonc">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <PackageReference Include="Newtonsoft.Json" />
+    <None Update="config.jsonc" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- References ====================================================== -->
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 </Project>
