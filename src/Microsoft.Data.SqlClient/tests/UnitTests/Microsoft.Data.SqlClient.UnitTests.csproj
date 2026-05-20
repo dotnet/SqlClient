@@ -36,22 +36,51 @@
     </None>
   </ItemGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- When a test signing key is provided, sign UnitTests so IVT from signed SqlClient works. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- References ====================================================== -->
   <!-- Test target reference -->
-  <ItemGroup>
-    <!--
-      The Unit Test project only supports ReferenceType = Project since it needs access to the
-      internals of sibling packages.
-    -->
+  <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
   </ItemGroup>
 
-  <Target Name="ValidateReferenceType"
-          BeforeTargets="Restore;PrepareForBuild"
-          Condition="'$(ReferenceType)' != 'Project'">
-    <Error Text="Microsoft.Data.SqlClient.UnitTests.csproj only supports ReferenceType=Project." />
-  </Target>
+  <!--
+    Package mode: Unit tests exercise internal types that only exist in the implementation assembly
+    (runtimes/{rid}/lib/{tfm}/), not in the ref assembly (ref/{tfm}/).  We exclude the ref
+    compile asset and reference the runtime DLL directly so the compiler can see internals.
+
+    TODO: This is fragile, depending on our SqlClient NuGet package layout and supported TFMs.  This
+    could all be avoided if we didn't ship ref assemblies.
+  -->
+  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
+    <_SqlClientRid Condition="'$(OS)' != 'Windows_NT'">unix</_SqlClientRid>
+    <_SqlClientRid Condition="'$(OS)' == 'Windows_NT'">win</_SqlClientRid>
+    <!-- Map test TFM to the closest available package TFM (package ships net8.0/net9.0/net462) -->
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net8.0'">net8.0</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net9.0</_SqlClientPackageTfm>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <!-- Brings in transitive dependencies and runtime deployment; ExcludeAssets="compile" prevents
+         the compiler from using the ref assembly (which only contains public API surface).
+         GeneratePathProperty="true" causes NuGet restore to emit $(PkgMicrosoft_Data_SqlClient)
+         pointing to the extracted package folder in the global packages cache. -->
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
+    <!-- Compile against the implementation assembly so the compiler can resolve internal types
+         exposed via InternalsVisibleTo.  The path uses $(PkgMicrosoft_Data_SqlClient) generated
+         above to locate the runtime DLL inside the NuGet package layout. -->
+    <Reference Include="Microsoft.Data.SqlClient"
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/runtimes/$(_SqlClientRid)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+  </ItemGroup>
 
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
