@@ -440,8 +440,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             // Connection has been sitting idle longer than the configured idle timeout.
-            // IdleSinceUtc is stamped by ReturnInternalConnection on each return; if it is the default
-            // (DateTime.MinValue), the connection has never been pooled yet and the check is a no-op.
+            // IdleSinceUtc is initialized to CreateTime so a freshly minted connection never trips this
+            // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
             if (idleTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
             {
