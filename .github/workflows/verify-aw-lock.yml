@@ -16,17 +16,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install gh-aw extension
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh extension install githubnext/gh-aw
+        uses: github/gh-aw-actions/setup-cli@bc56a0cad2f450c562810785ef38649c04db812a # v0.72.1
+        with:
+          version: v0.72.1
 
       - name: Recompile agentic workflows
         run: gh aw compile
 
-      - name: Fail if any .lock.yml is stale
+      - name: Fail if any .lock.yml is out of date
         run: |
           if ! git diff --exit-code -- '.github/workflows/**/*.lock.yml'; then
-            echo "::error::A .github/workflows/**/*.md file changed but its .lock.yml is stale."
-            echo "::error::Run 'gh aw compile' locally and commit the regenerated .lock.yml in this PR."
+            echo "::error::One or more .github/workflows/**/*.lock.yml files are out of date relative to their .md source (running 'gh aw compile' produced a diff)."
+            echo "::error::Run 'gh aw compile' locally and commit the regenerated .lock.yml files in this PR."
             exit 1
           fi
