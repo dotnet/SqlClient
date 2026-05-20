@@ -235,6 +235,7 @@
     <ExecuteReader name="BehaviorParameter">
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
+        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
       </param>
       <summary>
         Sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
@@ -308,6 +309,7 @@
     <ExecuteReaderAsync name="BehaviorParameter">
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
+        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
       </param>
       <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
       <summary>
@@ -379,6 +381,7 @@
     <ExecuteDbDataReader>
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
+        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
       </param>
       <summary>
         Executes the batch against its connection, returning a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> which can be used to access the results.
@@ -402,7 +405,10 @@ When the batch returns multiple result sets from different commands, <xref:Micro
       </exception>
     </ExecuteDbDataReader>
     <ExecuteDbDataReaderAsync>
-      <param name="behavior">One of the enumeration values that specifies options for batch execution and data retrieval.</param>
+      <param name="behavior">
+        An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
+        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
+      </param>
       <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
       <summary>
         This implementation invokes the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync" /> method and returns a completed task. The default implementation will return a cancelled task if passed an already cancelled cancellation token. This method accepts a cancellation token that can be used to request the operation to be cancelled early.
