@@ -661,6 +661,7 @@ public class TransactedConnectionPoolTest
         public int Count => throw new NotImplementedException();
         public bool ErrorOccurred => throw new NotImplementedException();
         public int Id { get; } = 1;
+        public int IdleCount => throw new NotImplementedException();
         public DbConnectionPoolIdentity Identity => throw new NotImplementedException();
         public bool IsRunning => throw new NotImplementedException();
         public TimeSpan LoadBalanceTimeout => throw new NotImplementedException();
@@ -675,12 +676,12 @@ public class TransactedConnectionPoolTest
 
         public void Clear() => throw new NotImplementedException();
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, out DbConnectionInternal? connection)
         {
             throw new NotImplementedException();
         }
 
-        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection)
         {
             throw new NotImplementedException();
         }

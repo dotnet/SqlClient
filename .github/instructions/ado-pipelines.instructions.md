@@ -22,14 +22,14 @@ Top-level CI/PR pipeline files:
 - `dotnet-sqlclient-ci-project-reference-pipeline.yml` — CI with Project references (Release)
 - `sqlclient-pr-package-ref-pipeline.yml` — PR validation with Package references
 - `sqlclient-pr-project-ref-pipeline.yml` — PR validation with Project references
-- `stress-tests-pipeline.yml` — Stress tests triggered after successful CI-Package runs
+- `stress/stress-tests-pipeline.yml` — Stress test pipeline and templates
 
 Reusable templates are organized under:
 - `common/templates/jobs/` — Job templates (`ci-build-nugets-job`, `ci-code-coverage-job`, `ci-run-tests-job`)
 - `common/templates/stages/` — Stage templates (`ci-run-tests-stage`)
 - `common/templates/steps/` — Step templates (build, test, config, publish)
 - `jobs/` — Package-specific CI jobs (pack/test Abstractions, Azure, Logging, stress)
-- `stages/` — Package-specific CI stages (build Logging → Abstractions → SqlClient → Azure → verify → stress)
+- `stages/` — Package-specific CI stages (generate secrets, build SqlServer/Logging/Abstractions/SqlClient/Azure, verify packages)
 - `libraries/` — Shared variables (`ci-build-variables.yml`)
 - `steps/` — SDK install steps
 
@@ -43,24 +43,27 @@ Key parameters:
 - `testJobTimeout` (required) — test job timeout in minutes
 - `targetFrameworks` — Windows test TFMs; default `[net462, net8.0, net9.0, net10.0]`
 - `targetFrameworksUnix` — Unix test TFMs; default `[net8.0, net9.0, net10.0]`
+- `netcoreVersionTestUtils` — default runtime for shared test utilities; default `net10.0`
 - `testSets` — test partitions; default `[1, 2, 3]`
 - `useManagedSNI` — SNI variants to test; default `[false, true]`
 - `runAlwaysEncryptedTests` — include AE test set; default `true`
-- `enableStressTests` — enable stress test stage; default `false`
+- `runLegacySqlTests` — include SQL Server 2016/2017 manual-test legs; default `true`
 - `debug` — enable debug output; default `false`
-- `dotnetVerbosity` — MSBuild verbosity; default `normal`
+- `dotnetVerbosity` — build verbosity; default `normal`
 
 ## Build Stage Order
 
 Stages execute in dependency order (Package reference mode requires artifacts from prior stages):
 1. `generate_secrets` — Generate test secrets
-2. `build_logging_package_stage` — Build Logging package
-3. `build_abstractions_package_stage` — Build Abstractions (depends on Logging)
-4. `build_sqlclient_package_stage` — Build SqlClient + AKV Provider (depends on Abstractions + Logging)
-5. `build_azure_package_stage` — Build Azure extensions (depends on Abstractions + Logging + SqlClient)
-6. `verify_nuget_packages_stage` — Verify NuGet package metadata
-7. `stress_tests_stage` — Optional stress tests
+2. `build_sqlserver_package_stage` — Build `Microsoft.SqlServer.Server`
+3. `build_logging_package_stage` — Build Logging package
+4. `build_abstractions_package_stage` — Build Abstractions (package mode depends on Logging)
+5. `build_sqlclient_package_stage` — Build SqlClient and produce the AKV provider package
+6. `build_azure_package_stage` — Build Azure extensions
+7. `verify_nuget_packages_stage` — Verify NuGet package metadata
 8. `ci_run_tests_stage` — Run MDS and AKV test suites
+
+Stress testing is no longer a stage threaded through `dotnet-sqlclient-ci-core.yml`; it lives under `eng/pipelines/stress/` as a separate pipeline flow.
 
 When adding a new build stage, respect the dependency graph and pass artifact names/versions to downstream stages.
 
@@ -70,12 +73,12 @@ PR pipelines:
 - Trigger on PRs to `dev/*`, `feat/*`, `main`; exclude `eng/pipelines/onebranch/*` paths
 - Use reduced TFM matrix: `[net462, net8.0, net9.0]` (excludes net10.0)
 - Timeout: 90 minutes
-- Package-ref PR disables Always Encrypted tests in Debug config
+- Package-ref PR disables Always Encrypted tests in Debug config and also disables legacy SQL Server test legs to keep validation fast
 
 CI pipelines:
 - Trigger on push to `main` (GitHub) and `internal/main` (ADO) with `batch: true`
 - Scheduled weekday builds (see individual pipeline files for cron times)
-- Full TFM matrix including net10.0
+- Full TFM matrix including net10.0 test legs and legacy SQL Server manual-test coverage
 
 ## Test Configuration
 
@@ -97,7 +100,7 @@ Flaky test quarantine:
 
 SNI testing — `useManagedSNI` controls testing with native SNI (`false`) or managed SNI (`true`)
 
-Test timeout — `--blame-hang-timeout 10m` (configured in `build.proj`); tests exceeding 10 minutes are killed
+Test timeout — `--blame-hang-timeout 10m` (configured in `build.proj` and threaded through CI test steps); tests exceeding 10 minutes are killed
 
 ## Variables
 

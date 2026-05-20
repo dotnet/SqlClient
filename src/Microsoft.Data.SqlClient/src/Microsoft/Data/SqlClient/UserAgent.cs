@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient;
 ///   This class uses runtime environment information to produce a value
 ///   suitable for use in the TDS LOGIN7 USERAGENT Feature Extension
 ///   payload.
-///   
+///
 ///   See the spec here:
 ///
 ///   <see href="https://microsoft.sharepoint-df.com/:w:/t/sqldevx/IQASFk7dM5QsS66DR8mj5SmMASPyzUn3-osv8F2fMV-p3LU?e=FTph5o">
@@ -24,13 +24,13 @@ namespace Microsoft.Data.SqlClient;
 internal static class UserAgent
 {
     #region Properties
-    
+
     /// <summary>
     ///   <para>
     ///     The pipe-delimited payload as a string, never null, never empty, and
     ///     never larger than 256 characters.
     ///   </para>
-    ///   <para> 
+    ///   <para>
     ///     The format is pipe ('|') delimited into 7 parts:
     ///
     ///     <code>1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
@@ -63,7 +63,7 @@ internal static class UserAgent
     ///     The <c>{OS Info}</c> part will be sourced from the
     ///     <see cref="RuntimeInformation.OSDescription">
     ///       OSDescription
-    ///     </see> 
+    ///     </see>
     ///     value, or "Unknown" if that value is empty or all whitespace.
     ///     Maximum length is 44 characters.
     ///   </para>
@@ -105,7 +105,7 @@ internal static class UserAgent
     internal static ReadOnlyMemory<byte> Ucs2Bytes { get; }
 
     #endregion Properties
-    
+
     #region Helpers
 
     /// <summary>
@@ -145,12 +145,12 @@ internal static class UserAgent
             MaxLenOverall,
             PayloadVersion,
             DriverName,
-            System.ThisAssembly.NuGetPackageVersion,
+            ThisAssembly.NuGetPackageVersion,
             RuntimeInformation.ProcessArchitecture,
             osType,
             RuntimeInformation.OSDescription,
             RuntimeInformation.FrameworkDescription);
-        
+
         // Convert it to UCS-2 bytes.
         //
         // The default Unicode instance doesn't throw if encoding fails, so
@@ -170,25 +170,25 @@ internal static class UserAgent
     ///   The maximum length of the returned value.
     /// </param>
     /// <param name="payloadVersion">
-    ///   The value of the payload version part. 
+    ///   The value of the payload version part.
     /// </param>
     /// <param name="driverName">
-    ///   The value of the driver name part. 
+    ///   The value of the driver name part.
     /// </param>
     /// <param name="driverVersion">
-    ///   The value of the driver version part. 
+    ///   The value of the driver version part.
     /// </param>
     /// <param name="arch">
     ///   The value of the Architecture part.
     /// </param>
     /// <param name="osType">
-    ///   The value of the OS Type part. 
+    ///   The value of the OS Type part.
     /// </param>
     /// <param name="osInfo">
-    ///   The value of the OS Info part. 
+    ///   The value of the OS Info part.
     /// </param>
     /// <param name="runtimeInfo">
-    ///   The value of the Runtime Info part. 
+    ///   The value of the Runtime Info part.
     /// </param>
     /// <returns>
     ///   The payload string value, never null, never empty, and never longer
@@ -238,11 +238,11 @@ internal static class UserAgent
             // Add the OS Type, truncating to its max length.
             name.Append(Truncate(Clean(osType), MaxLenOsType));
             name.Append('|');
-            
+
             // Add the OS Info, truncating to its max length.
             name.Append(Truncate(Clean(osInfo), MaxLenOsInfo));
             name.Append('|');
-            
+
             // Add the Runtime Info, truncating to its max length.
             name.Append(Truncate(Clean(runtimeInfo), MaxLenRuntimeInfo));
 
@@ -320,7 +320,7 @@ internal static class UserAgent
         {
             return Unknown;
         }
-        
+
         // Remove any leading and trailing whitespace.
         value = value.Trim();
 
@@ -345,7 +345,7 @@ internal static class UserAgent
                     (c >= 'A' && c <= 'Z')
                     || (c >= 'a' && c <= 'z')
                     || (c >= '0' && c <= '9')
-                    #endif 
+                    #endif
                     || c == ' '
                     || c == '.'
                     || c == '+'
@@ -406,7 +406,7 @@ internal static class UserAgent
 
     // The overall maximum length of Value.
     private const ushort MaxLenOverall = 256;
-    
+
     // Maximum part lengths as promised in our API.
     private const ushort MaxLenPayloadVersion = 2;
     private const ushort MaxLenDriverName = 12;

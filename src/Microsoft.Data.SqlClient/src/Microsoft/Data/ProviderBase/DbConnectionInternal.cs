@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Internal;
@@ -91,6 +90,17 @@ namespace Microsoft.Data.ProviderBase
         /// When the connection was created.
         /// </summary>
         internal DateTime CreateTime { get; }
+
+        /// <summary>
+        /// The pool generation at the time this connection was created or added to the pool.
+        /// Used by <see cref="ChannelDbConnectionPool"/> to detect stale connections after a pool clear.
+        /// </summary>
+        /// <remarks>
+        /// Not safe, should only be set by the connection pool.
+        /// </remarks>
+        // TODO: Ideally this would be readonly and set in the constructor. Piping the value all the way through the connection factory is too complicated to be worth it.
+        // If we can expose the constructor to the connection pool in the future, it can be set in the constructor.
+        internal int ClearGeneration { get; set; }
 
         internal bool AllowSetConnectionString { get; }
 
@@ -678,7 +688,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
         {
-            if (!TryOpenConnection(outerConnection, connectionFactory, null, null))
+            if (!TryOpenConnection(outerConnection, connectionFactory, null))
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
             }
@@ -790,8 +800,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             throw ADP.ConnectionAlreadyOpen(State);
         }
@@ -799,8 +808,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             throw ADP.MethodNotImplemented();
         }
@@ -867,6 +875,22 @@ namespace Microsoft.Data.ProviderBase
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
         }
 
+        protected internal virtual Task<DataTable> GetSchemaAsync(
+            SqlConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions,
+            CancellationToken cancellationToken)
+        {
+            Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
+
+            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
+
+            return metaDataFactory.GetSchemaAsync(outerConnection, collectionName, restrictions, cancellationToken);
+        }
+
         protected virtual bool ObtainAdditionalLocksForClose()
         {
             // No additional locks in default implementation
@@ -886,8 +910,7 @@ namespace Microsoft.Data.ProviderBase
         protected bool TryOpenConnectionInternal(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
@@ -896,7 +919,7 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, retry, userOptions, this, out openConnection))
+                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, out openConnection))
                     {
                         return false;
                     }
