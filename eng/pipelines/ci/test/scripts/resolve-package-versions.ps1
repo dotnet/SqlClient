@@ -39,10 +39,11 @@ function Get-PackageVersion {
         [string]$PackageId
     )
 
-    $pattern = "^$([regex]::Escape($PackageId))\.(?<version>.+)\.nupkg$"
+    $pattern = "^$([regex]::Escape($PackageId))\.(?<version>\d.+)\.nupkg$"
 
     $match = Get-ChildItem -Path $PackagesPath -Filter "$PackageId.*.nupkg" -File |
         Where-Object { $_.Name -notlike '*.symbols.nupkg' } |
+        Where-Object { $_.Name -match $pattern } |
         Sort-Object Name -Descending |
         Select-Object -First 1
 
