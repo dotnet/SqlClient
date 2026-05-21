@@ -42,7 +42,7 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// The sentinel value (<c>0</c>) used to indicate an infinite timeout when starting a timer.
         /// </summary>
-        internal static readonly long InfiniteTimeout = 0;
+        internal const long InfiniteTimeout = 0;
 
         #endregion
 
@@ -60,12 +60,17 @@ namespace Microsoft.Data.ProviderBase
         /// The <see cref="TimeProvider"/> used to read the current time and schedule
         /// cancellation.
         /// </param>
+        /// <exception cref="OverflowException">
+        /// Thrown when computing the absolute expiration point in checked arithmetic,
+        /// if the sum of the current file-time ticks and <paramref name="expiration"/>
+        /// ticks falls outside the <see cref="long"/> range.
+        /// </exception>
         private TimeoutTimer(TimeSpan expiration, TimeProvider timeProvider)
         {
             TimeProvider = timeProvider;
             OriginalTicks = expiration.Ticks;
             IsInfinite = OriginalTicks == InfiniteTimeout;
-            ExpirationTicks = IsInfinite ? long.MaxValue : checked(NowTicks() + OriginalTicks);
+            ExpirationTicks = checked(NowTicks() + OriginalTicks);
         }
 
         #endregion
@@ -73,18 +78,17 @@ namespace Microsoft.Data.ProviderBase
         #region Properties
 
         /// <summary>
-        /// Gets the absolute tick value at which this timer is considered expired.
+        /// Gets the tick value at which this timer is considered expired.
+        /// Do not use this value directly; instead, use <see cref="IsExpired"/> to check if the timer has expired.
+        /// Does not return a meaningful value when the timer is infinite.
         /// </summary>
         /// <value>
         /// The tick count, in file-time units (100-nanosecond intervals since
-        /// 1601-01-01 UTC), at which the timer expires; <see cref="long.MaxValue"/>
-        /// when <see cref="IsInfinite"/> is <see langword="true"/>.
+        /// 1601-01-01 UTC), at which the timer expires.
         /// </value>
         /// <remarks>
         /// The tick scale is intentionally compatible with
-        /// <see cref="DateTime.ToFileTimeUtc()"/> so that legacy callers that compare
-        /// this value against historic <c>ADP.TimerCurrent()</c> readings continue
-        /// to function correctly.
+        /// <see cref="DateTime.ToFileTimeUtc()"/>
         /// </remarks>
         internal long ExpirationTicks
         {
@@ -120,7 +124,7 @@ namespace Microsoft.Data.ProviderBase
 
         /// <summary>
         /// Gets the number of milliseconds remaining before this timer expires,
-        /// trimmed to <c>0</c> when none remain and to <see cref="long.MaxValue"/>
+        /// truncated to <c>0</c> when none remain, and approximated to <see cref="long.MaxValue"/>
         /// when the timer is infinite.
         /// </summary>
         /// <value>
@@ -157,7 +161,7 @@ namespace Microsoft.Data.ProviderBase
 
         /// <summary>
         /// Gets the number of milliseconds remaining before this timer expires as
-        /// a 32-bit integer, trimmed to <c>0</c> when none remain and saturated to
+        /// a 32-bit integer, trimmed to <c>0</c> when none remain and approximated to
         /// <see cref="int.MaxValue"/> when the remaining time exceeds that value or
         /// when the timer is infinite.
         /// </summary>
@@ -306,7 +310,7 @@ namespace Microsoft.Data.ProviderBase
         ///   <item><description>Parent finite, duration shorter than parent's remaining → finite child with the requested duration.</description></item>
         ///   <item><description>Parent finite with no remaining time, or <paramref name="duration"/> ≤ 0 → already-expired child (see <see cref="StartExpired(TimeProvider)"/>).</description></item>
         /// </list>
-        /// To request an infinite child, call <see cref="StartNew(TimeSpan, TimeProvider)"/>
+        /// To request a truly infinite timeout, call <see cref="StartNew(TimeSpan, TimeProvider)"/>
         /// directly with <see cref="TimeSpan.Zero"/>; this method does not
         /// produce infinite children.
         /// </remarks>
