@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         private static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
             AllowTrailingCommas = true,
+            IncludeFields = true,
+            PropertyNameCaseInsensitive = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
         };
 
@@ -78,7 +80,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
 
         public static void UpdateConfig(Config updatedConfig, string configPath = @"config.jsonc")
         {
-            string config = JsonSerializer.Serialize(updatedConfig);
+            string config = JsonSerializer.Serialize(updatedConfig, JsonSerializerOptions);
             File.WriteAllText(configPath, config);
         }
 

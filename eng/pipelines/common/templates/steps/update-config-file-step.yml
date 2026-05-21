@@ -188,8 +188,6 @@ steps:
 
           $p.DNSCachingConnString="${{parameters.DNSCachingConnString }}"
 
-          $p.SupportsFileStream="${{parameters.SupportsFileStream }}"
-
           $p.LocalDbAppName="${{parameters.LocalDbAppName }}"
 
           $p.TCPConnectionStringAASSGX="${{parameters.TCPConnectionStringAASSGX }}"
