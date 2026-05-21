@@ -51,9 +51,9 @@ jobs:
     displayName: "${{ parameters.testDisplayName }}_${{ parameters.platformDisplayName }}"
 
     pool:
-      # TEST
       name: ADO-1ES-Pool
-      vmImage: ${{ parameters.platformImage }}
+      demands:
+      - imageOverride -equals ${{ parameters.platformImage }}
 
     steps:
       - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
