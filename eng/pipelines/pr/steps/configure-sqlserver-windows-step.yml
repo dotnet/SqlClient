@@ -89,7 +89,7 @@ steps:
   # Install northwind database
   - powershell: |
       # Propagate parameters to PS variables ###############################
-      $repoRoot = $(REPO_ROOT)
+      $repoRoot = "$(REPO_ROOT)"
       echo "repoRoot= $repoRoot"
 
       # Install Northwind Database #########################################
