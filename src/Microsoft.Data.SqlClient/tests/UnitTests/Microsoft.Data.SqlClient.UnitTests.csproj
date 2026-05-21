@@ -39,8 +39,19 @@
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <ItemGroup>
+    <!--
+      The Unit Test project only supports ReferenceType = Project since it needs access to the
+      internals of sibling packages.
+    -->
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
   </ItemGroup>
+
+  <Target Name="ValidateReferenceType"
+          BeforeTargets="Restore;PrepareForBuild"
+          Condition="'$(ReferenceType)' != 'Project'">
+    <Error Text="Microsoft.Data.SqlClient.UnitTests.csproj only supports ReferenceType=Project." />
+  </Target>
 
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
@@ -48,7 +59,6 @@
 
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="xunit" />
@@ -65,7 +75,6 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
