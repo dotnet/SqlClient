@@ -61,9 +61,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
+            public PendingGetConnection(DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
             {
-                DueTime = dueTime;
+                DueTime = timeout.IsInfinite ? System.Threading.Timeout.Infinite : timeout.ExpirationTicks;
                 Owner = owner;
                 Completion = completion;
                 Timeout = timeout;
@@ -917,7 +917,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // can flow through the existing TimerRemainingMilliseconds path unchanged.
             var pendingGetConnection =
                 new PendingGetConnection(
-                    timeout.IsInfinite ? Timeout.Infinite : timeout.ExpirationTicks,
                     owningObject,
                     taskCompletionSource,
                     timeout);
