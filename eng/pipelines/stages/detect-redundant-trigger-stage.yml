@@ -1,0 +1,109 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This stage gates PR pipeline runs to avoid redundant builds triggered by state-only transitions
+# (e.g. Draft <-> Open).  It compares the current merge commit (Build.SourceVersion) against the
+# most recent successful build for the same PR in this pipeline definition.
+#
+# If the merge commit is unchanged and the prior build succeeded, the build is considered redundant
+# and the output variable 'meaningful' is set to 'false'.  Downstream stages should check this
+# variable and skip when it is 'false'.
+#
+# Output variable reference (for use in stage conditions):
+#
+#   dependencies.detect_redundant_trigger_stage.outputs['detect_redundant_trigger.detect.meaningful']
+#
+# This stage defines:
+#
+#   Stage name:  detect_redundant_trigger_stage
+#   Job name:    detect_redundant_trigger
+#   Step name:   detect
+#   Variable:    meaningful (true|false)
+
+parameters:
+
+  # True to emit debug information.
+  - name: debug
+    type: boolean
+    default: false
+
+stages:
+
+  - stage: detect_redundant_trigger_stage
+    displayName: Detect Redundant Trigger
+    jobs:
+
+      - job: detect_redundant_trigger
+        displayName: Detect Redundant Trigger
+        pool:
+          vmImage: ubuntu-latest
+
+        steps:
+
+          - checkout: none
+
+          - bash: |
+              set -euo pipefail
+
+              # The current merge commit SHA for this PR build.
+              CURRENT_SOURCE_VERSION="$(Build.SourceVersion)"
+
+              # The Azure DevOps REST API base URL.
+              ORG_URL="$(System.CollectionUri)"
+              PROJECT="$(System.TeamProject)"
+              DEFINITION_ID="$(System.DefinitionId)"
+              BUILD_ID="$(Build.BuildId)"
+
+              # The branch name used for PR builds (refs/pull/{number}/merge).
+              BRANCH="$(Build.SourceBranch)"
+
+              echo "Current source version: $CURRENT_SOURCE_VERSION"
+              echo "Branch: $BRANCH"
+              echo "Definition ID: $DEFINITION_ID"
+              echo "Build ID: $BUILD_ID"
+
+              # Query the most recent successful build for this PR in this pipeline,
+              # excluding the current build.
+              API_URL="${ORG_URL}${PROJECT}/_apis/build/builds"
+              API_URL="${API_URL}?definitions=${DEFINITION_ID}"
+              API_URL="${API_URL}&branchName=${BRANCH}"
+              API_URL="${API_URL}&resultFilter=succeeded"
+              API_URL="${API_URL}&\$top=5"
+              API_URL="${API_URL}&queryOrder=finishTimeDescending"
+              API_URL="${API_URL}&api-version=7.1"
+
+              RESPONSE=$(curl -s -H "Authorization: Bearer $(System.AccessToken)" "$API_URL")
+
+              if [[ "${{ parameters.debug }}" == "True" ]]; then
+                echo "API Response:"
+                echo "$RESPONSE" | head -c 2000
+              fi
+
+              # Find the first successful build that is not the current build.
+              LAST_SUCCESSFUL_VERSION=$(echo "$RESPONSE" | \
+                jq -r --argjson buildId "$BUILD_ID" \
+                '[.value[] | select(.id != $buildId)] | .[0].sourceVersion // empty')
+
+              echo "Last successful source version: ${LAST_SUCCESSFUL_VERSION:-<none>}"
+
+              if [[ -n "$LAST_SUCCESSFUL_VERSION" && "$LAST_SUCCESSFUL_VERSION" == "$CURRENT_SOURCE_VERSION" ]]; then
+                echo ""
+                echo "##[section]Build is REDUNDANT — source version unchanged and prior build succeeded."
+                echo "This is likely a Draft/Open state transition. Skipping build."
+                echo "##vso[task.setvariable variable=meaningful;isOutput=true]false"
+              else
+                echo ""
+                echo "##[section]Build is MEANINGFUL — proceeding."
+                if [[ -z "$LAST_SUCCESSFUL_VERSION" ]]; then
+                  echo "  Reason: No prior successful build found for this PR."
+                elif [[ "$LAST_SUCCESSFUL_VERSION" != "$CURRENT_SOURCE_VERSION" ]]; then
+                  echo "  Reason: Source version changed (new commits or target branch update)."
+                fi
+                echo "##vso[task.setvariable variable=meaningful;isOutput=true]true"
+              fi
+            name: detect
+            displayName: Check for redundant PR trigger
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
