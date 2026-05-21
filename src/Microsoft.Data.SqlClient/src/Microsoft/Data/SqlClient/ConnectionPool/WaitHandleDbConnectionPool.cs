@@ -329,6 +329,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void CleanupCallback(object state)
         {
+            // FR-005: if the pool is shutting down, skip work. Shutdown disposes the timer, but
+            // a callback may already be in-flight when Shutdown runs; this guard ensures it does
+            // not perform pruning or re-arm pool create requests.
+            if (State == ShuttingDown)
+            {
+                return;
+            }
+
             // Called when the cleanup-timer ticks over.
 
             // This is the automatic pruning method.  Every period, we will
@@ -767,6 +775,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void ErrorCallback(object state)
         {
+            // FR-005: skip work if the pool is shutting down. The shutdown path disposes the
+            // timer; this guard handles the in-flight-callback race.
+            if (State == ShuttingDown)
+            {
+                return;
+            }
+
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ErrorCallback|RES|CPOOL> {0}, Resetting Error handling.", Id);
             _errorOccurred = false;
             _waitHandles.ErrorEvent.Reset();
@@ -955,6 +970,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     try
                     {
                         waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
+
+                        // FR-007: after waking, observe shutdown state and bail out so waiters
+                        // do not spin against a drained pool.
+                        if (State != Running)
+                        {
+                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is shutting down; abandoning wait.", Id);
+                            Interlocked.Decrement(ref _waitCount);
+                            connection = null;
+                            return false;
+                        }
 
                         // From the WaitAny docs: "If more than one object became signaled during
                         // the call, this is the array index of the signaled object with the
@@ -1481,14 +1506,45 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
+
+            // FR-006: idempotent. Subsequent calls observe ShuttingDown and bail.
+            if (State == ShuttingDown)
+            {
+                return;
+            }
             State = ShuttingDown;
 
-            // deactivate timer callbacks
-            Timer t = _cleanupTimer;
-            _cleanupTimer = null;
-            if (t != null)
+            // FR-005: dispose all background timers so they no longer schedule new work.
+            // Note that any timer callback already in flight may still observe State == ShuttingDown
+            // and short-circuit (see CleanupCallback / ErrorCallback).
+            Timer cleanup = Interlocked.Exchange(ref _cleanupTimer, null);
+            cleanup?.Dispose();
+            Timer error = Interlocked.Exchange(ref _errorTimer, null);
+            error?.Dispose();
+
+            // FR-007: wake any threads parked in WaitHandle.WaitAny by releasing the pool semaphore
+            // up to its max count. Waiters check State == Running after wake-up and bail.
+            // We may release more than necessary; SemaphoreFullException is harmless when the
+            // semaphore is already saturated.
+            try
             {
-                t.Dispose();
+                _waitHandles.PoolSemaphore.Release(MaxPoolSize);
+            }
+            catch (SemaphoreFullException)
+            {
+                // Already at max count - all slots free. Nothing to do.
+            }
+
+            // FR-003: drain idle stacks and destroy contained connections. Active checked-out
+            // connections are destroyed when they are returned (see DeactivateObject's
+            // State is ShuttingDown branch).
+            while (_stackNew.TryPop(out DbConnectionInternal newObj))
+            {
+                DestroyObject(newObj);
+            }
+            while (_stackOld.TryPop(out DbConnectionInternal oldObj))
+            {
+                DestroyObject(oldObj);
             }
         }
 

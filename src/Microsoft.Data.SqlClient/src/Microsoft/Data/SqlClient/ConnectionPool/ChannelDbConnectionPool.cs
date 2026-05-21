@@ -92,6 +92,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
         private volatile int _isClearing;
+
+        /// <summary>
+        /// Tracks whether <see cref="Shutdown"/> has already initiated the shutdown sequence so that
+        /// repeated calls are observed as no-ops (FR-006). Updated atomically via
+        /// <see cref="Interlocked.CompareExchange(ref int, int, int)"/>.
+        /// </summary>
+        private int _shutdownInitiated;
         #endregion
 
         /// <summary>
@@ -254,21 +261,57 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                var written = _idleChannel.TryWrite(connection);
-                Debug.Assert(written, "Failed to write returning connection to the idle channel.");
+                if (!_idleChannel.TryWrite(connection))
+                {
+                    // The channel has been completed (pool is shutting down). Race window
+                    // between the State check above and TryWrite: destroy instead of pooling.
+                    RemoveConnection(connection);
+                }
             }
         }
 
         /// <inheritdoc />
         public void Shutdown()
         {
-            // No-op for now, warmup will be implemented later.
+            // FR-006: idempotent. Compare-and-exchange ensures only one caller performs shutdown work.
+            if (Interlocked.CompareExchange(ref _shutdownInitiated, 1, 0) != 0)
+            {
+                return;
+            }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
+
+            // FR-001: transition to ShuttingDown. After this point, ReturnInternalConnection
+            // routes returning connections to RemoveConnection.
+            State = ShuttingDown;
+
+            // FR-002 + FR-007: complete the channel writer so:
+            //  - no further idle connections can be enqueued (TryWrite returns false), and
+            //  - in-flight / future async waiters on ReadAsync fault with ChannelClosedException.
+            _idleChannel.Complete();
+
+            // FR-003: drain remaining buffered idle connections and destroy them. The channel is
+            // unbounded so all already-enqueued items can be drained synchronously.
+            while (_idleChannel.TryRead(out DbConnectionInternal? connection))
+            {
+                if (connection is not null)
+                {
+                    RemoveConnection(connection);
+                }
+                // null sentinels are wake-up signals only; nothing to destroy.
+            }
         }
 
         /// <inheritdoc />
         public void Startup()
         {
-            // No-op for now, warmup will be implemented later.
+            // This pool has no background timers today (idle timeout is enforced lazily in
+            // IsLiveConnection on retrieval; pruning is not implemented). State is set to Running
+            // in the constructor, so this is currently the symmetrical counterpart of Shutdown.
+            // Background work (warmup, pruning timers) will be added here when introduced.
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}", Id);
         }
 
         /// <inheritdoc />
