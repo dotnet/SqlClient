@@ -670,6 +670,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 //   DelegatedTransactionEnded event will clean up the
                                 //   connection appropriately regardless of the pool state.
                                 Debug.Assert(_transactedConnectionPool != null, "Transacted connection pool was not expected to be null.");
+                                // Stamp the idle-since timestamp before parking the connection in the transacted
+                                // pool so the next retrieval measures idle time from when it left the active set,
+                                // not from create-time or the previous general-pool return. Skip when idle expiry
+                                // is disabled to avoid an unnecessary DateTime.UtcNow on the hot return path.
+                                if (PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+                                {
+                                    obj.MarkPooledIdle();
+                                }
                                 _transactedConnectionPool.PutTransactedObject(transaction, obj);
                                 rootTxn = true;
                             }
@@ -1331,7 +1339,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Stamp the idle-since timestamp immediately before placing the connection on the idle stack
             // so that idle-expiry checks on later retrieval can decide whether it has sat unused too long.
-            obj.MarkPooledIdle();
+            // Skip the stamp when idle expiry is disabled (the default) to avoid the per-return
+            // DateTime.UtcNow on the hot return path.
+            if (PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+            {
+                obj.MarkPooledIdle();
+            }
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
 

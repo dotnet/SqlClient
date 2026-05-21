@@ -256,7 +256,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Stamp the idle-since timestamp immediately before putting the connection back in the
                 // pool so that IsLiveConnection can later evict it if it sits idle past the configured limit.
-                connection.MarkPooledIdle();
+                // Skip the stamp when idle expiry is disabled (the default) to avoid the per-return
+                // DateTime.UtcNow on the hot return path.
+                if (PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+                {
+                    connection.MarkPooledIdle();
+                }
                 var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
             }
