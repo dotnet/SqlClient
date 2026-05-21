@@ -106,6 +106,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private const int DefaultLifetimeWindowSeconds = 300;
 
         /// <summary>
+        /// Maximum allowed sample buffer size to prevent excessive memory allocation
+        /// from very large LoadBalanceTimeout values.
+        /// </summary>
+        private const int MaxPruningSampleSize = 300;
+
+        /// <summary>
         /// One-shot timer that triggers pruning evaluation. Re-armed at the end of each callback.
         /// </summary>
         private readonly Timer? _pruningTimer;
@@ -113,24 +119,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// The interval between pruning samples/evaluations.
         /// </summary>
-        private readonly TimeSpan _pruningSamplingInterval;
+        private readonly TimeSpan _pruningSamplingInterval = TimeSpan.Zero;
 
         /// <summary>
         /// Number of idle count samples to collect before computing the median and pruning.
-        /// Equals ConnectionLifetime / PruningInterval (rounded up).
+        /// Equals ConnectionLifetime / PruningInterval (rounded up), clamped to <see cref="MaxPruningSampleSize"/>.
         /// </summary>
-        private readonly int _pruningSampleSize;
+        private readonly int _pruningSampleSize = 0;
 
         /// <summary>
         /// Buffer of idle count snapshots, one recorded per timer tick.
         /// Sorted in-place when full to compute the median, then reset for the next window.
         /// </summary>
-        private readonly int[] _pruningSamples;
+        private readonly int[] _pruningSamples = Array.Empty<int>();
 
         /// <summary>
         /// The 0-based index into the sorted <see cref="_pruningSamples"/> array that represents the median.
         /// </summary>
-        private readonly int _pruningMedianIndex;
+        private readonly int _pruningMedianIndex = 0;
 
         /// <summary>
         /// Whether the pruning timer is currently armed and firing.
@@ -177,7 +183,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     lifetimeSeconds = DefaultLifetimeWindowSeconds;
                 }
 
-                _pruningSampleSize = DivideRoundingUp(lifetimeSeconds, DefaultPruningIntervalSeconds);
+                _pruningSampleSize = Math.Min(
+                    DivideRoundingUp(lifetimeSeconds, DefaultPruningIntervalSeconds),
+                    MaxPruningSampleSize);
                 _pruningMedianIndex = DivideRoundingUp(_pruningSampleSize, 2) - 1;
                 _pruningSamples = new int[_pruningSampleSize];
 
@@ -187,10 +195,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     _pruningTimer = new Timer(PruneIdleConnections, this, Timeout.Infinite, Timeout.Infinite);
                 }
-            }
-            else
-            {
-                _pruningSamples = Array.Empty<int>();
             }
 
             State = Running;
@@ -758,6 +762,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             lock (_pruningTimer)
             {
+                // Re-check after acquiring lock — Shutdown() may have disposed the timer.
+                if (!IsRunning)
+                {
+                    return;
+                }
+
                 int numConnections = _connectionSlots.ReservationCount;
 
                 if (numConnections > MinPoolSize && !_pruningTimerEnabled)
