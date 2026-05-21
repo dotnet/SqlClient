@@ -179,7 +179,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     {
                         // Retry with cached IP address
                         int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
 
                         string firstCachedIP;
                         string secondCachedIP;
@@ -194,6 +193,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             firstCachedIP = cachedDNSInfo.AddrIPv4;
                             secondCachedIP = cachedDNSInfo.AddrIPv6;
                         }
+
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: firstCachedIP, args2: portRetry);
 
                         try
                         {
@@ -418,7 +419,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             List<Socket> checkErrorLst;
 
                             // Repeating Socket.Select several times if our timeout is greater
-                            // than int.MaxValue microseconds because of 
+                            // than int.MaxValue microseconds because of
                             // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
                             // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
                             do
@@ -577,7 +578,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     try
                     {
                         // Repeating Socket.Select several times if our timeout is greater
-                        // than int.MaxValue microseconds because of 
+                        // than int.MaxValue microseconds because of
                         // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
                         // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
                         do

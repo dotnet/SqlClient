@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
         {
             // For CoreCLR, we need to register the ANSI Code Page encoding provider before attempting to get an Encoding from a CodePage
             // For a default installation of SqlServer the encoding exchanged during Login is 1252. This encoding is not loaded by default
-            // See Remarks at https://msdn.microsoft.com/en-us/library/system.text.encodingprovider(v=vs.110).aspx 
+            // See Remarks at https://msdn.microsoft.com/en-us/library/system.text.encodingprovider(v=vs.110).aspx
             // SqlClient needs to register the encoding providers to make sure that even basic scenarios work with Sql Server.
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
@@ -683,7 +683,7 @@ namespace Microsoft.Data.SqlClient
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
-        }   
+        }
 
         internal void EnableMars()
         {
@@ -1376,11 +1376,11 @@ namespace Microsoft.Data.SqlClient
                 int feOffset = length;
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(
-                    requestedFeatures, 
-                    recoverySessionData, 
+                    requestedFeatures,
+                    recoverySessionData,
                     fedAuthFeatureExtensionData,
                     UserAgent.Ucs2Bytes,
-                    useFeatureExt, 
+                    useFeatureExt,
                     length
                     );
 
@@ -2792,7 +2792,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             _connHandler._federatedAuthenticationInfoReceived = true;
                             SqlFedAuthInfo info;
-                            
+
                             result = TryProcessFedAuthInfo(stateObj, tokenLength, out info);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -5711,7 +5711,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-         
+
             // read flags and set appropriate flags in structure
             byte flags;
             result = stateObj.TryReadByte(out flags);
@@ -7040,7 +7040,7 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
 
-                    // Internally, we use Sqlbinary to deal with varbinary data and store it in 
+                    // Internally, we use Sqlbinary to deal with varbinary data and store it in
                     // SqlBuffer as SqlBinary value.
 #if NET
                     value.SqlBinary = SqlBinary.WrapBytes(b);
@@ -8794,9 +8794,7 @@ namespace Microsoft.Data.SqlClient
                 // Call run loop to process looking for attention ack.
                 Run(RunBehavior.Attention, null, null, null, stateObj);
             }
-            catch (Exception e)
-                // UNDONE - should not be catching all exceptions!!!
-                when (ADP.IsCatchableExceptionType(e))
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // If an exception occurs - break the connection.
                 // Attention error will not be thrown in this case by Run(), but other failures may.
@@ -9165,7 +9163,7 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         internal int WriteVectorSupportFeatureRequest(bool write)
         {
-            const int len = 6; 
+            const int len = 6;
 
             if (write)
             {
@@ -9523,9 +9521,7 @@ namespace Microsoft.Data.SqlClient
                     true
                     );
             }
-            catch (Exception e)
-                // UNDONE - should not be catching all exceptions!!!
-                when (ADP.IsCatchableExceptionType(e))
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // be sure to wipe out our buffer if we started sending stuff
                 _physicalStateObj.ResetPacketCounters();
@@ -10056,14 +10052,8 @@ namespace Microsoft.Data.SqlClient
                 // Finished sync
                 return null;
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                // UNDONE - should not be catching all exceptions!!!
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 FailureCleanup(stateObj, e);
 
                 throw;
@@ -10356,7 +10346,7 @@ namespace Microsoft.Data.SqlClient
             {
                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
 
-                // Output parameter of SqlDbType vector are defined through SqlParameter.Value. 
+                // Output parameter of SqlDbType vector are defined through SqlParameter.Value.
                 // This check ensures that we do not discard the parameter value when SqlDbType is vector.
                 if (mt.SqlDbType != SqlDbTypeExtensions.Vector)
                 {
@@ -10641,7 +10631,7 @@ namespace Microsoft.Data.SqlClient
 
                         Debug.Assert(udtVal != null, "GetBytes returned null instance. Make sure that it always returns non-null value");
                         size = udtVal.Length;
-                        
+
                         if (size >= maxSupportedSize && maxsize != -1)
                         {
                             throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
@@ -13143,7 +13133,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 if (type.NullableType == TdsEnums.SQLJSON)
                                 {
-                                    // TODO : Performance and BOM check. Saurabh 
+                                    // TODO : Performance and BOM check. Saurabh
                                     byte[] jsonAsBytes = Encoding.UTF8.GetBytes((string)value);
                                     WriteInt(jsonAsBytes.Length, stateObj);
                                     return stateObj.WriteByteArray(jsonAsBytes, jsonAsBytes.Length, 0, canAccumulate: false);
@@ -13801,13 +13791,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             TdsOperationStatus result = TryReadPlpUnicodeChars(
-                ref temp, 
-                0, 
-                length >> 1, 
-                stateObj, 
-                out length, 
+                ref temp,
+                0,
+                length >> 1,
+                stateObj,
+                out length,
                 supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
-                rentedBuff: ref buffIsRented, 
+                rentedBuff: ref buffIsRented,
                 startOffset,
                 canContinue
             );
@@ -14017,7 +14007,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj._longlenleft--;
                         if (writeDataSizeToSnapshot)
                         {
-                            // we need to write the single b1 byte to the array because we may run out of data 
+                            // we need to write the single b1 byte to the array because we may run out of data
                             // and need to wait for another packet
                             buff[offst] = (char)((b1 & 0xff));
                             currentPacketId = IncrementSnapshotDataSize(stateObj, restartingDataSizeCount, currentPacketId, 1);

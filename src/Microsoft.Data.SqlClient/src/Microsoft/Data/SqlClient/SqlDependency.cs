@@ -638,9 +638,7 @@ namespace Microsoft.Data.SqlClient
                                         {
                                             Stop(connectionString, queue, useDefaults, true);
                                         }
-                                        catch (Exception e)
-                                            // Discard stop failure!
-                                            when (ADP.IsCatchableExceptionType(e))
+                                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                                         {
                                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from Stop() after duplicate was found on Start().");

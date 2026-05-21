@@ -123,11 +123,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlSecurityUtility.DecryptSymmetricKey(cipherMdCopy, sqlCommand.Connection, sqlCommand);
                     }
-                    catch (Exception ex)
-                        when (ex is
-                                  SqlException or
-                                  ArgumentException or
-                                  ArgumentNullException)
+                    catch (Exception ex) when (ex is SqlException or ArgumentException)
                     {
                         // Invalidate the cache entry.
                         InvalidateCacheEntry(sqlCommand);
@@ -149,7 +145,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = 
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys =
                 _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey);
             if (enclaveKeys is not null)
             {
