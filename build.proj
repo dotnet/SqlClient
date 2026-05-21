@@ -261,13 +261,10 @@
 
     <!--
       TestSigningKeyPath
-      Applies to:     Test* targets
+      Applies to:     TestSqlClientUnit
       Description:    Path to the key used to sign test assemblies. Required in Package mode when
                       SigningKeyPath is set so that InternalsVisibleTo grants from signed driver
                       assemblies can be fulfilled.
-                      If SigningKeyPath is set and ReferenceType is Package but TestSigningKeyPath
-                      is omitted, test builds that access internals will fail with CS0234 errors
-                      because the driver assembly's IVT requires a matching public key.
       Default value:  [blank]
       Example:        C:\path\to\sqlclient-test-key.snk
     -->

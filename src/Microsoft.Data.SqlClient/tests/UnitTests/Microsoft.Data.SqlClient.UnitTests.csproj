@@ -55,8 +55,10 @@
     (runtimes/{rid}/lib/{tfm}/), not in the ref assembly (ref/{tfm}/).  We exclude the ref
     compile asset and reference the runtime DLL directly so the compiler can see internals.
 
-    TODO: This is fragile, depending on our SqlClient NuGet package layout and supported TFMs.  This
-    could all be avoided if we didn't ship ref assemblies.
+    TODO: This is fragile, depending on our SqlClient NuGet package layout and supported TFMs.  It
+    is only necessary because we produce ref and not-supported assemblies and package them.  By
+    default, the compiler will use the ref assemblies if present, which we must explicitly override
+    as explained above.
   -->
   <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
     <_SqlClientRid Condition="'$(OS)' != 'Windows_NT'">unix</_SqlClientRid>
