@@ -47,6 +47,13 @@ stages:
           - bash: |
               set -euo pipefail
 
+              # If this is not a PR-triggered run (e.g., manual queue), always proceed.
+              if [[ "$(Build.Reason)" != "PullRequest" ]]; then
+                echo "##[section]Build is MEANINGFUL — not a PR trigger (Build.Reason=$(Build.Reason))."
+                echo "##vso[task.setvariable variable=meaningful;isOutput=true]true"
+                exit 0
+              fi
+
               # The current merge commit SHA for this PR build.
               CURRENT_SOURCE_VERSION="$(Build.SourceVersion)"
 
@@ -74,12 +81,18 @@ stages:
               API_URL="${API_URL}&queryOrder=finishTimeDescending"
               API_URL="${API_URL}&api-version=7.1"
 
-              RESPONSE=$(curl -s -H "Authorization: Bearer $(System.AccessToken)" "$API_URL")
+              # Call the API using the mapped env var (avoids macro expansion/logging).
+              # On HTTP error, default to meaningful=true so the build proceeds.
+              HTTP_CODE=$(curl -s -o /tmp/api_response.json -w "%{http_code}" \
+                -H "Authorization: Bearer $SYSTEM_ACCESSTOKEN" "$API_URL")
 
-              if [[ "${{ parameters.debug }}" == "True" ]]; then
-                echo "API Response:"
-                echo "$RESPONSE" | head -c 2000
+              if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
+                echo "##[warning]Builds API returned HTTP $HTTP_CODE — defaulting to meaningful build."
+                echo "##vso[task.setvariable variable=meaningful;isOutput=true]true"
+                exit 0
               fi
+
+              RESPONSE=$(cat /tmp/api_response.json)
 
               # Find the first successful build that is not the current build.
               LAST_SUCCESSFUL_VERSION=$(echo "$RESPONSE" | \
@@ -107,3 +120,9 @@ stages:
             displayName: Check for redundant PR trigger
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+          - ${{ if eq(parameters.debug, true) }}:
+            - bash: |
+                echo "API Response (first 2000 chars):"
+                head -c 2000 /tmp/api_response.json 2>/dev/null || echo "<no response captured>"
+              displayName: Debug - Show API Response
