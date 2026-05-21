@@ -88,6 +88,16 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
   # TODO: What is this for?
   - name: netcoreVersionTestUtils
     type: string
@@ -192,6 +202,12 @@ jobs:
       displayName: Download MDS Package Artifacts
       inputs:
         artifactName: ${{ parameters.mdsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download SqlServer Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.sqlServerArtifactsName }}
         targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK and Runtimes.
@@ -364,6 +380,7 @@ jobs:
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
@@ -379,6 +396,7 @@ jobs:
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

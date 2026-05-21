@@ -61,7 +61,7 @@
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
-        <dependency id="Microsoft.SqlServer.Server" version="1.0.0" />
+        <dependency id="Microsoft.SqlServer.Server" version="$SqlServerPackageVersion$" />
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
       </group>
@@ -73,7 +73,7 @@
         <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.13" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
-        <dependency id="Microsoft.SqlServer.Server" version="1.0.0" />
+        <dependency id="Microsoft.SqlServer.Server" version="$SqlServerPackageVersion$" />
         <dependency id="System.Configuration.ConfigurationManager" version="9.0.13" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="9.0.13" />
       </group>
@@ -85,7 +85,7 @@
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
-        <dependency id="Microsoft.SqlServer.Server" version="1.0.0" />
+        <dependency id="Microsoft.SqlServer.Server" version="$SqlServerPackageVersion$" />
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Json" version="10.0.3" />

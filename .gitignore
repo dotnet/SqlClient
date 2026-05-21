@@ -377,3 +377,6 @@ MigrationBackup/
 
 # MDS "Not Supported" GenAPI code
 **/notsupported/*.cs
+
+# C# language server cache
+*.lscache

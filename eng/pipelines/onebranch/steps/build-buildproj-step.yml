@@ -56,6 +56,7 @@ steps:
         -t:Build${{ parameters.packageShortName }}
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:ReferenceType=Package
+        -p:SkipDependencyPack=true
         -p:SigningKeyPath="$(keyFile.secureFilePath)"
         -p:BuildNumber="$(Build.BuildNumber)"
         -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
