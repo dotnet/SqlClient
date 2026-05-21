@@ -61,9 +61,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
+            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
             {
-                DueTime = timeout.IsInfinite ? System.Threading.Timeout.Infinite : timeout.ExpirationTicks;
+                DueTime = dueTime;
                 Owner = owner;
                 Completion = completion;
                 Timeout = timeout;
@@ -882,13 +882,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (taskCompletionSource == null)
             {
-                // Use the caller's remaining timeout budget (rather than the static
-                // CreationTimeout) so synchronous pool waits respect any time already
-                // consumed earlier in the open path and don't exceed the overall
-                // ConnectTimeout.
-                waitForMultipleObjectsTimeout = timeout.IsInfinite
-                    ? unchecked((uint)Timeout.Infinite)
-                    : (uint)timeout.MillisecondsRemainingInt;
+                if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
+                {
+                    // Use the caller's remaining timeout budget (rather than the static
+                    // CreationTimeout) so synchronous pool waits respect any time already
+                    // consumed earlier in the open path and don't exceed the overall
+                    // ConnectTimeout.
+                    waitForMultipleObjectsTimeout = timeout.IsInfinite
+                        ? unchecked((uint)Timeout.Infinite)
+                        : (uint)timeout.MillisecondsRemainingInt;
+                }
+                else
+                {
+                    waitForMultipleObjectsTimeout = (uint)CreationTimeout;
+
+                    // Set the wait timeout to INFINITE (-1) if the pool CreationTimeout is 0.
+                    if (waitForMultipleObjectsTimeout == 0)
+                    {
+                        waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
+                    }
+                }
 
                 allowCreate = true;
             }
@@ -911,12 +924,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return true;
             }
 
-            // Anchor the pending request's due time on the caller's remaining budget so
-            // the async waiter loop respects the overall ConnectTimeout. ExpirationTicks
-            // is in DateTime.ToFileTimeUtc() units, matching ADP.TimerCurrent() so it
-            // can flow through the existing TimerRemainingMilliseconds path unchanged.
+            long dueTime;
+            if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
+            {
+                // Anchor the pending request's due time on the caller's remaining budget so
+                // the async waiter loop respects the overall ConnectTimeout. ExpirationTicks
+                // is in DateTime.ToFileTimeUtc() units, matching ADP.TimerCurrent() so it
+                // can flow through the existing TimerRemainingMilliseconds path unchanged.
+                dueTime = timeout.IsInfinite ? Timeout.Infinite : timeout.ExpirationTicks;
+            }
+            else
+            {
+                dueTime = CreationTimeout == 0
+                    ? Timeout.Infinite
+                    : ADP.TimerCurrent() + ADP.TimerFromSeconds(CreationTimeout / 1000);
+            }
+
             var pendingGetConnection =
                 new PendingGetConnection(
+                    dueTime,
                     owningObject,
                     taskCompletionSource,
                     timeout);

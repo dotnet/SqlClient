@@ -400,8 +400,18 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                
-                _timeout = timeout;
+                // If we want to consider pool operations against the overall connect timeout, 
+                // use the provided timeout. Otherwise, start a fresh timeout to receive the full
+                // connect timeout.
+                if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
+                {
+                    _timeout = timeout;
+                }
+                else
+                {
+                    _timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout));
+                }
+
                 // If transient fault handling is enabled then we can retry the login up to the
                 // ConnectRetryCount.
                 int connectionEstablishCount = applyTransientFaultHandling
