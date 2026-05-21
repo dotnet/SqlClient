@@ -30,7 +30,6 @@ parameters:
   # template expansion.
   #
   #   EnclaveEnabled
-  #   IsAzureSynapse
   #   IsDNSCachingSupportedCR
   #   IsDNSCachingSupportedTR
   #   ManagedIdentitySupported
@@ -290,8 +289,6 @@ jobs:
           IsDNSCachingSupportedCR: ${{ eq(parameters.configProperties.IsDNSCachingSupportedCR, 'true') }}
         ${{ if parameters.configProperties.IsDNSCachingSupportedTR }}:
           IsDNSCachingSupportedTR: ${{ eq(parameters.configProperties.IsDNSCachingSupportedTR, 'true') }}
-        ${{ if parameters.configProperties.IsAzureSynapse }}:
-          IsAzureSynapse: ${{ eq(parameters.configProperties.IsAzureSynapse, 'true') }}
         ${{ if parameters.configProperties.ManagedIdentitySupported }}:
           ManagedIdentitySupported: ${{ eq(parameters.configProperties.ManagedIdentitySupported, 'true') }}
 

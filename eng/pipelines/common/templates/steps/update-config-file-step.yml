@@ -121,10 +121,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: IsAzureSynapse
-    type: boolean
-    default: false
-
   - name: ManagedIdentitySupported
     type: boolean
     default: true
@@ -199,7 +195,6 @@ steps:
           $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
           $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
           $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
-          $p.IsAzureSynapse=[System.Convert]::ToBoolean("${{parameters.IsAzureSynapse }}")
           $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
           $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
           $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")
