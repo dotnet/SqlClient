@@ -82,34 +82,50 @@ jobs:
         displayName: Set Connection String Password
 
       - pwsh: |
-          # Read existing default configuration from file
-          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
-          $configDirectory = "$(Agent.TempDirectory)/mds-config"
-          $configPath = Join-Path $configDirectory "config.json"
-          $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
+          try {
+              # Read existing default configuration from file
+              $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
+              $configDirectory = "$(Agent.TempDirectory)/mds-config"
+              $configPath = Join-Path $configDirectory "config.json"
+              $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
 
-          # Update the config values
-          $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
-          $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
-          $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
-          $config.AzureKeyVaultTenantId = "${{ parameters.azureKeyVaultTenantId }}"
-          $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
-          $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
-          $config.ManagedIdentitySupported = true
-          $config.SupportsIntegratedSecurity = false
+              # Update the config values
+              $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
+              $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
+              $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
+              $config.AzureKeyVaultTenantId = "${{ parameters.azureKeyVaultTenantId }}"
+              $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
+              $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
+              $config.ManagedIdentitySupported = true
+              $config.SupportsIntegratedSecurity = false
 
-          if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
-              $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
-          } else {
-              $config.FileStreamDirectory = ""
+              if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
+                  $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
+              } else {
+                  $config.FileStreamDirectory = ""
+              }
+
+              # Write config object to config file
+              New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
+              $config | ConvertTo-Json | Set-Content $configPath
+
+              # Set generated config file path to environment variable
+              Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
+          } catch {
+              Write-Host "Generate manual test config failed."
+              Write-Host "defaultConfigPath: $defaultConfigPath"
+              Write-Host "configDirectory: $configDirectory"
+              Write-Host "configPath: $configPath"
+              Write-Host "ExceptionType: $($_.Exception.GetType().FullName)"
+              Write-Host "ExceptionMessage: $($_.Exception.Message)"
+              Write-Host "InvocationInfo:"
+              Write-Host $_.InvocationInfo.PositionMessage
+              Write-Host "ScriptStackTrace:"
+              Write-Host $_.ScriptStackTrace
+              Write-Host "ErrorRecord:"
+              $_ | Format-List * -Force
+              throw
           }
-
-          # Write config object to config file
-          New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
-          $config | ConvertTo-Json | Set-Content $configPath
-
-          # Set generated config file path to environment variable
-          Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
         displayName: 'Generate manual test config'
 
       - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
