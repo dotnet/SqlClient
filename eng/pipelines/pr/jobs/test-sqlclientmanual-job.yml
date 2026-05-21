@@ -83,15 +83,12 @@ jobs:
 
       - pwsh: |
           # Read existing default configuration from file
-
           $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
           $configDirectory = "$(Agent.TempDirectory)/mds-config"
           $configPath = Join-Path $configDirectory "config.json"
-
-          New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
-
           $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
 
+          # Update the config values
           $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
           $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
           $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
@@ -99,14 +96,19 @@ jobs:
           $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
           $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = true
+          $config.SupportsIntegratedSecurity = false
 
-          $enableWindowsLocalFeatures = "${{ parameters.platformOperatingSystem }}" -eq "Windows"
-          $config.SupportsFileStream = $enableWindowsLocalFeatures
-          $config.FileStreamDirectory = if ($enableWindowsLocalFeatures) { "${{ parameters.fileStreamDirectory }}" } else { "" }
-          $config.SupportsIntegratedSecurity = $enableWindowsLocalFeatures
+          if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
+              $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
+          } else {
+              $config.FileStreamDirectory = ""
+          }
 
+          # Write config object to config file
+          New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
           $config | ConvertTo-Json | Set-Content $configPath
 
+          # Set generated config file path to environment variable
           Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
         displayName: 'Generate manual test config'
 
