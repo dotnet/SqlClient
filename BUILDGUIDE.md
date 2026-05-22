@@ -19,14 +19,21 @@ on operating systems that do not support .NET Framework. As such, it is not nece
 
 ### Miscellaneous
 
-**PowerShell** is required to run several miscellaneous tasks as part of building and packaging. On
-Windows systems, either the built-in `powershell.exe` will be used, or if installed, the modern
-`pwsh` will be used. On Linux and macOS systems, the `pwsh` command is required to be in the `$PATH`
-environment variable. For specific instructions see: [Install
-PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell)
+**PowerShell** is included as a .NET local tool in this repository. Running `dotnet tool restore`
+(see below) will make it available via `dotnet tool run pwsh -- <args>`. Note that `pwsh` is not
+added to PATH — it must be invoked through `dotnet tool run`. Build targets handle this
+automatically; manual invocation is only needed for ad-hoc scripting.
 
 The **NuGet** binary is optional for inspection and feed-management workflows, but build and packaging flows in this
 repository are run through `dotnet build` against `build.proj`.
+
+### .NET Tools
+
+This repository uses .NET local tools (e.g. PowerShell) that must be restored before building. Run the following from the repository root:
+
+```bash
+dotnet tool restore
+```
 
 ## Developer Workflow
 

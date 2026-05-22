@@ -60,9 +60,23 @@
   </Target>
 
   <!-- ================================================================== -->
+  <!-- _CheckApiCompatToolRestored                                        -->
+  <!-- ================================================================== -->
+  <Target Name="_CheckApiCompatToolRestored">
+    <Exec Command="dotnet tool run apicompat -- --version"
+          WorkingDirectory="$(RepoRoot)"
+          ConsoleToMsBuild="true"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_ApiCompatExitCode" />
+    </Exec>
+    <Error Condition="'$(_ApiCompatExitCode)' != '0'"
+           Text="The 'apicompat' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before running this target." />
+  </Target>
+
+  <!-- ================================================================== -->
   <!-- _DownloadBaselinePackage                                           -->
   <!-- ================================================================== -->
-  <Target Name="_DownloadBaselinePackage" DependsOnTargets="_ValidateBaselineVersion;_SetApiCompatProperties">
+  <Target Name="_DownloadBaselinePackage" DependsOnTargets="_ValidateBaselineVersion;_CheckApiCompatToolRestored;_SetApiCompatProperties">
     <!-- Skip download if already extracted -->
     <Message
       Condition="Exists('$(BaselineExtractDir)')"
@@ -91,13 +105,6 @@
   </Target>
 
   <!-- ================================================================== -->
-  <!-- _RestoreTools                                                      -->
-  <!-- ================================================================== -->
-  <Target Name="_RestoreTools" DependsOnTargets="_SetApiCompatProperties">
-    <Exec Command="dotnet tool restore" WorkingDirectory="$(RepoRoot)" />
-  </Target>
-
-  <!-- ================================================================== -->
   <!-- _BuildRefProject                                                   -->
   <!-- ================================================================== -->
   <Target Name="_BuildRefProject" DependsOnTargets="_SetApiCompatProperties">
@@ -111,7 +118,7 @@
   <!-- _RunRefApiCompat                                                   -->
   <!-- ================================================================== -->
   <Target Name="_RunRefApiCompat"
-          DependsOnTargets="_DownloadBaselinePackage;_RestoreTools;_BuildRefProject">
+          DependsOnTargets="_DownloadBaselinePackage;_BuildRefProject">
 
     <!--
       For each TFM, compare the consolidated ref output against the baseline
@@ -134,7 +141,7 @@
       Text="--- Comparing %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) ---" />
 
     <Exec
-      Command="dotnet apicompat -l &quot;$(BaselineExtractDir)ref/%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      Command="dotnet tool run apicompat -- -l &quot;$(BaselineExtractDir)ref/%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
       WorkingDirectory="$(RepoRoot)"
       ContinueOnError="ErrorAndContinue" />
 
