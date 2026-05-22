@@ -57,6 +57,7 @@ steps:
     # Install the SDK listed in the global.json file.
     - task: UseDotNet@2
       displayName: Install .NET SDK (global.json)
+      retryCountOnTaskFailure: 3
       inputs:
         installationPath: ${{ parameters.installDir }}
         packageType: sdk
@@ -65,10 +66,12 @@ steps:
         env:
           PROCESSOR_ARCHITECTURE: x86
 
+
     # Install the desired Runtimes, if any.
     - ${{ each version in parameters.runtimes }}:
       - task: UseDotNet@2
         displayName: Install .NET ${{ version }} Runtime
+        retryCountOnTaskFailure: 3
         inputs:
           installationPath: ${{ parameters.installDir }}
           packageType: runtime
@@ -83,6 +86,7 @@ steps:
     # Use the install script for ARM64.
     - task: PowerShell@2
       displayName: Install .NET SDK and Runtimes for ARM64
+      retryCountOnTaskFailure: 3
       inputs:
         targetType: filePath
         pwsh: true
