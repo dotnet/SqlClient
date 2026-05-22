@@ -18,6 +18,8 @@ public abstract class DatabaseObject : IDisposable
 
     public string Name { get; }
 
+    public string UnescapedName => Name.Substring(1, Name.Length - 2).Replace("]]", "]");
+
     protected DatabaseObject(SqlConnection connection, string name, string definition, bool shouldCreate, bool shouldDrop)
     {
         _shouldDrop = shouldDrop;
