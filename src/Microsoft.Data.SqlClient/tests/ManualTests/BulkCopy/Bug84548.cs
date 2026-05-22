@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class Bug84548
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void Test()
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
