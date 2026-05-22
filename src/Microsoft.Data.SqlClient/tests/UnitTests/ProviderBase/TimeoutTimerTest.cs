@@ -413,39 +413,101 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
         }
 
         /// <summary>
-        /// Verifies that the new remaining-milliseconds calculation used inside
-        /// <see cref="TimeoutTimer"/> — <c>TicksToMilliseconds(ExpirationTicks - NowTicks())</c>
-        /// — produces the same value as the legacy
-        /// <see cref="ADP.TimerRemainingMilliseconds"/> path
-        /// (<c>(ExpirationTicks - ADP.TimerCurrent()) / TicksPerMillisecond</c>)
-        /// for the same <c>ExpirationTicks</c>. Exercised across past, near-now,
-        /// and far-future expirations.
+        /// Verifies that <see cref="TimeoutTimer.MillisecondsRemaining"/>
+        /// (the <see cref="long"/> variant) counts down as virtual time
+        /// elapses and reports the full original duration when no time has
+        /// passed yet.
         /// </summary>
-        [Theory]
-        [InlineData(-30L * TimeSpan.TicksPerSecond)] // already expired
-        [InlineData(-TimeSpan.TicksPerMillisecond)]  // just expired
-        [InlineData(0L)]                              // expiring now
-        [InlineData(TimeSpan.TicksPerMillisecond)]   // 1 ms remaining
-        [InlineData(TimeSpan.TicksPerSecond)]        // 1 s remaining
-        [InlineData(30L * TimeSpan.TicksPerSecond)]  // 30 s remaining
-        public void RemainingMilliseconds_MatchesAdpTimerRemainingMilliseconds(long offsetTicks)
+        [Fact]
+        public void MillisecondsRemaining_Long_DecreasesAsTimeElapses()
         {
-            // Build an absolute expiration relative to "now" so both formulas
-            // see a meaningful target instead of an arbitrary tick value.
-            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1));
-            long nowTicks = timer.NowTicks();
-            long expirationTicks = nowTicks + offsetTicks;
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(10), fake);
+            Assert.Equal(10_000L, timer.MillisecondsRemaining);
 
-            // Legacy formula: subtracts ADP.TimerCurrent() internally.
-            long legacy = ADP.TimerRemainingMilliseconds(expirationTicks);
+            // Act
+            fake.Advance(TimeSpan.FromSeconds(3));
 
-            // New formula used by TimeoutTimer: subtracts NowTicks() (which goes
-            // through TimeProvider.System) and divides via TicksToMilliseconds.
-            long updated = TimeoutTimer.TicksToMilliseconds(expirationTicks - nowTicks);
+            // Assert
+            Assert.Equal(7_000L, timer.MillisecondsRemaining);
+        }
 
-            // The two formulas read the wall clock at slightly different
-            // instants, so allow ± 1 ms of slip between them.
-            Assert.InRange(updated, legacy - 1, legacy + 1);
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.MillisecondsRemaining"/>
+        /// floors at zero (rather than going negative) once the timer's
+        /// deadline has passed.
+        /// </summary>
+        [Fact]
+        public void MillisecondsRemaining_Long_IsZeroAfterExpiration()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fake);
+
+            // Act
+            fake.Advance(TimeSpan.FromSeconds(5));
+
+            // Assert
+            Assert.True(timer.IsExpired);
+            Assert.Equal(0L, timer.MillisecondsRemaining);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.MillisecondsRemaining"/>
+        /// reports <see cref="long.MaxValue"/> for an infinite timer, even
+        /// after a large amount of virtual time has elapsed.
+        /// </summary>
+        [Fact]
+        public void MillisecondsRemaining_Long_InfiniteTimer_ReturnsMaxValue()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.Zero, fake);
+            Assert.True(timer.IsInfinite);
+
+            // Act
+            fake.Advance(TimeSpan.FromHours(1));
+
+            // Assert
+            Assert.Equal(long.MaxValue, timer.MillisecondsRemaining);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.MillisecondsRemainingInt"/>
+        /// reports <see cref="int.MaxValue"/> for an infinite timer.
+        /// </summary>
+        [Fact]
+        public void MillisecondsRemainingInt_InfiniteTimer_ReturnsMaxValue()
+        {
+            // Arrange
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.Zero, fake);
+            Assert.True(timer.IsInfinite);
+
+            // Assert
+            Assert.Equal(int.MaxValue, timer.MillisecondsRemainingInt);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TimeoutTimer.MillisecondsRemainingInt"/>
+        /// saturates at <see cref="int.MaxValue"/> when the remaining time
+        /// would otherwise overflow a 32-bit integer (anything beyond ~24.8
+        /// days), while <see cref="TimeoutTimer.MillisecondsRemaining"/>
+        /// reports the full <see cref="long"/> value.
+        /// </summary>
+        [Fact]
+        public void MillisecondsRemainingInt_LargeDuration_SaturatesAtMaxValue()
+        {
+            // Arrange: a finite duration that exceeds int.MaxValue ms.
+            TimeSpan longDuration = TimeSpan.FromMilliseconds((long)int.MaxValue + 1_000L);
+            var fake = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            TimeoutTimer timer = TimeoutTimer.StartNew(longDuration, fake);
+
+            // Assert
+            Assert.False(timer.IsInfinite);
+            Assert.Equal(int.MaxValue, timer.MillisecondsRemainingInt);
+            Assert.Equal((long)longDuration.TotalMilliseconds, timer.MillisecondsRemaining);
         }
     }
 }
