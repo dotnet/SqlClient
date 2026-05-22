@@ -433,14 +433,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ProviderBase
             // Build an absolute expiration relative to "now" so both formulas
             // see a meaningful target instead of an arbitrary tick value.
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1));
-            long expirationTicks = timer.NowTicks() + offsetTicks;
+            long nowTicks = timer.NowTicks();
+            long expirationTicks = nowTicks + offsetTicks;
 
             // Legacy formula: subtracts ADP.TimerCurrent() internally.
             long legacy = ADP.TimerRemainingMilliseconds(expirationTicks);
 
             // New formula used by TimeoutTimer: subtracts NowTicks() (which goes
             // through TimeProvider.System) and divides via TicksToMilliseconds.
-            long updated = TimeoutTimer.TicksToMilliseconds(expirationTicks - timer.NowTicks());
+            long updated = TimeoutTimer.TicksToMilliseconds(expirationTicks - nowTicks);
 
             // The two formulas read the wall clock at slightly different
             // instants, so allow ± 1 ms of slip between them.

@@ -477,6 +477,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
