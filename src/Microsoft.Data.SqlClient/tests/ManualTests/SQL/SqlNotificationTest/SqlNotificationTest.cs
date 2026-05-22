@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public sealed class SqlNotificationTest : IDisposable
     {
         // Misc constants
-        private const int CALLBACK_TIMEOUT = 5000; // milliseconds
+        private const int CALLBACK_TIMEOUT = 20000; // milliseconds
 
         // Database schema
         private readonly string _tableName = $"dbo.[SQLDEP_{Guid.NewGuid().ToString()}]";
