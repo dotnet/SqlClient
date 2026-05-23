@@ -7,9 +7,9 @@ namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 /// <summary>
 /// A transient server login, created at the start of its scope and dropped when disposed.
 /// </summary>
-public sealed class ServerLogin : DatabaseObject
+public sealed class ServerLogin : DatabaseObject<string>
 {
-    public string Password { get; }
+    public string Password => State;
 
     /// <summary>
     /// Initializes a new instance of the ServerLogin class using the specified SQL connection, login name prefix, and default database.
@@ -24,9 +24,8 @@ public sealed class ServerLogin : DatabaseObject
     }
 
     private ServerLogin(SqlConnection connection, string namePrefix, string password, string? defaultDatabase)
-        : base(connection, namePrefix, GenerateDefinition(password, defaultDatabase), shouldCreate: true, shouldDrop: true)
+        : base(connection, namePrefix, GenerateDefinition(password, defaultDatabase), password, shouldCreate: true, shouldDrop: true)
     {
-        Password = password;
     }
 
     private static string GenerateDefinition(string password, string? defaultDatabase) =>

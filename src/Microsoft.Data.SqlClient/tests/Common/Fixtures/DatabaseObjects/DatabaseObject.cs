@@ -10,21 +10,28 @@ namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 /// Base class for a transient database object (such as a table, type or
 /// stored procedure.)
 /// </summary>
-public abstract class DatabaseObject : IDisposable
+/// <typeparam name="TState">
+/// The type of the internal state accessible to derived types at the point of object creation
+/// via the <see cref="State"/> property.
+/// </typeparam>
+public abstract class DatabaseObject<TState> : IDisposable
 {
     private readonly bool _shouldDrop;
 
     protected SqlConnection Connection { get; }
 
+    protected TState State { get; }
+
     public string Name { get; }
 
     public string UnescapedName => Name.Substring(1, Name.Length - 2).Replace("]]", "]");
 
-    protected DatabaseObject(SqlConnection connection, string name, string definition, bool shouldCreate, bool shouldDrop)
+    protected DatabaseObject(SqlConnection connection, string name, string definition, TState state, bool shouldCreate, bool shouldDrop)
     {
         _shouldDrop = shouldDrop;
 
         Connection = connection;
+        State = state;
         Name = name;
 
         if (shouldCreate)
@@ -259,5 +266,17 @@ public abstract class DatabaseObject : IDisposable
         // used in a loop to create multiple UDTs.
 
         GC.SuppressFinalize(this);
+    }
+}
+
+/// <summary>
+/// Base class for a transient database object (such as a table, type or
+/// stored procedure.)
+/// </summary>
+public abstract class DatabaseObject : DatabaseObject<object?>
+{
+    protected DatabaseObject(SqlConnection connection, string name, string definition, bool shouldCreate, bool shouldDrop)
+        : base(connection, name, definition, state: null, shouldCreate, shouldDrop)
+    {
     }
 }
