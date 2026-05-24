@@ -204,7 +204,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
     #region Switch Value Getters and Setters
 
-    // These properties get or set the like-named underlying switch field value.
+    // These properties get the like-named underlying switch *property* value and set the underlying
+    // switch *field* value. This allows tests to verify the default switch values.
     //
     // They all throw if the value cannot be retrieved or set.
 
@@ -214,7 +215,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? DisableTnirByDefault
     {
-        get => GetSwitchValue("s_disableTnirByDefault");
+        get => GetSwitchPropertyValue(nameof(DisableTnirByDefault));
         set => SetSwitchValue("s_disableTnirByDefault", value);
     }
     #endif
@@ -224,7 +225,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? EnableMultiSubnetFailoverByDefault
     {
-        get => GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
+        get => GetSwitchPropertyValue(nameof(EnableMultiSubnetFailoverByDefault));
         set => SetSwitchValue("s_enableMultiSubnetFailoverByDefault", value);
     }
 
@@ -234,7 +235,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? GlobalizationInvariantMode
     {
-        get => GetSwitchValue("s_globalizationInvariantMode");
+        get => GetSwitchPropertyValue(nameof(GlobalizationInvariantMode));
         set => SetSwitchValue("s_globalizationInvariantMode", value);
     }
     #endif
@@ -244,7 +245,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? IgnoreServerProvidedFailoverPartner
     {
-        get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+        get => GetSwitchPropertyValue(nameof(IgnoreServerProvidedFailoverPartner));
         set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
     }
 
@@ -253,7 +254,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseLegacyFailoverAlternationOnLoginSqlErrors
     {
-        get => GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
+        get => GetSwitchPropertyValue(nameof(UseLegacyFailoverAlternationOnLoginSqlErrors));
         set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
     }
 
@@ -262,7 +263,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? LegacyRowVersionNullBehavior
     {
-        get => GetSwitchValue("s_legacyRowVersionNullBehavior");
+        get => GetSwitchPropertyValue(nameof(LegacyRowVersionNullBehavior));
         set => SetSwitchValue("s_legacyRowVersionNullBehavior", value);
     }
 
@@ -271,7 +272,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? LegacyVarTimeZeroScaleBehaviour
     {
-        get => GetSwitchValue("s_legacyVarTimeZeroScaleBehaviour");
+        get => GetSwitchPropertyValue(nameof(LegacyVarTimeZeroScaleBehaviour));
         set => SetSwitchValue("s_legacyVarTimeZeroScaleBehaviour", value);
     }
 
@@ -280,7 +281,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? MakeReadAsyncBlocking
     {
-        get => GetSwitchValue("s_makeReadAsyncBlocking");
+        get => GetSwitchPropertyValue(nameof(MakeReadAsyncBlocking));
         set => SetSwitchValue("s_makeReadAsyncBlocking", value);
     }
 
@@ -289,7 +290,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? SuppressInsecureTlsWarning
     {
-        get => GetSwitchValue("s_suppressInsecureTlsWarning");
+        get => GetSwitchPropertyValue(nameof(SuppressInsecureTlsWarning));
         set => SetSwitchValue("s_suppressInsecureTlsWarning", value);
     }
 
@@ -298,7 +299,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? TruncateScaledDecimal
     {
-        get => GetSwitchValue("s_truncateScaledDecimal");
+        get => GetSwitchPropertyValue(nameof(TruncateScaledDecimal));
         set => SetSwitchValue("s_truncateScaledDecimal", value);
     }
 
@@ -307,7 +308,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseCompatibilityAsyncBehaviour
     {
-        get => GetSwitchValue("s_useCompatibilityAsyncBehaviour");
+        get => GetSwitchPropertyValue(nameof(UseCompatibilityAsyncBehaviour));
         set => SetSwitchValue("s_useCompatibilityAsyncBehaviour", value);
     }
 
@@ -316,7 +317,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseCompatibilityProcessSni
     {
-        get => GetSwitchValue("s_useCompatibilityProcessSni");
+        get => GetSwitchPropertyValue(nameof(UseCompatibilityProcessSni));
         set => SetSwitchValue("s_useCompatibilityProcessSni", value);
     }
 
@@ -325,7 +326,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseConnectionPoolV2
     {
-        get => GetSwitchValue("s_useConnectionPoolV2");
+        get => GetSwitchPropertyValue(nameof(UseConnectionPoolV2));
         set => SetSwitchValue("s_useConnectionPoolV2", value);
     }
 
@@ -335,7 +336,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseManagedNetworking
     {
-        get => GetSwitchValue("s_useManagedNetworking");
+        get => GetSwitchPropertyValue(nameof(UseManagedNetworking));
         set => SetSwitchValue("s_useManagedNetworking", value);
     }
     #endif
@@ -345,7 +346,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseMinimumLoginTimeout
     {
-        get => GetSwitchValue("s_useMinimumLoginTimeout");
+        get => GetSwitchPropertyValue(nameof(UseMinimumLoginTimeout));
         set => SetSwitchValue("s_useMinimumLoginTimeout", value);
     }
 
@@ -358,19 +359,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     private static bool? GetSwitchValue(string fieldName)
     {
-        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
-        if (assembly is null)
-        {
-            throw new InvalidOperationException(
-                "Could not get assembly for Microsoft.Data.SqlClient");
-        }
-        
-        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-        if (type is null)
-        {
-            throw new InvalidOperationException(
-                "Could not get type LocalAppContextSwitches");
-        }
+        var type = GetLocalAppContextSwitchesType();
 
         var field = type.GetField(
             fieldName,
@@ -405,19 +394,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     private static void SetSwitchValue(string fieldName, bool? value)
     {
-        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
-        if (assembly is null)
-        {
-            throw new InvalidOperationException(
-                "Could not get assembly for Microsoft.Data.SqlClient");
-        }
-        
-        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-        if (type is null)
-        {
-            throw new InvalidOperationException(
-                "Could not get type LocalAppContextSwitches");
-        }
+        var type = GetLocalAppContextSwitchesType();
 
         var field = type.GetField(
             fieldName,
@@ -440,6 +417,50 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             (byte)(!value.HasValue ? 0 : value.Value ? 1 : 2);
 
         field.SetValue(null, Enum.ToObject(field.FieldType, byteValue));
+    }
+
+    /// <summary>
+    /// Use reflection to get a switch property value from LocalAppContextSwitches.
+    /// </summary>
+    /// <remarks>
+    /// Each property in LocalAppContextSwitchHelper corresponds to a like-named property in
+    /// LocalAppContextSwitches, which may return a different value when the AppContext switch
+    /// has not been set.
+    /// </remarks>
+    private static bool GetSwitchPropertyValue(string propertyName)
+    {
+        var type = GetLocalAppContextSwitchesType();
+        var property = type.GetProperty(
+            propertyName,
+            BindingFlags.Static | BindingFlags.Public);
+
+        if (property == null)
+        {
+            throw new InvalidOperationException(
+                $"Property '{propertyName}' not found in LocalAppContextSwitches");
+        }
+
+        object? value = property.GetValue(null);
+
+        return value is bool boolValue
+            ? boolValue
+            : throw new InvalidOperationException($"Property '{propertyName}' is not of type bool.");
+    }
+
+    private static Type GetLocalAppContextSwitchesType()
+    {
+        var assembly = Assembly.GetAssembly(typeof(SqlConnection));
+        if (assembly is null)
+        {
+            throw new InvalidOperationException("Could not get assembly for Microsoft.Data.SqlClient");
+        }
+
+        var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        if (type is null)
+        {
+            throw new InvalidOperationException("Could not get type LocalAppContextSwitches");
+        }
+        return type;
     }
 
     #endregion
