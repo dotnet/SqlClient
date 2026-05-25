@@ -112,6 +112,7 @@ jobs:
 
               for await (const response of iterator) {
                 for (const pr of response.data) {
+                  if (pr.draft) continue;
                   if (pr.assignees) {
                     for (const assignee of pr.assignees) {
                       const login = normalizeLogin(assignee.login);
