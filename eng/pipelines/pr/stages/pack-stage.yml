@@ -19,15 +19,21 @@
 #   alphabetically is the best way to arrange for now.
 
 parameters:
+
+  # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
   - name: buildSuffix
     type: string
 
+  # Name to use for the stage. This is parameterized to allow a higher level of the pipeline to
+  # define the name and pass it to sibling stages (ie, test stage) and avoid relying on brittle
+  # hard-coded stage names.
   - name: stageName
     type: string
 

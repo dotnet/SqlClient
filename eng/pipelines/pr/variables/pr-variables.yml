@@ -83,7 +83,7 @@ variables:
   # LocalDbSharedInstanceName
   - group: sqlclient-testconfig-v1
 
-  # Well-known Variables ===================================================
+  # General Variables ======================================================
   - name: stageNamePack
     value: "pack_stage"
 

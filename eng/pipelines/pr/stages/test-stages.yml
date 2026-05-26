@@ -9,47 +9,67 @@
 # confidence and expedience of validation.
 
 parameters:
+  # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
   - name: buildSuffix
     type: string
 
+  # Name of the build/pack stage that this stage will depend on.
   - name: stageNamePack
     type: string
 
+  # Name of the secret generation job used to determine the path to the SA password variable.
   - name: stageNameSecrets
     type: string
 
   # Manual Test Configuration Parameters ==================================
 
+  # Azure Key Vault tenant ID that will be set in the config.json file for sqlclient manual tests.
   - name: manualTestAzureKeyVaultTenantId
     type: string
 
+  # Azure Key Vault URL that will be set in the config.json file for sqlclient manual tests.
   - name: manualTestAzureKeyVaultUrl
     type: string
 
+  # Connection string to Azure SQL using named pipes that will be set in the config.json file for
+  # sqlclient manual tests against Azure SQL.
   - name: manualTestConnectionStringNpAzure
     type: string
 
+  # Connection string to localhost using named pipes that will be set in the config.json file for
+  # sqlclient manual tests against a local box product.
   - name: manualTestConnectionStringNpLocalhost
     type: string
 
+  # Connection string to Azure SQL using TCP that will be set in the config.json file for sqlclient
+  # manual tests against Azure SQL.
   - name: manualTestConnectionStringTcpAzure
     type: string
 
+  # Connection string to localhost using TCP that will be set in the config.json file for sqlclient
+  # manual tests against a local box product.
   - name: manualTestConnectionStringTcpLocalhost
     type: string
 
+  # Path to use for file stream tests, this value will be stored in the config.json for sqlclient
+  # manual tests.
   - name: manualTestFileStreamDirectory
     type: string
 
+  # Name of the local DB application name for localdb tests, this value will be stored in the
+  # config.json for sqlclient manual tests.
   - name: manualTestLocalDbAppName
     type: string
 
+  # Name of the local DB shared instance name for localdb tests, this value will be stored in the
+  # config.json for sqlclient manual tests.
   - name: manualTestLocalDbSharedInstanceName
     type: string
 
@@ -73,11 +93,6 @@ stages:
         dependsOn:
           - ${{ parameters.stageNamePack }}
           - ${{ parameters.stageNameSecrets }}
-
-        variables:
-          # Bring the generated SA password from the secrets stage into scope for this test stage.
-          - name: manualTestSaPassword
-            value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
 
         jobs:
           # TestAbstractions
@@ -122,6 +137,8 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
@@ -134,8 +151,8 @@ stages:
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
-              saPassword: $(manualTestSaPassword)
 
+           # @TODO:
 #          # TestSqlClientManual - Azure
 #          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
 #            parameters:

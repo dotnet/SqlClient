@@ -32,7 +32,6 @@ stages:
       stageNameSecrets: ${{ variables.stageNameSecrets }}
 
       platforms:
-        # @TODO: Expand to cover different SQL Server targets
         - displayName: "windows_net462"
           dotnet: "net462"
           image: "ADO-MMS22-SQL22"

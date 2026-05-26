@@ -7,28 +7,36 @@
 parameters:
   # General Parameters =====================================================
 
+  # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
     values:
       - Debug
       - Release
 
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
   - name: buildSuffix
     type: string
 
   # Platform Parameters ====================================================
 
+  # Display name of the platform. This will be formatted into the job's official name as well as
+  # the display name for the job. As such, only alphanumeric and _ characters are permitted.
   - name: platformDisplayName
     type: string
 
+  # TFM name of the version of dotnet to run this test with.
   - name: platformDotnet
     type: string
 
+  # Name of the image in the ADO-1ES-Pool to use to execute this job.
   - name: platformImage
     type: string
 
   # Test Parameters ========================================================
 
+  # Name of the project to run tests for. This will be used to generate the build.proj target to
+  # execute: Test{packageShortName}{testProject}
   - name: packageShortName
     type: string
     values:
@@ -39,9 +47,14 @@ parameters:
       - SqlClient
       - SqlServer
 
+  # Display name of the test target that is being executed. This will be formatted into the job's
+  # official name as well as the display name for the job. As such, only alphanumeric and _
+  # characters are permitted.
   - name: testDisplayName
     type: string
 
+  # Optional test project name to execute. This only applies to packages that have >1 test target.
+  # eg, for TestSqlClientManual, this should be "Manual"
   - name: testProject
     type: string
     default: ''
@@ -53,13 +66,15 @@ jobs:
     pool:
       name: ADO-1ES-Pool
       demands:
-      - imageOverride -equals ${{ parameters.platformImage }}
+        - imageOverride -equals ${{ parameters.platformImage }}
 
     steps:
+      # Install the version of the dotnet runtime we will use to execute the test target.
       - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
         parameters:
           runtimeVersion: ${{ parameters.platformDotnet }}
 
+      # Execute the test target
       - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
