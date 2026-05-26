@@ -33,7 +33,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     maxPoolSize: 50,
                     creationTimeout: 15,
                     loadBalanceTimeout: 0,
-                    hasTransactionAffinity: true
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0
             );
             dbConnectionPoolGroup ??= new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -578,7 +579,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     maxPoolSize: 50,
                     creationTimeout: 15,
                     loadBalanceTimeout: 500,
-                    hasTransactionAffinity: true
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0
             );
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
             Assert.Equal(poolGroupOptions.LoadBalanceTimeout, pool.LoadBalanceTimeout);
@@ -596,7 +598,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     maxPoolSize: 50,
                     creationTimeout: 15,
                     loadBalanceTimeout: 500,
-                    hasTransactionAffinity: true));
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
             var pool = ConstructPool(SuccessfulConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
             Assert.Equal(dbConnectionPoolGroup, pool.PoolGroup);
         }
@@ -610,7 +613,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 50,
                 creationTimeout: 15,
                 loadBalanceTimeout: 500,
-                hasTransactionAffinity: true);
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
             Assert.Equal(poolGroupOptions, pool.PoolGroupOptions);
         }
@@ -646,7 +650,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 50,
                 creationTimeout: 15,
                 loadBalanceTimeout: 500,
-                hasTransactionAffinity: true);
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
             Assert.Equal(poolGroupOptions.UseLoadBalancing, pool.UseLoadBalancing);
         }
@@ -930,14 +935,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void IdleTimeout_DefaultIsZero_DisablesExpiry()
         {
-            // Default ctor argument keeps idle expiry off.
+            // Explicitly passing zero keeps idle expiry off.
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
                 maxPoolSize: 50,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true);
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
 
             Assert.Equal(TimeSpan.Zero, poolGroupOptions.IdleTimeout);
         }
@@ -1119,7 +1125,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 0, // This should cause an exception
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -1150,7 +1157,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 10000,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -1191,7 +1199,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 1,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -1217,7 +1226,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 2,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),

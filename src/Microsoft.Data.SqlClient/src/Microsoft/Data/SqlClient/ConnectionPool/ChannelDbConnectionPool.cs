@@ -432,6 +432,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
         private bool IsLiveConnection(DbConnectionInternal connection)
         {
+            // Connection has been sitting idle longer than the configured idle timeout.
+            // Checked before the (potentially expensive) liveness probe so an idle-expired
+            // connection is discarded without an SNI round-trip.
+            // IdleSinceUtc is initialized to CreateTime so a freshly minted connection never trips this
+            // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
+            TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
+            if (idleTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
+            {
+                return false;
+            }
+
             // Broken physical connection
             if (!connection.IsConnectionAlive())
             {
@@ -440,15 +451,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Connection has been alive longer than the load balance timeout
             if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
-            {
-                return false;
-            }
-
-            // Connection has been sitting idle longer than the configured idle timeout.
-            // IdleSinceUtc is initialized to CreateTime so a freshly minted connection never trips this
-            // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
-            TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
-            if (idleTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
             {
                 return false;
             }

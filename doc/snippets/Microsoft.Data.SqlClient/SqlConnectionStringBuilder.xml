@@ -984,11 +984,11 @@ The following example converts an existing connection string from using SQL Serv
         Gets or sets the maximum time, in seconds, that a connection can sit unused (idle) in the connection pool before it is discarded on its next retrieval.
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IdleTimeout" /> property, or 0 if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IdleTimeout" /> property, or 300 (5 minutes) if none has been supplied.
       </value>
       <remarks>
         <para>
-          This property corresponds to the "Connection Idle Timeout" key (synonym: "Pool Idle Timeout") within the connection string.
+          This property corresponds to the "Connection Idle Timeout" key within the connection string.
         </para>
         <para>
           When a caller retrieves a connection from the pool, the driver checks how long the connection has been sitting idle. If the idle duration exceeds the value of <c>Connection Idle Timeout</c>, the connection is discarded and a different valid or newly-created connection is returned instead. This protects callers from receiving connections that may have been silently closed by firewalls, load balancers, or server-side inactivity thresholds.

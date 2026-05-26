@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                         int creationTimeout,
                                         int loadBalanceTimeout,
                                         bool hasTransactionAffinity,
-                                        int idleTimeout = 0
+                                        int idleTimeout
         )
         {
             _poolByIdentity = poolByIdentity;
@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (0 != idleTimeout)
             {
-                _idleTimeout = new TimeSpan(0, 0, idleTimeout);
+                _idleTimeout = TimeSpan.FromSeconds(idleTimeout);
             }
 
             _hasTransactionAffinity = hasTransactionAffinity;

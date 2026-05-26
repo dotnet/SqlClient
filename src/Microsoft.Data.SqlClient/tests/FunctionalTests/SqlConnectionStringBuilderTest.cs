@@ -251,11 +251,11 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void IdleTimeout_DefaultIsZero()
+        public void IdleTimeout_DefaultIs300()
         {
-            // Default-constructed builder should have IdleTimeout == 0 (disabled).
+            // Default-constructed builder should have IdleTimeout == 300 (5 minutes), matching Npgsql.
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-            Assert.Equal(0, builder.IdleTimeout);
+            Assert.Equal(300, builder.IdleTimeout);
         }
 
         [Fact]
@@ -277,14 +277,6 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder("Connection Idle Timeout=120");
             Assert.Equal(120, builder.IdleTimeout);
-        }
-
-        [Fact]
-        public void IdleTimeout_SynonymPoolIdleTimeout_Parses()
-        {
-            // "Pool Idle Timeout" is a registered synonym -> same canonical property.
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder("Pool Idle Timeout=75");
-            Assert.Equal(75, builder.IdleTimeout);
         }
 
         [Fact]

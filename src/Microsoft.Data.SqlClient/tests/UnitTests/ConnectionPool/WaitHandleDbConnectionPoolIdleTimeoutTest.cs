@@ -4,7 +4,6 @@
 
 using System;
 using System.Reflection;
-using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -157,36 +156,6 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
 
         // Assert - same instance reused, well within idle window
         Assert.Same(first, second);
-    }
-
-    [Fact]
-    public void IdleTimeout_TransactedPool_StampsOnReturn()
-    {
-        // Regression test: returning a connection into the transacted pool must stamp IdleSinceUtc
-        // so that idle-expiry on the next retrieval measures time spent parked there, not time since
-        // create-time / last general-pool return.
-        _pool = CreatePool(idleTimeoutSeconds: 3600);
-
-        using var scope = new TransactionScope();
-        Assert.NotNull(Transaction.Current);
-
-        SqlConnection owner = new();
-        DbConnectionInternal connection = GetConnection(owner);
-
-        // Backdate the stamp to a clearly-old value before returning so we can assert the return
-        // path actually re-stamped it (and didn't just leave the create-time value).
-        BackdateIdleSince(connection, TimeSpan.FromMinutes(30));
-        DateTime stampedBack = connection.IdleSinceUtc;
-
-        DateTime before = DateTime.UtcNow;
-        _pool.ReturnInternalConnection(connection, owner);
-        DateTime after = DateTime.UtcNow;
-
-        // Assert - stamp was refreshed during the return-to-transacted-pool path.
-        Assert.InRange(connection.IdleSinceUtc, before, after);
-        Assert.True(connection.IdleSinceUtc > stampedBack);
-
-        scope.Complete();
     }
 
     [Fact]

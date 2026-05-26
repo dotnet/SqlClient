@@ -221,8 +221,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             lock (s_random)
             {
-                // Random.Next is not thread-safe
-                _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                // Drive the cleanup cadence from the configured idle timeout so a configured pool
+                // prunes at roughly the idle-expiration interval. When idle expiration is disabled
+                // (IdleTimeout == 0) fall back to the historical 2-4 minute random window.
+                TimeSpan idleTimeout = connectionPoolGroup.PoolGroupOptions.IdleTimeout;
+                _cleanupWait = idleTimeout != TimeSpan.Zero
+                    ? (int)idleTimeout.TotalMilliseconds
+                    : s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
             }
 
             _connectionFactory = connectionFactory;
@@ -670,14 +675,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 //   DelegatedTransactionEnded event will clean up the
                                 //   connection appropriately regardless of the pool state.
                                 Debug.Assert(_transactedConnectionPool != null, "Transacted connection pool was not expected to be null.");
-                                // Stamp the idle-since timestamp before parking the connection in the transacted
-                                // pool so the next retrieval measures idle time from when it left the active set,
-                                // not from create-time or the previous general-pool return. Skip when idle expiry
-                                // is disabled to avoid an unnecessary DateTime.UtcNow on the hot return path.
-                                if (PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
-                                {
-                                    obj.MarkPooledIdle();
-                                }
+                                // Transacting connections are held in their own store and are never
+                                // proactively closed (doing so would abort the transaction, which can be
+                                // distributed). Idle-timeout enforcement does not apply here, so we do
+                                // not stamp IdleSinceUtc when parking the connection in the transacted pool.
                                 _transactedConnectionPool.PutTransactedObject(transaction, obj);
                                 rootTxn = true;
                             }
@@ -1036,7 +1037,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 Interlocked.Decrement(ref _waitCount);
                                 obj = GetFromGeneralPool();
 
-                                if ((obj != null) && (!obj.IsConnectionAlive() || IsIdleExpired(obj)))
+                                if ((obj != null) && (IsIdleExpired(obj) || !obj.IsConnectionAlive()))
                                 {
                                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Connection {1}, found dead and removed.", Id, obj.ObjectID);
                                     DestroyObject(obj);
@@ -1215,8 +1216,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             throw;
                         }
                     }
-                    else if (!obj.IsConnectionAlive() || IsIdleExpired(obj))
+                    else if (!obj.IsConnectionAlive())
                     {
+                        // Transacting connections are exempt from idle-timeout eviction (closing them
+                        // would abort the transaction, possibly distributed). Only liveness is checked here.
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", Id, obj.ObjectID);
                         DestroyObject(obj);
                         obj = null;
