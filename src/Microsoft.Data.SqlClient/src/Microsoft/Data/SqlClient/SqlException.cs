@@ -25,15 +25,15 @@ namespace Microsoft.Data.SqlClient
 
         private readonly SqlErrorCollection _errors;
 #if NETFRAMEWORK
-        [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
+        [OptionalField(VersionAdded = 4)]
 #endif
         private Guid _clientConnectionId = Guid.Empty;
 #if NETFRAMEWORK
-        [System.Runtime.Serialization.IgnoreDataMember]
+        [IgnoreDataMember]
 #endif
         private SqlBatchCommand _batchCommand;
 #if NETFRAMEWORK
-        [System.Runtime.Serialization.IgnoreDataMember]
+        [IgnoreDataMember]
 #endif
         // Do not serialize this field! It is used to indicate that no reconnection attempts are required
         internal bool _doNotReconnect = false;

@@ -1,11 +1,14 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Xml.XPath;
+using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -89,23 +92,63 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
     }
 
+    /// <summary>
+    /// These tests validate that activity IDs are properly transferred to the server and recorded in XEvent sessions,
+    /// even in error scenarios. This is important to ensure that customers can rely on activity IDs being present in
+    /// XEvent sessions for troubleshooting and correlation purposes.
+    /// </summary>
     [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {
-        private readonly string _testName;
+        private const int CustomErrorNumber = 50001;
 
-        public XEventsTracingTest(ITestOutputHelper outputHelper)
+        /// <summary>
+        /// Verifies that the attach_activity_id_xfer in the 'rpc_starting' extended event is consistent with the tracing
+        /// context when executing a stored procedure.
+        /// </summary>
+        /// <remarks>
+        /// This test has historically been marked as flaky following occasional failures due to deadlocks on the remote
+        /// SQL Server instance. This first became apparent when running 'sp_help' on an Azure SQL instance under load.
+        /// This appears to have been resolved by switching to a temporary stored procedure which consists of a simple
+        /// 'SELECT 1' statement.
+        /// </remarks>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void XEventActivityIDConsistentWithTracing_RpcStarting()
         {
-            _testName = DataTestUtility.CurrentTestName(outputHelper);
+            using SqlConnection managementConnection = new(DataTestUtility.TCPConnectionString);
+            using StoredProcedure sp = new(managementConnection, nameof(XEventActivityIDConsistentWithTracing_RpcStarting), " AS SELECT 1 AS [Field1];");
+
+            // Our stored procedure name is an escaped SQL Server object name. This will not match the object_name data
+            // in the XEvent XML, which records it as an unescaped name.
+            string unescapedProcedureName = sp.Name.Substring(1, sp.Name.Length - 2).Replace("]]", "]");
+
+            VerifyXEventActivityIDConsistentWithTracing(unescapedProcedureName, System.Data.CommandType.StoredProcedure, "rpc_starting");
         }
 
-        [Trait("Category", "flaky")]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        [InlineData("SELECT @@VERSION", System.Data.CommandType.Text, "sql_statement_starting")]
-        [InlineData("sp_help", System.Data.CommandType.StoredProcedure, "rpc_starting")]
-        public void XEventActivityIDConsistentWithTracing(string query, System.Data.CommandType commandType, string xEvent)
+        /// <summary>
+        /// Verifies that the attach_activity_id_xfer in the 'sql_statement_starting' extended event is consistent with the tracing
+        /// context when executing a SQL statement which is not a stored procedure.
+        /// </summary>
+        /// <remarks>
+        /// This test has historically been marked as flaky following occasional failures due to deadlocks on the remote
+        /// SQL Server instance. This first became apparent when running 'SELECT @@VERSION' on an Azure SQL instance under load.
+        /// This appears to have been resolved by switching to a simpler 'SELECT 1' statement.
+        /// </remarks>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void XEventActivityIDConsistentWithTracing_SqlStatementStarting() =>
+            VerifyXEventActivityIDConsistentWithTracing("SELECT 1 AS [Field1]", System.Data.CommandType.Text, "sql_statement_starting");
+
+        /// <summary>
+        /// Validates that the activity ID is consistently recorded in an XEvent session even when a command generates an error.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        public void XEventActivityIDConsistentWithTracing_ActivityIDTransferOnError() =>
+            VerifyXEventActivityIDConsistentWithTracing($"THROW {CustomErrorNumber}, 'Sample message', 0", System.Data.CommandType.Text, "sql_statement_starting");
+
+        private void VerifyXEventActivityIDConsistentWithTracing(string query, System.Data.CommandType commandType, string xEvent,
+            [CallerMemberName] string testName = "")
         {
-            // This test validates that the activity ID recorded in the client-side trace is passed through to the server,
+            // This method validates that the activity ID recorded in the client-side trace is passed through to the server,
             // where it can be recorded in an XEvent session. This is documented at:
             // https://learn.microsoft.com/en-us/sql/relational-databases/native-client/features/accessing-diagnostic-information-in-the-extended-events-log
 
@@ -119,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             xEventManagementConnection.Open();
 
             using XEventScope xEventSession = new(
-                _testName,
+                testName,
                 xEventManagementConnection,
                 $@"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}')),
                     ADD EVENT RPC_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}'))",
@@ -127,12 +170,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (DataTestUtility.MDSEventListener TraceListener = new())
             {
-                using SqlCommand command = new(query, activityConnection) { CommandType = commandType };
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                try
                 {
-                    // Flush data
+                    using SqlCommand command = new(query, activityConnection) { CommandType = commandType };
+                    using SqlDataReader reader = command.ExecuteReader();
+
+                    reader.FlushResultSet();
                 }
+                // We only want to catch and swallow our custom user error number. Error number 1205 should continue to cause the
+                // test to fail, as it indicates a deadlock.
+                // @TODO: If deadlocks continue to cause test failures, we should record the xml_deadlock_report extended event to
+                // capture more information about the deadlock and output it to the test logs for analysis.
+                catch (SqlException sqlEx) when (sqlEx.Number == CustomErrorNumber)
+                { }
 
                 ids = TraceListener.ActivityIDs;
             }
@@ -146,22 +196,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GetCommandActivityId(string commandText, string eventName, Guid connectionId, XmlDocument xEvents)
         {
+            // We manually build the XPath query and cannot escape quotes, so disallow them from the command text to simplify
+            // the test.
+            Assert.DoesNotContain("\"", commandText);
+
             XPathNavigator? xPathRoot = xEvents.CreateNavigator();
             Assert.NotNull(xPathRoot);
 
             // The transferred activity ID is attached to the "attach_activity_id_xfer" action within
             // the "sql_statement_starting" and the "rpc_starting" events.
             XPathNodeIterator statementStartingQuery = xPathRoot.Select(
-                $"/RingBufferTarget/event[@name='{eventName}'"
-                + $" and action[@name='client_connection_id']/value='{connectionId.ToString().ToUpper()}'"
-                + $" and (data[@name='statement']='{commandText}' or data[@name='object_name']='{commandText}')]");
+                $"/RingBufferTarget/event[@name=\"{eventName}\""
+                + $" and action[@name=\"client_connection_id\"]/value=\"{connectionId.ToString().ToUpper()}\""
+                + $" and (data[@name=\"statement\"]=\"{commandText}\" or data[@name=\"object_name\"]=\"{commandText}\")]");
 
             Assert.Equal(1, statementStartingQuery.Count);
             Assert.True(statementStartingQuery.MoveNext());
 
             XPathNavigator? current = statementStartingQuery.Current;
             Assert.NotNull(current);
-            XPathNavigator? activityIdElement = current.SelectSingleNode("action[@name='attach_activity_id_xfer']/value");
+            XPathNavigator? activityIdElement = current.SelectSingleNode("action[@name=\"attach_activity_id_xfer\"]/value");
 
             Assert.NotNull(activityIdElement);
             Assert.NotNull(activityIdElement.Value);

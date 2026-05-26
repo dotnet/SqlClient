@@ -29,6 +29,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
         Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
+        Assert.False(LocalAppContextSwitches.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);

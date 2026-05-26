@@ -77,6 +77,16 @@ parameters:
   - name: akvPackageVersion
     type: string
 
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
+  # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
 jobs:
 - job: build_mds_akv_packages_job
   displayName: Build MDS & AKV Packages
@@ -85,7 +95,6 @@ jobs:
     name: ${{parameters.poolName }}
     demands:
     - imageOverride -equals ${{ parameters.imageOverride }}
-    - msbuild
 
   variables:
     - template: /eng/pipelines/libraries/ci-build-variables.yml@self
@@ -116,8 +125,17 @@ jobs:
         artifactName: ${{ parameters.loggingArtifactsName }}
         targetPath: $(localFeedPath)
 
+    - task: DownloadPipelineArtifact@2
+      displayName: Download SqlServer Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.sqlServerArtifactsName }}
+        targetPath: $(localFeedPath)
+
   # Install the .NET SDK.
   - template: /eng/pipelines/steps/install-dotnet.yml@self
+
+  # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+  - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
 
   # When we're performing a Debug build, we still want to try _compiling_ the
   # code in Release mode to ensure downstream pipelines don't encounter
@@ -130,7 +148,6 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
-        assemblyBuildNumber: $(assemblyBuildNumber)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -139,9 +156,9 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
-      assemblyBuildNumber: $(assemblyBuildNumber)
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+      sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Create MDS NuGet Package'
@@ -156,6 +173,7 @@ jobs:
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
         -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
         -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
 
   # PackSqlClient outputs to artifacts/Microsoft.Data.SqlClient/<ReferenceType>-<Configuration>/.
   # Downstream steps (local feed copy, AKV pack, artifact publish) all expect packages at
@@ -183,21 +201,38 @@ jobs:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
       build: AkvProvider
-      assemblyBuildNumber: $(assemblyBuildNumber)
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
       akvPackageVersion: ${{ parameters.akvPackageVersion }}
+      sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Create AKV Provider NuGet Package'
     inputs:
-      command: pack
-      packagesToPack: src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj
-      configurationToPack: ${{ parameters.buildConfiguration }}
-      nobuild: true
-      packDirectory: $(packagePath)
-      buildProperties: ReferenceType=${{ parameters.referenceType }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }};SqlClientPackageVersion=${{ parameters.mdsPackageVersion }};AkvProviderPackageVersion=${{ parameters.akvPackageVersion }};BuildNumber=$(Build.BuildNumber);AssemblyBuildNumber=$(assemblyBuildNumber)
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackAkvProvider
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:PackBuild=false
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:BuildNumber=$(Build.BuildNumber)
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+        -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
+
+  - task: CopyFiles@2
+    displayName: Copy AKV Package to Output Folder
+    inputs:
+      sourceFolder: artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/${{ parameters.buildConfiguration }}
+      contents: |
+        **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.nupkg
+        **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.snupkg
+      targetFolder: $(packagePath)
+      flattenFolders: true
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'

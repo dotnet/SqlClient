@@ -5103,93 +5103,14 @@ namespace Microsoft.Data.SqlClient
 
         internal int GetCodePage(SqlCollation collation, TdsParserStateObject stateObj)
         {
-            int codePage = 0;
+            bool success = LocalesHelper.TryGetCodePage(collation.LCID, collation._sortId, out int codePage);
 
-            if (0 != collation._sortId)
+            if (!success)
             {
-                codePage = TdsEnums.CODE_PAGE_FROM_SORT_ID[collation._sortId];
-                Debug.Assert(0 != codePage, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation._sortId)).ToString((IFormatProvider)null));
+                ThrowUnsupportedCollationEncountered(stateObj);
             }
-            else
-            {
-                int cultureId = collation.LCID;
-                bool success = false;
 
-                try
-                {
-                    codePage = CultureInfo.GetCultureInfo(cultureId).TextInfo.ANSICodePage;
-
-                    // SqlHot 50001398: CodePage can be zero, but we should defer such errors until
-                    //  we actually MUST use the code page (i.e. don't error if no ANSI data is sent).
-                    success = true;
-                }
-                catch (ArgumentException e)
-                {
-                    ADP.TraceExceptionWithoutRethrow(e);
-                }
-
-                // If we failed, it is quite possible this is because certain culture id's
-                // were removed in Win2k and beyond, however Sql Server still supports them.
-                // In this case we will mask off the sort id (the leading 1). If that fails,
-                // or we have a culture id other than the cases below, we throw an error and
-                // throw away the rest of the results. For additional info, see MDAC 65963.
-
-                // SqlHot 50001398: Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
-                // This should be treated as an error and functionality switches into the following logic.
-                if (!success || codePage == 0)
-                {
-                    switch (cultureId)
-                    {
-                        case 0x10404: // zh-TW
-                        case 0x10804: // zh-CN
-                        case 0x10c04: // zh-HK
-                        case 0x11004: // zh-SG
-                        case 0x11404: // zh-MO
-                        case 0x10411: // ja-JP
-                        case 0x10412: // ko-KR
-                            // If one of the following special cases, mask out sortId and
-                            // retry.
-                            cultureId = cultureId & 0x03fff;
-
-                            try
-                            {
-                                codePage = new CultureInfo(cultureId).TextInfo.ANSICodePage;
-                                success = true;
-                            }
-                            catch (ArgumentException e)
-                            {
-                                ADP.TraceExceptionWithoutRethrow(e);
-                            }
-                            break;
-                        case 0x827:     // Mapping Non-supported Lithuanian code page to supported Lithuanian.
-                            try
-                            {
-                                codePage = new CultureInfo(0x427).TextInfo.ANSICodePage;
-                                success = true;
-                            }
-                            catch (ArgumentException e)
-                            {
-                                ADP.TraceExceptionWithoutRethrow(e);
-                            }
-                            break;
-                        case 0x43f:
-                            codePage = 1251;  // Kazakh code page based on SQL Server
-                            break;
-                        case 0x10437:
-                            codePage = 1252;  // Georgian code page based on SQL Server
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if (!success)
-                    {
-                        ThrowUnsupportedCollationEncountered(stateObj);
-                    }
-
-                    Debug.Assert(codePage >= 0, $"Invalid code page. codePage: {codePage}. cultureId: {cultureId}");
-                }
-            }
+            Debug.Assert(codePage != 0, $"Invalid code page. codePage: {codePage}. cultureId: {collation.LCID}");
 
             return codePage;
         }
@@ -5367,6 +5288,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Parses the TDS message to read single CIPHER_INFO entry.</para>
         /// </summary>
+        /// <remarks>
+        /// The CIPHER_INFO structure is represented as an EK_INFO structure in the TDS protocol.
+        /// </remarks>
+        /// <seealso href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/b0f2c914-c5ee-4714-802a-f118edf1b33d"/>.
         internal TdsOperationStatus TryReadCipherInfoEntry(TdsParserStateObject stateObj, out SqlTceCipherInfoEntry entry)
         {
             byte cekValueCount = 0;
@@ -5397,8 +5322,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Read the key MD Version
-            byte[] keyMDVersion = new byte[8];
-            result = stateObj.TryReadByteArray(keyMDVersion, 8);
+            result = stateObj.TryReadInt64(out long keyMDVersion);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -5493,7 +5417,7 @@ namespace Microsoft.Data.SqlClient
                     databaseId: dbId,
                     cekId: keyId,
                     cekVersion: keyVersion,
-                    cekMdVersion: keyMDVersion,
+                    cekMdVersion: unchecked((ulong)keyMDVersion),
                     keyPath: keyPath,
                     keyStoreName: keyStoreName,
                     algorithmName: algorithmName);
@@ -5508,9 +5432,8 @@ namespace Microsoft.Data.SqlClient
         internal TdsOperationStatus TryProcessCipherInfoTable(TdsParserStateObject stateObj, out SqlTceCipherInfoTable cipherTable)
         {
             // Read count
-            short tableSize = 0;
             cipherTable = null;
-            TdsOperationStatus result = stateObj.TryReadInt16(out tableSize);
+            TdsOperationStatus result = stateObj.TryReadUInt16(out ushort tableSize);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -11524,8 +11447,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(cekTable[i].CekVersion, stateObj);
 
                 // Write 8 bytes of key MD Version
-                Debug.Assert(8 == cekTable[i].CekMdVersion.Length);
-                stateObj.WriteByteArray(cekTable[i].CekMdVersion, 8, 0);
+                WriteUnsignedLong(cekTable[i].CekMdVersion, stateObj);
 
                 // We don't really need to send the keys
                 stateObj.WriteByte(0x00);

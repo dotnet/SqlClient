@@ -3646,7 +3646,17 @@ namespace Microsoft.Data.SqlClient.Connection
                         continue;
                     }
 
-                    if (IsDoNotRetryConnectError(sqlex) || timeout.IsExpired)
+                    bool isLoginPhaseSqlError = _parser?.State is not TdsParserState.Closed;
+
+                    // If state != closed, indicates that the parser encountered an error while
+                    // processing the login response (e.g. an explicit error token). Transient
+                    // network errors that impact connectivity will result in parser state being
+                    // closed. Only network-level errors should trigger failover alternation;
+                    // login-phase errors (like transient errors) should be thrown so they can
+                    // be handled by the outer ConnectRetryCount loop.
+                    if ((isLoginPhaseSqlError && !LocalAppContextSwitches.UseLegacyFailoverAlternationOnLoginSqlErrors) ||
+                        IsDoNotRetryConnectError(sqlex) ||
+                        timeout.IsExpired)
                     {
                         // No more time to try again.
                         // Caller will call LoginFailure()

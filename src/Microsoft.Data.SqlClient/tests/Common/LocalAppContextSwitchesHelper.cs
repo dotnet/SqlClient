@@ -47,6 +47,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _globalizationInvariantModeOriginal;
     #endif
     private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
+    private readonly bool? _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal;
     private readonly bool? _legacyRowVersionNullBehaviorOriginal;
     private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly bool? _makeReadAsyncBlockingOriginal;
@@ -99,6 +100,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             #endif
             _ignoreServerProvidedFailoverPartnerOriginal =
                 GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+            _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal =
+                GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
             _legacyRowVersionNullBehaviorOriginal =
                 GetSwitchValue("s_legacyRowVersionNullBehavior");
             _legacyVarTimeZeroScaleBehaviourOriginal =
@@ -157,6 +160,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_ignoreServerProvidedFailoverPartner",
                 _ignoreServerProvidedFailoverPartnerOriginal);
+            SetSwitchValue(
+                "s_useLegacyFailoverAlternationOnLoginSqlErrors",
+                _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
             SetSwitchValue(
                 "s_legacyRowVersionNullBehavior", 
                 _legacyRowVersionNullBehaviorOriginal);
@@ -246,6 +252,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
         set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyFailoverAlternationOnLoginSqlErrors switch value.
+    /// </summary>
+    public bool? UseLegacyFailoverAlternationOnLoginSqlErrors
+    {
+        get => GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
+        set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
     }
 
     /// <summary>

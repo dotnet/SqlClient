@@ -59,6 +59,13 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
 
     /// <summary>
+    /// The name of the app context switch that controls whether failover
+    /// alternation should use legacy behavior for login-phase SQL errors.
+    /// </summary>
+    private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
     /// arrays instead of null.
@@ -188,6 +195,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the IgnoreServerProvidedFailoverPartner switch.
     /// </summary>
     private static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -420,6 +432,19 @@ internal static class LocalAppContextSwitches
             IgnoreServerProvidedFailoverPartnerString,
             defaultValue: false,
             ref s_ignoreServerProvidedFailoverPartner);
+
+    /// <summary>
+    /// When set to true, LoginWithFailover preserves legacy behavior and may
+    /// alternate to the failover partner on login-phase SQL errors where the
+    /// parser state is not Closed.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyFailoverAlternationOnLoginSqlErrors =>
+        AcquireAndReturn(
+            UseLegacyFailoverAlternationOnLoginSqlErrorsString,
+            defaultValue: false,
+            ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
