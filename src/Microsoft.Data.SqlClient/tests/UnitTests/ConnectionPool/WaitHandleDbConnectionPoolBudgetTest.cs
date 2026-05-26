@@ -4,11 +4,8 @@
 
 using System;
 using System.Data.Common;
-using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Extensions.Time.Testing;
