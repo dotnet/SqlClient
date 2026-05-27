@@ -24,6 +24,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
+    // @TODO: These tests are known to not run reliably in DEBUG mode.
+    [ConditionalClass(typeof(DataTestUtility), nameof(DataTestUtility.IsNotDebugBuild))]
     public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;

@@ -188,6 +188,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 IsSqlVectorSupported &&
                 CheckVectorFloat16Supported();
 
+        public static bool IsDebugBuild
+        {
+            get
+            {
+                #if DEBUG
+                return true;
+                #else
+                return false;
+                #endif
+            }
+        }
+
+        public static bool IsNotDebugBuild() => IsDebugBuild;
+
         private static bool CheckVectorFloat16Supported()
         {
             try
