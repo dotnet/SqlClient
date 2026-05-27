@@ -88,6 +88,7 @@ jobs:
 
     variables:
       # Bring the generated SA password from the secrets stage into scope for this test stage.
+      # Note: Because this is set at runtime, it must be referenced as `$(saPassword)`.
       - name: saPassword
         value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
 
@@ -102,12 +103,12 @@ jobs:
         parameters:
           fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
           operatingSystem: ${{ parameters.platformOperatingSystem }}
-          saPassword: ${{ variables.saPassword }}
+          saPassword: $(saPassword)
 
       # Assign the generated SA password to the $Password field. This will allow $(Password) to be
-      # be replaced in connection strings with whatever was passed in as ${{ saPassword }}.
+      # be replaced in connection strings with whatever set in the secrets stage.
       - pwsh: |
-          $password = "${{ variables.saPassword }}"
+          $password = "$(variables.saPassword)"
           Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
         displayName: Set Connection String Password
 
