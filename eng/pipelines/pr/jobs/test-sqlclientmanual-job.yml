@@ -71,6 +71,11 @@ parameters:
   - name: fileStreamDirectory
     type: string
 
+  # Whether the server that tests will be executed against is local to the job agent. If `true`
+  # server configuration steps will be executed prior to running the tests.
+  - name: isLocalServer
+    type: boolean
+
   # Name of the local DB application name for localdb tests, this value will be stored in the
   # config.json
   - name: localDbAppName
@@ -103,11 +108,12 @@ jobs:
           runtimeVersion: ${{ parameters.platformDotnet }}
 
       # Configure the local SQL Server instance
-      - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
-        parameters:
-          fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
-          operatingSystem: ${{ parameters.platformOperatingSystem }}
-          saPassword: $(saPassword)
+      - ${{ if(parameters.isLocalServer) }}:
+        - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
+          parameters:
+            fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+            operatingSystem: ${{ parameters.platformOperatingSystem }}
+            saPassword: $(saPassword)
 
       # Assign the generated SA password to the $Password field. This will allow $(Password) to be
       # be replaced in connection strings with whatever set in the secrets stage.

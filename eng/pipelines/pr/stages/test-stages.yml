@@ -162,25 +162,26 @@ stages:
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
 
-           # @TODO:
-#          # TestSqlClientManual - Azure
-#          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
-#            parameters:
-#              buildConfiguration: ${{ parameters.buildConfiguration }}
-#              buildSuffix: ${{ parameters.buildSuffix }}
-#              platformDisplayName: ${{ platform.displayName }}
-#              platformDotnet: ${{ platform.dotnet }}
-#              platformImage: ${{ platform.image }}
-#              poolName: ${{ parameters.poolName }}
-#
-#              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
-#              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
-#              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
-#              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
-#              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
-#              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
-#              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
-#              saPassword: $(manualTestSaPassword)
+          # TestSqlClientManual - Azure
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              stageNameSecrets: ${{ parameters.stageNamesecrets }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
