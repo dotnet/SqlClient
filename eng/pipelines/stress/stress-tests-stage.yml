@@ -32,9 +32,10 @@ parameters:
     type: boolean
     default: false
 
-  # True to fail the job when stress tests fail.  When false, test failures produce warnings.
+  # True to fail the job when stress tests fail (default).  When false, test failures produce warnings.
   - name: failOnTestFailure
     type: boolean
+    default: true
 
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity

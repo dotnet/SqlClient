@@ -52,6 +52,7 @@ parameters:
   # (SucceededWithIssues) but do not fail the job.
   - name: failOnTestFailure
     type: boolean
+    default: true
 
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
