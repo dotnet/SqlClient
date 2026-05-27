@@ -32,7 +32,6 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string PacketSize = "packetsize";
         internal const string PersistSecurityInfo = "persistsecurityinfo";
         internal const string PoolBlockingPeriod = "poolblockingperiod";
-        internal const string PoolIdleTimeout = "pool idle timeout";
         internal const string Pwd = "pwd";
         internal const string Server = "server";
         internal const string ServerCertificate = "servercertificate";
