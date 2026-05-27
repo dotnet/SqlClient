@@ -59,6 +59,11 @@ parameters:
   - name: azureKeyVaultUrl
     type: string
 
+  # Display name for the config being used for this execution of the manual jobs. This will be used
+  # for the job name, so it may only contain alphanumeric and '_' characters.
+  - name: configDisplayName
+    type: string
+
   # Connection string using named pipes that will be set in the config.json file.
   - name: connectionStringNp
     type: string
@@ -87,8 +92,8 @@ parameters:
     type: string
 
 jobs:
-  - job: "test_${{ parameters.platformDisplayName }}_sqlclient_manual"
-    displayName: "sqlclient_manual_${{ parameters.platformDisplayName }}"
+  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.configDisplayName }}_sqlclient_manual"
+    displayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.platformDisplayName }}"
 
     pool:
       name: ${{ parameters.poolName }}

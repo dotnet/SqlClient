@@ -156,6 +156,7 @@ stages:
 
               azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
               azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "localhost"
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
@@ -178,6 +179,7 @@ stages:
 
               azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
               azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "azure"
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
