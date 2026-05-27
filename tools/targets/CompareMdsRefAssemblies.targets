@@ -43,11 +43,6 @@
       <_RefTfm Include="net9.0" />
       <_RefTfm Include="netstandard2.0" />
     </ItemGroup>
-
-    <Message Importance="high" Text="Configuration:      $(Configuration)" />
-    <Message Importance="high" Text="BaselineExtractDir: $(BaselineExtractDir)" />
-    <Message Importance="high" Text="RefProjectPath:     $(RefProjectPath)" />
-    <Message Importance="high" Text="RefOutputDir:       $(RefOutputDir)" />
   </Target>
 
   <!-- ================================================================== -->
@@ -141,6 +136,51 @@
   </Target>
 
   <!-- ================================================================== -->
+  <!-- _RunNotsupportedApiCompat                                          -->
+  <!-- ================================================================== -->
+  <Target Name="_BuildNotSupportedSG"
+          DependsOnTargets="_BuildRefProject">
+
+    <Message Text="--- Building source generated not supported binaries project ---"/>
+    <PropertyGroup>
+      <NotSupportedProjectPath>$([MSBuild]::NormalizePath('$(RepoRoot)', 'src', 'Microsoft.Data.SqlClient', 'notsupported', 'Microsoft.Data.SqlClient.csproj'))</NotSupportedProjectPath>
+    </PropertyGroup>
+    <MSBuild
+      Targets="Restore;Build"
+      Projects="$(NotSupportedProjectPath)"
+      Properties="NotSupportedSG=true"/>
+  </Target>
+  
+  <Target Name="_RunNotsupportedApiCompat"
+          DependsOnTargets="_RestoreTools;_BuildNotSupportedSG">
+
+    <!--
+      For each TFM, compare the consolidated ref output against the baseline
+      ref assembly from the published NuGet package. Using strict mode flags
+      any difference (additions or removals). ContinueOnError ensures all
+      comparisons run even if some fail.
+
+      Output from each comparison is written to a file under
+      $(ApiCompatResultsDir) so the user can review results after the run.
+    -->
+
+    <PropertyGroup>
+      <ApiCompatResultsDir>$(BaselinePackageDir)results\</ApiCompatResultsDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(ApiCompatResultsDir)" />
+
+    <Message
+      Importance="high"
+      Text="--- Comparing %(_RefTfm.Identity)  ---" />
+
+    <Exec
+      Command="dotnet apicompat -l &quot;$(RepoRoot)artifacts/Microsoft.Data.SqlClient.notsupported/$(ReferenceType)-$(Configuration)/%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RepoRoot)artifacts/Microsoft.Data.SqlClient.notsupported/$(ReferenceType)-$(Configuration)-SG/%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      WorkingDirectory="$(RepoRoot)"
+      ContinueOnError="ErrorAndContinue" />
+  </Target>
+
+  <!-- ================================================================== -->
   <!-- CompareMdsRefAssemblies (public entry point)                          -->
   <!-- ================================================================== -->
   <Target Name="CompareMdsRefAssemblies" DependsOnTargets="_RunRefApiCompat">
@@ -148,6 +188,18 @@
       <_ApiCompatResultFiles Include="$(ApiCompatResultsDir)*.txt" />
     </ItemGroup>
     <Message Importance="high" Text="=== Ref assembly API comparison complete. ===" />
+    <Message Importance="high" Text="Results written to: $(ApiCompatResultsDir)" />
+    <Message Importance="high" Text="  %(_ApiCompatResultFiles.Filename)%(_ApiCompatResultFiles.Extension)" />
+  </Target>
+
+  <!-- ================================================================== -->
+  <!-- CompareMdsNotsuppoertedAssemblies (public entry point)                          -->
+  <!-- ================================================================== -->
+  <Target Name="CompareNotsupportedAssemblies" DependsOnTargets="_RunNotsupportedApiCompat">
+    <ItemGroup>
+      <_ApiCompatResultFiles Include="$(ApiCompatResultsDir)*.txt" />
+    </ItemGroup>
+    <Message Importance="high" Text="=== Decompiled and source generated API comparison complete. ===" />
     <Message Importance="high" Text="Results written to: $(ApiCompatResultsDir)" />
     <Message Importance="high" Text="  %(_ApiCompatResultFiles.Filename)%(_ApiCompatResultFiles.Extension)" />
   </Target>

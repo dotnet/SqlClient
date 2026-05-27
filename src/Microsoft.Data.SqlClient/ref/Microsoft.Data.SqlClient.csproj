@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
@@ -8,6 +8,8 @@
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>../notsupported</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
@@ -17,6 +19,10 @@
     <FileVersion>$(SqlClientFileVersion)</FileVersion>
     <Version>$(SqlClientPackageVersion)</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="TargetFramework" />
+  </ItemGroup>
 
   <!-- CLS Compliance ================================================== -->
   <ItemGroup>
@@ -76,6 +82,10 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
+    <ProjectReference Include="../../../tools/GenAPI/Microsoft.Data.SqlClient.SourceGenerator/Microsoft.Data.SqlClient.SourceGenerator.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>

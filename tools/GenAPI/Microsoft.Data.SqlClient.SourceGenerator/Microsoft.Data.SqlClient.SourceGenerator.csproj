@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);GENAPI_COMPAT</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!--
     Everybody hold onto your pants because this is going to get a bit ugly.
 
@@ -70,6 +70,8 @@
 
     <!-- Disable obsolete member usage warning -->
     <NoWarn>$(NoWarn);CS0618</NoWarn>
+
+    <DefineConstants Condition="'$(NotSupportedSG)' == 'true'">$(DefineConstants);NOTSUPPORTED</DefineConstants>
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
@@ -91,6 +93,7 @@
       nice to have a flatter directory structure, it's more hassle than its worth.
     -->
     <OutputPath>$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
+    <OutputPath Condition="'$(NotSupportedSG)' == 'true'">$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)-SG/</OutputPath>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
@@ -179,10 +182,20 @@
 
   <!-- Generate "Not Supported" Source ================================= -->
   <PropertyGroup>
-    <NotSupportedSourceFile>$(AssemblyName).$(TargetFramework).notsupported.cs</NotSupportedSourceFile>
+    <NotSupportedSourceFile Condition="'$(NotSupportedSG)' != 'true'">$(AssemblyName).$(TargetFramework).notsupported.cs</NotSupportedSourceFile>
+    <NotSupportedSourceFile Condition="'$(NotSupportedSG)' == 'true'">Microsoft.Data.SqlClient.SourceGenerator/Microsoft.Data.SqlClient.SourceGenerator.RefToNotSupportedGenerator/$(AssemblyName).$(TargetFramework).notsupported.g.cs</NotSupportedSourceFile>
   </PropertyGroup>
 
+  <Target Name="BuildAndCompare"
+          Condition="'$(NotSupportedSG)' == 'true'"
+          BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$(NotSupportedSourceFile)" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="GenerateNotSupportedSource"
+          Condition="'$(NotSupportedSG)' != 'true'"
           BeforeTargets="CoreCompile"
           DependsOnTargets="ResolveReferences">
 

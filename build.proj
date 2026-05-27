@@ -451,6 +451,35 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
+  <Target Name="BuildSqlClientNotSupportedSG"
+          DependsOnTargets="BuildSqlClientRef">
+
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(SqlClientNotSupportedProjectPath)"
+        -v:minimal
+        -p:Configuration=$(Configuration)
+        -p:NotSupportedSG=true
+        $(SigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionLoggingArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Building source generated not supported binaries project via command: '$(DotnetCommand)'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
   <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
   <Target Name="BuildSqlClientRef">
     <PropertyGroup>

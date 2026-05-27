@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Debug SG": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\..\\..\\src\\Microsoft.Data.SqlClient\\ref\\Microsoft.Data.SqlClient.csproj"
+    }
+  }
+}

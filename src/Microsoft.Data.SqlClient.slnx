@@ -160,6 +160,7 @@
     <Project Path="../tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj">
       <Build Project="false" />
     </Project>
+    <Project Path="../tools/GenAPI/Microsoft.Data.SqlClient.SourceGenerator/Microsoft.Data.SqlClient.SourceGenerator.csproj" />
     <Project Path="Microsoft.Data.SqlClient/notsupported/Microsoft.Data.SqlClient.csproj">
       <Build Project="false" />
     </Project>
