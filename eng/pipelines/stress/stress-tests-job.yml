@@ -201,27 +201,40 @@ jobs:
       #     - When failOnTestFailure is true, continueOnError is false: a test failure fails the
       #       job (red), though subsequent runtimes still run due to the condition above.
       #
+      # We invoke `dotnet run` via a script step (rather than DotNetCoreCLI@2) because that task
+      # strips the `--` separator from arguments, which would cause `dotnet run` to interpret the
+      # stress test runner's own flags (e.g. `-a`) as its own options (e.g. `--arch`).
+      #
+      # The runner's exit code equals the number of distinct (test x exception) pairs recorded
+      # during the run.  A non-zero exit code is surfaced as a pipeline error annotation so test
+      # failures appear in the build summary, and the exit code is then propagated so the step
+      # itself fails (subject to continueOnError).
+      #
       - ${{ each runtime in parameters.netTestRuntimes }}:
-        - task: DotNetCoreCLI@2
+        - pwsh: |
+            dotnet run --project "$(project)" $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
+              Write-Host "##vso[task.logissue type=error]Stress tests [${{ runtime }}] failed: runner exited with code $exitCode ($exitCode distinct test/exception pairs recorded)."
+            }
+            exit $exitCode
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ not(parameters.failOnTestFailure) }}
           env:
             STRESS_CONFIG_FILE: config.json
-          inputs:
-            command: run
-            projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
-        - task: DotNetCoreCLI@2
+        - pwsh: |
+            dotnet run --project "$(project)" $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
+              Write-Host "##vso[task.logissue type=error]Stress tests [${{ runtime }}] failed: runner exited with code $exitCode ($exitCode distinct test/exception pairs recorded)."
+            }
+            exit $exitCode
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ not(parameters.failOnTestFailure) }}
           env:
             STRESS_CONFIG_FILE: config.json
-          inputs:
-            command: run
-            projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} $(testArguments)

@@ -71,6 +71,7 @@ namespace DPStressHarness
             TraceListener listener = new TextWriterTraceListener(Console.Out);
             Trace.Listeners.Add(listener);
             Trace.UseGlobalLock = true;
+            Trace.AutoFlush = true;
 
             _threadsRunning = 0;
             _continue = true;
