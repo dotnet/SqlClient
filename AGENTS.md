@@ -54,6 +54,17 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 6. **Performance Optimization**: Use pooling, async, efficient allocations
 7. **Observability**: EventSource tracing, meaningful errors
 
+## Terminal Reliability Rules
+
+When using shell/terminal tools, follow these rules strictly:
+
+1. Treat non-zero terminal exit codes as immediate failures to investigate; do not continue as if the command succeeded.
+2. If a bash session exits, assume it is dead and start a new command/session; do not wait for additional output from that session.
+3. After any command expected to gather data, verify output was actually returned before proceeding.
+4. If command execution failed, report the failure clearly and retry with a corrected command instead of waiting.
+5. Avoid `set -e` in this automation context; prefer single-purpose commands with explicit follow-up checks so failures are visible without killing the shell unexpectedly.
+6. Prefer shorter command batches over long chained scripts when collecting evidence; this makes bash exits easier to detect and recover from.
+
 ## Branch Naming
 
 All branches created by AI agents **must** live under the `dev/automation/` prefix. Use a descriptive suffix, for example:
@@ -68,10 +79,11 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 ### Bug Fix Workflow
 1. Understand the issue from the bug report
 2. Locate relevant code in `src/Microsoft.Data.SqlClient/src/` (do NOT modify legacy `netcore/src/` or `netfx/src/`)
-3. Write a failing test that reproduces the issue
-4. Implement the fix
-5. Ensure all tests pass
-6. Update documentation if behavior changes
+3. Check `.github/instructions/features.instructions.md` for existing AppContext switches (including failover compatibility switches) before introducing behavior changes
+4. Write a failing test that reproduces the issue
+5. Implement the fix
+6. Ensure all tests pass
+7. Update documentation if behavior changes
 
 ### Feature Implementation
 1. Review the feature specification

@@ -13,6 +13,16 @@
       package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
   -->
 
+  <!--
+    Import guard: set on first import so that subsequent imports of this file are skipped.
+    Directory.Packages.props imports all Versions.props early in Package mode; the guard
+    prevents each csproj's own conditional import from re-importing and re-evaluating
+    version properties.
+  -->
+  <PropertyGroup>
+    <SqlClientVersionsImported>true</SqlClientVersionsImported>
+  </PropertyGroup>
+
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
@@ -66,9 +76,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <SqlClientPackageVersion>$(SqlClientVersionDefault)-$(BuildSuffix)</SqlClientPackageVersion>
+        <SqlClientPackageVersion>$(SqlClientVersionDefault)-dev</SqlClientPackageVersion>
         <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </Otherwise>

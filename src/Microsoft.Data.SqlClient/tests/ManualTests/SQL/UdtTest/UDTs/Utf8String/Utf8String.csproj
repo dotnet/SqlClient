@@ -16,6 +16,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.SqlServer.Server"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,10 @@
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../Versions.props" />
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="../Versions.props" Condition="'$(SqlClientVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlClientFileVersion)</FileVersion>
@@ -47,6 +50,7 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
+
   <!-- Trim Docs for IntelliSense ====================================== -->
   <!--
     It has been determined that including the remarks section in IntelliSense docs looks bad in
@@ -54,16 +58,27 @@
     them in the xml files, though, because those are the source for the docs site, which needs to
     have the full documentation.
   -->
+  <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
+  <Target Name="_CheckPwshToolRestored">
+    <Exec Command="dotnet tool run pwsh -- -Version"
+          WorkingDirectory="$(RepoRoot)"
+          ConsoleToMsBuild="true"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_PwshExitCode" />
+    </Exec>
+    <Error Condition="'$(_PwshExitCode)' != '0'"
+           Text="The 'pwsh' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before building." />
+  </Target>
+
   <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
   <Target Name="TrimDocsForIntelliSense"
           AfterTargets="Build"
+          DependsOnTargets="_CheckPwshToolRestored"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
 
     <PropertyGroup>
-      <PowerShellCommand Condition="'$(OS)' == 'Windows_NT'">powershell.exe</PowerShellCommand>
-      <PowerShellCommand Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellCommand>
       <PowerShellCommand>
-        $(PowerShellCommand)
+        dotnet tool run pwsh --
           -NonInteractive
           -ExecutionPolicy Unrestricted
           -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
@@ -89,6 +104,13 @@
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
+  <!-- .NET Framework and .NET Standard 2.0 don't need to reference SqlServer. -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.SqlServer.Server"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
 
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
@@ -103,9 +125,7 @@
     <Reference Include="System.Xml" />
 
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
-                      PrivateAssets="all"
-                      IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
@@ -124,7 +144,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
@@ -136,7 +155,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />

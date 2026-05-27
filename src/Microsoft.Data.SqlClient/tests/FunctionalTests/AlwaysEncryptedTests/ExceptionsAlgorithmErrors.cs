@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             const byte invalidEncryptionType = 3;
             Object cipherMD = GetSqlCipherMetadata(0, 2, null, invalidEncryptionType, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, 0x010203, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
             byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_NullColumnEncryptionAlgorithm,
                 "'AEAD_AES_256_CBC_HMAC_SHA256'");
             Object cipherMD = GetSqlCipherMetadata(0, 0, null, 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, 0x010203, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
             byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnknownColumnEncryptionAlgorithmId,
                 unknownEncryptionAlgoId, "'1', '2'");
             Object cipherMD = GetSqlCipherMetadata(0, unknownEncryptionAlgoId, null, 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, 0x010203, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
             byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnrecognizedKeyStoreProviderName,
                     invalidProviderName, "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'", "");
                 Object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x03);
-                AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, invalidProviderName, "RSA_OAEP");
+                AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, 0x010203, _certificatePath, invalidProviderName, "RSA_OAEP");
                 byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
                 byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnknownColumnEncryptionAlgorithm,
                 unknownEncryptionAlgorithm, "'AEAD_AES_256_CBC_HMAC_SHA256'");
             Object cipherMD = GetSqlCipherMetadata(0, 0, "Dummy", 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, 0x010203, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
             byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 "MSSQL_CERTIFICATE_STORE", BitConverter.ToString(corruptedCek, corruptedCek.Length - 10, 10));
 
             Object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, corruptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, corruptedCek, 0, 0, 0, 0x010203, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
             byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
 
                 object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x01);
-                AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "DummyProvider", "DummyAlgo");
+                AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, 0x010203, _certificatePath, "DummyProvider", "DummyAlgo");
                 byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
                 byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 

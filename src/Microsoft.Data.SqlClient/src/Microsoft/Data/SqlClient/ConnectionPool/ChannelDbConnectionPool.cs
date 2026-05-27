@@ -224,7 +224,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public DbConnectionInternal ReplaceConnection(
             DbConnection owningObject, 
-            SqlConnectionOptions userOptions, 
             DbConnectionInternal oldConnection)
         {
             throw new NotImplementedException();
@@ -282,7 +281,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool TryGetConnection(
             DbConnection owningObject, 
             TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
-            SqlConnectionOptions userOptions, 
             out DbConnectionInternal? connection)
         {
             var timeout = TimeSpan.FromSeconds(owningObject.ConnectionTimeout);
@@ -292,7 +290,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 var task = GetInternalConnection(
                         owningObject,
-                        userOptions,
                         async: false,
                         timeout);
 
@@ -340,7 +337,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     connection = await GetInternalConnection(
                         owningObject,
-                        userOptions,
                         async: true,
                         timeout
                     ).ConfigureAwait(false);
@@ -375,7 +371,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Opens a new internal connection to the database.
         /// </summary>
         /// <param name="owningConnection">The owning connection.</param>
-        /// <param name="userOptions">The options for the connection.</param>
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
         /// <returns>A task representing the asynchronous operation, with a result of the new internal connection.</returns>
         /// <exception cref="OperationCanceledException">
@@ -383,7 +378,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection, 
-            SqlConnectionOptions userOptions, 
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -405,8 +399,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // when this support is added to DbConnectionInternal.
                     var connection = ConnectionFactory.CreatePooledConnection(
                         owningConnection,
-                        this,
-                        userOptions);
+                        this);
 
                     if (connection is not null)
                     {
@@ -498,7 +491,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Gets an internal connection from the pool, either by retrieving an idle connection or opening a new one.
         /// </summary>
         /// <param name="owningConnection">The DbConnection that will own this internal connection</param>
-        /// <param name="userOptions">The user options to set on the internal connection</param>
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
         /// <param name="timeout">The timeout for the operation.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
@@ -512,7 +504,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection, 
-            SqlConnectionOptions userOptions, 
             bool async, 
             TimeSpan timeout)
         {
@@ -533,7 +524,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we didn't find an idle connection, try to open a new one.  
                     connection ??= OpenNewInternalConnection(
                         owningConnection,
-                        userOptions,
                         cancellationToken);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
