@@ -272,6 +272,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.TrustedConnection, Keywords.IntegratedSecurity },
                 { DbConnectionStringSynonyms.TrustServerCertificate, Keywords.TrustServerCertificate },
                 { DbConnectionStringSynonyms.ConnectionLifetime, Keywords.LoadBalanceTimeout },
+                { DbConnectionStringSynonyms.PoolIdleTimeout, Keywords.IdleTimeout },
                 { DbConnectionStringSynonyms.Pwd, Keywords.Password },
                 { DbConnectionStringSynonyms.PersistSecurityInfo, Keywords.PersistSecurityInfo },
                 { DbConnectionStringSynonyms.Uid, Keywords.UserID },

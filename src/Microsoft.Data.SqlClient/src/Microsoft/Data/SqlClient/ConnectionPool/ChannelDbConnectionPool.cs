@@ -256,9 +256,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Stamp the idle-since timestamp immediately before putting the connection back in the
                 // pool so that IsLiveConnection can later evict it if it sits idle past the configured limit.
-                // Skip the stamp when idle expiry is disabled (the default) to avoid the per-return
-                // DateTime.UtcNow on the hot return path.
-                if (PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+                // Skip the stamp when idle expiry is disabled or legacy idle-timeout behavior is in effect
+                // to avoid the per-return DateTime.UtcNow on the hot return path.
+                if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                    PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
                 {
                     connection.MarkPooledIdle();
                 }
@@ -438,7 +439,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // IdleSinceUtc is initialized to CreateTime so a freshly minted connection never trips this
             // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
-            if (idleTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
+            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                idleTimeout != TimeSpan.Zero &&
+                DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
             {
                 return false;
             }

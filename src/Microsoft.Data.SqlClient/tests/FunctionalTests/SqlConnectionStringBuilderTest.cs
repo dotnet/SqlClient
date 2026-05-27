@@ -280,6 +280,13 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void IdleTimeout_SynonymKeyword_Parses()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder("Pool Idle Timeout=120");
+            Assert.Equal(120, builder.IdleTimeout);
+        }
+
+        [Fact]
         public void SetInvalidIdleTimeout_Throws()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();

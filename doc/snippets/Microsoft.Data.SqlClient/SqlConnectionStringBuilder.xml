@@ -981,7 +981,7 @@ The following example converts an existing connection string from using SQL Serv
     </LoadBalanceTimeout>
     <IdleTimeout>
       <summary>
-        Gets or sets the maximum time, in seconds, that a connection can sit unused (idle) in the connection pool before it is discarded on its next retrieval.
+        Gets or sets the maximum time, in seconds, that a connection can sit unused (idle) in the connection pool before it is discarded.
       </summary>
       <value>
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IdleTimeout" /> property, or 300 (5 minutes) if none has been supplied.

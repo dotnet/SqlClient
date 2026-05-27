@@ -196,7 +196,8 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.IpAddressPreference);
             AddKeywordToMap(DbConnectionStringKeywords.LoadBalanceTimeout,
                             DbConnectionStringSynonyms.ConnectionLifetime);
-            AddKeywordToMap(DbConnectionStringKeywords.IdleTimeout);
+            AddKeywordToMap(DbConnectionStringKeywords.IdleTimeout,
+                            DbConnectionStringSynonyms.PoolIdleTimeout);
             AddKeywordToMap(DbConnectionStringKeywords.MultipleActiveResultSets,
                             DbConnectionStringSynonyms.MultipleActiveResultSets);
             AddKeywordToMap(DbConnectionStringKeywords.MaxPoolSize);

@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
@@ -951,6 +952,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void IdleTimeout_StampedOnReturn()
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
             // Arrange - long idle timeout so the return path stamps (not evicts).
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 3600);
             SqlConnection owningConnection = new();
@@ -1000,6 +1004,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void IdleTimeout_Set_ExpiresOldConnection()
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
             // Arrange - pool with 1-second idle timeout
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
             SqlConnection owner = new();
@@ -1025,6 +1032,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void IdleTimeout_Set_KeepsFreshConnection()
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
             // Arrange - 60-second idle timeout, connection just returned
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 60);
             SqlConnection owner = new();
@@ -1043,14 +1053,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         // Forcibly rewinds a connection's IdleSinceUtc by the given amount so tests don't have to sleep.
-        // Uses reflection because the setter is private by design (only the pool's return path stamps it).
         private static void BackdateIdleSince(DbConnectionInternal connection, TimeSpan delta)
         {
-            var prop = typeof(DbConnectionInternal).GetProperty(
-                nameof(DbConnectionInternal.IdleSinceUtc),
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-            Assert.NotNull(prop);
-            prop!.SetValue(connection, DateTime.UtcNow - delta);
+            connection.IdleSinceUtc = DateTime.UtcNow - delta;
         }
 
         #endregion

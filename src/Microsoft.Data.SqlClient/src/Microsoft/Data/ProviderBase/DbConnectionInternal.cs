@@ -99,9 +99,10 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// UTC timestamp of when this connection was last placed into the pool's idle state.
         /// Stamped by <see cref="MarkPooledIdle"/> from the pool's return-to-pool path.
+        /// Internal setter exists to support deterministic unit tests without reflection.
         /// Used by the pool to discard connections that have sat unused longer than the configured idle timeout.
         /// </summary>
-        internal DateTime IdleSinceUtc { get; private set; }
+        internal DateTime IdleSinceUtc { get; set; }
 
         /// <summary>
         /// The pool generation at the time this connection was created or added to the pool.
