@@ -159,6 +159,7 @@ stages:
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: true
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
 
@@ -180,6 +181,7 @@ stages:
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: false
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
 
