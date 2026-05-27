@@ -108,7 +108,7 @@ jobs:
           runtimeVersion: ${{ parameters.platformDotnet }}
 
       # Configure the local SQL Server instance
-      - ${{ if(parameters.isLocalServer) }}:
+      - ${{ if eq(parameters.isLocalServer, true) }}:
         - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
           parameters:
             fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
