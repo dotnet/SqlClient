@@ -3,6 +3,7 @@
     <AssemblyName>Microsoft.Data.SqlClient.TestCommon</AssemblyName>
     <RootNamespace>Microsoft.Data.SqlClient.TestCommon</RootNamespace>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
 
     <!--
       This is a shared helper library, not a test project. IsTestProject prevents test adapters

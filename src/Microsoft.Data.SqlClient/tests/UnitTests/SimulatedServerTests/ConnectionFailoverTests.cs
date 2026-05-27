@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.Servers;
@@ -172,7 +173,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "master",// Required for failover partner to work
                 ConnectTimeout = 1,
                 ConnectRetryInterval = 1,
-                ConnectRetryCount = 0, // Disable retry 
+                ConnectRetryCount = 0, // Disable retry
                 Encrypt = false,
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
@@ -336,6 +337,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
         }
 
+        /// <summary>
+        /// Verifies login-phase transient SQL errors are retried on the primary endpoint and
+        /// do not trigger failover-partner alternation.
+        /// </summary>
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -372,6 +377,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
+            // First login receives the transient token; outer connect retry opens a fresh parser
+            // and retries against the same primary endpoint.
             connection.Open();
 
             // Assert
@@ -380,6 +387,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            // Login-phase errors must NOT trigger failover alternation
+            Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
         [Theory]
@@ -430,6 +439,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Fail();
         }
 
+        /// <summary>
+        /// Verifies user-provided failover partner does not change behavior for login-phase
+        /// transient SQL errors; retries stay on primary.
+        /// </summary>
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -467,6 +480,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
+            // Even with a configured partner, this path should use outer connect retry
+            // against primary rather than alternation inside LoginWithFailover.
             connection.Open();
 
             // Assert
@@ -475,6 +490,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            // Login-phase errors must NOT trigger failover alternation
+            Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
         [Theory]
@@ -590,6 +607,329 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // 1 for the initial connection
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             // 1 for the failover connection
+            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+        }
+
+        /// <summary>
+        /// Async parity for primary-only retry behavior on login-phase transient SQL errors.
+        /// </summary>
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public async Task TransientFault_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
+        {
+            // Async parity for TransientFault_ShouldConnectToPrimary.
+            // A transient login-token error must be retried against the primary;
+            // the failover partner must never be contacted.
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                Pooling = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            // Asserts async open follows the same retry and failover-selection rules as sync.
+            await connection.OpenAsync();
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            // Login-phase errors must NOT trigger failover alternation
+            Assert.Equal(0, failoverServer.PreLoginCount);
+        }
+
+        /// <summary>
+        /// Async parity with user-provided partner: login-phase transient SQL errors should
+        /// still retry on primary without failover alternation.
+        /// </summary>
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public async Task TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
+        {
+            // Async parity for TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary.
+            // Even with a user-provided failover partner, a login-token error must not
+            // cause alternation to the failover server.
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            // Asserts async open with explicit partner still avoids failover alternation.
+            await connection.OpenAsync();
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            // Login-phase errors must NOT trigger failover alternation
+            Assert.Equal(0, failoverServer.PreLoginCount);
+        }
+
+        /// <summary>
+        /// Verifies pooled connections are not cleared and failover is not attempted when a
+        /// login-phase transient SQL error occurs with a user-provided failover partner.
+        /// </summary>
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(uint errorCode)
+        {
+            // With pooling enabled and a user-provided failover partner, a transient
+            // login-token error must not clear the pool and must not contact the failover server.
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            // Start with errors disabled so the pool warms up successfully.
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                Pooling = true,
+            };
+
+            // Keep one connection open so the next Open() cannot reuse it and must perform login.
+            using SqlConnection warmup = new(builder.ConnectionString);
+            warmup.Open();
+
+            // Enable the transient error for the next login attempt.
+            server.SetErrorBehavior(true, errorCode);
+
+            // ConnectRetryCount > 0 (default 1) so the client retries and succeeds.
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+
+            connection.Close();
+            warmup.Close();
+
+            // If the pool is not cleared, this open should reuse a pooled connection without a new login.
+            using SqlConnection pooledConnection = new(builder.ConnectionString);
+            pooledConnection.Open();
+
+            Assert.Equal(ConnectionState.Open, pooledConnection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", pooledConnection.DataSource);
+
+            // 1 warmup login + 1 failed login + 1 retry login.
+            Assert.Equal(3, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(3, server.Login7Count);
+            // Failover server must never have been contacted.
+            Assert.Equal(0, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+            Assert.Equal(0, failoverServer.Login7Count);
+        }
+
+        /// <summary>
+        /// Verifies ConnectRetryCount=0 propagates login-phase transient SQL errors immediately
+        /// and never attempts failover alternation.
+        /// </summary>
+        [Theory]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        public void TransientFault_RetryDisabled_WithUserProvidedPartner_ShouldFail_NotFailover(uint errorCode)
+        {
+            // When ConnectRetryCount = 0 and the server returns a login-phase token error,
+            // the exception must propagate immediately and the failover partner must not be
+            // contacted (parser state is not Closed, so the new guard must kick in).
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                ConnectRetryCount = 0,
+                Encrypt = false,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            // No outer connect retry is allowed, so the first transient error should surface.
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
+
+            Assert.Equal((int)errorCode, ex.Number);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            // The parser was not closed (login-phase error), so the failover alternation branch
+            // must not have been entered.
+            Assert.Equal(0, failoverServer.PreLoginCount);
+        }
+
+        /// <summary>
+        /// Isolates the parser-state guard by using a non-fatal login error token: without the
+        /// guard, LoginWithFailover alternates to partner; with the guard, retry stays on primary.
+        /// </summary>
+        [Fact]
+        public void NonFatalTransientLoginError_WithUserProvidedPartner_ShouldRetryPrimary_NotFailover()
+        {
+            // This test isolates the parser-state guard added to LoginWithFailover.
+            // We emit a transient login error with non-fatal severity so the connection
+            // is not automatically doomed/broken by existing breakConnection logic.
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = 40613,
+                    // Use non-fatal severity so break/doom logic does not short-circuit the path.
+                    ErrorClass = 16,
+                    RepeatCount = 1,
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                Pooling = false,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(0, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+        }
+
+        /// <summary>
+        /// Verifies opt-in legacy behavior: login-phase SQL errors can alternate to the
+        /// failover partner when UseLegacyFailoverAlternationOnLoginSqlErrors is enabled.
+        /// </summary>
+        [Fact]
+        public void NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = true;
+
+            using TdsServer failoverServer = new(
+                new TdsServerArguments
+                {
+                    FailoverPartner = "localhost,1234",
+                });
+            failoverServer.Start();
+
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments()
+                {
+                    IsEnabledTransientError = true,
+                    Number = 40613,
+                    // Keep the login token non-fatal so parser state, not break/doom behavior,
+                    // drives this branch decision.
+                    ErrorClass = 16,
+                    RepeatCount = 1,
+                    FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+                });
+            server.Start();
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                ConnectTimeout = 30,
+                ConnectRetryInterval = 1,
+                Encrypt = false,
+                Pooling = false,
+                FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
         }
     }

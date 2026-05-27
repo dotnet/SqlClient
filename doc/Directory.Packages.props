@@ -6,5 +6,6 @@
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0-preview4.26064.3" />
     <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="7.0.0-preview1.26064.3" />
     <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0-preview1.26064.3" />
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
   </ItemGroup>
 </Project>
