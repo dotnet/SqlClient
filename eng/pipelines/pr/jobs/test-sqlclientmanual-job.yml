@@ -108,7 +108,7 @@ jobs:
       # Assign the generated SA password to the $Password field. This will allow $(Password) to be
       # be replaced in connection strings with whatever set in the secrets stage.
       - pwsh: |
-          $password = "$(variables.saPassword)"
+          $password = "$(saPassword)"
           Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
         displayName: Set Connection String Password
 
