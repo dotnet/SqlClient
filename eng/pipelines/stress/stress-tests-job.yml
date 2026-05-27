@@ -212,7 +212,9 @@ jobs:
       #
       - ${{ each runtime in parameters.netTestRuntimes }}:
         - pwsh: |
-            dotnet run --project "$(project)" $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
+            $cmd = 'dotnet run --project "$(project)" $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)'
+            Write-Host "##[command]$cmd"
+            Invoke-Expression $cmd
             $exitCode = $LASTEXITCODE
             if ($exitCode -ne 0) {
               Write-Host "##vso[task.logissue type=error]Stress tests [${{ runtime }}] failed: runner exited with code $exitCode ($exitCode distinct test/exception pairs recorded)."
@@ -227,7 +229,9 @@ jobs:
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
         - pwsh: |
-            dotnet run --project "$(project)" $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
+            $cmd = 'dotnet run --project "$(project)" $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)'
+            Write-Host "##[command]$cmd"
+            Invoke-Expression $cmd
             $exitCode = $LASTEXITCODE
             if ($exitCode -ne 0) {
               Write-Host "##vso[task.logissue type=error]Stress tests [${{ runtime }}] failed: runner exited with code $exitCode ($exitCode distinct test/exception pairs recorded)."
