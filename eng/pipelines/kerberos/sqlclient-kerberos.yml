@@ -131,6 +131,10 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
           # inline PowerShell instead of the shared config template which
@@ -223,6 +227,10 @@ stages:
           - template: /eng/pipelines/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
