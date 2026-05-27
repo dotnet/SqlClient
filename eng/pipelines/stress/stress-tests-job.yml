@@ -205,10 +205,12 @@ jobs:
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ not(parameters.failOnTestFailure) }}
+          env:
+            STRESS_CONFIG_FILE: config.json
           inputs:
             command: run
             projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
@@ -216,7 +218,9 @@ jobs:
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ not(parameters.failOnTestFailure) }}
+          env:
+            STRESS_CONFIG_FILE: config.json
           inputs:
             command: run
             projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.json -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
