@@ -211,7 +211,7 @@ jobs:
           inputs:
             command: run
             projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
@@ -224,4 +224,4 @@ jobs:
           inputs:
             command: run
             projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} -- $(testArguments)
+            arguments: $(runArguments) --no-build -f ${{ runtime }} $(testArguments)
