@@ -875,6 +875,31 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } while (_pendingOpens.TryPeek(out next));
         }
 
+        /// <summary>
+        /// Resolves the <c>WaitHandle.WaitAny</c> timeout (milliseconds) for a synchronous
+        /// pool acquire.
+        /// </summary>
+        /// <remarks>
+        /// When <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>
+        /// is enabled the caller's remaining <see cref="TimeoutTimer"/> budget is used so
+        /// the pool wait participates in the overall ConnectTimeout. Otherwise the legacy
+        /// behavior is preserved: the static pool <c>CreationTimeout</c> is used, with
+        /// <c>0</c> mapped to <see cref="Timeout.Infinite"/>. Extracted so this branch can
+        /// be unit-tested without timing-based assertions.
+        /// </remarks>
+        internal static uint ResolvePoolWaitTimeoutMs(TimeoutTimer timeout, int creationTimeoutMs)
+        {
+            if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
+            {
+                return timeout.IsInfinite
+                    ? unchecked((uint)Timeout.Infinite)
+                    : (uint)timeout.MillisecondsRemainingInt;
+            }
+
+            uint legacy = (uint)creationTimeoutMs;
+            return legacy == 0 ? unchecked((uint)Timeout.Infinite) : legacy;
+        }
+
         public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
             uint waitForMultipleObjectsTimeout = 0;
@@ -882,31 +907,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (taskCompletionSource == null)
             {
-                if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
-                {
-                    // Use the caller's remaining timeout budget (rather than the static
-                    // CreationTimeout) so synchronous pool waits respect any time already
-                    // consumed earlier in the open path and don't exceed the overall
-                    // ConnectTimeout.
-                    waitForMultipleObjectsTimeout = timeout.IsInfinite
-                        ? unchecked((uint)Timeout.Infinite)
-                        : (uint)timeout.MillisecondsRemainingInt;
-                }
-                else
-                {
-                    waitForMultipleObjectsTimeout = (uint)CreationTimeout;
-
-                    // Set the wait timeout to INFINITE (-1) if the pool CreationTimeout is 0.
-                    if (waitForMultipleObjectsTimeout == 0)
-                    {
-                        waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
-                    }
-                }
-
+                waitForMultipleObjectsTimeout = ResolvePoolWaitTimeoutMs(timeout, CreationTimeout);
                 allowCreate = true;
-            }
-
-            if (State is not Running)
+            }            if (State is not Running)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, DbConnectionInternal State != Running.", Id);
                 connection = null;

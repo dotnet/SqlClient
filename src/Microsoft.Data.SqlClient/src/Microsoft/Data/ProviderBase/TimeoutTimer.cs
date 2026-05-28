@@ -206,7 +206,7 @@ namespace Microsoft.Data.ProviderBase
         /// timer was created. Used by <see cref="Reset"/> to restore the original
         /// expiration window.
         /// </summary>
-        private long OriginalTicks { get; }
+        internal long OriginalTicks { get; }
 
         /// <summary>
         /// Gets the <see cref="TimeProvider"/> used by this timer. Exposed for

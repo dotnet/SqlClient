@@ -403,14 +403,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 // If we want to consider pool operations against the overall connect timeout, 
                 // use the provided timeout. Otherwise, start a fresh timeout to receive the full
                 // connect timeout.
-                if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
-                {
-                    _timeout = timeout;
-                }
-                else
-                {
-                    _timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout));
-                }
+                _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);
 
                 // If transient fault handling is enabled then we can retry the login up to the
                 // ConnectRetryCount.
@@ -777,6 +770,25 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Make private field.
         private bool IsAzureSqlConnection { get; set; }
 
+        internal TimeoutTimer Timeout => _timeout;
+
+        /// <summary>
+        /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
+        /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
+        /// </summary>
+        /// <remarks>
+        /// When the switch is enabled the caller-supplied <paramref name="callerTimeout"/>
+        /// is returned as-is so any time already consumed (e.g., waiting for the pool) counts
+        /// against the overall ConnectTimeout. When disabled, a fresh timer is started from
+        /// <paramref name="connectTimeoutSeconds"/>, preserving legacy behavior. Extracted so
+        /// this branch can be unit-tested without standing up a real connection.
+        /// </remarks>
+        internal static TimeoutTimer ResolveLoginTimeout(TimeoutTimer callerTimeout, int connectTimeoutSeconds)
+        {
+            return LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait
+                ? callerTimeout
+                : TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectTimeoutSeconds));
+        }
         #endregion
 
         #region Public and Internal Methods
