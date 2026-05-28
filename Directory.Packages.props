@@ -108,7 +108,6 @@
   <!-- SqlClient Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
@@ -125,12 +124,14 @@
 
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.13" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="9.0.16" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.13" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.13" />
   </ItemGroup>
 
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
   </ItemGroup>
