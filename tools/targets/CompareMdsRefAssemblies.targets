@@ -43,6 +43,11 @@
       <_RefTfm Include="net9.0" />
       <_RefTfm Include="netstandard2.0" />
     </ItemGroup>
+
+    <Message Importance="high" Text="Configuration:      $(Configuration)" />
+    <Message Importance="high" Text="BaselineExtractDir: $(BaselineExtractDir)" />
+    <Message Importance="high" Text="RefProjectPath:     $(RefProjectPath)" />
+    <Message Importance="high" Text="RefOutputDir:       $(RefOutputDir)" />
   </Target>
 
   <!-- ================================================================== -->

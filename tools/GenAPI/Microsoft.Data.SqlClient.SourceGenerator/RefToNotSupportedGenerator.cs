@@ -50,11 +50,11 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
 
                         try
                         {
-
                             sb.AppendLine("using System;");
                             sb.AppendLine("#if NOTSUPPORTED");
 
                             RefToNotsupportedTypeRewriter visitor = new RefToNotsupportedTypeRewriter();
+                            // Group all collected types by namespace. Expects source file name from ref library to match namespace of all incuded types  
                             foreach (var group in compilation.Left
                                 .GroupBy(c => c.GetLocation().SourceTree.FilePath)
                                 .OrderBy(cg => cg.Key)
@@ -64,9 +64,9 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
                                 sb.Append("namespace ");
                                 sb.AppendLine(Path.GetFileNameWithoutExtension(group.Key));
                                 sb.AppendLine("{");
-                                foreach (var model in group)
+                                foreach (SyntaxNode model in group)
                                 {
-                                    var result = visitor.Visit(model);
+                                    SyntaxNode result = visitor.Visit(model);
                                     result.WriteTo(writer);
                                 }
                                 sb.AppendLine("}");
@@ -75,10 +75,9 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
                             sb.AppendLine("#endif");
 
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
-                            sb.AppendLine($"// Exception: {ex}");
-                            sb.AppendLine($"// StackTrace: {ex.StackTrace}");
+                            sb.AppendLine($"// Exception:  {ex.Message}\r\n// StackTrace: {ex.StackTrace}");
                         }
 
                         ctx.AddSource($"Microsoft.Data.SqlClient.{framework}.notsupported.g.cs", sb.ToString());

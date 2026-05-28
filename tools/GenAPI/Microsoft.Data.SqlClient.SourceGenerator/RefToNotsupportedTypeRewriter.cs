@@ -8,11 +8,12 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
 {
     public class RefToNotsupportedTypeRewriter : CSharpSyntaxRewriter
     {
-        private static BlockSyntax ThrowBlock;
-        private static ArrowExpressionClauseSyntax ThrowExpression;
+        private static readonly BlockSyntax s_throwBlock;
+        private static readonly ArrowExpressionClauseSyntax s_throwExpression;
+
         static RefToNotsupportedTypeRewriter()
         {
-            var throwStatement =
+            ThrowStatementSyntax throwStatement =
             ThrowStatement(                                                                                   // throw new System.PlatformNotSupportedException("Microsoft.Data.SqlClient is not supported on this platform.")
                 ObjectCreationExpression(                                                                     // new System.PlatformNotSupportedException("Microsoft.Data.SqlClient is not supported on this platform.")              
                     IdentifierName("System.PlatformNotSupportedException"),
@@ -31,9 +32,9 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
             )
             .WithSemicolonToken(Token(SyntaxKind.SemicolonToken));                                            // throw new System.PlatformNotSupportedException("Microsoft.Data.SqlClient is not supported on this platform.");
 
-            ThrowBlock = Block(throwStatement)
+            s_throwBlock = Block(throwStatement)
                 .NormalizeWhitespace(indentation: " ", eol: "");                                              // { throw new System.PlatformNotSupportedException("Microsoft.Data.SqlClient is not supported on this platform."); }
-            ThrowExpression = ArrowExpressionClause(ThrowExpression(throwStatement.Expression))
+            s_throwExpression = ArrowExpressionClause(ThrowExpression(throwStatement.Expression))
                 .NormalizeWhitespace();                                                                       // => throw new System.PlatformNotSupportedException("Microsoft.Data.SqlClient is not supported on this platform.")
         }
 
@@ -47,7 +48,7 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
             AccessorListSyntax newNode = AccessorList();
             foreach (AccessorDeclarationSyntax accessor in node.Accessors)
             {
-                newNode = newNode.AddAccessors(AccessorDeclaration(accessor.Kind(), accessor.AttributeLists, accessor.Modifiers, ThrowBlock));
+                newNode = newNode.AddAccessors(AccessorDeclaration(accessor.Kind(), accessor.AttributeLists, accessor.Modifiers, s_throwBlock));
             }
 
             return newNode.NormalizeWhitespace(indentation: " ", eol: "").WithTrailingTrivia(CarriageReturnLineFeed);
@@ -58,14 +59,10 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
             if (node.ExpressionBody != null)
             {
 #if GENAPI_COMPAT
-               // Replacing property getter expression with accessor list with throw statement for compatibility with GenAPI generated source
-                var newNode = PropertyDeclaration(node.AttributeLists, node.Modifiers, node.Type, node.ExplicitInterfaceSpecifier, node.Identifier,
-                    AccessorList(SingletonList(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, ThrowBlock))), null, null, node.SemicolonToken)
-                    .WithTriviaFrom(node);
-                node = node.WithAccessorList(AccessorList(SingletonList(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, ThrowBlock))));
-                node = node.WithExpressionBody(null);
-                node = node.WithSemicolonToken(MissingToken(SyntaxKind.SemicolonToken))
-                           .WithTriviaFrom(node);
+                // Replacing property getter expression with accessor list with throw statement for compatibility with GenAPI generated source
+                node = PropertyDeclaration(node.AttributeLists, node.Modifiers, node.Type, node.ExplicitInterfaceSpecifier, node.Identifier,
+                                           AccessorList(SingletonList(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, s_throwBlock))), null, null, node.SemicolonToken)
+                       .WithTriviaFrom(node);
 #else
                 node = node.WithExpressionBody(ThrowExpression);
 #endif
@@ -78,7 +75,7 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
         {
             if (node.ExpressionBody != null)
             {
-                node = node.WithExpressionBody(ThrowExpression);
+                node = node.WithExpressionBody(s_throwExpression);
             }
 
             return base.VisitIndexerDeclaration(node);
@@ -91,14 +88,14 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
                 return base.VisitMethodDeclaration(node);
             }
 
-            MethodDeclarationSyntax newNode = (node.ExpressionBody != null ? node.WithExpressionBody(ThrowExpression) : node.WithBody(ThrowBlock))
+            MethodDeclarationSyntax newNode = (node.ExpressionBody != null ? node.WithExpressionBody(s_throwExpression) : node.WithBody(s_throwBlock))
                 .WithTrailingTrivia(CarriageReturnLineFeed);
             return base.VisitMethodDeclaration(newNode);
         }
 
         public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
-            ConstructorDeclarationSyntax newNode = (node.ExpressionBody != null ? node.WithExpressionBody(ThrowExpression) : node.WithBody(ThrowBlock))
+            ConstructorDeclarationSyntax newNode = (node.ExpressionBody != null ? node.WithExpressionBody(s_throwExpression) : node.WithBody(s_throwBlock))
                 .WithTrailingTrivia(CarriageReturnLineFeed);
             return base.VisitConstructorDeclaration(newNode);
         }
@@ -106,7 +103,11 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
 #if GENAPI_COMPAT
         public override SyntaxNode VisitAttribute(AttributeSyntax node)
         {
-            if (node.Name.ToString().EndsWith("DesignerSerializationVisibilityAttribute") && node.ArgumentList.Arguments.Count > 0 && node.ArgumentList.ToFullString() == "(0)")
+            // Ref sources uses following form of the attribute: [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
+            // , while GenAPI sources it is generated as:        [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+            // Here for GenAPI compatibility we substitute former with a latter in source
+            if (node.Name.ToString().EndsWith("DesignerSerializationVisibilityAttribute") &&
+                node.ArgumentList.Arguments.Count > 0 && node.ArgumentList.ToFullString() == "(0)")
             {
                 node = node.WithArgumentList(
                             AttributeArgumentList(
@@ -115,8 +116,7 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
                                         MemberAccessExpression(
                                             SyntaxKind.SimpleMemberAccessExpression,
                                             IdentifierName("System.ComponentModel.DesignerSerializationVisibility"),
-                                            IdentifierName("Hidden"))))
-                                ));
+                                            IdentifierName("Hidden"))))));
             }
 
             return base.VisitAttribute(node);
@@ -137,6 +137,7 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
 #if GENAPI_COMPAT
         public override SyntaxNode Visit(SyntaxNode node)
         {
+            // Strip away any documentation, or preprocessor directives
             if (node is MemberDeclarationSyntax member)
             {
                 if (!member.Modifiers.Any(m => m.IsKind(SyntaxKind.PrivateKeyword)))
