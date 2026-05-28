@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
 #if GENAPI_COMPAT
                 // Replacing property getter expression with accessor list with throw statement for compatibility with GenAPI generated source
                 node = PropertyDeclaration(node.AttributeLists, node.Modifiers, node.Type, node.ExplicitInterfaceSpecifier, node.Identifier,
-                                           AccessorList(SingletonList(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, s_throwBlock))), null, null, node.SemicolonToken)
+                                           AccessorList(SingletonList(AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, s_throwBlock))), null, null, MissingToken(SyntaxKind.SemicolonToken))
                        .WithTriviaFrom(node);
 #else
                 node = node.WithExpressionBody(ThrowExpression);
@@ -88,8 +88,15 @@ namespace Microsoft.Data.SqlClient.SourceGenerator
                 return base.VisitMethodDeclaration(node);
             }
 
+#if GENAPI_COMPAT
+            MethodDeclarationSyntax newNode = node.WithBody(s_throwBlock)
+                .WithExpressionBody(null)
+                .WithSemicolonToken(MissingToken(SyntaxKind.SemicolonToken))
+                .WithTrailingTrivia(CarriageReturnLineFeed);
+#else
             MethodDeclarationSyntax newNode = (node.ExpressionBody != null ? node.WithExpressionBody(s_throwExpression) : node.WithBody(s_throwBlock))
                 .WithTrailingTrivia(CarriageReturnLineFeed);
+#endif
             return base.VisitMethodDeclaration(newNode);
         }
 
