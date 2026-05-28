@@ -909,7 +909,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 waitForMultipleObjectsTimeout = ResolvePoolWaitTimeoutMs(timeout, CreationTimeout);
                 allowCreate = true;
-            }            if (State is not Running)
+            }            
+            
+            if (State is not Running)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, DbConnectionInternal State != Running.", Id);
                 connection = null;

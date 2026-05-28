@@ -25,6 +25,19 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// </summary>
 public class SqlConnectionInternalTimeoutTests
 {
+    /// <summary>
+    /// Verifies the branch selection in
+    /// <see cref="SqlConnectionInternal.ResolveLoginTimeout"/>:
+    /// <list type="bullet">
+    ///   <item>switch ON  → the caller's <see cref="TimeoutTimer"/> instance
+    ///   flows through unchanged (asserted by reference identity), so any
+    ///   time already consumed counts against the overall ConnectTimeout;</item>
+    ///   <item>switch OFF → a fresh timer is started from
+    ///   <c>ConnectTimeout</c> (asserted by inspecting
+    ///   <see cref="TimeoutTimer.OriginalTicks"/>), preserving legacy
+    ///   behavior where login always gets the full configured budget.</item>
+    /// </list>
+    /// </summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
