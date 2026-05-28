@@ -133,7 +133,7 @@ stages:
 
           # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
           # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
-          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
@@ -230,7 +230,7 @@ stages:
 
           # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
           # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
-          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |

@@ -1,0 +1,27 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This stage is meant to perform a sanity check of the source code at the current point in time.
+# Although the test targets will implicitly build the projects they depend on, this stage allows
+# for fast failure of the build if the source code is not in a state that can be built.
+#
+# This stage will also be used to generate nuget packages based on the current source code. These
+# will be uploaded, along with the build output as the artifacts of the build.
+
+stages:
+  - stage: build_projects
+    displayName: Build Projects
+
+    jobs:
+      - job: build_projects
+        displayName: Build Projects
+
+        pool:
+          vmImage: 'ubuntu-latest'
+
+        steps:
+
+

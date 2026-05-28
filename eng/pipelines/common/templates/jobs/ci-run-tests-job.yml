@@ -211,7 +211,7 @@ jobs:
         targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK and Runtimes.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
+  - template: /eng/pipelines/common/steps/install-dotnet.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       ${{ if parameters.isArm64 }}:
@@ -223,7 +223,7 @@ jobs:
         runtimes: [8.x, 9.x]
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
-  - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+  - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -352,7 +352,7 @@ jobs:
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
       # Install the .NET SDK and Runtimes for x86.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           architecture: x86
           debug: ${{ parameters.debug }}
