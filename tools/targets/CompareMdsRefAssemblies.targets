@@ -164,7 +164,7 @@
   </Target>
   
   <Target Name="_RunNotsupportedApiCompat"
-          DependsOnTargets="_RestoreTools;_BuildNotSupportedSG">
+          DependsOnTargets="_CheckApiCompatToolRestored;_BuildNotSupportedSG">
 
     <!--
       For each TFM, compare the consolidated ref output against the baseline
