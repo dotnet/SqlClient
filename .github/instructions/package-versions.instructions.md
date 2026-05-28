@@ -65,6 +65,51 @@ Packages that only exist (or are only needed) on older TFMs. The polyfill major 
 
 Condition the *presence* of the reference, not the version.
 
+## How to categorize a package
+
+The named lists above aren't exhaustive. To classify a package you don't recognize, work through these steps in order:
+
+### 1. Read the nuget.org description
+
+Pure polyfills almost always say so explicitly. For example, `Microsoft.Bcl.TimeProvider`'s page reads: *"For apps targeting .NET 8 and newer versions, referencing this package is unnecessary, as the types it contains are already included in the .NET 8 and higher platform versions."*
+
+If the description says "for apps targeting .NET X and earlier" or "unnecessary on .NET X+", treat as polyfill candidate and continue to step 2 to confirm. If it makes no such claim and the package owner is Microsoft + a major number tracks the .NET release train, treat as runtime-aligned candidate.
+
+### 2. Inspect the package's `lib/` layout
+
+Look at the "Frameworks" tab on nuget.org or open the `.nupkg`:
+
+| `lib/` layout | Category |
+|---|---|
+| Only older TFM folders (`netstandard2.0`, `net462`) — no modern TFMs | Pure polyfill |
+| `lib/net8.0/_._`, `lib/net9.0/_._` placeholders + real DLL only on older TFMs | Pure polyfill (no-op on modern TFMs) |
+| Real DLLs in `lib/net8.0/`, `lib/net9.0/`, `lib/net10.0/`, differing per band | Runtime-aligned |
+| Real DLLs on every TFM including older ones, single major doesn't track .NET releases | Independent |
+
+### 3. Check the release cadence
+
+- Runtime-aligned: new major every November in lockstep with .NET (8.0, 9.0, 10.0, ...) plus monthly servicing patches.
+- Independent: releases on its own schedule, major doesn't correlate with .NET versions.
+- Pure polyfill: usually freezes at one major and rarely bumps; new majors only to ride the build train.
+
+### 4. Functional test — remove the reference and rebuild
+
+The decisive test for the polyfill-vs-runtime-aligned boundary: remove the `PackageReference` on a modern TFM (e.g. net8) and build.
+
+- Builds clean → package was acting as a polyfill on that TFM. Confirm category 3.
+- Fails with `CS0246`/`CS1061` (missing type or method) → the package contributes API the in-box BCL doesn't have. Treat as runtime-aligned (category 1), even if the description sounds polyfill-ish.
+
+### Beware hybrids
+
+Some packages look like polyfills but add API beyond the in-box BCL even on modern TFMs. Treat these like runtime-aligned packages.
+
+### When in doubt
+
+Treat as **runtime-aligned** (category 1) and reference on every TFM with per-TFM majors.
+
+- Cost of mis-classifying a true polyfill this way: a redundant `_._` asset at restore. Harmless.
+- Cost of mis-classifying a hybrid as a pure polyfill: a compile break on the TFMs where you dropped the reference.
+
 ## Why
 
 ### Why latest minor/patch always
@@ -73,7 +118,7 @@ Condition the *presence* of the reference, not the version.
 
 - **Security**: BCL and Extensions packages ship CVE patches in minor/patch bumps. Pinning to an older patch means a customer who doesn't transitively pull a newer version stays on the vulnerable floor.
 - **Bug fixes**: Same logic for non-security fixes. We have no reason to anchor customers to an older `8.0.0` when `8.0.5` is available.
-- **Restore behaviour is identical**: A higher minor/patch within the same major never causes NU1605 in either direction (downgrade protection is per-major in practice — the SemVer constraint that matters is the major).
+- **NU1605 risk is small and easy to fix**: NU1605 fires on *any* downgrade, including minor/patch within the same major (e.g. our `8.0.5` transitive vs. a customer's direct `8.0.0`). In practice this is rare and trivial to resolve — the customer bumps their direct reference to a current patch. The cost of *not* tracking latest (stale security/bug fixes for every consumer who doesn't override) is larger than the cost of an occasional one-line bump in a consumer project.
 - **Reduces noise from automated bumps**: Dependabot/Renovate PRs disappear if we already track latest.
 
 This rule applies to all three categories. The category decides the major; "latest" decides the minor and patch.
