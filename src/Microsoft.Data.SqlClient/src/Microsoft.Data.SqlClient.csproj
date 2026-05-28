@@ -295,7 +295,6 @@
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Bcl.TimeProvider" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />

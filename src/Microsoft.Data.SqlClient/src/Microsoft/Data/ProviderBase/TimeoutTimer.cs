@@ -366,9 +366,17 @@ namespace Microsoft.Data.ProviderBase
             // Route the timer through the configured TimeProvider so that fake
             // time providers can advance virtual time and trigger cancellation
             // deterministically in tests.
-            // Use the extension method rather than the CancellationTokenSource
-            // constructor overload, which doesn't exist on .NET Framework.
+#if NET
+            // On .NET 8+ the BCL provides this constructor directly; avoid the
+            // Microsoft.Bcl.TimeProvider extension so the produced assembly
+            // doesn't carry a hard reference to the polyfill package, which the
+            // .NET SDK prunes from downstream consumers' restore graphs.
+            return new CancellationTokenSource(TimeSpan.FromMilliseconds(remaining), TimeProvider);
+#else
+            // .NET Framework lacks the constructor overload; use the extension
+            // method shipped by Microsoft.Bcl.TimeProvider.
             return TimeProvider.CreateCancellationTokenSource(TimeSpan.FromMilliseconds(remaining));
+#endif
         }
 
         /// <summary>
