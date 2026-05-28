@@ -37,6 +37,7 @@
     <dependencies>
       <group targetFramework="net462">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
+        <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.8" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI" version="6.0.2" />
@@ -55,6 +56,7 @@
       </group>
       <group targetFramework="net8.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
+        <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.8" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
@@ -67,6 +69,7 @@
       </group>
       <group targetFramework="net9.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="9.0.13" />
+        <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.8" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
@@ -79,6 +82,7 @@
       </group>
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
+        <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.8" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$LoggingPackageVersion$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
