@@ -74,11 +74,13 @@ parameters:
     type: string
 
   # This is an array of objects with the following fields:
-  # - displayName - Friendly name to use when displaying the stage name and job names. This must
-  #                 only contain alphanumeric characters and '_'. It will be used for both display
-  #                 name fields and stage/job names.
-  # - dotnet      - Version of dotnet runtime to use to execute the tests
-  # - image       - Image to use to execute the test jobs in the pipeline
+  # - displayName     - Friendly name to use when displaying the stage name and job names. This
+  #                     must only contain alphanumeric characters and '_'. It will be used for both
+  #                     display name fields and stage/job names.
+  # - dotnet          - Version of dotnet runtime to use to execute the tests
+  # - image           - Image to use to execute the test jobs in the pipeline
+  # - operatingSystem - General OS "class" that the image contains. This is used to switch between
+  #                     server configuration behaviors.
   #
   # Each one of the objects in this parameter will become a stage that executes all test projects
   # available.

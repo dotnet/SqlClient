@@ -54,5 +54,6 @@ steps:
       verbosity: detailed
       arguments: >-
         -t:Pack${{ parameters.packageShortName }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
         -p:BuildNumber='$(Build.BuildNumber)'
         -p:BuildSuffix='${{ parameters.buildSuffix }}'

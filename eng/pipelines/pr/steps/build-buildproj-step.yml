@@ -39,6 +39,7 @@ steps:
       projects: build.proj
       arguments: >-
         -t:Build${{ parameters.packageShortName }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
         -p:BuildNumber='$(Build.BuildNumber)'
         -p:BuildSuffix='${{ parameters.buildSuffix }}'
 

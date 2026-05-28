@@ -53,6 +53,7 @@ steps:
       verbosity: detailed
       arguments: >-
         -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
         -p:BuildNumber='$(Build.BuildNumber)'
         -p:BuildSuffix='${{ parameters.buildSuffix }}'
         -p:TestFramework=${{ parameters.testFramework }}
