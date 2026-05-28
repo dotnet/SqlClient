@@ -387,6 +387,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
+        public static bool IsNotKerberosTest => !IsKerberosTest;
+
         #nullable enable
 
         /// <summary>
