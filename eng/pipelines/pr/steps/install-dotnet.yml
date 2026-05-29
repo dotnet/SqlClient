@@ -20,3 +20,5 @@ steps:
       ${{ if not(contains(parameters.runtimeVersion, 'net4')) }}:
         runtimes:
           - "${{ replace(parameters.runtimeVersion, 'net', '') }}.x"
+
+  - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
