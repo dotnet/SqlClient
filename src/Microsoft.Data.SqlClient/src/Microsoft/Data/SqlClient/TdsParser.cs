@@ -542,7 +542,7 @@ namespace Microsoft.Data.SqlClient
             }
             _state = TdsParserState.OpenNotLoggedIn;
             _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite;
-            _physicalStateObj.TimeoutTime = timeout.LegacyTimerExpire;
+            _physicalStateObj.TimeoutTime = timeout.IsInfinite ? long.MaxValue : timeout.ExpirationTicks;
 
             bool marsCapable = false;
 

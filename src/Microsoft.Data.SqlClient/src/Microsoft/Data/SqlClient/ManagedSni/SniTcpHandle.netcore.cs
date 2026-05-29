@@ -892,6 +892,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 try
                 {
+                    // TODO: convert these to async versions that accept a cancellation token
+                    // this will let us pass fake time providers all the way down the stack
+                    // and easily test timeout behavior.
                     if (timeoutInMilliseconds > 0)
                     {
                         _socket.ReceiveTimeout = timeoutInMilliseconds;
