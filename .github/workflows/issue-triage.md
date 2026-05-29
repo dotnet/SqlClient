@@ -6,21 +6,37 @@ on:
     types: [created]
   roles: all
 
-# Cheap gate before the agent boots:
-#   - issues.opened          -> always run (initial triage)
-#   - issue_comment.created  -> only when the commenter IS the issue author,
-#                               the comment is on an issue (not a PR), and
-#                               the author is not a bot. The deeper checks
-#                               ("prior triage flagged missing env" and
-#                               "no second triage already posted") are done
-#                               inside the prompt because they require
-#                               reading existing comments.
+# Cheap gate evaluated BEFORE the agent boots. The activation job is skipped
+# (zero compute, $0) if this is false. Only events matching one of the
+# following three conditions cause the workflow to run:
+#
+#   1. issues.opened
+#        -> Initial triage. Always runs.
+#
+#   2. issue_comment.created from the issue's original author, on an issue
+#      (not a PR), not a bot, AND the issue currently has the label
+#      "Auto-Triage: Waiting for Author".
+#        -> Follow-up triage. The label is applied by the initial triage
+#           only when environment fields were missing, and removed by the
+#           follow-up triage once the author supplies them. Without the
+#           label, author comments do NOT boot the agent.
+#
+#   3. issue_comment.created whose body starts with "/triage", from a repo
+#      OWNER, MEMBER, or COLLABORATOR (maintainer-only on-demand override).
+#        -> On-demand triage. Bypasses the follow-up gate; produces a fresh
+#           triage summary regardless of label or prior summaries.
 if: |
   github.event_name == 'issues' ||
   (github.event_name == 'issue_comment'
    && github.event.issue.pull_request == null
-   && github.event.comment.user.login == github.event.issue.user.login
-   && !endsWith(github.event.comment.user.login, '[bot]'))
+   && !endsWith(github.event.comment.user.login, '[bot]')
+   && (
+     (startsWith(github.event.comment.body, '/triage')
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+     ||
+     (github.event.comment.user.login == github.event.issue.user.login
+      && contains(github.event.issue.labels.*.name, 'Auto-Triage: Waiting for Author'))
+   ))
 
 engine: copilot
 
@@ -34,12 +50,20 @@ tools:
     min-integrity: none
 
 safe-outputs:
-  # Allow up to 2 triage summaries per issue (initial + one follow-up).
-  # `hide-older-comments` collapses the previous summary so the latest one
-  # is the only visible "current state".
+  # One triage summary per run. `hide-older-comments` collapses previous
+  # summaries so only the latest is visible.
   add-comment:
-    max: 2
+    max: 1
     hide-older-comments: true
+  # Allow the workflow to apply/remove ONLY this one internal-state label.
+  # The label is the YAML-level flag that lets the cheap `if:` gate above
+  # decide whether an author comment should boot the agent at all.
+  add-labels:
+    allowed: ["Auto-Triage: Waiting for Author"]
+    max: 1
+  remove-labels:
+    allowed: ["Auto-Triage: Waiting for Author"]
+    max: 1
 ---
 
 # SqlClient Issue Auto-Triage
@@ -48,41 +72,53 @@ You are a triage specialist for **Microsoft.Data.SqlClient**.
 Your job is to post **at most one** triage summary comment per workflow run
 using `add_comment`.
 
-This workflow runs in two situations:
+This workflow runs in three situations. Identify which one **before** doing
+any work, then follow the matching flow:
 
-1. **Initial triage** — a new issue was just opened (`event_name == "issues"`).
-2. **Follow-up triage** — the original issue author posted a comment
-   (`event_name == "issue_comment"`). In this case you must first decide
-   whether a follow-up triage is actually warranted (see "Follow-up gate"
-   below) and call `noop` if it is not.
+1. **Initial triage** — `event_name == "issues"`. A new issue was just opened.
+   Always proceed to the triage instructions below.
+2. **Follow-up triage** — `event_name == "issue_comment"` and the comment body
+   does NOT start with `/triage`. The workflow-level `if:` has already verified
+   the issue currently carries the label `Auto-Triage: Waiting for Author`,
+   so a prior triage flagged missing env info and the author has now responded.
+   Treat later author comments as part of the issue body and re-validate the
+   environment. There are three sub-cases routed by "Follow-up routing" under
+   Instructions:
+   - **No progress** (comment supplied no new env field, e.g. "will share
+     soon") → silent `noop`, label stays, no comment posted.
+   - **Partial progress** (comment supplied at least one new env field but
+     others are still missing) → post a fresh summary acknowledging what
+     was provided and re-asking for the rest, KEEP the label.
+   - **Complete** (all required env fields are now present) → post a fresh
+     summary, REMOVE the label.
+3. **On-demand triage** — `event_name == "issue_comment"` and the comment body
+   starts with `/triage`. A maintainer is explicitly requesting a fresh triage.
+   Ignore label state and prior summary counts; proceed to the triage
+   instructions and produce a new summary. Do NOT change the label as part of
+   `/triage` runs (leave it as-is).
 
 Do NOT call `add_comment` more than once per run.
-Do NOT call `add_labels`. Do NOT apply any labels.
+Do NOT call `add_labels` or `remove_labels` for any label other than
+`Auto-Triage: Waiting for Author` — that single label is the only one this
+workflow is permitted to manage.
 Do NOT post intermediate findings. Do NOT post separate comments for
 area detection, duplicate checking, or environment validation.
 Everything goes into the single triage summary at the end.
 
 ---
 
-## Follow-up gate (only when `event_name == "issue_comment"`)
+## Label-managed state
 
-Before doing any triage work on a comment event, list all existing comments
-on the issue using GitHub read tools and verify **all** of the following.
-If any check fails, call `noop` with a short reason and stop — do NOT post
-a comment.
+The workflow uses one internal-state label to decide cheaply (at the YAML
+`if:` level) whether an author comment should boot the agent at all:
 
-1. **Exactly one prior triage summary exists.** Count comments authored by
-   `github-actions[bot]` whose body contains the string `🔍 Triage Summary`.
-   - If the count is `0`, the initial triage hasn't happened yet — call `noop`.
-   - If the count is `≥ 2`, the follow-up has already been posted — call
-     `noop`. We never post a third summary.
-2. **The prior triage flagged missing environment fields.** The single
-   existing `🔍 Triage Summary` comment body must contain the string
-   `⚠️ Missing:`. If it does not, the first triage had complete info and
-   no follow-up is needed — call `noop`.
-3. **The triggering comment is from the issue's original author.** This is
-   already enforced by the workflow-level `if:`, but re-verify defensively:
-   `comment.user.login == issue.user.login`. If not, call `noop`.
+- **`Auto-Triage: Waiting for Author`** — present iff the most recent
+  triage summary flagged `⚠️ Missing:` or `⚠️ Partial:` environment fields
+  and we are waiting for the issue author to supply them.
+
+The agent (you) is responsible for keeping this label accurate — see the
+"Actions" section below for exactly when to call `add_labels` /
+`remove_labels`.
 
 Only if all three checks pass, proceed to the triage instructions below
 and produce a fresh summary. Treat the prior summary as **invalidated** —
@@ -106,9 +142,51 @@ environment validation, and analysis. Do not skip this step.
 
 ## Instructions
 
-Read the issue body **and, for follow-up runs, every subsequent comment**.
-Then do ALL of the following analysis silently (using read tools and search
-only — no comments, no outputs):
+Read the issue body **and, for follow-up / on-demand runs, every subsequent
+comment**. Then do ALL of the following analysis silently (using read tools
+and search only — no comments, no outputs):
+
+### Follow-up routing (scenario 2 only)
+
+Before running the full analysis on a follow-up run, decide which of three
+sub-cases this comment falls into. Use the rules in step **B** below to
+determine which environment fields each source supplies.
+
+Compute two snapshots:
+
+- **BEFORE** = env fields supplied by the issue body + every author comment
+  EXCEPT the triggering comment.
+- **AFTER**  = env fields supplied by the issue body + every author comment
+  INCLUDING the triggering comment.
+
+Then route as follows:
+
+1. **No progress** — `AFTER == BEFORE` (the new comment did not supply any
+   new env field; e.g. "okay, will share details soon", a question, an
+   unrelated remark). → Call `noop` with a short reason like `"Author
+   commented but supplied no new env info"` and STOP. Do NOT call
+   `add_comment`. Do NOT change the label. The label stays so the next
+   author comment can re-trigger this workflow.
+
+2. **Partial progress** — `AFTER` adds at least one new env field but is
+   still incomplete (some required fields are still missing). → Proceed
+   to the full analysis below and post a fresh triage summary. The
+   `Environment` row MUST acknowledge what was just provided and list
+   only the fields that are STILL missing, e.g.
+   `⚠️ Partial: received SqlClient version and OS; still missing: .NET TFM, SQL Server version`.
+   Keep the label `Auto-Triage: Waiting for Author` on the issue (i.e. call
+   `add_labels` with that label — it is a no-op if already present).
+
+3. **Complete** — `AFTER` contains every required env field. → Proceed to
+   the full analysis below and post a fresh triage summary. The
+   `Environment` row says `All required environment details provided for
+   investigation`. Call `remove_labels` with the label.
+
+This routing does NOT apply to initial triage (scenario 1) or on-demand
+`/triage` (scenario 3) — those always produce a fresh summary using the
+standard label-management rules in the Actions section below.
+
+### Full analysis
 
 **A. Classify issue type**: Bug (reports unexpected behavior, crash, regression, or incorrect results), Feature (has proposal), Question, or Task.
 
@@ -147,8 +225,9 @@ Proceed with all remaining triage steps regardless of missing environment detail
 
 ## Actions
 
-Call `add_comment` exactly **once** with this markdown (for follow-up runs,
-add the parenthetical "(updated after author response)" to the heading):
+Call `add_comment` exactly **once** with this markdown. For follow-up runs
+add "(updated after author response)" to the heading; for on-demand `/triage`
+runs add "(on-demand re-triage)" to the heading:
 
 ```
 ## 🔍 Triage Summary
@@ -156,7 +235,7 @@ add the parenthetical "(updated after author response)" to the heading):
 | Check | Result |
 |-------|--------|
 | Issue type | <Bug / Feature / Question / Task> |
-| Environment | <All required environment details provided for investigation / ⚠️ Missing: list specific fields> |
+| Environment | <All required environment details provided for investigation / ⚠️ Partial: received <list>; still missing: <list> / ⚠️ Missing: list specific fields> |
 | Area | <Best matching area from classification table> |
 | Duplicates | <None found / Potentially related: #NNN, #NNN> |
 | Regression | <Not indicated / Likely regression from vX.Y.Z / Inconclusive> |
@@ -181,5 +260,16 @@ and severity assessment (P0-P3)>
 
 > **Note**: This triage summary is auto-generated by an AI agent. The analysis and suggestions above have not been verified by a human maintainer. Please treat as preliminary guidance only.
 ```
+
+**Then manage the label**:
+
+- For **on-demand `/triage` runs**, do NOT touch the label — preserve
+  whatever state existed before.
+- For **initial triage** and **follow-up triage**, base the decision on the
+  `Environment` row of the summary you just posted:
+  - If it contains `⚠️ Missing:` or `⚠️ Partial:` → call `add_labels` with
+    `["Auto-Triage: Waiting for Author"]` (no-op if already present).
+  - Otherwise (env complete) → call `remove_labels` with
+    `["Auto-Triage: Waiting for Author"]` (safe to call even if absent).
 
 If the issue is spam or no action is needed, call the `noop` tool instead.
