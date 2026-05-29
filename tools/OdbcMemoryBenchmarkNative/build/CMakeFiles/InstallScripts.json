@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/apdeshmukh/git/SqlClient/dev-ad-strict-oom/tools/OdbcMemoryBenchmarkNative/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

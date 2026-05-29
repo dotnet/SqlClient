@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\apdeshmukh\git\SqlClient\dev-ad-strict-oom\tools\OdbcMemoryBenchmarkNative\OdbcMemoryBenchmark.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\apdeshmukh\git\SqlClient\dev-ad-strict-oom\tools\OdbcMemoryBenchmarkNative\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{ADD8D4E0-53FC-3F47-92BB-8FF2B247984F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

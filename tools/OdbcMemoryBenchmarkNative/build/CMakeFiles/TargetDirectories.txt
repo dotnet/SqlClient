@@ -1,0 +1,3 @@
+C:/Users/apdeshmukh/git/SqlClient/dev-ad-strict-oom/tools/OdbcMemoryBenchmarkNative/build/CMakeFiles/OdbcMemoryBenchmark.dir
+C:/Users/apdeshmukh/git/SqlClient/dev-ad-strict-oom/tools/OdbcMemoryBenchmarkNative/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/apdeshmukh/git/SqlClient/dev-ad-strict-oom/tools/OdbcMemoryBenchmarkNative/build/CMakeFiles/ZERO_CHECK.dir
