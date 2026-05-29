@@ -13,8 +13,28 @@ namespace Microsoft.Data.SqlClient.Tools.PackageCompatibility.Tests;
 /// content that documents default package versions and override examples.
 /// </summary>
 [Collection(ConsoleCollection.Name)]
-public class EntryPointTests
+public class EntryPointTests : IDisposable
 {
+    private readonly TextWriter _originalOut;
+    private readonly TextWriter _originalError;
+    private readonly StringWriter _output;
+
+    public EntryPointTests(ConsoleCollectionFixture _)
+    {
+        _originalOut = Console.Out;
+        _originalError = Console.Error;
+        _output = new StringWriter();
+        Console.SetOut(_output);
+        Console.SetError(_output);
+    }
+
+    public void Dispose()
+    {
+        Console.SetOut(_originalOut);
+        Console.SetError(_originalError);
+        _output.Dispose();
+    }
+
     /// <summary>
     /// Ensures invoking the entry point without the required connection-string argument fails and
     /// reports the missing option to the caller.
@@ -22,31 +42,11 @@ public class EntryPointTests
     [Fact]
     public void EntryPointWithoutConnectionStringReturnsNonZero()
     {
-        // Redirect console streams so we can assert on CLI output without polluting test logs.
-        TextWriter originalOut = Console.Out;
-        TextWriter originalError = Console.Error;
-        using StringWriter output = new();
+        // Act: invoke with no arguments; --connection-string is required.
+        int exitCode = EntryPoint.Main(Array.Empty<string>());
 
-        int exitCode;
-        string commandOutput;
-
-        try
-        {
-            Console.SetOut(output);
-            Console.SetError(output);
-
-            // Act: invoke with no arguments; --connection-string is required.
-            exitCode = EntryPoint.Main(Array.Empty<string>());
-
-            // Wait for command help/validation text to flush before asserting.
-            commandOutput = WaitForCapturedOutput(output, "--connection-string");
-        }
-        finally
-        {
-            // Always restore global console streams for subsequent tests.
-            Console.SetOut(originalOut);
-            Console.SetError(originalError);
-        }
+        // Wait for command help/validation text to flush before asserting.
+        string commandOutput = WaitForCapturedOutput(_output, "--connection-string");
 
         // Assert: parser should reject the command and mention the missing option.
         Assert.NotEqual(0, exitCode);
@@ -60,31 +60,12 @@ public class EntryPointTests
     [Fact]
     public void HelpOutputContainsDefaultVersions()
     {
-        // Capture help output for contract validation of documented build parameters.
-        TextWriter originalOut = Console.Out;
-        TextWriter originalError = Console.Error;
-        using StringWriter output = new();
+        // Act: request help; this should never fail.
+        int exitCode = EntryPoint.Main(new[] { "--help" });
+        Assert.Equal(0, exitCode);
 
-        string helpOutput;
-
-        try
-        {
-            Console.SetOut(output);
-            Console.SetError(output);
-
-            // Act: request help; this should never fail.
-            int exitCode = EntryPoint.Main(new[] { "--help" });
-            Assert.Equal(0, exitCode);
-
-            // Ensure final help footer is present so all formatted content has been emitted.
-            helpOutput = WaitForCapturedOutput(output, "--version");
-        }
-        finally
-        {
-            // Restore global console state to keep tests isolated.
-            Console.SetOut(originalOut);
-            Console.SetError(originalError);
-        }
+        // Ensure final help footer is present so all formatted content has been emitted.
+        string helpOutput = WaitForCapturedOutput(_output, "--version");
 
         // Assert: sample property overrides remain documented in help text.
         Assert.Contains("-p:AbstractionsVersion=1.0.1", helpOutput, StringComparison.Ordinal);

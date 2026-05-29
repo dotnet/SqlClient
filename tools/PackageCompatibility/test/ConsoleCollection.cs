@@ -18,8 +18,9 @@ public sealed class ConsoleCollection : ICollectionFixture<ConsoleCollectionFixt
 
 /// <summary>
 /// Fixture type associated with <see cref="ConsoleCollection"/>.
-/// Present to satisfy xUnit collection fixture wiring and to provide a future extension point
-/// for shared setup/teardown if console coordination needs to expand.
+/// Present to satisfy xUnit collection fixture wiring; individual test classes in this collection
+/// capture and restore console streams in their own constructor/Dispose lifecycle to keep each
+/// test isolated.
 /// </summary>
 public sealed class ConsoleCollectionFixture
 {

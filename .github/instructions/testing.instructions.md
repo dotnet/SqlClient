@@ -173,12 +173,12 @@ dotnet test ... --filter "FullyQualifiedName=Namespace.ClassName.MethodName"
 
 ## Writing Tests
 
-## Test Documentation Requirements
+### Test Documentation Requirements
 
 To keep tests maintainable for contributors and AI agents, test intent must be documented at
 class and method level.
 
-### Required XML Documentation
+#### Required XML Documentation
 - Add XML `<summary>` comments to every test class.
 - Add XML `<summary>` comments to every test method (`[Fact]`, `[Theory]`, conditional variants).
 - For helper methods used by tests, add XML `<summary>` comments and XML `<param>` / `<returns>`
@@ -186,20 +186,20 @@ class and method level.
 - For fixture and collection types, add XML `<summary>` comments describing why the fixture exists
   (for example, serialization of console-mutating tests).
 
-### What the Comments Must Explain
+#### What the Comments Must Explain
 - The behavior/contract being tested (not just restating the method name).
 - Why the scenario matters (for example: regression guard, parsing contract, sync/async parity,
   isolation requirement).
 - For helper methods, what side effects occur (for example console redirection, file system
   copying, process execution) and why they are needed.
 
-### Style Guidance
+#### Style Guidance
 - Keep comments concise and factual.
 - Prefer behavior-focused wording over implementation trivia.
 - Avoid comments that merely repeat obvious code.
 - Use inline comments inside test methods only for non-obvious setup/act/assert details.
 
-### Example
+#### Example
 ```csharp
 /// <summary>
 /// Ensures malformed connection strings return a non-zero exit code and emit a parse error

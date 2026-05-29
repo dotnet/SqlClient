@@ -28,15 +28,26 @@ public class BuildVersionOverrideTests
         // Build in an isolated copy so per-test overrides cannot leak into repo obj/bin state.
         BuildArtifacts artifacts = BuildAppWithProperties(buildProperties);
 
-        // The generated source file is the authoritative output of GeneratePackageVersions.targets.
-        string generatedVersions = File.ReadAllText(artifacts.GeneratedVersionsFile);
-
-        // Assert each expected package label maps to the generated constant/version pair.
-        foreach (var kvp in expectedVersions)
+        try
         {
-            string constantName = GetPackageVersionsConstantName(kvp.Key);
-            string expected = $"public const string {constantName} = \"{kvp.Value}\";";
-            Assert.Contains(expected, generatedVersions, StringComparison.Ordinal);
+            // The generated source file is the authoritative output of GeneratePackageVersions.targets.
+            string generatedVersions = File.ReadAllText(artifacts.GeneratedVersionsFile);
+
+            // Assert each expected package label maps to the generated constant/version pair.
+            foreach (var kvp in expectedVersions)
+            {
+                string constantName = GetPackageVersionsConstantName(kvp.Key);
+                string expected = $"public const string {constantName} = \"{kvp.Value}\";";
+                Assert.Contains(expected, generatedVersions, StringComparison.Ordinal);
+            }
+        }
+        finally
+        {
+            if (!ShouldPreserveTempBuildDirectories())
+            {
+                TryDeleteDirectory(artifacts.ProjectDirectory);
+                TryDeleteDirectory(artifacts.OutputDirectory);
+            }
         }
     }
 
@@ -107,13 +118,44 @@ public class BuildVersionOverrideTests
     /// </summary>
     /// <param name="properties">MSBuild properties passed via <c>-p:</c> arguments.</param>
     /// <returns>Paths to the isolated workspace, output folder, and generated versions file.</returns>
+    private static bool ShouldPreserveTempBuildDirectories()
+    {
+        string? preserve = Environment.GetEnvironmentVariable("PACKAGECOMPATIBILITY_PRESERVE_TEMP");
+        return string.Equals(preserve, "1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(preserve, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.Delete(path, recursive: true);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
     private static BuildArtifacts BuildAppWithProperties(Dictionary<string, string> properties)
     {
         // Locate and clone the package-compatibility subtree so test builds are hermetic.
         string packageCompatibilityDir = GetPackageCompatibilityDirectory();
         string tempProjectDir = Path.Combine(Path.GetTempPath(), $"PackageCompatibilityProject_{Guid.NewGuid():N}");
         string tempOutputDir = Path.Combine(Path.GetTempPath(), $"PackageCompatibility_{Guid.NewGuid():N}");
+        bool preserveTemp = ShouldPreserveTempBuildDirectories();
+
         CopyDirectory(packageCompatibilityDir, tempProjectDir);
+
+        // Create an empty packages/ directory so NuGet.config source path remains valid.
+        Directory.CreateDirectory(Path.Combine(tempProjectDir, "packages"));
         Directory.CreateDirectory(tempOutputDir);
 
         string copiedProjectFile = Path.Combine(tempProjectDir, "src", "PackageCompatibility.csproj");
@@ -274,6 +316,7 @@ public class BuildVersionOverrideTests
         {
             if (segment.Equals("bin", StringComparison.Ordinal)
                 || segment.Equals("obj", StringComparison.Ordinal)
+                || segment.Equals("packages", StringComparison.Ordinal)
                 || segment.Equals("test", StringComparison.Ordinal))
             {
                 return true;
