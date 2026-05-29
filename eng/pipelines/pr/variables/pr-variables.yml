@@ -11,68 +11,6 @@ variables:
 
   # These variables are used to construct the config file for manual tests.
   #
-  # AAD_PASSWORD_CONN_STR
-  # AAD_PASSWORD_CONN_STR_eastus
-  # AADAuthorityURL
-  # AADServicePrincipalId
-  # AADServicePrincipalSecret
-  # AZURE_DB_NP_CONN_STRING
-  # AZURE_DB_NP_CONN_STRING_eastus
-  # AZURE_DB_TCP_CONN_STRING
-  # AZURE_DB_TCP_CONN_STRING_eastus
-  # AZURE_DW_NP_CONN_STRING
-  # AZURE_DW_TCP_CONN_STRING
-  # Azure_Password
-  # Azure_SQL_Server_eastus
-  # Azure_SQL_Server_westus2
-  # AZURE_USERNAME
-  # AzureKeyVaultTenantId
-  # AzureKeyVaultUrl
-  # AzureKeyVaultUrl_EastUS
-  # Database
-  # Enclave_Password
-  # EnclaveEnabled
-  # Encrypt
-  # EncryptOptions
-  # FileStreamDirectory
-  # LocalDbAppName
-  # LocalDbSharedInstanceName
-  # MI_Password
-  # MI_User
-  # NamedInstance
-  # Password
-  # saUser
-  # SQL_MI_NP_CONN_STRING
-  # SQL_MI_TCP_CONN_STRING
-  # SQL_NP_CONN_STRING
-  # SQL_NP_CONN_STRING_ENCRYPTED
-  # SQL_TCP_CONN_STRING
-  # SQL_TCP_CONN_STRING_AASSGX
-  # SQL_TCP_CONN_STRING_AASVBS
-  # SQL_TCP_CONN_STRING_ENCRYPTED
-  # SQL_TCP_CONN_STRING_ENCRYPTED_UNIX
-  # SQL_TCP_CONN_STRING_HGSVBS
-  # SQL_TCP_CONN_STRING_NoneVBS
-  # SQL_TCP_CONN_STRING_TDS8_Strict_HNIC
-  # SQL_TCP_INSTANCE_CONN_STRING
-  # SQL16RootPath
-  # SQL17RootPath
-  # SQL19-SGX
-  # SQL19-VBS
-  # SQL19RootPath
-  # SQL22RootPath
-  # SupportsIntegratedSecurity
-  # UseManagedSNIOnWindows
-  # user
-  # UserManagedIdentityClientId
-  # UserManagedIdentityClientId_eastus
-  # UserManagedIdentityObjectId
-  # UsermanagedIdentityObjectId_eastus
-  # WorkloadIdentityFederationServiceConnectionId
-  - group: ADO Test Configuration Properties
-
-  # These variables are used to construct the config file for manual tests.
-  #
   # AzureKeyVaultTenantId
   # AzureKeyVaultUrl
   # ConnectionStringNp_Azure_ManagedIdentity
