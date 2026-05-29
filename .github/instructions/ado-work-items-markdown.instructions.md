@@ -43,8 +43,12 @@ Some work items reject a direct type switch unless a valid value is provided. Us
 ### Step 1: Capture current description
 
 ```bash
-desc=$(az boards work-item show --id <id> | jq -r '.fields["System.Description"] // ""')
+az boards work-item show --id <id> | jq -j '.fields["System.Description"] // ""' > ./desc-backup.txt
 ```
+
+> **NOTE**: Writing to a file preserves all characters including trailing newlines.
+> Command substitution (`$(...)`) silently strips trailing newlines, which would
+> corrupt multi-line Markdown content.
 
 ### Step 2: Force markdown type with temporary empty value
 
@@ -69,7 +73,7 @@ az rest \
 ```bash
 PATCH_STEP2_FILE="${PATCH_STEP2_FILE:-./patch-step2.json}"
 
-jq -n --arg d "$desc" '[
+jq -n --rawfile d ./desc-backup.txt '[
   {"op":"replace","path":"/fields/System.Description","value":$d}
 ]' >"$PATCH_STEP2_FILE"
 
