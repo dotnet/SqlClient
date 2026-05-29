@@ -32,15 +32,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _maxPoolSize = maxPoolSize;
             _creationTimeout = creationTimeout;
 
-            if (idleTimeout < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(idleTimeout), idleTimeout, "Idle timeout cannot be negative.");
-            }
-
             if (0 != loadBalanceTimeout)
             {
                 _loadBalanceTimeout = new TimeSpan(0, 0, loadBalanceTimeout);
                 _useLoadBalancing = true;
+            }
+
+            if (idleTimeout < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(idleTimeout), idleTimeout, "Idle timeout cannot be negative.");
             }
 
             if (0 != idleTimeout)

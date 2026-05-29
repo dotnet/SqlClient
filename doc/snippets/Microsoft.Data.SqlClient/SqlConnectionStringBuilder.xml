@@ -991,7 +991,7 @@ The following example converts an existing connection string from using SQL Serv
           This property corresponds to the "Connection Idle Timeout" key within the connection string.
         </para>
         <para>
-          When a caller retrieves a connection from the pool, the driver checks how long the connection has been sitting idle. If the idle duration exceeds the value of <c>Connection Idle Timeout</c>, the connection is discarded and a different valid or newly-created connection is returned instead. This protects callers from receiving connections that may have been silently closed by firewalls, load balancers, or server-side inactivity thresholds.
+          The driver makes a best effort to close connections that have remained idle in the pool for longer than this value. The exact point in the connection lifecycle at which the check occurs is an implementation detail and may change over time. This protects callers from receiving connections that may have been silently closed by firewalls, load balancers, or server-side inactivity thresholds.
         </para>
         <para>
           A value of zero (0) disables idle expiration; connections are kept in the pool indefinitely (subject to other expiry rules such as <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.LoadBalanceTimeout" />).

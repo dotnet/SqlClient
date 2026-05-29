@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Reflection;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool;
@@ -67,19 +67,17 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
     }
 
     // Forcibly rewinds a connection's IdleSinceUtc by the given amount so tests don't have to sleep.
-    // Uses reflection because the setter is private by design (only the pool's return path stamps it).
     private static void BackdateIdleSince(DbConnectionInternal connection, TimeSpan delta)
     {
-        var prop = typeof(DbConnectionInternal).GetProperty(
-            nameof(DbConnectionInternal.IdleSinceUtc),
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        Assert.NotNull(prop);
-        prop!.SetValue(connection, DateTime.UtcNow - delta);
+        connection.IdleSinceUtc = DateTime.UtcNow - delta;
     }
 
     [Fact]
     public void IdleTimeout_StampedOnReturn()
     {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
         // Arrange - long idle timeout so the return path stamps (not evicts).
         _pool = CreatePool(idleTimeoutSeconds: 3600);
         SqlConnection owner = new();
@@ -124,6 +122,9 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
     [Fact]
     public void IdleTimeout_Set_ExpiresOldConnection()
     {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
         // Arrange - pool with 1-second idle timeout
         _pool = CreatePool(idleTimeoutSeconds: 1);
         SqlConnection owner = new();
@@ -144,6 +145,9 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
     [Fact]
     public void IdleTimeout_Set_KeepsFreshConnection()
     {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
         // Arrange - 60-second idle timeout, connection just returned
         _pool = CreatePool(idleTimeoutSeconds: 60);
         SqlConnection owner = new();

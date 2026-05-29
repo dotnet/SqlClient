@@ -221,13 +221,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             lock (s_random)
             {
-                // Drive the cleanup cadence from the configured idle timeout only when legacy behavior
-                // is disabled. Otherwise preserve the historical 2-4 minute random cleanup window.
                 TimeSpan idleTimeout = connectionPoolGroup.PoolGroupOptions.IdleTimeout;
-                long cleanupWaitMilliseconds = (long)idleTimeout.TotalMilliseconds;
-                _cleanupWait = !LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior && idleTimeout != TimeSpan.Zero
-                    ? (cleanupWaitMilliseconds >= int.MaxValue ? int.MaxValue : (int)cleanupWaitMilliseconds)
-                    : s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior && idleTimeout != TimeSpan.Zero)
+                {
+                    // The WaitHandle pool takes two pruning cycles to remove an idle connection
+                    // (new->old generation, then old->closed), so halve the configured timeout
+                    // to approximate the requested idle lifetime.
+                    long cleanupWaitMilliseconds = (long)idleTimeout.TotalMilliseconds / 2;
+                    _cleanupWait = cleanupWaitMilliseconds >= int.MaxValue ? int.MaxValue : (int)cleanupWaitMilliseconds;
+                }
+                else
+                {
+                    // Preserve the historical 2-4 minute random cleanup window.
+                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                }
             }
 
             _connectionFactory = connectionFactory;

@@ -659,8 +659,8 @@ namespace Microsoft.Data.SqlClient
         internal int CommandTimeout => _commandTimeout;
         internal int ConnectTimeout => _connectTimeout;
         internal int LoadBalanceTimeout => _loadBalanceTimeout;
-        // Maximum time (in seconds) a connection can sit idle in the pool before it is discarded
-        // on the next retrieval attempt. 0 disables idle expiration.
+        // Maximum time (in seconds) a connection can sit idle in the pool before it is discarded.
+        // 0 disables idle expiration.
         internal int IdleTimeout => _idleTimeout;
         internal int MaxPoolSize => _maxPoolSize;
         internal int MinPoolSize => _minPoolSize;
