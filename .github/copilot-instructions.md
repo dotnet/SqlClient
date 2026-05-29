@@ -50,6 +50,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Data Encryption**: Supports data encryption for secure data transmission.
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
+  - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
 - **Cross-Platform Support**: Compatible with both .NET Framework and .NET Core, allowing applications to run on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
