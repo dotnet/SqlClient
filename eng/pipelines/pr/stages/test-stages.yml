@@ -28,6 +28,10 @@ parameters:
   - name: stageNameSecrets
     type: string
 
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
   # Manual Test Configuration Parameters ==================================
 
   # Azure Key Vault tenant ID that will be set in the config.json file for sqlclient manual tests.
@@ -105,6 +109,7 @@ stages:
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
 
               packageShortName: "Abstractions"
               testDisplayName: "abstractions"
@@ -117,6 +122,7 @@ stages:
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
 
               packageShortName: "Azure"
               testDisplayName: "azure"
@@ -129,6 +135,7 @@ stages:
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_functional"
@@ -145,6 +152,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
 
               azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
               azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
@@ -163,6 +171,7 @@ stages:
 #              platformDisplayName: ${{ platform.displayName }}
 #              platformDotnet: ${{ platform.dotnet }}
 #              platformImage: ${{ platform.image }}
+#              poolName: ${{ parameters.poolName }}
 #
 #              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
 #              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
@@ -181,6 +190,7 @@ stages:
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_unit"

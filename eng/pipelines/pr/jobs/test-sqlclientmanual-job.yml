@@ -31,7 +31,7 @@ parameters:
   - name: platformDotnet
     type: string
 
-  # Name of the image in the ADO-1ES-Pool to use to execute this job.
+  # Name of the image in the customized ADO pool to use to execute this job.
   - name: platformImage
     type: string
 
@@ -44,6 +44,10 @@ parameters:
     values:
       - Windows
       - Linux
+
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
 
   # Test Configuration Parameters ==========================================
 
@@ -82,7 +86,7 @@ jobs:
     displayName: "sqlclient_manual_${{ parameters.platformDisplayName }}"
 
     pool:
-      name: ADO-1ES-Pool
+      name: ${{ parameters.poolName }}
       demands:
         - imageOverride -equals ${{ parameters.platformImage }}
 

@@ -19,6 +19,7 @@ variables:
   # ConnectionStringTcp_LocalhostDefault_UsernamePassword
   # LocalDbAppName
   # LocalDbSharedInstanceName
+  # PoolNameDefault
   - group: sqlclient-testconfig-v1
 
   # General Variables ======================================================
