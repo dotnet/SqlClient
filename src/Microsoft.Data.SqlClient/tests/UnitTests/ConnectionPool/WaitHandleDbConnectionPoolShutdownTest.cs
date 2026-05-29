@@ -14,8 +14,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
     /// <summary>
-    /// Deterministic tests for <see cref="WaitHandleDbConnectionPool"/> shutdown behavior
-    /// per spec 004-pool-shutdown FR-001 .. FR-007 (P1 scope).
+    /// Deterministic tests for <see cref="WaitHandleDbConnectionPool"/> shutdown behavior.
     /// </summary>
     public class WaitHandleDbConnectionPoolShutdownTest
     {
@@ -50,7 +49,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             return (T)field!.GetValue(instance)!;
         }
 
-        // FR-001
+        // State transitions to ShuttingDown on Shutdown.
         [Fact]
         public void Shutdown_TransitionsState_ToShuttingDown()
         {
@@ -63,7 +62,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
-        // FR-005 - cleanup timer is disposed.
+        // Cleanup timer is disposed.
         [Fact]
         public void Shutdown_DisposesCleanupTimer()
         {
@@ -77,7 +76,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(afterTimer);
         }
 
-        // FR-005 - error timer is disposed when present.
+        // Error timer is disposed when present.
         [Fact]
         public void Shutdown_DisposesErrorTimer_WhenPresent()
         {
@@ -94,7 +93,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(afterTimer);
         }
 
-        // FR-003 - drains idle stacks.
+        // Drains idle stacks.
         [Fact]
         public void Shutdown_DrainsIdleStacks()
         {
@@ -119,7 +118,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
-        // FR-006
+        // Shutdown is idempotent.
         [Fact]
         public void Shutdown_IsIdempotent()
         {
@@ -130,7 +129,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
-        // FR-005 acceptance #3 - cleanup-callback after shutdown is a no-op.
+        // Cleanup callback after shutdown is a no-op.
         [Fact]
         public void CleanupCallback_AfterShutdown_IsNoOp()
         {
@@ -147,7 +146,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
-        // FR-005 acceptance #3 - error-callback after shutdown is a no-op.
+        // Error callback after shutdown is a no-op.
         [Fact]
         public void ErrorCallback_AfterShutdown_IsNoOp()
         {
@@ -161,7 +160,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(ex);
         }
 
-        // FR-007 - sync caller arriving after shutdown gets a null connection (factory will
+        // Sync caller arriving after shutdown gets a null connection (factory will
         // see this and return up the retry chain). The pool's TryGetConnection short-circuits
         // on State != Running.
         [Fact]
@@ -180,7 +179,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(conn);
         }
 
-        // FR-007 - shutdown wakes up a thread parked in WaitHandle.WaitAny.
+        // Shutdown wakes up a thread parked in WaitHandle.WaitAny.
         [Fact]
         public void Shutdown_UnblocksSyncWaiter()
         {
@@ -213,8 +212,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             { IsBackground = true };
             t.Start();
 
-            // Give the waiter time to enter WaitAny.
-            Thread.Sleep(200);
+            // Wait deterministically until the worker has incremented _waitCount, which
+            // happens immediately before it enters WaitHandle.WaitAny. Polling avoids the
+            // CI-flakiness of a fixed Thread.Sleep on slow agents.
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (DateTime.UtcNow < deadline && GetPrivateField<int>(pool, "_waitCount") < 1)
+            {
+                Thread.Yield();
+            }
+            Assert.True(GetPrivateField<int>(pool, "_waitCount") >= 1, "Waiter did not park within 5s.");
             Assert.True(t.IsAlive, "Waiter should be parked, but thread already exited.");
 
             pool.Shutdown();

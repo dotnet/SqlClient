@@ -329,7 +329,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void CleanupCallback(object state)
         {
-            // FR-005: if the pool is shutting down, skip work. Shutdown disposes the timer, but
+            // If the pool is shutting down, skip work. Shutdown disposes the timer, but
             // a callback may already be in-flight when Shutdown runs; this guard ensures it does
             // not perform pruning or re-arm pool create requests.
             if (State == ShuttingDown)
@@ -775,7 +775,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void ErrorCallback(object state)
         {
-            // FR-005: skip work if the pool is shutting down. The shutdown path disposes the
+            // Skip work if the pool is shutting down. The shutdown path disposes the
             // timer; this guard handles the in-flight-callback race.
             if (State == ShuttingDown)
             {
@@ -971,11 +971,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     {
                         waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
 
-                        // FR-007: after waking, observe shutdown state and bail out so waiters
-                        // do not spin against a drained pool.
+                        // After waking, observe shutdown state and bail out so waiters
+                        // do not spin against a drained pool. If WaitAny consumed a
+                        // PoolSemaphore slot, release it back so the accounting stays
+                        // balanced; otherwise the slot would leak and other waiters
+                        // (or callers that arrive after Shutdown completes its own
+                        // Release loop) would starve.
                         if (State != Running)
                         {
                             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is shutting down; abandoning wait.", Id);
+                            if (waitResult == SEMAPHORE_HANDLE || waitResult == WAIT_ABANDONED + SEMAPHORE_HANDLE)
+                            {
+                                try
+                                {
+                                    _waitHandles.PoolSemaphore.Release(1);
+                                }
+                                catch (SemaphoreFullException)
+                                {
+                                    // Pool semaphore was already saturated by Shutdown's bulk release; safe to ignore.
+                                }
+                            }
                             Interlocked.Decrement(ref _waitCount);
                             connection = null;
                             return false;
@@ -1507,14 +1522,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
 
-            // FR-006: idempotent. Subsequent calls observe ShuttingDown and bail.
+            // Idempotent: subsequent calls observe ShuttingDown and bail.
             if (State == ShuttingDown)
             {
                 return;
             }
             State = ShuttingDown;
 
-            // FR-005: dispose all background timers so they no longer schedule new work.
+            // Dispose all background timers so they no longer schedule new work.
             // Note that any timer callback already in flight may still observe State == ShuttingDown
             // and short-circuit (see CleanupCallback / ErrorCallback).
             Timer cleanup = Interlocked.Exchange(ref _cleanupTimer, null);
@@ -1522,20 +1537,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Timer error = Interlocked.Exchange(ref _errorTimer, null);
             error?.Dispose();
 
-            // FR-007: wake any threads parked in WaitHandle.WaitAny by releasing the pool semaphore
-            // up to its max count. Waiters check State == Running after wake-up and bail.
-            // We may release more than necessary; SemaphoreFullException is harmless when the
-            // semaphore is already saturated.
-            try
+            // Wake any threads parked in WaitHandle.WaitAny by releasing as many semaphore
+            // slots as there are recorded waiters. Using _waitCount (rather than MaxPoolSize)
+            // avoids ArgumentOutOfRangeException when MaxPoolSize == 0 (unlimited) and ensures
+            // we wake every parked waiter even when _waitCount exceeds MaxPoolSize. Waiters
+            // observe State != Running after wake-up and bail.
+            int waitersToWake = Volatile.Read(ref _waitCount);
+            if (waitersToWake > 0)
             {
-                _waitHandles.PoolSemaphore.Release(MaxPoolSize);
-            }
-            catch (SemaphoreFullException)
-            {
-                // Already at max count - all slots free. Nothing to do.
+                try
+                {
+                    _waitHandles.PoolSemaphore.Release(waitersToWake);
+                }
+                catch (SemaphoreFullException)
+                {
+                    // Semaphore already saturated; nothing to do.
+                }
             }
 
-            // FR-003: drain idle stacks and destroy contained connections. Active checked-out
+            // Drain idle stacks and destroy contained connections. Active checked-out
             // connections are destroyed when they are returned (see DeactivateObject's
             // State is ShuttingDown branch).
             while (_stackNew.TryPop(out DbConnectionInternal newObj))

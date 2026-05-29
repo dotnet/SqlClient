@@ -15,7 +15,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
     /// <summary>
     /// Deterministic tests for <see cref="ChannelDbConnectionPool"/> shutdown behavior.
-    /// Verifies the contract defined by spec 004-pool-shutdown FR-001 .. FR-007 (P1 scope).
     /// </summary>
     public class ChannelDbConnectionPoolShutdownTest
     {
@@ -41,7 +40,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionPoolProviderInfo());
         }
 
-        // FR-001
+        // State transitions to ShuttingDown on Shutdown.
         [Fact]
         public void Shutdown_TransitionsState_ToShuttingDown()
         {
@@ -55,7 +54,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
-        // FR-003
+        // Drains buffered idle connections.
         [Fact]
         public void Shutdown_DrainsIdleConnections()
         {
@@ -84,7 +83,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
-        // FR-004 - returned connection while shutting down is destroyed, not pooled.
+        // Returned connection while shutting down is destroyed, not pooled.
         [Fact]
         public void Shutdown_ReturnedConnection_IsDestroyedNotPooled()
         {
@@ -104,7 +103,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
-        // FR-006
+        // Shutdown is idempotent.
         [Fact]
         public void Shutdown_IsIdempotent()
         {
@@ -116,7 +115,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
-        // FR-007 - async waiter is unblocked when the pool shuts down.
+        // Async waiter is unblocked when the pool shuts down.
         [Fact]
         public async Task Shutdown_UnblocksAsyncWaiter()
         {
@@ -153,7 +152,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
         }
 
-        // Story 3 acceptance #3 - sync get fails fast after shutdown.
+        // Sync get fails fast after shutdown.
         // The factory-level retry guard checks IsRunning, but the pool itself must not vend
         // new connections after Shutdown. We verify by exhausting the pool first then
         // checking that returned connections are destroyed (Count goes back to 0).

@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <summary>
         /// Tracks whether <see cref="Shutdown"/> has already initiated the shutdown sequence so that
-        /// repeated calls are observed as no-ops (FR-006). Updated atomically via
+        /// repeated calls are observed as no-ops. Updated atomically via
         /// <see cref="Interlocked.CompareExchange(ref int, int, int)"/>.
         /// </summary>
         private int _shutdownInitiated;
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Shutdown()
         {
-            // FR-006: idempotent. Compare-and-exchange ensures only one caller performs shutdown work.
+            // idempotent. Compare-and-exchange ensures only one caller performs shutdown work.
             if (Interlocked.CompareExchange(ref _shutdownInitiated, 1, 0) != 0)
             {
                 return;
