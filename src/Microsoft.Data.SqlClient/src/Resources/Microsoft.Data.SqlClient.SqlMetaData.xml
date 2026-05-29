@@ -582,16 +582,10 @@
   </DataSourceInformationTable>
   <ReservedWordsTable>
     <ReservedWords>
-      <ReservedWord>ADD</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>EXCEPT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PERCENT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ALL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>EXEC</ReservedWord>
@@ -600,16 +594,10 @@
       <ReservedWord>PLAN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ALTER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>EXECUTE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PRECISION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>AND</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>EXISTS</ReservedWord>
@@ -618,16 +606,10 @@
       <ReservedWord>PRIMARY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ANY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>EXIT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PRINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>AS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>FETCH</ReservedWord>
@@ -636,16 +618,10 @@
       <ReservedWord>PROC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ASC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>FILE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PROCEDURE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>AUTHORIZATION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>FILLFACTOR</ReservedWord>
@@ -654,16 +630,10 @@
       <ReservedWord>PUBLIC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BACKUP</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>FOR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RAISERROR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BEGIN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>FOREIGN</ReservedWord>
@@ -672,16 +642,10 @@
       <ReservedWord>READ</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BETWEEN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>FREETEXT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>READTEXT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BREAK</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>FREETEXTTABLE</ReservedWord>
@@ -690,16 +654,10 @@
       <ReservedWord>RECONFIGURE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BROWSE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>FROM</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>REFERENCES</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BULK</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>FULL</ReservedWord>
@@ -708,16 +666,10 @@
       <ReservedWord>REPLICATION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>FUNCTION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RESTORE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CASCADE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>GOTO</ReservedWord>
@@ -726,16 +678,10 @@
       <ReservedWord>RESTRICT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CASE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>GRANT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RETURN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CHECK</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>GROUP</ReservedWord>
@@ -744,16 +690,10 @@
       <ReservedWord>REVOKE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CHECKPOINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>HAVING</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RIGHT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CLOSE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>HOLDLOCK</ReservedWord>
@@ -762,16 +702,10 @@
       <ReservedWord>ROLLBACK</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CLUSTERED</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>IDENTITY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>ROWCOUNT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>COALESCE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>IDENTITY_INSERT</ReservedWord>
@@ -780,16 +714,10 @@
       <ReservedWord>ROWGUIDCOL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>COLLATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>IDENTITYCOL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RULE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>COLUMN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>IF</ReservedWord>
@@ -798,16 +726,10 @@
       <ReservedWord>SAVE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>COMMIT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>IN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SCHEMA</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>COMPUTE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>INDEX</ReservedWord>
@@ -816,16 +738,10 @@
       <ReservedWord>SELECT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CONSTRAINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>INNER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SESSION_USER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CONTAINS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>INSERT</ReservedWord>
@@ -834,16 +750,10 @@
       <ReservedWord>SET</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CONTAINSTABLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>INTERSECT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SETUSER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CONTINUE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>INTO</ReservedWord>
@@ -852,16 +762,10 @@
       <ReservedWord>SHUTDOWN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CONVERT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>IS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SOME</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CREATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>JOIN</ReservedWord>
@@ -870,16 +774,10 @@
       <ReservedWord>STATISTICS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CROSS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>KEY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SYSTEM_USER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CURRENT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>KILL</ReservedWord>
@@ -888,16 +786,10 @@
       <ReservedWord>TABLE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CURRENT_DATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LEFT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TEXTSIZE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CURRENT_TIME</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LIKE</ReservedWord>
@@ -906,16 +798,10 @@
       <ReservedWord>THEN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CURRENT_TIMESTAMP</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LINENO</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TO</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CURRENT_USER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LOAD</ReservedWord>
@@ -924,16 +810,10 @@
       <ReservedWord>TOP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CURSOR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NATIONAL </ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TRAN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DATABASE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>NOCHECK</ReservedWord>
@@ -942,16 +822,10 @@
       <ReservedWord>TRANSACTION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DBCC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NONCLUSTERED</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TRIGGER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DEALLOCATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>NOT</ReservedWord>
@@ -960,25 +834,16 @@
       <ReservedWord>TRUNCATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DECLARE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NULL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TSEQUAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DEFAULT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NULLIF</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>UNION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DELETE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>OF</ReservedWord>

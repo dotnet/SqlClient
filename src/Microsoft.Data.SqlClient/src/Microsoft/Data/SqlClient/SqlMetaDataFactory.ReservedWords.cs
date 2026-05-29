@@ -36,7 +36,12 @@ internal sealed partial class SqlMetaDataFactory
         // similar approach to ADP.IsAzureSynapseOnDemandEndpoint (i.e. check the data source string.)
 
         // Add reserved keywords used by SQL Server and Azure Synapse Analytics.
-        AddReservedWords(minVersion: null, maxVersion: null);
+        AddReservedWords(minVersion: null, maxVersion: null,
+            "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUTHORIZATION", "BACKUP",
+            "BEGIN", "BETWEEN", "BREAK", "BROWSE", "BULK", "BY", "CASCADE", "CASE", "CHECK",
+            "CHECKPOINT", "CLOSE", "CLUSTERED", "COALESCE", "COLLATE", "COLUMN", "COMMIT", "COMPUTE", "CONSTRAINT",
+            "CONTAINS", "CONTAINSTABLE", "CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME",
+            "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "DATABASE", "DBCC", "DEALLOCATE", "DECLARE", "DEFAULT", "DELETE");
 
         // Add ODBC reserved keywords.
         AddReservedWords(minVersion: null, maxVersion: null);
