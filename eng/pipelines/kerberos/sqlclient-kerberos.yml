@@ -127,7 +127,7 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
 
@@ -224,7 +224,7 @@ stages:
             fetchTags: false
 
           # --- Install .NET SDK and runtimes ---
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
 
