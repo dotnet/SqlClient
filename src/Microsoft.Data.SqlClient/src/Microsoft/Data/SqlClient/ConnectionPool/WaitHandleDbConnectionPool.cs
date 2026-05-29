@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// <summary>
     /// A concrete implementation of <see cref="IDbConnectionPool"/> used by <c>Microsoft.Data.SqlClient</c>
     /// to efficiently manage a pool of reusable <see cref="DbConnectionInternal"/> objects backing ADO.NET <c>SqlConnection</c> instances.
-    /// 
+    ///
     /// <para><b>Primary Responsibilities:</b></para>
     /// <list type="bullet">
     ///   <item><description><b>Connection Reuse and Pooling:</b> Uses two stacks (<c>_stackNew</c> and <c>_stackOld</c>) to manage idle connections. Ensures efficient reuse and limits new connection creation.</description></item>
@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     ///   <item><description><b>Pending Request Queue:</b> Queues unresolved connection requests in <c>_pendingOpens</c> and processes them using background threads.</description></item>
     ///   <item><description><b>Identity and Authentication Context:</b> Manages identity-based reuse via a dictionary of <c>DbConnectionPoolAuthenticationContext</c> keyed by user identity.</description></item>
     /// </list>
-    /// 
+    ///
     /// <para><b>Key Concepts in Design:</b></para>
     /// <list type="bullet">
     ///   <item><description>Stacks and queues for free and pending connections</description></item>
@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         //   ONLY touch obj after lock release if shouldDestroy is false!!!  Otherwise, it may be destroyed
                         //   by transaction-end thread!
 
-                        // Note that there is a minor race condition between this task and the transaction end event, if the latter runs 
+                        // Note that there is a minor race condition between this task and the transaction end event, if the latter runs
                         //  between the lock above and the SetInStasis call below. The result is that the stasis counter may be
                         //  incremented without a corresponding decrement (the transaction end task is normally expected
                         //  to decrement, but will only do so if the stasis flag is set when it runs). I've minimized the size
@@ -547,14 +547,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Reset the error wait:
                 _errorWait = ERROR_WAIT_DEFAULT;
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                // UNDONE - should not be catching all exceptions!!!
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 ADP.TraceExceptionWithoutRethrow(e);
 
                 if (!IsBlockingPeriodEnabled())
@@ -577,7 +571,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
 
                 bool timerIsNotDisposed;
-                
+
                 _waitHandles.ErrorEvent.Set();
                 _errorOccurred = true;
 
@@ -624,16 +618,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // be returned to a different customer until the transaction
                     // actually completes, so we send it into Stasis -- the SysTx
                     // transaction object will ensure that it is owned (not lost),
-                    // and it will be certain to put it back into the pool.                    
+                    // and it will be certain to put it back into the pool.
 
                     if (State is ShuttingDown)
                     {
                         if (obj.IsTransactionRoot)
                         {
-                            // SQLHotfix# 50003503 - connections that are affiliated with a 
-                            //   root transaction and that also happen to be in a connection 
-                            //   pool that is being shutdown need to be put in stasis so that 
-                            //   the root transaction isn't effectively orphaned with no 
+                            // SQLHotfix# 50003503 - connections that are affiliated with a
+                            //   root transaction and that also happen to be in a connection
+                            //   pool that is being shutdown need to be put in stasis so that
+                            //   the root transaction isn't effectively orphaned with no
                             //   means to promote itself to a full delegated transaction or
                             //   Commit or Rollback
                             obj.SetInStasis();
@@ -666,7 +660,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             {
                                 // NOTE: we're not locking on _state, so it's possible that its
                                 //   value could change between the conditional check and here.
-                                //   Although perhaps not ideal, this is OK because the 
+                                //   Although perhaps not ideal, this is OK because the
                                 //   DelegatedTransactionEnded event will clean up the
                                 //   connection appropriately regardless of the pool state.
                                 Debug.Assert(_transactedConnectionPool != null, "Transacted connection pool was not expected to be null.");
@@ -685,13 +679,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             {
                                 // SQLHotfix# 50003503 - if the object cannot be pooled but is a transaction
                                 //   root, then we must have hit one of two race conditions:
-                                //       1) PruneConnectionPoolGroups shutdown the pool and marked this connection 
+                                //       1) PruneConnectionPoolGroups shutdown the pool and marked this connection
                                 //          as non-poolable while we were processing within this lock
                                 //       2) The LoadBalancingTimeout expired on this connection and marked this
                                 //          connection as DoNotPool.
                                 //
                                 //   This connection needs to be put in stasis so that the root transaction isn't
-                                //   effectively orphaned with no means to promote itself to a full delegated 
+                                //   effectively orphaned with no means to promote itself to a full delegated
                                 //   transaction or Commit or Rollback
                                 obj.SetInStasis();
                                 rootTxn = true;
@@ -716,7 +710,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else if (destroyObject)
             {
-                // Connections that have been marked as no longer 
+                // Connections that have been marked as no longer
                 // poolable (e.g. exceeded their connection lifetime) are not, in fact,
                 // returned to the general pool
                 DestroyObject(obj);
@@ -783,7 +777,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private Exception TryCloneCachedException()
         // Cached exception can be of any type, so is not always cloneable.
-        // This functions clones SqlException 
+        // This functions clones SqlException
         // OleDb and Odbc connections are not passing throw this code
             => _resError is SqlException sqlEx ? sqlEx.InternalClone() : _resError;
 
@@ -796,7 +790,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             do
             {
                 bool started = false;
-                
+
                 try
                 {
                     started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
@@ -825,7 +819,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         DbConnectionInternal connection = null;
                         bool timeout = false;
                         Exception caughtException = null;
-                        
+
                         try
                         {
                             ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as Transaction);
@@ -1165,8 +1159,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Debug.Assert(obj != null, "null connection is not expected");
             }
 
-            // When another thread is clearing this pool,  
-            // it will remove all connections in this pool which causes the 
+            // When another thread is clearing this pool,
+            // it will remove all connections in this pool which causes the
             // following assert to fire, which really mucks up stress against
             // checked bits.
 
@@ -1275,7 +1269,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                             }
                                             catch
                                             {
-                                                // Catch all the exceptions occuring during CreateObject so that they 
+                                                // Catch all the exceptions occuring during CreateObject so that they
                                                 // don't emerge as unhandled on the thread pool and don't crash applications
                                                 // The error is handled in CreateObject and surfaced to the caller of the Connection Pool
                                                 // using the ErrorEvent. Hence it is OK to swallow all exceptions here.
@@ -1301,15 +1295,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                     QueuePoolCreateRequest();
                                 }
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
-
                                 // Now that CreateObject can throw, we need to catch the exception and discard it.
-                                // There is no further action we can take beyond tracing.  The error will be 
+                                // There is no further action we can take beyond tracing.  The error will be
                                 // thrown to the user the next time they request a connection.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|CPOOL> {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}", Id, e);
                             }
@@ -1494,14 +1483,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool
         //   that is implemented inside DbConnectionPool. This method's counterpart (PutTransactedObject) should
-        //   only be called from DbConnectionPool.DeactivateObject and thus the plumbing to provide access to 
+        //   only be called from DbConnectionPool.DeactivateObject and thus the plumbing to provide access to
         //   other objects is unnecessary (hence the asymmetry of Ended but no Begin)
         public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
             Debug.Assert(transaction != null, "null transaction?");
             Debug.Assert(transactedObject != null, "null transactedObject?");
 
-            // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.          
+            // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", Id, transaction.GetHashCode(), transactedObject.ObjectID);
 
             // called by the internal connection when it get's told that the
