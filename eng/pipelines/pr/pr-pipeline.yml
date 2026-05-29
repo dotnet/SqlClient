@@ -28,7 +28,7 @@ stages:
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
-      poolName: ${{ parameters.poolName }}
+      poolName: $(PoolNameDefault)
       stageNamePack: ${{ variables.stageNamePack }}
       stageNameSecrets: ${{ variables.stageNameSecrets }}
 
