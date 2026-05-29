@@ -1,0 +1,298 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# =============================================================================
+# sqlclient-kerberos
+# =============================================================================
+# Daily Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
+# Replaces the Classic "Test-SqlClient-Kerberos-Azure" pipeline.
+#
+# Schedule: daily at 07:00 UTC on internal/main.
+#
+# Job breakdown (10 total):
+#   Stage: windows           → 7 jobs  (net462 + net8/9/10 × NativeSNI/ManagedSNI)
+#   Stage: linux             → 3 jobs  (net8, net9, net10 — ManagedSNI only)
+#   Stage: Merge-Code-Coverage → 1 job
+#
+# Shared steps:
+#   Build and test steps are defined in build-and-test-steps.yml and reused
+#   by both stages. Each stage passes its OS-specific build target and the
+#   per-job testFramework matrix variable.
+#
+# Required ADO variable groups (link in pipeline UI):
+#   - kv-sqldrivers-shared    (provides the agent-at-sqldrv-ad secret)
+#
+# Variables defined in this file (no pipeline UI configuration needed):
+#   - KerberosDomain          sqldrv.ad
+#   - KerberosDomainOU        agents
+#   - KerberosDomainUser      agent
+#   - KerberosDomainPassword  $(agent-at-sqldrv-ad) from kv-sqldrivers-shared
+#   - REMOTE_TCP_CONN_STRING  TCP connection string to sqldrv-sql22
+#   - REMOTE_NP_CONN_STRING   Named Pipe connection string to sqldrv-sql22
+# =============================================================================
+
+trigger: none   # Scheduled runs only — no CI trigger
+pr: none        # Not triggered by PRs
+
+schedules:
+  - cron: '0 7 * * *'
+    displayName: Daily run (07:00 UTC)
+    branches:
+      include:
+        - internal/main
+    always: true
+
+name: $(date:yyyyMMdd)$(rev:.r)
+
+variables:
+  # Our Kerberos environment doesn't change often, so we can define these variables here rather than
+  # in the Pipeline UI or in Libraries.
+  - name: KerberosDomain
+    value: sqldrv.ad
+
+  - name: KerberosDomainOU
+    value: agents
+
+  - name: KerberosDomainUser
+    value: agent
+
+  - name: KerberosDomainPassword
+    value: $(agent-at-sqldrv-ad)   # Secret from kv-sqldrivers-shared variable group
+
+  - name: REMOTE_TCP_CONN_STRING
+    value: Data Source=tcp:sqldrv-sql22.sqldrv.ad\sql2022;Initial Catalog=Northwind;Integrated Security=true;Encrypt=false;TrustServerCertificate=true
+
+  - name: REMOTE_NP_CONN_STRING
+    value: Data Source=np:sqldrv-sql22.sqldrv.ad\sql2022;Initial Catalog=Northwind;Integrated Security=true;Encrypt=false;TrustServerCertificate=true
+
+# =============================================================================
+# STAGES
+# =============================================================================
+stages:
+
+  # ===========================================================================
+  # Stage 1 - Windows (7 jobs = net462 + 3 TFs × 2 ManagedSNI)
+  # ===========================================================================
+  - stage: windows
+    displayName: Windows
+    dependsOn: []
+    variables:
+      # KerberosDomainPassword expands at runtime in this stage from the agent-at-sqldrv-ad secret
+      # exposed by this variable group.
+      - group: kv-sqldrivers-shared
+    jobs:
+      - job: windows
+        displayName: Windows
+        timeoutInMinutes: 90
+        workspace:
+          clean: all    # Purge obj/artifacts from prior runs on self-hosted agents
+        strategy:
+          matrix:
+            # Azure Pipelines exposes matrix variables as environment variables for each step.
+            # Do not use the name targetFramework here: MSBuild imports environment variables as
+            # properties, and TargetFramework would leak into dotnet build build.proj, forcing
+            # transitive project references onto an invalid TFM (for example SqlServer.Server -> net9.0).
+            net462_NativeSNI:
+              testFramework: net462
+              managedSNI: 'false'
+            net8_NativeSNI:
+              testFramework: net8.0
+              managedSNI: 'false'
+            net8_ManagedSNI:
+              testFramework: net8.0
+              managedSNI: 'true'
+            net9_NativeSNI:
+              testFramework: net9.0
+              managedSNI: 'false'
+            net9_ManagedSNI:
+              testFramework: net9.0
+              managedSNI: 'true'
+            net10_NativeSNI:
+              testFramework: net10.0
+              managedSNI: 'false'
+            net10_ManagedSNI:
+              testFramework: net10.0
+              managedSNI: 'true'
+        pool:
+          name: ADO-Trusted-Domain-Win-WestUS2
+          demands:
+            - ImageOverride -equals ADO-MMS22-SQL19
+        steps:
+
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            fetchTags: false
+
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+            parameters:
+              runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
+          # --- Update test configuration ---
+          # Uses runtime variables from the matrix ($(managedSNI)) so we use
+          # inline PowerShell instead of the shared config template which
+          # requires compile-time parameters.
+          - pwsh: |
+              $managedSni = [System.Convert]::ToBoolean($env:MANAGED_SNI)
+              $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+              foreach ($p in $jdata) {
+                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
+                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
+                  $p.SupportsIntegratedSecurity = $true
+                  $p.UseManagedSNIOnWindows    = $managedSni
+              }
+              $jdata | ConvertTo-Json | Set-Content "config.json"
+            workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+            displayName: Update test config.json
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+              MANAGED_SNI: $(managedSNI)
+
+          # --- Prepare Windows services ---
+          - powershell: |
+              $svc = Get-Service -Name SQLBrowser -ErrorAction SilentlyContinue
+              if ($null -ne $svc) {
+                  Set-Service -StartupType Automatic SQLBrowser
+                  if ($svc.Status -ne 'Running') { Start-Service SQLBrowser }
+                  Get-Service SQLBrowser | Select-Object Name, StartType, Status
+              }
+            displayName: Start SQL Server Browser
+
+          - powershell: |
+              Set-DtcNetworkSetting -DtcName "Local" `
+                -InboundTransactionsEnabled $true `
+                -OutboundTransactionsEnabled $true `
+                -RemoteClientAccessEnabled $true `
+                -Confirm:$false
+
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC)"      | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC-EPMAP)" | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-Out)"   | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+              Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+            displayName: Enable Network DTC Access
+
+          # --- Build and test ---
+          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+            parameters:
+              buildTarget: BuildSqlClientWindows
+              testFramework: $(testFramework)
+              testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
+              artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
+
+  # ===========================================================================
+  # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
+  # ===========================================================================
+  - stage: linux
+    displayName: Linux
+    dependsOn: []
+    variables:
+      # KerberosDomainPassword expands at runtime in this stage from the agent-at-sqldrv-ad secret
+      # exposed by this variable group.
+      - group: kv-sqldrivers-shared
+    jobs:
+      - job: linux
+        displayName: Linux
+        timeoutInMinutes: 90
+        workspace:
+          clean: all    # Purge leftovers on self-hosted agents to reduce cross-run flakiness
+        strategy:
+          matrix:
+            net8:
+              testFramework: net8.0
+            net9:
+              testFramework: net9.0
+            net10:
+              testFramework: net10.0
+        pool:
+          name: ADO-Trusted-Linux-WestUS2
+          demands:
+            - ImageOverride -equals ADO-UB20-SQL22
+
+        steps:
+
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            fetchTags: false
+
+          # --- Install .NET SDK and runtimes ---
+          - template: /eng/pipelines/steps/install-dotnet.yml@self
+            parameters:
+              runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
+          # --- Update test configuration (with Kerberos credentials) ---
+          - pwsh: |
+              $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+              foreach ($p in $jdata) {
+                  $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
+                  $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
+                  $p.SupportsIntegratedSecurity = $true
+              }
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
+              $jdata | ConvertTo-Json | Set-Content "config.json"
+            workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+            displayName: Update test config.json (Kerberos)
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+              REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
+
+          # --- Kerberos domain join ---
+          - template: /eng/pipelines/kerberos/linux-init-step.yml@self
+            parameters:
+              kerberosDomain: $(KerberosDomain)
+              kerberosDomainOU: $(KerberosDomainOU)
+              kerberosDomainUser: $(KerberosDomainUser)
+              kerberosDomainPassword: $(KerberosDomainPassword)
+
+          # --- Verify SQL connectivity ---
+          - pwsh: |
+              Install-Module -Name SqlServer -Force -Confirm:$false
+              Import-Module SqlServer
+              Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
+            displayName: Verify SQL connectivity
+            env:
+              REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+
+          # --- Build and test ---
+          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+            parameters:
+              buildTarget: BuildSqlClientUnix
+              testFramework: $(testFramework)
+              testRunTitle: Linux-$(testFramework)
+              artifactName: $(testFramework)-linux-$(System.JobId)
+
+          # --- Kerberos cleanup (always runs) ---
+          - template: /eng/pipelines/kerberos/linux-cleanup-step.yml@self
+            parameters:
+              kerberosDomain: $(KerberosDomain)
+              kerberosDomainUser: $(KerberosDomainUser)
+              kerberosDomainPassword: $(KerberosDomainPassword)
+
+  # ===========================================================================
+  # Stage 3 — Merge Code Coverage (1 job)
+  # ===========================================================================
+  - stage: merge
+    displayName: Merge Code Coverage
+    dependsOn:
+      - windows
+      - linux
+    condition: succeeded()
+    jobs:
+      - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
+        parameters:
+          upload: false

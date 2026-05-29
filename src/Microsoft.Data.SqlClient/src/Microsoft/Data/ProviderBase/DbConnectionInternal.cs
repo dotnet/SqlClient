@@ -688,7 +688,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
         {
-            if (!TryOpenConnection(outerConnection, connectionFactory, null, null))
+            if (!TryOpenConnection(outerConnection, connectionFactory, null))
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
             }
@@ -800,8 +800,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             throw ADP.ConnectionAlreadyOpen(State);
         }
@@ -809,8 +808,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             throw ADP.MethodNotImplemented();
         }
@@ -912,8 +910,7 @@ namespace Microsoft.Data.ProviderBase
         protected bool TryOpenConnectionInternal(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TaskCompletionSource<DbConnectionInternal> retry)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
@@ -922,7 +919,7 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, retry, userOptions, this, out openConnection))
+                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, out openConnection))
                     {
                         return false;
                     }
