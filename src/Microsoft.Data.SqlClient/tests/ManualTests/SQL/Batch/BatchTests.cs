@@ -675,6 +675,31 @@ END";
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteReaderAsyncCommandCommandBehaviorSchemaOnlyKeyInfo()
+        {
+            System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            await using (SqlBatch batch = new SqlBatch(conn))
+            {
+                await conn.OpenAsync();
+
+                var cmd = new SqlBatchCommand("SELECT * FROM Categories");
+                cmd.CommandBehavior = CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo;
+                batch.BatchCommands.Add(cmd);
+
+                using var reader = await batch.ExecuteReaderAsync();
+
+                Assert.False(await reader.ReadAsync());
+
+                schema = reader.GetColumnSchema();
+            }
+
+            Assert.Equal(4, schema.Count);
+            Assert.True(schema[0].IsKey);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReaderCommandBehaviorCloseConnection()
         {
             int resultSetCount = 0;

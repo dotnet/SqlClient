@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteReaderAsync(behavior, cancellationToken)
-                .ContinueWith((result) =>
+                .ContinueWith(static (result) =>
                 {
                     if (result.IsFaulted)
                     {
