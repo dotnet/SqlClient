@@ -150,7 +150,6 @@ public class BuildVersionOverrideTests
         string packageCompatibilityDir = GetPackageCompatibilityDirectory();
         string tempProjectDir = Path.Combine(Path.GetTempPath(), $"PackageCompatibilityProject_{Guid.NewGuid():N}");
         string tempOutputDir = Path.Combine(Path.GetTempPath(), $"PackageCompatibility_{Guid.NewGuid():N}");
-        bool preserveTemp = ShouldPreserveTempBuildDirectories();
 
         CopyDirectory(packageCompatibilityDir, tempProjectDir);
 
