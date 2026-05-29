@@ -2,6 +2,8 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.TestCommon</AssemblyName>
     <RootNamespace>Microsoft.Data.SqlClient.TestCommon</RootNamespace>
+
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
