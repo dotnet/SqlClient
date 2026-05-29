@@ -163,13 +163,14 @@ stages:
               isLocalServer: true
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "123"
 
           # TestSqlClientManual - Azure
           - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
-              stageNameSecrets: ${{ parameters.stageNamesecrets }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -186,6 +187,31 @@ stages:
               isLocalServer: false
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "123"
+
+          # TestSqlClientManual - Localhost Always Encrypted
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: "Release"      # AE tests are not stable enough to run in DEBUG mode (as of 5/29/26)
+              buildSuffix: ${{ parameters.buildSuffix }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "localhost_ae"
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: true
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "AE"
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self

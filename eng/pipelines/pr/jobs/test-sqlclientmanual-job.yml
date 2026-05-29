@@ -91,9 +91,13 @@ parameters:
   - name: localDbSharedInstanceName
     type: string
 
+  # Manual test set to execute.
+  - name: testSet
+    type: string
+
 jobs:
-  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.configDisplayName }}_sqlclient_manual"
-    displayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.platformDisplayName }}"
+  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.configDisplayName }}_${{ parameters.testSet }}_sqlclient_manual"
+    displayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.testSet }}_${{ parameters.platformDisplayName }}"
 
     pool:
       name: ${{ parameters.poolName }}
@@ -168,4 +172,5 @@ jobs:
           packageShortName: "SqlClient"
           testFramework: ${{ parameters.platformDotnet }}
           testProject: "Manual"
+          testSet: ${{ parameters.testSet }}
 
