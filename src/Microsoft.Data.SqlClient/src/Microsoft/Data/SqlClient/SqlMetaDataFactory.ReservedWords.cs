@@ -47,7 +47,14 @@ internal sealed partial class SqlMetaDataFactory
             "END", "ERRLVL", "ESCAPE", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXIT", /* "EXTERNAL", */
             "FETCH", "FILE", "FILLFACTOR", "FOR", "FOREIGN", "FREETEXT", "FREETEXTTABLE", "FROM", "FULL",
             "FUNCTION", "GOTO", "GRANT", "GROUP", "HAVING", "HOLDLOCK", "IDENTITY", "IDENTITY_INSERT", "IDENTITYCOL",
-            "IF", "IN", "INDEX", "INNER", "INSERT", "INTERSECT", "INTO", "IS", "JOIN");
+            "IF", "IN", "INDEX", "INNER", "INSERT", "INTERSECT", "INTO", "IS", "JOIN",
+            // @TODO: Missing keyword: MERGE
+            "KEY", "KILL", "LEFT", "LIKE", "LINENO", "LOAD", /* "MERGE", */ "NATIONAL", "NOCHECK",
+            "NONCLUSTERED", "NOT", "NULL", "NULLIF", "OF", "OFF", "OFFSETS", "ON", "OPEN",
+            "OPENDATASOURCE", "OPENQUERY", "OPENROWSET", "OPENXML", "OPTION", "OR", "ORDER", "OUTER", "OVER",
+            // @TODO: Missing keyword: PIVOT
+            "PERCENT", /* "PIVOT", */ "PLAN", "PRECISION", "PRIMARY", "PRINT", "PROC", "PROCEDURE", "PUBLIC",
+            "RAISERROR", "READ", "READTEXT", "RECONFIGURE", "REFERENCES", "REPLICATION", "RESTORE", "RESTRICT", "RETURN");
 
         // Add ODBC reserved keywords.
         AddReservedWords(minVersion: null, maxVersion: null);

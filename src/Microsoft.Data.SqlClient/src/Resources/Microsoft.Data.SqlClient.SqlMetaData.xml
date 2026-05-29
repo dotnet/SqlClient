@@ -582,57 +582,6 @@
   </DataSourceInformationTable>
   <ReservedWordsTable>
     <ReservedWords>
-      <ReservedWord>PERCENT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PLAN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PRECISION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PRIMARY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PRINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PROC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PROCEDURE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PUBLIC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RAISERROR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>READ</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>READTEXT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RECONFIGURE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>REFERENCES</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>REPLICATION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RESTORE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RESTRICT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RETURN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>REVOKE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -678,121 +627,61 @@
       <ReservedWord>STATISTICS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>KEY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>SYSTEM_USER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>KILL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TABLE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>LEFT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TEXTSIZE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LIKE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>THEN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>LINENO</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TO</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LOAD</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TOP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>NATIONAL </ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TRAN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>NOCHECK</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TRANSACTION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>NONCLUSTERED</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TRIGGER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>NOT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TRUNCATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>NULL</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TSEQUAL</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>NULLIF</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>UNION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OF</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>UNIQUE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OFF</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>UPDATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OFFSETS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>UPDATETEXT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ON</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>USE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OPEN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>USER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OPENDATASOURCE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>VALUES</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OPENQUERY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>VARYING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OPENROWSET</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>VIEW</ReservedWord>
@@ -801,37 +690,19 @@
       <ReservedWord>DUMMY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OPENXML</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>WAITFOR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OPTION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>WHEN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>WHERE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ORDER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>WHILE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OUTER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>WITH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OVER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>WRITETEXT</ReservedWord>
