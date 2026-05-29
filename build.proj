@@ -260,6 +260,20 @@
     </SigningKeyPathArgument>
 
     <!--
+      TestSigningKeyPath
+      Applies to:     TestSqlClientUnit
+      Description:    Path to the key used to sign test assemblies. Required in Package mode when
+                      SigningKeyPath is set so that InternalsVisibleTo grants from signed driver
+                      assemblies can be fulfilled.
+      Default value:  [blank]
+      Example:        C:\path\to\sqlclient-test-key.snk
+    -->
+    <TestSigningKeyPath Condition="'$(TestSigningKeyPath)' == ''" />
+    <TestSigningKeyPathArgument Condition="'$(TestSigningKeyPath)' != ''">
+      -p:TestSigningKeyPath="$(TestSigningKeyPath)"
+    </TestSigningKeyPathArgument>
+
+    <!--
       TestBlameTimeout
       Applies to:     Test* targets
       Description:    How long to wait on a test before timing it out. This will be fed to the
@@ -678,10 +692,6 @@
   <!-- TestSqlClientUnit: Runs unit tests for SqlClient -->
   <Target Name="TestSqlClientUnit">
     <PropertyGroup>
-      <!--
-        Note: This test exclusively uses project references, so neither ReferenceType nor any
-            package version arguments are specified in this command.
-      -->
       <LogFilePrefix>SqlClientUnit-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
@@ -692,6 +702,10 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
+        $(ReferenceTypeArgument)
+        $(TestSigningKeyPathArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
@@ -862,7 +876,7 @@
     <PropertyGroup>
       <!--
         Note: This test exclusively uses project references, so neither ReferenceType nor any
-            package version arguments are specified in this command.
+        package version arguments are specified in this command.
       -->
       <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
