@@ -6,12 +6,6 @@
 
 name: $(DayOfYear)$(Rev:rr)
 
-parameters:
-  # Name of the pool to use for jobs that require customized VM images.
-  - name: poolName
-    type: string
-    default: $(PoolNameDefault)
-
 variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
