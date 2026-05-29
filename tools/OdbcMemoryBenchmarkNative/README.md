@@ -44,7 +44,9 @@ OdbcMemoryBenchmark.exe
 | `--batch N` | 100 | Connections per measurement batch |
 | `--encrypt MODE` | Strict | Encryption mode: Strict, Mandatory, Optional |
 | `--driver NAME` | "ODBC Driver 18 for SQL Server" | ODBC driver name |
-| `--no-pooling` | (pooling on) | Disable ODBC Driver Manager connection pooling |
+| `--no-pooling` | (pooling on) | `SQL_CP_OFF` + unique `APP=` per iter — genuine no-pool (fresh handshake every time) |
+| `--mimic-net-odbc` | (off) | `SQL_CP_ONE_PER_HENV` + unique `APP=` per iter — mirrors `System.Data.Odbc`'s behavior |
+| `--unique-connstr` | (off) | `SQL_CP_ONE_PER_DRIVER` + unique `APP=` per iter — default pool mode with unique conn strings (isolation test) |
 | `--csv PATH` | (none) | Append measurements to a CSV file |
 
 ### Examples
@@ -58,6 +60,11 @@ OdbcMemoryBenchmark.exe --connections 10000 --encrypt Mandatory
 
 REM Disable pooling to ensure fresh TLS handshake each time
 OdbcMemoryBenchmark.exe --connections 5000 --encrypt Strict --no-pooling
+
+REM Mirror System.Data.Odbc's pooling behavior to see if its growth
+REM reproduces in native code (proves the growth is DM pool accumulation,
+REM not a driver leak).
+OdbcMemoryBenchmark.exe --connections 5000 --encrypt Strict --mimic-net-odbc
 
 REM Use ODBC Driver 17 for comparison
 OdbcMemoryBenchmark.exe --encrypt Mandatory --driver "ODBC Driver 17 for SQL Server"
@@ -82,3 +89,20 @@ OdbcMemoryBenchmark.exe --encrypt Strict --csv results.csv
 ## Expected Behavior
 
 With `Encrypt=Strict` (TDS 8.0, TLS 1.3), you should observe unbounded native memory growth because SChannel caches TLS 1.3 session tickets without eviction. With `Encrypt=Mandatory` (TDS 7.x, TLS 1.2), memory should remain stable.
+
+## Pooling-mode comparison
+
+| Mode | DM pooling setting | Conn string | Expected behaviour |
+|---|---|---|---|
+| default | `SQL_CP_ONE_PER_DRIVER` | same | DM pool hits after first — minimal native growth |
+| `--unique-connstr` | `SQL_CP_ONE_PER_DRIVER` | unique per iter | Same DM pool mode as default but forces a new pool bucket per iter — isolation test for the "DM pool + unique conn str = growth" hypothesis |
+| `--no-pooling` | `SQL_CP_OFF` | unique per iter | Fresh handshake every iter — driver-bug leaks visible |
+| `--mimic-net-odbc` | `SQL_CP_ONE_PER_HENV` | unique per iter | DM pool accumulates one entry per unique conn string — mirrors `System.Data.Odbc`'s benchmark behaviour |
+
+### Why `--mimic-net-odbc` exists
+
+`System.Data.Odbc`'s [`OdbcEnvironmentHandle` constructor](https://github.com/dotnet/runtime/blob/main/src/libraries/System.Data.Odbc/src/System/Data/Odbc/OdbcEnvironmentHandle.cs) **always** calls `SQLSetEnvAttr(SQL_ATTR_CONNECTION_POOLING, SQL_CP_ONE_PER_HENV)` — there is no off switch. When the .NET ODBC benchmark uses `Pooling=false` + unique `APP=` per iteration, the ADO.NET-level pool is bypassed but the underlying DM pool **still pools** each unique conn string into its own permanent entry. Each entry retains its own SChannel context, certificate chain, and key material.
+
+The `--mimic-net-odbc` flag replicates this exact setup in native code so you can confirm whether the .NET ODBC benchmark's per-iter growth is:
+- a real driver leak (native repro should also leak with this flag), OR
+- benign DM pool accumulation (native repro grows with this flag, but at the same rate as .NET — not a bug).

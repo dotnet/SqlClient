@@ -1,5 +1,6 @@
 using System.Data.Odbc;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 // =============================================================================
 // ODBC Driver Memory Benchmark
@@ -20,6 +21,22 @@ using System.Diagnostics;
 //   dotnet run -c Release -- --connections 10000 --encrypt Strict
 //   dotnet run -c Release -- --connections 5000 --encrypt Mandatory --driver "ODBC Driver 18 for SQL Server"
 //   dotnet run -c Release -- --connections 5000 --encrypt Strict --no-pooling
+//   dotnet run -c Release -- --connections 5000 --encrypt Strict --no-pooling --dm-no-pool
+//
+// --no-pooling disables ADO.NET-level pooling AND appends a unique APP= per
+// iteration. However, System.Data.Odbc unconditionally sets
+// SQL_ATTR_CONNECTION_POOLING = SQL_CP_ONE_PER_HENV on its global env handle,
+// so the ODBC Driver Manager *still* pools connections, accumulating one
+// retained HDBC per unique conn string. Each retained HDBC keeps its SChannel
+// context/cert chain alive on the process heap.
+//
+// --dm-no-pool calls SQLSetEnvAttr(SQL_NULL_HENV, SQL_CP_OFF) BEFORE the first
+// OdbcConnection is constructed. SQL_ATTR_CONNECTION_POOLING is process-wide
+// and must be set on SQL_NULL_HENV before any env handle is allocated; once
+// set, System.Data.Odbc's later SQLSetEnvAttr(thisEnv, SQL_CP_ONE_PER_HENV)
+// becomes a no-op (per docs that attribute is invalid on existing env handles).
+// Combine with --no-pooling for a genuine no-pool .NET test that matches the
+// native C++ --no-pooling baseline.
 // =============================================================================
 
 string? server = Environment.GetEnvironmentVariable("BENCHMARK_SERVER");
@@ -42,6 +59,7 @@ if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullO
     Console.WriteLine("  dotnet run -c Release -- --connections 10000 --encrypt Strict");
     Console.WriteLine("  dotnet run -c Release -- --encrypt Mandatory --driver \"ODBC Driver 18 for SQL Server\"");
     Console.WriteLine("  dotnet run -c Release -- --encrypt Strict --no-pooling");
+    Console.WriteLine("  dotnet run -c Release -- --encrypt Strict --no-pooling --dm-no-pool");
     return;
 }
 
@@ -50,7 +68,29 @@ int batchSize = GetArgValue(args, "--batch", 100);
 string encryptMode = GetArgString(args, "--encrypt", "Strict");
 string driver = GetArgString(args, "--driver", "ODBC Driver 18 for SQL Server");
 bool pooling = !args.Any(a => a.Equals("--no-pooling", StringComparison.OrdinalIgnoreCase));
+bool dmNoPool = args.Any(a => a.Equals("--dm-no-pool", StringComparison.OrdinalIgnoreCase));
 string? csvPath = GetArgString(args, "--csv", null);
+
+// ─── Preempt System.Data.Odbc's hardcoded DM pooling (if requested) ───
+// OdbcEnvironmentHandle ctor in dotnet/runtime calls:
+//     SQLSetEnvAttr(this, SQL_ATTR_CONNECTION_POOLING, SQL_CP_ONE_PER_HENV, ...)
+// with no opt-out. SQL_ATTR_CONNECTION_POOLING is process-wide and must be set
+// on SQL_NULL_HENV BEFORE allocating any env handle. So set SQL_CP_OFF here,
+// before the first OdbcConnection is constructed. The DM remembers our value;
+// System.Data.Odbc's later call on the existing env handle is a no-op per docs.
+if (dmNoPool)
+{
+    short rc = NativeOdbcInterop.SQLSetEnvAttr(
+        IntPtr.Zero,
+        NativeOdbcInterop.SQL_ATTR_CONNECTION_POOLING,
+        new IntPtr(NativeOdbcInterop.SQL_CP_OFF),
+        NativeOdbcInterop.SQL_IS_INTEGER);
+    Console.WriteLine($"[INFO] SQLSetEnvAttr(SQL_NULL_HENV, SQL_CP_OFF) returned {rc} (0=SUCCESS, 1=SUCCESS_WITH_INFO)");
+    if (rc != 0 && rc != 1)
+    {
+        Console.WriteLine("[WARN] DM pooling override may not have taken effect; continuing anyway.");
+    }
+}
 
 // Build ODBC connection string
 // ODBC Driver 18 keywords:
@@ -70,6 +110,7 @@ Console.WriteLine($"Database:        {database}");
 Console.WriteLine($"User:            {user}");
 Console.WriteLine($"Encrypt:         {encryptMode}");
 Console.WriteLine($"Pooling:         {pooling}");
+Console.WriteLine($"DM pool off:     {dmNoPool}");
 Console.WriteLine($"Total conns:     {totalConnections}");
 Console.WriteLine($"Batch size:      {batchSize}");
 Console.WriteLine();
@@ -420,4 +461,23 @@ static string GetArgString(string[] args, string name, string? defaultValue)
         }
     }
     return defaultValue ?? "";
+}
+
+// P/Invoke shims so we can override ODBC Driver Manager pooling BEFORE
+// System.Data.Odbc allocates its global env handle (which hardcodes
+// SQL_CP_ONE_PER_HENV with no opt-out).
+internal static class NativeOdbcInterop
+{
+    public const int SQL_ATTR_CONNECTION_POOLING = 201;
+    public const int SQL_CP_OFF                  = 0;
+    public const int SQL_CP_ONE_PER_DRIVER       = 1;
+    public const int SQL_CP_ONE_PER_HENV         = 2;
+    public const int SQL_IS_INTEGER              = -6;
+
+    [DllImport("odbc32.dll", CallingConvention = CallingConvention.StdCall)]
+    public static extern short SQLSetEnvAttr(
+        IntPtr EnvironmentHandle,
+        int    Attribute,
+        IntPtr Value,
+        int    StringLength);
 }

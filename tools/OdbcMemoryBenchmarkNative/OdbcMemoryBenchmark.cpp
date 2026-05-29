@@ -23,6 +23,15 @@
 //   OdbcMemoryBenchmark.exe --connections 10000 --encrypt Strict
 //   OdbcMemoryBenchmark.exe --connections 5000 --encrypt Mandatory --driver "ODBC Driver 18 for SQL Server"
 //   OdbcMemoryBenchmark.exe --connections 5000 --encrypt Strict --no-pooling
+//   OdbcMemoryBenchmark.exe --connections 5000 --encrypt Strict --mimic-net-odbc
+//
+// Pooling modes:
+//   default              : SQL_CP_ONE_PER_DRIVER + same connection string -> DM pool hits
+//   --no-pooling         : SQL_CP_OFF + unique APP= per iter             -> fresh handshake each iter
+//   --mimic-net-odbc     : SQL_CP_ONE_PER_HENV + unique APP= per iter    -> mirrors System.Data.Odbc
+//                          behavior so we can directly compare to the .NET ODBC bench. Each unique
+//                          connection string accumulates a separate DM pool entry that retains
+//                          its own SChannel context.
 // =============================================================================
 
 #define WIN32_LEAN_AND_MEAN
@@ -222,6 +231,8 @@ int main(int argc, char* argv[])
         printf("  OdbcMemoryBenchmark.exe --connections 10000 --encrypt Strict\n");
         printf("  OdbcMemoryBenchmark.exe --encrypt Mandatory --driver \"ODBC Driver 18 for SQL Server\"\n");
         printf("  OdbcMemoryBenchmark.exe --encrypt Strict --no-pooling\n");
+        printf("  OdbcMemoryBenchmark.exe --encrypt Strict --mimic-net-odbc\n");
+        printf("  OdbcMemoryBenchmark.exe --encrypt Strict --unique-connstr\n");
         return 1;
     }
 
@@ -230,8 +241,41 @@ int main(int argc, char* argv[])
     int batchSize = GetArgInt(argc, argv, "--batch", 100);
     std::string encryptMode = GetArgStr(argc, argv, "--encrypt", "Strict");
     std::string driver = GetArgStr(argc, argv, "--driver", "ODBC Driver 18 for SQL Server");
-    bool pooling = !HasArg(argc, argv, "--no-pooling");
+    bool mimicNetOdbc = HasArg(argc, argv, "--mimic-net-odbc");
+    bool noPooling = HasArg(argc, argv, "--no-pooling");
+    bool forceUniqueConnStr = HasArg(argc, argv, "--unique-connstr");
+    bool pooling = !noPooling;  // legacy display flag
     std::string csvPath = GetArgStr(argc, argv, "--csv", "");
+
+    if (mimicNetOdbc && noPooling)
+    {
+        fprintf(stderr, "[FATAL] --mimic-net-odbc and --no-pooling are mutually exclusive.\n");
+        return 1;
+    }
+
+    // Unique conn string per iter is implied by --no-pooling or --mimic-net-odbc
+    // (defeats pool dedup so each iter takes a fresh code path). --unique-connstr
+    // forces the same behavior on top of default pool mode (SQL_CP_ONE_PER_DRIVER)
+    // for isolation testing.
+    bool useUniqueConnStr = noPooling || mimicNetOdbc || forceUniqueConnStr;
+
+    const char* poolingModeDescription;
+    if (mimicNetOdbc)
+    {
+        poolingModeDescription = "SQL_CP_ONE_PER_HENV + unique conn str (mimics System.Data.Odbc)";
+    }
+    else if (noPooling)
+    {
+        poolingModeDescription = "SQL_CP_OFF + unique conn str (genuine no-pool)";
+    }
+    else if (forceUniqueConnStr)
+    {
+        poolingModeDescription = "SQL_CP_ONE_PER_DRIVER + unique conn str (default pool + unique strings)";
+    }
+    else
+    {
+        poolingModeDescription = "SQL_CP_ONE_PER_DRIVER + same conn str (default; pool hits)";
+    }
 
     // Build connection string
     std::string connectionString = BuildConnectionString(driver, server, database, user, password, encryptMode);
@@ -242,7 +286,7 @@ int main(int argc, char* argv[])
     printf("Database:        %s\n", database.c_str());
     printf("User:            %s\n", user.c_str());
     printf("Encrypt:         %s\n", encryptMode.c_str());
-    printf("Pooling:         %s\n", pooling ? "true" : "false");
+    printf("Pooling mode:    %s\n", poolingModeDescription);
     printf("Total conns:     %d\n", totalConnections);
     printf("Batch size:      %d\n", batchSize);
     printf("\n");
@@ -250,25 +294,40 @@ int main(int argc, char* argv[])
     printf("  %s\n", SanitizeConnectionString(connectionString, password).c_str());
     printf("\n");
 
-    // ─── Disable ODBC Driver Manager pooling if --no-pooling ───
+    // ─── Configure ODBC Driver Manager pooling ───
+    // This MUST happen before allocating any environment handle. The value
+    // affects every env handle subsequently allocated in the process.
+    //
+    //   SQL_CP_OFF             - no DM pooling at all
+    //   SQL_CP_ONE_PER_DRIVER  - one pool per driver DLL (typical apps)
+    //   SQL_CP_ONE_PER_HENV    - one pool per env handle (what System.Data.Odbc uses)
     SQLHENV hEnv = SQL_NULL_HENV;
     SQLRETURN ret;
 
-    // Set pooling BEFORE allocating the environment handle
-    if (!pooling)
+    SQLPOINTER poolingAttr;
+    const char* poolingAttrName;
+    if (mimicNetOdbc)
     {
-        ret = SQLSetEnvAttr(SQL_NULL_HENV, SQL_ATTR_CONNECTION_POOLING,
-            (SQLPOINTER)SQL_CP_OFF, SQL_IS_INTEGER);
-        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
-        {
-            fprintf(stderr, "[WARN] Failed to disable connection pooling at driver-manager level.\n");
-        }
+        poolingAttr = (SQLPOINTER)SQL_CP_ONE_PER_HENV;
+        poolingAttrName = "SQL_CP_ONE_PER_HENV";
+    }
+    else if (noPooling)
+    {
+        poolingAttr = (SQLPOINTER)SQL_CP_OFF;
+        poolingAttrName = "SQL_CP_OFF";
     }
     else
     {
-        // Enable driver-manager pooling (default behavior)
-        ret = SQLSetEnvAttr(SQL_NULL_HENV, SQL_ATTR_CONNECTION_POOLING,
-            (SQLPOINTER)SQL_CP_ONE_PER_DRIVER, SQL_IS_INTEGER);
+        poolingAttr = (SQLPOINTER)SQL_CP_ONE_PER_DRIVER;
+        poolingAttrName = "SQL_CP_ONE_PER_DRIVER";
+    }
+
+    ret = SQLSetEnvAttr(SQL_NULL_HENV, SQL_ATTR_CONNECTION_POOLING,
+        poolingAttr, SQL_IS_INTEGER);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+    {
+        fprintf(stderr, "[WARN] SQLSetEnvAttr(SQL_ATTR_CONNECTION_POOLING, %s) failed.\n",
+            poolingAttrName);
     }
 
     // Allocate environment handle
@@ -465,9 +524,14 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            // To defeat pooling, append a unique APP= value
+            // To defeat pooling-by-conn-string-match, append a unique APP= value.
+            // - In --no-pooling mode this is belt-and-suspenders on top of SQL_CP_OFF.
+            // - In --mimic-net-odbc mode DM pooling is ON; the unique conn string
+            //   forces each iter to register a new DM pool entry that retains its
+            //   own SChannel context. This mirrors the .NET OdbcMemoryBenchmark
+            //   --no-pooling path, which is the same trick.
             std::string connStr = connectionString;
-            if (!pooling)
+            if (useUniqueConnStr)
             {
                 connStr += "APP=bench_" + std::to_string(connectionsDone + i) + ";";
             }
@@ -522,7 +586,7 @@ int main(int argc, char* argv[])
             csvFile << GetCurrentTimestamp() << ","
                 << driver << ","
                 << encryptMode << ","
-                << (pooling ? "true" : "false") << ","
+                << poolingAttrName << ","
                 << connectionsDone << ","
                 << std::fixed << std::setprecision(2)
                 << currentPrivate / (1024.0 * 1024.0) << ","
@@ -545,7 +609,7 @@ int main(int argc, char* argv[])
     printf("===========================================================================\n");
     printf("Driver:                %s\n", driver.c_str());
     printf("Encrypt mode:          %s\n", encryptMode.c_str());
-    printf("Pooling:               %s\n", pooling ? "true" : "false");
+    printf("Pooling mode:          %s\n", poolingModeDescription);
     printf("Total connections:     %d\n", connectionsDone);
     printf("Connection errors:     %d\n", errors);
     printf("\n");

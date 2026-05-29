@@ -283,6 +283,7 @@ internal static class NativeMemoryLeakDetector
         string encryptMode = GetArgString(args, "--encrypt", "Strict");
         bool pooling = !args.Any(a => a.Equals("--no-pooling", StringComparison.OrdinalIgnoreCase));
         bool useManagedSni = args.Any(a => a.Equals("--managed-sni", StringComparison.OrdinalIgnoreCase));
+        bool uniqueConnStr = args.Any(a => a.Equals("--unique-connstr", StringComparison.OrdinalIgnoreCase));
         string? csvPath = GetArgString(args, "--csv", null);
 
         // Force managed SNI if requested (bypasses SChannel entirely)
@@ -338,6 +339,7 @@ internal static class NativeMemoryLeakDetector
         Console.WriteLine($"User:            {user}");
         Console.WriteLine($"Encrypt:         {encryptMode}");
         Console.WriteLine($"Pooling:         {pooling}");
+        Console.WriteLine($"Unique connstr:  {uniqueConnStr}");
         Console.WriteLine($"Total conns:     {totalConnections}");
         Console.WriteLine($"Batch size:      {batchSize}");
         Console.WriteLine($"Authentication:  SqlPassword");
@@ -408,7 +410,16 @@ internal static class NativeMemoryLeakDetector
             {
                 try
                 {
-                    using var connection = new SqlConnection(connectionString);
+                    // When --unique-connstr is set, vary ApplicationName per iteration
+                    // so SqlClient's pool sees each connection as a distinct pool group.
+                    // This isolates whether the leak is per-fresh-handshake (will leak
+                    // either way) vs. per-retained-pool-entry (would only leak here when
+                    // pooling is also true).
+                    string iterConnStr = uniqueConnStr
+                        ? $"{connectionString};Application Name=bench_{connectionsDone + i}"
+                        : connectionString;
+
+                    using var connection = new SqlConnection(iterConnStr);
                     await connection.OpenAsync();
                     using var cmd = connection.CreateCommand();
                     cmd.CommandText = "SELECT 1";
