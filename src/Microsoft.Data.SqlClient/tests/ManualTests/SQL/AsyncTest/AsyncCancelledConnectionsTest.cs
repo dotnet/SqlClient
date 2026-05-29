@@ -25,7 +25,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private Random _random;
 
         // Disabled on Azure since this test fails on concurrent runs on same database.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        // Disabled on Kerberos and Managed Instance pipelines due to environment-specific instability.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotManagedInstance),
+            nameof(DataTestUtility.IsNotKerberosTest))]
         [InlineData(true)]
         [InlineData(false)]
         public async Task CancelAsyncConnections(bool useMars)
