@@ -4,8 +4,6 @@
 
 using System;
 using System.Data.Common;
-using System.Reflection;
-using System.Threading;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
@@ -72,48 +70,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
         }
 
-        private static Timer? GetPruningTimer(ChannelDbConnectionPool pool)
-        {
-            return (Timer?)typeof(ChannelDbConnectionPool)
-                .GetField("_pruningTimer", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(pool);
-        }
-
-        private static bool GetPruningTimerEnabled(ChannelDbConnectionPool pool)
-        {
-            return (bool)typeof(ChannelDbConnectionPool)
-                .GetField("_pruningTimerEnabled", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(pool)!;
-        }
-
-        private static int GetPruningSampleIndex(ChannelDbConnectionPool pool)
-        {
-            return (int)typeof(ChannelDbConnectionPool)
-                .GetField("_pruningSampleIndex", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(pool)!;
-        }
-
-        private static int GetPruningSampleSize(ChannelDbConnectionPool pool)
-        {
-            return (int)typeof(ChannelDbConnectionPool)
-                .GetField("_pruningSampleSize", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(pool)!;
-        }
-
-        private static void InvokePruneIdleConnections(ChannelDbConnectionPool pool)
-        {
-            typeof(ChannelDbConnectionPool)
-                .GetMethod("PruneIdleConnections", BindingFlags.NonPublic | BindingFlags.Static)!
-                .Invoke(null, new object[] { pool });
-        }
-
-        private static void InvokeUpdatePruningTimer(ChannelDbConnectionPool pool)
-        {
-            typeof(ChannelDbConnectionPool)
-                .GetMethod("UpdatePruningTimer", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .Invoke(pool, null);
-        }
-
         #endregion
 
         #region Timer Creation / Configuration Tests
@@ -124,7 +80,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // When min < max, the pool can shrink so a pruning timer should be created.
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
 
-            Assert.NotNull(GetPruningTimer(pool));
+            Assert.True(pool.HasPruningTimer);
         }
 
         [Fact]
@@ -133,7 +89,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // When min == max, the pool is fixed-size — pruning would never activate.
             var pool = ConstructPool(minPoolSize: 10, maxPoolSize: 10);
 
-            Assert.Null(GetPruningTimer(pool));
+            Assert.False(pool.HasPruningTimer);
         }
 
         [Fact]
@@ -142,7 +98,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Timer should be created but not armed (pool starts empty, below MinPoolSize threshold).
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
 
-            Assert.False(GetPruningTimerEnabled(pool));
+            Assert.False(pool.IsPruningTimerEnabled);
         }
 
         [Theory]
@@ -155,7 +111,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: loadBalanceTimeout);
 
-            Assert.Equal(expectedSampleSize, GetPruningSampleSize(pool));
+            Assert.Equal(expectedSampleSize, pool.PruningSampleSize);
         }
 
         [Fact]
@@ -164,7 +120,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // When LoadBalanceTimeout is 0, use DefaultLifetimeWindowSeconds (300) / 10 = 30 samples
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 0);
 
-            Assert.Equal(30, GetPruningSampleSize(pool));
+            Assert.Equal(30, pool.PruningSampleSize);
+        }
+
+        [Fact]
+        public void Constructor_LargeLoadBalanceTimeout_ClampedToMaxPruningSampleSize()
+        {
+            // A very large LoadBalanceTimeout should be clamped to MaxPruningSampleSize (300)
+            // to prevent excessive memory allocation. 10000 / 10 = 1000, clamped to 300.
+            var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 10000);
+
+            Assert.Equal(300, pool.PruningSampleSize);
         }
 
         #endregion
@@ -177,14 +143,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 2, maxPoolSize: 10);
 
             // Pool starts empty, timer should be disabled
-            Assert.False(GetPruningTimerEnabled(pool));
+            Assert.False(pool.IsPruningTimerEnabled);
 
             // Add connections to grow beyond MinPoolSize
             FillPoolWithIdleConnections(pool, 3);
 
             // After growing beyond min, UpdatePruningTimer is called internally
             // and should enable the timer.
-            Assert.True(GetPruningTimerEnabled(pool));
+            Assert.True(pool.IsPruningTimerEnabled);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -196,7 +164,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             FillPoolWithIdleConnections(pool, 2);
 
             // Timer should stay disabled since we're at (not above) MinPoolSize
-            Assert.False(GetPruningTimerEnabled(pool));
+            Assert.False(pool.IsPruningTimerEnabled);
         }
 
         [Fact]
@@ -206,21 +174,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Grow the pool to enable the timer
             FillPoolWithIdleConnections(pool, 3);
-            Assert.True(GetPruningTimerEnabled(pool));
+            Assert.True(pool.IsPruningTimerEnabled);
 
             // Now prune all connections back to 0 (MinPoolSize)
             // Simulate by calling PruneIdleConnections enough times to fill the sample buffer
             // and then let it prune.
-            int sampleSize = GetPruningSampleSize(pool);
+            int sampleSize = pool.PruningSampleSize;
             for (int i = 0; i < sampleSize; i++)
             {
-                InvokePruneIdleConnections(pool);
+                ChannelDbConnectionPool.PruneIdleConnections(pool);
             }
 
             // After pruning removed connections back to MinPoolSize, UpdatePruningTimer
             // should have disabled the timer.
-            Assert.False(GetPruningTimerEnabled(pool));
-            Assert.Equal(0, GetPruningSampleIndex(pool));
+            Assert.False(pool.IsPruningTimerEnabled);
+            Assert.Equal(0, pool.PruningSampleIndex);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -230,9 +200,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 5, maxPoolSize: 5);
 
             // UpdatePruningTimer should return without error (null timer guard)
-            InvokeUpdatePruningTimer(pool);
+            pool.UpdatePruningTimer();
 
-            Assert.Null(GetPruningTimer(pool));
+            Assert.False(pool.HasPruningTimer);
         }
 
         #endregion
@@ -250,11 +220,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             int initialCount = pool.Count;
 
             // First invocation: records idle count in sample[0], buffer not full
-            InvokePruneIdleConnections(pool);
+            ChannelDbConnectionPool.PruneIdleConnections(pool);
 
             // No connections should be pruned yet
             Assert.Equal(initialCount, pool.Count);
-            Assert.Equal(1, GetPruningSampleIndex(pool));
+            Assert.Equal(1, pool.PruningSampleIndex);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -268,11 +240,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(10, pool.Count);
 
             // Fill sample buffer and trigger pruning
-            InvokePruneIdleConnections(pool); // sample 1
-            InvokePruneIdleConnections(pool); // sample 2 → prune
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 1
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 2 → prune
 
             // Pool should not drop below MinPoolSize (5)
             Assert.True(pool.Count >= 5, $"Pool count {pool.Count} dropped below MinPoolSize 5");
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -281,10 +255,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 20);
 
             // Pool starts empty, timer is disabled. Calling prune should be a no-op.
-            InvokePruneIdleConnections(pool);
+            ChannelDbConnectionPool.PruneIdleConnections(pool);
 
             Assert.Equal(0, pool.Count);
-            Assert.Equal(0, GetPruningSampleIndex(pool));
+            Assert.Equal(0, pool.PruningSampleIndex);
         }
 
         [Fact]
@@ -297,11 +271,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             FillPoolWithIdleConnections(pool, 5);
 
             // Fill sample buffer and trigger pruning
-            InvokePruneIdleConnections(pool); // sample index → 1
-            InvokePruneIdleConnections(pool); // buffer full, prune, reset index → 0
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample index → 1
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // buffer full, prune, reset index → 0
 
             // After pruning, sample index should be reset to 0
-            Assert.Equal(0, GetPruningSampleIndex(pool));
+            Assert.Equal(0, pool.PruningSampleIndex);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -326,11 +302,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(10, pool.Count);
 
             // Fill sample buffer and trigger pruning
-            InvokePruneIdleConnections(pool); // sample 1 (idle count = 5)
-            InvokePruneIdleConnections(pool); // sample 2 → prune
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 1 (idle count = 5)
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 2 → prune
 
             // In-use connections must not be removed. Pool count >= 5 (the in-use ones).
             Assert.True(pool.Count >= 5, $"In-use connections were pruned. Count: {pool.Count}");
+
+            pool.Shutdown();
         }
 
         #endregion
@@ -341,18 +319,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Shutdown_DisposesPruningTimer()
         {
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
-            var timer = GetPruningTimer(pool);
-            Assert.NotNull(timer);
+            Assert.True(pool.HasPruningTimer);
 
             // Enable the timer by growing the pool beyond MinPoolSize
             FillPoolWithIdleConnections(pool, 3);
-            Assert.True(GetPruningTimerEnabled(pool));
+            Assert.True(pool.IsPruningTimerEnabled);
 
             pool.Shutdown();
 
             Assert.Equal(ShuttingDown, pool.State);
             // After shutdown, the timer-enabled flag must be cleared.
-            Assert.False(GetPruningTimerEnabled(pool));
+            Assert.False(pool.IsPruningTimerEnabled);
         }
 
         [Fact]
@@ -360,7 +337,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Fixed-size pool has no timer
             var pool = ConstructPool(minPoolSize: 5, maxPoolSize: 5);
-            Assert.Null(GetPruningTimer(pool));
+            Assert.False(pool.HasPruningTimer);
 
             // Should not throw
             pool.Shutdown();
@@ -381,9 +358,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(15, 10, 2)] // ceil(15/10) = 2
         public void DivideRoundingUp_ReturnsCorrectCeiling(int value, int divisor, int expected)
         {
-            var result = (int)typeof(ChannelDbConnectionPool)
-                .GetMethod("DivideRoundingUp", BindingFlags.NonPublic | BindingFlags.Static)!
-                .Invoke(null, new object[] { value, divisor })!;
+            int result = ChannelDbConnectionPool.DivideRoundingUp(value, divisor);
 
             Assert.Equal(expected, result);
         }
@@ -408,11 +383,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Pruning samples will both record idle=20, so toPrune=20.
             // But pruning loop is bounded by pool.Count > MinPoolSize (0).
-            InvokePruneIdleConnections(pool); // sample 1
-            InvokePruneIdleConnections(pool); // sample 2 → prune
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 1
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 2 → prune
 
             // Pool should be reduced significantly
             Assert.True(pool.Count < 20, $"Pool was not pruned. Count: {pool.Count}");
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -429,10 +406,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(5, pool.Count);
 
             // Timer is not enabled because pool hasn't grown beyond MinPoolSize
-            Assert.False(GetPruningTimerEnabled(pool));
+            Assert.False(pool.IsPruningTimerEnabled);
 
             // Even if we call prune directly, the guard (_pruningTimerEnabled=false) prevents action
-            InvokePruneIdleConnections(pool);
+            ChannelDbConnectionPool.PruneIdleConnections(pool);
             Assert.Equal(5, pool.Count);
         }
 
@@ -457,10 +434,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 busyOwners[i] = new SqlConnection();
                 pool.TryGetConnection(busyOwners[i], null, out busyConns[i]);
             }
-            InvokePruneIdleConnections(pool); // sample[0] = 2 idle
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample[0] = 2 idle
 
             // Sample 2: 2 idle (still high demand)
-            InvokePruneIdleConnections(pool); // sample[1] = 2 idle
+            ChannelDbConnectionPool.PruneIdleConnections(pool); // sample[1] = 2 idle
 
             // Now return all busy connections, creating a brief lull (10 idle)
             for (int i = 0; i < 8; i++)
@@ -470,13 +447,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Sample 3: 10 idle (lull). Buffer full → sorted=[2,2,10], median at index 1 = 2.
             int countBefore = pool.Count;
-            InvokePruneIdleConnections(pool);
+            ChannelDbConnectionPool.PruneIdleConnections(pool);
 
             // Pruning should only remove 2 connections (the median), not 10 (the current idle count).
             // This verifies that sampling prevents aggressive pruning during brief lulls.
             int pruned = countBefore - pool.Count;
             Assert.True(pruned <= 2, $"Pruning was too aggressive: pruned {pruned} connections, " +
                                      $"expected at most 2 (median). Count before={countBefore}, after={pool.Count}");
+
+            pool.Shutdown();
         }
 
         #endregion

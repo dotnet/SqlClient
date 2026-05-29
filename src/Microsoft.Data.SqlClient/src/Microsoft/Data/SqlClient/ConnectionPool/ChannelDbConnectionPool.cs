@@ -148,6 +148,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private int _pruningSampleIndex;
         #endregion
+
+        #region Internal test surface
+        /// <summary>Whether the pruning timer is currently armed. Exposed for unit tests.</summary>
+        internal bool IsPruningTimerEnabled => _pruningTimerEnabled;
+
+        /// <summary>Current write position in the sample buffer. Exposed for unit tests.</summary>
+        internal int PruningSampleIndex => _pruningSampleIndex;
+
+        /// <summary>Total number of samples collected per pruning window. Exposed for unit tests.</summary>
+        internal int PruningSampleSize => _pruningSampleSize;
+
+        /// <summary>Whether a pruning timer was allocated (false for fixed-size pools). Exposed for unit tests.</summary>
+        internal bool HasPruningTimer => _pruningTimer != null;
+        #endregion
         #endregion
 
         /// <summary>
@@ -753,7 +767,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Enables or disables the pruning timer based on the current pool size relative to MinPoolSize.
         /// Called after connections are opened or closed.
         /// </summary>
-        private void UpdatePruningTimer()
+        internal void UpdatePruningTimer()
         {
             if (_pruningTimer is null || !IsRunning)
             {
@@ -790,7 +804,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Timer callback that samples the idle count and, once enough samples are collected,
         /// prunes idle connections based on the median of recent samples.
         /// </summary>
-        private static void PruneIdleConnections(object? state)
+        internal static void PruneIdleConnections(object? state)
         {
             var pool = (ChannelDbConnectionPool)state!;
             int[] samples = pool._pruningSamples;
@@ -840,7 +854,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private static int DivideRoundingUp(int value, int divisor) => 1 + (value - 1) / divisor;
+        internal static int DivideRoundingUp(int value, int divisor) => 1 + (value - 1) / divisor;
         #endregion
     }
 }
