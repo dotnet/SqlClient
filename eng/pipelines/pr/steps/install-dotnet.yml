@@ -20,7 +20,7 @@ parameters:
 steps:
   - template: /eng/pipelines/common/steps/install-dotnet.yml@self
     parameters:
-      ${{ if and(not(eq(parameters.runtimeVersion, ''), not(contains(parameters.runtimeVersion, 'net4'))) }}:
+      ${{ if and( not(eq(parameters.runtimeVersion, '' )), not(contains(parameters.runtimeVersion, 'net4')) ) }}:
         runtimes:
           - "${{ replace(parameters.runtimeVersion, 'net', '') }}.x"
 
