@@ -64,6 +64,11 @@ safe-outputs:
   remove-labels:
     allowed: ["Auto-Triage: Waiting for Author"]
     max: 1
+  # Silently skip noop runs (e.g. random author comment with no new env info).
+  # Without this, gh-aw auto-creates a tracking issue "[aw] No-Op Runs" and
+  # appends a comment to it for every noop.
+  noop:
+    report-as-issue: false
 ---
 
 # SqlClient Issue Auto-Triage
