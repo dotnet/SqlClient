@@ -79,11 +79,15 @@ jobs:
           runtimeVersion: ${{ parameters.platformDotnet }}
 
       # Execute the test target
-      - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          buildSuffix: ${{ parameters.buildSuffix }}
-
-          packageShortName: ${{ parameters.packageShortName }}
-          testFramework: ${{ parameters.platformDotnet }}
-          testProject: ${{ parameters.testProject }}
+      - task: DotNetCoreCLI@2
+        displayName: 'build.proj - Test${{ parameters.packageShortName }}${{ parameters.testProject }}'
+        inputs:
+          command: build
+          projects: build.proj
+          verbosity: detailed
+          arguments: >-
+            -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:BuildNumber='$(Build.BuildNumber)'
+            -p:BuildSuffix='${{ parameters.buildSuffix }}'
+            -p:TestFramework=${{ parameters.testFramework }}

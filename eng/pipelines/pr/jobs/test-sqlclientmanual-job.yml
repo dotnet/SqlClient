@@ -164,13 +164,17 @@ jobs:
         displayName: 'Generate manual test config'
 
       # Execute TestSqlClientManual target from build.proj
-      - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          buildSuffix: ${{ parameters.buildSuffix }}
-
-          packageShortName: "SqlClient"
-          testFramework: ${{ parameters.platformDotnet }}
-          testProject: "Manual"
-          testSet: ${{ parameters.testSet }}
+      - task: DotNetCoreCLI@2
+        displayName: 'build.proj: Test${{ parameters.packageShortName }}${{ parameters.testProject }} ${{ parameters.testSet }}'
+        inputs:
+          command: build
+          projects: build.proj
+          verbosity: detailed
+          arguments: >-
+            -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:BuildNumber='$(Build.BuildNumber)'
+            -p:BuildSuffix='${{ parameters.buildSuffix }}'
+            -p:TestFramework=${{ parameters.testFramework }}
+            -p:TestSet=${{ parameters.testSet }}
 
