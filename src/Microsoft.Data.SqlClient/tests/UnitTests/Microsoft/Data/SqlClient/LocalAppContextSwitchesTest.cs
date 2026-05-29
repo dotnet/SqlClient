@@ -29,7 +29,6 @@ public class LocalAppContextSwitchesTest
 
         switchesHelper.EnableMultiSubnetFailoverByDefault = null;
         switchesHelper.IgnoreServerProvidedFailoverPartner = null;
-        switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
         switchesHelper.LegacyRowVersionNullBehavior = null;
         switchesHelper.LegacyVarTimeZeroScaleBehaviour = null;
         switchesHelper.MakeReadAsyncBlocking = null;
