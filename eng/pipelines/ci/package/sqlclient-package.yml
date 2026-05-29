@@ -121,6 +121,9 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
+      # Restore dotnet local tools (pwsh, apicompat, etc.).
+      - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
       # Clean any pre-existing .nupkg / .snupkg files from the packages/ directory
       # to ensure we only publish packages produced by this run.
       - pwsh: |
