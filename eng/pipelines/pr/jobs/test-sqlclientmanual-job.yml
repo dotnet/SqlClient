@@ -165,13 +165,13 @@ jobs:
 
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
-        displayName: 'build.proj: Test${{ parameters.packageShortName }}${{ parameters.testProject }} ${{ parameters.testSet }}'
+        displayName: 'build.proj: TestSqlClientManual ${{ parameters.testSet }}'
         inputs:
           command: build
           projects: build.proj
           verbosity: detailed
           arguments: >-
-            -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
+            -t:TestSqlClientManual
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:BuildNumber='$(Build.BuildNumber)'
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
