@@ -2226,16 +2226,26 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
         {
+            // Create a single TimeoutTimer that represents the overall connection-open budget for this
+            // attempt. The timer is threaded through every layer (inner connection state transitions,
+            // connection factory, pool wait, physical connection establishment) so that all of those
+            // costs are charged against the same budget. This prevents the cumulative wait from exceeding
+            // the configured ConnectTimeout. A fresh timer is created per TryOpen call so that each
+            // retry attempt gets its own budget, matching the existing behavior.
+            // Note: TimeoutTimer treats 0 seconds as infinite timeout, which matches ConnectTimeout=0 semantics.
+            TimeoutTimer timeout = TimeoutTimer.StartNew(
+                TimeSpan.FromSeconds(ConnectionOptions?.ConnectTimeout ?? ADP.DefaultConnectionTimeout));
+
             if (ForceNewConnection)
             {
-                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry))
+                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, timeout))
                 {
                     return false;
                 }
             }
             else
             {
-                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry))
+                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, timeout))
                 {
                     return false;
                 }
@@ -2735,6 +2745,7 @@ namespace Microsoft.Data.SqlClient
                 con = new SqlConnectionInternal(
                     identity: null,
                     connectionOptions,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout)),
                     credential,
                     providerInfo: null,
                     newPassword,
