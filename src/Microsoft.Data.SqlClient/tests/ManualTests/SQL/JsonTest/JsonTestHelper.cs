@@ -73,6 +73,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                     }
                     return !arrB.MoveNext();
 
+                case JsonValueKind.String:
+                    return a.GetString() == b.GetString();
+
                 default:
                     return a.GetRawText() == b.GetRawText();
             }
