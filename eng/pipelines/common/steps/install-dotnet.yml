@@ -90,7 +90,7 @@ steps:
       inputs:
         targetType: filePath
         pwsh: true
-        filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
+        filePath: $(Build.SourcesDirectory)/eng/pipelines/common/steps/install-dotnet-arm64.ps1
         # Arguments:
         #
         # -Debug:
