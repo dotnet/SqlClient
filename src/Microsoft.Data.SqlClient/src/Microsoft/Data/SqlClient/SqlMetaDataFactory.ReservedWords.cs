@@ -54,7 +54,20 @@ internal sealed partial class SqlMetaDataFactory
             "OPENDATASOURCE", "OPENQUERY", "OPENROWSET", "OPENXML", "OPTION", "OR", "ORDER", "OUTER", "OVER",
             // @TODO: Missing keyword: PIVOT
             "PERCENT", /* "PIVOT", */ "PLAN", "PRECISION", "PRIMARY", "PRINT", "PROC", "PROCEDURE", "PUBLIC",
-            "RAISERROR", "READ", "READTEXT", "RECONFIGURE", "REFERENCES", "REPLICATION", "RESTORE", "RESTRICT", "RETURN");
+            "RAISERROR", "READ", "READTEXT", "RECONFIGURE", "REFERENCES", "REPLICATION", "RESTORE", "RESTRICT", "RETURN",
+            // @TODO: Missing keyword: REVERT
+            /* "REVERT", */ "REVOKE", "RIGHT", "ROLLBACK", "ROWCOUNT", "ROWGUIDCOL", "RULE", "SAVE", "SCHEMA",
+            // @TODO: Missing keywords: SECURITYAUDIT, SEMANTICKEYPHRASETABLE, SEMANTICSIMILARITYDETAILSTABLE
+            /* "SECURITYAUDIT", */ "SELECT", /* "SEMANTICKEYPHRASETABLE", "SEMANTICSIMILARITYDETAILSTABLE", */
+            // @TODO: Missing keyword: SEMANTICSIMILARITYTABLE
+            /* "SEMANTICSIMILARITYTABLE", */ "SESSION_USER", "SET", "SETUSER", "SHUTDOWN",
+            // @TODO: Missing keyword: TABLESAMPLE
+            "SOME", "STATISTICS", "SYSTEM_USER", "TABLE", /* "TABLESAMPLE", */ "TEXTSIZE", "THEN", "TO", "TOP",
+            // @TODO: Missing keywords: TRY_CONVERT, UNPIVOT
+            "TRAN", "TRANSACTION", "TRIGGER", "TRUNCATE", /* "TRY_CONVERT", */ "TSEQUAL", "UNION", "UNIQUE", /* "UNPIVOT", */
+            "UPDATE", "UPDATETEXT", "USE", "USER", "VALUES", "VARYING", "VIEW", "WAITFOR", "WHEN",
+            // @TODO: Missing keyword: WITHIN GROUP
+            "WHERE", "WHILE", "WITH", /* "WITHIN GROUP", */ "WRITETEXT");
 
         // Add ODBC reserved keywords.
         AddReservedWords(minVersion: null, maxVersion: null);
