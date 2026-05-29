@@ -175,6 +175,6 @@ jobs:
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:BuildNumber='$(Build.BuildNumber)'
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
-            -p:TestFramework=${{ parameters.testFramework }}
+            -p:TestFramework=${{ parameters.platformDotnet }}
             -p:TestSet=${{ parameters.testSet }}
 
