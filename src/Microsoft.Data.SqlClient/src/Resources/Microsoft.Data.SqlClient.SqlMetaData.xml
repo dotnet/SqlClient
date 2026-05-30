@@ -585,16 +585,7 @@
       <ReservedWord>DUMMY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ABSOLUTE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>FOUND</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>PRESERVE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ACTION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>FREE</ReservedWord>
@@ -615,16 +606,10 @@
       <ReservedWord>AFTER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>GET</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>READS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>AGGREGATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>GLOBAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>REAL</ReservedWord>
@@ -633,22 +618,13 @@
       <ReservedWord>ALIAS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>GO</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>RECURSIVE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ALLOCATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>GROUPING</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>REF</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ARE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>HOST</ReservedWord>
@@ -666,16 +642,10 @@
       <ReservedWord>RELATIVE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ASSERTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>IGNORE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RESULT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>AT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>IMMEDIATE</ReservedWord>
@@ -702,9 +672,6 @@
       <ReservedWord>ROLLUP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BIT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>INITIALLY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -727,9 +694,6 @@
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>ROWS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BOTH</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>INT</ReservedWord>
@@ -756,16 +720,10 @@
       <ReservedWord>SCOPE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CASCADED</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>ISOLATION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SEARCH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CAST</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>ITERATE</ReservedWord>
@@ -774,25 +732,16 @@
       <ReservedWord>SECOND</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CATALOG</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LANGUAGE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SECTION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CHAR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LARGE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SEQUENCE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CHARACTER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LAST</ReservedWord>
@@ -819,9 +768,6 @@
       <ReservedWord>SIZE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>COLLATION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LESS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -837,25 +783,16 @@
       <ReservedWord>SPACE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CONNECT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LIMIT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SPECIFIC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CONNECTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LOCAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SPECIFICTYPE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CONSTRAINTS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LOCALTIME</ReservedWord>
@@ -871,9 +808,6 @@
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SQLEXCEPTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CORRESPONDING</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LOCATOR</ReservedWord>
@@ -927,16 +861,10 @@
       <ReservedWord>STATIC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>MODULE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>STRUCTURE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DAY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>MONTH</ReservedWord>
@@ -954,25 +882,16 @@
       <ReservedWord>TERMINATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DECIMAL</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NATURAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>THAN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DEFERRABLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NCHAR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TIME</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DEFERRED</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>NCLOB</ReservedWord>
@@ -999,16 +918,10 @@
       <ReservedWord>TIMEZONE_MINUTE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DESCRIBE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NO</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TRAILING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DESCRIPTOR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>NONE</ReservedWord>
@@ -1053,25 +966,16 @@
       <ReservedWord>UNKNOWN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DIAGNOSTICS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>OPERATION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>UNNEST</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DISCONNECT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>ORDINALITY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>USAGE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DOMAIN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>OUT</ReservedWord>
@@ -1098,9 +1002,6 @@
       <ReservedWord>VARCHAR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>END-EXEC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>PARAMETER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -1125,16 +1026,10 @@
       <ReservedWord>WITHOUT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>EXCEPTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>PATH</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>WORK</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>EXTERNAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>POSTFIX</ReservedWord>
@@ -1143,16 +1038,10 @@
       <ReservedWord>WRITE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>FALSE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>PREFIX</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>YEAR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>FIRST</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PREORDER</ReservedWord>
@@ -1161,34 +1050,7 @@
       <ReservedWord>ZONE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>FLOAT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>PREPARE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ADA</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>AVG</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BIT_LENGTH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CHAR_LENGTH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CHARACTER_LENGTH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>COUNT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>EXTRACT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>FORTRAN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>INCLUDE</ReservedWord>

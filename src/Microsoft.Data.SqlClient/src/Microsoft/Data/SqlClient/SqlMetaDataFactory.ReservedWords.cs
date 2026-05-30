@@ -43,8 +43,7 @@ internal sealed partial class SqlMetaDataFactory
             "CONTAINS", "CONTAINSTABLE", "CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME",
             "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "DATABASE", "DBCC", "DEALLOCATE", "DECLARE", "DEFAULT", "DELETE",
             "DENY", "DESC", "DISK", "DISTINCT", "DISTRIBUTED", "DOUBLE", "DROP", "DUMP", "ELSE",
-            // @TODO: Missing keyword: EXTERNAL
-            "END", "ERRLVL", "ESCAPE", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXIT", /* "EXTERNAL", */
+            "END", "ERRLVL", "ESCAPE", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXIT", "EXTERNAL",
             "FETCH", "FILE", "FILLFACTOR", "FOR", "FOREIGN", "FREETEXT", "FREETEXTTABLE", "FROM", "FULL",
             "FUNCTION", "GOTO", "GRANT", "GROUP", "HAVING", "HOLDLOCK", "IDENTITY", "IDENTITY_INSERT", "IDENTITYCOL",
             "IF", "IN", "INDEX", "INNER", "INSERT", "INTERSECT", "INTO", "IS", "JOIN",
@@ -69,8 +68,13 @@ internal sealed partial class SqlMetaDataFactory
             // @TODO: Missing keyword: WITHIN GROUP
             "WHERE", "WHILE", "WITH", /* "WITHIN GROUP", */ "WRITETEXT");
 
-        // Add ODBC reserved keywords.
-        AddReservedWords(minVersion: null, maxVersion: null);
+        // Add ODBC reserved keywords. Some of these overlap with the previous category, and are not included.
+        AddReservedWords(minVersion: null, maxVersion: null,
+            "ABSOLUTE", "ACTION", "ADA", "ALLOCATE", "ARE", "ASSERTION", "AT", "AVG", "BIT",
+            "BIT_LENGTH", "BOTH", "CASCADED", "CAST", "CATALOG", "CHAR", "CHAR_LENGTH", "CHARACTER", "CHARACTER_LENGTH",
+            "COLLATION", "CONNECT", "CONNECTION", "CONSTRAINTS", "CORRESPONDING", "COUNT", "DATE", "DAY", "DECIMAL",
+            "DEFERRABLE", "DEFERRED", "DESCRIBE", "DESCRIPTOR", "DIAGNOSTICS", "DISCONNECT", "DOMAIN", "END-EXEC", "EXCEPTION",
+            "EXTRACT", "FALSE", "FIRST", "FLOAT", "FORTRAN", "FOUND", "GET", "GLOBAL", "GO");
 
         // Add future reserved keywords.
         AddReservedWords(minVersion: null, maxVersion: null);
