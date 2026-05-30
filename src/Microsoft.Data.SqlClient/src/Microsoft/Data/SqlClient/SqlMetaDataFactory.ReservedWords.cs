@@ -74,7 +74,12 @@ internal sealed partial class SqlMetaDataFactory
             "BIT_LENGTH", "BOTH", "CASCADED", "CAST", "CATALOG", "CHAR", "CHAR_LENGTH", "CHARACTER", "CHARACTER_LENGTH",
             "COLLATION", "CONNECT", "CONNECTION", "CONSTRAINTS", "CORRESPONDING", "COUNT", "DATE", "DAY", "DECIMAL",
             "DEFERRABLE", "DEFERRED", "DESCRIBE", "DESCRIPTOR", "DIAGNOSTICS", "DISCONNECT", "DOMAIN", "END-EXEC", "EXCEPTION",
-            "EXTRACT", "FALSE", "FIRST", "FLOAT", "FORTRAN", "FOUND", "GET", "GLOBAL", "GO");
+            "EXTRACT", "FALSE", "FIRST", "FLOAT", "FORTRAN", "FOUND", "GET", "GLOBAL", "GO",
+            "HOUR", "IMMEDIATE", "INCLUDE", "INDICATOR", "INITIALLY", "INPUT", "INSENSITIVE", "INT", "INTEGER",
+            "INTERVAL", "ISOLATION", "LANGUAGE", "LAST", "LEADING", "LEVEL", "LOCAL", "LOWER", "MATCH",
+            "MAX", "MIN", "MINUTE", "MODULE", "MONTH", "NAMES", "NATURAL", "NCHAR", "NEXT",
+            "NO", "NONE", "NUMERIC", "OCTET_LENGTH", "ONLY", "OUTPUT", "OVERLAPS", "PAD", "PASCAL",
+            "POSITION", "PREPARE", "PRESERVE", "PRIOR", "PRIVILEGES", "REAL", "RELATIVE", "ROWS", "SCROLL");
 
         // Add future reserved keywords.
         AddReservedWords(minVersion: null, maxVersion: null);
