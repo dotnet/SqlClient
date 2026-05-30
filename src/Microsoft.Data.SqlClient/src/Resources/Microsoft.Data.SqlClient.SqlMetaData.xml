@@ -681,19 +681,10 @@
       <ReservedWord>ITERATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>SECOND</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SECTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LARGE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SEQUENCE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SESSION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>CLASS</ReservedWord>
@@ -708,19 +699,10 @@
       <ReservedWord>CLOB</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>SIZE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LESS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>SMALLINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>COMPLETION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SPACE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LIMIT</ReservedWord>
@@ -735,9 +717,6 @@
       <ReservedWord>LOCALTIME</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>SQL</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>CONSTRUCTOR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -750,16 +729,10 @@
       <ReservedWord>LOCATOR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>SQLSTATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>CUBE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>MAP</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SQLWARNING</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>CURRENT_PATH</ReservedWord>
@@ -795,9 +768,6 @@
       <ReservedWord>STRUCTURE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>TEMPORARY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>DEC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -807,13 +777,7 @@
       <ReservedWord>THAN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>TIME</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NCLOB</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TIMESTAMP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>DEPTH</ReservedWord>
@@ -822,19 +786,7 @@
       <ReservedWord>NEW</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>TIMEZONE_HOUR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>DEREF</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TIMEZONE_MINUTE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TRAILING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TRANSLATION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>DESTROY</ReservedWord>
@@ -849,9 +801,6 @@
       <ReservedWord>OBJECT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>TRUE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>DETERMINISTIC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -864,9 +813,6 @@
       <ReservedWord>DICTIONARY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>UNKNOWN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>OPERATION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -876,25 +822,13 @@
       <ReservedWord>ORDINALITY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>USAGE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>OUT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>USING</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>DYNAMIC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>VALUE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>EACH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>VARCHAR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PARAMETER</ReservedWord>
@@ -909,9 +843,6 @@
       <ReservedWord>PARAMETERS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>WHENEVER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>EVERY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -924,49 +855,13 @@
       <ReservedWord>PATH</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>WORK</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>POSTFIX</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>WRITE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PREFIX</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>YEAR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>PREORDER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ZONE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SQLCA</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SQLCODE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SQLERROR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SUBSTRING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SUM</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TRANSLATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TRIM</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>UPPER</ReservedWord>
     </ReservedWords>
   </ReservedWordsTable>
 </MetaData>
