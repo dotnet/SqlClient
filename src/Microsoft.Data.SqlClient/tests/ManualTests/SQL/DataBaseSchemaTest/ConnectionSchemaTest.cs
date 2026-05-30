@@ -56,6 +56,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(CanRunSchemaTests))]
+        public static async Task GetReservedWordsFromSchema()
+        {
+            (DataTable syncReservedWordTable, DataTable asyncReservedWordsTable) = await VerifySchemaTable(DbMetaDataCollectionNames.ReservedWords, new string[] { "ReservedWord" });
+
+            VerifyReservedWordsTable(syncReservedWordTable);
+            VerifyReservedWordsTable(asyncReservedWordsTable);
+        }
+
+        [ConditionalFact(nameof(CanRunSchemaTests))]
         public static async Task GetIndexColumnsFromSchema()
         {
             await VerifySchemaTable(SqlClientMetaDataCollectionNames.IndexColumns, new string[] { "index_name", "KeyType", "column_name" });
@@ -197,6 +206,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // The "json" type should only be present when running against a SQL Server version which supports it.
             // SQL Azure reports a version of 12.x but supports JSON, so SqlClient doesn't include it in the list of types.
             Assert.Equal(DataTestUtility.IsJsonSupported && DataTestUtility.IsNotAzureServer(), actualTypes.Contains("json"));
+        }
+
+        private static void VerifyReservedWordsTable(DataTable reservedWordsTable)
+        {
+            // This set contains four example words from each of the categories of reserved words
+            string[] sampleReservedWords = [
+                // SQL Server reserved words
+                "SELECT", "FROM", "WHERE", "NATIONAL",
+                // ODBC reserved words
+                "GO", "COUNT", "SQLCODE", "SMALLINT",
+                // Future reserved keywords
+                "AGGREGATE", "ALIAS", "DATA", "LOCALTIME",
+                // Older keyword
+                "DUMMY"
+            ];
+            HashSet<string> actualReservedWords = [];
+
+            // Assert that every reserved word is unique.
+            foreach (DataRow row in reservedWordsTable.Rows)
+            {
+                string reservedWord = row[DbMetaDataColumnNames.ReservedWord] as string;
+
+                Assert.False(string.IsNullOrEmpty(reservedWord));
+                // Older versions of SqlClient included a keyword of "NATIONAL " (note the trailing space.)
+                // Verify that this is no longer possible.
+                Assert.Equal(reservedWord.Trim(), reservedWord);
+                Assert.True(actualReservedWords.Add(reservedWord));
+            }
+
+            Assert.All(sampleReservedWords, reservedWord => Assert.Contains(reservedWord, actualReservedWords));
+            Assert.Equal(393, actualReservedWords.Count);
         }
     }
 }
