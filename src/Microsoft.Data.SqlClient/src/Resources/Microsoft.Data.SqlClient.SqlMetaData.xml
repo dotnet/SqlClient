@@ -588,22 +588,10 @@
       <ReservedWord>FREE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ADMIN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>GENERAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>AFTER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>READS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>AGGREGATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ALIAS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RECURSIVE</ReservedWord>
@@ -621,9 +609,6 @@
       <ReservedWord>REFERENCING</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ARRAY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>IGNORE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -633,13 +618,7 @@
       <ReservedWord>RETURNS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BEFORE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>ROLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BINARY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>INITIALIZE</ReservedWord>
@@ -651,25 +630,13 @@
       <ReservedWord>ROUTINE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BLOB</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>INOUT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>ROW</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>BOOLEAN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>SAVEPOINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>BREADTH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CALL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SCOPE</ReservedWord>
@@ -687,22 +654,13 @@
       <ReservedWord>SEQUENCE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CLASS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LATERAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SETS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CLOB</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LESS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>COMPLETION</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>LIMIT</ReservedWord>
@@ -717,9 +675,6 @@
       <ReservedWord>LOCALTIME</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CONSTRUCTOR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>LOCALTIMESTAMP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -729,34 +684,19 @@
       <ReservedWord>LOCATOR</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CUBE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>MAP</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CURRENT_PATH</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>START</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>CURRENT_ROLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>STATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>CYCLE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>MODIFIES</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>STATEMENT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DATA</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>MODIFY</ReservedWord>
@@ -768,9 +708,6 @@
       <ReservedWord>STRUCTURE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DEC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TERMINATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -780,37 +717,19 @@
       <ReservedWord>NCLOB</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DEPTH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>NEW</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DEREF</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DESTROY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>TREAT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>DESTRUCTOR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>OBJECT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DETERMINISTIC</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>OLD</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>UNDER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DICTIONARY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>OPERATION</ReservedWord>
@@ -823,12 +742,6 @@
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>OUT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>DYNAMIC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>EACH</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>PARAMETER</ReservedWord>

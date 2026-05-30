@@ -86,7 +86,19 @@ internal sealed partial class SqlMetaDataFactory
             "USING", "VALUE", "VARCHAR", "WHENEVER", "WORK", "WRITE", "YEAR", "ZONE");
 
         // Add future reserved keywords.
-        AddReservedWords(minVersion: null, maxVersion: null);
+        AddReservedWords(minVersion: null, maxVersion: null,
+            // @TODO: Missing keywords: ASENSITIVE, ASYMMETRIC, ATOMIC
+            "ADMIN", "AFTER", "AGGREGATE", "ALIAS", "ARRAY", /* "ASENSITIVE", "ASYMMETRIC", "ATOMIC", */ "BEFORE",
+            // @TODO: Missing keyword: CALLED, CARDINALITY
+            "BINARY", "BLOB", "BOOLEAN", "BREADTH", "CALL", /* "CALLED", "CARDINALITY", */ "CLASS", "CLOB",
+            // @TODO: Missing keywords: COLLECT, CONDITION, CORR, COVAR_POP, COVAR_SAMP, CUME_DIST
+            /* "COLLECT", */ "COMPLETION", /* "CONDITION", */ "CONSTRUCTOR", /* "CORR", "COVAR_POP", "COVAR_SAMP", */ "CUBE", /* "CUME_DIST", */
+            // @TODO: Missing keywords: CURRENT_CATALOG, CURRENT_DEFAULT_TRANSFORM_GROUP
+            /* "CURRENT_CATALOG", "CURRENT_DEFAULT_TRANSFORM_GROUP", */ "CURRENT_PATH", "CURRENT_ROLE",
+            // @TODO: Missing keywords: CURRENT_SCHEMA, CURRENT_TRANSFORM_GROUP_FOR_TYPE
+            /* "CURRENT_SCHEMA", "CURRENT_TRANSFORM_GROUP_FOR_TYPE", */ "CYCLE", "DATA", "DEC",
+            // @TODO: Missing keyword: ELEMENT
+            "DEPTH", "DEREF", "DESTROY", "DESTRUCTOR", "DETERMINISTIC", "DICTIONARY", "DYNAMIC", "EACH" /* "ELEMENT" */);
 
         reservedWordsDataTable.EndLoadData();
         reservedWordsDataTable.AcceptChanges();
