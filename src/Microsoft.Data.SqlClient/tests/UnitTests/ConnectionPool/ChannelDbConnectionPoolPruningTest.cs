@@ -469,7 +469,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection)
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
             {
                 return new StubDbConnectionInternal();
             }
