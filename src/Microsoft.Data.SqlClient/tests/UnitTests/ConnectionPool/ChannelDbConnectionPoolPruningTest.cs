@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < count; i++)
             {
                 owners[i] = new SqlConnection();
-                pool.TryGetConnection(owners[i], null, out connections[i]);
+                pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out connections[i]);
             }
 
             for (int i = 0; i < count; i++)
@@ -292,7 +292,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < 5; i++)
             {
                 owners[i] = new SqlConnection();
-                pool.TryGetConnection(owners[i], null, out connections[i]);
+                pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out connections[i]);
             }
 
             // Also add 5 idle connections
@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < 8; i++)
             {
                 busyOwners[i] = new SqlConnection();
-                pool.TryGetConnection(busyOwners[i], null, out busyConns[i]);
+                pool.TryGetConnection(busyOwners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out busyConns[i]);
             }
             ChannelDbConnectionPool.PruneIdleConnections(pool); // sample[0] = 2 idle
 
