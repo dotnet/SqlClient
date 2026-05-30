@@ -585,31 +585,16 @@
       <ReservedWord>DUMMY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>FREE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>GENERAL</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>READS</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RECURSIVE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>GROUPING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>REF</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>HOST</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>REFERENCING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>IGNORE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>RESULT</ReservedWord>
@@ -621,16 +606,10 @@
       <ReservedWord>ROLE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>INITIALIZE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>ROLLUP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>ROUTINE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>INOUT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>ROW</ReservedWord>
@@ -645,25 +624,10 @@
       <ReservedWord>SEARCH</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ITERATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LARGE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>SEQUENCE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>LATERAL</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>SETS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LESS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LIMIT</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>SPECIFIC</ReservedWord>
@@ -672,19 +636,7 @@
       <ReservedWord>SPECIFICTYPE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>LOCALTIME</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LOCALTIMESTAMP</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>SQLEXCEPTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>LOCATOR</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>MAP</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>START</ReservedWord>
@@ -693,13 +645,7 @@
       <ReservedWord>STATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>MODIFIES</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>STATEMENT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>MODIFY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>STATIC</ReservedWord>
@@ -714,52 +660,16 @@
       <ReservedWord>THAN</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>NCLOB</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>NEW</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TREAT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OBJECT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OLD</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>UNDER</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>OPERATION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>UNNEST</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>ORDINALITY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>OUT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PARAMETER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>VARIABLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>EQUALS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PARAMETERS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>EVERY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PARTIAL</ReservedWord>
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>WITHOUT</ReservedWord>

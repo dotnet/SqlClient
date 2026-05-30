@@ -98,7 +98,17 @@ internal sealed partial class SqlMetaDataFactory
             // @TODO: Missing keywords: CURRENT_SCHEMA, CURRENT_TRANSFORM_GROUP_FOR_TYPE
             /* "CURRENT_SCHEMA", "CURRENT_TRANSFORM_GROUP_FOR_TYPE", */ "CYCLE", "DATA", "DEC",
             // @TODO: Missing keyword: ELEMENT
-            "DEPTH", "DEREF", "DESTROY", "DESTRUCTOR", "DETERMINISTIC", "DICTIONARY", "DYNAMIC", "EACH" /* "ELEMENT" */);
+            "DEPTH", "DEREF", "DESTROY", "DESTRUCTOR", "DETERMINISTIC", "DICTIONARY", "DYNAMIC", "EACH", /* "ELEMENT", */
+            // @TODO: Missing keywords: FILTER, FULLTEXTTABLE, FUSION, HOLD
+            "EQUALS", "EVERY", /* "FILTER", */ "FREE", /* "FULLTEXTTABLE", "FUSION", */ "GENERAL", "GROUPING", /* "HOLD", */
+            // @TODO: Missing keyword: INTERSECTION
+            "HOST", "IGNORE", "INITIALIZE", "INOUT", /* "INTERSECTION", */ "ITERATE", "LARGE", "LATERAL", "LESS",
+            // @TODO: Missing keywords: LIKE_REGEX, LN, MEMBER, METHOD
+            /* "LIKE_REGEX",*/ "LIMIT", /* "LN", */ "LOCALTIME", "LOCALTIMESTAMP", "LOCATOR", "MAP", /* "MEMBER", "METHOD", */
+            // @TODO: Missing keywords: MOD, MULTISET, NORMALIZE, OCCURRENCES_REGEX
+            /* "MOD", */ "MODIFIES", "MODIFY", /* "MULTISET", */ "NCLOB", "NEW", /* "NORMALIZE", */ "OBJECT", /* "OCCURRENCES_REGEX", */
+            // @TODO: Missing keyword: OVERLAY, PARTITION
+            "OLD", "OPERATION", "ORDINALITY", "OUT", /* "OVERLAY", */ "PARAMETER", "PARAMETERS", "PARTIAL" /*, "PARTITION" */);
 
         reservedWordsDataTable.EndLoadData();
         reservedWordsDataTable.AcceptChanges();
