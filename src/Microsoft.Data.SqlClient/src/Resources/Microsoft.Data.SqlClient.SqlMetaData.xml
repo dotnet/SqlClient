@@ -585,75 +585,6 @@
       <ReservedWord>DUMMY</ReservedWord>
     </ReservedWords>
     <ReservedWords>
-      <ReservedWord>READS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RECURSIVE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>REF</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>REFERENCING</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RESULT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>RETURNS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ROLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ROLLUP</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ROUTINE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>ROW</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SAVEPOINT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SCOPE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SEARCH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SEQUENCE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SETS</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SPECIFIC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SPECIFICTYPE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>SQLEXCEPTION</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>START</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>STATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>STATEMENT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>STATIC</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>STRUCTURE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
       <ReservedWord>TERMINATE</ReservedWord>
     </ReservedWords>
     <ReservedWords>
@@ -673,18 +604,6 @@
     </ReservedWords>
     <ReservedWords>
       <ReservedWord>WITHOUT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PATH</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>POSTFIX</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PREFIX</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>PREORDER</ReservedWord>
     </ReservedWords>
   </ReservedWordsTable>
 </MetaData>

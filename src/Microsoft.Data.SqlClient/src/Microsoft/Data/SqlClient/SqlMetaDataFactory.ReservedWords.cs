@@ -108,7 +108,18 @@ internal sealed partial class SqlMetaDataFactory
             // @TODO: Missing keywords: MOD, MULTISET, NORMALIZE, OCCURRENCES_REGEX
             /* "MOD", */ "MODIFIES", "MODIFY", /* "MULTISET", */ "NCLOB", "NEW", /* "NORMALIZE", */ "OBJECT", /* "OCCURRENCES_REGEX", */
             // @TODO: Missing keyword: OVERLAY, PARTITION
-            "OLD", "OPERATION", "ORDINALITY", "OUT", /* "OVERLAY", */ "PARAMETER", "PARAMETERS", "PARTIAL" /*, "PARTITION" */);
+            "OLD", "OPERATION", "ORDINALITY", "OUT", /* "OVERLAY", */ "PARAMETER", "PARAMETERS", "PARTIAL", /* "PARTITION" */
+            // @TODO: Missing keywords: PERCENT_RANK, PERCENTILE_CONT, PERCENTILE_DISC, POSITION_REGEX, RANGE
+            "PATH", "POSTFIX", "PREFIX", "PREORDER", /* "PERCENT_RANK", "PERCENTILE_CONT", "PERCENTILE_DISC", "POSITION_REGEX", "RANGE", */
+            "READS", "RECURSIVE", "REF", "REFERENCING",
+            // @TODO: Missing keywords: REGR_AVGX, REGR_AVGY, REGR_COUNT, REGR_INTERCEPT, REGR_R2, REGR_SLOPE
+            /* "REGR_AVGX", "REGR_AVGY", "REGR_COUNT", "REGR_INTERCEPT", "REGR_R2", "REGR_SLOPE", */
+            // @TODO: Missing keywords: REGR_SXX, REGR_SXY, REGR_SYY, RELEASE
+            /* "REGR_SXX", "REGR_SXY", "REGR_SYY", "RELEASE", */ "RESULT", "RETURNS", "ROLE", "ROLLUP", "ROUTINE",
+            // @TODO: Missing keywords: SENSITIVE, SIMILAR
+            "ROW", "SAVEPOINT", "SCOPE", "SEARCH", /* "SENSITIVE", */ "SEQUENCE", "SETS", /* "SIMILAR", */ "SPECIFIC",
+            // @TODO: Missing keywords: STDDEV_POP, STDDEV_SAMP
+            "SPECIFICTYPE", "SQLEXCEPTION", "START", "STATE", "STATEMENT", "STATIC", /* "STDDEV_POP", "STDDEV_SAMP", */ "STRUCTURE");
 
         reservedWordsDataTable.EndLoadData();
         reservedWordsDataTable.AcceptChanges();
