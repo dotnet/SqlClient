@@ -119,7 +119,22 @@ internal sealed partial class SqlMetaDataFactory
             // @TODO: Missing keywords: SENSITIVE, SIMILAR
             "ROW", "SAVEPOINT", "SCOPE", "SEARCH", /* "SENSITIVE", */ "SEQUENCE", "SETS", /* "SIMILAR", */ "SPECIFIC",
             // @TODO: Missing keywords: STDDEV_POP, STDDEV_SAMP
-            "SPECIFICTYPE", "SQLEXCEPTION", "START", "STATE", "STATEMENT", "STATIC", /* "STDDEV_POP", "STDDEV_SAMP", */ "STRUCTURE");
+            "SPECIFICTYPE", "SQLEXCEPTION", "START", "STATE", "STATEMENT", "STATIC", /* "STDDEV_POP", "STDDEV_SAMP", */ "STRUCTURE",
+
+            // @TODO: Missing keywords: SUBMULTISET, SUBSTRING_REGEX, SYMMETRIC, SYSTEM, TRANSLATE_REGEX, UESCAPE
+            /* "SUBMULTISET", "SUBSTRING_REGEX", "SYMMETRIC", "SYSTEM", */ "TERMINATE", "THAN", /* "TRANSLATE_REGEX", */ "TREAT", /* "UESCAPE", */
+            // @TODO: Missing keywords: VAR_POP, VAR_SAMP, WIDTH_BUCKET, WINDOW, WITHIN
+            "UNDER", "UNNEST", /* "VAR_POP", "VAR_SAMP", */ "VARIABLE", /* "WIDTH_BUCKET", */ "WITHOUT" /* , "WINDOW", "WITHIN", */
+            // @TODO: Missing keywords: XMLAGG, XMLATTRIBUTES, XMLBINARY, XMLCAST, XMLCOMMENT, XMLCONCAT, XMLDOCUMENT, XMLELEMENT, XMLEXISTS
+            /* "XMLAGG", "XMLATTRIBUTES", "XMLBINARY", "XMLCAST", "XMLCOMMENT", "XMLCONCAT", "XMLDOCUMENT", "XMLELEMENT", "XMLEXISTS", */
+            // @TODO: Missing keywords: XMLFOREST, XMLITERATE, XMLNAMESPACES, XMLPARSE, XMLPI, XMLQUERY, XMLSERIALIZE, XMLTABLE, XMLTEXT
+            /* "XMLFOREST", "XMLITERATE", "XMLNAMESPACES", "XMLPARSE", "XMLPI", "XMLQUERY", "XMLSERIALIZE", "XMLTABLE", "XMLTEXT", */
+            // @TODO: Missing keyword: XMLVALIDATE
+            /* "XMLVALIDATE" */);
+
+        // Keywords which appear in the SQL Server 2000 documentation but not in newer versions.
+        // Preserved for backwards compatibility purposes.
+        AddReservedWords(minVersion: null, maxVersion: null, "DUMMY");
 
         reservedWordsDataTable.EndLoadData();
         reservedWordsDataTable.AcceptChanges();

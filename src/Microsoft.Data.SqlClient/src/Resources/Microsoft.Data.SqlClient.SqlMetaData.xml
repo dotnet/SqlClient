@@ -580,30 +580,4 @@
       <SupportedJoinOperators>15</SupportedJoinOperators>
     </DataSourceInformation>
   </DataSourceInformationTable>
-  <ReservedWordsTable>
-    <ReservedWords>
-      <ReservedWord>DUMMY</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TERMINATE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>THAN</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>TREAT</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>UNDER</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>UNNEST</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>VARIABLE</ReservedWord>
-    </ReservedWords>
-    <ReservedWords>
-      <ReservedWord>WITHOUT</ReservedWord>
-    </ReservedWords>
-  </ReservedWordsTable>
 </MetaData>
