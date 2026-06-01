@@ -112,12 +112,9 @@ jobs:
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:Configuration=${{ parameters.buildConfiguration }}
 
-      # dotnet CLI arguments for run.
-      - name: runArguments
-        value: >-
-          --verbosity ${{ parameters.dotnetVerbosity }}
-          --configuration ${{ parameters.buildConfiguration }}
-          --no-build
+      # The output directory where the built stress test binaries are placed.
+      - name: outputDir
+        value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/bin/${{ parameters.buildConfiguration }}
 
       # The contents of the config file to use for all tests.  We will write this to a JSON file and
       # then point to it via the STRESS_CONFIG_FILE environment variable.
@@ -188,6 +185,11 @@ jobs:
 
       # Run the stress tests for each .NET runtime.
       #
+      # We use `dotnet exec` instead of `dotnet run` because SDK 10.0.300 has a regression where
+      # `dotnet run` forwards its own options (--verbosity, --configuration, --no-build) as
+      # application arguments on hosted Ubuntu agents.  Since we build separately above, `dotnet
+      # exec` is both simpler and immune to argument-parsing changes in the SDK.
+      #
       # The condition and continueOnError work together to achieve the following behavior:
       #
       #   condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
@@ -211,8 +213,8 @@ jobs:
             STRESS_CONFIG_FILE: config.json
           inputs:
             command: custom
-            custom: run
-            arguments: --project $(project) $(runArguments) -f ${{ runtime }} -- $(testArguments)
+            custom: exec
+            arguments: $(outputDir)/${{ runtime }}/stresstest.dll $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
@@ -224,5 +226,5 @@ jobs:
             STRESS_CONFIG_FILE: config.json
           inputs:
             command: custom
-            custom: run
-            arguments: --project $(project) $(runArguments) -f ${{ runtime }} -- $(testArguments)
+            custom: exec
+            arguments: $(outputDir)/${{ runtime }}/stresstest.dll $(testArguments)
