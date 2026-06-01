@@ -131,6 +131,10 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
           # inline PowerShell instead of the shared config template which
@@ -224,6 +228,10 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.jsonc" | ConvertFrom-Json
@@ -283,7 +291,7 @@ stages:
     dependsOn:
       - windows
       - linux
-    condition: succeededOrFailed()
+    condition: succeeded()
     jobs:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
         parameters:

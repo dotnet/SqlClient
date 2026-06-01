@@ -125,6 +125,13 @@ internal static class LocalAppContextSwitches
     private const string UseConnectionPoolV2String =
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
+    /// <summary>
+    /// The name of the app context switch that controls whether pool operations
+    /// should count against the caller's overall ConnectTimeout budget.
+    /// </summary>
+    private const string UseOverallConnectTimeoutForPoolWaitString =
+        "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
+
     #if NET && _WINDOWS
     /// <summary>
     /// The name of the app context switch that controls whether to use the
@@ -233,6 +240,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
+    /// </summary>
+    private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
     #if NET && _WINDOWS
     /// <summary>
@@ -563,6 +575,20 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// When set to true, pool operations count against the
+    /// caller's ConnectTimeout budget. This includes waits and async operations.
+    /// When false, pool operations receive a full ConnectTimeout and
+    /// network calls receive a further full ConnectTimeout.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseOverallConnectTimeoutForPoolWait =>
+        AcquireAndReturn(
+            UseOverallConnectTimeoutForPoolWaitString,
+            defaultValue: false,
+            ref s_useOverallConnectTimeoutForPoolWait);
 
     #if NET && _WINDOWS
     /// <summary>

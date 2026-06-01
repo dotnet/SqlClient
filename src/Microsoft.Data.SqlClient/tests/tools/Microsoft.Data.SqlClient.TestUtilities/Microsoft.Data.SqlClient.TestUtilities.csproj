@@ -3,6 +3,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- Sign with the test key so signed test assemblies can reference this project. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- Copy config file ================================================ -->
   <Target Name="CopyConfig" BeforeTargets="Compile">
     <Copy SourceFiles="config.default.jsonc" DestinationFiles="config.jsonc" Condition="!Exists('config.jsonc')" />

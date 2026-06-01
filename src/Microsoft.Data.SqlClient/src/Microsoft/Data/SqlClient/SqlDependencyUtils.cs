@@ -272,15 +272,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
                             // Since we are looping over dependencies, do not allow one Invalidate
                             // that results in a throw prevent us from invalidating all dependencies
                             // related to this server.
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
                             ADP.TraceExceptionWithoutRethrow(e);
                         }
                     }
@@ -327,15 +323,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
                         // Since we are looping over dependencies, do not allow one Invalidate
                         // that results in a throw prevent us from invalidating all dependencies
                         // related to this server.
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(e);
                     }
                 }
@@ -581,13 +573,8 @@ namespace Microsoft.Data.SqlClient
                             // to invoke user-code while holding an internal lock.
                             dependencies[i].Invalidate(SqlNotificationType.Change, SqlNotificationInfo.Error, SqlNotificationSource.Timeout);
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
-
                             // This is an exception in user code, and we're in a thread-pool thread
                             // without user's code up in the stack, no much we can do other than
                             // eating the exception.
