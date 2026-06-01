@@ -2,200 +2,185 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
+#nullable enable
+
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.ProviderBase
 {
-    // Purpose:
-    //   Manages determining and tracking timeouts
-    //
-    // Intended use:
-    //   Call StartXXXXTimeout() to get a timer with the given expiration point
-    //   Get remaining time in appropriate format to pass to subsystem timeouts
-    //   Check for timeout via IsExpired for checks in managed code.
-    //   Simply abandon to GC when done.
+    /// <summary>
+    /// Manages determining and tracking timeouts for use by subsystems that perform
+    /// time-bounded operations.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Intended use:
+    /// </para>
+    /// <para>
+    /// Call <see cref="StartNew(TimeSpan)"/> (or the overload that accepts a
+    /// <see cref="TimeProvider"/>) to get a timer with the given expiration point.
+    /// Read the remaining time in the appropriate format to pass to subsystem timeouts.
+    /// Check for timeout via <see cref="IsExpired"/> for checks in managed code.
+    /// Simply abandon the instance to the GC when done.
+    /// </para>
+    /// <para>
+    /// All time reads (current time and remaining time calculations) and any
+    /// <see cref="CancellationTokenSource"/> instances created by this timer flow
+    /// through the supplied <see cref="TimeProvider"/>. This allows tests to inject
+    /// a fake time provider (for example
+    /// <c>Microsoft.Extensions.Time.Testing.FakeTimeProvider</c>) and deterministically
+    /// trigger expiration without relying on wall-clock delays.
+    /// </para>
+    /// </remarks>
     internal class TimeoutTimer
     {
-        //-------------------
-        // Fields
-        //-------------------
-        private long _timerExpire;
-        private bool _isInfiniteTimeout;
-        private long _originalTimerTicks;
+        #region Fields
 
-        //-------------------
-        // Timeout-setting methods
-        //-------------------
+        /// <summary>
+        /// The sentinel value (<c>0</c>) used to indicate an infinite timeout when starting a timer.
+        /// </summary>
+        internal const long InfiniteTimeout = 0;
 
-        // Get a new timer that will expire in the given number of seconds
-        //  For input, a value of zero seconds indicates infinite timeout
-        internal static TimeoutTimer StartSecondsTimeout(int seconds)
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TimeoutTimer"/> class with the
+        /// specified expiration duration and time source.
+        /// </summary>
+        /// <param name="expiration">
+        /// The duration before the timer expires. A value whose ticks equal
+        /// <see cref="InfiniteTimeout"/> indicates an infinite timeout.
+        /// </param>
+        /// <param name="timeProvider">
+        /// The <see cref="TimeProvider"/> used to read the current time and schedule
+        /// cancellation.
+        /// </param>
+        /// <exception cref="OverflowException">
+        /// Thrown when computing the absolute expiration point in checked arithmetic,
+        /// if the sum of the current file-time ticks and <paramref name="expiration"/>
+        /// ticks falls outside the <see cref="long"/> range.
+        /// </exception>
+        private TimeoutTimer(TimeSpan expiration, TimeProvider timeProvider)
         {
-            //--------------------
-            // Preconditions: None (seconds must conform to SetTimeoutSeconds requirements)
-
-            //--------------------
-            // Method body
-            var timeout = new TimeoutTimer();
-            timeout.SetTimeoutSeconds(seconds);
-
-            //---------------------
-            // Postconditions
-            Debug.Assert(timeout != null); // Need a valid timeouttimer if no error
-
-            return timeout;
+            TimeProvider = timeProvider;
+            OriginalTicks = expiration.Ticks;
+            IsInfinite = OriginalTicks == InfiniteTimeout;
+            ExpirationTicks = checked(NowTicks() + OriginalTicks);
         }
 
-        // Get a new timer that will expire in the given number of milliseconds
-        //  No current need to support infinite milliseconds timeout
-        internal static TimeoutTimer StartMillisecondsTimeout(long milliseconds)
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets the tick value at which this timer is considered expired.
+        /// Do not use this value directly; instead, use <see cref="IsExpired"/> to check if the timer has expired.
+        /// Does not return a meaningful value when the timer is infinite.
+        /// </summary>
+        /// <value>
+        /// The tick count, in file-time units (100-nanosecond intervals since
+        /// 1601-01-01 UTC), at which the timer expires.
+        /// </value>
+        /// <remarks>
+        /// The tick scale is intentionally compatible with
+        /// <see cref="DateTime.ToFileTimeUtc()"/>
+        /// </remarks>
+        internal long ExpirationTicks
         {
-            //--------------------
-            // Preconditions
-            Debug.Assert(0 <= milliseconds);
-
-            //--------------------
-            // Method body
-            var timeout = new TimeoutTimer();
-            timeout._originalTimerTicks = milliseconds * TimeSpan.TicksPerMillisecond;
-            timeout._timerExpire = checked(ADP.TimerCurrent() + timeout._originalTimerTicks);
-            timeout._isInfiniteTimeout = false;
-
-            //---------------------
-            // Postconditions
-            Debug.Assert(timeout != null); // Need a valid timeouttimer if no error
-
-            return timeout;
+            get;
+            //TODO: Remove this when we disable Reset()
+            private set;
         }
 
-        //-------------------
-        // Methods for changing timeout
-        //-------------------
-
-        internal void SetTimeoutSeconds(int seconds)
-        {
-            //--------------------
-            // Preconditions
-            Debug.Assert(0 <= seconds || InfiniteTimeout == seconds);  // no need to support negative seconds at present
-
-            //--------------------
-            // Method body
-            if (InfiniteTimeout == seconds)
-            {
-                _isInfiniteTimeout = true;
-            }
-            else
-            {
-                // Stash current time + timeout
-                _originalTimerTicks = ADP.TimerFromSeconds(seconds);
-                _timerExpire = checked(ADP.TimerCurrent() + _originalTimerTicks);
-                _isInfiniteTimeout = false;
-            }
-
-            //---------------------
-            // Postconditions:None
-        }
-
-        // Reset timer to original duration.
-        internal void Reset()
-        {
-            if (InfiniteTimeout == _originalTimerTicks)
-            {
-                _isInfiniteTimeout = true;
-            }
-            else
-            {
-                _timerExpire = checked(ADP.TimerCurrent() + _originalTimerTicks);
-                _isInfiniteTimeout = false;
-            }
-        }
-
-        //-------------------
-        // Timeout info properties
-        //-------------------
-
-        // Indicator for infinite timeout when starting a timer
-        internal static readonly long InfiniteTimeout = 0;
-
-        // Is this timer in an expired state?
+        /// <summary>
+        /// Gets a value indicating whether this timer has expired.
+        /// </summary>
+        /// <value>
+        /// <see langword="true"/> if the timer is not infinite and the current time
+        /// (as read from the configured <see cref="TimeProvider"/>) has passed
+        /// <see cref="ExpirationTicks"/>; otherwise, <see langword="false"/>.
+        /// </value>
         internal bool IsExpired
         {
             get
             {
-                return !IsInfinite && ADP.TimerHasExpired(_timerExpire);
+                return !IsInfinite && NowTicks() > ExpirationTicks;
             }
         }
 
-        // is this an infinite-timeout timer?
-        internal bool IsInfinite
-        {
-            get
-            {
-                return _isInfiniteTimeout;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this timer represents an infinite timeout.
+        /// </summary>
+        /// <value>
+        /// <see langword="true"/> if the timer was created with an expiration whose
+        /// ticks equal <see cref="InfiniteTimeout"/>; otherwise, <see langword="false"/>.
+        /// </value>
+        internal bool IsInfinite { get; }
 
-        // Special accessor for TimerExpire for use when thunking to legacy timeout methods.
-        public long LegacyTimerExpire
-        {
-            get
-            {
-                return (_isInfiniteTimeout) ? long.MaxValue : _timerExpire;
-            }
-        }
-
-        // Returns milliseconds remaining trimmed to zero for none remaining
-        //  and long.MaxValue for infinite
-        // This method should be preferred for internal calculations that are not
-        //  yet common enough to code into the TimeoutTimer class itself.
+        /// <summary>
+        /// Gets the number of milliseconds remaining before this timer expires,
+        /// truncated to <c>0</c> when none remain, and approximated to <see cref="long.MaxValue"/>
+        /// when the timer is infinite.
+        /// </summary>
+        /// <value>
+        /// A non-negative count of milliseconds remaining; <see cref="long.MaxValue"/>
+        /// when <see cref="IsInfinite"/> is <see langword="true"/>.
+        /// </value>
+        /// <remarks>
+        /// This property should be preferred for internal calculations that are not
+        /// yet common enough to code into the <see cref="TimeoutTimer"/> class itself.
+        /// </remarks>
         internal long MillisecondsRemaining
         {
             get
             {
-                //-------------------
-                // Preconditions: None
-
-                //-------------------
-                // Method Body
                 long milliseconds;
-                if (_isInfiniteTimeout)
+                if (IsInfinite)
                 {
                     milliseconds = long.MaxValue;
                 }
                 else
                 {
-                    milliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
+                    milliseconds = TicksToMilliseconds(ExpirationTicks - NowTicks());
                     if (0 > milliseconds)
                     {
                         milliseconds = 0;
                     }
                 }
 
-                //--------------------
-                // Postconditions
                 Debug.Assert(0 <= milliseconds); // This property guarantees no negative return values
 
                 return milliseconds;
             }
         }
 
-        // Returns milliseconds remaining trimmed to zero for none remaining
+        /// <summary>
+        /// Gets the number of milliseconds remaining before this timer expires as
+        /// a 32-bit integer, trimmed to <c>0</c> when none remain and approximated to
+        /// <see cref="int.MaxValue"/> when the remaining time exceeds that value or
+        /// when the timer is infinite.
+        /// </summary>
+        /// <value>
+        /// A non-negative count of milliseconds remaining, never exceeding
+        /// <see cref="int.MaxValue"/>.
+        /// </value>
         internal int MillisecondsRemainingInt
         {
             get
             {
-                //-------------------
-                // Method Body
                 int milliseconds;
-                if (_isInfiniteTimeout)
+                if (IsInfinite)
                 {
                     milliseconds = int.MaxValue;
                 }
                 else
                 {
-                    long longMilliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
+                    long longMilliseconds = TicksToMilliseconds(ExpirationTicks - NowTicks());
                     if (0 > longMilliseconds)
                     {
                         milliseconds = 0;
@@ -210,12 +195,220 @@ namespace Microsoft.Data.ProviderBase
                     }
                 }
 
-                //--------------------
-                // Postconditions
                 Debug.Assert(0 <= milliseconds);
 
                 return milliseconds;
             }
         }
+
+        /// <summary>
+        /// Gets the original timeout duration, in ticks, that was supplied when the
+        /// timer was created. Used by <see cref="Reset"/> to restore the original
+        /// expiration window.
+        /// </summary>
+        internal long OriginalTicks { get; }
+
+        /// <summary>
+        /// Gets the <see cref="TimeProvider"/> used by this timer. Exposed for
+        /// callers that need to construct related timers or schedule cancellation
+        /// against the same time source.
+        /// </summary>
+        internal TimeProvider TimeProvider { get; }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Creates and starts a new <see cref="TimeoutTimer"/> with the specified
+        /// expiration duration, using <see cref="TimeProvider.System"/> as the time
+        /// source.
+        /// </summary>
+        /// <param name="expiration">
+        /// The duration before the returned timer expires. A value whose ticks equal
+        /// <see cref="InfiniteTimeout"/> produces an infinite timer.
+        /// </param>
+        /// <returns>A new <see cref="TimeoutTimer"/> instance that has already started.</returns>
+        internal static TimeoutTimer StartNew(TimeSpan expiration)
+            => new TimeoutTimer(expiration, TimeProvider.System);
+
+        /// <summary>
+        /// Creates and starts a new <see cref="TimeoutTimer"/> with the specified
+        /// expiration duration and time source.
+        /// </summary>
+        /// <param name="expiration">
+        /// The duration before the returned timer expires. A value whose ticks equal
+        /// <see cref="InfiniteTimeout"/> produces an infinite timer.
+        /// </param>
+        /// <param name="timeProvider">
+        /// The <see cref="TimeProvider"/> used to read the current time and schedule
+        /// cancellation. Pass a fake provider in tests to deterministically control
+        /// expiration.
+        /// </param>
+        /// <returns>A new <see cref="TimeoutTimer"/> instance that has already started.</returns>
+        internal static TimeoutTimer StartNew(TimeSpan expiration, TimeProvider timeProvider)
+            => new TimeoutTimer(expiration, timeProvider);
+
+        /// <summary>
+        /// Creates a new <see cref="TimeoutTimer"/> that is already expired,
+        /// using <see cref="TimeProvider.System"/> as the time source.
+        /// </summary>
+        /// <returns>
+        /// A finite <see cref="TimeoutTimer"/> whose <see cref="IsExpired"/> is
+        /// already <see langword="true"/> and whose <see cref="MillisecondsRemaining"/>
+        /// is zero.
+        /// </returns>
+        internal static TimeoutTimer StartExpired()
+            => StartExpired(TimeProvider.System);
+
+        /// <summary>
+        /// Creates a new <see cref="TimeoutTimer"/> that is already expired.
+        /// </summary>
+        /// <param name="timeProvider">
+        /// The <see cref="TimeProvider"/> used to read the current time and schedule
+        /// cancellation.
+        /// </param>
+        /// <returns>
+        /// A finite <see cref="TimeoutTimer"/> whose <see cref="IsExpired"/> is
+        /// already <see langword="true"/> and whose <see cref="MillisecondsRemaining"/>
+        /// is zero. Useful when a code path needs to hand off an already-exhausted
+        /// timeout (for example, a child timer whose parent has no remaining
+        /// budget) without resorting to negative durations or the
+        /// <see cref="InfiniteTimeout"/> sentinel.
+        /// </returns>
+        /// <remarks>
+        /// Implemented by anchoring the expiration one tick before "now" on the
+        /// supplied <paramref name="timeProvider"/>. The timer is finite, so
+        /// <see cref="IsInfinite"/> is <see langword="false"/>.
+        /// </remarks>
+        internal static TimeoutTimer StartExpired(TimeProvider timeProvider)
+            => new TimeoutTimer(TimeSpan.FromTicks(-1), timeProvider);
+
+        /// <summary>
+        /// Creates and starts a new <see cref="TimeoutTimer"/> nested under this
+        /// (parent) timer. The child shares the parent's <see cref="TimeProvider"/>
+        /// and is capped so that it cannot outlast the parent's remaining time.
+        /// </summary>
+        /// <param name="duration">
+        /// The desired duration of the child timer, interpreted literally — a
+        /// value of <see cref="TimeSpan.Zero"/> means "expire immediately" and
+        /// is <em>not</em> treated as the <see cref="InfiniteTimeout"/>
+        /// sentinel. A non-positive value yields an already-expired child.
+        /// </param>
+        /// <returns>
+        /// A new <see cref="TimeoutTimer"/> that uses this timer's
+        /// <see cref="TimeProvider"/>. The child is finite unless the parent is
+        /// infinite, in which case the requested <paramref name="duration"/> is
+        /// honored as-is. When the parent is finite, the child's expiration is
+        /// capped at the parent's remaining time.
+        /// </returns>
+        /// <remarks>
+        /// Behavior matrix:
+        /// <list type="bullet">
+        ///   <item><description>Parent infinite → finite child with the requested duration (or already-expired when <paramref name="duration"/> ≤ 0).</description></item>
+        ///   <item><description>Parent finite, duration longer than parent's remaining → finite child capped at the parent's remaining time.</description></item>
+        ///   <item><description>Parent finite, duration shorter than parent's remaining → finite child with the requested duration.</description></item>
+        ///   <item><description>Parent finite with no remaining time, or <paramref name="duration"/> ≤ 0 → already-expired child (see <see cref="StartExpired(TimeProvider)"/>).</description></item>
+        /// </list>
+        /// To request a truly infinite timeout, call <see cref="StartNew(TimeSpan, TimeProvider)"/>
+        /// directly with <see cref="TimeSpan.Zero"/>; this method does not
+        /// produce infinite children.
+        /// </remarks>
+        internal TimeoutTimer StartChild(TimeSpan duration)
+        {
+            long requestedMs = (long)duration.TotalMilliseconds;
+
+            // Caller asked for a non-positive duration: already expired.
+            if (requestedMs <= 0)
+            {
+                return StartExpired(TimeProvider);
+            }
+
+            // Parent finite: cap at parent's remaining time. If the cap leaves
+            // no time, return an already-expired timer rather than colliding
+            // with the 0-ticks-means-infinite sentinel.
+            long childMs = Math.Min(requestedMs, MillisecondsRemaining);
+            if (childMs <= 0)
+            {
+                return StartExpired(TimeProvider);
+            }
+
+            return new TimeoutTimer(TimeSpan.FromMilliseconds(childMs), TimeProvider);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="CancellationTokenSource"/> that will be canceled
+        /// when this timer expires, using the same <see cref="TimeProvider"/> the
+        /// timer was constructed with.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="CancellationTokenSource"/> scheduled to cancel after
+        /// <see cref="MillisecondsRemainingInt"/> milliseconds. When
+        /// <see cref="IsInfinite"/> is <see langword="true"/>, the returned source
+        /// is never automatically canceled. When the timer has already expired, the
+        /// returned source is already canceled.
+        /// </returns>
+        internal CancellationTokenSource CreateCancellationTokenSource()
+        {
+            if (IsInfinite)
+            {
+                return new CancellationTokenSource();
+            }
+
+            int remaining = MillisecondsRemainingInt;
+            if (remaining == 0)
+            {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                cts.Cancel();
+                return cts;
+            }
+
+            // Route the timer through the configured TimeProvider so that fake
+            // time providers can advance virtual time and trigger cancellation
+            // deterministically in tests.
+#if NET
+            // On .NET 8+ the BCL provides this constructor directly; avoid the
+            // Microsoft.Bcl.TimeProvider extension so the produced assembly
+            // doesn't carry a hard reference to the polyfill package, which the
+            // .NET SDK prunes from downstream consumers' restore graphs.
+            return new CancellationTokenSource(TimeSpan.FromMilliseconds(remaining), TimeProvider);
+#else
+            // .NET Framework lacks the constructor overload; use the extension
+            // method shipped by Microsoft.Bcl.TimeProvider.
+            return TimeProvider.CreateCancellationTokenSource(TimeSpan.FromMilliseconds(remaining));
+#endif
+        }
+
+        /// <summary>
+        /// Resets the timeout to its original duration.
+        /// </summary>
+        /// <remarks>
+        /// This method is only used to retry after federated authentication timeouts,
+        /// which can use up the whole timeout due to MFA. Has no effect when
+        /// <see cref="IsInfinite"/> is <see langword="true"/>.
+        /// </remarks>
+        internal void Reset()
+        {
+            if (!IsInfinite)
+            {
+                ExpirationTicks = checked(NowTicks() + OriginalTicks);
+            }
+        }
+
+        /// <summary>
+        /// Reads the configured <see cref="TimeProvider"/>'s current UTC time and
+        /// returns it as file-time ticks (100-nanosecond intervals since
+        /// 1601-01-01 UTC). This keeps <see cref="ExpirationTicks"/> in the same
+        /// scale historically produced by <c>DateTime.UtcNow.ToFileTimeUtc()</c>.
+        /// </summary>
+        internal long NowTicks() => TimeProvider.GetUtcNow().UtcDateTime.ToFileTimeUtc();
+
+        /// <summary>
+        /// Converts a tick count (100-nanosecond intervals) to milliseconds, matching
+        /// the conversion historically performed by <c>ADP.TimerToMilliseconds</c>.
+        /// </summary>
+        internal static long TicksToMilliseconds(long ticks) => ticks / TimeSpan.TicksPerMillisecond;
+
+        #endregion
     }
 }

@@ -56,7 +56,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async Task Test_EnlistedTransactionPreservedWhilePooled()
         {
             #if NET
-            TransactionManager.ImplicitDistributedTransactions = true;
+            if (OperatingSystem.IsWindows())
+            {
+                TransactionManager.ImplicitDistributedTransactions = true;
+            }
             #endif
 
             await RunTestSet(EnlistedTransactionPreservedWhilePooled);
