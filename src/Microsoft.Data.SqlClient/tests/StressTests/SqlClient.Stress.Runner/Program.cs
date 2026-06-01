@@ -16,25 +16,19 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
         private static bool s_debugMode = false;
         static int Main(string[] args)
         {
-            Init(args);
+            int exitCode = Init(args);
+            if (exitCode != 0)
+            {
+                return exitCode;
+            }
             return Run();
         }
 
-        public enum RunMode
-        {
-            RunAll,
-            RunVerify,
-            Help,
-            ExitWithError
-        };
-
-        private static RunMode s_mode = RunMode.RunAll;
         private static IEnumerable<TestBase> s_tests;
         private static StressEngine s_eng;
-        private static string s_error;
         private static bool s_console = false;
 
-        public static void Init(string[] args)
+        public static int Init(string[] args)
         {
             for (int i = 0; i < args.Length; i++)
             {
@@ -43,10 +37,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
                     case "-a":
                         string assemblyName = args[++i];
                         TestFinder.AssemblyName = new AssemblyName(assemblyName);
-                        break;
-
-                    case "-all":
-                        s_mode = RunMode.RunAll;
                         break;
 
                     case "-override":
@@ -67,10 +57,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
 
                     case "-threads":
                         TestMetrics.StressThreads = int.Parse(args[++i]);
-                        break;
-
-                    case "-verify":
-                        s_mode = RunMode.RunVerify;
                         break;
 
                     case "-console":
@@ -118,8 +104,8 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
                         break;
 
                     default:
-                        s_mode = RunMode.Help;
-                        break;
+                        PrintHelp(args);
+                        return 1;
                 }
             }
 
@@ -137,36 +123,22 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             }
             else
             {
-                Program.s_error = string.Format("Assembly {0} cannot be found.", TestFinder.AssemblyName);
-                s_mode = RunMode.ExitWithError;
+                Console.Error.WriteLine("Error: No assembly specified. Use -a <assembly name>.");
+                PrintHelp(args);
+                return 1;
             }
+
+            return 0;
         }
 
-        public static int Run()
+        private static void PrintHelp(string[] args)
         {
-            if (TestFinder.AssemblyName == null)
+            Console.WriteLine($"Arguments ({args.Length}):");
+            for (int i = 0; i < args.Length; i++)
             {
-                s_mode = RunMode.Help;
+                Console.WriteLine($"  [{i}] \"{args[i]}\"");
             }
-            switch (s_mode)
-            {
-                case RunMode.RunAll:
-                    return RunStress();
-
-                case RunMode.RunVerify:
-                    return RunVerify();
-
-                case RunMode.ExitWithError:
-                    return ExitWithError();
-
-                case RunMode.Help:
-                default:
-                    return PrintHelp();
-            }
-        }
-
-        private static int PrintHelp()
-        {
+            Console.WriteLine();
             Console.WriteLine("stresstest.exe [-a <module name>] <arguments>");
             Console.WriteLine();
             Console.WriteLine("   -a <module name> should specify path to the assembly containing the tests.");
@@ -204,8 +176,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine();
             Console.WriteLine("   -deadlockdetection          True or False to enable deadlock detection. Default is false");
             Console.WriteLine();
-
-            return 1;
         }
 
         private static void PrintConfigSummary()
@@ -215,7 +185,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine(border);
             Console.WriteLine($"MDS Version:         {GetMdsVersion()}");
             Console.WriteLine($"Test Assembly Name:  {TestFinder.AssemblyName}");
-            Console.WriteLine($"Run mode:            {Enum.GetName(typeof(RunMode), s_mode)}");
             foreach (var item in TestMetrics.Overrides)
             {
                 Console.WriteLine($"Override:            {item.Key} = {item.Value}");
@@ -235,18 +204,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine(border);
         }
 
-        private static int ExitWithError()
-        {
-            Environment.FailFast("Exit with error(s).");
-            return 1;
-        }
-
-        private static int RunVerify()
-        {
-            throw new NotImplementedException();
-        }
-
-        private static int RunStress()
+        private static int Run()
         {
             if (!s_console)
             {
@@ -275,7 +233,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             // See:  tools/targets/GenerateThisAssemblyCs.targets
             //
             var assembly = typeof(SqlConnection).Assembly;
-            var type = assembly.GetType("System.ThisAssembly");
+            var type = assembly.GetType("Microsoft.Data.SqlClient.ThisAssembly");
             if (type is null)
             {
                 return "<unknown>";
