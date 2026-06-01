@@ -210,9 +210,9 @@ jobs:
           env:
             STRESS_CONFIG_FILE: config.json
           inputs:
-            command: run
-            projects: $(project)
-            arguments: $(runArguments) -f ${{ runtime }} -- $(testArguments)
+            command: custom
+            custom: run
+            arguments: --project $(project) $(runArguments) -f ${{ runtime }} -- $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
@@ -223,6 +223,6 @@ jobs:
           env:
             STRESS_CONFIG_FILE: config.json
           inputs:
-            command: run
-            projects: $(project)
-            arguments: $(runArguments) -f ${{ runtime }} -- $(testArguments)
+            command: custom
+            custom: run
+            arguments: --project $(project) $(runArguments) -f ${{ runtime }} -- $(testArguments)

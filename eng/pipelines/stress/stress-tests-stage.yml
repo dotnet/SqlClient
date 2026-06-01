@@ -58,7 +58,7 @@ parameters:
   # in the stress test Directory.Build.props and the TFMs that SqlClient ships.
   - name: netTestRuntimes
     type: object
-    default: [net8.0, net9.0]
+    default: [net8.0, net9.0, net10.0]
 
 stages:
   - stage: stress_tests_stage
