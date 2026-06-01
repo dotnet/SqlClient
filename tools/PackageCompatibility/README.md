@@ -1,9 +1,10 @@
 # PackageCompatibility Tool
 
 A minimal console application that verifies that a set of SqlClient packages can coexist without
-transitive dependency conflicts, API surface mismatches, or broken runtime functionality.  It loads
-assemblies from each package and then opens a `SqlConnection` to confirm that the resolved package
-graph works end-to-end against a real SQL Server instance.
+transitive dependency conflicts, API surface mismatches, or broken runtime functionality.  It forces
+the AKV provider type to load (pulling in that assembly and its transitive dependencies) and then
+opens a `SqlConnection` to confirm that the resolved package graph works end-to-end against a real
+SQL Server instance.
 
 The following SqlClient packages are verified, either directly or transitively:
 
@@ -114,7 +115,7 @@ exercised during the connectivity test.  Use different modes to broaden coverage
 | Authentication mode | `Authentication=` value | Packages exercised |
 | --- | --- | --- |
 | SQL Server auth | *(omit or `SqlPassword`)* | `Microsoft.Data.SqlClient` only |
-| Windows / Integrated | `ActiveDirectoryIntegrated` | `Microsoft.Data.SqlClient` + SSPI |
+| Entra ID — integrated | `ActiveDirectoryIntegrated` | `Microsoft.Data.SqlClient` + `Extensions.Azure` (requires `AzureVersion`) |
 | Entra ID — default chain | `ActiveDirectoryDefault` | `Microsoft.Data.SqlClient` + `Extensions.Azure` (requires `AzureVersion`) |
 | Entra ID — password | `ActiveDirectoryPassword` | `Microsoft.Data.SqlClient` + `Extensions.Azure` (requires `AzureVersion`) |
 | Entra ID — interactive | `ActiveDirectoryInteractive` | `Microsoft.Data.SqlClient` + `Extensions.Azure` (requires `AzureVersion`) |
