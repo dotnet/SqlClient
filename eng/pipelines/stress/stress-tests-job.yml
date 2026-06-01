@@ -217,14 +217,13 @@ jobs:
             arguments: $(outputDir)/${{ runtime }}/stresstest.dll $(testArguments)
 
       # Run the stress tests for each .NET Framework runtime.
+      # .NET Framework assemblies cannot be run via `dotnet exec`; invoke the exe directly.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
-        - task: DotNetCoreCLI@2
+        - task: CmdLine@2
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ parameters.warnOnTestFailure }}
           env:
             STRESS_CONFIG_FILE: config.json
           inputs:
-            command: custom
-            custom: exec
-            arguments: $(outputDir)/${{ runtime }}/stresstest.dll $(testArguments)
+            script: '"$(outputDir)/${{ runtime }}/stresstest.exe" $(testArguments)'

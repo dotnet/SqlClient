@@ -145,10 +145,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine();
             Console.WriteLine("Supported options are:");
             Console.WriteLine();
-            Console.WriteLine("   -all                        Run all tests - best for debugging, not perf measurements.");
-            Console.WriteLine();
-            Console.WriteLine("   -verify                     Run in functional verification mode.");
-            Console.WriteLine();
             Console.WriteLine("   -duration <n>               Duration of the test in seconds.");
             Console.WriteLine();
             Console.WriteLine("   -threads <n>                Number of threads to use.");

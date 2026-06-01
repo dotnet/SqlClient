@@ -54,8 +54,8 @@ parameters:
     type: object
     default: [net462]
 
-  # The list of .NET runtimes to test against.  These must align with the TargetFrameworks defined
-  # in the stress test Directory.Build.props and the TFMs that SqlClient ships.
+  # The list of .NET runtimes to test against.  These should include the TFMs that SqlClient ships
+  # as well as any upcoming runtimes being validated (e.g. net10.0 is tested but not yet shipped).
   - name: netTestRuntimes
     type: object
     default: [net8.0, net9.0, net10.0]
