@@ -93,10 +93,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: SupportsFileStream
-    type: boolean
-    default: false
-
   - name: DNSCachingConnString
     type: string
     default: ''

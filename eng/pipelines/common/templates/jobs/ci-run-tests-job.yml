@@ -33,7 +33,6 @@ parameters:
   #   IsDNSCachingSupportedCR
   #   IsDNSCachingSupportedTR
   #   ManagedIdentitySupported
-  #   SupportsFileStream
   #   SupportsIntegratedSecurity
   #   TracingEnabled
   #
@@ -278,8 +277,6 @@ jobs:
           AliasName: ${{ parameters.configProperties.AliasName }}
         ${{ if parameters.configProperties.SupportsIntegratedSecurity }}:
           SupportsIntegratedSecurity: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
-        ${{ if parameters.configProperties.SupportsFileStream }}:
-          SupportsFileStream: ${{ eq(parameters.configProperties.SupportsFileStream, 'true') }}
         ${{ if parameters.configProperties.DNSCachingConnString }}:
           DNSCachingConnString: ${{ parameters.configProperties.DNSCachingConnString }}
         ${{ if parameters.configProperties.DNSCachingServerCR }}:
