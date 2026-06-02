@@ -230,16 +230,16 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 }
 ```
 
-You can override the config file path with the `MDS_TEST_CONFIG` environment variable:
+You can override the config file path with the `TEST_MDS_CONFIG` environment variable:
 
 ```bash
-MDS_TEST_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestSet=2
+TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
-$env:MDS_TEST_CONFIG = "C:\path\to\config.jsonc"
+$env:TEST_MDS_CONFIG = "C:\path\to\config.jsonc"
 dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 

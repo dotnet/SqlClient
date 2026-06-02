@@ -29,8 +29,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Write test config file so the test suite can find the connection string.
 CONFIG_DIR="${REPO_ROOT}/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities"
-CONFIG_DEFAULT_FILE="${CONFIG_DIR}/config.default.json"
-CONFIG_FILE="${CONFIG_DIR}/config.json"
+CONFIG_DEFAULT_FILE="${CONFIG_DIR}/config.default.jsonc"
+CONFIG_FILE="${CONFIG_DIR}/config.jsonc"
 echo "Writing test config to ${CONFIG_FILE} (based on ${CONFIG_DEFAULT_FILE})..."
 TCP_CONN_STR="Data Source=tcp:${SQL_HOST},${SQL_PORT};Database=Northwind;User Id=sa;Password=${SA_PASSWORD};Encrypt=false;TrustServerCertificate=true"
 # config.default.json contains JS-style comments (// ...) which are not valid JSON.
