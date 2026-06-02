@@ -27,12 +27,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
             nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotManagedInstance),
             nameof(DataTestUtility.IsNotKerberosTest))]
-        public void CancelAsyncConnections()
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CancelAsyncConnections(bool useMars)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.MultipleActiveResultSets = false;
-            RunCancelAsyncConnections(builder);
-            builder.MultipleActiveResultSets = true;
+            builder.MultipleActiveResultSets = useMars;
             RunCancelAsyncConnections(builder);
         }
 
