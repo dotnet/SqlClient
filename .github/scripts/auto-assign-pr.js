@@ -16,9 +16,8 @@ module.exports = async ({ github, context, core }) => {
 
   // Fallback pool keeps behavior unchanged when no repo variable is configured.
   const defaultPool = ['cheenamalhotra', 'paulmedynski', 'priyankatiwari08', 'benrr101', 'mdaigle', 'apoorvdeshmukh'];
-  const configuredPool = parseCsvLogins(process.env.AUTO_ASSIGN_PR_POOL);
+  const configuredPool = parseCsvLogins(process.env.PR_REVIEWER_POOL);
   const rawPool = configuredPool.length > 0 ? configuredPool : defaultPool;
-  const skipUsers = new Set(parseCsvLogins(process.env.AUTO_ASSIGN_PR_SKIP).map(normalizeLogin));
   const seenPoolUsers = new Set();
   const pool = [];
   for (const user of rawPool) {
@@ -61,7 +60,6 @@ module.exports = async ({ github, context, core }) => {
 
   const candidates = pool.filter(user =>
     normalizeLogin(user) !== normalizeLogin(author) &&
-    !skipUsers.has(normalizeLogin(user)) &&
     !currentAssignees.some(a => normalizeLogin(a) === normalizeLogin(user))
   );
 

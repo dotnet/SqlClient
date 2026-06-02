@@ -19,9 +19,7 @@ jobs:
       issues: write
       pull-requests: read
     env:
-      AUTO_ASSIGN_PR_POOL: ${{ vars.AUTO_ASSIGN_PR_POOL }}
-      AUTO_ASSIGN_PR_SKIP: ${{ vars.AUTO_ASSIGN_PR_SKIP }}
-    
+      PR_REVIEWER_POOL: ${{ vars.PR_REVIEWER_POOL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
