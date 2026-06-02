@@ -128,6 +128,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // A very large LoadBalanceTimeout should be clamped to MaxPruningSampleSize (300)
             // to prevent excessive memory allocation. 10000 / 10 = 1000, clamped to 300.
+            // TODO: In Story 2 PR, surface the clamp via logging, document the max supported
+            // idle timeout on the connection string property, and evaluate whether 300 is sufficient.
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 10000);
 
             Assert.Equal(300, pool.PruningSampleSize);
@@ -189,6 +191,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // should have disabled the timer.
             Assert.False(pool.IsPruningTimerEnabled);
             Assert.Equal(0, pool.PruningSampleIndex);
+            Assert.Equal(0, pool.Count);
 
             pool.Shutdown();
         }
@@ -243,8 +246,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 1
             ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 2 → prune
 
-            // Pool should not drop below MinPoolSize (5)
-            Assert.True(pool.Count >= 5, $"Pool count {pool.Count} dropped below MinPoolSize 5");
+            // Pool should not drop below MinPoolSize (5).
+            // 10 idle connections, median of 2 samples (both 10) = 10, but floor is MinPoolSize=5.
+            Assert.Equal(5, pool.Count);
 
             pool.Shutdown();
         }
@@ -305,8 +309,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 1 (idle count = 5)
             ChannelDbConnectionPool.PruneIdleConnections(pool); // sample 2 → prune
 
-            // In-use connections must not be removed. Pool count >= 5 (the in-use ones).
-            Assert.True(pool.Count >= 5, $"In-use connections were pruned. Count: {pool.Count}");
+            // In-use connections must not be removed.
+            // 5 idle connections, median of 2 samples (both 5) = 5, all 5 idle pruned → 5 in-use remain.
+            Assert.Equal(5, pool.Count);
 
             pool.Shutdown();
         }
