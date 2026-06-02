@@ -106,16 +106,6 @@ jobs:
       - name: project
         value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
 
-      # dotnet CLI arguments for build.
-      - name: buildArguments
-        value: >-
-          --verbosity ${{ parameters.dotnetVerbosity }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-
-      # The output directory where the built stress test binaries are placed.
-      - name: outputDir
-        value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/bin/${{ parameters.buildConfiguration }}
-
       # The contents of the config file to use for all tests.  We will write this to a JSON file and
       # then point to it via the STRESS_CONFIG_FILE environment variable.
       - name: configContent
@@ -136,8 +126,28 @@ jobs:
             }
           ]
 
-      # Stress test command-line arguments.
-      - name: testArguments
+      # IMPORTANT: Do NOT name pipeline variables "runArguments", "buildArguments", or
+      # "testArguments".  ADO exposes all pipeline variables as environment variables (uppercased),
+      # and the dotnet CLI's System.CommandLine reads env vars matching {COMMAND}ARGUMENTS (e.g.
+      # RUNARGUMENTS, BUILDARGUMENTS) and silently injects their content into the parsed arguments —
+      # bypassing the "--" separator.  This causes app arguments to contain SDK options and triggers
+      # unintended behavior.
+
+      # dotnet CLI options for build.
+      - name: dotnetBuildOpts
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+
+      # dotnet run options shared by all test steps (framework is appended per-step).
+      - name: dotnetRunOpts
+        value: >-
+          --no-build
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          --configuration ${{ parameters.buildConfiguration }}
+
+      # Stress test options passed after the "--" separator.
+      - name: stressTestOpts
         value: -a SqlClient.Stress.Tests -console
 
     steps:
@@ -177,18 +187,13 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments)
+          arguments: ${{ variables.dotnetBuildOpts }}
 
       # Set a flag so test steps can distinguish a build failure from a test failure.
       - pwsh: Write-Host "##vso[task.setvariable variable=buildSucceeded]true"
         displayName: Set build success flag
 
       # Run the stress tests for each .NET runtime.
-      #
-      # We use `dotnet exec` instead of `dotnet run` because SDK 10.0.300 has a regression where
-      # `dotnet run` forwards its own options (--verbosity, --configuration, --no-build) as
-      # application arguments on hosted Ubuntu agents.  Since we build separately above, `dotnet
-      # exec` is both simpler and immune to argument-parsing changes in the SDK.
       #
       # The condition and continueOnError work together to achieve the following behavior:
       #
@@ -212,18 +217,19 @@ jobs:
           env:
             STRESS_CONFIG_FILE: config.json
           inputs:
-            command: custom
-            custom: exec
-            arguments: $(outputDir)/${{ runtime }}/stresstest.dll $(testArguments)
+            command: run
+            projects: $(project)
+            arguments: ${{ variables.dotnetRunOpts }} -f ${{ runtime }} -- ${{ variables.stressTestOpts }}
 
       # Run the stress tests for each .NET Framework runtime.
-      # .NET Framework assemblies cannot be run via `dotnet exec`; invoke the exe directly.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
-        - task: CmdLine@2
+        - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ parameters.warnOnTestFailure }}
           env:
             STRESS_CONFIG_FILE: config.json
           inputs:
-            script: '"$(outputDir)/${{ runtime }}/stresstest.exe" $(testArguments)'
+            command: run
+            projects: $(project)
+            arguments: ${{ variables.dotnetRunOpts }} -f ${{ runtime }} -- ${{ variables.stressTestOpts }}
