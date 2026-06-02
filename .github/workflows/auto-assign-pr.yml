@@ -16,6 +16,7 @@ jobs:
     if: github.repository == 'dotnet/SqlClient' && github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && github.event.pull_request.milestone != null
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       issues: write
       pull-requests: read
     env:
