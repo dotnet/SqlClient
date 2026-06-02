@@ -45,6 +45,10 @@ steps:
     docker --version
     docker pull --platform linux/amd64 mcr.microsoft.com/mssql/server:2022-latest
 
+    # Disable xtrace before any command that handles the SA password so it is
+    # not echoed (expanded) into pipeline logs.
+    { set +x; } 2>/dev/null
+
     # Password for the SA user (required)
     MSSQL_SA_PW="${{ parameters.password }}"
 
