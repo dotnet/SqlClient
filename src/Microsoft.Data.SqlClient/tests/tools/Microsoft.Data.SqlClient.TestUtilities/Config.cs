@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
                 return JsonSerializer.Deserialize<Config>(sr.ReadToEnd(), JsonSerializerOptions) ??
                        throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'");
             }
-            catch (FileNotFoundException)
+            catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
             {
                 // File did not exist at the path given. We will try a different location.
                 return null;

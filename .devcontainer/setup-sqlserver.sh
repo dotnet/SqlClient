@@ -33,7 +33,7 @@ CONFIG_DEFAULT_FILE="${CONFIG_DIR}/config.default.jsonc"
 CONFIG_FILE="${CONFIG_DIR}/config.jsonc"
 echo "Writing test config to ${CONFIG_FILE} (based on ${CONFIG_DEFAULT_FILE})..."
 TCP_CONN_STR="Data Source=tcp:${SQL_HOST},${SQL_PORT};Database=Northwind;User Id=sa;Password=${SA_PASSWORD};Encrypt=false;TrustServerCertificate=true"
-# config.default.json contains JS-style comments (// ...) which are not valid JSON.
+# config.default.jsonc contains JS-style comments (// ...) which are not valid JSON.
 # Strip single-line comments before feeding to jq.
 sed 's|//.*||' "${CONFIG_DEFAULT_FILE}" \
   | jq --arg cs "${TCP_CONN_STR}" \
