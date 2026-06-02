@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
     env:
       PR_REVIEWER_POOL: ${{ vars.PR_REVIEWER_POOL }}
     steps:
