@@ -71,6 +71,15 @@ stages:
       - name: saPassword
         value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
 
+      # The 1ES pool name, determined automatically by ADO project:
+      #   - ADO.Net  -> ADO-1ES-Pool
+      #   - public   -> ADO-CI-1ES-Pool
+      - name: poolName
+        ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
+          value: ADO-1ES-Pool
+        ${{ else }}:
+          value: ADO-CI-1ES-Pool
+
     jobs:
 
     # ----------------------------------------------------------------------------------------------
@@ -85,7 +94,7 @@ stages:
         warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
         jobNameSuffix: linux
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ADO-CI-1ES-Pool
+        poolName: ${{ variables.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
@@ -107,7 +116,7 @@ stages:
         # Note that we include the .NET Framework runtimes for test runs on Windows.
         netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ADO-CI-1ES-Pool
+        poolName: ${{ variables.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
