@@ -2856,18 +2856,17 @@ DROP TABLE #Column_Aliases
                         task,
                         source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: state =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                            Task continuedTask = sqlBulkCopy.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
+                            Task continuedTask = state.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                             if (continuedTask == null)
                             {
                                 // Continuation finished sync, recall into CopyBatchesAsync to continue
-                                sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                                state.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                             }
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true));
+                        onFailure: static (state, _) => state.CopyBatchesAsyncContinuedOnError(cleanupParser: false),
+                        onCancellation: static state => state.CopyBatchesAsyncContinuedOnError(cleanupParser: true));
 
                     return source.Task;
                 }
@@ -2918,24 +2917,23 @@ DROP TABLE #Column_Aliases
                         writeTask,
                         source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: state =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
                             try
                             {
-                                sqlBulkCopy.RunParser();
-                                sqlBulkCopy.CommitTransaction();
+                                state.RunParser();
+                                state.CommitTransaction();
                             }
                             catch (Exception)
                             {
-                                sqlBulkCopy.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
+                                state.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
                                 throw;
                             }
 
                             // Always call back into CopyBatchesAsync
-                            sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                            state.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false));
+                        onFailure: static (state, _ ) => state.CopyBatchesAsyncContinuedOnError(cleanupParser: false));
                     return source.Task;
                 }
             }
@@ -3190,21 +3188,20 @@ DROP TABLE #Column_Aliases
 
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
                         AsyncHelper.SetTimeoutExceptionWithState(
-                            completion: cancellableReconnectTS,
-                            timeout: BulkCopyTimeout,
+                            taskCompletionSource: cancellableReconnectTS,
+                            timeoutInSeconds: BulkCopyTimeout,
                             state: _destinationTableName,
-                            onFailure: static state =>
-                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()),
+                            onTimeout: static state => SQL.BulkLoadInvalidDestinationTable(state, SQL.CR_ReconnectTimeout()),
                             cancellationToken: CancellationToken.None
                         );
 
                         AsyncHelper.ContinueTaskWithState(
-                            task: cancellableReconnectTS.Task,
-                            completion: source,
+                            taskToContinue:cancellableReconnectTS.Task,
+                            taskCompletionSource: source,
                             state: regReconnectCancel,
-                            onSuccess: (object state) =>
+                            onSuccess: state =>
                             {
-                                ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
+                                state.Value.Dispose();
                                 if (_parserLock != null)
                                 {
                                     _parserLock.Release();
@@ -3214,10 +3211,22 @@ DROP TABLE #Column_Aliases
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                        );
+                            onFailure: (regReconnectCancel2, exception) =>
+                            {
+                                regReconnectCancel2.Value.Dispose();
+
+                                // Convert exception and set it on the source
+                                // Note: This is safe because the helper will only try to set the
+                                //    exception and b/c it is already set will pass without setting
+                                //    to the original exception.
+                                Exception convertedException = SQL.BulkLoadInvalidDestinationTable(
+                                    _destinationTableName,
+                                    exception);
+                                source.TrySetException(convertedException);
+                            },
+                            onCancellation: static regReconnectCancel2 =>
+                                regReconnectCancel2.Value.Dispose());
+
                         return;
                     }
                     else
