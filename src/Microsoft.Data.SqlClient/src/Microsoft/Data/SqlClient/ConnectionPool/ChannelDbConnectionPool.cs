@@ -92,12 +92,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
         private volatile int _isClearing;
-
-        /// <summary>
-        /// Manages idle connection pruning. Null when the pool is fixed-size (MinPoolSize >= MaxPoolSize)
-        /// because pruning would never activate.
-        /// </summary>
-        private readonly PoolPruner? _pruner;
         #endregion
 
         /// <summary>
@@ -125,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // If min >= max, the pool is fixed-size and pruning would never activate.
             if (MinPoolSize < MaxPoolSize)
             {
-                _pruner = new PoolPruner(this, PoolGroupOptions.LoadBalanceTimeout);
+                Pruner = new PoolPruner(this, PoolGroupOptions.LoadBalanceTimeout);
             }
 
             State = Running;
@@ -279,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Shutdown()
         {
             State = ShuttingDown;
-            _pruner?.Dispose();
+            Pruner?.Dispose();
         }
 
         /// <inheritdoc />
@@ -441,7 +435,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // A new connection was added to the pool. If we've grown past MinPoolSize,
                 // start the pruning timer so idle connections can be reclaimed.
-                _pruner?.UpdateTimer();
+                Pruner?.UpdateTimer();
             }
 
             return result;
@@ -491,7 +485,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             connection.Dispose();
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
-            _pruner?.UpdateTimer();
+            Pruner?.UpdateTimer();
         }
 
         /// <summary>
@@ -684,9 +678,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         #region Pruning
         /// <summary>
-        /// Exposes the pruner instance for unit tests. Null when pruning is disabled (fixed-size pool).
+        /// Manages idle connection pruning. Null when the pool is fixed-size (MinPoolSize >= MaxPoolSize)
+        /// because pruning would never activate.
         /// </summary>
-        internal PoolPruner? Pruner => _pruner;
+        internal PoolPruner? Pruner { get; }
 
         /// <summary>
         /// Removes up to <paramref name="count"/> idle connections from the pool, respecting

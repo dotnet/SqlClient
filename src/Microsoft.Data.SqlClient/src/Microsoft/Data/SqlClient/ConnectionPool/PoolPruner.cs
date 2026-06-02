@@ -37,12 +37,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private static readonly TimeSpan DefaultLifetimeWindow = TimeSpan.FromSeconds(300);
 
+        /// <summary>
+        /// The owning connection pool whose idle connections are pruned.
+        /// </summary>
         private readonly ChannelDbConnectionPool _pool;
-        private readonly int _minPoolSize;
 
         /// <summary>
-        /// One-shot timer that triggers pruning evaluation. Re-armed manually after each callback
-        /// to prevent overlapping invocations.
+        /// One-shot timer that triggers pruning evaluation. Re-armed manually after each
+        /// pruning operation to prevent overlapping invocations.
         /// </summary>
         private readonly Timer _timer;
 
@@ -92,7 +94,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal PoolPruner(ChannelDbConnectionPool pool, TimeSpan lifetimeWindow)
         {
             _pool = pool;
-            _minPoolSize = pool.PoolGroupOptions.MinPoolSize;
             _samplingInterval = DefaultSamplingInterval;
 
             int lifetimeSeconds = (int)lifetimeWindow.TotalSeconds;
@@ -153,13 +154,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 int numConnections = _pool.Count;
 
-                if (numConnections > _minPoolSize && !_timerEnabled)
+                if (numConnections > _pool.PoolGroupOptions.MinPoolSize && !_timerEnabled)
                 {
                     // Pool grew beyond min — start collecting samples.
                     _timerEnabled = true;
                     _timer.Change(_samplingInterval, Timeout.InfiniteTimeSpan);
                 }
-                else if (numConnections <= _minPoolSize && _timerEnabled)
+                else if (numConnections <= _pool.PoolGroupOptions.MinPoolSize && _timerEnabled)
                 {
                     // Pool shrunk back to min — stop pruning, reset sample buffer.
                     _timer.Change(Timeout.Infinite, Timeout.Infinite);
