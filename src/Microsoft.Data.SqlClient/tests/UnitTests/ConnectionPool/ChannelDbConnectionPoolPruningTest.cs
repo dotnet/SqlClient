@@ -60,7 +60,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < count; i++)
             {
                 owners[i] = new SqlConnection();
-                pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out connections[i]);
+                var completed = pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out connections[i]);
+                Assert.True(completed);
+                Assert.NotNull(connections[i]);
             }
 
             for (int i = 0; i < count; i++)
@@ -282,7 +284,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < 5; i++)
             {
                 owners[i] = new SqlConnection();
-                pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out connections[i]);
+                var completed = pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out connections[i]);
+                Assert.True(completed);
+                Assert.NotNull(connections[i]);
             }
 
             // Also add 5 idle connections
@@ -403,7 +407,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             for (int i = 0; i < 8; i++)
             {
                 busyOwners[i] = new SqlConnection();
-                pool.TryGetConnection(busyOwners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out busyConns[i]);
+                var completed = pool.TryGetConnection(busyOwners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out busyConns[i]);
+                Assert.True(completed);
+                Assert.NotNull(busyConns[i]);
             }
             pool.Pruner!.OnPruningCallback(null); // sample[0] = 2 idle
 

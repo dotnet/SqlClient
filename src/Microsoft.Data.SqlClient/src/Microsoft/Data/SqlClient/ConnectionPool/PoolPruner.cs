@@ -185,16 +185,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return;
                 }
 
-                // Use a local for readability; _sampleIndex is only modified under this lock.
-                int sampleIndex = _sampleIndex;
-
                 // Record the current idle count as a sample.
-                _samples[sampleIndex] = _pool.IdleCount;
+                _samples[_sampleIndex] = _pool.IdleCount;
 
-                if (sampleIndex != _sampleSize - 1)
+                if (_sampleIndex != _sampleSize - 1)
                 {
                     // Buffer not full yet — keep collecting, re-arm timer.
-                    _sampleIndex = sampleIndex + 1;
+                    _sampleIndex++;
                     _timer.Change(_samplingInterval, Timeout.InfiniteTimeSpan);
                     return;
                 }
