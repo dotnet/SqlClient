@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{initialServer.EndPoint.Port}", secondConnection.DataSource);
 
             // 1 for the initial connection, 2 for the second connection
-            Assert.Equal(3, initialServer.PreLoginCount - initialServer.AbandonedPreLoginCount);
+            Assert.Equal(3, initialServer.Login7Count);
             // A failover should not be triggered, so prelogin count to the failover server should be 0
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
@@ -341,8 +341,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, server.PreLoginCount);
-            Assert.Equal(0, server.Login7Count);
-            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+            // Login7 is sent to the primary but the client gives up during the
+            // server-side delay; the counter is still incremented when the
+            // Login7 message is received.
+            Assert.Equal(1, server.Login7Count);
+            Assert.Equal(1, failoverServer.Login7Count);
         }
 
         [Theory]
@@ -388,7 +391,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(2, server.Login7Count);
         }
 
         [Theory]
@@ -483,7 +486,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
-            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(2, server.Login7Count);
         }
 
         [Theory]
@@ -603,9 +606,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, failoverConnection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
             // 1 for the initial connection
-            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
+            Assert.Equal(1, server.Login7Count);
             // 1 for the failover connection
-            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+            Assert.Equal(1, failoverServer.Login7Count);
         }
     }
 }

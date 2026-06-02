@@ -33,10 +33,10 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for login request
         /// </summary>
-        public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnPreLoginRequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Get the collection from a valid On PreLogin Request
-            TDSMessageCollection preLoginCollection = base.OnPreLoginRequest(session, request);
+            TDSMessageCollection preLoginCollection = base.OnPreLoginRequestCore(session, request);
 
             // Find the is token carrying on TDSPreLoginToken
             TDSPreLoginToken preLoginToken = preLoginCollection.Find(message => message.Exists(packetToken => packetToken is TDSPreLoginToken)).
@@ -76,10 +76,10 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for login request
         /// </summary>
-        public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnLogin7RequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Get the collection from the normal behavior On Login7 Request
-            TDSMessageCollection login7Collection = base.OnLogin7Request(session, request);
+            TDSMessageCollection login7Collection = base.OnLogin7RequestCore(session, request);
 
             // Get the Federated Authentication ExtAck from Login 7
             TDSFeatureExtAckFederatedAuthenticationOption fedAutExtAct = GetFeatureExtAckFederatedAuthenticationOptionFromLogin7(login7Collection);

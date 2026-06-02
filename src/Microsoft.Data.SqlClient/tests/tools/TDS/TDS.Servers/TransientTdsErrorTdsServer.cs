@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Threading;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Error;
@@ -52,7 +51,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for login request
         /// </summary>
-        public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnLogin7RequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
@@ -60,13 +59,11 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Check if we're still going to raise transient error
             if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
-                // Increment Login7 count since we won't call base.OnLogin7Request
-                Interlocked.Increment(ref _login7Count);
                 return GenerateErrorMessage(request);
             }
 
             // Return login response from the base class
-            return base.OnLogin7Request(session, request);
+            return base.OnLogin7RequestCore(session, request);
         }
 
         /// <inheritdoc/>

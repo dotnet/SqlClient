@@ -37,10 +37,10 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for pre-login request
         /// </summary>
-        public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnPreLoginRequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Delegate to the base class
-            TDSMessageCollection response = base.OnPreLoginRequest(session, request);
+            TDSMessageCollection response = base.OnPreLoginRequestCore(session, request);
 
             // Check if arguments are of the routing server
             if (Arguments is RoutingTdsServerArguments)
@@ -72,7 +72,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for login request
         /// </summary>
-        public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnLogin7RequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
@@ -122,7 +122,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             // Delegate to the base class
-            return base.OnLogin7Request(session, request);
+            return base.OnLogin7RequestCore(session, request);
         }
 
         /// <summary>

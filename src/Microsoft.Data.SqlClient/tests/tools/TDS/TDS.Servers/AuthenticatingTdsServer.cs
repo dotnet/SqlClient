@@ -33,7 +33,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for login request
         /// </summary>
-        public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnLogin7RequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;
@@ -207,7 +207,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             // Return login response from the base class
-            return base.OnLogin7Request(session, request);
+            return base.OnLogin7RequestCore(session, request);
         }
     }
 }
