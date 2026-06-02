@@ -82,6 +82,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
 
             Assert.NotNull(pool.Pruner);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -100,6 +102,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
 
             Assert.False(pool.Pruner!.IsTimerEnabled);
+
+            pool.Shutdown();
         }
 
         [Theory]
@@ -113,6 +117,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: loadBalanceTimeout);
 
             Assert.Equal(expectedSampleSize, pool.Pruner!.SampleSize);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -122,6 +128,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 0);
 
             Assert.Equal(30, pool.Pruner!.SampleSize);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -133,6 +141,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 10000);
 
             Assert.Equal(300, pool.Pruner!.SampleSize);
+
+            pool.Shutdown();
         }
 
         #endregion
@@ -167,6 +177,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Timer should stay disabled since we're at (not above) MinPoolSize
             Assert.False(pool.Pruner!.IsTimerEnabled);
+
+            pool.Shutdown();
         }
 
         [Fact]
@@ -251,6 +263,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             Assert.Equal(0, pool.Count);
             Assert.Equal(0, pool.Pruner.SampleIndex);
+
+            pool.Shutdown();
         }
 
         [Fact]
