@@ -30,18 +30,15 @@ parameters:
   # True to enable debugging steps.
   - name: debug
     type: boolean
-    default: false
 
   # When true, test failures produce warnings (SucceededWithIssues) but do not fail the job.
   # When false, test failures fail the job.  All test steps always run regardless of this setting.
   - name: warnOnTestFailure
     type: boolean
-    default: false
 
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
-    default: normal
     values:
     - quiet
     - minimal
@@ -93,6 +90,8 @@ stages:
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
         warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
         jobNameSuffix: linux
+        # No .NET Framework runtimes on Linux.
+        netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         poolName: ${{ variables.poolName }}
         saPassword: $(saPassword)
@@ -137,6 +136,8 @@ stages:
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
         warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
         jobNameSuffix: macos
+        # No .NET Framework runtimes on macOS.
+        netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         # We don't have any 1ES Hosted Pool images for macOS, so we use a generic one from Azure
         # Pipelines.

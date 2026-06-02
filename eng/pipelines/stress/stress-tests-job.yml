@@ -24,7 +24,6 @@ parameters:
   # True to enable debugging steps.
   - name: debug
     type: boolean
-    default: false
 
   # The prefix to prepend to the job's display name:
   #
@@ -36,7 +35,6 @@ parameters:
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
-    default: normal
     values:
     - quiet
     - minimal
@@ -52,17 +50,14 @@ parameters:
   # When false, test failures fail the job.  All test steps always run regardless of this setting.
   - name: warnOnTestFailure
     type: boolean
-    default: false
 
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
     type: object
-    default: []
 
   # The list of .NET runtimes to test against.
   - name: netTestRuntimes
     type: object
-    default: []
 
   # The name of the Azure Pipelines pool to use.
   - name: poolName
