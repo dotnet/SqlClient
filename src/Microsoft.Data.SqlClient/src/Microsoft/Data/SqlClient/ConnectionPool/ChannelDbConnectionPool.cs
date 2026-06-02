@@ -93,75 +93,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private volatile int _isClearing;
 
-        #region Pruning fields
         /// <summary>
-        /// Default pruning interval in seconds. Used until a connection string keyword is added.
+        /// Manages idle connection pruning. Null when the pool is fixed-size (MinPoolSize >= MaxPoolSize)
+        /// because pruning would never activate.
         /// </summary>
-        private const int DefaultPruningIntervalSeconds = 10;
-
-        /// <summary>
-        /// Default lifetime window in seconds used for sample size calculation when
-        /// LoadBalanceTimeout (Connection Lifetime) is zero.
-        /// </summary>
-        private const int DefaultLifetimeWindowSeconds = 300;
-
-        /// <summary>
-        /// Maximum allowed sample buffer size to prevent excessive memory allocation
-        /// from very large LoadBalanceTimeout values.
-        /// </summary>
-        private const int MaxPruningSampleSize = 300;
-
-        /// <summary>
-        /// One-shot timer that triggers pruning evaluation. Re-armed at the end of each callback.
-        /// </summary>
-        private readonly Timer? _pruningTimer;
-
-        /// <summary>
-        /// The interval between pruning samples/evaluations.
-        /// </summary>
-        private readonly TimeSpan _pruningSamplingInterval = TimeSpan.Zero;
-
-        /// <summary>
-        /// Number of idle count samples to collect before computing the median and pruning.
-        /// Equals ConnectionLifetime / PruningInterval (rounded up), clamped to <see cref="MaxPruningSampleSize"/>.
-        /// </summary>
-        private readonly int _pruningSampleSize = 0;
-
-        /// <summary>
-        /// Buffer of idle count snapshots, one recorded per timer tick.
-        /// Sorted in-place when full to compute the median, then reset for the next window.
-        /// </summary>
-        private readonly int[] _pruningSamples = Array.Empty<int>();
-
-        /// <summary>
-        /// The 0-based index into the sorted <see cref="_pruningSamples"/> array that represents the median.
-        /// </summary>
-        private readonly int _pruningMedianIndex = 0;
-
-        /// <summary>
-        /// Whether the pruning timer is currently armed and firing.
-        /// </summary>
-        private volatile bool _pruningTimerEnabled;
-
-        /// <summary>
-        /// Current write position in the <see cref="_pruningSamples"/> buffer.
-        /// </summary>
-        private int _pruningSampleIndex;
-        #endregion
-
-        #region Internal test surface
-        /// <summary>Whether the pruning timer is currently armed. Exposed for unit tests.</summary>
-        internal bool IsPruningTimerEnabled => _pruningTimerEnabled;
-
-        /// <summary>Current write position in the sample buffer. Exposed for unit tests.</summary>
-        internal int PruningSampleIndex => _pruningSampleIndex;
-
-        /// <summary>Total number of samples collected per pruning window. Exposed for unit tests.</summary>
-        internal int PruningSampleSize => _pruningSampleSize;
-
-        /// <summary>Whether a pruning timer was allocated (false for fixed-size pools). Exposed for unit tests.</summary>
-        internal bool HasPruningTimer => _pruningTimer != null;
-        #endregion
+        private readonly PoolPruner? _pruner;
         #endregion
 
         /// <summary>
@@ -189,26 +125,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // If min >= max, the pool is fixed-size and pruning would never activate.
             if (MinPoolSize < MaxPoolSize)
             {
-                _pruningSamplingInterval = TimeSpan.FromSeconds(DefaultPruningIntervalSeconds);
-
-                var lifetimeSeconds = (int)PoolGroupOptions.LoadBalanceTimeout.TotalSeconds;
-                if (lifetimeSeconds <= 0)
-                {
-                    lifetimeSeconds = DefaultLifetimeWindowSeconds;
-                }
-
-                _pruningSampleSize = Math.Min(
-                    DivideRoundingUp(lifetimeSeconds, DefaultPruningIntervalSeconds),
-                    MaxPruningSampleSize);
-                _pruningMedianIndex = DivideRoundingUp(_pruningSampleSize, 2) - 1;
-                _pruningSamples = new int[_pruningSampleSize];
-
-                // Suppress ExecutionContext flow to avoid capturing AsyncLocals onto the timer,
-                // which would keep them alive for the lifetime of the pool.
-                using (ExecutionContext.SuppressFlow())
-                {
-                    _pruningTimer = new Timer(PruneIdleConnections, this, Timeout.Infinite, Timeout.Infinite);
-                }
+                _pruner = new PoolPruner(this, PoolGroupOptions.LoadBalanceTimeout);
             }
 
             State = Running;
@@ -362,14 +279,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Shutdown()
         {
             State = ShuttingDown;
-            if (_pruningTimer is not null)
-            {
-                lock (_pruningTimer)
-                {
-                    _pruningTimerEnabled = false;
-                    _pruningTimer.Dispose();
-                }
-            }
+            _pruner?.Dispose();
         }
 
         /// <inheritdoc />
@@ -531,7 +441,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // A new connection was added to the pool. If we've grown past MinPoolSize,
                 // start the pruning timer so idle connections can be reclaimed.
-                UpdatePruningTimer();
+                _pruner?.UpdateTimer();
             }
 
             return result;
@@ -581,7 +491,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             connection.Dispose();
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
-            UpdatePruningTimer();
+            _pruner?.UpdateTimer();
         }
 
         /// <summary>
@@ -774,97 +684,31 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         #region Pruning
         /// <summary>
-        /// Enables or disables the pruning timer based on the current pool size relative to MinPoolSize.
-        /// Called after connections are opened or closed.
+        /// Exposes the pruner instance for unit tests. Null when pruning is disabled (fixed-size pool).
         /// </summary>
-        internal void UpdatePruningTimer()
-        {
-            if (_pruningTimer is null || !IsRunning)
-            {
-                return;
-            }
-
-            lock (_pruningTimer)
-            {
-                // Re-check after acquiring lock — Shutdown() may have disposed the timer.
-                if (!IsRunning)
-                {
-                    return;
-                }
-
-                int numConnections = _connectionSlots.ReservationCount;
-
-                if (numConnections > MinPoolSize && !_pruningTimerEnabled)
-                {
-                    // Pool grew beyond min — start collecting samples
-                    _pruningTimerEnabled = true;
-                    _pruningTimer.Change(_pruningSamplingInterval, Timeout.InfiniteTimeSpan);
-                }
-                else if (numConnections <= MinPoolSize && _pruningTimerEnabled)
-                {
-                    // Pool shrunk back to min — stop pruning, reset sample buffer
-                    _pruningTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    _pruningSampleIndex = 0;
-                    _pruningTimerEnabled = false;
-                }
-            }
-        }
+        internal PoolPruner? Pruner => _pruner;
 
         /// <summary>
-        /// Timer callback that samples the idle count and, once enough samples are collected,
-        /// prunes idle connections based on the median of recent samples.
+        /// Removes up to <paramref name="count"/> idle connections from the pool, respecting
+        /// the <see cref="MinPoolSize"/> floor. Called by <see cref="PoolPruner"/> after computing
+        /// the median of collected samples.
         /// </summary>
-        internal static void PruneIdleConnections(object? state)
+        internal void PruneConnections(int count)
         {
-            var pool = (ChannelDbConnectionPool)state!;
-            int[] samples = pool._pruningSamples;
-            int toPrune;
-
-            lock (pool._pruningTimer!)
-            {
-                // Guard against races with Shutdown or UpdatePruningTimer disabling the timer.
-                if (!pool._pruningTimerEnabled)
-                {
-                    return;
-                }
-
-                int sampleIndex = pool._pruningSampleIndex;
-
-                // Record the current idle count as a sample.
-                samples[sampleIndex] = pool._idleChannel.Count;
-
-                if (sampleIndex != pool._pruningSampleSize - 1)
-                {
-                    // Buffer not full yet — keep collecting, re-arm timer.
-                    pool._pruningSampleIndex = sampleIndex + 1;
-                    pool._pruningTimer!.Change(pool._pruningSamplingInterval, Timeout.InfiniteTimeSpan);
-                    return;
-                }
-
-                // Buffer full — compute median, reset, and re-arm.
-                Array.Sort(samples);
-                toPrune = samples[pool._pruningMedianIndex];
-                pool._pruningSampleIndex = 0;
-                pool._pruningTimer!.Change(pool._pruningSamplingInterval, Timeout.InfiniteTimeSpan);
-            }
-
-            // Prune outside the lock to avoid holding it during I/O.
-            while (toPrune > 0
-                && pool.IsRunning
-                && pool._connectionSlots.ReservationCount > pool.MinPoolSize
-                && pool._idleChannel.TryRead(out var connection))
+            while (count > 0
+                && IsRunning
+                && _connectionSlots.ReservationCount > MinPoolSize
+                && _idleChannel.TryRead(out var connection))
             {
                 if (connection is null)
                 {
                     continue;
                 }
 
-                pool.RemoveConnection(connection);
-                toPrune--;
+                RemoveConnection(connection);
+                count--;
             }
         }
-
-        internal static int DivideRoundingUp(int value, int divisor) => 1 + (value - 1) / divisor;
         #endregion
     }
 }
