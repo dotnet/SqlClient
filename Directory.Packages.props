@@ -40,6 +40,31 @@
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
+  <!--
+    Compute version ceilings for sibling packages. The ceiling is the next minor version
+    (prerelease suffix stripped) derived from the *floor* (XxxPackageVersion), giving a range
+    like [1.1.0-preview1-ci123, 1.2.0).  This prevents NuGet from resolving an incompatible
+    newer minor/major version.
+
+    Because the ceiling is derived from the floor, no separate NextVersion lookup is needed
+    here — the range is self-contained regardless of what pipeline or developer scenario
+    computed the floor.
+  -->
+  <PropertyGroup>
+    <!-- SNI version (external package, version declared once here) -->
+    <SniVersion>6.0.2</SniVersion>
+    <SniVersionRange>[$(SniVersion), $(SniVersion.Split('.')[0]).$([MSBuild]::Add($(SniVersion.Split('.')[1]), 1)).0)</SniVersionRange>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
+    <SqlServerVersionCeiling>$(SqlServerPackageVersion.Split('.')[0]).$([MSBuild]::Add($(SqlServerPackageVersion.Split('.')[1]), 1)).0</SqlServerVersionCeiling>
+    <LoggingVersionCeiling>$(LoggingPackageVersion.Split('.')[0]).$([MSBuild]::Add($(LoggingPackageVersion.Split('.')[1]), 1)).0</LoggingVersionCeiling>
+    <AbstractionsVersionCeiling>$(AbstractionsPackageVersion.Split('.')[0]).$([MSBuild]::Add($(AbstractionsPackageVersion.Split('.')[1]), 1)).0</AbstractionsVersionCeiling>
+    <SqlClientVersionCeiling>$(SqlClientPackageVersion.Split('.')[0]).$([MSBuild]::Add($(SqlClientPackageVersion.Split('.')[1]), 1)).0</SqlClientVersionCeiling>
+    <AzureVersionCeiling>$(AzurePackageVersion.Split('.')[0]).$([MSBuild]::Add($(AzurePackageVersion.Split('.')[1]), 1)).0</AzureVersionCeiling>
+    <AkvProviderVersionCeiling>$(AkvProviderPackageVersion.Split('.')[0]).$([MSBuild]::Add($(AkvProviderPackageVersion.Split('.')[1]), 1)).0</AkvProviderVersionCeiling>
+  </PropertyGroup>
+
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
@@ -47,22 +72,22 @@
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.SqlServer.Server"
-      Version="$(SqlServerPackageVersion)" />
+      Version="[$(SqlServerPackageVersion), $(SqlServerVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Internal.Logging"
-      Version="$(LoggingPackageVersion)" />
+      Version="[$(LoggingPackageVersion), $(LoggingVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
-      Version="$(AbstractionsPackageVersion)" />
+      Version="[$(AbstractionsPackageVersion), $(AbstractionsVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient"
-      Version="$(SqlClientPackageVersion)" />
+      Version="[$(SqlClientPackageVersion), $(SqlClientVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Azure"
-      Version="$(AzurePackageVersion)" />
+      Version="[$(AzurePackageVersion), $(AzureVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-      Version="$(AkvProviderPackageVersion)" />
+      Version="[$(AkvProviderPackageVersion), $(AkvProviderVersionCeiling))" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -108,8 +133,8 @@
   <!-- SqlClient Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="$(SniVersionRange)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(SniVersionRange)" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
