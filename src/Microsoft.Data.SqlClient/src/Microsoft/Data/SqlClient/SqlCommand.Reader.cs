@@ -1599,18 +1599,18 @@ namespace Microsoft.Data.SqlClient
         {
             // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask,
+                taskToContinue: writeTask,
                 state: _activeConnection,
-                onSuccess: state =>
+                onSuccess: sqlConnection =>
                 {
                     // This will throw if the connection is closed.
                     // @TODO: So... can we have something that specifically does that?
-                    ((SqlConnection)state).GetOpenTdsConnection();
+                    sqlConnection.GetOpenTdsConnection();
                     CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                 },
-                onFailure: static (exception, state) =>
+                onFailure: static (sqlConnection, _) =>
                 {
-                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
+                    sqlConnection.GetOpenTdsConnection().DecrementAsyncCount();
                 });
         }
 
@@ -1632,7 +1632,7 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.SetTimeoutException(
                 completion,
                 timeout,
-                onFailure: static () => SQL.CR_ReconnectTimeout(),
+                onTimeout: static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
 
             // @TODO: With an object to pass around we can use the state-based version
@@ -1703,14 +1703,13 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: This is a prime candidate for proper async-await execution
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 AsyncHelper.ContinueTaskWithState(
-                    task: describeParameterEncryptionTask,
-                    completion: completion,
+                    taskToContinue: describeParameterEncryptionTask,
+                    taskCompletionSource: completion,
                     state: this,
-                    onSuccess: state =>
+                    onSuccess: sqlCommand =>
                     {
-                        SqlCommand command = (SqlCommand)state;
-                        command.GenerateEnclavePackage();
-                        command.RunExecuteReaderTds(
+                        sqlCommand.GenerateEnclavePackage();
+                        sqlCommand.RunExecuteReaderTds(
                             cmdBehavior,
                             runBehavior,
                             returnStream,
@@ -1729,23 +1728,23 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             AsyncHelper.ContinueTaskWithState(
-                                task: subTask,
-                                completion: completion,
+                                taskToContinue: subTask,
+                                taskCompletionSource: completion,
                                 state: completion,
-                                onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                                onSuccess: static state => state.SetResult(null));
                         }
                     },
-                    onFailure: static (exception, state) =>
+                    onFailure: static (sqlCommand, exception) =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        sqlCommand.CachedAsyncState?.ResetAsyncState();
                         if (exception is not null)
                         {
                             throw exception;
                         }
                     },
-                    onCancellation: static state =>
+                    onCancellation: static sqlCommand =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        sqlCommand.CachedAsyncState?.ResetAsyncState();
                     });
 
                 task = completion.Task;

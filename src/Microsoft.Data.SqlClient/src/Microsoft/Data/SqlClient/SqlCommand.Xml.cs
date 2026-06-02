@@ -262,8 +262,8 @@ namespace Microsoft.Data.SqlClient
                 if (writeTask is not null)
                 {
                     AsyncHelper.ContinueTaskWithState(
-                        task: writeTask,
-                        completion: localCompletion,
+                        taskToContinue: writeTask,
+                        taskCompletionSource: localCompletion,
                         state: Tuple.Create(this, localCompletion),
                         onSuccess: static state =>
                         {

@@ -223,13 +223,13 @@ namespace Microsoft.Data.SqlClient
                     if (execNonQuery is not null)
                     {
                         AsyncHelper.ContinueTaskWithState(
-                            task: execNonQuery,
-                            completion: localCompletion,
-                            state: Tuple.Create(this, localCompletion),
-                            onSuccess: static state =>
+                            taskToContinue: execNonQuery,
+                            taskCompletionSource: localCompletion,
+                            state1: this,
+                            state2: localCompletion,
+                            onSuccess: static (sqlCommand, localCompletion) =>
                             {
-                                var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                                parameters.Item1.BeginExecuteNonQueryInternalReadStage(parameters.Item2);
+                                sqlCommand.BeginExecuteNonQueryInternalReadStage(localCompletion);
                             });
                     }
                     else
