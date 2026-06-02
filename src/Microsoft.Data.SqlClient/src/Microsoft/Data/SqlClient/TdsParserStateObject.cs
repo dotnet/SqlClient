@@ -1269,13 +1269,12 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         return AsyncHelper.CreateContinuationTaskWithState(
-                            task: writePacketTask,
+                            taskToContinue: writePacketTask,
                             state: this,
-                            onSuccess: static (object state) =>
+                            onSuccess: static state =>
                             {
-                                TdsParserStateObject stateObject = (TdsParserStateObject)state;
-                                stateObject.HasPendingData = true;
-                                stateObject._messageStatus = 0;
+                                state.HasPendingData = true;
+                                state._messageStatus = 0;
                             }
                         );
                     }
