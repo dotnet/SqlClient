@@ -388,6 +388,161 @@
   -->
   <Target Name="Pack" DependsOnTargets="PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider;PackSqlServer" />
 
+  <!-- ================================================================= -->
+  <!-- Version Extraction Targets
+       One target per project that emits 3 labeled messages at High importance:
+         PackageVersion: <value>
+         PublishedVersion: <value>
+         FileVersion: <value>
+
+       Pipelines capture these by grepping stdout with sed.
+
+       Usage:
+         dotnet build build.proj -t:GetVersionsLogging -v:m -nologo -p:BuildNumber=1234
+         # stdout contains:
+         #   PackageVersion: 1.1.0-preview1
+         #   PublishedVersion: 1.0.0
+         #   FileVersion: 1.1.0.1234
+  -->
+
+  <Target Name="GetVersionsLogging">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(LoggingProjectPath)" -getProperty:LoggingPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(LoggingProjectPath)&quot; -getProperty:LoggingPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(LoggingProjectPath)" -getProperty:LoggingFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsAbstractions">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)" -getProperty:AbstractionsPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AbstractionsProjectPath)&quot; -getProperty:AbstractionsPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)" -getProperty:AbstractionsFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsSqlClient">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SqlClientProjectPath)&quot; -getProperty:SqlClientPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsAzure">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(AzureProjectPath)" -getProperty:AzurePackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AzureProjectPath)&quot; -getProperty:AzurePublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(AzureProjectPath)" -getProperty:AzureFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsAkvProvider">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)" -getProperty:AkvProviderPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(AkvProviderProjectPath)&quot; -getProperty:AkvProviderPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)" -getProperty:AkvProviderFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsSqlServer">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SqlServerProjectPath)&quot; -getProperty:SqlServerPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
   <!--
     Test: Run all test targets for all packages.
     Note: This will run for a *very* long time and it is not recommended, even in automated test

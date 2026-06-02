@@ -25,7 +25,7 @@ parameters:
   - name: packageShortName
     type: string
 
-  # The package version, used for symbol versioning.
+  # The package version, used for symbol versioning (required, pre-computed by compute-versions stage).
   - name: packageVersion
     type: string
 
@@ -53,29 +53,18 @@ jobs:
       type: linux
 
     variables:
-      # OneBranch requires ob_outputDirectory to be set. Pipeline Artifacts are always on and
-      # cannot be disabled. To prevent this job from publishing artifacts, a .artifactignore
-      # that excludes all files is written into ob_outputDirectory before the auto-publish step.
-      ob_outputDirectory: $(Build.SourcesDirectory)/no_publish
-
-      # Disable SDL scanning — this job only uploads/publishes PDBs and produces no
-      # assemblies to scan. APIScan and BinSkim are handled by the build jobs.
-      ob_sdl_apiscan_enabled: false
-      ob_sdl_binskim_break: false
-      ob_sdl_binskim_enabled: false
-
-      # Path where the downloaded artifact will be placed.
-      artifactPath: '$(Pipeline.Workspace)/${{ parameters.packageFullName }}'
-
-      # PublishSymbols@2 runs on the OneBranch host agent (outside the build container) due to 1ES
-      # Pipeline Template credential isolation. On Linux, the host resolves to the Microsoft org by
-      # default. Setting this variable at job level ensures the task sees it and connects to the
-      # correct org's symbol store.
-      #
-      # Reference:
-      # https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL#Option_B:_OneBranch
-      #
-      ArtifactServices.Symbol.AccountName: ${{ parameters.symbolsUploadAccount }}
+      - name: ob_outputDirectory
+        value: $(Build.SourcesDirectory)/no_publish
+      - name: ob_sdl_apiscan_enabled
+        value: false
+      - name: ob_sdl_binskim_break
+        value: false
+      - name: ob_sdl_binskim_enabled
+        value: false
+      - name: artifactPath
+        value: '$(Pipeline.Workspace)/${{ parameters.packageFullName }}'
+      - name: ArtifactServices.Symbol.AccountName
+        value: ${{ parameters.symbolsUploadAccount }}
 
     steps:
       # Create ob_outputDirectory with a .artifactignore that excludes everything,

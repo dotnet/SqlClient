@@ -52,14 +52,15 @@ parameters:
   #   version of the dependency.
   # * shortName - Short name of the dependency. This name should correspond to the short name used
   #   when building the package via build.proj
-  # * version - the version of the dependency that this package depends on
+  # * version - Pre-computed version of the dependency (from compute-versions stage).
   - name: dependencies
     type: object
     default: []
 
-  # Assembly file version for APIScan (e.g. 1.0.0.12345).
+  # Assembly file version for APIScan (e.g. 1.0.0.12345). Pre-computed by compute-versions stage.
   - name: fileVersion
     type: string
+    default: ''
 
   # The full name of the package. This is used in the job name, and to form DLL and PDB filenames
   # for APIScan.
@@ -85,7 +86,7 @@ parameters:
       - 'SqlClient'
       - 'SqlServer'
 
-  # The version of the package.
+  # Package version (required). Pre-computed by compute-versions stage.
   - name: packageVersion
     type: string
 
@@ -107,17 +108,16 @@ jobs:
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
       ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
-      ob_sdl_apiscan_versionNumber: ${{ parameters.fileVersion }}
+      ob_sdl_apiscan_versionNumber: ${{ coalesce(parameters.fileVersion, '0.0.0.0') }}
 
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
-      # Constructs the dependency package version parameters to pass to the build steps. Generates
-      # a string of the form (eg) "-p:PackageVersionAzure=1.2.3"
+      # Constructs the dependency package version parameters to pass to the build steps.
+      # Each dependency has a pre-computed version from the compute-versions stage.
+      # Generates a string of the form (eg) "-p:PackageVersionAzure=1.2.3"
       - ${{ each package in parameters.dependencies }}:
-          # Append the dependency to the package dependency arguments argument in the form of, eg:
-          # -p:PackageVersionAzure=1.2.3
-          - script: echo "##vso[task.setvariable variable=dependencyPackageArguments]$(dependencyPackageArguments) -p:PackageVersion${{ package.shortName }}=${{ package.version }}
+          - script: echo "##vso[task.setvariable variable=dependencyPackageArguments]$(dependencyPackageArguments) -p:PackageVersion${{ package.shortName }}=${{ package.version }}"
             displayName: "Append Package Version Argument - ${{ package.shortName }}"
 
           # Download the pipeline artifact for this dependency package
@@ -134,12 +134,20 @@ jobs:
       # such as _CheckPwshToolRestored that run during RoslynAnalyzers and Build.
       - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
 
+      # Set the package version for downstream steps.
+      - script: |
+          echo "Using packageVersion: ${{ parameters.packageVersion }}"
+          echo "##vso[task.setvariable variable=packageVersion]${{ parameters.packageVersion }}"
+          echo "##vso[task.setvariable variable=packageVersion;isOutput=true]${{ parameters.packageVersion }}"
+        displayName: "Set Package Version - ${{ parameters.packageShortName }}"
+        name: "extractVersion"
+
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:
           dependencyArguments: $(dependencyPackageArguments)
           packageShortName: ${{ parameters.packageShortName }}
-          packageVersion: ${{ parameters.packageVersion }}
+          packageVersion: $(packageVersion)
 
       # Build the package, producing DLLs only (no NuGet package yet).
       - template: /eng/pipelines/onebranch/steps/build-buildproj-step.yml@self
@@ -147,7 +155,7 @@ jobs:
           buildConfiguration: Release
           dependencyArguments: $(dependencyPackageArguments)
           packageShortName: ${{ parameters.packageShortName }}
-          packageVersion: ${{ parameters.packageVersion }}
+          packageVersion: $(packageVersion)
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
           # ESRP sign the DLLs.
@@ -193,7 +201,7 @@ jobs:
           dependencyArguments: $(dependencyPackageArguments)
           packageFullName: ${{ parameters.packageFullName }}
           packageShortName: ${{ parameters.packageShortName }}
-          packageVersion: ${{ parameters.packageVersion }}
+          packageVersion: $(packageVersion)
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
           # ESRP sign the NuGet package.

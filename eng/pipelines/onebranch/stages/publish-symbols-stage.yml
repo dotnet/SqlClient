@@ -43,37 +43,19 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
-  - name: abstractionsPackageVersion
-    type: string
-
   - name: akvProviderArtifactsName
-    type: string
-
-  - name: akvProviderPackageVersion
     type: string
 
   - name: azureArtifactsName
     type: string
 
-  - name: azurePackageVersion
-    type: string
-
   - name: loggingArtifactsName
-    type: string
-
-  - name: loggingPackageVersion
     type: string
 
   - name: sqlClientArtifactsName
     type: string
 
-  - name: sqlClientPackageVersion
-    type: string
-
   - name: sqlServerArtifactsName
-    type: string
-
-  - name: sqlServerPackageVersion
     type: string
 
   # ── Symbols Publishing Parameters ──────────────────────────────────────
@@ -91,6 +73,26 @@ parameters:
     type: string
 
   - name: symbolsUploadAccount
+    type: string
+
+  # ── Pre-computed versions (from compute-versions stage) ─────────────────
+
+  - name: loggingPackageVersion
+    type: string
+
+  - name: abstractionsPackageVersion
+    type: string
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: azurePackageVersion
+    type: string
+
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: sqlServerPackageVersion
     type: string
 
 stages:

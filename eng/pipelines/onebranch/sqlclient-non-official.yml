@@ -187,23 +187,11 @@ extends:
           buildAkvProvider: ${{ parameters.buildAkvProvider }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsFileVersion: '${{ variables.abstractionsFileVersion }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderFileVersion: '${{ variables.akvProviderFileVersion }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azureFileVersion: '${{ variables.azureFileVersion }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingFileVersion: '${{ variables.loggingFileVersion }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientFileVersion: '${{ variables.sqlClientFileVersion }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerFileVersion: '${{ variables.sqlServerFileVersion }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
           signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
@@ -220,17 +208,11 @@ extends:
           buildAkvProvider: ${{ parameters.buildAkvProvider }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
@@ -251,17 +233,11 @@ extends:
           publishSymbols: ${{ parameters.publishSymbols }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
           releaseLogging: ${{ parameters.releaseLogging }}

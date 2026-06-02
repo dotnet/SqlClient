@@ -25,11 +25,14 @@
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
+    <!-- Last version shipped to NuGet. Update after each release. -->
+    <AkvProviderPublishedVersion>7.0.0</AkvProviderPublishedVersion>
+
     <!--
       This is the *next* version to release of AkvProvider. Update this after a version is released.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <AkvProviderVersionDefault>7.1.0-preview1</AkvProviderVersionDefault>
+    <AkvProviderNextVersion>7.1.0-preview1</AkvProviderNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -61,10 +64,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <AkvProviderPackageVersion Condition="'$(BuildSuffix)' != ''">$(AkvProviderVersionDefault)-$(BuildSuffix)$(BuildNumber)</AkvProviderPackageVersion>
-        <AkvProviderPackageVersion Condition="'$(BuildSuffix)' == ''">$(AkvProviderVersionDefault)</AkvProviderPackageVersion>
+        <AkvProviderPackageVersion Condition="'$(BuildSuffix)' != ''">$(AkvProviderNextVersion)-$(BuildSuffix)$(BuildNumber)</AkvProviderPackageVersion>
+        <AkvProviderPackageVersion Condition="'$(BuildSuffix)' == ''">$(AkvProviderNextVersion)</AkvProviderPackageVersion>
 
-        <AkvProviderFileVersion>$(AkvProviderVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AkvProviderFileVersion>
+        <AkvProviderFileVersion>$(AkvProviderNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</AkvProviderFileVersion>
       </PropertyGroup>
     </When>
 
@@ -76,8 +79,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <AkvProviderPackageVersion>$(AkvProviderVersionDefault)-dev</AkvProviderPackageVersion>
-        <AkvProviderFileVersion>$(AkvProviderVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AkvProviderFileVersion>
+        <AkvProviderPackageVersion>$(AkvProviderNextVersion)-dev</AkvProviderPackageVersion>
+        <AkvProviderFileVersion>$(AkvProviderNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</AkvProviderFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

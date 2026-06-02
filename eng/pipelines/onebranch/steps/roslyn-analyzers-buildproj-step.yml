@@ -33,7 +33,7 @@ parameters:
 
   #  Version to assign to the project to build. This will be passed into dotnet build as
   #  "-p:PackageVersion(packageShortName)".
-  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  #  Always required — compute up-front via the compute-versions stage.
   - name: packageVersion
     type: string
 

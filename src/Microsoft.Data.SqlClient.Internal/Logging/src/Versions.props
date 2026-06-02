@@ -25,12 +25,15 @@
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
+    <!-- Last version shipped to NuGet. Update after each release. -->
+    <LoggingPublishedVersion>1.0.0</LoggingPublishedVersion>
+
     <!--
       This is the *next* version to release of Logging. Update this when the next version is
       decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <LoggingVersionDefault>1.1.0-preview1</LoggingVersionDefault>
+    <LoggingNextVersion>1.1.0-preview1</LoggingNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -62,10 +65,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <LoggingPackageVersion Condition="'$(BuildSuffix)' != ''">$(LoggingVersionDefault)-$(BuildSuffix)$(BuildNumber)</LoggingPackageVersion>
-        <LoggingPackageVersion Condition="'$(BuildSuffix)' == ''">$(LoggingVersionDefault)</LoggingPackageVersion>
+        <LoggingPackageVersion Condition="'$(BuildSuffix)' != ''">$(LoggingNextVersion)-$(BuildSuffix)$(BuildNumber)</LoggingPackageVersion>
+        <LoggingPackageVersion Condition="'$(BuildSuffix)' == ''">$(LoggingNextVersion)</LoggingPackageVersion>
 
-        <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
+        <LoggingFileVersion>$(LoggingNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
       </PropertyGroup>
     </When>
 
@@ -77,8 +80,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <LoggingPackageVersion>$(LoggingVersionDefault)-dev</LoggingPackageVersion>
-        <LoggingFileVersion>$(LoggingVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
+        <LoggingPackageVersion>$(LoggingNextVersion)-dev</LoggingPackageVersion>
+        <LoggingFileVersion>$(LoggingNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</LoggingFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

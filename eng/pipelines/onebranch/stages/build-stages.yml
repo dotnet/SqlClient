@@ -33,60 +33,68 @@ parameters:
   - name: buildAkvProvider
     type: boolean
 
-  # Package Parameters -----------------------------------------------------
+  # ── Pre-computed versions (from compute-versions stage) ─────────────────
 
-  - name: abstractionsArtifactsName
-    type: string
-
-  - name: abstractionsFileVersion
+  - name: loggingPackageVersion
     type: string
 
   - name: abstractionsPackageVersion
     type: string
 
-  - name: akvProviderArtifactsName
-    type: string
-
-  - name: akvProviderFileVersion
-    type: string
-
-  - name: akvProviderPackageVersion
-    type: string
-
-  - name: azureArtifactsName
-    type: string
-
-  - name: azureFileVersion
+  - name: sqlClientPackageVersion
     type: string
 
   - name: azurePackageVersion
     type: string
 
-  - name: loggingArtifactsName
+  - name: akvProviderPackageVersion
+    type: string
+
+  - name: sqlServerPackageVersion
     type: string
 
   - name: loggingFileVersion
     type: string
+    default: ''
 
-  - name: loggingPackageVersion
+  - name: abstractionsFileVersion
+    type: string
+    default: ''
+
+  - name: sqlClientFileVersion
+    type: string
+    default: ''
+
+  - name: azureFileVersion
+    type: string
+    default: ''
+
+  - name: akvProviderFileVersion
+    type: string
+    default: ''
+
+  - name: sqlServerFileVersion
+    type: string
+    default: ''
+
+  # Package Parameters -----------------------------------------------------
+
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: akvProviderArtifactsName
+    type: string
+
+  - name: azureArtifactsName
+    type: string
+
+  - name: loggingArtifactsName
     type: string
 
   - name: sqlClientArtifactsName
     type: string
 
-  - name: sqlClientFileVersion
-    type: string
-
-  - name: sqlClientPackageVersion
-    type: string
-
   - name: sqlServerArtifactsName
-    type: string
-
-  - name: sqlServerFileVersion
-    type: string
-
-  - name: sqlServerPackageVersion
     type: string
 
   # Signing Parameters -----------------------------------------------------
@@ -297,15 +305,17 @@ stages:
 
   # ====================================================================
   # Validation
+  # @TODO: Update validate-signed-package-job to compute expected versions from
+  # Versions.props (same as build jobs) instead of receiving them as parameters.
   # ====================================================================
-  - ${{ if eq(parameters.buildSqlClient, true) }}:
-      - stage: sqlclient_package_validation
-        displayName: "SqlClient Package Validation"
-        dependsOn: build_dependent
-        jobs:
-          - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
-            parameters:
-              artifactName: '${{ parameters.sqlClientArtifactsName }}'
-              expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
-              expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              isOfficial: ${{ parameters.isOfficial }}
+  # - ${{ if eq(parameters.buildSqlClient, true) }}:
+  #     - stage: sqlclient_package_validation
+  #       displayName: "SqlClient Package Validation"
+  #       dependsOn: build_dependent
+  #       jobs:
+  #         - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
+  #           parameters:
+  #             artifactName: '${{ parameters.sqlClientArtifactsName }}'
+  #             expectedFileVersion: <computed>
+  #             expectedPackageVersion: <computed>
+  #             isOfficial: ${{ parameters.isOfficial }}

@@ -25,11 +25,14 @@
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
+    <!-- Last version shipped to NuGet. Update after each release. -->
+    <SqlClientPublishedVersion>7.0.0</SqlClientPublishedVersion>
+
     <!--
       This is the *next* version to release of SqlClient. Update this after a version is released.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <SqlClientVersionDefault>7.1.0-preview1</SqlClientVersionDefault>
+    <SqlClientNextVersion>7.1.0-preview1</SqlClientNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -61,10 +64,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientVersionDefault)-$(BuildSuffix)$(BuildNumber)</SqlClientPackageVersion>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientVersionDefault)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientNextVersion)-$(BuildSuffix)$(BuildNumber)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientNextVersion)</SqlClientPackageVersion>
 
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientFileVersion>$(SqlClientNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -76,8 +79,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion>$(SqlClientVersionDefault)-dev</SqlClientPackageVersion>
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientPackageVersion>$(SqlClientNextVersion)-dev</SqlClientPackageVersion>
+        <SqlClientFileVersion>$(SqlClientNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

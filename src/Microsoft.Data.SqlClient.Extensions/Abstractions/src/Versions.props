@@ -25,12 +25,15 @@
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
+    <!-- Last version shipped to NuGet. Update after each release. -->
+    <AbstractionsPublishedVersion>1.0.0</AbstractionsPublishedVersion>
+
     <!--
       This is the *next* version to release of Abstractions. Update this when the next version is
       decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <AbstractionsVersionDefault>1.1.0-preview1</AbstractionsVersionDefault>
+    <AbstractionsNextVersion>1.1.0-preview1</AbstractionsNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -62,10 +65,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <AbstractionsPackageVersion Condition="'$(BuildSuffix)' != ''">$(AbstractionsVersionDefault)-$(BuildSuffix)$(BuildNumber)</AbstractionsPackageVersion>
-        <AbstractionsPackageVersion Condition="'$(BuildSuffix)' == ''">$(AbstractionsVersionDefault)</AbstractionsPackageVersion>
+        <AbstractionsPackageVersion Condition="'$(BuildSuffix)' != ''">$(AbstractionsNextVersion)-$(BuildSuffix)$(BuildNumber)</AbstractionsPackageVersion>
+        <AbstractionsPackageVersion Condition="'$(BuildSuffix)' == ''">$(AbstractionsNextVersion)</AbstractionsPackageVersion>
 
-        <AbstractionsFileVersion>$(AbstractionsVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AbstractionsFileVersion>
+        <AbstractionsFileVersion>$(AbstractionsNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</AbstractionsFileVersion>
       </PropertyGroup>
     </When>
 
@@ -77,8 +80,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <AbstractionsPackageVersion>$(AbstractionsVersionDefault)-dev</AbstractionsPackageVersion>
-        <AbstractionsFileVersion>$(AbstractionsVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AbstractionsFileVersion>
+        <AbstractionsPackageVersion>$(AbstractionsNextVersion)-dev</AbstractionsPackageVersion>
+        <AbstractionsFileVersion>$(AbstractionsNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</AbstractionsFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

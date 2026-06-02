@@ -33,9 +33,9 @@ parameters:
       - SqlClient
       - SqlServer
 
-  #  Version to assign to the project to build. This will be passed into msbuild as
-  #  "-p:PackageVersion(packageShortName)".
-  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  #  Version to assign to the project. Passed to msbuild as
+  #  "-p:PackageVersion<packageShortName>=<packageVersion>".
+  #  Always required — compute up-front via the compute-versions stage.
   - name: packageVersion
     type: string
 
