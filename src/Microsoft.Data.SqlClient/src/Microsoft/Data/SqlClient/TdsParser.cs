@@ -12284,11 +12284,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(
+                    return AsyncHelper.CreateContinuationTaskWithState(
                         unterminatedWriteTask,
-                        onSuccess: WriteInt,
-                        arg1: 0,
-                        arg2: stateObj);
+                        state1: 0,
+                        state2: stateObj,
+                        onSuccess: WriteInt);
                 }
             }
             else
@@ -13245,11 +13245,11 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Otherwise, create a continuation task to write the encryption metadata after the previous write completes.
-                return AsyncHelper.CreateContinuationTask<SqlColumnEncryptionInputParameterInfo, TdsParserStateObject>(
+                return AsyncHelper.CreateContinuationTaskWithState(
                     terminatedWriteTask,
-                    onSuccess: WriteEncryptionMetadata,
-                    arg1: columnEncryptionParameterInfo,
-                    arg2: stateObj);
+                    state1: columnEncryptionParameterInfo,
+                    state2: stateObj,
+                    onSuccess: WriteEncryptionMetadata);
             }
         }
 
