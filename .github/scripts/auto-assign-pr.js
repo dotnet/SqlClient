@@ -41,8 +41,8 @@ module.exports = async ({ github, context, core }) => {
     throw new Error(`Failed to fetch latest PR details: ${error.message}`);
   }
 
-  if (latestPr.draft || !latestPr.milestone) {
-    console.log('PR is no longer assignment-eligible (draft or missing milestone).');
+  if (latestPr.state !== 'open' || latestPr.draft || !latestPr.milestone) {
+    console.log('PR is no longer assignment-eligible (not open, draft, or missing milestone).');
     return;
   }
 
