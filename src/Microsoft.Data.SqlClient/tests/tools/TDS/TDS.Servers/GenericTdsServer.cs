@@ -65,6 +65,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         private int _preLoginCount = 0;
 
+        /// <summary>
+        /// Counts Login7 requests to the server.
+        /// </summary>
+        private int _login7Count = 0;
+
         private TDSServerEndPoint _endpoint;
 
         /// <summary>
@@ -108,6 +113,15 @@ namespace Microsoft.SqlServer.TDS.Servers
         public int PreLoginCount => _preLoginCount;
 
         /// <summary>
+        /// Counts Login7 requests received by the server. The counter is
+        /// incremented in the non-virtual <see cref="OnLogin7Request"/>
+        /// dispatcher before any virtual handler runs, so it reflects every
+        /// received Login7 message even if a derived handler sleeps, throws,
+        /// or returns early.
+        /// </summary>
+        public int Login7Count => _login7Count;
+
+        /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public bool EnableVectorFeatureExt { get; set; } = false;
@@ -128,9 +142,12 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 throw new InvalidOperationException("Server is already started");
             }
-            _endpoint = new TDSServerEndPoint(this) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
-            _endpoint.EndpointName = methodName;
-            _endpoint.EventLog = Arguments.Log;
+            _endpoint = new TDSServerEndPoint(this)
+            {
+                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
+                EndpointName = methodName,
+                EventLog = Arguments.Log
+            };
             _endpoint.Start();
         }
 
@@ -162,12 +179,23 @@ namespace Microsoft.SqlServer.TDS.Servers
         }
 
         /// <summary>
-        /// Handler for pre-login request
+        /// Handler for pre-login request. Non-virtual so the request counter is
+        /// always incremented exactly once per received PreLogin message.
+        /// Derived classes should override <see cref="OnPreLoginRequestCore"/>.
         /// </summary>
-        public virtual TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
+        public TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
         {
             Interlocked.Increment(ref _preLoginCount);
+            return OnPreLoginRequestCore(session, request);
+        }
 
+        /// <summary>
+        /// Virtual extension point for pre-login request handling. Override this
+        /// instead of <see cref="OnPreLoginRequest"/> so the counter remains
+        /// accurate.
+        /// </summary>
+        protected virtual TDSMessageCollection OnPreLoginRequestCore(ITDSServerSession session, TDSMessage request)
+        {
             // Inflate pre-login request from the message
             TDSPreLoginToken preLoginRequest = request[0] as TDSPreLoginToken;
             GenericTdsServerSession genericTdsServerSession = session as GenericTdsServerSession;
@@ -221,9 +249,22 @@ namespace Microsoft.SqlServer.TDS.Servers
         }
 
         /// <summary>
-        /// Handler for login request
+        /// Handler for login request. Non-virtual so the request counter is
+        /// always incremented exactly once per received Login7 message.
+        /// Derived classes should override <see cref="OnLogin7RequestCore"/>.
         /// </summary>
-        public virtual TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        public TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        {
+            Interlocked.Increment(ref _login7Count);
+            return OnLogin7RequestCore(session, request);
+        }
+
+        /// <summary>
+        /// Virtual extension point for login request handling. Override this
+        /// instead of <see cref="OnLogin7Request"/> so the counter remains
+        /// accurate.
+        /// </summary>
+        protected virtual TDSMessageCollection OnLogin7RequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Inflate login7 request from the message
             TDSLogin7Token loginRequest = request[0] as TDSLogin7Token;

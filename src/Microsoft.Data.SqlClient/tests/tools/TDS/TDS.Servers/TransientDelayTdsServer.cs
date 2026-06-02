@@ -35,7 +35,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Handler for login request
         /// </summary>
-        public override TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage request)
+        protected override TDSMessageCollection OnLogin7RequestCore(ITDSServerSession session, TDSMessage request)
         {
             // Check if we're still going to raise transient error
             if (Arguments.IsEnabledPermanentDelay ||
@@ -47,7 +47,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             // Return login response from the base class
-            return base.OnLogin7Request(session, request);
+            return base.OnLogin7RequestCore(session, request);
         }
 
         /// <inheritdoc/>

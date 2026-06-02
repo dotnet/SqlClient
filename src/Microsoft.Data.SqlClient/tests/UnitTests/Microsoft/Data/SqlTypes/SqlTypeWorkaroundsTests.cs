@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(SqlDecimalExtractData_NonNullInput_Data))]
+        [MemberData(nameof(SqlDecimalExtractData_NonNullInput_Data), DisableDiscoveryEnumeration = true)]
         public void SqlDecimalExtractData_NonNullInput(SqlDecimal input)
         {
             // Act
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(SqlMoneyCtor_Data))]
+        [MemberData(nameof(SqlMoneyCtor_Data), DisableDiscoveryEnumeration = true)]
         public void SqlMoneyCtor(long input, SqlMoney expected)
         {
             // Act
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(SqlMoneyToSqlInternalRepresentation_NonNullInput_Data))]
+        [MemberData(nameof(SqlMoneyToSqlInternalRepresentation_NonNullInput_Data), DisableDiscoveryEnumeration = true)]
         public void SqlMoneyToSqlInternalRepresentation_NonNullInput(SqlMoney input, long expected)
         {
             // Act
