@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// The trade-off is slightly higher memory overhead per pool instance due to the channel infrastructure,
     /// but this is generally offset by the performance benefits in async-heavy workloads.
     /// </summary>
-    internal sealed class ChannelDbConnectionPool : IDbConnectionPool
+    internal sealed class ChannelDbConnectionPool : IDbConnectionPool, IDisposable
     {
         #region Fields
         // Limits synchronous operations which depend on async operations on managed
@@ -275,6 +275,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             State = ShuttingDown;
             Pruner?.Dispose();
         }
+
+        /// <summary>
+        /// Disposes the pool by calling <see cref="Shutdown"/>.
+        /// </summary>
+        public void Dispose() => Shutdown();
 
         /// <inheritdoc />
         public void Startup()

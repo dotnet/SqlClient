@@ -84,6 +84,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int _sampleIndex;
 
         /// <summary>
+        /// Whether <see cref="Dispose"/> has been called. Prevents double-disposal of the timer.
+        /// </summary>
+        private bool _disposed;
+
+        /// <summary>
         /// Creates a new pruner for the given pool.
         /// </summary>
         /// <param name="pool">The owning connection pool.</param>
@@ -210,12 +215,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Stops the pruning timer and releases resources.
+        /// Stops the pruning timer and releases resources. Safe to call multiple times.
         /// </summary>
         public void Dispose()
         {
             lock (_timer)
             {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
                 _timerEnabled = false;
                 _timer.Dispose();
             }
