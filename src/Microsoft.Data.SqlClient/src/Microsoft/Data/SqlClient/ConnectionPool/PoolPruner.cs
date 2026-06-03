@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Threading;
+using Microsoft.Data.Common;
 
 #nullable enable
 
@@ -117,12 +118,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _medianIndex = DivideRoundingUp(_sampleSize, 2) - 1;
             _samples = new int[_sampleSize];
 
-            // Suppress ExecutionContext flow to avoid capturing AsyncLocals onto the timer,
-            // which would keep them alive for the lifetime of the pool.
-            using (ExecutionContext.SuppressFlow())
-            {
-                _timer = new Timer(OnPruningCallback, null, Timeout.Infinite, Timeout.Infinite);
-            }
+            _timer = ADP.UnsafeCreateTimer(OnPruningCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
         #region Internal test surface
