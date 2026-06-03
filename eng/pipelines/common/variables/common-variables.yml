@@ -4,11 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Common variables shared across all OneBranch Official pipelines.
+# Common variables shared across all pipelines.
 
 variables:
-  - name: CommitHead
-    value: '' # the value will be extracted from the repo's head
 
   ##########################################################################
   # "Well-Known" Variables that are ok to use directly, anywhere in the pipeline.
@@ -21,15 +19,3 @@ variables:
   # <ArtifactsPath>).
   - name: BUILD_OUTPUT
     value: $(REPO_ROOT)/artifacts
-
-  # Directory where downloaded pipeline artifacts (NuGet packages from earlier
-  # stages) are placed. Build jobs use this as a local NuGet package source so
-  # that downstream packages can resolve dependencies on packages built by
-  # upstream stages.
-  - name: JOB_INPUT
-    value: $(REPO_ROOT)/packages
-
-  # Root directory for all job output artifacts (NuGet packages, symbols, etc.). OneBranch auto
-  # publishes everything under this directory as the artifact for the job.
-  - name: JOB_OUTPUT
-    value: $(REPO_ROOT)/output

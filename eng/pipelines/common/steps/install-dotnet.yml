@@ -69,6 +69,7 @@ steps:
         env:
           PROCESSOR_ARCHITECTURE: x86
 
+
     # Install the desired Runtimes, if any.
     - ${{ each version in parameters.runtimes }}:
       - task: UseDotNet@2
@@ -96,7 +97,7 @@ steps:
       inputs:
         targetType: filePath
         pwsh: true
-        filePath: $(Build.SourcesDirectory)/eng/pipelines/steps/install-dotnet-arm64.ps1
+        filePath: $(Build.SourcesDirectory)/eng/pipelines/common/steps/install-dotnet-arm64.ps1
         # Arguments:
         #
         # -Debug:
