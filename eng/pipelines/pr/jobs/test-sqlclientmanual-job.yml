@@ -111,10 +111,15 @@ jobs:
         value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
 
     steps:
-      # Install the version of the dotnet runtime we will use to execute the test target.
-      - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
+      # Install dotnet and the runtime that will run the tests (if it is not netframework)
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
-          runtimeVersion: ${{ parameters.platformDotnet }}
+          ${{ if not(contains(parameters.platformDotnet, 'net4')) }}:
+            runtimes:
+              - "${{ replace(parameters.platformDotnet, 'net', '') }}.x"
+
+      # Restore dotnet tools
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
       # Configure the local SQL Server instance
       - ${{ if eq(parameters.isLocalServer, true) }}:
@@ -165,7 +170,7 @@ jobs:
 
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
-        displayName: 'build.proj: TestSqlClientManual ${{ parameters.testSet }}'
+        displayName: 'Test: SqlClientManual ${{ parameters.testSet }}'
         inputs:
           command: build
           projects: build.proj

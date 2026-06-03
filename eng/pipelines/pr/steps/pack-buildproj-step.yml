@@ -46,7 +46,7 @@ parameters:
 
 steps:
   - task: DotNetCoreCLI@2
-    displayName: 'build.proj - Build${{ parameters.packageShortName }}'
+    displayName: 'Pack: ${{ parameters.packageShortName }}'
     condition: ${{ parameters.condition }}
     inputs:
       command: build
