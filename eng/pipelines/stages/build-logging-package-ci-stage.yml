@@ -74,8 +74,15 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: loggingPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+      - name: loggingAssemblyFileVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.LoggingFileVersion'] ]
 
     jobs:
 

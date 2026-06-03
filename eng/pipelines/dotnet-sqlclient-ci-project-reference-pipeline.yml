@@ -166,6 +166,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
+    buildSuffix: 'ci'
     referenceType: Project
     debug: ${{ parameters.debug }}
     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

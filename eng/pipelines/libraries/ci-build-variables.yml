@@ -6,15 +6,11 @@
 
 # Variables for PR and CI pipelines. Package versions are computed by each project's
 # Versions.props using BuildNumber + buildSuffix. No per-package version variables are needed.
+# The buildSuffix itself is set by each pipeline via the core template parameter.
 
 variables:
   - group: ADO Build properties
   - group: ADO Test Configuration Properties
-
-  # Build suffix for CI/PR builds — distinguishes these from official builds.
-  # Versions.props appends this to the prerelease tag: e.g. 7.1.0-preview1-ci20250602.1
-  - name: buildSuffix
-    value: 'ci'
 
   # Local NuGet feed directory where downloaded pipeline artifacts are placed.
   # NuGet.config references this as a local package source for restore.

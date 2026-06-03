@@ -128,6 +128,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
+    buildSuffix: 'pr'
     referenceType: Package
     debug: ${{ parameters.debug }}
     targetFrameworks: ${{ parameters.targetFrameworks }}

@@ -94,6 +94,11 @@ parameters:
     type: boolean
     default: true
 
+  # Build suffix appended to the prerelease tag. PR pipelines pass 'pr',
+  # CI pipelines pass 'ci'. Official builds leave this empty.
+  - name: buildSuffix
+    type: string
+
   - name: dotnetVerbosity
     type: string
     default: normal
@@ -123,6 +128,12 @@ variables:
     value: SqlServer.Artifacts
 
 stages:
+  # Compute all package versions up-front. Downstream stages consume these via
+  # stage dependency output variables (e.g. $(loggingPackageVersion)).
+  - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
+    parameters:
+      buildSuffix: ${{ parameters.buildSuffix }}
+
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:

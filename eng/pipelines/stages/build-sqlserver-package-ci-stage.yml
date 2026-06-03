@@ -70,8 +70,13 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
     jobs:
       - template: /eng/pipelines/jobs/pack-sqlserver-package-ci-job.yml@self

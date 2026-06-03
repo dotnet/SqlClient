@@ -92,8 +92,21 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: mdsPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+      - name: akvPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AkvProviderPackageVersion'] ]
+      - name: loggingPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+      - name: abstractionsPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
     jobs:
     - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
