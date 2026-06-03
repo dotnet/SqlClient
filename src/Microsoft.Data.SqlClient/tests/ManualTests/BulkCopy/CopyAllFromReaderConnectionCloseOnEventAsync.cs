@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class CopyAllFromReaderConnectionClosedOnEventAsync
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
