@@ -14,7 +14,7 @@
 # ADO.Net project:
 #   Triggering pipeline:  MDS Main CI (branch internal/main only)
 #   Pipeline name:        sqlclient-stress
-#   Pipeline URL:         TODO: add URL when pipeline is created
+#   Pipeline URL:         https://dev.azure.com/SqlClientDrivers/ADO.Net/_build?definitionId=2284
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
