@@ -288,19 +288,17 @@ namespace Microsoft.Data.SqlClient.Connection
         /// - Although the new password is generally not used it must be passed to the ctor. The
         ///   new Login7 packet will always write out the new password (or a length of zero and no
         ///   bytes if not present).
-        /// - userConnectionOptions may be different to connectionOptions if the connection string
-        ///   has been expanded (see SqlConnectionOptions.Expand)
         /// </remarks>
         // @TODO: We really really need simplify what we pass into this. All these optional parameters need to go!
         internal SqlConnectionInternal(
             DbConnectionPoolIdentity identity,
             SqlConnectionOptions connectionOptions,
+            TimeoutTimer timeout,
             SqlCredential credential,
             DbConnectionPoolGroupProviderInfo providerInfo,
             string newPassword,
             SecureString newSecurePassword,
             bool redirectedUserInstance,
-            SqlConnectionOptions userConnectionOptions = null,
             SessionData reconnectSessionData = null,
             bool applyTransientFaultHandling = false,
             string accessToken = null,
@@ -317,29 +315,6 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 reconnectSessionData._debugReconnectDataApplied = true;
             }
-
-            #if NETFRAMEWORK
-            try
-            {
-                // use this to help validate this object is only created after the following
-                // permission has been previously demanded in the current codepath
-                if (userConnectionOptions != null)
-                {
-                    // As mentioned above, userConnectionOptions may be different to
-                    // connectionOptions, so we need to demand on the correct connection string
-                    userConnectionOptions.DemandPermission();
-                }
-                else
-                {
-                    connectionOptions.DemandPermission();
-                }
-            }
-            catch (SecurityException)
-            {
-                Debug.Assert(false, "unexpected SecurityException for current codepath");
-                throw;
-            }
-            #endif
             #endif
 
             Debug.Assert(reconnectSessionData == null || connectionOptions.ConnectRetryCount > 0,
@@ -401,7 +376,10 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
+                // If we want to consider pool operations against the overall connect timeout, 
+                // use the provided timeout. Otherwise, start a fresh timeout to receive the full
+                // connect timeout.
+                _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);
 
                 // If transient fault handling is enabled then we can retry the login up to the
                 // ConnectRetryCount.
@@ -426,19 +404,14 @@ namespace Microsoft.Data.SqlClient.Connection
                         break;
                     }
                     catch (SqlException sqlex)
+                        when (
+                            connectionEstablishCount != i + 1
+                            && applyTransientFaultHandling
+                            && !_timeout.IsExpired
+                            && _timeout.MillisecondsRemaining >= transientRetryIntervalInMilliSeconds
+                            && IsTransientError(sqlex))
                     {
-                        if (connectionEstablishCount == i + 1
-                            || !applyTransientFaultHandling
-                            || _timeout.IsExpired
-                            || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
-                            || !IsTransientError(sqlex))
-                        {
-                            throw;
-                        }
-                        else
-                        {
-                            Thread.Sleep(transientRetryIntervalInMilliSeconds);
-                        }
+                        Thread.Sleep(transientRetryIntervalInMilliSeconds);
                     }
                 }
             }
@@ -757,6 +730,8 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             get => _parser._fResetConnection ? null : CurrentTransaction;
         }
+
+        internal TimeoutTimer Timeout => _timeout;
 
         #endregion
 
@@ -1921,14 +1896,32 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
+        
+        /// <summary>
+        /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
+        /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
+        /// </summary>
+        /// <remarks>
+        /// When the switch is enabled the caller-supplied <paramref name="callerTimeout"/>
+        /// is returned as-is so any time already consumed (e.g., waiting for the pool) counts
+        /// against the overall ConnectTimeout. When disabled, a fresh timer is started from
+        /// <paramref name="connectTimeoutSeconds"/>, preserving legacy behavior. Extracted so
+        /// this branch can be unit-tested without standing up a real connection.
+        /// </remarks>
+        internal static TimeoutTimer ResolveLoginTimeout(TimeoutTimer callerTimeout, int connectTimeoutSeconds)
+        {
+            return LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait
+                ? callerTimeout
+                : TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectTimeoutSeconds));
+        }
 
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
-            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
         }
 
         internal void ValidateConnectionForExecute(SqlCommand command)
@@ -2055,13 +2048,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 // If an exception occurred, the inner connection will be marked as unusable and
                 // destroyed upon returning to the pool
                 DoomThisConnection();
@@ -2186,6 +2174,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// if a cached token exists from a previous auth attempt (see GetFedAuthToken).
         /// </summary>
         // @TODO: Rename to meet naming conventions
+        // TODO: if this call timed out, what reason do we have to believe some other call succeeded? why not just fail?
         private bool AttemptRetryADAuthWithTimeoutError(
             SqlException sqlex,
             SqlConnectionOptions connectionOptions, // @TODO: this is not used
@@ -3182,7 +3171,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     // Set timeout for this attempt, but don't exceed original timer
                     long nextTimeoutInterval = checked(timeoutUnitInterval * multiplier);
-                    long milliseconds = timeout.MillisecondsRemaining;
 
                     #if NETFRAMEWORK
                     // If it is the first attempt at TNIR connection, then allow at least 500ms for
@@ -3194,11 +3182,11 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                     #endif
 
-                    if (nextTimeoutInterval > milliseconds)
-                    {
-                        nextTimeoutInterval = milliseconds;
-                    }
-                    intervalTimer = TimeoutTimer.StartMillisecondsTimeout(nextTimeoutInterval);
+                    // StartChild propagates the parent TimeProvider, caps the
+                    // requested duration at the parent's remaining time, and
+                    // returns an already-expired timer when the parent has no
+                    // remaining budget (no 0-means-infinite ambiguity).
+                    intervalTimer = timeout.StartChild(TimeSpan.FromMilliseconds(nextTimeoutInterval));
                 }
 
                 // Re-allocate parser each time to make sure state is known.
@@ -3477,13 +3465,12 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 // Set timeout for this attempt, but don't exceed original timer
                 long nextTimeoutInterval = checked(timeoutUnitInterval * ((attemptNumber / 2) + 1));
-                long milliseconds = timeout.MillisecondsRemaining;
-                if (nextTimeoutInterval > milliseconds)
-                {
-                    nextTimeoutInterval = milliseconds;
-                }
 
-                TimeoutTimer intervalTimer = TimeoutTimer.StartMillisecondsTimeout(nextTimeoutInterval);
+                // StartChild propagates the parent TimeProvider, caps the
+                // requested duration at the parent's remaining time, and
+                // returns an already-expired timer when the parent has no
+                // remaining budget (no 0-means-infinite ambiguity).
+                TimeoutTimer intervalTimer = timeout.StartChild(TimeSpan.FromMilliseconds(nextTimeoutInterval));
 
                 // Re-allocate parser each time to make sure state is known. If parser was created
                 // by previous attempt, dispose it to properly close the socket, if created.
@@ -3617,7 +3604,17 @@ namespace Microsoft.Data.SqlClient.Connection
                         continue;
                     }
 
-                    if (IsDoNotRetryConnectError(sqlex) || timeout.IsExpired)
+                    bool isLoginPhaseSqlError = _parser?.State is not TdsParserState.Closed;
+
+                    // If state != closed, indicates that the parser encountered an error while
+                    // processing the login response (e.g. an explicit error token). Transient
+                    // network errors that impact connectivity will result in parser state being
+                    // closed. Only network-level errors should trigger failover alternation;
+                    // login-phase errors (like transient errors) should be thrown so they can
+                    // be handled by the outer ConnectRetryCount loop.
+                    if ((isLoginPhaseSqlError && !LocalAppContextSwitches.UseLegacyFailoverAlternationOnLoginSqlErrors) ||
+                        IsDoNotRetryConnectError(sqlex) ||
+                        timeout.IsExpired)
                     {
                         // No more time to try again.
                         // Caller will call LoginFailure()
@@ -3817,13 +3814,9 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    LoginFailure();
-                }
-
+                LoginFailure();
                 throw;
             }
 

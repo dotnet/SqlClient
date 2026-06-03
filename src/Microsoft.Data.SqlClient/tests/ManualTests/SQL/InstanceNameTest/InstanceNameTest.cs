@@ -172,12 +172,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Type[] getPortByInstanceNameTypesArray = new Type[] { typeof(string), typeof(string), timeoutTimerType, typeof(bool), typeof(Microsoft.Data.SqlClient.SqlConnectionIPAddressPreference) };
 
-            Type[] startSecondsTimeoutTypesArray = new Type[] { typeof(int) };
+            // The current TimeoutTimer API exposes only a static StartNew(TimeSpan)
+            // factory; the legacy parameterless constructor + StartSecondsTimeout(int)
+            // shape no longer exists.
+            Type[] startNewTypesArray = new Type[] { typeof(TimeSpan) };
 
             ConstructorInfo sniProxyConstructor = sniProxyType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
             ConstructorInfo SSRPConstructor = ssrpType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
             ConstructorInfo dataSourceConstructor = dataSourceType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
-            ConstructorInfo timeoutTimerConstructor = timeoutTimerType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
 
             object sniProxyObj = sniProxyConstructor.Invoke(new object[] { });
 
@@ -185,11 +187,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             object ssrpObj = SSRPConstructor.Invoke(new object[] { });
 
-            object timeoutTimerObj = timeoutTimerConstructor.Invoke(new object[] { });
+            MethodInfo startNewInfo = timeoutTimerType.GetMethod("StartNew", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, startNewTypesArray, null);
 
-            MethodInfo startSecondsTimeoutInfo = timeoutTimerObj.GetType().GetMethod("StartSecondsTimeout", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, startSecondsTimeoutTypesArray, null);
-
-            timeoutTimerObj = startSecondsTimeoutInfo.Invoke(dataSourceObj, new object[] { 30 });
+            object timeoutTimerObj = startNewInfo.Invoke(null, new object[] { TimeSpan.FromSeconds(30) });
 
             MethodInfo parseServerNameInfo = dataSourceObj.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
             object dataSrcInfo = parseServerNameInfo.Invoke(dataSourceObj, new object[] { dataSource });

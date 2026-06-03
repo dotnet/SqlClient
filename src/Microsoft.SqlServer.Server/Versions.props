@@ -13,6 +13,16 @@
       naming. It must be in the form: (Major).0.0.0
   -->
 
+  <!--
+    Import guard: set on first import so that subsequent imports of this file are skipped.
+    Directory.Packages.props imports all Versions.props early in Package mode; the guard
+    prevents each csproj's own conditional import from re-importing and re-evaluating
+    version properties.
+  -->
+  <PropertyGroup>
+    <SqlServerVersionsImported>true</SqlServerVersionsImported>
+  </PropertyGroup>
+
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
@@ -20,7 +30,7 @@
       decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <SqlServerVersionDefault>1.0.0</SqlServerVersionDefault>
+    <SqlServerVersionDefault>1.1.0-preview1</SqlServerVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -67,9 +77,7 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <BuildSuffix Condition="'$(BuildSuffix)' == ''">dev</BuildSuffix>
-
-        <SqlServerPackageVersion>$(SqlServerVersionDefault)-$(BuildSuffix)</SqlServerPackageVersion>
+        <SqlServerPackageVersion>$(SqlServerVersionDefault)-dev</SqlServerPackageVersion>
         <SqlServerFileVersion>$(SqlServerVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
       </PropertyGroup>
     </Otherwise>

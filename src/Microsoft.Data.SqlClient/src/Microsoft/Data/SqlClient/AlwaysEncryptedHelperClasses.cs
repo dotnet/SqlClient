@@ -1,8 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Server;
@@ -20,7 +21,7 @@ namespace Microsoft.Data.SqlClient
         internal int databaseId;
         internal int cekId;
         internal int cekVersion;
-        internal byte[] cekMdVersion;
+        internal ulong cekMdVersion;
         internal string keyPath;
         internal string keyStoreName;
         internal string algorithmName;
@@ -63,7 +64,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Cek MD Version
         /// </summary>
-        private byte[] _cekMdVersion;
+        private ulong _cekMdVersion;
 
         /// <summary>
         /// Return the ordinal.
@@ -112,7 +113,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the CEK MD Version.
         /// </summary>
-        internal byte[] CekMdVersion
+        internal ulong CekMdVersion
         {
             get
             {
@@ -142,7 +143,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyPath"></param>
         /// <param name="keyStoreName"></param>
         /// <param name="algorithmName"></param>
-        internal void Add(byte[] encryptedKey, int databaseId, int cekId, int cekVersion, byte[] cekMdVersion, string keyPath, string keyStoreName, string algorithmName)
+        internal void Add(byte[] encryptedKey, int databaseId, int cekId, int cekVersion, ulong cekMdVersion, string keyPath, string keyStoreName, string algorithmName)
         {
 
             Debug.Assert(_columnEncryptionKeyValues != null, "_columnEncryptionKeyValues should already be initialized.");
@@ -172,7 +173,6 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_databaseId == databaseId);
                 Debug.Assert(_cekId == cekId);
                 Debug.Assert(_cekVersion == cekVersion);
-                Debug.Assert(_cekMdVersion != null && cekMdVersion != null && _cekMdVersion.Length == _cekMdVersion.Length);
             }
         }
 
@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             _databaseId = 0;
             _cekId = 0;
             _cekVersion = 0;
-            _cekMdVersion = null;
+            _cekMdVersion = 0;
             _columnEncryptionKeyValues = new List<SqlEncryptionKeyInfo>();
         }
     }
@@ -550,7 +550,7 @@ namespace Microsoft.Data.SqlClient
             totalLength += sizeof(int);
 
             // Metadata version of the encryption key.
-            totalLength += _cipherMetadata.EncryptionKeyInfo.cekMdVersion.Length;
+            totalLength += sizeof(ulong);
 
             // Normalization Rule Version.
             totalLength += sizeof(byte);
@@ -576,8 +576,8 @@ namespace Microsoft.Data.SqlClient
             SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.cekVersion, serializedWireFormat, ref consumedBytes);
 
             // 6 - Write the metadata version of the encryption key.
-            Buffer.BlockCopy(_cipherMetadata.EncryptionKeyInfo.cekMdVersion, 0, serializedWireFormat, consumedBytes, _cipherMetadata.EncryptionKeyInfo.cekMdVersion.Length);
-            consumedBytes += _cipherMetadata.EncryptionKeyInfo.cekMdVersion.Length;
+            BinaryPrimitives.WriteUInt64LittleEndian(serializedWireFormat.AsSpan(consumedBytes), _cipherMetadata.EncryptionKeyInfo.cekMdVersion);
+            consumedBytes += sizeof(ulong);
 
             // 7 - Write Normalization Rule Version.
             serializedWireFormat[consumedBytes++] = _cipherMetadata.NormalizationRuleVersion;

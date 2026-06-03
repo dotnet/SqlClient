@@ -82,7 +82,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: null,
-            new SqlConnectionOptions(""),
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
             out DbConnectionInternal? connection);
         return connection!;
     }
@@ -95,7 +95,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: tcs,
-            new SqlConnectionOptions(""),
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
             out DbConnectionInternal? connection);
         return connection ?? await tcs.Task;
     }
@@ -905,7 +905,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
             DbConnection owningConnection,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
             return new MockDbConnectionInternal();
         }

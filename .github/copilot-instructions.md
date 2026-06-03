@@ -34,7 +34,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 ## 🛠️ Key Features
 - **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Entra ID authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
 - **Connection Resiliency**: Implements connection resiliency features to handle transient faults and network issues, ensuring reliable database connectivity.
-- **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are: 
+- **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are:
   - **Optional**: Encryption is used if available, but not required.
   - **Mandatory**: Encryption is mandatory for the connection.
   - **Strict**: Enforces strict TLS requirements, ensuring only secure connections are established.
@@ -50,6 +50,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Data Encryption**: Supports data encryption for secure data transmission.
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
+  - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
 - **Cross-Platform Support**: Compatible with both .NET Framework and .NET Core, allowing applications to run on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
@@ -123,7 +124,7 @@ When a new issue is created, follow these steps:
 - Ensure the PR passes all CI checks before merging.
 
 ### ✅ Closing Issues
-- Add a comment summarizing the fix and referencing the PR 
+- Add a comment summarizing the fix and referencing the PR
 
 ### ⚙️ Automating Workflows
 - Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
@@ -149,6 +150,14 @@ When a new issue is created, follow these steps:
 - Do not modify the `CODEOWNERS` file directly.
 - Do not modify `CHANGELOG.md` unless executing a release workflow (see `release-notes` prompt).
 - Do not close issues without a fix or without providing a clear reason.
+
+## Terminal Execution Safety
+- Treat any non-zero shell exit code as a failed step that requires correction before proceeding.
+- If a bash process exits, do not wait for more output from that process; rerun the command in a fresh terminal session.
+- Validate that expected command output was produced before using it as evidence for conclusions.
+- When terminal execution fails, surface the failure immediately and retry with a corrected command.
+- Avoid `set -e` in this automation workflow; use focused commands and verify each result explicitly so shell exits are observable and attributable.
+- Prefer short, single-purpose terminal commands over long chained scripts when debugging or gathering state.
 
 ## 📝 Notes
 - Update policies and guidelines in the `policy/` directory as needed based on trending practices and team feedback.

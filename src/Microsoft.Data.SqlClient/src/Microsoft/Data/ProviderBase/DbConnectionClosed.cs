@@ -65,8 +65,8 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions) =>
-            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            TimeoutTimer timeout) =>
+            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
 
         /// <inheritdoc/>
         internal override void ResetConnection() => throw ADP.ClosedConnectionError();
@@ -82,7 +82,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
             => throw ADP.ConnectionAlreadyOpen(State);
     }
 
@@ -124,14 +124,14 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions) =>
-            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            TimeoutTimer timeout) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry, timeout);
 
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
             if (retry == null || !retry.Task.IsCompleted)
             {
@@ -180,7 +180,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions) =>
-            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            TimeoutTimer timeout) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry, timeout);
     }
 }

@@ -130,6 +130,10 @@ jobs:
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
 
+      # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+      # such as _CheckPwshToolRestored that run during RoslynAnalyzers and Build.
+      - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:

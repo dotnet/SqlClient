@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlErrorCollection _errors;
         internal SqlErrorCollection _warnings;
         internal object _errorAndWarningsLock = new object();
-        private bool _hasErrorOrWarning;
+        private volatile bool _hasErrorOrWarning;
 
         // local exceptions to cache warnings and errors that occurred prior to sending attention
         internal SqlErrorCollection _preAttentionErrors;
@@ -1083,13 +1083,8 @@ namespace Microsoft.Data.SqlClient
                     goodForReuse = true;
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 ADP.TraceExceptionWithoutRethrow(e);
             }
             return goodForReuse;
@@ -2672,6 +2667,12 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (!_hasErrorOrWarning &&
+                    Volatile.Read(ref _errors) == null &&
+                    Volatile.Read(ref _warnings) == null)
+                {
+                    return 0;
+                }
                 int count = 0;
                 lock (_errorAndWarningsLock)
                 {
@@ -2713,6 +2714,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (!_hasErrorOrWarning && _warnings == null)
+                {
+                    return 0;
+                }
                 int count = 0;
                 lock (_errorAndWarningsLock)
                 {
@@ -3825,12 +3830,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 SendAttention(mustTakeWriteLock: true, asyncClose);
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
                                 // if unable to send attention, cancel the _networkPacketTaskSource to
                                 // request the parser be broken.  SNIWritePacket errors will already
                                 // be in the _errors collection.

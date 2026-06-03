@@ -2,13 +2,23 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.TestCommon</AssemblyName>
     <RootNamespace>Microsoft.Data.SqlClient.TestCommon</RootNamespace>
+
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
 
     <!--
       This is a shared helper library, not a test project. IsTestProject prevents test adapters
       (e.g. dotnet test) from discovering this assembly.
     -->
     <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- Sign with the test key so signed test assemblies can reference this project. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <!-- Target Frameworks =============================================== -->
@@ -25,7 +35,10 @@
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <!-- References for netfx -->

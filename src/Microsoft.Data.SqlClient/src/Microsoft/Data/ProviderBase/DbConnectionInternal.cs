@@ -688,14 +688,6 @@ namespace Microsoft.Data.ProviderBase
             Pool = connectionPool;
         }
 
-        internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
-        {
-            if (!TryOpenConnection(outerConnection, connectionFactory, null, null))
-            {
-                throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
-            }
-        }
-
         internal void PostPop(DbConnection newOwner)
         {
             // Called by IDbConnectionPool right after it pulls this from its pool, we take this
@@ -803,7 +795,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
             throw ADP.ConnectionAlreadyOpen(State);
         }
@@ -812,7 +804,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
             throw ADP.MethodNotImplemented();
         }
@@ -915,7 +907,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            SqlConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
@@ -924,7 +916,7 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, retry, userOptions, this, out openConnection))
+                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, timeout, out openConnection))
                     {
                         return false;
                     }

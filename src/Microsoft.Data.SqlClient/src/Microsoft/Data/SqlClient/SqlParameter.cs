@@ -2419,13 +2419,8 @@ namespace Microsoft.Data.SqlClient
                         value = Convert.ChangeType(value, destinationType.ClassType, null);
                     }
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
-
                     throw ADP.ParameterConversionFailed(value, destinationType.ClassType, e);
                 }
             }
