@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void Shutdown_DisposesPruningTimer()
         {
-            var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10);
             var pruner = GetPruner(pool);
 
             // Enable the timer by growing the pool beyond MinPoolSize
@@ -355,7 +355,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Shutdown_NullTimer_DoesNotThrow()
         {
             // Fixed-size pool has no timer
-            var pool = ConstructPool(minPoolSize: 5, maxPoolSize: 5);
+            using var pool = ConstructPool(minPoolSize: 5, maxPoolSize: 5);
             Assert.Null(pool.Pruner);
 
             // Should not throw
