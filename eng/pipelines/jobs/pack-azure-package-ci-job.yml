@@ -26,11 +26,18 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Abstractions package verion to depend on.
+  # The Abstractions package version to depend on.
   #
   # This is used when the referenceType is 'Package'.
   - name: abstractionsPackageVersion
     type: string
+
+  # The Logging package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+    default: ''
 
   # The name of the pipeline artifacts to publish.
   - name: azureArtifactsName
@@ -151,15 +158,31 @@ jobs:
           debug: ${{ parameters.debug }}
 
       # Create the NuGet packages.
-      - task: DotNetCoreCLI@2
-        displayName: Create NuGet Package
-        inputs:
-          command: pack
-          packagesToPack: $(project)
-          configurationToPack: ${{ parameters.buildConfiguration }}
-          packDirectory: $(dotnetPackagesDir)
-          verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: AzurePackageVersion=${{ parameters.azurePackageVersion }};AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }}
+      #
+      # When referenceType is Package, we must pass ReferenceType and the
+      # dependency versions so that Directory.Packages.props applies version
+      # ranges to sibling package dependencies.
+      - ${{ if eq(parameters.referenceType, 'Package') }}:
+        - task: DotNetCoreCLI@2
+          displayName: Create NuGet Package
+          inputs:
+            command: pack
+            packagesToPack: $(project)
+            configurationToPack: ${{ parameters.buildConfiguration }}
+            packDirectory: $(dotnetPackagesDir)
+            verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            buildProperties: AzurePackageVersion=${{ parameters.azurePackageVersion }};AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }};ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+
+      - ${{ else }}:
+        - task: DotNetCoreCLI@2
+          displayName: Create NuGet Package
+          inputs:
+            command: pack
+            packagesToPack: $(project)
+            configurationToPack: ${{ parameters.buildConfiguration }}
+            packDirectory: $(dotnetPackagesDir)
+            verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            buildProperties: AzurePackageVersion=${{ parameters.azurePackageVersion }};AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }}
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

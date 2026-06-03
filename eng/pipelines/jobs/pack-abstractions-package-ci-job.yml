@@ -53,6 +53,30 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the Logging pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The Logging package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
+
 jobs:
 
   - job: pack_abstractions_package_job
@@ -102,21 +126,46 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
+      # For Package reference builds, we must first download the dependency
+      # package artifacts.
+      - ${{ if eq(parameters.referenceType, 'Package') }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: Download Logging Package Artifacts
+          inputs:
+            artifactName: ${{ parameters.loggingArtifactsName }}
+            targetPath: $(Build.SourcesDirectory)/packages
+
       # Install the .NET SDK.
       - template: /eng/pipelines/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
 
       # Create the NuGet packages.
-      - task: DotNetCoreCLI@2
-        displayName: Create NuGet Package
-        inputs:
-          command: pack
-          packagesToPack: $(project)
-          configurationToPack: ${{ parameters.buildConfiguration }}
-          packDirectory: $(dotnetPackagesDir)
-          verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
+      #
+      # When referenceType is Package, we must pass ReferenceType and the
+      # dependency version so that Directory.Packages.props applies version
+      # ranges to sibling package dependencies.
+      - ${{ if eq(parameters.referenceType, 'Package') }}:
+        - task: DotNetCoreCLI@2
+          displayName: Create NuGet Package
+          inputs:
+            command: pack
+            packagesToPack: $(project)
+            configurationToPack: ${{ parameters.buildConfiguration }}
+            packDirectory: $(dotnetPackagesDir)
+            verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            buildProperties: AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }};ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+
+      - ${{ else }}:
+        - task: DotNetCoreCLI@2
+          displayName: Create NuGet Package
+          inputs:
+            command: pack
+            packagesToPack: $(project)
+            configurationToPack: ${{ parameters.buildConfiguration }}
+            packDirectory: $(dotnetPackagesDir)
+            verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            buildProperties: AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1
