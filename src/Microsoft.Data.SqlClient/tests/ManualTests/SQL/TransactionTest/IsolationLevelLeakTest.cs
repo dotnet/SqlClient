@@ -99,11 +99,17 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         }
 
         // Negative test: legacy switch ON brings the old leak back.
+        // Only meaningful on on-prem SQL Server: Azure SQL DB resets the
+        // session isolation level inside sp_reset_connection, so the leak
+        // never materializes there regardless of the switch.
         // Uses LocalAppContextSwitchesHelper to force the cached switch value
         // in LocalAppContextSwitches (production code reads the cache, not
         // AppContext, after first use). The helper restores the previous
         // value on dispose.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer))]
         public static void LegacySwitch_PreservesOldLeakBehavior()
         {
             using LocalAppContextSwitchesHelper switchesHelper = new();
