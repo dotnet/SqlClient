@@ -47,6 +47,7 @@ stages:
       poolName: $(PoolNameDefault)
       stageNamePack: ${{ variables.stageNamePack }}
       stageNameSecrets: ${{ variables.stageNameSecrets }}
+      testResultsArtifactName: ${{ variables.testResultsArtifactName }}
 
       platforms:
         - displayName: "windows_net462"

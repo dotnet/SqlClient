@@ -37,12 +37,22 @@ parameters:
   - name: poolName
     type: string
 
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
   # Name of the build/pack stage that this stage will depend on.
   - name: stageNamePack
     type: string
 
   # Name of the secret generation job used to determine the path to the SA password variable.
   - name: stageNameSecrets
+    type: string
+
+  # Name of the artifact to upload the test results (including code coverage) to.
+  # Note: This artifact will be used to store results from all jobs. Ensure that the folders used
+  #     to store the results is unique to the test run.
+  - name: testResultsArtifactName
     type: string
 
   # Manual Test Configuration Parameters ==================================
@@ -129,6 +139,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               packageShortName: "Abstractions"
               testDisplayName: "abstractions"
@@ -143,6 +154,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               packageShortName: "Azure"
               testDisplayName: "azure"
@@ -157,6 +169,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_functional"
@@ -250,6 +263,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_unit"

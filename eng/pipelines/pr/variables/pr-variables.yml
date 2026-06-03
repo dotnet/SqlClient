@@ -29,3 +29,6 @@ variables:
 
   - name: stageNameSecrets
     value: "secrets_stage"
+
+  - name: testResultsArtifactName
+    value: "test_results"
