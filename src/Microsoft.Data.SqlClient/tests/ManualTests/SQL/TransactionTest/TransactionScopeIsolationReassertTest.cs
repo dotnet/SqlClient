@@ -4,6 +4,7 @@
 
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -83,6 +84,51 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                 }
 
                 scope.Complete();
+            }
+        }
+
+        // Negative test: with the legacy switch enabled, the second and later
+        // opens inside the scope should observe the database default isolation
+        // (Azure SQL DB resets the level on sp_reset_connection). Proves the
+        // back-compat switch fully restores the previous behavior.
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsAzureServer))]
+        public static async Task LegacySwitch_PreservesAzureDowngradeBehavior()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyTransactionScopeIsolationBehavior = true;
+
+            string cs = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = true,
+                MaxPoolSize = 1,
+                ApplicationName = nameof(TransactionScopeIsolationReassertTest) + "-Legacy"
+            }.ConnectionString;
+
+            try
+            {
+                using var scope = new TransactionScope(
+                    TransactionScopeOption.Required,
+                    new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
+                    TransactionScopeAsyncFlowOption.Enabled);
+
+                // First open inside the scope sets the level via TM Begin.
+                string first = await GetSessionIsolationLevelAsync(cs);
+                Assert.Equal("Serializable", first);
+
+                // Second open re-checks-out the same pooled physical connection.
+                // With the legacy switch on, no SET is re-issued, and Azure's
+                // sp_reset_connection drops the session level to the DB default.
+                string second = await GetSessionIsolationLevelAsync(cs);
+                Assert.NotEqual("Serializable", second);
+
+                scope.Complete();
+            }
+            finally
+            {
+                SqlConnection.ClearAllPools();
             }
         }
 

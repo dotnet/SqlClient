@@ -2379,7 +2379,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 EnlistNonNull(transaction);
             }
             else if (!LocalAppContextSwitches.UseLegacyTransactionScopeIsolationBehavior
-                     && _fResetConnection)
+                     && _parser._fResetConnection)
             {
                 // Same System.Transactions transaction being re-attached to the same
                 // pooled physical connection (transacted-pool re-checkout inside an
@@ -2425,7 +2425,7 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 Task executeTask = _parser.TdsExecuteSQLBatch(
                     $"SET TRANSACTION ISOLATION LEVEL {isoSql};",
-                    timeout: 0,
+                    ConnectionOptions.ConnectTimeout,
                     notificationRequest: null,
                     _parser._physicalStateObj,
                     sync: true);

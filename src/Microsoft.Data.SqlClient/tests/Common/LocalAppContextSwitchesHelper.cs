@@ -46,6 +46,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     #endif
     private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
     private readonly bool? _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal;
+    private readonly bool? _useLegacyTransactionScopeIsolationBehaviorOriginal;
     private readonly bool? _legacyRowVersionNullBehaviorOriginal;
     private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly bool? _makeReadAsyncBlockingOriginal;
@@ -100,6 +101,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
             _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal =
                 GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
+            _useLegacyTransactionScopeIsolationBehaviorOriginal =
+                GetSwitchValue("s_useLegacyTransactionScopeIsolationBehavior");
             _legacyRowVersionNullBehaviorOriginal =
                 GetSwitchValue("s_legacyRowVersionNullBehavior");
             _legacyVarTimeZeroScaleBehaviourOriginal =
@@ -161,6 +164,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useLegacyFailoverAlternationOnLoginSqlErrors",
                 _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
+            SetSwitchValue(
+                "s_useLegacyTransactionScopeIsolationBehavior",
+                _useLegacyTransactionScopeIsolationBehaviorOriginal);
             SetSwitchValue(
                 "s_legacyRowVersionNullBehavior", 
                 _legacyRowVersionNullBehaviorOriginal);
@@ -259,6 +265,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
         set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyTransactionScopeIsolationBehavior switch value.
+    /// </summary>
+    public bool? UseLegacyTransactionScopeIsolationBehavior
+    {
+        get => GetSwitchValue("s_useLegacyTransactionScopeIsolationBehavior");
+        set => SetSwitchValue("s_useLegacyTransactionScopeIsolationBehavior", value);
     }
 
     /// <summary>
