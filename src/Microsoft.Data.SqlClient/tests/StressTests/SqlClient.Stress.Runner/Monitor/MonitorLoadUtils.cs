@@ -3,19 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Monitoring;
 using System.Reflection;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public static class MonitorLoader
     {
         public static IMonitorLoader LoadMonitorLoaderAssembly()
         {
             IMonitorLoader monitorloader = null;
-            const string classname = "Monitoring.MonitorLoader";
+            const string classname = "Microsoft.Data.SqlClient.Test.Stress.MonitorLoader";
             const string interfacename = "IMonitorLoader";
-            Assembly mainAssembly = typeof(Monitoring.IMonitorLoader).GetTypeInfo().Assembly;
+            Assembly mainAssembly = typeof(IMonitorLoader).GetTypeInfo().Assembly;
 
             Type t = mainAssembly.GetType(classname);
             //make sure the type is derived from IMonitorLoader
