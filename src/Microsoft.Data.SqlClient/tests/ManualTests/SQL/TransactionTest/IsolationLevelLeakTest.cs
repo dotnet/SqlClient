@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 using IsolationLevel = System.Data.IsolationLevel;
 
@@ -28,13 +29,14 @@ SELECT CASE transaction_isolation_level
        END
 FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
 
-        private static string PooledMaxOneConnString =>
+        private static string BuildPooledConnString(string appName) =>
             new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 Pooling = true,
                 MaxPoolSize = 1,
                 MultipleActiveResultSets = false,
-                ApplicationName = "IsoLeakTest"
+                Enlist = true,
+                ApplicationName = appName
             }.ConnectionString;
 
         private static int GetSpid(SqlConnection c)
@@ -52,7 +54,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SqlTransaction_SerializableDoesNotLeakAcrossPool()
         {
-            string cs = PooledMaxOneConnString;
+            string cs = BuildPooledConnString("IsoLeakTest-SqlTx");
             int spid1;
             using (SqlConnection c = new SqlConnection(cs))
             {
@@ -74,7 +76,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TransactionScope_SerializableDoesNotLeakAcrossPool()
         {
-            string cs = PooledMaxOneConnString;
+            string cs = BuildPooledConnString("IsoLeakTest-TxScope");
             int spid1;
             using (var scope = new TransactionScope(
                 TransactionScopeOption.RequiresNew,
@@ -96,27 +98,21 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             }
         }
 
-        // Negative test: legacy switch ON brings the old leak back. Runs in
-        // an isolated AppDomain on .NET Framework / process boundary on .NET
-        // would be ideal, but AppContext switches set before any pool entry
-        // is created suffice when this test runs first in its own collection.
+        // Negative test: legacy switch ON brings the old leak back.
+        // Uses LocalAppContextSwitchesHelper to force the cached switch value
+        // in LocalAppContextSwitches (production code reads the cache, not
+        // AppContext, after first use). The helper restores the previous
+        // value on dispose.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LegacySwitch_PreservesOldLeakBehavior()
         {
-            const string Switch = "Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior";
-            AppContext.SetSwitch(Switch, true);
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIsolationLevelBehavior = true;
+
+            // Distinct app name so this test gets its own pool group.
+            string cs = BuildPooledConnString("IsoLeakTest-Legacy");
             try
             {
-                // Use a distinct app name so this test gets its own pool group
-                // and isn't affected by entries created by the other tests.
-                string cs = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
-                {
-                    Pooling = true,
-                    MaxPoolSize = 1,
-                    MultipleActiveResultSets = false,
-                    ApplicationName = "IsoLeakTest-Legacy"
-                }.ConnectionString;
-
                 int spid1;
                 using (SqlConnection c = new SqlConnection(cs))
                 {
@@ -135,7 +131,6 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             }
             finally
             {
-                AppContext.SetSwitch(Switch, false);
                 SqlConnection.ClearAllPools();
             }
         }
