@@ -179,6 +179,15 @@ extends:
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
+      - template: /eng/pipelines/onebranch/stages/compute-versions-stage.yml@self
+        parameters:
+          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
+          releaseLogging: ${{ parameters.releaseLogging }}
+          releaseAbstractions: ${{ parameters.releaseAbstractions }}
+          releaseSqlClient: ${{ parameters.releaseSqlClient }}
+          releaseAzure: ${{ parameters.releaseAzure }}
+          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}
+
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           isOfficial: false # This is a non-official pipeline.

@@ -34,48 +34,57 @@ parameters:
     type: boolean
 
   # ── Pre-computed versions (from compute-versions stage) ─────────────────
+  # These default to $(variableName) tokens that resolve at runtime from
+  # stage-level variables populated via stageDependencies.compute_versions outputs.
+  # Callers may override with explicit values if needed.
 
   - name: loggingPackageVersion
     type: string
+    default: $(loggingPackageVersion)
 
   - name: abstractionsPackageVersion
     type: string
+    default: $(abstractionsPackageVersion)
 
   - name: sqlClientPackageVersion
     type: string
+    default: $(sqlClientPackageVersion)
 
   - name: azurePackageVersion
     type: string
+    default: $(azurePackageVersion)
 
   - name: akvProviderPackageVersion
     type: string
+    default: $(akvProviderPackageVersion)
 
   - name: sqlServerPackageVersion
     type: string
+    default: $(sqlServerPackageVersion)
 
   - name: loggingFileVersion
     type: string
-    default: ''
+    default: $(loggingFileVersion)
 
   - name: abstractionsFileVersion
     type: string
-    default: ''
+    default: $(abstractionsFileVersion)
 
   - name: sqlClientFileVersion
     type: string
-    default: ''
+    default: $(sqlClientFileVersion)
 
   - name: azureFileVersion
     type: string
-    default: ''
+    default: $(azureFileVersion)
 
   - name: akvProviderFileVersion
     type: string
-    default: ''
+    default: $(akvProviderFileVersion)
 
   - name: sqlServerFileVersion
     type: string
-    default: ''
+    default: $(sqlServerFileVersion)
 
   # Package Parameters -----------------------------------------------------
 
@@ -124,6 +133,17 @@ stages:
   # ====================================================================
   - stage: build_independent
     displayName: "Build Independent Packages"
+    dependsOn: compute_versions
+
+    variables:
+      - name: loggingPackageVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+      - name: loggingFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingFileVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+      - name: sqlServerFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerFileVersion'] ]
 
     jobs:
       - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
@@ -175,7 +195,17 @@ stages:
   - ${{ if eq(parameters.buildSqlClient, true) }}:
       - stage: build_abstractions
         displayName: "Build Abstractions Package"
-        dependsOn: build_independent
+        dependsOn:
+          - compute_versions
+          - build_independent
+
+        variables:
+          - name: loggingPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+          - name: abstractionsPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+          - name: abstractionsFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsFileVersion'] ]
 
         jobs:
           # Build Microsoft.Data.SqlClient.Extensions.Abstractions
@@ -208,7 +238,25 @@ stages:
   - ${{ if eq(parameters.buildSqlClient, true) }}:
       - stage: build_dependent
         displayName: "Build Core Packages"
-        dependsOn: build_abstractions
+        dependsOn:
+          - compute_versions
+          - build_abstractions
+
+        variables:
+          - name: abstractionsPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+          - name: loggingPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+          - name: sqlServerPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+          - name: sqlClientPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+          - name: sqlClientFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
+          - name: azurePackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AzurePackageVersion'] ]
+          - name: azureFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AzureFileVersion'] ]
 
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
@@ -270,7 +318,23 @@ stages:
   - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
       - stage: build_addons
         displayName: "Build Add-on Packages"
-        dependsOn: build_dependent
+        dependsOn:
+          - compute_versions
+          - build_dependent
+
+        variables:
+          - name: abstractionsPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+          - name: loggingPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+          - name: sqlClientPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+          - name: sqlServerPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+          - name: akvProviderPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AkvProviderPackageVersion'] ]
+          - name: akvProviderFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AkvProviderFileVersion'] ]
 
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self

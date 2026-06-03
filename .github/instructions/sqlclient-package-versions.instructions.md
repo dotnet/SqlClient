@@ -45,13 +45,13 @@ Each `Versions.props` uses a 3-tier `<Choose>` block:
 
 **`buildSuffix`** set via core template parameter:
 - `buildSuffix: 'pr'` (passed explicitly from PR pipeline)
-- `BuildNumber` = ADO-assigned (e.g. `20250602.1`)
+- `BuildNumber` = `$(DayOfYear)$(Rev:rr)` (e.g. `15401` for day-of-year 154, run 01)
 
 **Mode:** Project (typical PR validation)
 
 - Versions computed in `compute-versions-ci-stage.yml` (runs `GetVersions*` targets with `-p:BuildSuffix=pr -p:BuildNumber=...`)
 - Falls into Priority 2 with BuildSuffix present.
-- **Result:** `7.1.0-preview1-pr20250602.1` / FileVersion `7.1.0.20250602`
+- **Result:** `7.1.0-preview1-pr15401` / FileVersion `7.1.0.15401`
 - Dependencies are project references — all packages built together in-tree.
 
 **Mode:** Package (PR package-ref validation)
@@ -65,7 +65,7 @@ Each `Versions.props` uses a 3-tier `<Choose>` block:
 
 Same structure as PR but passes `buildSuffix: 'ci'` explicitly.
 
-- **Result:** `7.1.0-preview1-ci20250602.1` / FileVersion `7.1.0.20250602`
+- **Result:** `7.1.0-preview1-ci15401` / FileVersion `7.1.0.15401`
 
 ### OneBranch Pipeline (official)
 
