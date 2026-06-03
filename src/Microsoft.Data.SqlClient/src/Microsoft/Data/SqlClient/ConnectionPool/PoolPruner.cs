@@ -136,6 +136,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>Total number of samples collected per pruning window. Exposed for unit tests.</summary>
         internal int SampleSize => _sampleSize;
 
+        /// <summary>Read-only view of the sample buffer contents. Exposed for unit tests.</summary>
+        internal ReadOnlySpan<int> Samples => _samples;
+
         #endregion
 
         /// <summary>
