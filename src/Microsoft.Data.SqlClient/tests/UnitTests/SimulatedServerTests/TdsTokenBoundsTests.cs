@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Servers;
@@ -62,9 +63,16 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedTotalLength: (uint)(TdsEnums.MaxTokenDataLength + 1)));
         };
 
-        using SqlConnection connection = new(_connectionString);
-        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-        Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+            Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -93,9 +101,16 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 innerClaimedLength: TdsEnums.MaxTokenDataLength + 1));
         };
 
-        using SqlConnection connection = new(_connectionString);
-        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-        Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+            Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -131,9 +146,16 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             responseMessage.Insert(doneIndex, new MaliciousSRecoveryFeatureExtAckToken());
         };
 
-        using SqlConnection connection = new(_connectionString);
-        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-        Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+            Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -163,9 +185,16 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedLength: TdsEnums.MaxTokenDataLength + 1));
         };
 
-        using SqlConnection connection = new(_connectionString);
-        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-        Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+            Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -195,9 +224,16 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedNewLength: TdsEnums.MaxPromoteTransactionLength + 1));
         };
 
-        using SqlConnection connection = new(_connectionString);
-        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-        Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+            Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -416,6 +452,162 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
 
             // Old value length (byte) = 0
             destination.WriteByte(0x00);
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 6: Post-login batch response injection — PromoteTransaction
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that bounds checks fire during command execution (post-login)
+    /// by injecting a malicious PromoteTransaction env change token into the
+    /// SQL batch response. This exercises the <c>OnSQLBatchCompleted</c> hook
+    /// on the simulated server and proves the same bounds check fires regardless
+    /// of whether the token arrives during login or command execution.
+    /// </summary>
+    [Fact]
+    public void BatchResponse_PromoteTransaction_OversizedLength_ThrowsParsingError()
+    {
+        _server.OnSQLBatchCompleted = responseMessage =>
+        {
+            int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
+            if (doneIndex < 0)
+            {
+                doneIndex = responseMessage.Count;
+            }
+
+            responseMessage.Insert(doneIndex, new MaliciousPromoteTransactionEnvChangeToken(
+                claimedNewLength: TdsEnums.MaxPromoteTransactionLength + 1));
+        };
+
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1";
+
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                () => command.ExecuteNonQuery());
+            Assert.Contains("18", ex.Message); // CorruptedTdsStream
+        }
+        finally
+        {
+            _server.OnSQLBatchCompleted = null;
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 7: Post-login batch response — DateTime oversized length
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryReadSqlDateTime</c> rejects a TIME column value whose
+    /// data length byte exceeds the maximum datetime wire size (10 bytes). A
+    /// malicious server could set this length to a large value, causing the
+    /// parser to attempt an oversized stackalloc.
+    /// </summary>
+    [Fact]
+    public void BatchResponse_DateTime_OversizedLength_ThrowsParsingError()
+    {
+        _server.OnSQLBatchCompleted = responseMessage =>
+        {
+            // Replace the entire response with a crafted result set containing
+            // a TIME column whose ROW data length exceeds the maximum.
+            responseMessage.Clear();
+
+            // Use proper library tokens for COLMETADATA so framing is correct
+            var metadata = new TDSColMetadataToken();
+            var col = new TDSColumnData();
+            col.DataType = TDSDataType.TimeN;
+            col.DataTypeSpecific = (byte)7; // scale = 7
+            col.Flags.IsNullable = true;
+            col.Name = string.Empty;
+            metadata.Columns.Add(col);
+            responseMessage.Add(metadata);
+
+            // Add a malicious ROW token with oversized data length
+            responseMessage.Add(new MaliciousTimeRowToken());
+
+            // Add DONE token
+            responseMessage.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
+        };
+
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
+
+            SqlDataReader reader = command.ExecuteReader();
+            try
+            {
+                // Read() returns true (data is ready) but doesn't actually parse the
+                // column values — that happens on GetValue/GetTimeSpan. Force the read.
+                Assert.True(reader.Read());
+                Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                    () => reader.GetValue(0));
+                Assert.Contains("18", ex.Message); // CorruptedTdsStream
+            }
+            finally
+            {
+                // After corrupting the stream, dispose may trigger additional
+                // parsing errors. Suppress them for test stability.
+                using (new DebugAssertSuppressor())
+                {
+                    try { reader.Dispose(); } catch { }
+                }
+            }
+        }
+        finally
+        {
+            _server.OnSQLBatchCompleted = null;
+        }
+    }
+
+    /// <summary>
+    /// Writes a ROW token (0xD1) with a single TimeN column whose data length
+    /// byte is set to 11 (exceeding the maximum datetime wire size of 10 bytes).
+    /// </summary>
+    private sealed class MaliciousTimeRowToken : TDSPacketToken
+    {
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        public override void Deflate(Stream destination)
+        {
+            // ROW token type
+            destination.WriteByte(0xD1);
+
+            // TimeN data: length prefix (1 byte) = 11 (INVALID — max for time is 5, max datetime overall is 10)
+            destination.WriteByte(11);
+
+            // Write 11 bytes of dummy data
+            destination.Write(new byte[11], 0, 11);
+        }
+    }
+
+    /// <summary>
+    /// Temporarily suppresses Debug.Assert failures by clearing trace listeners.
+    /// Used when disposing resources after intentionally corrupting a TDS stream.
+    /// </summary>
+    private sealed class DebugAssertSuppressor : IDisposable
+    {
+        private readonly System.Diagnostics.TraceListener[] _listeners;
+
+        public DebugAssertSuppressor()
+        {
+            _listeners = new System.Diagnostics.TraceListener[System.Diagnostics.Trace.Listeners.Count];
+            System.Diagnostics.Trace.Listeners.CopyTo(_listeners, 0);
+            System.Diagnostics.Trace.Listeners.Clear();
+        }
+
+        public void Dispose()
+        {
+            System.Diagnostics.Trace.Listeners.AddRange(_listeners);
         }
     }
 }
