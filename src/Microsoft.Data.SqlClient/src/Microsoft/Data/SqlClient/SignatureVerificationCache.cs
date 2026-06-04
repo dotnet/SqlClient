@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
 
             string cacheLookupKey = GetCacheLookupKey(masterKeyPath, allowEnclaveComputations, signature, keyStoreName);
 
-            return _cache.TryGetValue<bool>(cacheLookupKey, out bool value);
+            return _cache.TryGetValue<bool>(cacheLookupKey, out bool value) && value;
         }
 
         /// <summary>
