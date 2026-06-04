@@ -339,7 +339,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseOverallConnectTimeoutForPoolWait
     {
-        get => GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
+        get => GetSwitchPropertyValue(nameof(UseOverallConnectTimeoutForPoolWait));
         set => SetSwitchValue("s_useOverallConnectTimeoutForPoolWait", value);
     }
 
