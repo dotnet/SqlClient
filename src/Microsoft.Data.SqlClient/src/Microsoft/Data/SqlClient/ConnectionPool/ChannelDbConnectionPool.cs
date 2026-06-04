@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                     PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
                 {
-                    connection.MarkPooledIdle();
+                    connection.ReturnedToPool();
                 }
                 var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
@@ -436,12 +436,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Connection has been sitting idle longer than the configured idle timeout.
             // Checked before the (potentially expensive) liveness probe so an idle-expired
             // connection is discarded without an SNI round-trip.
-            // IdleSinceUtc is initialized to CreateTime so a freshly minted connection never trips this
+            // ReturnedTime is initialized to CreateTime so a freshly minted connection never trips this
             // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 idleTimeout != TimeSpan.Zero &&
-                DateTime.UtcNow > connection.IdleSinceUtc + idleTimeout)
+                DateTime.UtcNow > connection.ReturnedTime + idleTimeout)
             {
                 return false;
             }

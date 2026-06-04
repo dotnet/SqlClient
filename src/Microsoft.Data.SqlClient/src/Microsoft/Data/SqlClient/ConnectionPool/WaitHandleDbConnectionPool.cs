@@ -685,7 +685,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // Transacting connections are held in their own store and are never
                                 // proactively closed (doing so would abort the transaction, which can be
                                 // distributed). Idle-timeout enforcement does not apply here, so we do
-                                // not stamp IdleSinceUtc when parking the connection in the transacted pool.
+                                // not call ReturnedToPool when parking the connection in the transacted pool.
                                 _transactedConnectionPool.PutTransactedObject(transaction, obj);
                                 rootTxn = true;
                             }
@@ -1354,7 +1354,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
             {
-                obj.MarkPooledIdle();
+                obj.ReturnedToPool();
             }
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
@@ -1373,7 +1373,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
             return !LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                    idleTimeout != TimeSpan.Zero &&
-                   DateTime.UtcNow > obj.IdleSinceUtc + idleTimeout;
+                   DateTime.UtcNow > obj.ReturnedTime + idleTimeout;
         }
 
         public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)

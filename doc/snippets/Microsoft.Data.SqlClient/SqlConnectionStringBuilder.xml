@@ -981,23 +981,23 @@ The following example converts an existing connection string from using SQL Serv
     </LoadBalanceTimeout>
     <IdleTimeout>
       <summary>
-        Gets or sets the maximum time, in seconds, that a connection can sit unused (idle) in the connection pool before it is discarded.
+        Gets or sets the maximum time, in seconds, that a connection can sit unused (idle) in the connection pool before it is discarded. The default is 300 (5 minutes).
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IdleTimeout" /> property, or 300 (5 minutes) if none has been supplied.
+        The idle timeout for pooled connections, in seconds.
       </value>
       <remarks>
         <para>
           This property corresponds to the "Connection Idle Timeout" key within the connection string.
         </para>
         <para>
-          The driver makes a best effort to close connections that have remained idle in the pool for longer than this value. The exact point in the connection lifecycle at which the check occurs is an implementation detail and may change over time. This protects callers from receiving connections that may have been silently closed by firewalls, load balancers, or server-side inactivity thresholds.
+          The driver makes a best effort to discard connections that have remained idle in the pool for longer than this value. The exact point in the connection lifecycle at which the check occurs is an implementation detail and may change over time. This protects callers from receiving connections that may have been silently closed by firewalls, load balancers, or server-side inactivity thresholds.
         </para>
         <para>
           A value of zero (0) disables idle expiration; connections are kept in the pool indefinitely (subject to other expiry rules such as <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.LoadBalanceTimeout" />).
         </para>
         <para>
-          Idle timeout operates independently of <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.LoadBalanceTimeout" />. Whichever threshold is exceeded first causes the connection to be recycled.
+          Idle timeout operates independently of <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.LoadBalanceTimeout" />. Whichever threshold is exceeded first causes the connection to be discarded.
         </para>
       </remarks>
     </IdleTimeout>

@@ -66,10 +66,10 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         return connection!;
     }
 
-    // Forcibly rewinds a connection's IdleSinceUtc by the given amount so tests don't have to sleep.
-    private static void BackdateIdleSince(DbConnectionInternal connection, TimeSpan delta)
+    // Forcibly rewinds a connection's ReturnedTime by the given amount so tests don't have to sleep.
+    private static void BackdateReturnedTime(DbConnectionInternal connection, TimeSpan delta)
     {
-        connection.IdleSinceUtc = DateTime.UtcNow - delta;
+        connection.ReturnedTime = DateTime.UtcNow - delta;
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
 
         // Backdate by a small amount that's still well inside the idle window so the return path
         // doesn't decide to evict instead of stamp.
-        BackdateIdleSince(connection, TimeSpan.FromSeconds(5));
-        DateTime stampedBack = connection.IdleSinceUtc;
+        BackdateReturnedTime(connection, TimeSpan.FromSeconds(5));
+        DateTime stampedBack = connection.ReturnedTime;
 
         // Act
         DateTime before = DateTime.UtcNow;
@@ -94,8 +94,8 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         DateTime after = DateTime.UtcNow;
 
         // Assert: stamp falls within the return window and is strictly newer than the backdated value.
-        Assert.InRange(connection.IdleSinceUtc, before, after);
-        Assert.True(connection.IdleSinceUtc > stampedBack);
+        Assert.InRange(connection.ReturnedTime, before, after);
+        Assert.True(connection.ReturnedTime > stampedBack);
     }
 
     [Fact]
@@ -106,9 +106,9 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         SqlConnection owner = new();
         DbConnectionInternal first = GetConnection(owner);
 
-        // Return + back-date IdleSinceUtc to simulate a long sit.
+        // Return + back-date ReturnedTime to simulate a long sit.
         _pool.ReturnInternalConnection(first, owner);
-        BackdateIdleSince(first, TimeSpan.FromHours(1));
+        BackdateReturnedTime(first, TimeSpan.FromHours(1));
 
         // Act
         SqlConnection owner2 = new();
@@ -130,9 +130,9 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         SqlConnection owner = new();
         DbConnectionInternal first = GetConnection(owner);
 
-        // Return + back-date IdleSinceUtc beyond the timeout.
+        // Return + back-date ReturnedTime beyond the timeout.
         _pool.ReturnInternalConnection(first, owner);
-        BackdateIdleSince(first, TimeSpan.FromSeconds(5));
+        BackdateReturnedTime(first, TimeSpan.FromSeconds(5));
 
         // Act - request another connection
         SqlConnection owner2 = new();
@@ -166,17 +166,17 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
     public void IdleTimeout_Zero_DoesNotStampOnReturn()
     {
         // When idle-timeout is disabled, the return path must skip the stamp so the default config
-        // does not pay a per-return DateTime.UtcNow on the hot path. A connection's IdleSinceUtc is
+        // does not pay a per-return DateTime.UtcNow on the hot path. A connection's ReturnedTime is
         // initialized to CreateTime and should remain at that value when expiry is off.
         _pool = CreatePool(idleTimeoutSeconds: 0);
 
         SqlConnection owner = new();
         DbConnectionInternal connection = GetConnection(owner);
-        DateTime stampAtAcquire = connection.IdleSinceUtc;
+        DateTime stampAtAcquire = connection.ReturnedTime;
 
         _pool.ReturnInternalConnection(connection, owner);
 
         // Assert - stamp was NOT refreshed (return path is a no-op when feature disabled).
-        Assert.Equal(stampAtAcquire, connection.IdleSinceUtc);
+        Assert.Equal(stampAtAcquire, connection.ReturnedTime);
     }
 }

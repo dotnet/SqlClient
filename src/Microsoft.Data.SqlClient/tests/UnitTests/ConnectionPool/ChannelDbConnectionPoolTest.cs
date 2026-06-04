@@ -964,8 +964,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Backdate by a small amount that's still well inside the idle window so the return path
             // doesn't decide to evict instead of stamp.
-            BackdateIdleSince(connection, TimeSpan.FromSeconds(5));
-            DateTime stampedBack = connection.IdleSinceUtc;
+            BackdateReturnedTime(connection, TimeSpan.FromSeconds(5));
+            DateTime stampedBack = connection.ReturnedTime;
 
             // Act
             DateTime before = DateTime.UtcNow;
@@ -973,8 +973,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             DateTime after = DateTime.UtcNow;
 
             // Assert: stamp falls within the return window and is strictly newer than the backdated value.
-            Assert.InRange(connection.IdleSinceUtc, before, after);
-            Assert.True(connection.IdleSinceUtc > stampedBack);
+            Assert.InRange(connection.ReturnedTime, before, after);
+            Assert.True(connection.ReturnedTime > stampedBack);
         }
 
         [Fact]
@@ -987,9 +987,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? first);
             Assert.NotNull(first);
 
-            // Return + back-date IdleSinceUtc to simulate a long sit.
+            // Return + back-date ReturnedTime to simulate a long sit.
             pool.ReturnInternalConnection(first, owner);
-            BackdateIdleSince(first, TimeSpan.FromHours(1));
+            BackdateReturnedTime(first, TimeSpan.FromHours(1));
 
             // Act
             SqlConnection owner2 = new();
@@ -1014,9 +1014,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? first);
             Assert.NotNull(first);
 
-            // Return + back-date IdleSinceUtc beyond the timeout.
+            // Return + back-date ReturnedTime beyond the timeout.
             pool.ReturnInternalConnection(first, owner);
-            BackdateIdleSince(first, TimeSpan.FromSeconds(5));
+            BackdateReturnedTime(first, TimeSpan.FromSeconds(5));
 
             // Act - request another connection
             SqlConnection owner2 = new();
@@ -1052,10 +1052,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Same(first, second);
         }
 
-        // Forcibly rewinds a connection's IdleSinceUtc by the given amount so tests don't have to sleep.
-        private static void BackdateIdleSince(DbConnectionInternal connection, TimeSpan delta)
+        // Forcibly rewinds a connection's ReturnedTime by the given amount so tests don't have to sleep.
+        private static void BackdateReturnedTime(DbConnectionInternal connection, TimeSpan delta)
         {
-            connection.IdleSinceUtc = DateTime.UtcNow - delta;
+            connection.ReturnedTime = DateTime.UtcNow - delta;
         }
 
         #endregion

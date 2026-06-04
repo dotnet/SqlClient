@@ -82,11 +82,11 @@ namespace Microsoft.Data.ProviderBase
             ShouldHidePassword = hidePassword;
             State = state;
             CreateTime = DateTime.UtcNow;
-            // Initialize the idle-since stamp to creation time so that a freshly built connection is treated
-            // as "just used" by idle-expiry checks until the pool's return path stamps it again on first return.
-            // Without this initialization, IdleSinceUtc would default to DateTime.MinValue, which would cause
+            // Initialize the returned-to-pool stamp to creation time so that a freshly built connection is treated
+            // as "just used" by the pool's idle-expiry checks until the pool's return path stamps it again on first return.
+            // Without this initialization, ReturnedTime would default to DateTime.MinValue, which would cause
             // IsLiveConnection to immediately evict every new connection whenever IdleTimeout is configured.
-            IdleSinceUtc = CreateTime;
+            ReturnedTime = CreateTime;
         }
 
         #region Properties
@@ -97,12 +97,13 @@ namespace Microsoft.Data.ProviderBase
         internal DateTime CreateTime { get; }
 
         /// <summary>
-        /// UTC timestamp of when this connection was last placed into the pool's idle state.
-        /// Stamped by <see cref="MarkPooledIdle"/> from the pool's return-to-pool path.
+        /// UTC timestamp of when this connection was last returned to the pool.
+        /// Stamped by <see cref="ReturnedToPool"/>. Initialized to <see cref="CreateTime"/> in the constructor
+        /// so a freshly built connection is treated as "just used" until its first return.
         /// Internal setter exists to support deterministic unit tests without reflection.
-        /// Used by the pool to discard connections that have sat unused longer than the configured idle timeout.
+        /// The pool reads this value to decide whether the connection has sat idle longer than the configured idle timeout.
         /// </summary>
-        internal DateTime IdleSinceUtc { get; set; }
+        internal DateTime ReturnedTime { get; set; }
 
         /// <summary>
         /// The pool generation at the time this connection was created or added to the pool.
@@ -748,13 +749,14 @@ namespace Microsoft.Data.ProviderBase
         }
 
         /// <summary>
-        /// Stamps <see cref="IdleSinceUtc"/> with the current UTC time. Called by the pool's return-to-pool path
-        /// (after the connection has been deactivated and is about to enter the idle pool) so that the pool can later
-        /// decide whether the connection has sat idle for too long and should be discarded.
+        /// Records that this connection was just returned to the pool by stamping <see cref="ReturnedTime"/>
+        /// with the current UTC time. Called from the pool's return-to-pool path after the connection has
+        /// been deactivated and is about to enter the idle pool. The pool alone decides what to do with the
+        /// resulting timestamp (e.g. discarding the connection once it has sat unused for too long).
         /// </summary>
-        internal void MarkPooledIdle()
+        internal void ReturnedToPool()
         {
-            IdleSinceUtc = DateTime.UtcNow;
+            ReturnedTime = DateTime.UtcNow;
         }
 
         internal void PrePush(DbConnection expectedOwner)
