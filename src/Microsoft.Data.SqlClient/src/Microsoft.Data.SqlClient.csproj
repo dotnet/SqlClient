@@ -209,10 +209,11 @@
 
     <!-- Expand the SqlClientPackNuspec template with computed version ranges. -->
     <PropertyGroup>
-      <!-- Compute version ranges: [floor, floor.Major.(floor.Minor+1).0) — ceiling derived from floor -->
-      <_AbstractionsVersionRange>[$(AbstractionsPackageVersion), $(AbstractionsPackageVersion.Split('.')[0]).$([MSBuild]::Add($(AbstractionsPackageVersion.Split('.')[1]), 1)).0)</_AbstractionsVersionRange>
-      <_LoggingVersionRange>[$(LoggingPackageVersion), $(LoggingPackageVersion.Split('.')[0]).$([MSBuild]::Add($(LoggingPackageVersion.Split('.')[1]), 1)).0)</_LoggingVersionRange>
-      <_SqlServerVersionRange>[$(SqlServerPackageVersion), $(SqlServerPackageVersion.Split('.')[0]).$([MSBuild]::Add($(SqlServerPackageVersion.Split('.')[1]), 1)).0)</_SqlServerVersionRange>
+      <!-- Compute version ranges: [floor, floor.Major.(floor.Minor+1).0) — ceiling derived from floor.
+           Use trimmed values to guard against whitespace passed via -p: arguments. -->
+      <_AbstractionsVersionRange>[$(_AbstractionsPackageVersionTrimmed), $(_AbstractionsPackageVersionTrimmed.Split('.')[0]).$([MSBuild]::Add($(_AbstractionsPackageVersionTrimmed.Split('.')[1]), 1)).0)</_AbstractionsVersionRange>
+      <_LoggingVersionRange>[$(_LoggingPackageVersionTrimmed), $(_LoggingPackageVersionTrimmed.Split('.')[0]).$([MSBuild]::Add($(_LoggingPackageVersionTrimmed.Split('.')[1]), 1)).0)</_LoggingVersionRange>
+      <_SqlServerVersionRange>[$(_SqlServerPackageVersionTrimmed), $(_SqlServerPackageVersionTrimmed.Split('.')[0]).$([MSBuild]::Add($(_SqlServerPackageVersionTrimmed.Split('.')[1]), 1)).0)</_SqlServerVersionRange>
     </PropertyGroup>
     <PropertyGroup>
       <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsVersionRange$','$(_AbstractionsVersionRange)').Replace('$LoggingVersionRange$','$(_LoggingVersionRange)').Replace('$SqlServerVersionRange$','$(_SqlServerVersionRange)').Replace('$SniVersionRange$','$(SniVersionRange)'))</_SqlClientPackNuspecExpandedText>

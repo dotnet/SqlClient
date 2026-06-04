@@ -57,12 +57,12 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
-    <SqlServerVersionCeiling>$(SqlServerPackageVersion.Split('.')[0]).$([MSBuild]::Add($(SqlServerPackageVersion.Split('.')[1]), 1)).0</SqlServerVersionCeiling>
-    <LoggingVersionCeiling>$(LoggingPackageVersion.Split('.')[0]).$([MSBuild]::Add($(LoggingPackageVersion.Split('.')[1]), 1)).0</LoggingVersionCeiling>
-    <AbstractionsVersionCeiling>$(AbstractionsPackageVersion.Split('.')[0]).$([MSBuild]::Add($(AbstractionsPackageVersion.Split('.')[1]), 1)).0</AbstractionsVersionCeiling>
-    <SqlClientVersionCeiling>$(SqlClientPackageVersion.Split('.')[0]).$([MSBuild]::Add($(SqlClientPackageVersion.Split('.')[1]), 1)).0</SqlClientVersionCeiling>
-    <AzureVersionCeiling>$(AzurePackageVersion.Split('.')[0]).$([MSBuild]::Add($(AzurePackageVersion.Split('.')[1]), 1)).0</AzureVersionCeiling>
-    <AkvProviderVersionCeiling>$(AkvProviderPackageVersion.Split('.')[0]).$([MSBuild]::Add($(AkvProviderPackageVersion.Split('.')[1]), 1)).0</AkvProviderVersionCeiling>
+    <SqlServerVersionCeiling>$(SqlServerPackageVersion.Trim().Split('.')[0]).$([MSBuild]::Add($(SqlServerPackageVersion.Trim().Split('.')[1]), 1)).0</SqlServerVersionCeiling>
+    <LoggingVersionCeiling>$(LoggingPackageVersion.Trim().Split('.')[0]).$([MSBuild]::Add($(LoggingPackageVersion.Trim().Split('.')[1]), 1)).0</LoggingVersionCeiling>
+    <AbstractionsVersionCeiling>$(AbstractionsPackageVersion.Trim().Split('.')[0]).$([MSBuild]::Add($(AbstractionsPackageVersion.Trim().Split('.')[1]), 1)).0</AbstractionsVersionCeiling>
+    <SqlClientVersionCeiling>$(SqlClientPackageVersion.Trim().Split('.')[0]).$([MSBuild]::Add($(SqlClientPackageVersion.Trim().Split('.')[1]), 1)).0</SqlClientVersionCeiling>
+    <AzureVersionCeiling>$(AzurePackageVersion.Trim().Split('.')[0]).$([MSBuild]::Add($(AzurePackageVersion.Trim().Split('.')[1]), 1)).0</AzureVersionCeiling>
+    <AkvProviderVersionCeiling>$(AkvProviderPackageVersion.Trim().Split('.')[0]).$([MSBuild]::Add($(AkvProviderPackageVersion.Trim().Split('.')[1]), 1)).0</AkvProviderVersionCeiling>
   </PropertyGroup>
 
   <!-- ===================================================================== -->
