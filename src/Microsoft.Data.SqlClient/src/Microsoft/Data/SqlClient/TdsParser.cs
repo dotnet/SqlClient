@@ -4932,16 +4932,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             // always read as sql types
-            if (valLen > (ulong)int.MaxValue)
-            {
-                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, int.MaxValue);
-            }
-
-            int intlen = (int)valLen;
+            int intlen;
 
             if (rec.metaType.IsPlp)
             {
                 intlen = int.MaxValue;    // If plp data, read it all
+            }
+            else if (valLen > (ulong)int.MaxValue)
+            {
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, int.MaxValue);
+            }
+            else
+            {
+                intlen = (int)valLen;
             }
 
             if (rec.type == SqlDbTypeExtensions.Vector)
