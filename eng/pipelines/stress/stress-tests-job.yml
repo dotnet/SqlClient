@@ -144,7 +144,7 @@ jobs:
     steps:
 
       # Install the .NET SDK and Runtimes.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           runtimes: [8.x, 9.x]
 
