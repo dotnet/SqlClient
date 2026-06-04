@@ -590,6 +590,237 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
         }
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 8: Post-login batch response — ReturnValue with oversized data length
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryProcessReturnValue</c> rejects a RETURNVALUE token (0xAC)
+    /// whose inner data length (for a non-PLP IMAGE type) exceeds int.MaxValue.
+    /// A malicious server can craft a TEXT/IMAGE return value with a spoofed int32
+    /// data length that becomes a huge value when cast to ulong, triggering unbounded
+    /// allocation.
+    /// </summary>
+    [Fact]
+    public void BatchResponse_ReturnValue_OversizedLength_ThrowsParsingError()
+    {
+        _server.OnSQLBatchCompleted = responseMessage =>
+        {
+            int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
+            if (doneIndex < 0)
+            {
+                doneIndex = responseMessage.Count;
+            }
+
+            responseMessage.Insert(doneIndex, new MaliciousReturnValueToken());
+        };
+
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1";
+
+            using (new DebugAssertSuppressor())
+            {
+                Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                    () => command.ExecuteNonQuery());
+                Assert.Contains("18", ex.Message); // CorruptedTdsStream
+            }
+        }
+        finally
+        {
+            _server.OnSQLBatchCompleted = null;
+        }
+    }
+
+    /// <summary>
+    /// Writes a RETURNVALUE token (0xAC) with an IMAGE (0x22) type whose data
+    /// length field is set to -1 (0xFFFFFFFF). When cast to ulong this exceeds
+    /// int.MaxValue, triggering the bounds check in TryProcessReturnValue.
+    /// Wire layout:
+    ///   [0xAC] token
+    ///   [uint16] ordinal
+    ///   [byte] param name length (0)
+    ///   [byte] status
+    ///   [uint32] user type
+    ///   [byte] flags1
+    ///   [byte] flags2
+    ///   [byte] tds type = 0x22 (IMAGE)
+    ///   [int32] max length
+    ///   [byte] textPtrLen = 16
+    ///   [16 bytes] textPtr
+    ///   [8 bytes] timestamp
+    ///   [int32] data length = -1 (INVALID)
+    /// </summary>
+    private sealed class MaliciousReturnValueToken : TDSPacketToken
+    {
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        public override void Deflate(Stream destination)
+        {
+            // RETURNVALUE token
+            destination.WriteByte(0xAC);
+
+            // Ordinal (uint16 LE)
+            destination.WriteByte(0x00);
+            destination.WriteByte(0x00);
+
+            // Param name length (byte) = 0
+            destination.WriteByte(0x00);
+
+            // Status (byte) = 0x01 (output parameter)
+            destination.WriteByte(0x01);
+
+            // UserType (uint32 LE) = 0
+            destination.Write(new byte[4], 0, 4);
+
+            // Flags byte 1 (ignored)
+            destination.WriteByte(0x00);
+
+            // Flags byte 2
+            destination.WriteByte(0x00);
+
+            // TDS type = SQLIMAGE (0x22)
+            destination.WriteByte(0x22);
+
+            // MaxLen (int32 LE) — for IMAGE this is read via TryGetTokenLength
+            // which for 0x22 reads int32. Value doesn't matter much, just needs
+            // to be valid for MetaType lookup.
+            destination.Write(new byte[] { 0x10, 0x00, 0x00, 0x00 }, 0, 4); // 16
+
+            // -- TryProcessColumnHeaderNoNBC: IsLong && !IsPlp path --
+            // TextPtr length (byte) = 16
+            destination.WriteByte(0x10);
+
+            // TextPtr data (16 bytes)
+            destination.Write(new byte[16], 0, 16);
+
+            // Timestamp (8 bytes)
+            destination.Write(new byte[8], 0, 8);
+
+            // Data length (int32 LE) = -1 (0xFFFFFFFF)
+            // (ulong)(-1) = 0xFFFFFFFFFFFFFFFF > int.MaxValue → triggers bounds check
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 9: Post-login batch response — PLP ReturnValue (regression guard)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryProcessReturnValue</c> correctly handles PLP
+    /// (Partially Length-Prefixed) return values without triggering the bounds
+    /// check. PLP types use the unknown-length sentinel (0xFFFFFFFFFFFFFFFE)
+    /// which must NOT be rejected by the non-PLP bounds check.
+    /// </summary>
+    [Fact]
+    public void BatchResponse_ReturnValue_PlpUnknownLength_Succeeds()
+    {
+        _server.OnSQLBatchCompleted = responseMessage =>
+        {
+            int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
+            if (doneIndex < 0)
+            {
+                doneIndex = responseMessage.Count;
+            }
+
+            responseMessage.Insert(doneIndex, new ValidPlpReturnValueToken());
+        };
+
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1";
+
+            // Should NOT throw — PLP unknown-length sentinel is valid
+            command.ExecuteNonQuery();
+        }
+        finally
+        {
+            _server.OnSQLBatchCompleted = null;
+        }
+    }
+
+    /// <summary>
+    /// Writes a valid RETURNVALUE token (0xAC) with a PLP VARBINARY(MAX) type
+    /// using the unknown-length sentinel (0xFFFFFFFFFFFFFFFE) followed by an
+    /// immediate PLP terminator (chunk length = 0). This exercises the IsPlp
+    /// branch in TryProcessReturnValue and must NOT trigger the bounds check.
+    /// Wire layout:
+    ///   [0xAC] token
+    ///   [uint16] ordinal
+    ///   [byte] param name length (0)
+    ///   [byte] status
+    ///   [uint32] user type
+    ///   [byte] flags1
+    ///   [byte] flags2
+    ///   [byte] tds type = 0xA5 (BIGVARBINARY)
+    ///   [uint16] max length = 0xFFFF (PLP marker)
+    ///   [uint64] PLP length = 0xFFFFFFFFFFFFFFFE (unknown)
+    ///   [uint32] chunk length = 0 (terminator)
+    /// </summary>
+    private sealed class ValidPlpReturnValueToken : TDSPacketToken
+    {
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        public override void Deflate(Stream destination)
+        {
+            // RETURNVALUE token
+            destination.WriteByte(0xAC);
+
+            // Ordinal (uint16 LE)
+            destination.WriteByte(0x00);
+            destination.WriteByte(0x00);
+
+            // Param name length (byte) = 0
+            destination.WriteByte(0x00);
+
+            // Status (byte) = 0x01 (output parameter)
+            destination.WriteByte(0x01);
+
+            // UserType (uint32 LE) = 0
+            destination.Write(new byte[4], 0, 4);
+
+            // Flags byte 1 (ignored)
+            destination.WriteByte(0x00);
+
+            // Flags byte 2
+            destination.WriteByte(0x00);
+
+            // TDS type = SQLBIGVARBINARY (0xA5)
+            destination.WriteByte(0xA5);
+
+            // MaxLen (uint16 LE) = 0xFFFF — PLP marker
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+
+            // -- TryProcessColumnHeaderNoNBC: non-IsLong path --
+            // TryGetDataLength → TryReadPlpLength:
+            //   reads uint64 = 0xFFFFFFFFFFFFFFFE (unknown length sentinel)
+            destination.WriteByte(0xFE);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+            destination.WriteByte(0xFF);
+
+            // PLP chunk terminator (uint32 = 0) — empty data
+            destination.Write(new byte[4], 0, 4);
+        }
+    }
+
     /// <summary>
     /// Temporarily suppresses Debug.Assert failures by clearing trace listeners.
     /// Used when disposing resources after intentionally corrupting a TDS stream.
