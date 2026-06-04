@@ -89,7 +89,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSUtilities.Log(Arguments.Log, "Request", request);
 
             // Prepare ERROR token with the denial details
-            TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
+            TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, Arguments.ErrorClass, errorMessage);
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", errorToken);

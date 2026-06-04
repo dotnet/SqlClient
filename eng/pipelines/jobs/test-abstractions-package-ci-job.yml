@@ -91,7 +91,7 @@ jobs:
       # dotnet CLI arguments for build/test/pack commands
       - name: buildArguments
         value: >-
-          --configuration ${{ parameters.buildConfiguration }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
@@ -122,7 +122,7 @@ jobs:
           displayName: '[Debug] Print Environment Variables'
 
       # Install the .NET SDK and Runtimes.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
           runtimes: [8.x, 9.x]
