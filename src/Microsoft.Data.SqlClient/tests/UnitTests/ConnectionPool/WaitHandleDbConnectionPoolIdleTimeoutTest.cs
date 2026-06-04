@@ -161,22 +161,4 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         // Assert - same instance reused, well within idle window
         Assert.Same(first, second);
     }
-
-    [Fact]
-    public void IdleTimeout_Zero_DoesNotStampOnReturn()
-    {
-        // When idle-timeout is disabled, the return path must skip the stamp so the default config
-        // does not pay a per-return DateTime.UtcNow on the hot path. A connection's ReturnedTime is
-        // initialized to CreateTime and should remain at that value when expiry is off.
-        _pool = CreatePool(idleTimeoutSeconds: 0);
-
-        SqlConnection owner = new();
-        DbConnectionInternal connection = GetConnection(owner);
-        DateTime stampAtAcquire = connection.ReturnedTime;
-
-        _pool.ReturnInternalConnection(connection, owner);
-
-        // Assert - stamp was NOT refreshed (return path is a no-op when feature disabled).
-        Assert.Equal(stampAtAcquire, connection.ReturnedTime);
-    }
 }

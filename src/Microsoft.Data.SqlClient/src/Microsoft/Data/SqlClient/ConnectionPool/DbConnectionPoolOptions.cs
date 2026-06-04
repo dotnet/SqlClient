@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 throw new ArgumentOutOfRangeException(nameof(idleTimeout), idleTimeout, "Idle timeout cannot be negative.");
             }
 
-            if (0 != idleTimeout)
+            if (idleTimeout != 0)
             {
                 _idleTimeout = TimeSpan.FromSeconds(idleTimeout);
             }

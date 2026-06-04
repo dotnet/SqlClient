@@ -222,18 +222,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             lock (s_random)
             {
                 TimeSpan idleTimeout = connectionPoolGroup.PoolGroupOptions.IdleTimeout;
-                if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior && idleTimeout != TimeSpan.Zero)
+                if (LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior)
                 {
-                    // The WaitHandle pool takes two pruning cycles to remove an idle connection
-                    // (new->old generation, then old->closed), so halve the configured timeout
-                    // to approximate the requested idle lifetime.
+                    // Legacy: preserve the historical 2-4 minute random cleanup window.
+                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                }
+                else if (idleTimeout != TimeSpan.Zero)
+                {
+                    // New + idle-expiry enabled: the WaitHandle pool takes two pruning cycles to evict
+                    // an idle connection (new->old generation, then old->closed), so halve the configured
+                    // timeout to approximate the requested idle lifetime.
                     long cleanupWaitMilliseconds = (long)idleTimeout.TotalMilliseconds / 2;
                     _cleanupWait = cleanupWaitMilliseconds >= int.MaxValue ? int.MaxValue : (int)cleanupWaitMilliseconds;
                 }
                 else
                 {
-                    // Preserve the historical 2-4 minute random cleanup window.
-                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                    // New pool, idle-expiry disabled (IdleTimeout=0). The cleanup timer still runs for
+                    // non-idle maintenance, so reuse the historical 2-4 minute window.
+                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000;
                 }
             }
 
@@ -1347,15 +1353,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {0}, Connection {1}, Pushing to general pool.", Id, obj.ObjectID);
 
-            // Stamp the idle-since timestamp immediately before placing the connection on the idle stack
-            // so that idle-expiry checks on later retrieval can decide whether it has sat unused too long.
-            // Skip the stamp when idle expiry is disabled (the default) to avoid the per-return
-            // DateTime.UtcNow on the hot return path.
-            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
-                PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
-            {
-                obj.ReturnedToPool();
-            }
+            // Record the return time so IsIdleExpired can later decide whether the connection has sat
+            // unused too long. The read path in IsIdleExpired short-circuits when idle expiry is
+            // disabled, so the stamp is harmless in that case.
+            obj.ReturnedToPool();
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
 
@@ -1370,10 +1371,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private bool IsIdleExpired(DbConnectionInternal obj)
         {
+            // Use subtraction rather than addition so the comparison cannot throw if ReturnedTime is
+            // ever close to DateTime.MaxValue. A clock skew that leaves ReturnedTime in the future
+            // produces a negative TimeSpan, which falls through as not-expired (fail safe).
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
             return !LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                    idleTimeout != TimeSpan.Zero &&
-                   DateTime.UtcNow > obj.ReturnedTime + idleTimeout;
+                   DateTime.UtcNow - obj.ReturnedTime > idleTimeout;
         }
 
         public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)
