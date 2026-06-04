@@ -191,6 +191,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useLegacyIdleTimeoutBehavior",
                 _useLegacyIdleTimeoutBehaviorOriginal);
+            SetSwitchValue(
                 "s_useOverallConnectTimeoutForPoolWait",
                 _useOverallConnectTimeoutForPoolWaitOriginal);
             #if NET && _WINDOWS
@@ -345,6 +346,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_useLegacyIdleTimeoutBehavior");
         set => SetSwitchValue("s_useLegacyIdleTimeoutBehavior", value);
+    }
+
+    /// <summary>
     /// Get or set the UseOverallConnectTimeoutForPoolWait switch value.
     /// </summary>
     public bool? UseOverallConnectTimeoutForPoolWait
