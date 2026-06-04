@@ -768,9 +768,11 @@ namespace Microsoft.Data.SqlClient.Utilities
                 static task =>
                 {
                     SqlClientEventSource.Log.TryTraceEvent($"Unobserved task exception: {task.Exception}");
-                    return _ = task.Exception;
+                    _ = task.Exception;
                 },
-                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
 
         private record ContinuationState(

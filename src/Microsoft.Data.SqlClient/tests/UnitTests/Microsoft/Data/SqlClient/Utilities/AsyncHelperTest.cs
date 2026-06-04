@@ -1304,9 +1304,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                     onTimeout: null,
                     rethrowExceptions: true);
 
+                // - Task has timed out, simulate faulting task completion source
+                tcs.SetException(new Exception("late failure"));
+
                 // - Force collection of unobserved task
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
+                GC.Collect();
 
                 // Assert
                 // - Make sure no unobserved tasks happened
