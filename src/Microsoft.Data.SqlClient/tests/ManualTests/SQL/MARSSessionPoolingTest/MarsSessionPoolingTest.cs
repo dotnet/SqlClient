@@ -376,7 +376,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 switch (commandType)
                 {
                     case CommandType.Text:
-                        string commandText = string.Join(" ", Enumerable.Repeat(@"SELECT * FROM sys.databases;", 20));
+                        // 100 rows from an in-memory VALUES generator, repeated as 20 result sets.
+                        // Produces enough output to span multiple 512-byte TDS packets (so the
+                        // request stays observable in dm_exec_requests for the MARS tests) without
+                        // the per-call CPU cost of scanning sys.databases on Azure SQL.
+                        const string rowGen =
+                            "SELECT a.n FROM (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS a(n) " +
+                            "CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) AS b(n);";
+                        string commandText = string.Join(" ", Enumerable.Repeat(rowGen, 20));
                         commandText += @" PRINT 'THIS IS THE END!'";
 
                         result[i] = new SqlCommand
@@ -389,9 +396,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         break;
 
                     case CommandType.StoredProcedure:
+                        // sp_server_info returns a small, fixed result set and avoids the
+                        // server-wide session scan that sp_who performs on shared Azure SQL.
                         result[i] = new SqlCommand
                         {
-                            CommandText = "sp_who",
+                            CommandText = "sp_server_info",
                             CommandTimeout = 120,
                             CommandType = CommandType.StoredProcedure,
                             Connection = connection
