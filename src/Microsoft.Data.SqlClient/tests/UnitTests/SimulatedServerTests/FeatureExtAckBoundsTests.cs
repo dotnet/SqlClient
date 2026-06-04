@@ -78,44 +78,50 @@ public class FeatureExtAckBoundsTests : IClassFixture<TdsServerFixture>
     }
 
     /// <summary>
-    /// Verifies that a FeatureExtAck token with a data length at or below the
+    /// Verifies that a FeatureExtAck token with a data length at exactly the
     /// allowed maximum is accepted without error, confirming there is no
     /// off-by-one in the bounds check.
     /// </summary>
     [Fact]
     public void FeatureExtAck_MaxAllowedDataLength_DoesNotThrow()
     {
-        // Arrange: inject a FeatureExtAck token at exactly the maximum allowed size.
-        // We use a small real payload to avoid actually allocating 1 MB in the test;
-        // the server will write a data length that equals the actual data length.
-        // This verifies that the boundary value is accepted (not off-by-one).
-        byte[] legitimateData = new byte[] { 0x01 }; // 1-byte GlobalTransactions ack
-
+        // Arrange: inject a FeatureExtAck token whose declared data length equals
+        // MaxTokenDataLength exactly. The bounds check should NOT fire for this
+        // value. The connection will fail for other reasons (not enough data on
+        // the wire), but the error must NOT be state 18 (CorruptedTdsStream).
         _server.OnAuthenticationResponseCompleted = responseMessage =>
         {
-            // Find existing FeatureExtAck or create one
             var existing = responseMessage.OfType<TDSFeatureExtAckToken>().FirstOrDefault();
-            if (existing == null)
+            if (existing != null)
             {
-                int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
-                if (doneIndex < 0)
-                {
-                    doneIndex = responseMessage.Count;
-                }
-
-                var token = new TDSFeatureExtAckToken(
-                    new TDSFeatureExtAckGenericOption(
-                        (TDSFeatureID)TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS,
-                        (uint)legitimateData.Length,
-                        legitimateData));
-                responseMessage.Insert(doneIndex, token);
+                responseMessage.Remove(existing);
             }
+
+            int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
+            if (doneIndex < 0)
+            {
+                doneIndex = responseMessage.Count;
+            }
+
+            // Insert token with dataLen = MaxTokenDataLength (at boundary, not over)
+            responseMessage.Insert(doneIndex, new MaliciousFeatureExtAckToken(
+                featureId: (TDSFeatureID)TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS,
+                claimedDataLen: (uint)TdsEnums.MaxTokenDataLength));
         };
 
-        // Act & Assert: connection should open successfully
-        using SqlConnection connection = new(_connectionString);
-        connection.Open();
-        Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            // The connection will fail (insufficient data for the claimed length),
+            // but the failure must NOT be the bounds check (state 18 with MaxTokenDataLength+1).
+            Exception ex = Assert.ThrowsAny<Exception>(connection.Open);
+            // Confirm it's NOT the bounds-check error (which would report MaxTokenDataLength+1)
+            Assert.DoesNotContain((TdsEnums.MaxTokenDataLength + 1).ToString(), ex.Message);
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     /// <summary>

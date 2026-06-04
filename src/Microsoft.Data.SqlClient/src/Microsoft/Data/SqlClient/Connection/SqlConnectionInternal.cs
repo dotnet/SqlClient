@@ -1348,7 +1348,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
                         if (len < 0 || len > data.Length - i)
                         {
-                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                            throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, len);
                         }
 
                         byte[] stateData = new byte[len];

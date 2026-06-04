@@ -507,7 +507,7 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
     /// Verifies that <c>TryReadSqlDateTime</c> rejects a TIME column value whose
     /// data length byte exceeds the maximum datetime wire size (10 bytes). A
     /// malicious server could set this length to a large value, causing the
-    /// parser to attempt an oversized stackalloc.
+    /// parser to attempt an unbounded heap allocation.
     /// </summary>
     [Fact]
     public void BatchResponse_DateTime_OversizedLength_ThrowsParsingError()

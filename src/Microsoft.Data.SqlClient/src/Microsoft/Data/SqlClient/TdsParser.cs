@@ -4940,7 +4940,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (valLen > (ulong)int.MaxValue)
             {
-                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, int.MaxValue);
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, unchecked((int)valLen));
             }
             else
             {
@@ -7141,13 +7141,12 @@ namespace Microsoft.Data.SqlClient
         {
             // DateTimeOffset is the largest datetime type at 10 bytes (5 time + 3 date + 2 offset).
             // Reject anything larger to prevent heap allocation from spoofed metadata.
-            const int MaxDateTimeLength = 10;
-            if (length < 0 || length > MaxDateTimeLength)
+            if (length < 0 || length > TdsEnums.MaxDateTimeLength)
             {
                 throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, length);
             }
 
-            Span<byte> datetimeBuffer = stackalloc byte[MaxDateTimeLength];
+            Span<byte> datetimeBuffer = stackalloc byte[TdsEnums.MaxDateTimeLength];
 
             TdsOperationStatus result = stateObj.TryReadByteArray(datetimeBuffer, length);
             if (result != TdsOperationStatus.Done)
