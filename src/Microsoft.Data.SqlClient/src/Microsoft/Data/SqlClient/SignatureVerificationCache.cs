@@ -10,6 +10,22 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
+    /// Tri-state result returned by <see cref="ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult"/>.
+    /// Distinguishes a cache miss from a cached negative result so callers cannot conflate the two.
+    /// </summary>
+    internal enum SignatureVerificationResult
+    {
+        /// <summary>No cached entry exists for the requested CMK metadata. The caller must verify the signature with the key store provider.</summary>
+        NotFound,
+
+        /// <summary>A cached entry exists and indicates that signature verification previously failed.</summary>
+        False,
+
+        /// <summary>A cached entry exists and indicates that signature verification previously succeeded.</summary>
+        True,
+    }
+
+    /// <summary>
     /// Cache for storing result of signature verification of CMK Metadata
     /// </summary>
     internal class ColumnMasterKeyMetadataSignatureVerificationCache
@@ -29,6 +45,9 @@ namespace Microsoft.Data.SqlClient
         private static readonly TimeSpan s_verificationCacheTimeout = TimeSpan.FromDays(10);
 
         //singleton instance
+        /// <summary>
+        /// Gets the process-wide singleton instance of the signature verification cache.
+        /// </summary>
         internal static ColumnMasterKeyMetadataSignatureVerificationCache Instance { get { return _signatureVerificationCache; } }
 
         private readonly MemoryCache _cache;
@@ -41,13 +60,23 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Get signature verification result for given CMK metadata (KeystoreName, MasterKeyPath, allowEnclaveComputations) and a given signature
+        /// Get signature verification result for given CMK metadata 
+        /// (KeystoreName, MasterKeyPath, allowEnclaveComputations) and a given signature
         /// </summary>
         /// <param name="keyStoreName">Key Store name for CMK</param>
         /// <param name="masterKeyPath">Key Path for CMK</param>
         /// <param name="allowEnclaveComputations">boolean indicating whether the key can be sent to enclave</param>
         /// <param name="signature">Signature for the CMK metadata</param>
-        internal bool GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
+        /// <returns>Tri-state result indicating whether signature verification succeeded, failed, or was not found in cache</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when <paramref name="masterKeyPath"/>, <paramref name="keyStoreName"/>, 
+        /// or <paramref name="signature"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when <paramref name="masterKeyPath"/> or <paramref name="keyStoreName"/> 
+        /// is empty or whitespace, or when <paramref name="signature"/> has length zero.
+        /// </exception>
+        internal SignatureVerificationResult GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _getSignatureVerificationResultMethodName);
             ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _getSignatureVerificationResultMethodName);
@@ -55,17 +84,31 @@ namespace Microsoft.Data.SqlClient
 
             string cacheLookupKey = GetCacheLookupKey(masterKeyPath, allowEnclaveComputations, signature, keyStoreName);
 
-            return _cache.TryGetValue<bool>(cacheLookupKey, out bool value) && value;
+            if (!_cache.TryGetValue<bool>(cacheLookupKey, out bool value))
+            {
+                return SignatureVerificationResult.NotFound;
+            }
+
+            return value ? SignatureVerificationResult.True : SignatureVerificationResult.False;
         }
 
         /// <summary>
-        /// Add signature verification result for given CMK metadata (KeystoreName, MasterKeyPath, allowEnclaveComputations) and a given signature in the cache
+        /// Add signature verification result for given CMK metadata (KeystoreName, 
+        /// MasterKeyPath, allowEnclaveComputations) and a given signature in the cache
         /// </summary>
         /// <param name="keyStoreName">Key Store name for CMK</param>
         /// <param name="masterKeyPath">Key Path for CMK</param>
         /// <param name="allowEnclaveComputations">boolean indicating whether the key can be sent to enclave</param>
         /// <param name="signature">Signature for the CMK metadata</param>
         /// <param name="result">result indicating signature verification success/failure</param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when <paramref name="masterKeyPath"/>, <paramref name="keyStoreName"/>, 
+        /// or <paramref name="signature"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when <paramref name="masterKeyPath"/> or <paramref name="keyStoreName"/> is empty or whitespace, 
+        /// or when <paramref name="signature"/> has length zero.
+        /// </exception>
         internal void AddSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature, bool result)
         {
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _addSignatureVerificationResultMethodName);

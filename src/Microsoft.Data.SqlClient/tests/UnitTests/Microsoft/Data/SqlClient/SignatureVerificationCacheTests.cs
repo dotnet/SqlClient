@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
     public class SignatureVerificationCacheTests
     {
         [Fact]
-        public void GetSignatureVerificationResult_DoesNotTreatCachedFailureAsSuccess()
+        public void GetSignatureVerificationResult_ReturnsFalseForCachedFailure()
         {
             ColumnMasterKeyMetadataSignatureVerificationCache cache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
             string keyStoreName = $"TEST_PROVIDER_{Guid.NewGuid():N}";
@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             cache.AddSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature, result: false);
 
-            Assert.False(cache.GetSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature));
+            Assert.Equal(SignatureVerificationResult.False, cache.GetSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature));
         }
 
         [Fact]
@@ -32,7 +32,18 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             cache.AddSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature, result: true);
 
-            Assert.True(cache.GetSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature));
+            Assert.Equal(SignatureVerificationResult.True, cache.GetSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature));
+        }
+
+        [Fact]
+        public void GetSignatureVerificationResult_ReturnsNotFoundForCacheMiss()
+        {
+            ColumnMasterKeyMetadataSignatureVerificationCache cache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
+            string keyStoreName = $"TEST_PROVIDER_{Guid.NewGuid():N}";
+            string masterKeyPath = $"https://unit-test/{Guid.NewGuid():N}";
+            byte[] signature = [9, 9, 9, 9];
+
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(keyStoreName, masterKeyPath, allowEnclaveComputations: true, signature));
         }
     }
 }

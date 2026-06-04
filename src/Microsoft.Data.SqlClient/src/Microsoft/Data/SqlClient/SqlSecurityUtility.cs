@@ -332,18 +332,21 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    if (signatureVerificationResult == false)
+                    SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                    switch (cachedResult)
                     {
-                        // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
-                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
-                                CMKSignature);
-
-                        ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
-                    }
-                    else
-                    {
-                        isValidSignature = signatureVerificationResult;
+                        case SignatureVerificationResult.True:
+                            isValidSignature = true;
+                            break;
+                        case SignatureVerificationResult.False:
+                            isValidSignature = false;
+                            break;
+                        default:
+                            // Cache miss: verify with the provider and cache the result.
+                            // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
+                            isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                            ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
+                            break;
                     }
                 }
             }
