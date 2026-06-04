@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class CopyAllFromReaderConnectionClosedOnEventAsync
     {
+        [Trait("Category", "flaky")] // Hangs and crashes on occasion
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
