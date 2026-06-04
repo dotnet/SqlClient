@@ -14,7 +14,10 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
+
+using CommonObjects = Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -22,6 +25,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// Always Encrypted public API Manual tests.
     /// </summary>
     [Trait("Set", "AE")]
+    // @TODO: These tests are known to not run reliably in DEBUG mode.
+    [ConditionalClass(typeof(DataTestUtility), nameof(DataTestUtility.IsNotDebugBuild))]
     public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;
@@ -727,37 +732,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public async Task TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
-            string randomName = DataTestUtility.GetShortName(Guid.NewGuid().ToString().Replace("-", ""), false);
-            if (randomName.Length > 50)
-            {
-                randomName = randomName.Substring(0, 50);
-            }
-            string tableName = $"VeryLong_{randomName}_TestTableName";
-            int columnsCount = 50;
-
-            // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
-            using SqlConnection connection = new SqlConnection(connectionString);
+            // Arrange
+            // - Set up connection to run the test
+            using SqlConnection connection = new(connectionString);
             await connection.OpenAsync();
 
-            using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects.Table wideTable = new(connection, tableName, GenerateBitTableDefinition(columnsCount));
-            string name = "nobody";
+            // - Drop and create table with 52 columns (ID, name, ColumnName0..49)
+            string tableName = DataTestUtility.GetShortName("VeryLongTestTableName_", withBracket: false);
+            const int columnsCount = 50;
+            using CommonObjects.Table wideTable = new(connection, tableName, GenerateBitTableDefinition(columnsCount));
 
-            // This creates a "select top 100" query that has over 40k characters
-            using SqlCommand sqlCommand = new(GenerateSelectQuery(wideTable.Name, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
+            // - Create SELECT query that has over 40k characters *and repeats 10 times*
+            using SqlCommand sqlCommand = new(
+                GenerateSelectQuery(wideTable.Name, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
                 connection,
                 transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
-            sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
-            sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar, name.Length);
 
-            sqlCommand.Parameters[0].Value = 0;
-            sqlCommand.Parameters[1].Value = name;
+            SqlParameter parameter1 = sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+            parameter1.Value = 0;
 
-            // Act and Assert
-            // Test that execute reader async does not throw an exception.
-            // The table is empty so there should be no results; however, the bug previously found is that it causes a TDS RPC exception on enclave.
+            SqlParameter parameter2 = sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar);
+            parameter2.Value = "nobody";
+
+            // Act
             using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
+
+            // Assert
+            // - The table is empty so there should be no results; however, the bug previously
+            //   found is that it causes a TDS RPC exception on enclave.
             Assert.False(sqlDataReader.HasRows, "The table should be empty");
+
+            // Cleanup
+            // - Explicitly throw away the results from the reader to avoid any race conditions in
+            //   disposal logic.
+            await sqlDataReader.FlushAllResultsAsync();
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]

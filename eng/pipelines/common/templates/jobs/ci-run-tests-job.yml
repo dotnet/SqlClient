@@ -30,11 +30,9 @@ parameters:
   # template expansion.
   #
   #   EnclaveEnabled
-  #   IsAzureSynapse
   #   IsDNSCachingSupportedCR
   #   IsDNSCachingSupportedTR
   #   ManagedIdentitySupported
-  #   SupportsFileStream
   #   SupportsIntegratedSecurity
   #   TracingEnabled
   #
@@ -211,7 +209,7 @@ jobs:
         targetPath: $(Build.SourcesDirectory)/packages
 
   # Install the .NET SDK and Runtimes.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
+  - template: /eng/pipelines/common/steps/install-dotnet.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       ${{ if parameters.isArm64 }}:
@@ -223,7 +221,7 @@ jobs:
         runtimes: [8.x, 9.x]
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
-  - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+  - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -279,8 +277,6 @@ jobs:
           AliasName: ${{ parameters.configProperties.AliasName }}
         ${{ if parameters.configProperties.SupportsIntegratedSecurity }}:
           SupportsIntegratedSecurity: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
-        ${{ if parameters.configProperties.SupportsFileStream }}:
-          SupportsFileStream: ${{ eq(parameters.configProperties.SupportsFileStream, 'true') }}
         ${{ if parameters.configProperties.DNSCachingConnString }}:
           DNSCachingConnString: ${{ parameters.configProperties.DNSCachingConnString }}
         ${{ if parameters.configProperties.DNSCachingServerCR }}:
@@ -293,8 +289,6 @@ jobs:
           IsDNSCachingSupportedCR: ${{ eq(parameters.configProperties.IsDNSCachingSupportedCR, 'true') }}
         ${{ if parameters.configProperties.IsDNSCachingSupportedTR }}:
           IsDNSCachingSupportedTR: ${{ eq(parameters.configProperties.IsDNSCachingSupportedTR, 'true') }}
-        ${{ if parameters.configProperties.IsAzureSynapse }}:
-          IsAzureSynapse: ${{ eq(parameters.configProperties.IsAzureSynapse, 'true') }}
         ${{ if parameters.configProperties.ManagedIdentitySupported }}:
           ManagedIdentitySupported: ${{ eq(parameters.configProperties.ManagedIdentitySupported, 'true') }}
 
@@ -352,7 +346,7 @@ jobs:
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
       # Install the .NET SDK and Runtimes for x86.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           architecture: x86
           debug: ${{ parameters.debug }}

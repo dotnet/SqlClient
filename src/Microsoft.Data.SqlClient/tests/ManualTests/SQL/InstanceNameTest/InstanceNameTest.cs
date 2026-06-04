@@ -23,16 +23,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ConnectToSQLWithInstanceNameTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out _);
 
-            bool proceed = true;
-            string dataSourceStr = builder.DataSource.Replace("tcp:", "");
-            string[] serverNamePartsByBackSlash = dataSourceStr.Split('\\');
-            string hostname = serverNamePartsByBackSlash[0];
-            if (!dataSourceStr.Contains(",") && serverNamePartsByBackSlash.Length == 2)
-            {
-                proceed = !string.IsNullOrWhiteSpace(hostname) && IsBrowserAlive(hostname);
-            }
-
+            // @TODO: This test as it is written will report success even if it doesn't test anything.
+            bool proceed = !string.IsNullOrWhiteSpace(hostname) && IsBrowserAlive(hostname);
             if (proceed)
             {
                 using SqlConnection connection = new(builder.ConnectionString);

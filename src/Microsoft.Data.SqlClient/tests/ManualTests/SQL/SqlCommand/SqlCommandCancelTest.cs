@@ -151,6 +151,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TimeOutDuringRead_Tcp() =>
             TimeOutDuringRead(tcp_connStr);
 
+        // @TODO: This test does not test NP behavior as the proxy server converts the named pipe connection string to a TCP connection string.
+        [ActiveIssue("https://dev.azure.com/SqlClientDrivers/ADO.Net/_workitems/edit/40840/")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeOutDuringRead_NamedPipe() =>
