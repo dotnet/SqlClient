@@ -131,6 +131,8 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseLegacyIdleTimeoutBehaviorString =
         "Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior";
+
+    /// <summary>
     /// The name of the app context switch that controls whether pool operations
     /// should count against the caller's overall ConnectTimeout budget.
     /// </summary>
@@ -250,6 +252,8 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
     /// </summary>
     private static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
+
+    /// <summary>
     /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
     /// </summary>
     private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
@@ -593,6 +597,8 @@ internal static class LocalAppContextSwitches
             UseLegacyIdleTimeoutBehaviorString,
             defaultValue: true,
             ref s_useLegacyIdleTimeoutBehavior);
+
+    /// <summary>
     /// When set to true, pool operations count against the
     /// caller's ConnectTimeout budget. This includes waits and async operations.
     /// When false, pool operations receive a full ConnectTimeout and
