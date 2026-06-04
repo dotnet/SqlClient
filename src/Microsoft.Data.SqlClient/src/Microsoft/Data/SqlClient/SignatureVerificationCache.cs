@@ -15,13 +15,20 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal enum SignatureVerificationResult
     {
-        /// <summary>No cached entry exists for the requested CMK metadata. The caller must verify the signature with the key store provider.</summary>
+        /// <summary>
+        /// No cached entry exists for the requested CMK metadata. 
+        /// The caller must verify the signature with the key store provider.
+        /// </summary>
         NotFound,
 
-        /// <summary>A cached entry exists and indicates that signature verification previously failed.</summary>
+        /// <summary>
+        /// A cached entry exists and indicates that signature verification previously failed.
+        /// </summary>
         False,
 
-        /// <summary>A cached entry exists and indicates that signature verification previously succeeded.</summary>
+        /// <summary>
+        /// A cached entry exists and indicates that signature verification previously succeeded.
+        /// </summary>
         True,
     }
 
@@ -32,31 +39,21 @@ namespace Microsoft.Data.SqlClient
     {
         private const int CacheSize = 2000; // Cache size in number of entries.
         private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
-
-        private const string _className = "ColumnMasterKeyMetadataSignatureVerificationCache";
-        private const string _getSignatureVerificationResultMethodName = "GetSignatureVerificationResult";
-        private const string _addSignatureVerificationResultMethodName = "AddSignatureVerificationResult";
-        private const string _masterkeypathArgumentName = "masterKeyPath";
-        private const string _keyStoreNameArgumentName = "keyStoreName";
-        private const string _signatureName = "signature";
         private const string _cacheLookupKeySeparator = ":";
 
-        private static readonly ColumnMasterKeyMetadataSignatureVerificationCache _signatureVerificationCache = new ColumnMasterKeyMetadataSignatureVerificationCache();
         private static readonly TimeSpan s_verificationCacheTimeout = TimeSpan.FromDays(10);
 
-        //singleton instance
         /// <summary>
         /// Gets the process-wide singleton instance of the signature verification cache.
         /// </summary>
-        internal static ColumnMasterKeyMetadataSignatureVerificationCache Instance { get { return _signatureVerificationCache; } }
+        internal static ColumnMasterKeyMetadataSignatureVerificationCache Instance { get; } = new();
 
         private readonly MemoryCache _cache;
-        private int _inTrim = 0;
+        private int _inTrim;
 
         private ColumnMasterKeyMetadataSignatureVerificationCache()
         {
             _cache = new MemoryCache(new MemoryCacheOptions());
-            _inTrim = 0;
         }
 
         /// <summary>
@@ -78,13 +75,13 @@ namespace Microsoft.Data.SqlClient
         /// </exception>
         internal SignatureVerificationResult GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
-            ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _getSignatureVerificationResultMethodName);
-            ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _getSignatureVerificationResultMethodName);
-            ValidateSignatureNotNullOrEmpty(signature, _getSignatureVerificationResultMethodName);
+            ValidateStringArgumentNotNullOrEmpty(masterKeyPath, nameof(masterKeyPath), nameof(GetSignatureVerificationResult));
+            ValidateStringArgumentNotNullOrEmpty(keyStoreName, nameof(keyStoreName), nameof(GetSignatureVerificationResult));
+            ValidateSignatureNotNullOrEmpty(signature, nameof(GetSignatureVerificationResult));
 
             string cacheLookupKey = GetCacheLookupKey(masterKeyPath, allowEnclaveComputations, signature, keyStoreName);
 
-            if (!_cache.TryGetValue<bool>(cacheLookupKey, out bool value))
+            if (!_cache.TryGetValue(cacheLookupKey, out bool value))
             {
                 return SignatureVerificationResult.NotFound;
             }
@@ -111,86 +108,90 @@ namespace Microsoft.Data.SqlClient
         /// </exception>
         internal void AddSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature, bool result)
         {
-            ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _addSignatureVerificationResultMethodName);
-            ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _addSignatureVerificationResultMethodName);
-            ValidateSignatureNotNullOrEmpty(signature, _addSignatureVerificationResultMethodName);
+            ValidateStringArgumentNotNullOrEmpty(masterKeyPath, nameof(masterKeyPath), nameof(AddSignatureVerificationResult));
+            ValidateStringArgumentNotNullOrEmpty(keyStoreName, nameof(keyStoreName), nameof(AddSignatureVerificationResult));
+            ValidateSignatureNotNullOrEmpty(signature, nameof(AddSignatureVerificationResult));
 
             string cacheLookupKey = GetCacheLookupKey(masterKeyPath, allowEnclaveComputations, signature, keyStoreName);
 
             TrimCacheIfNeeded();
 
             // By default evict after 10 days.
-            _cache.Set<bool>(cacheLookupKey, result, absoluteExpirationRelativeToNow: s_verificationCacheTimeout);
+            _cache.Set(cacheLookupKey, result, absoluteExpirationRelativeToNow: s_verificationCacheTimeout);
         }
 
-        private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)
+        private static void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)
         {
-            if (signature == null || signature.Length == 0)
+            if (signature is null)
             {
-                if (signature == null)
-                {
-                    throw SQL.NullArgumentInternal(_signatureName, _className, methodName);
-                }
-                else
-                {
-                    throw SQL.EmptyArgumentInternal(_signatureName, _className, methodName);
-                }
+                throw SQL.NullArgumentInternal(nameof(signature), nameof(ColumnMasterKeyMetadataSignatureVerificationCache), methodName);
+            }
+            if (signature.Length == 0)
+            {
+                throw SQL.EmptyArgumentInternal(nameof(signature), nameof(ColumnMasterKeyMetadataSignatureVerificationCache), methodName);
             }
         }
 
-        private void ValidateStringArgumentNotNullOrEmpty(string stringArgValue, string stringArgName, string methodName)
+        private static void ValidateStringArgumentNotNullOrEmpty(string value, string argumentName, string methodName)
         {
-            if (string.IsNullOrWhiteSpace(stringArgValue))
+            if (value is null)
             {
-                if (stringArgValue == null)
-                {
-                    throw SQL.NullArgumentInternal(stringArgName, _className, methodName);
-                }
-                else
-                {
-                    throw SQL.EmptyArgumentInternal(stringArgName, _className, methodName);
-                }
+                throw SQL.NullArgumentInternal(argumentName, nameof(ColumnMasterKeyMetadataSignatureVerificationCache), methodName);
+            }
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw SQL.EmptyArgumentInternal(argumentName, nameof(ColumnMasterKeyMetadataSignatureVerificationCache), methodName);
             }
         }
+
 
         private void TrimCacheIfNeeded()
         {
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
             long currentCacheSize = _cache.Count;
-            if ((currentCacheSize > CacheSize + CacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
+            if (currentCacheSize <= CacheSize + CacheTrimThreshold || Interlocked.CompareExchange(ref _inTrim, 1, 0) != 0)
             {
-                try
-                {
-                    // Example: 2301 - 2000 = 301; 301 / 2301 = 0.1308 * 100 = 13% compacting
-                    _cache.Compact((((double)(currentCacheSize - CacheSize) / (double)currentCacheSize) * 100));
-                }
-                finally
-                {
-                    // Reset _inTrim flag
-                    Interlocked.CompareExchange(ref _inTrim, 0, 1);
-                }
+                return;
+            }
+
+            try
+            {
+                // Example: 2301 - 2000 = 301; 301 / 2301 = 0.1308 * 100 = 13% compacting
+                _cache.Compact((double)(currentCacheSize - CacheSize) / currentCacheSize * 100);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _inTrim, 0);
             }
         }
 
-        private string GetCacheLookupKey(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, string keyStoreName)
+        /// <summary>
+        /// Generates a cache key for the given CMK metadata and signature. The key is a
+        /// concatenation of the key store name, master key path, allowEnclaveComputations value, and signature, separated by a delimiter.
+        /// </summary>
+        /// <param name="masterKeyPath">The master key path.</param>
+        /// <param name="allowEnclaveComputations">Whether enclave computations are allowed.</param>
+        /// <param name="signature">The signature.</param>
+        /// <param name="keyStoreName">The key store name.</param>
+        /// <returns>A string that can be used as a cache key.</returns>
+        private static string GetCacheLookupKey(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, string keyStoreName)
         {
-            StringBuilder cacheLookupKeyBuilder = new StringBuilder(keyStoreName,
-                capacity:
-                    keyStoreName.Length +
-                    masterKeyPath.Length +
-                    SqlSecurityUtility.GetBase64LengthFromByteLength(signature.Length) +
-                    3 /*separators*/ +
-                    10 /*boolean value + somebuffer*/);
+            int cacheCapacity =
+                keyStoreName.Length +
+                masterKeyPath.Length +
+                SqlSecurityUtility.GetBase64LengthFromByteLength(signature.Length) +
+                4 * _cacheLookupKeySeparator.Length +
+                10 /* boolean value + buffer */;
 
-            cacheLookupKeyBuilder.Append(_cacheLookupKeySeparator);
-            cacheLookupKeyBuilder.Append(masterKeyPath);
-            cacheLookupKeyBuilder.Append(_cacheLookupKeySeparator);
-            cacheLookupKeyBuilder.Append(allowEnclaveComputations);
-            cacheLookupKeyBuilder.Append(_cacheLookupKeySeparator);
-            cacheLookupKeyBuilder.Append(Convert.ToBase64String(signature));
-            cacheLookupKeyBuilder.Append(_cacheLookupKeySeparator);
-            string cacheLookupKey = cacheLookupKeyBuilder.ToString();
-            return cacheLookupKey;
+            return new StringBuilder(keyStoreName, capacity: cacheCapacity)
+                .Append(_cacheLookupKeySeparator)
+                .Append(masterKeyPath)
+                .Append(_cacheLookupKeySeparator)
+                .Append(allowEnclaveComputations)
+                .Append(_cacheLookupKeySeparator)
+                .Append(Convert.ToBase64String(signature))
+                .Append(_cacheLookupKeySeparator)
+                .ToString();
         }
     }
 }

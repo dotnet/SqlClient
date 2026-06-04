@@ -332,21 +332,20 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    switch (cachedResult)
+                    SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                        .GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+
+                    if (cachedResult == SignatureVerificationResult.NotFound)
                     {
-                        case SignatureVerificationResult.True:
-                            isValidSignature = true;
-                            break;
-                        case SignatureVerificationResult.False:
-                            isValidSignature = false;
-                            break;
-                        default:
-                            // Cache miss: verify with the provider and cache the result.
-                            // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
-                            isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
-                            ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
-                            break;
+                        // Cache miss: verify with the provider and cache the result.
+                        // Exceptions from VerifyColumnMasterKeyMetadata bubble up to the outer catch.
+                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                        ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                            .AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
+                    }
+                    else
+                    {
+                        isValidSignature = cachedResult == SignatureVerificationResult.True;
                     }
                 }
             }
