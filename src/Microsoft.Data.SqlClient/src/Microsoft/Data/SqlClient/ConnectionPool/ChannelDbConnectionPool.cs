@@ -277,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Disposes the pool by calling <see cref="Shutdown"/>.
+        /// Disposes the pool by calling <see cref="Shutdown"/>. Does not throw.
         /// </summary>
         public void Dispose() => Shutdown();
 

@@ -459,6 +459,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pruner.OnPruningCallback(null);
             Assert.Equal(0, pruner.SampleIndex);
 
+            // After sort, samples are [2,2,10] — verify first sample was not mutated.
+            Assert.Equal(2, pruner.Samples[0]);
+
             // Pruning should remove exactly 2 connections (the median), not 10 (the current idle count).
             // This verifies that sampling prevents aggressive pruning during brief lulls.
             int pruned = countBefore - pool.Count;
