@@ -168,6 +168,38 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
         Assert.Contains("18", ex.Message); // CorruptedTdsStream
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 5: ENV_PROMOTETRANSACTION with oversized newLength
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryProcessEnvChange</c> rejects a PromoteTransaction
+    /// environment change token (type 15) whose inner <c>newLength</c> field exceeds
+    /// <see cref="TdsEnums.MaxPromoteTransactionLength"/> (64 KB). A malicious server
+    /// can set the outer uint16 token length to a small value while writing an
+    /// int32 inner length claiming gigabytes, causing unbounded allocation.
+    /// </summary>
+    [Fact]
+    public void EnvChange_PromoteTransaction_OversizedLength_ThrowsParsingError()
+    {
+        _server.OnAuthenticationResponseCompleted = responseMessage =>
+        {
+            int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
+            if (doneIndex < 0)
+            {
+                doneIndex = responseMessage.Count;
+            }
+
+            // Inject a PromoteTransaction env change with a fraudulently large newLength
+            responseMessage.Insert(doneIndex, new MaliciousPromoteTransactionEnvChangeToken(
+                claimedNewLength: TdsEnums.MaxPromoteTransactionLength + 1));
+        };
+
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("18", ex.Message); // CorruptedTdsStream
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // Malicious token helpers
     // ══════════════════════════════════════════════════════════════════════════
@@ -339,6 +371,51 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             // Write minimal data (at least sizeof(uint) to pass the lower bound check,
             // but the upper bound check should fire first)
             destination.Write(new byte[] { 0x01, 0x00, 0x00, 0x00 }, 0, 4); // optionsCount = 1
+        }
+    }
+
+    /// <summary>
+    /// Writes an EnvChange token (0xE3) with type PromoteTransaction (15) whose
+    /// inner int32 newLength exceeds <see cref="TdsEnums.MaxPromoteTransactionLength"/>.
+    /// Wire format: [0xE3][uint16 tokenLen][byte type=15][int32 newLen][data...][byte oldLen=0]
+    /// The outer uint16 tokenLen is set to accommodate the header but the int32
+    /// newLength claims far more data than actually follows, triggering the bounds check.
+    /// </summary>
+    private sealed class MaliciousPromoteTransactionEnvChangeToken : TDSPacketToken
+    {
+        private readonly int _claimedNewLength;
+
+        public MaliciousPromoteTransactionEnvChangeToken(int claimedNewLength)
+        {
+            _claimedNewLength = claimedNewLength;
+        }
+
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        public override void Deflate(Stream destination)
+        {
+            // Token type: ENVCHANGE
+            destination.WriteByte((byte)TDSTokenType.EnvironmentChange); // 0xE3
+
+            // Outer token length (uint16): type(1) + newLength(4) + 1 byte data + oldLength(1)
+            // We write just enough to contain the header fields the parser reads before
+            // hitting the bounds check. The parser reads: type(1) + int32 newLen(4) = 5 bytes min.
+            ushort outerLength = 1 + 4 + 1 + 1; // type + newLen + 1 fake byte + oldLen
+            byte[] outerLenBytes = BitConverter.GetBytes(outerLength);
+            destination.Write(outerLenBytes, 0, 2);
+
+            // Env change type: PromoteTransaction = 15
+            destination.WriteByte(15);
+
+            // newLength (int32) — fraudulently large
+            byte[] newLenBytes = BitConverter.GetBytes(_claimedNewLength);
+            destination.Write(newLenBytes, 0, 4);
+
+            // Write 1 byte of fake data (the bounds check fires before attempting to read this much)
+            destination.WriteByte(0x00);
+
+            // Old value length (byte) = 0
+            destination.WriteByte(0x00);
         }
     }
 }

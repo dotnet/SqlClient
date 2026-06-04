@@ -400,7 +400,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                // If we want to consider pool operations against the overall connect timeout, 
+                // If we want to consider pool operations against the overall connect timeout,
                 // use the provided timeout. Otherwise, start a fresh timeout to receive the full
                 // connect timeout.
                 _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);
