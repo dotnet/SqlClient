@@ -1353,10 +1353,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {0}, Connection {1}, Pushing to general pool.", Id, obj.ObjectID);
 
-            // Record the return time so IsIdleExpired can later decide whether the connection has sat
-            // unused too long. The read path in IsIdleExpired short-circuits when idle expiry is
-            // disabled, so the stamp is harmless in that case.
-            obj.ReturnedToPool();
+            // Stamp the return time so IsIdleExpired can later decide whether the connection has sat
+            // unused too long. Skip the stamp when idle expiry is disabled or the legacy idle-timeout
+            // behavior is in effect to avoid the per-return DateTime.UtcNow on the hot return path;
+            // IsIdleExpired short-circuits on the same conditions so the value would be unread in
+            // those cases.
+            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+            {
+                obj.ReturnedToPool();
+            }
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
 

@@ -254,10 +254,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                // Record the return time so IsLiveConnection can later evict the connection if it sits
-                // idle past the configured limit. The read path in IsLiveConnection short-circuits when
-                // idle expiry is disabled, so the stamp is harmless in that case.
-                connection.ReturnedToPool();
+                // Stamp the return time so IsLiveConnection can later evict the connection if it sits
+                // idle past the configured limit. Skip the stamp when idle expiry is disabled or the
+                // legacy idle-timeout behavior is in effect to avoid the per-return DateTime.UtcNow on
+                // the hot return path; IsLiveConnection short-circuits on the same conditions so the
+                // value would be unread in those cases.
+                if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                    PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+                {
+                    connection.ReturnedToPool();
+                }
                 var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
             }
