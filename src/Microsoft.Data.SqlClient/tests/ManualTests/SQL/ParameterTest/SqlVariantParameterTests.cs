@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // which uses CultureInfo.CurrentCulture.LCID. On Linux, this LCID is 127
             // (InvariantCulture), which is not a valid SQL Server collation and causes
             // "invalid TDS collation" errors in the TVP code path.
-            // SqlClient doesn't support invariant mode: 
+            // SqlClient doesn't support invariant mode:
             // https://github.com/dotnet/SqlClient/issues/3742
             _previousCulture = Thread.CurrentThread.CurrentCulture;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
@@ -258,6 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Round trip sql_variant value using TVP with a SqlMetaData/SqlDataRecord source.
         /// </summary>
+        [Trait("Category", "flaky")] // Doesn't work well on Azure.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(SqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_TvpFromSqlMetaData_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
@@ -304,6 +305,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Round trip sql_variant value using TVP with a SqlDataReader source.
         /// </summary>
+        [Trait("Category", "flaky")] // Doesn't work well on Azure.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(SqlTypeTestData), DisableDiscoveryEnumeration = true)]
         public void SqlType_TvpFromSqlDataReader_RoundTripsCorrectly(object paramValue, string expectedTypeName, string expectedBaseTypeName)
