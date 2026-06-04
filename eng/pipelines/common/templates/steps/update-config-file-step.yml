@@ -93,10 +93,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: SupportsFileStream
-    type: boolean
-    default: false
-
   - name: DNSCachingConnString
     type: string
     default: ''
@@ -118,10 +114,6 @@ parameters:
     default: false
 
   - name: IsDNSCachingSupportedTR
-    type: boolean
-    default: false
-
-  - name: IsAzureSynapse
     type: boolean
     default: false
 
@@ -188,8 +180,6 @@ steps:
 
           $p.DNSCachingConnString="${{parameters.DNSCachingConnString }}"
 
-          $p.SupportsFileStream="${{parameters.SupportsFileStream }}"
-
           $p.LocalDbAppName="${{parameters.LocalDbAppName }}"
 
           $p.TCPConnectionStringAASSGX="${{parameters.TCPConnectionStringAASSGX }}"
@@ -201,7 +191,6 @@ steps:
           $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
           $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
           $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
-          $p.IsAzureSynapse=[System.Convert]::ToBoolean("${{parameters.IsAzureSynapse }}")
           $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
           $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
           $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")

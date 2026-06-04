@@ -2,9 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Text;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
@@ -170,7 +168,7 @@ public abstract class DatabaseObject : IDisposable
     ///
     /// The GUID parts will be the characters from the 1st and 4th blocks
     /// from a traditional string representation, as shown here:
-    /// 
+    ///
     /// <code>
     ///   7ff01cb8-88c7-11f0-b433-00155d7e531e
     ///   ^^^^^^^^           ^^^^

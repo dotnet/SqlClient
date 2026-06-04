@@ -22,7 +22,6 @@
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
-    "SupportsFileStream": false,
     "FileStreamDirectory": "",
     "UseManagedSNIOnWindows": false,
     "DNSCachingConnString": "",
@@ -30,11 +29,13 @@
     "DNSCachingServerTR": "",
     "IsDNSCachingSupportedCR": false,
     "IsDNSCachingSupportedTR": false,
-    "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",
     "AliasName": "",
-    "WorkloadIdentityFederationServiceConnectionId": ""
+    "WorkloadIdentityFederationServiceConnectionId": "",
+    "KerberosDomainPassword": "",
+    "KerberosDomainUser": "",
+    "IsManagedInstance": false
 }

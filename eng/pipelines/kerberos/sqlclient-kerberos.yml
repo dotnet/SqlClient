@@ -127,9 +127,13 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
@@ -220,9 +224,13 @@ stages:
             fetchTags: false
 
           # --- Install .NET SDK and runtimes ---
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
@@ -283,7 +291,7 @@ stages:
     dependsOn:
       - windows
       - linux
-    condition: succeededOrFailed()
+    condition: succeeded()
     jobs:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
         parameters:
