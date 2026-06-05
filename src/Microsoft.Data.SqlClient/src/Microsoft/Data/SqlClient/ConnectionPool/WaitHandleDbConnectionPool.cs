@@ -189,16 +189,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private readonly WaitCallback _poolCreateRequest;
 
-        private int _waitCount;
+        internal int _waitCount;
         private readonly PoolWaitHandles _waitHandles;
 
         private Exception _resError;
         private volatile bool _errorOccurred;
 
         private int _errorWait;
-        private Timer _errorTimer;
+        internal Timer _errorTimer;
 
-        private Timer _cleanupTimer;
+        internal Timer _cleanupTimer;
 
         private readonly TransactedConnectionPool _transactedConnectionPool;
 
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
-        private void CleanupCallback(object state)
+        internal void CleanupCallback(object state)
         {
             // If the pool is shutting down, skip work. Shutdown disposes the timer, but
             // a callback may already be in-flight when Shutdown runs; this guard ensures it does
@@ -773,7 +773,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private void ErrorCallback(object state)
+        internal void ErrorCallback(object state)
         {
             // Skip work if the pool is shutting down. The shutdown path disposes the
             // timer; this guard handles the in-flight-callback race.

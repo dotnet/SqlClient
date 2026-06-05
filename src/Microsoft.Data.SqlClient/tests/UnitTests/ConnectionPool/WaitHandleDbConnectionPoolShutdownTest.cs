@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
@@ -42,13 +41,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             return pool;
         }
 
-        private static T GetPrivateField<T>(object instance, string fieldName)
-        {
-            var field = instance.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(field);
-            return (T)field!.GetValue(instance)!;
-        }
-
         // State transitions to ShuttingDown on Shutdown.
         [Fact]
         public void Shutdown_TransitionsState_ToShuttingDown()
@@ -67,13 +59,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Shutdown_DisposesCleanupTimer()
         {
             var pool = CreatePool();
-            var beforeTimer = GetPrivateField<Timer?>(pool, "_cleanupTimer");
-            Assert.NotNull(beforeTimer);
+            Assert.NotNull(pool._cleanupTimer);
 
             pool.Shutdown();
 
-            var afterTimer = GetPrivateField<Timer?>(pool, "_cleanupTimer");
-            Assert.Null(afterTimer);
+            Assert.Null(pool._cleanupTimer);
         }
 
         // Error timer is disposed when present.
@@ -82,15 +72,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var pool = CreatePool();
             // Inject a real Timer into _errorTimer to mimic an error-state pool.
-            var injected = new Timer(_ => { }, null, Timeout.Infinite, Timeout.Infinite);
-            var field = pool.GetType().GetField("_errorTimer", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(field);
-            field!.SetValue(pool, injected);
+            pool._errorTimer = new Timer(_ => { }, null, Timeout.Infinite, Timeout.Infinite);
 
             pool.Shutdown();
 
-            var afterTimer = GetPrivateField<Timer?>(pool, "_errorTimer");
-            Assert.Null(afterTimer);
+            Assert.Null(pool._errorTimer);
         }
 
         // Drains idle stacks.
@@ -136,12 +122,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = CreatePool();
             pool.Shutdown();
 
-            // Invoke the private callback directly via reflection. Must not throw and must
-            // not re-arm any pool create requests.
-            var method = pool.GetType().GetMethod("CleanupCallback", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(method);
-
-            var ex = Record.Exception(() => method!.Invoke(pool, new object?[] { null }));
+            // Invoke the callback directly. Must not throw and must not re-arm any pool
+            // create requests.
+            var ex = Record.Exception(() => pool.CleanupCallback(state: null));
             Assert.Null(ex);
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
@@ -153,10 +136,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = CreatePool();
             pool.Shutdown();
 
-            var method = pool.GetType().GetMethod("ErrorCallback", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(method);
-
-            var ex = Record.Exception(() => method!.Invoke(pool, new object?[] { null }));
+            var ex = Record.Exception(() => pool.ErrorCallback(state: null));
             Assert.Null(ex);
         }
 
@@ -216,11 +196,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // happens immediately before it enters WaitHandle.WaitAny. Polling avoids the
             // CI-flakiness of a fixed Thread.Sleep on slow agents.
             var deadline = DateTime.UtcNow.AddSeconds(5);
-            while (DateTime.UtcNow < deadline && GetPrivateField<int>(pool, "_waitCount") < 1)
+            while (DateTime.UtcNow < deadline && pool._waitCount < 1)
             {
                 Thread.Yield();
             }
-            Assert.True(GetPrivateField<int>(pool, "_waitCount") >= 1, "Waiter did not park within 5s.");
+            Assert.True(pool._waitCount >= 1, "Waiter did not park within 5s.");
             Assert.True(t.IsAlive, "Waiter should be parked, but thread already exited.");
 
             pool.Shutdown();
