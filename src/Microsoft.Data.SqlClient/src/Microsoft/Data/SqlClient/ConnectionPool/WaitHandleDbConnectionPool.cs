@@ -1555,17 +1555,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
             }
 
-            // Drain idle stacks and destroy contained connections. Active checked-out
-            // connections are destroyed when they are returned (see DeactivateObject's
-            // State is ShuttingDown branch).
-            while (_stackNew.TryPop(out DbConnectionInternal newObj))
-            {
-                DestroyObject(newObj);
-            }
-            while (_stackOld.TryPop(out DbConnectionInternal oldObj))
-            {
-                DestroyObject(oldObj);
-            }
+            // Reuse Clear() to doom every connection (including active checked-out ones), drain
+            // both idle stacks, and reclaim emancipated objects. Active connections destroy
+            // themselves on return either via the doom flag or via DeactivateObject's
+            // State == ShuttingDown branch.
+            Clear();
         }
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool

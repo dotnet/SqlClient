@@ -282,17 +282,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
 
-            // FR-001: transition to ShuttingDown. After this point, ReturnInternalConnection
+            // Transition to ShuttingDown. After this point, ReturnInternalConnection
             // routes returning connections to RemoveConnection.
             State = ShuttingDown;
 
-            // FR-002 + FR-007: complete the channel writer so:
+            // Complete the channel writer so:
             //  - no further idle connections can be enqueued (TryWrite returns false), and
             //  - in-flight / future async waiters on ReadAsync fault with ChannelClosedException.
             _idleChannel.Complete();
 
-            // FR-003: drain remaining buffered idle connections and destroy them. The channel is
-            // unbounded so all already-enqueued items can be drained synchronously.
+            // Reuse Clear() for the drain. Clear bumps _clearGeneration so any active
+            // checked-out connection fails IsLiveConnection on return and is removed, and it
+            // drains the idle channel up to its captured IdleCount.
+            Clear();
+
+            // Clear() may short-circuit if another caller is already draining. Because the
+            // channel is now completed, no new items can be enqueued, so it is safe to do a
+            // final unbounded drain to mop up anything Clear() may have skipped.
             while (_idleChannel.TryRead(out DbConnectionInternal? connection))
             {
                 if (connection is not null)
