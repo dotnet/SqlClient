@@ -2378,6 +2378,72 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Only enlist if it's different...
                 EnlistNonNull(transaction);
             }
+            else if (!LocalAppContextSwitches.UseLegacyTransactionScopeIsolationBehavior
+                     && _parser._fResetConnection)
+            {
+                // Same System.Transactions transaction being re-attached to the same
+                // pooled physical connection (transacted-pool re-checkout inside an
+                // open TransactionScope). The queued sp_reset_connection_keep_transaction
+                // does not preserve the SQL Server session isolation level on every
+                // server (notably Azure SQL DB), so without re-asserting the level the
+                // second and later opens inside the scope would silently run at the
+                // database default. The SET batch piggybacks the queued reset on its
+                // TDS header, so no extra round trip is added.
+                ReassertSessionIsolationLevel(transaction.IsolationLevel);
+            }
+        }
+
+        // Re-issues SET TRANSACTION ISOLATION LEVEL on the physical state object so
+        // the next batch in this pooled connection observes the System.Transactions
+        // ambient isolation level even after sp_reset_connection resets the session.
+        private void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso)
+        {
+            string isoSql;
+            switch (sysIso)
+            {
+                case System.Transactions.IsolationLevel.ReadUncommitted:
+                    isoSql = "READ UNCOMMITTED";
+                    break;
+                case System.Transactions.IsolationLevel.ReadCommitted:
+                    isoSql = "READ COMMITTED";
+                    break;
+                case System.Transactions.IsolationLevel.RepeatableRead:
+                    isoSql = "REPEATABLE READ";
+                    break;
+                case System.Transactions.IsolationLevel.Serializable:
+                    isoSql = "SERIALIZABLE";
+                    break;
+                case System.Transactions.IsolationLevel.Snapshot:
+                    isoSql = "SNAPSHOT";
+                    break;
+                default:
+                    // Unspecified / Chaos: nothing meaningful to assert.
+                    return;
+            }
+
+            try
+            {
+                Task executeTask = _parser.TdsExecuteSQLBatch(
+                    $"SET TRANSACTION ISOLATION LEVEL {isoSql};",
+                    ConnectionOptions.ConnectTimeout,
+                    notificationRequest: null,
+                    _parser._physicalStateObj,
+                    sync: true);
+
+                Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+
+                _parser.Run(
+                    RunBehavior.UntilDone,
+                    cmdHandler: null,
+                    dataStream: null,
+                    bulkCopyHandler: null,
+                    _parser._physicalStateObj);
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                DoomThisConnection();
+                throw;
+            }
         }
 
         private void EnlistNonNull(Transaction transaction)

@@ -66,6 +66,18 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
 
     /// <summary>
+    /// The name of the app context switch that controls whether pooled
+    /// connections re-assert the System.Transactions ambient isolation level
+    /// when the same physical connection is handed back to an open
+    /// TransactionScope. On servers (e.g. Azure SQL DB) where
+    /// sp_reset_connection_keep_transaction resets the session isolation
+    /// level, skipping the re-assert causes the second and later
+    /// SqlConnection.Open() inside the scope to run at the database default.
+    /// </summary>
+    private const string UseLegacyTransactionScopeIsolationBehaviorString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyTransactionScopeIsolationBehavior";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
     /// arrays instead of null.
@@ -200,6 +212,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
     private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyTransactionScopeIsolationBehavior switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyTransactionScopeIsolationBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -445,6 +462,25 @@ internal static class LocalAppContextSwitches
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
             defaultValue: false,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
+    /// When set to true, pooled connections preserve the legacy behavior where
+    /// the ambient System.Transactions isolation level is not re-asserted on
+    /// the second and later SqlConnection.Open() inside the same
+    /// TransactionScope. As a result, on servers that reset the session
+    /// isolation level during sp_reset_connection (e.g. Azure SQL DB) those
+    /// later opens silently run at the database default rather than at the
+    /// scope's isolation level.
+    ///
+    /// The default value of this switch is false, meaning the driver will
+    /// re-issue SET TRANSACTION ISOLATION LEVEL on the re-attach so that the
+    /// scope's isolation level is honored across every connection inside it.
+    /// </summary>
+    public static bool UseLegacyTransactionScopeIsolationBehavior =>
+        AcquireAndReturn(
+            UseLegacyTransactionScopeIsolationBehaviorString,
+            defaultValue: false,
+            ref s_useLegacyTransactionScopeIsolationBehavior);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
