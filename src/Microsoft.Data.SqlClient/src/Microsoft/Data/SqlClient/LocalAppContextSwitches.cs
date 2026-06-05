@@ -66,6 +66,14 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
 
     /// <summary>
+    /// The name of the app context switch that controls whether pooled connections
+    /// preserve the legacy behavior of leaking the SQL Server session
+    /// transaction isolation level across pool reuse.
+    /// </summary>
+    private const string UseLegacyIsolationLevelBehaviorString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
     /// arrays instead of null.
@@ -200,6 +208,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
     private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyIsolationLevelBehavior switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyIsolationLevelBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -445,6 +458,22 @@ internal static class LocalAppContextSwitches
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
             defaultValue: false,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
+    /// When set to true, pooled connections preserve the legacy behavior where
+    /// the SQL Server session transaction isolation level is not reset on
+    /// return to the pool. As a result, the next user of the pooled connection
+    /// may inherit a non-default isolation level.
+    ///
+    /// The default value of this switch is false, meaning the driver will
+    /// reset the isolation level to READ COMMITTED before the next checkout
+    /// when it knows the level was changed.
+    /// </summary>
+    public static bool UseLegacyIsolationLevelBehavior =>
+        AcquireAndReturn(
+            UseLegacyIsolationLevelBehaviorString,
+            defaultValue: false,
+            ref s_useLegacyIsolationLevelBehavior);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a

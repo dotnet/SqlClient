@@ -281,6 +281,14 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to match naming conventions (remove f prefix)
         private readonly bool _fResetConnection;
 
+        // Tracks whether a SQL Server session transaction isolation level
+        // change has been issued on this connection (via SqlTransaction or
+        // System.Transactions enlistment) but not yet undone. SQL Server's
+        // sp_reset_connection does not reset the session isolation level, so
+        // without compensation a pooled connection leaks the level to its
+        // next user.
+        private bool _isolationLevelDirty;
+
 
 
         // @TODO: Rename to match naming conventions
@@ -2679,6 +2687,16 @@ namespace Microsoft.Data.SqlClient.Connection
                     internalTransaction,
                     stateObj,
                     isDelegateControlRequest);
+
+                // A successful Begin with a non-default isolation level mutates
+                // SQL Server's session transaction_isolation_level. sp_reset_connection
+                // will not undo this, so remember it and reset on deactivate.
+                if (requestType == TdsEnums.TransactionManagerRequestType.Begin &&
+                    isoLevel != TdsEnums.TransactionManagerIsolationLevel.Unspecified &&
+                    isoLevel != TdsEnums.TransactionManagerIsolationLevel.ReadCommitted)
+                {
+                    _isolationLevelDirty = true;
+                }
             }
             finally
             {
@@ -3894,6 +3912,42 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
                 _currentLanguage = _originalLanguage;
+
+                // sp_reset_connection (set up by PrepareResetConnection above) does not reset the
+                // session transaction isolation level. When we know a previous Begin changed the
+                // level, issue an explicit SET so the next user of this pooled connection starts at
+                // READ COMMITTED. The batch piggybacks the queued sp_reset_connection on its TDS
+                // header, so the round trip is shared and no separate reset packet is sent later.
+                // Gated by an app-context switch for back-compat.
+                if (_isolationLevelDirty && !LocalAppContextSwitches.UseLegacyIsolationLevelBehavior)
+                {
+                    ResetSessionIsolationLevel();
+                }
+            }
+        }
+
+        // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object
+        // so the next user of this pooled connection observes the default session isolation level.
+        // Called only from ResetConnection when _isolationLevelDirty is set; runs synchronously
+        // because Deactivate is a synchronous pool-return path.
+        private void ResetSessionIsolationLevel()
+        {
+            try
+            {
+                _parser.TdsExecuteSQLBatch(
+                    text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
+                    timeout: 0,
+                    notificationRequest: null,
+                    stateObj: _parser._physicalStateObj,
+                    sync: true);
+                _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
+                _isolationLevelDirty = false;
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                // If we cannot scrub the session state, the connection is not safe to pool.
+                // Dooming forces Deactivate's outer logic to destroy it instead of pooling it.
+                DoomThisConnection();
             }
         }
 
