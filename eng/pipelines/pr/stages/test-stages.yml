@@ -9,6 +9,8 @@
 # confidence and expedience of validation.
 
 parameters:
+  # General Parameters =====================================================
+
   # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
@@ -20,16 +22,27 @@ parameters:
   - name: buildSuffix
     type: string
 
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
   # Name of the build/pack stage that this stage will depend on.
   - name: stageNamePack
     type: string
 
   # Name of the secret generation job used to determine the path to the SA password variable.
   - name: stageNameSecrets
-    type: string
-
-  # Name of the pool to use for jobs that require customized VM images.
-  - name: poolName
     type: string
 
   # Manual Test Configuration Parameters ==================================
@@ -106,6 +119,7 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
@@ -119,6 +133,7 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
@@ -132,6 +147,7 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
@@ -146,6 +162,7 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
 
               platformDisplayName: ${{ platform.displayName }}
@@ -170,6 +187,7 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
 
               platformDisplayName: ${{ platform.displayName }}
@@ -194,6 +212,7 @@ stages:
             parameters:
               buildConfiguration: "Release"      # AE tests are not stable enough to run in DEBUG mode (as of 5/29/26)
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
 
               platformDisplayName: ${{ platform.displayName }}
@@ -218,6 +237,7 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}

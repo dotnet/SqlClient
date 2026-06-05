@@ -6,6 +6,21 @@
 
 name: $(DayOfYear)$(Rev:rr)
 
+parameters:
+  # General Parameters =====================================================
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
 variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
@@ -28,6 +43,7 @@ stages:
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       poolName: $(PoolNameDefault)
       stageNamePack: ${{ variables.stageNamePack }}
       stageNameSecrets: ${{ variables.stageNameSecrets }}

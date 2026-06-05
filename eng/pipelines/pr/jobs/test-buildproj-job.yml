@@ -18,6 +18,17 @@ parameters:
   - name: buildSuffix
     type: string
 
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
   # Platform Parameters ====================================================
 
   # Display name of the platform. This will be formatted into the job's official name as well as
@@ -89,7 +100,7 @@ jobs:
         inputs:
           command: build
           projects: build.proj
-          verbosity: detailed
+          verbosity: ${{ parameters.dotnetVerbosity }}
           arguments: >-
             -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
             -p:Configuration=${{ parameters.buildConfiguration }}

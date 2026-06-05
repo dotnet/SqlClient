@@ -5,6 +5,8 @@
 #################################################################################
 
 parameters:
+  # General Parameters =====================================================
+
   # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
@@ -15,6 +17,17 @@ parameters:
   # Suffix to append to the package version to indicate it is a pre-release/development build.
   - name: buildSuffix
     type: string
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
 
   # Name of the stage that generated the SA password
   - name: stageNameSecrets
@@ -174,7 +187,7 @@ jobs:
         inputs:
           command: build
           projects: build.proj
-          verbosity: detailed
+          verbosity: ${{ parameters.dotnetVerbosity }}
           arguments: >-
             -t:TestSqlClientManual
             -p:Configuration=${{ parameters.buildConfiguration }}
