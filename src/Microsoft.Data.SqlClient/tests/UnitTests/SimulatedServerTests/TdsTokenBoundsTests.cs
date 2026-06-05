@@ -821,6 +821,112 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
         }
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 10: Post-login batch response — sql_variant with oversized binary
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryReadSqlValueInternal</c> rejects a binary value inside
+    /// a sql_variant column whose inner data length exceeds
+    /// <see cref="TdsEnums.MAXSIZE"/> (8000 bytes). The bounds check in the
+    /// sql_variant deserialization path prevents unbounded heap allocation.
+    /// </summary>
+    [Fact]
+    public void BatchResponse_SqlVariantBinary_OversizedLength_ThrowsParsingError()
+    {
+        _server.OnSQLBatchCompleted = responseMessage =>
+        {
+            responseMessage.Clear();
+
+            // COLMETADATA: one SSVariant column
+            var metadata = new TDSColMetadataToken();
+            var col = new TDSColumnData();
+            col.DataType = TDSDataType.SSVariant;
+            col.DataTypeSpecific = (uint)8009; // max length for SSVariant
+            col.Flags.IsNullable = true;
+            col.Name = string.Empty;
+            metadata.Columns.Add(col);
+            responseMessage.Add(metadata);
+
+            // ROW with a sql_variant containing oversized binary data
+            responseMessage.Add(new MaliciousSqlVariantBinaryRowToken());
+
+            // DONE
+            responseMessage.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
+        };
+
+        try
+        {
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
+
+            SqlDataReader reader = command.ExecuteReader();
+            try
+            {
+                Assert.True(reader.Read());
+                Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                    () => reader.GetValue(0));
+                Assert.Contains("18", ex.Message); // CorruptedTdsStream
+            }
+            finally
+            {
+                using (new DebugAssertSuppressor())
+                {
+                    try { reader.Dispose(); } catch { }
+                }
+            }
+        }
+        finally
+        {
+            _server.OnSQLBatchCompleted = null;
+        }
+    }
+
+    /// <summary>
+    /// Writes a ROW token (0xD1) with a single SSVariant column containing a
+    /// BigVarBinary variant whose inner data length exceeds MAXSIZE (8000).
+    /// Wire layout for the variant:
+    ///   [int32] total variant length = 8005
+    ///   [byte] inner type = 0xA5 (BigVarBinary)
+    ///   [byte] cbPropBytes = 2
+    ///   [ushort] maxLen (property) = 8001
+    ///   [8001 bytes would be data, but we only write 4 to trigger the check]
+    /// lenData = 8005 - 2(SQLVARIANT_SIZE) - 2(cbProps) = 8001 > MAXSIZE → throws
+    /// </summary>
+    private sealed class MaliciousSqlVariantBinaryRowToken : TDSPacketToken
+    {
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        public override void Deflate(Stream destination)
+        {
+            // ROW token type
+            destination.WriteByte(0xD1);
+
+            // SSVariant column data: total length (int32 LE)
+            // lenData = totalLength - SQLVARIANT_SIZE(2) - cbPropBytes(2) = totalLength - 4
+            // We want lenData = 8001, so totalLength = 8005
+            int totalLength = 8005;
+            byte[] lenBytes = BitConverter.GetBytes(totalLength);
+            destination.Write(lenBytes, 0, 4);
+
+            // Inner type: BigVarBinary = 0xA5
+            destination.WriteByte(0xA5);
+
+            // cbPropBytes = 2
+            destination.WriteByte(0x02);
+
+            // Properties: maxLen (ushort) = 8001
+            destination.WriteByte(0x41); // 8001 & 0xFF = 0x41
+            destination.WriteByte(0x1F); // 8001 >> 8 = 0x1F
+
+            // Write 4 bytes of dummy data (bounds check fires before trying to read 8001)
+            destination.Write(new byte[4], 0, 4);
+        }
+    }
+
     /// <summary>
     /// Temporarily suppresses Debug.Assert failures by clearing trace listeners.
     /// Used when disposing resources after intentionally corrupting a TDS stream.
