@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Transactions;
 using Microsoft.Data.Common;
@@ -50,26 +51,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Checks out <paramref name="count"/> connections from the pool and leaves them in use.
-        /// Returns the owning <see cref="SqlConnection"/>s and their internal connections so the
-        /// caller can later return them via <see cref="ReturnConnections"/>.
+        /// A checked-out connection, pairing the owning <see cref="SqlConnection"/> with its
+        /// internal connection so the two can never be mismatched.
         /// </summary>
-        private static (SqlConnection[] Owners, DbConnectionInternal[] Connections) CheckOutConnections(
+        private record BusyConnection(SqlConnection Owner, DbConnectionInternal InternalDbConnection);
+
+        /// <summary>
+        /// Checks out <paramref name="count"/> connections from the pool and leaves them in use.
+        /// Returns the checked-out connections so the caller can later return them via
+        /// <see cref="ReturnConnections"/>.
+        /// </summary>
+        private static List<BusyConnection> CheckOutConnections(
             ChannelDbConnectionPool pool, int count)
         {
-            var owners = new SqlConnection[count];
-            var connections = new DbConnectionInternal[count];
+            var connections = new List<BusyConnection>(count);
 
             for (int i = 0; i < count; i++)
             {
-                owners[i] = new SqlConnection();
-                var completed = pool.TryGetConnection(owners[i], null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out var connection);
+                var owner = new SqlConnection();
+                var completed = pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out var connection);
                 Assert.True(completed);
                 Assert.NotNull(connection);
-                connections[i] = connection;
+                connections.Add(new BusyConnection(owner, connection));
             }
 
-            return (owners, connections);
+            return connections;
         }
 
         /// <summary>
@@ -77,12 +83,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         private static void ReturnConnections(
             ChannelDbConnectionPool pool,
-            SqlConnection[] owners,
-            DbConnectionInternal[] connections)
+            List<BusyConnection> connections)
         {
-            for (int i = 0; i < owners.Length; i++)
+            foreach (var connection in connections)
             {
-                pool.ReturnInternalConnection(connections[i], owners[i]);
+                pool.ReturnInternalConnection(connection.InternalDbConnection, connection.Owner);
             }
         }
 
@@ -91,8 +96,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         private static void FillPoolWithIdleConnections(ChannelDbConnectionPool pool, int count)
         {
-            var (owners, connections) = CheckOutConnections(pool, count);
-            ReturnConnections(pool, owners, connections);
+            var connections = CheckOutConnections(pool, count);
+            ReturnConnections(pool, connections);
         }
 
         /// <summary>
@@ -458,7 +463,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Sample 1: 2 idle (high demand, most connections checked out)
             FillPoolWithIdleConnections(pool, 10);
             // Check out 8, leaving 2 idle
-            var (busyOwners, busyConns) = CheckOutConnections(pool, 8);
+            var busyConnections = CheckOutConnections(pool, 8);
             pruner.OnPruningCallback(null); // sample[0] = 2 idle
             AssertPrunerState(pruner, true, 1, 2);
             Assert.Equal(10, pool.Count);
@@ -469,7 +474,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(10, pool.Count);
 
             // Now return all busy connections, creating a brief lull (10 idle)
-            ReturnConnections(pool, busyOwners, busyConns);
+            ReturnConnections(pool, busyConnections);
 
             // Sample 3: 10 idle (lull). Buffer full → sorted=[2,2,10], median at index 1 = 2.
             int countBefore = pool.Count;
@@ -500,7 +505,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             FillPoolWithIdleConnections(pool, 8);
 
             // Check out 4 so only 4 remain idle for the first sample.
-            var (busyOwners, busyConns) = CheckOutConnections(pool, 4);
+            var busyConnections = CheckOutConnections(pool, 4);
 
             // Sample 1: 4 idle.
             pruner.OnPruningCallback(null);
@@ -508,7 +513,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(8, pool.Count);
 
             // Return the 4 busy connections so 8 are idle for the second sample.
-            ReturnConnections(pool, busyOwners, busyConns);
+            ReturnConnections(pool, busyConnections);
 
             // Sample 2: 8 idle. Buffer full → sorted=[4,8], median at index 0 = 4.
             int countBefore = pool.Count;
@@ -536,7 +541,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // --- Window 1: produces a median of 4 ---
             FillPoolWithIdleConnections(pool, 12);
             // Check out 8, leaving 4 idle.
-            var (busyOwners, busyConns) = CheckOutConnections(pool, 8);
+            var busyConnections = CheckOutConnections(pool, 8);
 
             pruner.OnPruningCallback(null); // sample[0] = 4 idle
             AssertPrunerState(pruner, true, 1, 4);
@@ -547,7 +552,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(8, pool.Count); // 8 busy remain, 0 idle
 
             // Return the 8 busy connections so they are idle for window 2.
-            ReturnConnections(pool, busyOwners, busyConns);
+            ReturnConnections(pool, busyConnections);
             Assert.Equal(8, pool.Count);
 
             // --- Window 2: 8 idle, produces its own median of 8 ---
