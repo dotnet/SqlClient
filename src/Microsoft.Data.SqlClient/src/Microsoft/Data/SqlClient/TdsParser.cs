@@ -12286,9 +12286,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     return AsyncHelper.CreateContinuationTaskWithState(
                         unterminatedWriteTask,
-                        state1: 0,
+                        state1: this,
                         state2: stateObj,
-                        onSuccess: WriteInt);
+                        onSuccess: static (parser, state) => parser.WriteInt(0, state));
                 }
             }
             else

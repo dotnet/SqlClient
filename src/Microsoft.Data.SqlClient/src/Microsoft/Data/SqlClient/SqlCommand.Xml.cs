@@ -264,11 +264,11 @@ namespace Microsoft.Data.SqlClient
                     AsyncHelper.ContinueTaskWithState(
                         taskToContinue: writeTask,
                         taskCompletionSource: localCompletion,
-                        state: Tuple.Create(this, localCompletion),
-                        onSuccess: static state =>
+                        state1: this,
+                        state2: localCompletion,
+                        onSuccess: static (sqlCommand, localCompletion) =>
                         {
-                            var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                            parameters.Item1.BeginExecuteXmlReaderInternalReadStage(parameters.Item2);
+                            sqlCommand.BeginExecuteXmlReaderInternalReadStage(localCompletion);
                         });
                 }
                 else

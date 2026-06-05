@@ -137,7 +137,10 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///     is to allow the task completion source to be continued even more after this current
         ///     continuation.
         /// </remarks>
-        /// <typeparam name="TState">Type of the state object to provide to the callbacks</typeparam>
+        /// <typeparam name="TState">
+        /// Type of the state object to provide to the callbacks, constrained to class types to
+        /// prevent accidental modification of pass-by-value types.
+        /// </typeparam>
         /// <param name="taskToContinue">Task to continue with provided callbacks</param>
         /// <param name="taskCompletionSource">
         /// Completion source used to track completion of the continuation, see remarks for details
@@ -153,6 +156,7 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState> onSuccess,
             Action<TState, Exception>? onFailure = null,
             Action<TState>? onCancellation = null)
+            where TState : class
         {
             ContinuationState<TState> continuationState = new(
                 OnCancellation: onCancellation,
@@ -237,8 +241,14 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// <param name="taskCompletionSource">
         /// Completion source used to track completion of the continuation, see remarks for details
         /// </param>
-        /// <typeparam name="TState1">Type of the first state object to provide to callbacks</typeparam>
-        /// <typeparam name="TState2">Type of the second state object to provide to callbacks</typeparam>
+        /// <typeparam name="TState1">
+        /// Type of the first state object to provide to the callbacks, constrained to class types
+        /// to prevent accidental modification of pass-by-value types.
+        /// </typeparam>
+        /// <typeparam name="TState2">
+        /// Type of the second state object to provide to the callbacks, constrained to class types
+        /// to prevent accidental modification of pass-by-value types.
+        /// </typeparam>
         /// <param name="state1">First state object to provide to callbacks</param>
         /// <param name="state2">Second state object to provide to callbacks</param>
         /// <param name="onSuccess">Callback to execute on successful completion of the task</param>
@@ -252,6 +262,8 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState1, TState2> onSuccess,
             Action<TState1, TState2, Exception>? onFailure = null,
             Action<TState1, TState2>? onCancellation = null)
+            where TState1 : class
+            where TState2 : class
         {
             ContinuationState<TState1, TState2> continuationState = new(
                 OnCancellation: onCancellation,
@@ -428,7 +440,10 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///     task will be completed with the exception.
         ///   * The task will be completed as successful.
         /// </remarks>
-        /// <typeparam name="TState">Type of the state object to pass to callbacks</typeparam>
+        /// <typeparam name="TState">
+        /// Type of the state object to pass to callbacks, constrained to class types to prevent
+        /// accidental modification of pass-by-value types.
+        /// </typeparam>
         /// <param name="taskToContinue">
         /// Task to continue with provided callbacks, if <c>null</c>, <c>null</c> will be returned.
         /// </param>
@@ -442,6 +457,7 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState> onSuccess,
             Action<TState, Exception>? onFailure = null,
             Action<TState>? onCancellation = null)
+            where TState : class
         {
             if (taskToContinue is null)
             {
@@ -533,8 +549,13 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///     task will be completed with the exception.
         ///   * The task will be completed as successful.
         /// </remarks>
-        /// <typeparam name="TState1">Type of the first state object to pass to callbacks</typeparam>
-        /// <typeparam name="TState2">Type of the second state object to pass to callbacks</typeparam>
+        /// <typeparam name="TState1">
+        /// Type of the first state object to pass to callbacks, constrained to class types to
+        /// prevent accidental modification of pass-by-value types.
+        /// </typeparam>
+        /// <typeparam name="TState2">
+        /// Type of the second state object to pass to callbacks, constrained to class types to
+        /// prevent accidental modification of pass-by-value types.</typeparam>
         /// <param name="taskToContinue">
         /// Task to continue with provided callbacks, if <c>null</c>, <c>null</c> will be returned.
         /// </param>
@@ -550,6 +571,8 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState1, TState2> onSuccess,
             Action<TState1, TState2, Exception>? onFailure = null,
             Action<TState1, TState2>? onCancellation = null)
+            where TState1 : class
+            where TState2 : class
         {
             if (taskToContinue is null)
             {
@@ -667,6 +690,10 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// exception returned is set as the exception that completes the task completion source.
         /// This overload provides a state object to the timeout callback.
         /// </summary>
+        /// <typeparam name="TState">
+        /// Type of the state object to pass to callbacks, constrained to class types to prevent
+        /// accidental modification of pass-by-value types.
+        /// </typeparam>
         /// <param name="taskCompletionSource">Task to execute with a timeout</param>
         /// <param name="timeoutInSeconds">Number of seconds to wait until timing out the task</param>
         /// <param name="state">State object to pass to the callback</param>
@@ -681,6 +708,7 @@ namespace Microsoft.Data.SqlClient.Utilities
             TState state,
             Func<TState, Exception> onTimeout,
             CancellationToken cancellationToken)
+            where TState : class
         {
             if (timeoutInSeconds <= 0)
             {
@@ -786,7 +814,8 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState, Exception>? OnFailure,
             Action<TState> OnSuccess,
             TState State,
-            TaskCompletionSource<object?> TaskCompletionSource);
+            TaskCompletionSource<object?> TaskCompletionSource)
+            where TState : class;
 
         private record ContinuationState<TState1, TState2>(
             Action<TState1, TState2>? OnCancellation,
@@ -794,6 +823,8 @@ namespace Microsoft.Data.SqlClient.Utilities
             Action<TState1, TState2> OnSuccess,
             TState1 State1,
             TState2 State2,
-            TaskCompletionSource<object?> TaskCompletionSource);
+            TaskCompletionSource<object?> TaskCompletionSource)
+            where TState1 : class
+            where TState2 : class;
     }
 }
