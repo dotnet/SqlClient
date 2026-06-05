@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -19,6 +19,35 @@ public class LocalAppContextSwitchesTest
     [Fact]
     public void TestDefaultAppContextSwitchValues()
     {
+        // LocalAppContextSwitches caches each switch value on first access for
+        // the lifetime of the process.  Other tests running in parallel may
+        // already have triggered caching, or may use LocalAppContextSwitchesHelper
+        // to mutate the cached fields via reflection.  To make this test
+        // deterministic, acquire the helper (which serializes against every
+        // other helper user via a process-wide semaphore) and reset each
+        // cached field to None so the properties re-read from AppContext.
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+
+        switchesHelper.EnableMultiSubnetFailoverByDefault = null;
+        switchesHelper.IgnoreServerProvidedFailoverPartner = null;
+        switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
+        switchesHelper.LegacyRowVersionNullBehavior = null;
+        switchesHelper.LegacyVarTimeZeroScaleBehaviour = null;
+        switchesHelper.MakeReadAsyncBlocking = null;
+        switchesHelper.SuppressInsecureTlsWarning = null;
+        switchesHelper.TruncateScaledDecimal = null;
+        switchesHelper.UseCompatibilityAsyncBehaviour = null;
+        switchesHelper.UseCompatibilityProcessSni = null;
+        switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseMinimumLoginTimeout = null;
+        #if NET
+        switchesHelper.GlobalizationInvariantMode = null;
+        switchesHelper.UseManagedNetworking = null;
+        #endif
+        #if NETFRAMEWORK
+        switchesHelper.DisableTnirByDefault = null;
+        #endif
+
         Assert.False(LocalAppContextSwitches.LegacyRowVersionNullBehavior);
         Assert.False(LocalAppContextSwitches.SuppressInsecureTlsWarning);
         Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
@@ -27,8 +56,10 @@ public class LocalAppContextSwitchesTest
         Assert.True(LocalAppContextSwitches.UseCompatibilityProcessSni);
         Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
+        Assert.False(LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
         Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
+        Assert.False(LocalAppContextSwitches.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);

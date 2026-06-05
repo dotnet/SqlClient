@@ -636,13 +636,8 @@ namespace Microsoft.Data.SqlClient
                                         {
                                             Stop(connectionString, queue, useDefaults, true);
                                         }
-                                        catch (Exception e)
-                                        { // Discard stop failure!
-                                            if (!ADP.IsCatchableExceptionType(e))
-                                            {
-                                                throw;
-                                            }
-
+                                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+                                        {
                                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from Stop() after duplicate was found on Start().");
                                         }
@@ -664,13 +659,8 @@ namespace Microsoft.Data.SqlClient
                             // to provide options themselves.
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-
                         ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from _processDispatcher.Start(...), calling Invalidate(...).");
                         throw;
@@ -783,13 +773,8 @@ namespace Microsoft.Data.SqlClient
                                 // to provide options themselves.
                             }
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
-
                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                         }
                     }

@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 int databaseId,
                 int cekId,
                 int cekVersion,
-                byte[] cekMdVersion,
+                ulong cekMdVersion,
                 string keyPath,
                 string keyStoreName,
                 string algorithmName)

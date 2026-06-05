@@ -59,6 +59,13 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
 
     /// <summary>
+    /// The name of the app context switch that controls whether failover
+    /// alternation should use legacy behavior for login-phase SQL errors.
+    /// </summary>
+    private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
     /// arrays instead of null.
@@ -117,6 +124,13 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseConnectionPoolV2String =
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
+
+    /// <summary>
+    /// The name of the app context switch that controls whether pool operations
+    /// should count against the caller's overall ConnectTimeout budget.
+    /// </summary>
+    private const string UseOverallConnectTimeoutForPoolWaitString =
+        "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
 
     #if NET
     /// <summary>
@@ -183,6 +197,11 @@ internal static class LocalAppContextSwitches
     private static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
 
     /// <summary>
+    /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
     /// </summary>
     private static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
@@ -221,6 +240,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
+    /// </summary>
+    private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
     #if NET
     /// <summary>
@@ -410,6 +434,19 @@ internal static class LocalAppContextSwitches
             ref s_ignoreServerProvidedFailoverPartner);
 
     /// <summary>
+    /// When set to true, LoginWithFailover preserves legacy behavior and may
+    /// alternate to the failover partner on login-phase SQL errors where the
+    /// parser state is not Closed.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyFailoverAlternationOnLoginSqlErrors =>
+        AcquireAndReturn(
+            UseLegacyFailoverAlternationOnLoginSqlErrorsString,
+            defaultValue: false,
+            ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
     /// field with type Timestamp/RowVersion would return an empty byte array.
     /// This switch controls whether to preserve that behaviour on newer
@@ -538,6 +575,20 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// When set to true, pool operations count against the
+    /// caller's ConnectTimeout budget. This includes waits and async operations.
+    /// When false, pool operations receive a full ConnectTimeout and
+    /// network calls receive a further full ConnectTimeout.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseOverallConnectTimeoutForPoolWait =>
+        AcquireAndReturn(
+            UseOverallConnectTimeoutForPoolWaitString,
+            defaultValue: false,
+            ref s_useOverallConnectTimeoutForPoolWait);
 
     #if NET
     /// <summary>

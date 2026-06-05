@@ -19,8 +19,6 @@ safe-outputs:
   add-comment:
     max: 1
     hide-older-comments: true
-  add-labels:
-    max: 5
 ---
 
 # SqlClient Issue Auto-Triage
@@ -29,10 +27,10 @@ You are a triage specialist for **Microsoft.Data.SqlClient**.
 A new issue has just been opened. Your job is to:
 
 1. Read the issue silently using GitHub read tools
-2. Apply labels silently using `add_labels`
-3. Post **one** triage summary comment using `add_comment`
+2. Post **one** triage summary comment using `add_comment`
 
 That is the entire workflow. Do NOT call `add_comment` more than once.
+Do NOT call `add_labels`. Do NOT apply any labels.
 Do NOT post intermediate findings. Do NOT post separate comments for
 area detection, duplicate checking, or environment validation.
 Everything goes into the single triage summary at the end.
@@ -90,19 +88,9 @@ Proceed with all remaining triage steps regardless of missing environment detail
 
 ---
 
-## Actions (execute in this order)
+## Actions
 
-**First**: Call `add_labels` with at most 5 labels total (safe-outputs limit):
-- `Triage Needed :new:` (always)
-- Exactly **one** `Area\*` label from the table above (pick the single best match)
-- `Needs More Info :information_source:` if critical environment details are missing (bugs only)
-- `Repro Available :heavy_check_mark:` if repro steps are provided
-- `Regression :boom:` if this appears to be a regression
-
-If the issue spans multiple areas, pick the primary area as the label and mention
-other relevant areas in the triage summary comment instead.
-
-**Then**: Call `add_comment` exactly **once** with this markdown:
+Call `add_comment` exactly **once** with this markdown:
 
 ```
 ## 🔍 Triage Summary
@@ -111,7 +99,7 @@ other relevant areas in the triage summary comment instead.
 |-------|--------|
 | Issue type | <Bug / Feature / Question / Task> |
 | Environment | <All required environment details provided for investigation / ⚠️ Missing: list specific fields> |
-| Area | <Area label applied or "no match"> |
+| Area | <Best matching area from classification table> |
 | Duplicates | <None found / Potentially related: #NNN, #NNN> |
 | Regression | <Not indicated / Likely regression from vX.Y.Z / Inconclusive> |
 
