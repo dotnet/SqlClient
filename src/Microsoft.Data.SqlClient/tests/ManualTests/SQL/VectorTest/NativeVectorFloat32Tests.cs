@@ -14,7 +14,6 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
-    [Trait("Set", "3")]
     public static class VectorFloat32TestData
     {
         public const int VectorHeaderSize = 8;
@@ -54,6 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
     }
 
+    [Trait("Set", "3")]
     public sealed class NativeVectorFloat32Tests : IDisposable
     {
         private readonly ITestOutputHelper _output;
