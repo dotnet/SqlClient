@@ -227,18 +227,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Note: We have to set up mockOnSuccess to set a result on the task completion source,
             //       since the AsyncHelper will not do it, and without that, we cannot reliably
             //       know when the continuation completed. We will use SetResult b/c it will throw
             //       if it has already been set.
-            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<object>> mockOnSuccess = new();
             mockOnSuccess.Setup(action => action(state1))
-                .Callback<int>(_ => taskCompletionSource.SetResult(0));
+                .Callback<object>(_ => taskCompletionSource.SetResult(0));
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -263,14 +263,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
+            object state1 = new object();
 
             // - mockOnSuccess handler throws
-            Mock<Action<int>> mockOnSuccess = new();
-            mockOnSuccess.Setup(action => action(It.IsAny<int>())).Throws<Exception>();
+            Mock<Action<object>> mockOnSuccess = new();
+            mockOnSuccess.Setup(action => action(It.IsAny<object>())).Throws<Exception>();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -300,16 +300,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                mockOnCancellation.SetupThrows<int, Exception>();
+                mockOnCancellation.SetupThrows<object, Exception>();
             }
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -337,10 +337,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -368,16 +368,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                mockOnFailure.SetupThrows<int, Exception, Exception>();
+                mockOnFailure.SetupThrows<object, Exception, Exception>();
             }
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -405,10 +405,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -438,19 +438,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Note: We have to set up mockOnSuccess to set a result on the task completion source,
             //       since the AsyncHelper will not do it, and without that, we cannot reliably
             //       know when the continuation completed. We will use SetResult b/c it will throw
             //       if it has already been set.
-            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
             mockOnSuccess.Setup(action => action(state1, state2))
-                .Callback<int, int>((_, _) => taskCompletionSource.SetResult(0));
+                .Callback<object, object>((_, _) => taskCompletionSource.SetResult(0));
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -476,15 +476,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that completed successfully
             Task taskToContinue = Task.CompletedTask;
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
             // - mockOnSuccess handler throws
-            Mock<Action<int, int>> mockOnSuccess = new();
-            mockOnSuccess.Setup(o => o(It.IsAny<int>(), It.IsAny<int>())).Throws<Exception>();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            mockOnSuccess.Setup(o => o(It.IsAny<object>(), It.IsAny<object>())).Throws<Exception>();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -516,17 +516,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                mockOnCancellation.SetupThrows<int, int, Exception>();
+                mockOnCancellation.SetupThrows<object, object, Exception>();
             }
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -555,11 +555,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that was cancelled
             Task taskToContinue = GetCancelledTask();
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -588,17 +588,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                mockOnFailure.SetupThrows<int, int, Exception, Exception>();
+                mockOnFailure.SetupThrows<object, object, Exception, Exception>();
             }
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -627,11 +627,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // - Task to continue that faulted
             Task taskToContinue = Task.FromException(new Exception());
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Act
             AsyncHelper.ContinueTaskWithState(
@@ -850,10 +850,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public void CreateContinuationTaskWithState_1Generic_NullTask()
         {
             // Arrange
-            const int state1 = 123;
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            object state1 = new object();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -877,11 +877,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -905,14 +905,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // - mockOnSuccess handler throws
-            Mock<Action<int>> mockOnSuccess = new();
-            mockOnSuccess.SetupThrows<int, Exception>();
+            Mock<Action<object>> mockOnSuccess = new();
+            mockOnSuccess.SetupThrows<object, Exception>();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -938,15 +938,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnSuccess = new();
 
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                mockOnCancellation.SetupThrows<int, Exception>();
+                mockOnCancellation.SetupThrows<object, Exception>();
             }
 
             // Act
@@ -971,10 +971,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
-            Mock<Action<int>> mockOnSuccess = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
+            Mock<Action<object>> mockOnSuccess = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -999,15 +999,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
-            Mock<Action<int, Exception>> mockOnFailure = new();
+            Mock<Action<object, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                mockOnFailure.SetupThrows<int, Exception, Exception>();
+                mockOnFailure.SetupThrows<object, Exception, Exception>();
             }
 
             // Act
@@ -1032,10 +1032,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
-            const int state1 = 123;
+            object state1 = new object();
 
-            Mock<Action<int>> mockOnSuccess = new();
-            Mock<Action<int>> mockOnCancellation = new();
+            Mock<Action<object>> mockOnSuccess = new();
+            Mock<Action<object>> mockOnCancellation = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -1060,12 +1060,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public void CreateContinuationTaskWithState_2Generics_NullTask()
         {
             // Arrange
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -1090,12 +1090,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -1120,15 +1120,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue completed successfully
             Task taskToContinue = Task.CompletedTask;
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // - mockOnSuccess handler throws
-            Mock<Action<int, int>> mockOnSuccess = new();
-            mockOnSuccess.SetupThrows<int, int, Exception>();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            mockOnSuccess.SetupThrows<object, object, Exception>();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -1155,16 +1155,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
 
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
             if (handlerShouldThrow)
             {
-                mockOnCancellation.SetupThrows<int, int, Exception>();
+                mockOnCancellation.SetupThrows<object, object, Exception>();
             }
 
             // Act
@@ -1190,11 +1190,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
-            Mock<Action<int, int>> mockOnSuccess = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
@@ -1220,16 +1220,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
-            Mock<Action<int, int, Exception>> mockOnFailure = new();
+            Mock<Action<object, object, Exception>> mockOnFailure = new();
             if (handlerShouldThrow)
             {
-                mockOnFailure.SetupThrows<int, int, Exception, Exception>();
+                mockOnFailure.SetupThrows<object, object, Exception, Exception>();
             }
 
             // Act
@@ -1255,11 +1255,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Arrange
             // - Task to continue faulted
             Task taskToContinue = Task.FromException(new Exception());
-            const int state1 = 123;
-            const int state2 = 234;
+            object state1 = new object();
+            object state2 = new object();
 
-            Mock<Action<int, int>> mockOnSuccess = new();
-            Mock<Action<int, int>> mockOnCancellation = new();
+            Mock<Action<object, object>> mockOnSuccess = new();
+            Mock<Action<object, object>> mockOnCancellation = new();
 
             // Act
             Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
