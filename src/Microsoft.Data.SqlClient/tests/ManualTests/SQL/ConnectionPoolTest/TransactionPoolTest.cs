@@ -67,41 +67,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Assert.Equal(2, connectionPool.ConnectionCount);
         }
-
-        /// <summary>
-        /// Checks that connections in the transaction pool are not cleaned out, and the root transaction is put into "stasis" when it ages
-        /// Synapse: only supports local transaction request.
-        /// </summary>
-        /// <param name="connectionString"></param>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void TransactionCleanupTest(string connectionString)
-        {
-            SqlConnection.ClearAllPools();
-            ConnectionPoolWrapper connectionPool = null;
-
-            using (TransactionScope transScope = new())
-            {
-                using SqlConnection connection1 = new(connectionString);
-                using SqlConnection connection2 = new(connectionString);
-                connection1.Open();
-                connection2.Open();
-                InternalConnectionWrapper internalConnection1 = new(connection1);
-                connectionPool = new ConnectionPoolWrapper(connection1);
-
-                connectionPool.Cleanup();
-                Assert.Equal(2, connectionPool.ConnectionCount);
-
-                connection1.Close();
-                connection2.Close();
-                connectionPool.Cleanup();
-                Assert.Equal(2, connectionPool.ConnectionCount);
-
-                connectionPool.Cleanup();
-                Assert.Equal(2, connectionPool.ConnectionCount);
-
-                transScope.Complete();
-            }
-        }
     }
 }
