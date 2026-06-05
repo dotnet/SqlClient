@@ -162,4 +162,27 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         // Assert - same instance reused, well within idle window
         Assert.Same(first, second);
     }
+
+    [Fact]
+    public void IdleTimeout_LegacySwitch_SuppressesEviction()
+    {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseLegacyIdleTimeoutBehavior = true;
+
+        // Arrange - 1-second idle timeout, but legacy switch suppresses the new eviction path.
+        _pool = CreatePool(idleTimeoutSeconds: 1);
+        SqlConnection owner = new();
+        DbConnectionInternal first = GetConnection(owner);
+
+        // Return + back-date well past the configured timeout.
+        _pool.ReturnInternalConnection(first, owner);
+        BackdateReturnedTime(first, TimeSpan.FromMinutes(5));
+
+        // Act - request another connection.
+        SqlConnection owner2 = new();
+        DbConnectionInternal second = GetConnection(owner2);
+
+        // Assert - with the legacy switch on, the stale connection is still reused.
+        Assert.Same(first, second);
+    }
 }

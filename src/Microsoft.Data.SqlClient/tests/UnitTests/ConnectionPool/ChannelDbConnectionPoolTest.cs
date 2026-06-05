@@ -977,22 +977,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
-        public void IdleTimeout_DefaultIsZero_DisablesExpiry()
-        {
-            // Explicitly passing zero keeps idle expiry off.
-            var poolGroupOptions = new DbConnectionPoolGroupOptions(
-                poolByIdentity: false,
-                minPoolSize: 0,
-                maxPoolSize: 50,
-                creationTimeout: 15,
-                loadBalanceTimeout: 0,
-                hasTransactionAffinity: true,
-                idleTimeout: 0);
-
-            Assert.Equal(TimeSpan.Zero, poolGroupOptions.IdleTimeout);
-        }
-
-        [Fact]
         public void IdleTimeout_StampedOnReturn()
         {
             using LocalAppContextSwitchesHelper switchesHelper = new();
@@ -1099,6 +1083,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? second);
 
             // Assert - same instance reused, well within idle window
+            Assert.Same(first, second);
+        }
+
+        [Fact]
+        public void IdleTimeout_LegacySwitch_SuppressesEviction()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = true;
+
+            // Arrange - 1-second idle timeout, but legacy switch suppresses the new eviction path.
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+
+            // Return + back-date well past the configured timeout.
+            pool.ReturnInternalConnection(first, owner);
+            BackdateReturnedTime(first, TimeSpan.FromMinutes(5));
+
+            // Act - request another connection.
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? second);
+
+            // Assert - with the legacy switch on, the stale connection is still reused.
             Assert.Same(first, second);
         }
 

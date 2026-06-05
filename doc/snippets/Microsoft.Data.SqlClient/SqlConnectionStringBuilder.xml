@@ -991,6 +991,9 @@ The following example converts an existing connection string from using SQL Serv
           This property corresponds to the "Connection Idle Timeout" key within the connection string.
         </para>
         <para>
+          In versions where the AppContext switch <c>Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior</c> is enabled (the default), the driver preserves historical pooling behavior and does not enforce this setting. Set the switch to <see langword="false" /> to enable idle-timeout enforcement.
+        </para>
+        <para>
           The driver makes a best effort to discard connections that have remained idle in the pool for longer than this value. The exact point in the connection lifecycle at which the check occurs is an implementation detail and may change over time. This protects callers from receiving connections that may have been silently closed by firewalls, load balancers, or server-side inactivity thresholds.
         </para>
         <para>
