@@ -67,14 +67,21 @@ public class FeatureExtAckBoundsTests : IClassFixture<TdsServerFixture>
                 claimedDataLen: (uint)(TdsEnums.MaxTokenDataLength + 1)));
         };
 
-        // Act & Assert: connection should fail with a parsing error, NOT an OutOfMemoryException
-        using SqlConnection connection = new(_connectionString);
-        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        try
+        {
+            // Act & Assert: connection should fail with a parsing error, NOT an OutOfMemoryException
+            using SqlConnection connection = new(_connectionString);
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
 
-        // The exception message should indicate a corrupted TDS stream (parsing error state 18)
-        // with the oversized length value, not an OOM from attempting the allocation.
-        Assert.Contains("18", ex.Message); // ParsingErrorState.CorruptedTdsStream = 18
-        Assert.Contains((TdsEnums.MaxTokenDataLength + 1).ToString(), ex.Message);
+            // The exception message should indicate a corrupted TDS stream (parsing error state 18)
+            // with the oversized length value, not an OOM from attempting the allocation.
+            Assert.Contains("18", ex.Message); // ParsingErrorState.CorruptedTdsStream = 18
+            Assert.Contains((TdsEnums.MaxTokenDataLength + 1).ToString(), ex.Message);
+        }
+        finally
+        {
+            _server.OnAuthenticationResponseCompleted = null;
+        }
     }
 
     /// <summary>

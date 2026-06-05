@@ -3854,10 +3854,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, (int)dataLen);
                     }
-                    byte[] data = new byte[dataLen];
-                    if (dataLen > 0)
+                    int dataLength = (int)dataLen;
+                    byte[] data = new byte[dataLength];
+                    if (dataLength > 0)
                     {
-                        result = stateObj.TryReadByteArray(data, (int)dataLen);
+                        result = stateObj.TryReadByteArray(data, dataLength);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
