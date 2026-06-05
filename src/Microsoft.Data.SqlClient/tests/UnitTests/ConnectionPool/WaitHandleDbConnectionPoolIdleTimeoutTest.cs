@@ -61,6 +61,7 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: null,
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
             out DbConnectionInternal? connection);
         Assert.NotNull(connection);
         return connection!;

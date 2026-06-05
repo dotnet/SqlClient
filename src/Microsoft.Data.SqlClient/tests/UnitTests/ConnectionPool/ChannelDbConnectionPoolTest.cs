@@ -1002,6 +1002,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 3600);
             SqlConnection owningConnection = new();
             pool.TryGetConnection(owningConnection, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? connection);
             Assert.NotNull(connection);
 
@@ -1027,6 +1028,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 0);
             SqlConnection owner = new();
             pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? first);
             Assert.NotNull(first);
 
@@ -1037,6 +1039,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Act
             SqlConnection owner2 = new();
             pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? second);
 
             // Assert - same instance, idle expiry disabled
@@ -1054,6 +1057,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
             SqlConnection owner = new();
             pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? first);
             Assert.NotNull(first);
 
@@ -1064,6 +1068,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Act - request another connection
             SqlConnection owner2 = new();
             pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? second);
 
             // Assert - the expired one is discarded; a new one is minted.
@@ -1082,6 +1087,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 60);
             SqlConnection owner = new();
             pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? first);
             Assert.NotNull(first);
             pool.ReturnInternalConnection(first, owner);
@@ -1089,6 +1095,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Act - immediately request another connection
             SqlConnection owner2 = new();
             pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? second);
 
             // Assert - same instance reused, well within idle window
@@ -1323,7 +1330,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 1,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
 
