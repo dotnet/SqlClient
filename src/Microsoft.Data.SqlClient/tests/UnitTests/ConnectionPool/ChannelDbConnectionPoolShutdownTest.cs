@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 var owner = new SqlConnection();
                 owners.Add(owner);
-                Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, out DbConnectionInternal? c));
+                Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c));
                 Assert.NotNull(c);
                 conns.Add(c!);
             }
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var pool = ConstructPool();
             var owner = new SqlConnection();
-            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, out DbConnectionInternal? conn));
+            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn));
             Assert.NotNull(conn);
             Assert.Equal(1, pool.Count);
             Assert.Equal(0, pool.IdleCount);
@@ -122,12 +122,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(maxPoolSize: 1);
 
             // Saturate the pool.
-            Assert.True(pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out DbConnectionInternal? blocking));
+            Assert.True(pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? blocking));
             Assert.NotNull(blocking);
 
             // Park an async waiter.
             var tcs = new TaskCompletionSource<DbConnectionInternal>();
-            bool completed = pool.TryGetConnection(new SqlConnection(), tcs, out DbConnectionInternal? waiter);
+            bool completed = pool.TryGetConnection(new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? waiter);
             Assert.False(completed);
             Assert.Null(waiter);
             Assert.False(tcs.Task.IsCompleted);
@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var pool = ConstructPool();
             var owner = new SqlConnection();
-            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, out DbConnectionInternal? c));
+            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c));
             Assert.NotNull(c);
 
             pool.Shutdown();
