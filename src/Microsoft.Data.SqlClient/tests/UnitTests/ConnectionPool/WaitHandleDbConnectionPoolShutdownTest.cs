@@ -88,8 +88,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Vend a few connections then return them so they sit in _stackNew.
             var owner1 = new SqlConnection();
             var owner2 = new SqlConnection();
-            pool.TryGetConnection(owner1, taskCompletionSource: null, out DbConnectionInternal? c1);
-            pool.TryGetConnection(owner2, taskCompletionSource: null, out DbConnectionInternal? c2);
+            pool.TryGetConnection(owner1, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c1);
+            pool.TryGetConnection(owner2, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c2);
             Assert.NotNull(c1);
             Assert.NotNull(c2);
             pool.ReturnInternalConnection(c1!, owner1);
@@ -152,6 +152,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             bool completed = pool.TryGetConnection(
                 new SqlConnection(),
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? conn);
 
             // TryGetConnection returns true with a null connection when State != Running.
@@ -167,7 +168,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Saturate the pool.
             var owner = new SqlConnection();
-            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, out DbConnectionInternal? blocking));
+            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? blocking));
             Assert.NotNull(blocking);
 
             // Park a sync waiter on a worker thread with a long creation timeout.
@@ -182,6 +183,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     waiterCompleted = pool.TryGetConnection(
                         new SqlConnection(),
                         taskCompletionSource: null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out waiterResult);
                 }
                 catch (Exception ex)
