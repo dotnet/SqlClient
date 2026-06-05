@@ -22,14 +22,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _output = output;
         }
 
-        // Disabled on Azure since this test fails on concurrent runs on same database.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public void CancelAsyncConnections()
+
+        // Disabled on Azure, Kerberos, and Managed Instance pipelines due to environment-specific instability.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotManagedInstance),
+            nameof(DataTestUtility.IsNotKerberosTest))]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CancelAsyncConnections(bool useMars)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.MultipleActiveResultSets = false;
-            RunCancelAsyncConnections(builder);
-            builder.MultipleActiveResultSets = true;
+            builder.MultipleActiveResultSets = useMars;
             RunCancelAsyncConnections(builder);
         }
 
