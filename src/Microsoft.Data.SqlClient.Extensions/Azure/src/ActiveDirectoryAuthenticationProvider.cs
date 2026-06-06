@@ -31,12 +31,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
     private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
+    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
     private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
+    private const string _wamBrokerRedirectUriPrefix = $"ms-appx-web://microsoft.aad.brokerplugin/";
     private const string s_defaultScopeSuffix = "/.default";
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
-    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
 
     // The MSAL error code that indicates the action should be retried.
     //
@@ -124,7 +125,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
     /// <summary>
     /// Sets a function to return the parent activity or window handle to be used for
-    /// WAM (Web Account Manager) broker authentication prompts.
+    /// WAM (Windows Account Manager) broker authentication prompts.
     /// </summary>
     /// <param name="parentActivityOrWindowFunc">
     /// A function that returns an <see cref="IntPtr"/> window handle on Windows.
@@ -242,14 +243,14 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 *
                 * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
                 */
-            string redirectUri = s_nativeClientRedirectUri;
+            string redirectUri = _wamBrokerRedirectUriPrefix + _applicationClientId;
 
-            #if NETSTANDARD
-            if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
-            {
-                redirectUri = "http://localhost";
-            }
-            #endif
+            // #if NETSTANDARD
+            // if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+            // {
+            //     redirectUri = "http://localhost";
+            // }
+            // #endif
 
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
@@ -525,7 +526,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 // separate process. MSAL does not have control over this
                 // browser, but once the user finishes authentication, the web
                 // page is redirected in such a way that MSAL can intercept the
-                // Uri.  MSAL cannot detect if the user navigates away or simply
+                // Uri. MSAL cannot detect if the user navigates away or simply
                 // closes the browser. Apps using this technique are encouraged
                 // to define a timeout (via CancellationToken). We recommend a
                 // timeout of at least a few minutes, to take into account cases
