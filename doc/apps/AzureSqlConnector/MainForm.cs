@@ -421,7 +421,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             SqlAuthenticationMethod method = (SqlAuthenticationMethod)cmbAuthentication.SelectedItem;
 
             // User ID is meaningful for most methods (some make it optional). Disable for
-            // Integrated/Default/ManagedIdentity-style flows where the OS / environment supplies it.
+            // Integrated flow where the OS / environment supplies it.
             bool userEnabled =
                 method != SqlAuthenticationMethod.ActiveDirectoryIntegrated;
 
