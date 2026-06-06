@@ -105,4 +105,4 @@ or remain unresponsive.
   `NuGet.config` pointing at the governed SqlClient ADO feed (plus a local `packages/` folder for
   developer overrides).
 - This is a sample / diagnostic tool, **not** a product. It does not persist credentials.
-dotnet run --project .\doc\apps\AzureSqlConnector\AzureSqlConnector.csproj
+- From the repo root: `dotnet run --project .\doc\apps\AzureSqlConnector\AzureSqlConnector.csproj`

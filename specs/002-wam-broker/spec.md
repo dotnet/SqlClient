@@ -127,4 +127,4 @@ AcquireTokenAsync
 
 - WAM broker is **always enabled** on Windows when using PCA flows
 - No opt-in connection string keyword needed (aligns with MSAL PCA compliance requirements)
-- Existing `SetIWin32WindowFunc` remains as a backward-compatible API on .NET Framework, delegating to `SetParentActivityOrWindow`
+- Existing `SetIWin32WindowFunc` remains as a backward-compatible .NET Framework API; the new cross-platform API is `SetParentActivityOrWindow`.
