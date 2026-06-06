@@ -1,0 +1,160 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # Configuration with which to build the packages and execute the tests.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
+  - name: buildSuffix
+    type: string
+
+  # Name of the stage that generated the SA password
+  - name: stageNameSecrets
+    type: string
+
+  # Platform Parameters ====================================================
+
+  # Display name of the platform. This will be formatted into the job's official name as well as
+  # the display name for the job. As such, only alphanumeric and _ characters are permitted.
+  - name: platformDisplayName
+    type: string
+
+  # TFM name of the version of dotnet to run this test with.
+  - name: platformDotnet
+    type: string
+
+  # Name of the image in the customized ADO pool to use to execute this job.
+  - name: platformImage
+    type: string
+
+  # General name of the operating system that will be used to execute the job.
+  # Note: This is used at compile time to determine which SQL Server setup steps to use. As such,
+  #    this cannot be replaced with the agent's operating system, as this value is only available
+  #    at runtime.
+  - name: platformOperatingSystem
+    type: string
+    values:
+      - Windows
+      - Linux
+
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
+  # Test Configuration Parameters ==========================================
+
+  # Azure Key Vault tenant ID that will be set in the config.json file.
+  - name: azureKeyVaultTenantId
+    type: string
+
+  # Azure Key Vault URL that will be set in the config.json file.
+  - name: azureKeyVaultUrl
+    type: string
+
+  # Connection string using named pipes that will be set in the config.json file.
+  - name: connectionStringNp
+    type: string
+
+  # Connection string using TCP that will be set in the config.json file.
+  - name: connectionStringTcp
+    type: string
+
+  # Path to use for file stream tests, this value will be stored in the config.json file.
+  - name: fileStreamDirectory
+    type: string
+
+  # Name of the local DB application name for localdb tests, this value will be stored in the
+  # config.json
+  - name: localDbAppName
+    type: string
+
+  # Name of the local DB shared instance name for localdb tests, this value will be stored in the
+  # config.json
+  - name: localDbSharedInstanceName
+    type: string
+
+jobs:
+  - job: "test_${{ parameters.platformDisplayName }}_sqlclient_manual"
+    displayName: "sqlclient_manual_${{ parameters.platformDisplayName }}"
+
+    pool:
+      name: ${{ parameters.poolName }}
+      demands:
+        - imageOverride -equals ${{ parameters.platformImage }}
+
+    variables:
+      # Bring the generated SA password from the secrets stage into scope for this test stage.
+      # Note: Because this is set at runtime, it must be referenced as `$(saPassword)`.
+      - name: saPassword
+        value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
+
+    steps:
+      # Install the version of the dotnet runtime we will use to execute the test target.
+      - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
+        parameters:
+          runtimeVersion: ${{ parameters.platformDotnet }}
+
+      # Configure the local SQL Server instance
+      - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
+        parameters:
+          fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+          operatingSystem: ${{ parameters.platformOperatingSystem }}
+          saPassword: $(saPassword)
+
+      # Assign the generated SA password to the $Password field. This will allow $(Password) to be
+      # be replaced in connection strings with whatever set in the secrets stage.
+      - pwsh: |
+          $password = "$(saPassword)"
+          Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
+        displayName: Set Connection String Password
+
+      # Write configuration information to the config.json file.
+      - pwsh: |
+          # Read existing default configuration from file
+          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
+          $configDirectory = "$(Agent.TempDirectory)/mds-config"
+          $configPath = Join-Path $configDirectory "config.json"
+          $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
+
+          # Update the config values
+          $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
+          $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
+          $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
+          $config.AzureKeyVaultTenantId = "${{ parameters.azureKeyVaultTenantId }}"
+          $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
+          $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
+          $config.ManagedIdentitySupported = $true
+          $config.SupportsIntegratedSecurity = $false
+
+          if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
+              $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
+          } else {
+              $config.FileStreamDirectory = ""
+          }
+
+          # Write config object to config file
+          New-Item -ItemType Directory -Force -Path $configDirectory | Out-Null
+          $config | ConvertTo-Json | Set-Content $configPath
+
+          # Set generated config file path to environment variable
+          Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
+        displayName: 'Generate manual test config'
+
+      # Execute TestSqlClientManual target from build.proj
+      - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          buildSuffix: ${{ parameters.buildSuffix }}
+
+          packageShortName: "SqlClient"
+          testFramework: ${{ parameters.platformDotnet }}
+          testProject: "Manual"
+

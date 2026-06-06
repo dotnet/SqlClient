@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateRowsAffected(rowsAffected4);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonWriteAsync()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateRowsAffected(rowsAffected4);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonRead()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateRows(reader2);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonReadAsync()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             await ValidateRowsAsync(reader2);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestNullJson()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateNullJson(reader);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonAPIs()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -299,10 +299,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWithMARS()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString + "MultipleActiveResultSets=True;");
+            SqlConnectionStringBuilder csbMarsEnabledTcp = new(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true };
+            using SqlConnection connection = new(csbMarsEnabledTcp.ConnectionString);
             connection.Open();
 
             using Table jsonTable1 = new(connection, nameof(TestJsonWithMARS), "(Data json)");
@@ -339,7 +340,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonSPParams()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);

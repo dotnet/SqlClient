@@ -1,0 +1,128 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This stage is meant to perform a sanity check of the source code at the current point in time.
+# Although the test targets will implicitly build the projects they depend on, this stage allows
+# for fast failure of the build if the source code is not in a state that can be built.
+#
+# This stage will also be used to generate nuget packages based on the current source code. These
+# will be uploaded, along with the build output as the artifacts of the build.
+#
+# Developer notes ---
+# * Because we want a single artifact for build output, and we want to minimize overhead for build,
+#   we build all packages as a single job rather than one job per package.
+# * Although theoretically in package build we could arrange build steps to minimize re-building,
+#   build.proj isn't properly aware of how to do this. So, instead, arranging the build steps
+#   alphabetically is the best way to arrange for now.
+
+parameters:
+
+  # Configuration with which to build the packages and execute the tests.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
+  - name: buildSuffix
+    type: string
+
+  # Name to use for the stage. This is parameterized to allow a higher level of the pipeline to
+  # define the name and pass it to sibling stages (ie, test stage) and avoid relying on brittle
+  # hard-coded stage names.
+  - name: stageName
+    type: string
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: Build and Pack Projects
+    dependsOn: []
+
+    jobs:
+      - job: pack_job
+        displayName: Build and Pack Projects
+
+        pool:
+          vmImage: 'ubuntu-latest'
+
+        steps:
+          # Install dotnet SDK and restore tools
+          - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
+
+          # ################################################################
+          # Build/Pack Microsoft.Data.SqlClient
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
+            parameters:
+              condition: succeeded() # Only run if dotnet was installed successfully
+
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              packageShortName: SqlClient
+
+          # ################################################################
+          # Build/Pack Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
+            parameters:
+              condition: succeededOrFailed()
+
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              packageShortName: AkvProvider
+
+          # ################################################################
+          # Build/Pack Microsoft.Data.SqlClient.Extensions.Abstractions
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
+            parameters:
+              condition: succeededOrFailed()
+
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              packageShortName: Abstractions
+
+          # ################################################################
+          # Build/Pack Microsoft.Data.SqlClient.Extensions.Azure
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
+            parameters:
+              condition: succeededOrFailed()
+
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              packageShortName: Azure
+
+          # ################################################################
+          # Build/Pack Microsoft.Data.SqlClient.Internal.Logging
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
+            parameters:
+              condition: succeededOrFailed()
+
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              packageShortName: Logging
+
+          # ################################################################
+          # Build/Pack Microsoft.SqlServer.Server
+          - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
+            parameters:
+              condition: succeededOrFailed()
+
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              packageShortName: SqlServer
+
+          # Emit the build output
+          - script: tree -a $(BUILD_OUTPUT)
+            displayName: Output Build Output Tree
+            condition: succeededOrFailed()
+
+          # Upload the build output as the artifact of the job
+          - publish: $(BUILD_OUTPUT)
+            artifact: build_and_pack_projects
+            condition: succeededOrFailed()
+
+
+
+

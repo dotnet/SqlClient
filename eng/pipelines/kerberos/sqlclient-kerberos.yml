@@ -10,7 +10,7 @@
 # Daily Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
 # Replaces the Classic "Test-SqlClient-Kerberos-Azure" pipeline.
 #
-# Schedule: daily at 07:00 UTC on main.
+# Schedule: daily at 07:00 UTC on internal/main.
 #
 # Job breakdown (10 total):
 #   Stage: windows           → 7 jobs  (net462 + net8/9/10 × NativeSNI/ManagedSNI)
@@ -42,7 +42,7 @@ schedules:
     displayName: Daily run (07:00 UTC)
     branches:
       include:
-        - main
+        - internal/main
     always: true
 
 name: $(date:yyyyMMdd)$(rev:.r)
@@ -127,9 +127,13 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
@@ -220,9 +224,13 @@ stages:
             fetchTags: false
 
           # --- Install .NET SDK and runtimes ---
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+          # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
@@ -283,7 +291,7 @@ stages:
     dependsOn:
       - windows
       - linux
-    condition: succeededOrFailed()
+    condition: succeeded()
     jobs:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
         parameters:
