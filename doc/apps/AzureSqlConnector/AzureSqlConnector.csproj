@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net481</TargetFramework>
+    <RootNamespace>Microsoft.Data.SqlClient.Samples.AzureSqlConnector</RootNamespace>
+    <AssemblyName>AzureSqlConnector</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Platforms>AnyCPU</Platforms>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- SqlClient Packages -->
+  <!-- NOTE: Pre-Requisites:
+      1. `dotnet tool restore` must be run at the solution level to ensure all required tools are available for the build.
+      2. `msbuild` must be run from the root of the repository to ensure all dependencies are correctly resolved. -->
+  <!-- Provides Microsoft.Data.SqlClient from the local source project -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\Azure.csproj" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+</Project>
