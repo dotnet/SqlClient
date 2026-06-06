@@ -57,15 +57,14 @@ The `ActiveDirectoryAuthenticationProvider` is in `src/Microsoft.Data.SqlClient.
 1. **Make class `partial`**: Split `ActiveDirectoryAuthenticationProvider` into platform-specific files
 2. **Add WAM broker**: Configure `BrokerOptions` on `PublicClientApplicationBuilder` on Windows
 3. **Parent window handle**: Provide window handle for WAM dialog (required by WAM on Windows)
-4. **Cross-platform `SetParentActivityOrWindow`**: Replace `#if NETFRAMEWORK`-only `SetIWin32WindowFunc` with cross-platform `Func<object>` API
-
+4. **Cross-platform `SetParentActivityOrWindow`**: Add a cross-platform `Func<object>` API for parenting broker UI (in addition to the existing .NET Framework-only `SetIWin32WindowFunc`)
 ### New Public APIs
 
 ```csharp
 public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
 {
     // Cross-platform API to set the parent window/activity for WAM dialog
-    // On Windows: accepts IntPtr (window handle) or IWin32Window via Func<object>
+    // On Windows: accepts an IntPtr window handle (and on .NET Framework also accepts IWin32Window)
     // On Unix: no-op (WAM not available)
     public void SetParentActivityOrWindow(Func<object> parentActivityOrWindowFunc);
 }

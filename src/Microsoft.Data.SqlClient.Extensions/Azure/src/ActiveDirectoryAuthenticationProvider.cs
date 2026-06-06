@@ -240,12 +240,12 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 * For the remaining Active Directory authentication methods, we use MSAL.NET to acquire tokens.
                 * To do that, we need to construct a PublicClientApplication instance.
                 *
-                * With WAM broker support in MSAL enabled, on Windows we use a fixed redirect URI in the format 
-                * "ms-appx-web://microsoft.aad.brokerplugin/{clientId}" where {clientId} is the application (client) ID of the calling application.
+                * With WAM broker support in MSAL enabled, on Windows we use a fixed redirect URI in the format
+                * "ms-appx-web://microsoft.aad.brokerplugin/{clientId}" where {clientId} is the client ID configured for this provider
+                * (by default SqlClient's first-party app id, but it can be overridden via the constructor).
                 * This is required for MSAL to correctly route the authentication request to the WAM broker and for WAM to route the response back to MSAL.
                 *
-                * This means that an application using ActiveDirectoryAuthenticationProvider must have a redirect URI in the above format 
-                * registered in Entra ID in order to use WAM brokered authentication on Windows.
+                * This means the Entra ID app registration for that client ID must include the above redirect URI to use WAM brokered authentication on Windows.
             */
             string redirectUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? _wamBrokerRedirectUriPrefix + _applicationClientId

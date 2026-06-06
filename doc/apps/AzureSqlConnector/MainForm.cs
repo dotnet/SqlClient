@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 {
@@ -254,7 +255,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             try
             {
                 Clipboard.SetText(txtConnectionString.Text);
-                SetStatus("Connection string copied to clipboard.", isError: false);            }
+                SetStatus("Connection string copied to clipboard.", isError: false);
+            }
             catch (Exception ex)
             {
                 SetStatus("Failed to copy to clipboard.", isError: true);

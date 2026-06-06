@@ -31,6 +31,17 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
             {
                 return hwnd;
             }
+#if NETFRAMEWORK
+            if (parentWindow is System.Windows.Forms.IWin32Window win32Window)
+            {
+                return win32Window.Handle;
+            }
+#endif
+            if (parentWindow is not null)
+            {
+                throw new InvalidOperationException($"{nameof(SetParentActivityOrWindow)} expects the callback to return an IntPtr window handle" +
+                    " (or an IWin32Window on .NET Framework)." );
+            }
         }
 
         // Fall back to finding the console window, then getting its root owner.
