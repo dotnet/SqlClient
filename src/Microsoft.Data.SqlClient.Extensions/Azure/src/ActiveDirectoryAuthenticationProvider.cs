@@ -32,7 +32,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
     private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-    private const string _wamBrokerRedirectUriPrefix = $"ms-appx-web://microsoft.aad.brokerplugin/";
+    private const string _wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
+    private const string _systemBrowserRedirectUri = "http://localhost";
     private const string s_defaultScopeSuffix = "/.default";
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
@@ -246,7 +247,9 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 * This means that an application using ActiveDirectoryAuthenticationProvider must have a redirect URI in the above format 
                 * registered in Entra ID in order to use WAM brokered authentication on Windows.
             */
-            string redirectUri = _wamBrokerRedirectUriPrefix + _applicationClientId;
+            string redirectUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? _wamBrokerRedirectUriPrefix + _applicationClientId
+                : _systemBrowserRedirectUri;
 
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
