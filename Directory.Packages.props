@@ -1,4 +1,33 @@
 <Project>
+
+  <!-- ===================================================================== -->
+  <!--
+    Versions.props import strategy:
+
+    Each product has a Versions.props that computes its version properties (e.g.
+    SqlClientPackageVersion).  These files can be imported from two places:
+
+      1. Here, in Directory.Packages.props (Package mode only) — imports ALL
+         Versions.props early so that centrally-managed PackageVersion items can
+         reference the computed version values for sibling package pinning.
+
+      2. In each product's own csproj (conditional) — imports the product's own
+         Versions.props so standalone / Project-mode builds still get versions.
+
+    To prevent double-evaluation when both paths fire, every Versions.props sets
+    an import-guard property (e.g. SqlClientVersionsImported=true) on first load.
+    The csproj-level import checks that guard and becomes a no-op if the file was
+    already imported here.
+  -->
+  <ImportGroup Condition="'$(ReferenceType)' == 'Package'">
+    <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
+    <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Versions.props" />
+    <Import Project="src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props" />
+  </ImportGroup>
+
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!--
@@ -14,21 +43,11 @@
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
-  <!-- Ordered from least dependent to most dependent, and then alphabetically. -->
-
-  <ItemGroup>
-    <!--
-      We never reference this package via its project, so we always need a
-      version specified.
-    -->
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
-  </ItemGroup>
-
-  <!--
-    We only need other driver package versions specified when building via
-    package references.
-  -->
+  <!-- The driver packages need version numbers when we build via Package references. -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageVersion
+      Include="Microsoft.SqlServer.Server"
+      Version="$(SqlServerPackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Internal.Logging"
       Version="$(LoggingPackageVersion)" />
@@ -36,11 +55,11 @@
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
       Version="$(AbstractionsPackageVersion)" />
     <PackageVersion
-      Include="Microsoft.Data.SqlClient.Extensions.Azure"
-      Version="$(AzurePackageVersion)" />
-    <PackageVersion
       Include="Microsoft.Data.SqlClient"
       Version="$(SqlClientPackageVersion)" />
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzurePackageVersion)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
       Version="$(AkvProviderPackageVersion)" />
@@ -106,12 +125,14 @@
 
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.13" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="9.0.16" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.13" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.13" />
   </ItemGroup>
 
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
   </ItemGroup>

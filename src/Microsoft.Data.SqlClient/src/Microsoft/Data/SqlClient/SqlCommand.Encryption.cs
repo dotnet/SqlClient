@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -1016,7 +1017,7 @@ namespace Microsoft.Data.SqlClient
                     databaseId: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.DbId),
                     cekId: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyId),
                     cekVersion: ds.GetInt32((int)DescribeParameterEncryptionResultSet1.KeyVersion),
-                    cekMdVersion: keyMdVersion,
+                    cekMdVersion: BinaryPrimitives.ReadUInt64LittleEndian(keyMdVersion),
                     keyPath: keyPath,
                     keyStoreName: providerName,
                     algorithmName: ds.GetString((int)DescribeParameterEncryptionResultSet1.KeyEncryptionAlgorithm));

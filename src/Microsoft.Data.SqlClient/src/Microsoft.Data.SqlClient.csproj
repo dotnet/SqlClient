@@ -50,7 +50,10 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../Versions.props" />
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="../Versions.props" Condition="'$(SqlClientVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlClientFileVersion)</FileVersion>
@@ -59,10 +62,23 @@
 
   <!-- Strong name signing ============================================= -->
   <!-- Strong naming is being done in Directory.Build.props -->
-  <!-- If we're not signing, we are permitted to expose our internals to tests. -->
+
+  <!-- Unsigned: expose internals to UnitTests in any reference mode. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!--
+    Signed + Package mode: expose internals to UnitTests signed with the test key.
+    Signed + Project mode is intentionally omitted: production-signed assemblies should not
+    grant internal access to test assemblies during local development. Tests that need internals
+    in Project mode run unsigned; only the CI package-validation pipeline uses signed packages.
+  -->
+  <ItemGroup Condition="'$(SigningKeyPath)' != '' AND '$(ReferenceType)' == 'Package'">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>UnitTests, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
@@ -87,6 +103,7 @@
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
     <AbstractionsVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props</AbstractionsVersionsPropsPath>
     <LoggingVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props</LoggingVersionsPropsPath>
+    <SqlServerVersionsPropsPath>$(RepoRoot)/src/Microsoft.SqlServer.Server/Versions.props</SqlServerVersionsPropsPath>
 
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
 
@@ -129,13 +146,15 @@
   </PropertyGroup>
 
   <!--
-    Conditionally import the Abstractions and Logging Versions.props files to obtain their
-    calculated package version values.
+    Conditionally import sibling Versions.props files to obtain their calculated package
+    version values for nuspec dependency token expansion.
   -->
   <Import Project="$(AbstractionsVersionsPropsPath)"
     Condition="'$(AbstractionsPackageVersion)' == '' AND Exists('$(AbstractionsVersionsPropsPath)')" />
   <Import Project="$(LoggingVersionsPropsPath)"
     Condition="'$(LoggingPackageVersion)' == '' AND Exists('$(LoggingVersionsPropsPath)')" />
+  <Import Project="$(SqlServerVersionsPropsPath)"
+    Condition="'$(SqlServerPackageVersion)' == '' AND Exists('$(SqlServerVersionsPropsPath)')" />
 
   <!--
     SDK pack does not reliably substitute dependency version tokens in this nuspec flow.
@@ -173,18 +192,24 @@
     <PropertyGroup>
       <CommitId Condition="'$(CommitId)' == ''">$(SourceRevisionId)</CommitId>
       <NuspecProperties>$(NuspecProperties);COMMITID=$(CommitId)</NuspecProperties>
-      <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
-      <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>
     </PropertyGroup>
 
+    <!-- Check for empty sibling package versions. -->
+    <PropertyGroup>
+      <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
+      <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>
+      <_SqlServerPackageVersionTrimmed>$([System.String]::Copy('$(SqlServerPackageVersion)').Trim())</_SqlServerPackageVersionTrimmed>
+    </PropertyGroup>
     <Error Condition="'$(_AbstractionsPackageVersionTrimmed)' == ''"
       Text="AbstractionsPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionAbstractions=&lt;version&gt;; when packing the project directly, set -p:AbstractionsPackageVersion=&lt;version&gt;; otherwise ensure the Abstractions Versions.props import can resolve a value." />
     <Error Condition="'$(_LoggingPackageVersionTrimmed)' == ''"
       Text="LoggingPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionLogging=&lt;version&gt;; when packing the project directly, set -p:LoggingPackageVersion=&lt;version&gt;; otherwise ensure the Logging Versions.props import can resolve a value." />
+    <Error Condition="'$(_SqlServerPackageVersionTrimmed)' == ''"
+      Text="SqlServerPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionSqlServer=&lt;version&gt;; when packing the project directly, set -p:SqlServerPackageVersion=&lt;version&gt;; otherwise ensure the SqlServer Versions.props import can resolve a value." />
 
     <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
     <PropertyGroup>
-      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)'))</_SqlClientPackNuspecExpandedText>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('$SqlServerPackageVersion$','$(SqlServerPackageVersion)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
                       Lines="$(_SqlClientPackNuspecExpandedText)"
@@ -264,6 +289,7 @@
     <Reference Include="System.Transactions" />
 
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI" ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
