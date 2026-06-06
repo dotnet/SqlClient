@@ -32,7 +32,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
     private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-    private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
     private const string _wamBrokerRedirectUriPrefix = $"ms-appx-web://microsoft.aad.brokerplugin/";
     private const string s_defaultScopeSuffix = "/.default";
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
@@ -237,20 +236,17 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
 
             /*
-                * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
-                * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
-                * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
+                * For the remaining Active Directory authentication methods, we use MSAL.NET to acquire tokens.
+                * To do that, we need to construct a PublicClientApplication instance.
                 *
-                * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
-                */
+                * With WAM broker support in MSAL enabled, on Windows we use a fixed redirect URI in the format 
+                * "ms-appx-web://microsoft.aad.brokerplugin/{clientId}" where {clientId} is the application (client) ID of the calling application.
+                * This is required for MSAL to correctly route the authentication request to the WAM broker and for WAM to route the response back to MSAL.
+                *
+                * This means that an application using ActiveDirectoryAuthenticationProvider must have a redirect URI in the above format 
+                * registered in Entra ID in order to use WAM brokered authentication on Windows.
+            */
             string redirectUri = _wamBrokerRedirectUriPrefix + _applicationClientId;
-
-            // #if NETSTANDARD
-            // if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
-            // {
-            //     redirectUri = "http://localhost";
-            // }
-            // #endif
 
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
