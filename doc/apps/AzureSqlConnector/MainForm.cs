@@ -97,10 +97,9 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             try
             {
                 SqlConnectionStringBuilder builder = BuildConnectionString();
-                txtConnectionString.Text = builder.ConnectionString;
+                txtConnectionString.Text = MaskPassword(builder);
                 SetStatus("Connection string built successfully.", isError: false);
                 AppendStatus("Connection string built:\r\n" + MaskPassword(builder));
-            }
             catch (Exception ex)
             {
                 txtConnectionString.Text = string.Empty;
@@ -115,8 +114,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             try
             {
                 builder = BuildConnectionString();
-                txtConnectionString.Text = builder.ConnectionString;
-            }
+                txtConnectionString.Text = MaskPassword(builder);
             catch (Exception ex)
             {
                 SetStatus("Failed to build connection string.", isError: true);
@@ -166,10 +164,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
         {
             SqlConnectionStringBuilder builder;
             try
-            {
                 builder = BuildConnectionString();
-                txtConnectionString.Text = builder.ConnectionString;
-            }
+                txtConnectionString.Text = MaskPassword(builder);
             catch (Exception ex)
             {
                 SetStatus("Failed to build connection string.", isError: true);
@@ -254,7 +250,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
             try
             {
-                Clipboard.SetText(txtConnectionString.Text);
+                Clipboard.SetText(BuildConnectionString().ConnectionString);
                 SetStatus("Connection string copied to clipboard.", isError: false);
             }
             catch (Exception ex)
