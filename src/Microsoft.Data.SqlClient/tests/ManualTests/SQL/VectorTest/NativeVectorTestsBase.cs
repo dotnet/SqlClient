@@ -95,11 +95,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private readonly string _connectionString;
         private readonly SqlConnection _managementConnection;
         private readonly Table _vectorTable;
+        private readonly Table _bulkCopySourceTable;
 
         private readonly string _selectCommand;
         private readonly string _insertCommand;
 
-        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
         private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
 
         // xUnit only allows MemberData for a test to point to static methods, properties and variables.
@@ -118,13 +118,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             _connectionString = DataTestUtility.TCPConnectionString;
             _managementConnection = new SqlConnection(_connectionString);
             _vectorTable = new Table(_managementConnection, "VectorTestTable", s_tableDefinition);
+            _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", s_tableDefinition);
 
             _selectCommand = string.Format(s_selectCommandTemplate, _vectorTable.Name);
             _insertCommand = string.Format(s_insertCommandTemplate, _vectorTable.Name);
 
             using var connection = new SqlConnection(_connectionString);
             connection.Open();
-            DataTestUtility.CreateTable(connection, s_bulkCopySrcTableName, s_tableDefinition);
             DataTestUtility.CreateSP(connection, s_storedProcName, string.Format(s_spBodyTemplate, _vectorTable.Name));
         }
 
@@ -132,11 +132,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         {
             using (_managementConnection)
             using (_vectorTable)
+            using (_bulkCopySourceTable)
             { }
 
             using var connection = new SqlConnection(_connectionString);
             connection.Open();
-            DataTestUtility.DropTable(connection, s_bulkCopySrcTableName);
             DataTestUtility.DropStoredProcedure(connection, s_storedProcName);
         }
 
@@ -380,7 +380,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
                 case 1:
                     // Use SqlServer table as source
-                    var insertCmd = new SqlCommand($"insert into {s_bulkCopySrcTableName} values ({VectorParameterName})", sourceConnection);
+                    var insertCmd = new SqlCommand($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
                     var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
 
                     // Insert 2 rows with one non-null and null value
@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     insertCmd.Parameters.Clear();
                     break;
                 case 2:
-                    table = new DataTable(s_bulkCopySrcTableName);
+                    table = new DataTable(_bulkCopySourceTable.Name);
                     table.Columns.Add("Id", typeof(int));
                     table.Columns.Add(VectorColumnName, typeof(SqlVector<TElement>));
                     table.Rows.Add(1, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
@@ -406,7 +406,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
 
             //Bulkcopy from sql server table to destination table
-            using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, {VectorColumnName} FROM {s_bulkCopySrcTableName}", sourceConnection);
+            using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
             using SqlDataReader reader = sourceDataCommand.ExecuteReader();
 
             // Verify that the destination table is empty before bulk copy
@@ -480,7 +480,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
                 case 1:
                     // Use SqlServer table as source
-                    var insertCmd = new SqlCommand($"insert into {s_bulkCopySrcTableName} values ({VectorParameterName})", sourceConnection);
+                    var insertCmd = new SqlCommand($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
                     var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
 
                     // Insert 2 rows with one non-null and null value
@@ -493,7 +493,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     insertCmd.Parameters.Clear();
                     break;
                 case 2:
-                    table = new DataTable(s_bulkCopySrcTableName);
+                    table = new DataTable(_bulkCopySourceTable.Name);
                     table.Columns.Add("Id", typeof(int));
                     table.Columns.Add(VectorColumnName, typeof(SqlVector<TElement>));
                     table.Rows.Add(1, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
@@ -504,7 +504,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
 
             //Bulkcopy from sql server table to destination table
-            using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, {VectorColumnName} FROM {s_bulkCopySrcTableName}", sourceConnection);
+            using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
             using SqlDataReader reader = await sourceDataCommand.ExecuteReaderAsync();
 
             // Verify that the destination table is empty before bulk copy
