@@ -25,6 +25,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public abstract bool IsSupported { get; }
 
+        public abstract string SqlServerTypeName { get; }
+
         public IEnumerable<object[]> TestData => GetVectorFloat32TestData();
 
         public static IEnumerable<object[]> GetVectorFloat32TestData()
@@ -71,14 +73,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
         private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
         private static readonly int s_vectorDimensions = VectorFloat32TestData.vectorColumnLength;
-        private static readonly string s_bulkCopySrcTableDef = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}) NULL)";
-        private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}) NULL)";
+        private static readonly string s_bulkCopySrcTableDef = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
+        private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
         private static readonly string s_selectCmdString = $"SELECT {VectorColumnName} FROM {s_tableName} ORDER BY Id DESC";
         private static readonly string s_insertCmdString = $"INSERT INTO {s_tableName} ({VectorColumnName}) VALUES ({VectorParameterName})";
         private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
         private static readonly string s_storedProcBody = $@"
-                {VectorParameterName} vector({s_vectorDimensions}),   -- Input: Serialized float[] as JSON string
-                {VectorOutputParameterName} vector({s_vectorDimensions}) OUTPUT  -- Output: Echoed back from latest inserted row
+                {VectorParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized float[] as JSON string
+                {VectorOutputParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
                 BEGIN
                 SET NOCOUNT ON;
