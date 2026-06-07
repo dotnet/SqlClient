@@ -90,6 +90,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private readonly string _selectCommand;
         private readonly string _insertCommand;
 
+        private bool _disposed;
+
         // xUnit only allows MemberData for a test to point to static methods, properties and variables.
         // This presents a problem when the sample data needs to change based upon the element type of
         // the SqlVector, so this compromises: it instantiates a class derived from NativeVectorTestDataBase,
@@ -135,14 +137,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public void Dispose()
         {
-            using (_managementConnection)
-            using (_vectorTable)
-            using (_bulkCopySourceTable)
-            using (_vectorProcedure)
-            { }
-
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _vectorProcedure?.Dispose();
+                _bulkCopySourceTable?.Dispose();
+                _vectorTable?.Dispose();
+                _managementConnection?.Dispose();
+            }
+
+            _disposed = true;
+        }
+
+        ~NativeVectorTestsBase() =>
+            Dispose(false);
 
         /// <summary>
         /// Wraps an inbound <see cref="SqlVector{T}"/> in a <see cref="SqlParameter"/> according to
