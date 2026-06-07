@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
-    public abstract class VectorTestDataBase<TElement>
+    public abstract class NativeVectorTestDataBase<TElement>
         where TElement : unmanaged
     {
         public const int VectorHeaderSize = 8;
@@ -22,6 +22,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public static int vectorColumnLength = testData.Length;
         // Incorrect size for SqlParameter.Size
         public static int IncorrectParamSize = 3234;
+
+        public abstract bool IsSupported { get; }
+
+        public IEnumerable<object[]> TestData => GetVectorFloat32TestData();
+
         public static IEnumerable<object[]> GetVectorFloat32TestData()
         {
             // Pattern 1-4 with SqlVector<float>(values: testData)
@@ -56,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
     public abstract class NativeVectorTestsBase<TElement, TTestData> : IDisposable
         where TElement : unmanaged
-        where TTestData : VectorTestDataBase<TElement>
+        where TTestData : NativeVectorTestDataBase<TElement>, new()
     {
         private const string VectorColumnName = "VectorData";
         private const string VectorParameterName = "@VectorData";
@@ -87,6 +92,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 FROM {s_tableName}
                 ORDER BY Id DESC;
                 END;";
+
+        // xUnit only allows MemberData for a test to point to static methods, properties and variables.
+        // This presents a problem when the sample data needs to change based upon the element type of
+        // the SqlVector, so this compromises: it instantiates a class derived from NativeVectorTestDataBase,
+        // then projects the relevant fields from it as static properties in this base class.
+        private static TTestData TestDataInstance =>
+            field ??= new();
+
+        public static bool IsSupported => TestDataInstance.IsSupported;
+
+        public static IEnumerable<object[]> TestData => TestDataInstance.TestData;
 
         public NativeVectorTestsBase()
         {
@@ -151,8 +167,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
+        [ConditionalTheory(nameof(IsSupported))]
+        [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public void TestSqlVectorFloat32ParameterInsertionAndReads(
         int pattern,
         object value,
@@ -217,8 +233,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
+        [ConditionalTheory(nameof(IsSupported))]
+        [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestSqlVectorFloat32ParameterInsertionAndReadsAsync(
         int pattern,
         object value,
@@ -251,8 +267,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await ValidateInsertedDataAsync(conn, expectedValues, expectedLength);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
+        [ConditionalTheory(nameof(IsSupported))]
+        [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public void TestStoredProcParamsForVectorFloat32(
         int pattern,
         object value,
@@ -308,8 +324,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
-        [MemberData(nameof(VectorFloat32TestData.GetVectorFloat32TestData), MemberType = typeof(VectorFloat32TestData), DisableDiscoveryEnumeration = true)]
+        [ConditionalTheory(nameof(IsSupported))]
+        [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestStoredProcParamsForVectorFloat32Async(
         int pattern,
         object value,
@@ -365,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalTheory(nameof(IsSupported))]
         [InlineData(1)]
         [InlineData(2)]
         public void TestBulkCopyFromSqlTable(int bulkCopySourceMode)
@@ -464,7 +480,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Length);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalTheory(nameof(IsSupported))]
         [InlineData(1)]
         [InlineData(2)]
         public async Task TestBulkCopyFromSqlTableAsync(int bulkCopySourceMode)
@@ -564,7 +580,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalFact(nameof(IsSupported))]
         public void TestGetFieldTypeReturnsSqlVectorForVectorColumn()
         {
             using var connection = new SqlConnection(s_connectionString);
@@ -599,7 +615,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(VectorFloat32TestData.testData, typedValue.Memory.ToArray());
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        [ConditionalFact(nameof(IsSupported))]
         public void TestInsertVectorsFloat32WithPrepare()
         {
             SqlConnection conn = new SqlConnection(s_connectionString);
