@@ -70,16 +70,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private const string VectorParameterName = "@VectorData";
         private const string VectorOutputParameterName = "@OutputVectorData";
 
-        private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
-        private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
-        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
         private static readonly int s_vectorDimensions = TestDataInstance.ValidSampleScalarDataLength;
-        private static readonly string s_bulkCopySrcTableDef = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
         private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
-        private static readonly string s_selectCmdString = $"SELECT {VectorColumnName} FROM {s_tableName} ORDER BY Id DESC";
-        private static readonly string s_insertCmdString = $"INSERT INTO {s_tableName} ({VectorColumnName}) VALUES ({VectorParameterName})";
-        private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
-        private static readonly string s_storedProcBody = $@"
+        private static readonly string s_spBodyTemplate = $@"
                 {VectorParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized TElement[] as JSON string
                 {VectorOutputParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
@@ -95,6 +88,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 FROM {s_tableName}
                 ORDER BY Id DESC;
                 END;";
+        private static readonly string s_selectCommandTemplate = $"SELECT {VectorColumnName} FROM {s_tableName} ORDER BY Id DESC";
+        private static readonly string s_insertCommandTemplate = $"INSERT INTO {s_tableName} ({VectorColumnName}) VALUES ({VectorParameterName})";
+
+        private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
+        private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
+        private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
+        private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
 
         // xUnit only allows MemberData for a test to point to static methods, properties and variables.
         // This presents a problem when the sample data needs to change based upon the element type of
@@ -112,8 +112,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using var connection = new SqlConnection(s_connectionString);
             connection.Open();
             DataTestUtility.CreateTable(connection, s_tableName, s_tableDefinition);
-            DataTestUtility.CreateTable(connection, s_bulkCopySrcTableName, s_bulkCopySrcTableDef);
-            DataTestUtility.CreateSP(connection, s_storedProcName, s_storedProcBody);
+            DataTestUtility.CreateTable(connection, s_bulkCopySrcTableName, s_tableDefinition);
+            DataTestUtility.CreateSP(connection, s_storedProcName, s_spBodyTemplate);
         }
 
         public void Dispose()
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         private void ValidateInsertedData(SqlConnection connection, TElement[] expectedData, int expectedLength)
         {
-            using var selectCmd = new SqlCommand(s_selectCmdString, connection);
+            using var selectCmd = new SqlCommand(s_selectCommandTemplate, connection);
             using var reader = selectCmd.ExecuteReader();
             Assert.True(reader.Read(), "No data found in the table.");
 
@@ -197,7 +197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using var conn = new SqlConnection(s_connectionString);
             conn.Open();
 
-            using var insertCmd = new SqlCommand(s_insertCmdString, conn);
+            using var insertCmd = new SqlCommand(s_insertCommandTemplate, conn);
             SqlParameter param = GetParameterByPattern(pattern, value);
 
             insertCmd.Parameters.Add(param);
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         private async Task ValidateInsertedDataAsync(SqlConnection connection, TElement[] expectedData, int expectedLength)
         {
-            using var selectCmd = new SqlCommand(s_selectCmdString, connection);
+            using var selectCmd = new SqlCommand(s_selectCommandTemplate, connection);
             using var reader = await selectCmd.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync(), "No data found in the table.");
 
@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using var conn = new SqlConnection(s_connectionString);
             await conn.OpenAsync();
 
-            using var insertCmd = new SqlCommand(s_insertCmdString, conn);
+            using var insertCmd = new SqlCommand(s_insertCommandTemplate, conn);
             SqlParameter param = GetParameterByPattern(pattern, value);
 
             insertCmd.Parameters.Add(param);
@@ -270,7 +270,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             //Create SP for test
             using var conn = new SqlConnection(s_connectionString);
             conn.Open();
-            DataTestUtility.CreateSP(conn, s_storedProcName, s_storedProcBody);
+            DataTestUtility.CreateSP(conn, s_storedProcName, s_spBodyTemplate);
             using var command = new SqlCommand(s_storedProcName, conn)
             {
                 CommandType = CommandType.StoredProcedure
@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             //Create SP for test
             using var conn = new SqlConnection(s_connectionString);
             await conn.OpenAsync();
-            DataTestUtility.CreateSP(conn, s_storedProcName, s_storedProcBody);
+            DataTestUtility.CreateSP(conn, s_storedProcName, s_spBodyTemplate);
             using var command = new SqlCommand(s_storedProcName, conn)
             {
                 CommandType = CommandType.StoredProcedure
@@ -555,14 +555,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             connection.Open();
 
             // Insert a row so we can query it
-            using (var insertCmd = new SqlCommand(s_insertCmdString, connection))
+            using (var insertCmd = new SqlCommand(s_insertCommandTemplate, connection))
             {
                 var param = insertCmd.Parameters.Add(VectorParameterName, SqlDbTypeExtensions.Vector);
                 param.Value = new SqlVector<TElement>(TestDataInstance.SampleScalarData);
                 insertCmd.ExecuteNonQuery();
             }
 
-            using var selectCmd = new SqlCommand(s_selectCmdString, connection);
+            using var selectCmd = new SqlCommand(s_selectCommandTemplate, connection);
             using var reader = selectCmd.ExecuteReader();
 
             // Verify GetFieldType returns SqlVector<TElement> for the vector column
@@ -588,7 +588,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         {
             SqlConnection conn = new SqlConnection(s_connectionString);
             conn.Open();
-            SqlCommand command = new SqlCommand(s_insertCmdString, conn);
+            SqlCommand command = new SqlCommand(s_insertCommandTemplate, conn);
             SqlParameter vectorParam = new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector);
             command.Parameters.Add(vectorParam);
             command.Prepare();
