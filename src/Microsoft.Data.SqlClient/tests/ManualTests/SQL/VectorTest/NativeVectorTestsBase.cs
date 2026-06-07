@@ -96,11 +96,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private readonly SqlConnection _managementConnection;
         private readonly Table _vectorTable;
         private readonly Table _bulkCopySourceTable;
+        private readonly StoredProcedure _vectorProcedure;
 
         private readonly string _selectCommand;
         private readonly string _insertCommand;
-
-        private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
 
         // xUnit only allows MemberData for a test to point to static methods, properties and variables.
         // This presents a problem when the sample data needs to change based upon the element type of
@@ -119,13 +118,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             _managementConnection = new SqlConnection(_connectionString);
             _vectorTable = new Table(_managementConnection, "VectorTestTable", s_tableDefinition);
             _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", s_tableDefinition);
+            _vectorProcedure = new StoredProcedure(_managementConnection, "VectorsAsVarcharSp", string.Format(s_spBodyTemplate, _vectorTable.Name));
 
             _selectCommand = string.Format(s_selectCommandTemplate, _vectorTable.Name);
             _insertCommand = string.Format(s_insertCommandTemplate, _vectorTable.Name);
-
-            using var connection = new SqlConnection(_connectionString);
-            connection.Open();
-            DataTestUtility.CreateSP(connection, s_storedProcName, string.Format(s_spBodyTemplate, _vectorTable.Name));
         }
 
         public void Dispose()
@@ -133,11 +129,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using (_managementConnection)
             using (_vectorTable)
             using (_bulkCopySourceTable)
+            using (_vectorProcedure)
             { }
-
-            using var connection = new SqlConnection(_connectionString);
-            connection.Open();
-            DataTestUtility.DropStoredProcedure(connection, s_storedProcName);
         }
 
         private static SqlParameter GetParameterByPattern(int pattern, object value) =>
@@ -282,11 +275,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            //Create SP for test
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
-            DataTestUtility.CreateSP(conn, s_storedProcName, string.Format(s_spBodyTemplate, _vectorTable.Name));
-            using var command = new SqlCommand(s_storedProcName, conn)
+            using var command = new SqlCommand(_vectorProcedure.Name, conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -327,11 +318,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            //Create SP for test
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-            DataTestUtility.CreateSP(conn, s_storedProcName, string.Format(s_spBodyTemplate, _vectorTable.Name));
-            using var command = new SqlCommand(s_storedProcName, conn)
+            using var command = new SqlCommand(_vectorProcedure.Name, conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
