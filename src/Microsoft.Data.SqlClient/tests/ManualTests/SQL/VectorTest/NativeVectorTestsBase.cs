@@ -19,6 +19,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
     {
         public const int VectorHeaderSize = 8;
         public abstract TElement[] SampleScalarData { get; }
+
+        public abstract TElement[,] SampleDataSet { get; }
+
         public int ValidSampleScalarDataLength => SampleScalarData.Length;
         // Incorrect size for SqlParameter.Size
         public abstract int IncorrectScalarDataParameterSize { get; }
@@ -581,7 +584,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalFact(nameof(IsSupported))]
-        public void TestInsertVectorsFloat32WithPrepare()
+        public void TestInsertVectorsWithPrepare()
         {
             SqlConnection conn = new SqlConnection(s_connectionString);
             conn.Open();
@@ -589,22 +592,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             SqlParameter vectorParam = new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector);
             command.Parameters.Add(vectorParam);
             command.Prepare();
-            for (int i = 0; i < 10; i++)
+
+            TElement[,] sampleDataSet = TestDataInstance.SampleDataSet;
+            for (int i = 0; i < sampleDataSet.GetLength(0); i++)
             {
-                vectorParam.Value = new SqlVector<float>(new float[] { i + 0.1f, i + 0.2f, i + 0.3f, i + 0.4f, i + 0.5f, i + 0.6f });
+                TElement[] rowData = GetMultidimensionalArraySlice(sampleDataSet, i);
+                vectorParam.Value = new SqlVector<TElement>(rowData);
                 command.ExecuteNonQuery();
             }
+
             SqlCommand validateCommand = new SqlCommand($"SELECT {VectorColumnName} FROM {s_tableName}", conn);
             using SqlDataReader reader = validateCommand.ExecuteReader();
             int rowcnt = 0;
             while (reader.Read())
             {
-                float[] expectedData = new float[] { rowcnt + 0.1f, rowcnt + 0.2f, rowcnt + 0.3f, rowcnt + 0.4f, rowcnt + 0.5f, rowcnt + 0.6f };
-                float[] dbData = reader.GetSqlVector<float>(0).Memory.ToArray();
+                TElement[] expectedData = GetMultidimensionalArraySlice(sampleDataSet, rowcnt);
+                TElement[] dbData = reader.GetSqlVector<TElement>(0).Memory.ToArray();
                 Assert.Equal(expectedData, dbData);
                 rowcnt++;
             }
             Assert.Equal(10, rowcnt);
+
+            static TElement[] GetMultidimensionalArraySlice(TElement[,] sourceArray, int dimension)
+            {
+                TElement[] dst = new TElement[sourceArray.GetLength(1)];
+
+                for (int i = 0; i < dst.Length; i++)
+                {
+                    dst[i] = sourceArray[dimension, i];
+                }
+                return dst;
+            }
         }
     }
 }
