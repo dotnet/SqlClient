@@ -14,7 +14,8 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
-    public static class VectorFloat32TestData
+    public abstract class VectorTestDataBase<TElement>
+        where TElement : unmanaged
     {
         public const int VectorHeaderSize = 8;
         public static float[] testData = new float[] { 1.1f, 2.2f, 3.3f, 1.01f, float.MinValue, -0.0f };
@@ -53,9 +54,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
     }
 
-    public sealed class NativeVectorFloat32Tests : IDisposable
+    public abstract class NativeVectorTestsBase<TElement, TTestData> : IDisposable
+        where TElement : unmanaged
+        where TTestData : VectorTestDataBase<TElement>
     {
-        private readonly ITestOutputHelper _output;
         private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
         private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
         private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
@@ -84,9 +86,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 ORDER BY Id DESC;
                 END;";
 
-        public NativeVectorFloat32Tests(ITestOutputHelper output)
+        public NativeVectorTestsBase()
         {
-            _output = output;
             using var connection = new SqlConnection(s_connectionString);
             connection.Open();
             DataTestUtility.CreateTable(connection, s_tableName, s_tableDefinition);

@@ -5,3 +5,11 @@
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
 
 #nullable enable
+
+public sealed class VectorFloat32TestData : VectorTestDataBase<float>
+{
+}
+
+public sealed class NativeVectorFloat32Tests : NativeVectorTestsBase<float, VectorFloat32TestData>
+{
+}
