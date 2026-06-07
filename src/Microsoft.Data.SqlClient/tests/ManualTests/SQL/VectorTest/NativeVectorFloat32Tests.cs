@@ -10,6 +10,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
 
 public sealed class VectorFloat32TestData : NativeVectorTestDataBase<float>
 {
+    public override float[] SampleScalarData => [1.1f, 2.2f, 3.3f, 1.01f, float.MinValue, -0.0f];
+
     public override int IncorrectScalarDataParameterSize => 3234;
 
     public override bool IsSupported => DataTestUtility.IsSqlVectorSupported;
