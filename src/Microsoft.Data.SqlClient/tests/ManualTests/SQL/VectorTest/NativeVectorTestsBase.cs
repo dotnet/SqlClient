@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public static float[] SampleScalarData = new float[] { 1.1f, 2.2f, 3.3f, 1.01f, float.MinValue, -0.0f };
         public static int ValidSampleScalarDataLength = SampleScalarData.Length;
         // Incorrect size for SqlParameter.Size
-        public static int IncorrectScalarDataParameterSize = 3234;
+        public abstract int IncorrectScalarDataParameterSize { get; }
 
         public abstract bool IsSupported { get; }
 
@@ -124,6 +124,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             DataTestUtility.DropStoredProcedure(connection, s_storedProcName);
         }
 
+        private static SqlParameter GetParameterByPattern(int pattern, object value) =>
+            pattern switch
+            {
+                1 => new SqlParameter
+                {
+                    ParameterName = VectorParameterName,
+                    SqlDbType = SqlDbTypeExtensions.Vector,
+                    Value = value
+                },
+                2 => new SqlParameter(VectorParameterName, value),
+                3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
+                // Even if size is specified, the actual size is determined by the value passed and specified size is ignored.
+                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Value = value },
+                _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
+            };
+
         private void ValidateSqlVectorFloat32Object(bool isNull, SqlVector<float> sqlVectorFloat32, float[] expectedData, int expectedLength)
         {
             Assert.Equal(expectedData, sqlVectorFloat32.Memory.ToArray());
@@ -181,21 +197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             conn.Open();
 
             using var insertCmd = new SqlCommand(s_insertCmdString, conn);
-
-            SqlParameter param = pattern switch
-            {
-                1 => new SqlParameter
-                {
-                    ParameterName = VectorParameterName,
-                    SqlDbType = SqlDbTypeExtensions.Vector,
-                    Value = value
-                },
-                2 => new SqlParameter(VectorParameterName, value),
-                3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                // Even if size is specified, the actual size is determined by the value passed and specified size is ignored.
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
-                _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
-            };
+            SqlParameter param = GetParameterByPattern(pattern, value);
 
             insertCmd.Parameters.Add(param);
             Assert.Equal(1, insertCmd.ExecuteNonQuery());
@@ -247,20 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await conn.OpenAsync();
 
             using var insertCmd = new SqlCommand(s_insertCmdString, conn);
-
-            SqlParameter param = pattern switch
-            {
-                1 => new SqlParameter
-                {
-                    ParameterName = VectorParameterName,
-                    SqlDbType = (SqlDbType)36, // SqlDbTypeExtension.Vector
-                    Value = value
-                },
-                2 => new SqlParameter(VectorParameterName, value),
-                3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
-                _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
-            };
+            SqlParameter param = GetParameterByPattern(pattern, value);
 
             insertCmd.Parameters.Add(param);
             Assert.Equal(1, await insertCmd.ExecuteNonQueryAsync());
@@ -287,19 +276,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             };
 
             // Set input and output parameters
-            SqlParameter inputParam = pattern switch
-            {
-                1 => new SqlParameter
-                {
-                    ParameterName = VectorParameterName,
-                    SqlDbType = SqlDbTypeExtensions.Vector, // SqlDbTypeExtension.Vector
-                    Value = value
-                },
-                2 => new SqlParameter(VectorParameterName, value),
-                3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
-                _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
-            };
+            SqlParameter inputParam = GetParameterByPattern(pattern, value);
             command.Parameters.Add(inputParam);
 
             var outputParam = new SqlParameter
@@ -321,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
+            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
         }
@@ -344,19 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             };
 
             // Set input and output parameters
-            SqlParameter inputParam = pattern switch
-            {
-                1 => new SqlParameter
-                {
-                    ParameterName = VectorParameterName,
-                    SqlDbType = SqlDbTypeExtensions.Vector, // SqlDbTypeExtension.Vector
-                    Value = value
-                },
-                2 => new SqlParameter(VectorParameterName, value),
-                3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
-                _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
-            };
+            SqlParameter inputParam = GetParameterByPattern(pattern, value);
             command.Parameters.Add(inputParam);
 
             var outputParam = new SqlParameter
@@ -378,7 +343,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
+            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
