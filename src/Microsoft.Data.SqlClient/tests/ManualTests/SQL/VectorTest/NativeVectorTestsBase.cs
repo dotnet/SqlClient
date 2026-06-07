@@ -12,6 +12,8 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlTypes;
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
     public abstract class NativeVectorTestDataBase<TElement>
@@ -30,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public int ValidSampleScalarDataLength => SampleScalarData.Length;
 
-        public IEnumerable<object[]> TestData =>
+        public IEnumerable<object?[]> TestData =>
         [
             // Pattern 1-4 with SqlVector<TElement>(values: SampleScalarData)
             [ 1, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength ],
@@ -70,27 +72,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private const string VectorParameterName = "@VectorData";
         private const string VectorOutputParameterName = "@OutputVectorData";
 
-        private static readonly int s_vectorDimensions = TestDataInstance.ValidSampleScalarDataLength;
-        private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
-        private static readonly string s_spBodyTemplate = $@"
-                {VectorParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized TElement[] as JSON string
-                {VectorOutputParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
-                AS
-                BEGIN
-                SET NOCOUNT ON;
-
-                -- Insert into vector table
-                INSERT INTO {{0}} ({VectorColumnName})
-                VALUES ({VectorParameterName});
-
-                -- Retrieve latest entry (assumes auto-incrementing ID)
-                SELECT TOP 1 {VectorOutputParameterName} = {VectorColumnName}
-                FROM {{0}}
-                ORDER BY Id DESC;
-                END;";
-        private static readonly string s_selectCommandTemplate = $"SELECT {VectorColumnName} FROM {{0}} ORDER BY Id DESC";
-        private static readonly string s_insertCommandTemplate = $"INSERT INTO {{0}} ({VectorColumnName}) VALUES ({VectorParameterName})";
-
         private readonly string _connectionString;
         private readonly SqlConnection _managementConnection;
         private readonly Table _vectorTable;
@@ -109,18 +90,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public static bool IsSupported => TestDataInstance.IsSupported;
 
-        public static IEnumerable<object[]> TestData => TestDataInstance.TestData;
+        public static IEnumerable<object?[]> TestData => TestDataInstance.TestData;
 
         public NativeVectorTestsBase()
         {
+            int vectorDimensions = TestDataInstance.ValidSampleScalarDataLength;
+            string tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
+
             _connectionString = DataTestUtility.TCPConnectionString;
             _managementConnection = new SqlConnection(_connectionString);
-            _vectorTable = new Table(_managementConnection, "VectorTestTable", s_tableDefinition);
-            _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", s_tableDefinition);
-            _vectorProcedure = new StoredProcedure(_managementConnection, "VectorsAsVarcharSp", string.Format(s_spBodyTemplate, _vectorTable.Name));
+            _vectorTable = new Table(_managementConnection, "VectorTestTable", tableDefinition);
+            _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", tableDefinition);
+            _vectorProcedure = new StoredProcedure(_managementConnection,
+                prefix: "VectorsAsVarcharSp",
+                definition: $@"
+                {VectorParameterName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized TElement[] as JSON string
+                {VectorOutputParameterName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
+                AS
+                BEGIN
+                SET NOCOUNT ON;
 
-            _selectCommand = string.Format(s_selectCommandTemplate, _vectorTable.Name);
-            _insertCommand = string.Format(s_insertCommandTemplate, _vectorTable.Name);
+                -- Insert into vector table
+                INSERT INTO {_vectorTable.Name} ({VectorColumnName})
+                VALUES ({VectorParameterName});
+
+                -- Retrieve latest entry (assumes auto-incrementing ID)
+                SELECT TOP 1 {VectorOutputParameterName} = {VectorColumnName}
+                FROM {_vectorTable.Name}
+                ORDER BY Id DESC;
+                END;");
+
+            _selectCommand = $"SELECT {VectorColumnName} FROM {_vectorTable.Name} ORDER BY Id DESC";
+            _insertCommand = $"INSERT INTO {_vectorTable.Name} ({VectorColumnName}) VALUES ({VectorParameterName})";
         }
 
         public void Dispose()
@@ -134,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             GC.SuppressFinalize(this);
         }
 
-        private static SqlParameter GetParameterByPattern(int pattern, object value) =>
+        private static SqlParameter GetParameterByPattern(int pattern, object? value) =>
             pattern switch
             {
                 1 => new SqlParameter
@@ -199,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public void TestSqlVectorParameterInsertionAndReads(
             int pattern,
-            object value,
+            object? value,
             TElement[] expectedValues,
             int expectedLength)
         {
@@ -251,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestSqlVectorParameterInsertionAndReadsAsync(
             int pattern,
-            object value,
+            object? value,
             TElement[] expectedValues,
             int expectedLength)
         {
@@ -272,7 +273,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public void TestStoredProcParamsForVector(
             int pattern,
-            object value,
+            object? value,
             TElement[] expectedValues,
             int expectedLength)
         {
@@ -315,7 +316,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestStoredProcParamsForVectorAsync(
             int pattern,
-            object value,
+            object? value,
             TElement[] expectedValues,
             int expectedLength)
         {
@@ -364,7 +365,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             sourceConnection.Open();
             using SqlConnection destinationConnection = new(_connectionString);
             destinationConnection.Open();
-            DataTable table = null;
+            DataTable? table = null;
             switch (bulkCopySourceMode)
             {
 
@@ -456,7 +457,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using SqlConnection destinationConnection = new(_connectionString);
             await destinationConnection.OpenAsync();
 
-            DataTable table = null;
+            DataTable? table = null;
             switch (bulkCopySourceMode)
             {
 
