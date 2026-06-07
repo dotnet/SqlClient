@@ -188,10 +188,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public void TestSqlVectorFloat32ParameterInsertionAndReads(
-        int pattern,
-        object value,
-        float[] expectedValues,
-        int expectedLength)
+            int pattern,
+            object value,
+            TElement[] expectedValues,
+            int expectedLength)
         {
             using var conn = new SqlConnection(s_connectionString);
             conn.Open();
@@ -240,10 +240,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestSqlVectorFloat32ParameterInsertionAndReadsAsync(
-        int pattern,
-        object value,
-        float[] expectedValues,
-        int expectedLength)
+            int pattern,
+            object value,
+            TElement[] expectedValues,
+            int expectedLength)
         {
             using var conn = new SqlConnection(s_connectionString);
             await conn.OpenAsync();
@@ -261,10 +261,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public void TestStoredProcParamsForVectorFloat32(
-        int pattern,
-        object value,
-        float[] expectedValues,
-        int expectedLength)
+            int pattern,
+            object value,
+            TElement[] expectedValues,
+            int expectedLength)
         {
             //Create SP for test
             using var conn = new SqlConnection(s_connectionString);
@@ -306,10 +306,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
         public async Task TestStoredProcParamsForVectorFloat32Async(
-        int pattern,
-        object value,
-        float[] expectedValues,
-        int expectedLength)
+            int pattern,
+            object value,
+            TElement[] expectedValues,
+            int expectedLength)
         {
             //Create SP for test
             using var conn = new SqlConnection(s_connectionString);
