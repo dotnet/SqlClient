@@ -16,6 +16,10 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
+    /// <summary>
+    /// Base class for all data passed to a type derived from <see cref="NativeVectorTestsBase{TElement, TTestData}"/>.
+    /// </summary>
+    /// <typeparam name="TElement">The element type of the <see cref="SqlVector{T}"/>.</typeparam>
     public abstract class NativeVectorTestDataBase<TElement>
         where TElement : unmanaged
     {
@@ -64,6 +68,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         ];
     }
 
+    /// <summary>
+    /// Base class for all strongly-typed manual tests for <see cref="SqlVector{T}"/>.
+    /// </summary>
+    /// <typeparam name="TElement">The element type of the <see cref="SqlVector{T}"/>.</typeparam>
+    /// <typeparam name="TTestData">The type containing the sample data.</typeparam>
     public abstract class NativeVectorTestsBase<TElement, TTestData> : IDisposable
         where TElement : unmanaged
         where TTestData : NativeVectorTestDataBase<TElement>, new()
@@ -135,6 +144,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Wraps an inbound <see cref="SqlVector{T}"/> in a <see cref="SqlParameter"/> according to
+        /// the specified pattern.
+        /// </summary>
+        /// <param name="pattern">Pattern number.</param>
+        /// <param name="value"><see cref="SqlVector{T}"/> to wrap.</param>
+        /// <returns>A <see cref="SqlParameter"/> instance wrapping the <see cref="SqlVector{T}"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="pattern"/> is not a valid pattern.</exception>
+        /// <remarks>
+        /// <paramref name="pattern"/> can be a number from 1 to 4, inclusive, with the following meaning:
+        /// <list type="number">
+        ///   <item>Parameterless constructor, manually setting ParameterName, SqlDbType and Value.</item>
+        ///   <item>Specify the parameter name and value directly, relying upon type inference.</item>
+        ///   <item>Specify the parameter name and SqlDbType, manually setting the Value property.</item>
+        ///   <item>Identical to pattern 3, but with a known-invalid parameter size.</item>
+        /// </list>
+        /// </remarks>
+        /// <seealso cref="TestSqlVectorParameterInsertionAndReads"/>
+        /// <seealso cref="TestSqlVectorParameterInsertionAndReadsAsync"/>
+        /// <seealso cref="TestStoredProcParamsForVector"/>
+        /// <seealso cref="TestStoredProcParamsForVectorAsync"/>
         private static SqlParameter GetParameterByPattern(int pattern, object? value) =>
             pattern switch
             {
@@ -171,7 +201,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using SqlDataReader reader = selectCmd.ExecuteReader();
             Assert.True(reader.Read(), "No data found in the table.");
 
-            //For both null and non-null cases, validate the SqlVector<TElement> object
+            // For both null and non-null cases, validate the SqlVector<TElement> object
             ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
             ValidateSqlVectorObject(reader.IsDBNull(0), reader.GetFieldValue<SqlVector<TElement>>(0), expectedData, expectedLength);
             ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
@@ -223,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using SqlDataReader reader = await selectCmd.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync(), "No data found in the table.");
 
-            //For both null and non-null cases, validate the SqlVector<TElement> object
+            // For both null and non-null cases, validate the SqlVector<TElement> object
             ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
             ValidateSqlVectorObject(await reader.IsDBNullAsync(0), await reader.GetFieldValueAsync<SqlVector<TElement>>(0), expectedData, expectedLength);
             ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
@@ -360,7 +390,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [InlineData(2)]
         public void TestBulkCopyFromSqlTable(int bulkCopySourceMode)
         {
-            //Setup source with test data and create destination table for bulkcopy.
+            // Setup source with test data and create destination table for bulkcopy.
             using SqlConnection sourceConnection = new(_connectionString);
             sourceConnection.Open();
             using SqlConnection destinationConnection = new(_connectionString);
@@ -371,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
                 case 1:
                     {
-                        // Use SqlServer table as source
+                        // Use SQL Server table as source
                         using SqlCommand insertCmd = new($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
                         SqlParameter vectorParam = new(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
 
@@ -396,7 +426,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
             }
 
-            //Bulkcopy from sql server table to destination table
+            // Bulk copy from SQL Server table to destination table
             using SqlCommand sourceDataCommand = new($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
             using SqlDataReader reader = sourceDataCommand.ExecuteReader();
 
@@ -451,7 +481,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [InlineData(2)]
         public async Task TestBulkCopyFromSqlTableAsync(int bulkCopySourceMode)
         {
-            //Setup source with test data and create destination table for bulkcopy.
+            // Setup source with test data and create destination table for bulk copy.
             using SqlConnection sourceConnection = new(_connectionString);
             await sourceConnection.OpenAsync();
             using SqlConnection destinationConnection = new(_connectionString);
@@ -463,7 +493,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
                 case 1:
                     {
-                        // Use SqlServer table as source
+                        // Use SQL Server table as source
                         using SqlCommand insertCmd = new($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
                         SqlParameter vectorParam = new(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
 
@@ -488,7 +518,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
             }
 
-            //Bulkcopy from sql server table to destination table
+            // Bulk copy from SQL Server table to destination table
             using SqlCommand sourceDataCommand = new($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
             using SqlDataReader reader = await sourceDataCommand.ExecuteReaderAsync();
 
@@ -502,7 +532,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 DestinationTableName = _vectorTable.Name,
             };
 
-            // Perform bulkcopy
+            // Perform bulk copy
             switch (bulkCopySourceMode)
             {
                 case 1:
