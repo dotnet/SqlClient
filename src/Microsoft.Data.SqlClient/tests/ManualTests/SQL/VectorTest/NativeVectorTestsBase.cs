@@ -91,7 +91,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private static readonly string s_selectCommandTemplate = $"SELECT {VectorColumnName} FROM {s_tableName} ORDER BY Id DESC";
         private static readonly string s_insertCommandTemplate = $"INSERT INTO {s_tableName} ({VectorColumnName}) VALUES ({VectorParameterName})";
 
-        private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
+        private readonly string _connectionString;
+        private readonly SqlConnection _managementConnection;
         private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
         private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
         private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
@@ -109,7 +110,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public NativeVectorTestsBase()
         {
-            using var connection = new SqlConnection(s_connectionString);
+            _connectionString = DataTestUtility.TCPConnectionString;
+            _managementConnection = new SqlConnection(_connectionString);
+
+            using var connection = new SqlConnection(_connectionString);
             connection.Open();
             DataTestUtility.CreateTable(connection, s_tableName, s_tableDefinition);
             DataTestUtility.CreateTable(connection, s_bulkCopySrcTableName, s_tableDefinition);
@@ -118,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public void Dispose()
         {
-            using var connection = new SqlConnection(s_connectionString);
+            using var connection = new SqlConnection(_connectionString);
             connection.Open();
             DataTestUtility.DropTable(connection, s_tableName);
             DataTestUtility.DropTable(connection, s_bulkCopySrcTableName);
@@ -194,7 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            using var conn = new SqlConnection(s_connectionString);
+            using var conn = new SqlConnection(_connectionString);
             conn.Open();
 
             using var insertCmd = new SqlCommand(s_insertCommandTemplate, conn);
@@ -246,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            using var conn = new SqlConnection(s_connectionString);
+            using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             using var insertCmd = new SqlCommand(s_insertCommandTemplate, conn);
@@ -268,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             int expectedLength)
         {
             //Create SP for test
-            using var conn = new SqlConnection(s_connectionString);
+            using var conn = new SqlConnection(_connectionString);
             conn.Open();
             DataTestUtility.CreateSP(conn, s_storedProcName, s_spBodyTemplate);
             using var command = new SqlCommand(s_storedProcName, conn)
@@ -313,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             int expectedLength)
         {
             //Create SP for test
-            using var conn = new SqlConnection(s_connectionString);
+            using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             DataTestUtility.CreateSP(conn, s_storedProcName, s_spBodyTemplate);
             using var command = new SqlCommand(s_storedProcName, conn)
@@ -355,9 +359,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public void TestBulkCopyFromSqlTable(int bulkCopySourceMode)
         {
             //Setup source with test data and create destination table for bulkcopy.
-            SqlConnection sourceConnection = new SqlConnection(s_connectionString);
+            SqlConnection sourceConnection = new SqlConnection(_connectionString);
             sourceConnection.Open();
-            SqlConnection destinationConnection = new SqlConnection(s_connectionString);
+            SqlConnection destinationConnection = new SqlConnection(_connectionString);
             destinationConnection.Open();
             DataTable table = null;
             switch (bulkCopySourceMode)
@@ -454,9 +458,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public async Task TestBulkCopyFromSqlTableAsync(int bulkCopySourceMode)
         {
             //Setup source with test data and create destination table for bulkcopy.
-            SqlConnection sourceConnection = new SqlConnection(s_connectionString);
+            SqlConnection sourceConnection = new SqlConnection(_connectionString);
             await sourceConnection.OpenAsync();
-            SqlConnection destinationConnection = new SqlConnection(s_connectionString);
+            SqlConnection destinationConnection = new SqlConnection(_connectionString);
             await destinationConnection.OpenAsync();
 
             DataTable table = null;
@@ -551,7 +555,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalFact(nameof(IsSupported))]
         public void TestGetFieldTypeReturnsSqlVectorForVectorColumn()
         {
-            using var connection = new SqlConnection(s_connectionString);
+            using var connection = new SqlConnection(_connectionString);
             connection.Open();
 
             // Insert a row so we can query it
@@ -586,7 +590,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalFact(nameof(IsSupported))]
         public void TestInsertVectorsWithPrepare()
         {
-            SqlConnection conn = new SqlConnection(s_connectionString);
+            SqlConnection conn = new SqlConnection(_connectionString);
             conn.Open();
             SqlCommand command = new SqlCommand(s_insertCommandTemplate, conn);
             SqlParameter vectorParam = new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector);
