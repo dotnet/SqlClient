@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private static readonly string s_insertCmdString = $"INSERT INTO {s_tableName} ({VectorColumnName}) VALUES ({VectorParameterName})";
         private static readonly string s_storedProcName = DataTestUtility.GetShortName("VectorsAsVarcharSp");
         private static readonly string s_storedProcBody = $@"
-                {VectorParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized float[] as JSON string
+                {VectorParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized TElement[] as JSON string
                 {VectorOutputParameterName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
                 BEGIN
@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
-        public void TestSqlVectorFloat32ParameterInsertionAndReads(
+        public void TestSqlVectorParameterInsertionAndReads(
             int pattern,
             object value,
             TElement[] expectedValues,
@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
-        public async Task TestSqlVectorFloat32ParameterInsertionAndReadsAsync(
+        public async Task TestSqlVectorParameterInsertionAndReadsAsync(
             int pattern,
             object value,
             TElement[] expectedValues,
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
-        public void TestStoredProcParamsForVectorFloat32(
+        public void TestStoredProcParamsForVector(
             int pattern,
             object value,
             TElement[] expectedValues,
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         [ConditionalTheory(nameof(IsSupported))]
         [MemberData(nameof(TestData), DisableDiscoveryEnumeration = true)]
-        public async Task TestStoredProcParamsForVectorFloat32Async(
+        public async Task TestStoredProcParamsForVectorAsync(
             int pattern,
             object value,
             TElement[] expectedValues,
