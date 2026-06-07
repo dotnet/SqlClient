@@ -130,6 +130,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using (_bulkCopySourceTable)
             using (_vectorProcedure)
             { }
+
+            GC.SuppressFinalize(this);
         }
 
         private static SqlParameter GetParameterByPattern(int pattern, object value) =>
@@ -164,8 +166,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         private void ValidateInsertedData(SqlConnection connection, TElement[] expectedData, int expectedLength)
         {
-            using var selectCmd = new SqlCommand(_selectCommand, connection);
-            using var reader = selectCmd.ExecuteReader();
+            using SqlCommand selectCmd = new(_selectCommand, connection);
+            using SqlDataReader reader = selectCmd.ExecuteReader();
             Assert.True(reader.Read(), "No data found in the table.");
 
             //For both null and non-null cases, validate the SqlVector<TElement> object
@@ -201,10 +203,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            using var conn = new SqlConnection(_connectionString);
+            using SqlConnection conn = new(_connectionString);
             conn.Open();
 
-            using var insertCmd = new SqlCommand(_insertCommand, conn);
+            using SqlCommand insertCmd = new(_insertCommand, conn);
             SqlParameter param = GetParameterByPattern(pattern, value);
 
             insertCmd.Parameters.Add(param);
@@ -216,8 +218,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         private async Task ValidateInsertedDataAsync(SqlConnection connection, TElement[] expectedData, int expectedLength)
         {
-            using var selectCmd = new SqlCommand(_selectCommand, connection);
-            using var reader = await selectCmd.ExecuteReaderAsync();
+            using SqlCommand selectCmd = new(_selectCommand, connection);
+            using SqlDataReader reader = await selectCmd.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync(), "No data found in the table.");
 
             //For both null and non-null cases, validate the SqlVector<TElement> object
@@ -253,10 +255,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            using var conn = new SqlConnection(_connectionString);
+            using SqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            using var insertCmd = new SqlCommand(_insertCommand, conn);
+            using SqlCommand insertCmd = new(_insertCommand, conn);
             SqlParameter param = GetParameterByPattern(pattern, value);
 
             insertCmd.Parameters.Add(param);
@@ -274,9 +276,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            using var conn = new SqlConnection(_connectionString);
+            using SqlConnection conn = new(_connectionString);
             conn.Open();
-            using var command = new SqlCommand(_vectorProcedure.Name, conn)
+            using SqlCommand command = new(_vectorProcedure.Name, conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -285,7 +287,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             SqlParameter inputParam = GetParameterByPattern(pattern, value);
             command.Parameters.Add(inputParam);
 
-            var outputParam = new SqlParameter
+            SqlParameter outputParam = new()
             {
                 ParameterName = VectorOutputParameterName,
                 SqlDbType = SqlDbTypeExtensions.Vector,
@@ -298,13 +300,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             command.ExecuteNonQuery();
 
             // Validate the output parameter
-            var vector = (SqlVector<TElement>)outputParam.Value;
+            SqlVector<TElement> vector = (SqlVector<TElement>)outputParam.Value;
             ValidateSqlVectorObject(vector.IsNull, vector, expectedValues, expectedLength);
 
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
+            SqlParameter outputParamWithoutVal = new(VectorOutputParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
         }
@@ -317,9 +319,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             TElement[] expectedValues,
             int expectedLength)
         {
-            using var conn = new SqlConnection(_connectionString);
+            using SqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
-            using var command = new SqlCommand(_vectorProcedure.Name, conn)
+            using SqlCommand command = new(_vectorProcedure.Name, conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -328,7 +330,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             SqlParameter inputParam = GetParameterByPattern(pattern, value);
             command.Parameters.Add(inputParam);
 
-            var outputParam = new SqlParameter
+            SqlParameter outputParam = new()
             {
                 ParameterName = VectorOutputParameterName,
                 SqlDbType = SqlDbTypeExtensions.Vector,
@@ -341,13 +343,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await command.ExecuteNonQueryAsync();
 
             // Validate the output parameter
-            var vector = (SqlVector<TElement>)outputParam.Value;
+            SqlVector<TElement> vector = (SqlVector<TElement>)outputParam.Value;
             ValidateSqlVectorObject(vector.IsNull, vector, expectedValues, expectedLength);
 
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
+            SqlParameter outputParamWithoutVal = new(VectorOutputParameterName, SqlDbTypeExtensions.Vector, TestDataInstance.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
@@ -358,28 +360,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public void TestBulkCopyFromSqlTable(int bulkCopySourceMode)
         {
             //Setup source with test data and create destination table for bulkcopy.
-            SqlConnection sourceConnection = new SqlConnection(_connectionString);
+            using SqlConnection sourceConnection = new(_connectionString);
             sourceConnection.Open();
-            SqlConnection destinationConnection = new SqlConnection(_connectionString);
+            using SqlConnection destinationConnection = new(_connectionString);
             destinationConnection.Open();
             DataTable table = null;
             switch (bulkCopySourceMode)
             {
 
                 case 1:
-                    // Use SqlServer table as source
-                    var insertCmd = new SqlCommand($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
-                    var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
+                    {
+                        // Use SqlServer table as source
+                        using SqlCommand insertCmd = new($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
+                        SqlParameter vectorParam = new(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
 
-                    // Insert 2 rows with one non-null and null value
-                    insertCmd.Parameters.Add(vectorParam);
-                    Assert.Equal(1, insertCmd.ExecuteNonQuery());
-                    insertCmd.Parameters.Clear();
-                    vectorParam.Value = DBNull.Value;
-                    insertCmd.Parameters.Add(vectorParam);
-                    Assert.Equal(1, insertCmd.ExecuteNonQuery());
-                    insertCmd.Parameters.Clear();
-                    break;
+                        // Insert 2 rows with one non-null and null value
+                        insertCmd.Parameters.Add(vectorParam);
+                        Assert.Equal(1, insertCmd.ExecuteNonQuery());
+                        insertCmd.Parameters.Clear();
+                        vectorParam.Value = DBNull.Value;
+                        insertCmd.Parameters.Add(vectorParam);
+                        Assert.Equal(1, insertCmd.ExecuteNonQuery());
+                        insertCmd.Parameters.Clear();
+                        break;
+                    }
                 case 2:
                     table = new DataTable(_bulkCopySourceTable.Name);
                     table.Columns.Add("Id", typeof(int));
@@ -391,18 +395,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     throw new ArgumentOutOfRangeException(nameof(bulkCopySourceMode), $"Unsupported bulk copy source mode: {bulkCopySourceMode}");
             }
 
-
-
             //Bulkcopy from sql server table to destination table
-            using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
+            using SqlCommand sourceDataCommand = new($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
             using SqlDataReader reader = sourceDataCommand.ExecuteReader();
 
             // Verify that the destination table is empty before bulk copy
-            using SqlCommand countCommand = new SqlCommand($"SELECT COUNT(*) FROM {_vectorTable.Name}", destinationConnection);
+            using SqlCommand countCommand = new($"SELECT COUNT(*) FROM {_vectorTable.Name}", destinationConnection);
             Assert.Equal(0, Convert.ToInt16(countCommand.ExecuteScalar()));
 
             // Initialize bulk copy configuration
-            using SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection)
+            using SqlBulkCopy bulkCopy = new(destinationConnection)
             {
                 DestinationTableName = _vectorTable.Name,
             };
@@ -431,7 +433,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(2, Convert.ToInt16(countCommand.ExecuteScalar()));
 
             // Read the data from destination table as varbinary to verify the UTF-8 byte sequence
-            using SqlCommand verifyCommand = new SqlCommand($"SELECT {VectorColumnName} from {_vectorTable.Name}", destinationConnection);
+            using SqlCommand verifyCommand = new($"SELECT {VectorColumnName} from {_vectorTable.Name}", destinationConnection);
             using SqlDataReader verifyReader = verifyCommand.ExecuteReader();
 
             // Verify that we have data in the destination table
@@ -457,9 +459,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public async Task TestBulkCopyFromSqlTableAsync(int bulkCopySourceMode)
         {
             //Setup source with test data and create destination table for bulkcopy.
-            SqlConnection sourceConnection = new SqlConnection(_connectionString);
+            using SqlConnection sourceConnection = new(_connectionString);
             await sourceConnection.OpenAsync();
-            SqlConnection destinationConnection = new SqlConnection(_connectionString);
+            using SqlConnection destinationConnection = new(_connectionString);
             await destinationConnection.OpenAsync();
 
             DataTable table = null;
@@ -467,19 +469,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             {
 
                 case 1:
-                    // Use SqlServer table as source
-                    var insertCmd = new SqlCommand($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
-                    var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
+                    {
+                        // Use SqlServer table as source
+                        using SqlCommand insertCmd = new($"insert into {_bulkCopySourceTable.Name} values ({VectorParameterName})", sourceConnection);
+                        SqlParameter vectorParam = new(VectorParameterName, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
 
-                    // Insert 2 rows with one non-null and null value
-                    insertCmd.Parameters.Add(vectorParam);
-                    Assert.Equal(1, await insertCmd.ExecuteNonQueryAsync());
-                    insertCmd.Parameters.Clear();
-                    vectorParam.Value = DBNull.Value;
-                    insertCmd.Parameters.Add(vectorParam);
-                    Assert.Equal(1, await insertCmd.ExecuteNonQueryAsync());
-                    insertCmd.Parameters.Clear();
-                    break;
+                        // Insert 2 rows with one non-null and null value
+                        insertCmd.Parameters.Add(vectorParam);
+                        Assert.Equal(1, await insertCmd.ExecuteNonQueryAsync());
+                        insertCmd.Parameters.Clear();
+                        vectorParam.Value = DBNull.Value;
+                        insertCmd.Parameters.Add(vectorParam);
+                        Assert.Equal(1, await insertCmd.ExecuteNonQueryAsync());
+                        insertCmd.Parameters.Clear();
+                        break;
+                    }
                 case 2:
                     table = new DataTable(_bulkCopySourceTable.Name);
                     table.Columns.Add("Id", typeof(int));
@@ -492,15 +496,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             }
 
             //Bulkcopy from sql server table to destination table
-            using SqlCommand sourceDataCommand = new SqlCommand($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
+            using SqlCommand sourceDataCommand = new($"SELECT Id, {VectorColumnName} FROM {_bulkCopySourceTable.Name}", sourceConnection);
             using SqlDataReader reader = await sourceDataCommand.ExecuteReaderAsync();
 
             // Verify that the destination table is empty before bulk copy
-            using SqlCommand countCommand = new SqlCommand($"SELECT COUNT(*) FROM {_vectorTable.Name}", destinationConnection);
+            using SqlCommand countCommand = new($"SELECT COUNT(*) FROM {_vectorTable.Name}", destinationConnection);
             Assert.Equal(0, Convert.ToInt16(await countCommand.ExecuteScalarAsync()));
 
             // Initialize bulk copy configuration
-            using SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection)
+            using SqlBulkCopy bulkCopy = new(destinationConnection)
             {
                 DestinationTableName = _vectorTable.Name,
             };
@@ -529,7 +533,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(2, Convert.ToInt16(await countCommand.ExecuteScalarAsync()));
 
             // Read the data from destination table as varbinary to verify the UTF-8 byte sequence
-            using SqlCommand verifyCommand = new SqlCommand($"SELECT {VectorColumnName} from {_vectorTable.Name}", destinationConnection);
+            using SqlCommand verifyCommand = new($"SELECT {VectorColumnName} from {_vectorTable.Name}", destinationConnection);
             using SqlDataReader verifyReader = await verifyCommand.ExecuteReaderAsync();
 
             // Verify that we have data in the destination table
@@ -537,7 +541,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Validate first non-null value.
             Assert.True(!await verifyReader.IsDBNullAsync(0), "First row in the table is null.");
-            var vector = await verifyReader.GetFieldValueAsync<SqlVector<TElement>>(0);
+            SqlVector<TElement> vector = await verifyReader.GetFieldValueAsync<SqlVector<TElement>>(0);
             Assert.Equal(TestDataInstance.SampleScalarData, vector.Memory.ToArray());
             Assert.Equal(TestDataInstance.SampleScalarData.Length, vector.Length);
 
@@ -554,19 +558,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalFact(nameof(IsSupported))]
         public void TestGetFieldTypeReturnsSqlVectorForVectorColumn()
         {
-            using var connection = new SqlConnection(_connectionString);
+            using SqlConnection connection = new(_connectionString);
             connection.Open();
 
             // Insert a row so we can query it
-            using (var insertCmd = new SqlCommand(_insertCommand, connection))
+            using (SqlCommand insertCmd = new(_insertCommand, connection))
             {
-                var param = insertCmd.Parameters.Add(VectorParameterName, SqlDbTypeExtensions.Vector);
+                SqlParameter param = insertCmd.Parameters.Add(VectorParameterName, SqlDbTypeExtensions.Vector);
                 param.Value = new SqlVector<TElement>(TestDataInstance.SampleScalarData);
                 insertCmd.ExecuteNonQuery();
             }
 
-            using var selectCmd = new SqlCommand(_selectCommand, connection);
-            using var reader = selectCmd.ExecuteReader();
+            using SqlCommand selectCmd = new(_selectCommand, connection);
+            using SqlDataReader reader = selectCmd.ExecuteReader();
 
             // Verify GetFieldType returns SqlVector<TElement> for the vector column
             Assert.Equal(typeof(SqlVector<TElement>), reader.GetFieldType(0));
@@ -589,10 +593,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         [ConditionalFact(nameof(IsSupported))]
         public void TestInsertVectorsWithPrepare()
         {
-            SqlConnection conn = new SqlConnection(_connectionString);
+            using SqlConnection conn = new(_connectionString);
             conn.Open();
-            SqlCommand command = new SqlCommand(_insertCommand, conn);
-            SqlParameter vectorParam = new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector);
+            using SqlCommand command = new(_insertCommand, conn);
+            SqlParameter vectorParam = new(VectorParameterName, SqlDbTypeExtensions.Vector);
             command.Parameters.Add(vectorParam);
             command.Prepare();
 
@@ -604,7 +608,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 command.ExecuteNonQuery();
             }
 
-            SqlCommand validateCommand = new SqlCommand($"SELECT {VectorColumnName} FROM {_vectorTable.Name}", conn);
+            using SqlCommand validateCommand = new($"SELECT {VectorColumnName} FROM {_vectorTable.Name}", conn);
             using SqlDataReader reader = validateCommand.ExecuteReader();
             int rowcnt = 0;
             while (reader.Read())
