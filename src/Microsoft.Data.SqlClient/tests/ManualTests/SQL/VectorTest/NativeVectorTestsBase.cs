@@ -18,10 +18,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         where TElement : unmanaged
     {
         public const int VectorHeaderSize = 8;
-        public static float[] testData = new float[] { 1.1f, 2.2f, 3.3f, 1.01f, float.MinValue, -0.0f };
-        public static int vectorColumnLength = testData.Length;
+        public static float[] SampleScalarData = new float[] { 1.1f, 2.2f, 3.3f, 1.01f, float.MinValue, -0.0f };
+        public static int ValidSampleScalarDataLength = SampleScalarData.Length;
         // Incorrect size for SqlParameter.Size
-        public static int IncorrectParamSize = 3234;
+        public static int IncorrectScalarDataParameterSize = 3234;
 
         public abstract bool IsSupported { get; }
 
@@ -31,33 +31,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public static IEnumerable<object[]> GetVectorFloat32TestData()
         {
-            // Pattern 1-4 with SqlVector<float>(values: testData)
-            yield return new object[] { 1, new SqlVector<float>(testData), testData, vectorColumnLength };
-            yield return new object[] { 2, new SqlVector<float>(testData), testData, vectorColumnLength };
-            yield return new object[] { 3, new SqlVector<float>(testData), testData, vectorColumnLength };
-            yield return new object[] { 4, new SqlVector<float>(testData), testData, vectorColumnLength };
+            // Pattern 1-4 with SqlVector<float>(values: SampleScalarData)
+            yield return new object[] { 1, new SqlVector<float>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
+            yield return new object[] { 2, new SqlVector<float>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
+            yield return new object[] { 3, new SqlVector<float>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
+            yield return new object[] { 4, new SqlVector<float>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
 
             // Pattern 1-4 with SqlVector<float>(n)
-            yield return new object[] { 1, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 2, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 3, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 4, SqlVector<float>.CreateNull(vectorColumnLength), Array.Empty<float>(), vectorColumnLength };
+            yield return new object[] { 1, SqlVector<float>.CreateNull(ValidSampleScalarDataLength), Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 2, SqlVector<float>.CreateNull(ValidSampleScalarDataLength), Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 3, SqlVector<float>.CreateNull(ValidSampleScalarDataLength), Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 4, SqlVector<float>.CreateNull(ValidSampleScalarDataLength), Array.Empty<float>(), ValidSampleScalarDataLength };
 
             // Pattern 1-4 with DBNull
-            yield return new object[] { 1, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 2, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 3, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 4, DBNull.Value, Array.Empty<float>(), vectorColumnLength };
+            yield return new object[] { 1, DBNull.Value, Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 2, DBNull.Value, Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 3, DBNull.Value, Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 4, DBNull.Value, Array.Empty<float>(), ValidSampleScalarDataLength };
 
             // Pattern 1-4 with SqlVector<float>.Null
-            yield return new object[] { 1, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
+            yield return new object[] { 1, SqlVector<float>.Null, Array.Empty<float>(), ValidSampleScalarDataLength };
 
             // Following scenario is not supported in SqlClient.
             // This can only be fixed with a behavior change that SqlParameter.Value is internally set to DBNull.Value if it is set to null.
             //yield return new object[] { 2, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
 
-            yield return new object[] { 3, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
-            yield return new object[] { 4, SqlVector<float>.Null, Array.Empty<float>(), vectorColumnLength };
+            yield return new object[] { 3, SqlVector<float>.Null, Array.Empty<float>(), ValidSampleScalarDataLength };
+            yield return new object[] { 4, SqlVector<float>.Null, Array.Empty<float>(), ValidSampleScalarDataLength };
         }
     }
 
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         private static readonly string s_connectionString = ManualTesting.Tests.DataTestUtility.TCPConnectionString;
         private static readonly string s_tableName = DataTestUtility.GetShortName("VectorTestTable");
         private static readonly string s_bulkCopySrcTableName = DataTestUtility.GetShortName("VectorBulkCopyTestTable");
-        private static readonly int s_vectorDimensions = VectorFloat32TestData.vectorColumnLength;
+        private static readonly int s_vectorDimensions = VectorFloat32TestData.ValidSampleScalarDataLength;
         private static readonly string s_bulkCopySrcTableDef = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
         private static readonly string s_tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({s_vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
         private static readonly string s_selectCmdString = $"SELECT {VectorColumnName} FROM {s_tableName} ORDER BY Id DESC";
@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 2 => new SqlParameter(VectorParameterName, value),
                 3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
                 // Even if size is specified, the actual size is determined by the value passed and specified size is ignored.
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
+                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
 
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(VectorParameterName, value),
                 3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
+                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
 
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(VectorParameterName, value),
                 3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
+                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
             command.Parameters.Add(inputParam);
@@ -307,7 +307,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 ParameterName = VectorOutputParameterName,
                 SqlDbType = SqlDbTypeExtensions.Vector,
                 Direction = ParameterDirection.Output,
-                Value = SqlVector<float>.CreateNull(VectorFloat32TestData.vectorColumnLength)
+                Value = SqlVector<float>.CreateNull(VectorFloat32TestData.ValidSampleScalarDataLength)
             };
             command.Parameters.Add(outputParam);
 
@@ -321,7 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Direction = ParameterDirection.Output };
+            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
         }
@@ -354,7 +354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 },
                 2 => new SqlParameter(VectorParameterName, value),
                 3 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector) { Value = value },
-                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Value = value },
+                4 => new SqlParameter(VectorParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Value = value },
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
             command.Parameters.Add(inputParam);
@@ -364,7 +364,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 ParameterName = VectorOutputParameterName,
                 SqlDbType = SqlDbTypeExtensions.Vector,
                 Direction = ParameterDirection.Output,
-                Value = SqlVector<float>.CreateNull(VectorFloat32TestData.vectorColumnLength)
+                Value = SqlVector<float>.CreateNull(VectorFloat32TestData.ValidSampleScalarDataLength)
             };
             command.Parameters.Add(outputParam);
 
@@ -378,7 +378,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
             command.Parameters.Add(inputParam);
-            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectParamSize) { Direction = ParameterDirection.Output };
+            var outputParamWithoutVal = new SqlParameter(VectorOutputParameterName, SqlDbTypeExtensions.Vector, VectorFloat32TestData.IncorrectScalarDataParameterSize) { Direction = ParameterDirection.Output };
             command.Parameters.Add(outputParamWithoutVal);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
@@ -400,7 +400,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 case 1:
                     // Use SqlServer table as source
                     var insertCmd = new SqlCommand($"insert into {s_bulkCopySrcTableName} values ({VectorParameterName})", sourceConnection);
-                    var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<float>(VectorFloat32TestData.testData));
+                    var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<float>(VectorFloat32TestData.SampleScalarData));
 
                     // Insert 2 rows with one non-null and null value
                     insertCmd.Parameters.Add(vectorParam);
@@ -415,7 +415,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     table = new DataTable(s_bulkCopySrcTableName);
                     table.Columns.Add("Id", typeof(int));
                     table.Columns.Add(VectorColumnName, typeof(SqlVector<float>));
-                    table.Rows.Add(1, new SqlVector<float>(VectorFloat32TestData.testData));
+                    table.Rows.Add(1, new SqlVector<float>(VectorFloat32TestData.SampleScalarData));
                     table.Rows.Add(2, DBNull.Value);
                     break;
                 default:
@@ -470,8 +470,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Validate first non-null value.
             Assert.True(!verifyReader.IsDBNull(0), "First row in the table is null.");
-            Assert.Equal(VectorFloat32TestData.testData, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Memory.ToArray());
-            Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Length);
+            Assert.Equal(VectorFloat32TestData.SampleScalarData, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Memory.ToArray());
+            Assert.Equal(VectorFloat32TestData.SampleScalarData.Length, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Length);
 
             // Verify that we have another row
             Assert.True(verifyReader.Read(), "Second row not found in the table");
@@ -479,7 +479,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Verify that we have encountered null.
             Assert.True(verifyReader.IsDBNull(0));
             Assert.Equal(Array.Empty<float>(), ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Memory.ToArray());
-            Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Length);
+            Assert.Equal(VectorFloat32TestData.SampleScalarData.Length, ((SqlVector<float>)verifyReader.GetSqlVector<float>(0)).Length);
         }
 
         [ConditionalTheory(nameof(IsSupported))]
@@ -500,7 +500,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 case 1:
                     // Use SqlServer table as source
                     var insertCmd = new SqlCommand($"insert into {s_bulkCopySrcTableName} values ({VectorParameterName})", sourceConnection);
-                    var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<float>(VectorFloat32TestData.testData));
+                    var vectorParam = new SqlParameter(VectorParameterName, new SqlVector<float>(VectorFloat32TestData.SampleScalarData));
 
                     // Insert 2 rows with one non-null and null value
                     insertCmd.Parameters.Add(vectorParam);
@@ -515,7 +515,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                     table = new DataTable(s_bulkCopySrcTableName);
                     table.Columns.Add("Id", typeof(int));
                     table.Columns.Add(VectorColumnName, typeof(SqlVector<float>));
-                    table.Rows.Add(1, new SqlVector<float>(VectorFloat32TestData.testData));
+                    table.Rows.Add(1, new SqlVector<float>(VectorFloat32TestData.SampleScalarData));
                     table.Rows.Add(2, DBNull.Value);
                     break;
                 default:
@@ -569,8 +569,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate first non-null value.
             Assert.True(!await verifyReader.IsDBNullAsync(0), "First row in the table is null.");
             var vector = await verifyReader.GetFieldValueAsync<SqlVector<float>>(0);
-            Assert.Equal(VectorFloat32TestData.testData, vector.Memory.ToArray());
-            Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
+            Assert.Equal(VectorFloat32TestData.SampleScalarData, vector.Memory.ToArray());
+            Assert.Equal(VectorFloat32TestData.SampleScalarData.Length, vector.Length);
 
             // Verify that we have another row
             Assert.True(await verifyReader.ReadAsync(), "Second row not found in the table");
@@ -579,7 +579,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(await verifyReader.IsDBNullAsync(0));
             vector = await verifyReader.GetFieldValueAsync<SqlVector<float>>(0);
             Assert.Equal(Array.Empty<float>(), vector.Memory.ToArray());
-            Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
+            Assert.Equal(VectorFloat32TestData.SampleScalarData.Length, vector.Length);
         }
 
         [ConditionalFact(nameof(IsSupported))]
@@ -592,7 +592,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using (var insertCmd = new SqlCommand(s_insertCmdString, connection))
             {
                 var param = insertCmd.Parameters.Add(VectorParameterName, SqlDbTypeExtensions.Vector);
-                param.Value = new SqlVector<float>(VectorFloat32TestData.testData);
+                param.Value = new SqlVector<float>(VectorFloat32TestData.SampleScalarData);
                 insertCmd.ExecuteNonQuery();
             }
 
@@ -609,12 +609,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(reader.Read(), "No data found in the table.");
             object value = reader.GetValue(0);
             Assert.IsType<SqlVector<float>>(value);
-            Assert.Equal(VectorFloat32TestData.testData, ((SqlVector<float>)value).Memory.ToArray());
+            Assert.Equal(VectorFloat32TestData.SampleScalarData, ((SqlVector<float>)value).Memory.ToArray());
 
             // Verify GetFieldValue<SqlVector<float>> returns the correct typed value
             SqlVector<float> typedValue = reader.GetFieldValue<SqlVector<float>>(0);
             Assert.IsType<SqlVector<float>>(typedValue);
-            Assert.Equal(VectorFloat32TestData.testData, typedValue.Memory.ToArray());
+            Assert.Equal(VectorFloat32TestData.SampleScalarData, typedValue.Memory.ToArray());
         }
 
         [ConditionalFact(nameof(IsSupported))]
