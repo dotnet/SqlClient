@@ -140,39 +140,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 _ => throw new ArgumentOutOfRangeException(nameof(pattern), $"Unsupported pattern: {pattern}")
             };
 
-        private void ValidateSqlVectorFloat32Object(bool isNull, SqlVector<float> sqlVectorFloat32, float[] expectedData, int expectedLength)
+        private static void ValidateSqlVectorObject(bool isNull, SqlVector<TElement> sqlVector, TElement[] expectedData, int expectedLength)
         {
-            Assert.Equal(expectedData, sqlVectorFloat32.Memory.ToArray());
-            Assert.Equal(expectedLength, sqlVectorFloat32.Length);
+            Assert.Equal(expectedData, sqlVector.Memory.ToArray());
+            Assert.Equal(expectedLength, sqlVector.Length);
             if (!isNull)
             {
-                Assert.False(sqlVectorFloat32.IsNull, "IsNull set to true for a non-null value");
+                Assert.False(sqlVector.IsNull, "IsNull set to true for a non-null value");
             }
             else
             {
-                Assert.True(sqlVectorFloat32.IsNull, "IsNull set to false for a null value");
+                Assert.True(sqlVector.IsNull, "IsNull set to false for a null value");
             }
         }
 
-        private void ValidateInsertedData(SqlConnection connection, float[] expectedData, int expectedLength)
+        private void ValidateInsertedData(SqlConnection connection, TElement[] expectedData, int expectedLength)
         {
             using var selectCmd = new SqlCommand(s_selectCmdString, connection);
             using var reader = selectCmd.ExecuteReader();
             Assert.True(reader.Read(), "No data found in the table.");
 
             //For both null and non-null cases, validate the SqlVector<TElement> object
-            ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
-            ValidateSqlVectorFloat32Object(reader.IsDBNull(0), reader.GetFieldValue<SqlVector<TElement>>(0), expectedData, expectedLength);
-            ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
+            ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
+            ValidateSqlVectorObject(reader.IsDBNull(0), reader.GetFieldValue<SqlVector<TElement>>(0), expectedData, expectedLength);
+            ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
 
             if (!reader.IsDBNull(0))
             {
-                ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
-                ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
-                ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
-                Assert.Equal(expectedData, JsonSerializer.Deserialize<float[]>(reader.GetString(0)));
-                Assert.Equal(expectedData, JsonSerializer.Deserialize<float[]>(reader.GetSqlString(0).Value));
-                Assert.Equal(expectedData, JsonSerializer.Deserialize<float[]>(reader.GetFieldValue<string>(0)));
+                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
+                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
+                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
+                Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetString(0)));
+                Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetSqlString(0).Value));
+                Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetFieldValue<string>(0)));
             }
             else
             {
@@ -206,25 +206,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             ValidateInsertedData(conn, expectedValues, expectedLength);
         }
 
-        private async Task ValidateInsertedDataAsync(SqlConnection connection, float[] expectedData, int expectedLength)
+        private async Task ValidateInsertedDataAsync(SqlConnection connection, TElement[] expectedData, int expectedLength)
         {
             using var selectCmd = new SqlCommand(s_selectCmdString, connection);
             using var reader = await selectCmd.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync(), "No data found in the table.");
 
             //For both null and non-null cases, validate the SqlVector<TElement> object
-            ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
-            ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), await reader.GetFieldValueAsync<SqlVector<TElement>>(0), expectedData, expectedLength);
-            ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
+            ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
+            ValidateSqlVectorObject(await reader.IsDBNullAsync(0), await reader.GetFieldValueAsync<SqlVector<TElement>>(0), expectedData, expectedLength);
+            ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
 
             if (!await reader.IsDBNullAsync(0))
             {
-                ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
-                ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
-                ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
-                Assert.Equal(expectedData, JsonSerializer.Deserialize<float[]>(reader.GetString(0)));
-                Assert.Equal(expectedData, JsonSerializer.Deserialize<float[]>(reader.GetSqlString(0).Value));
-                Assert.Equal(expectedData, JsonSerializer.Deserialize<float[]>(await reader.GetFieldValueAsync<string>(0)));
+                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
+                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
+                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
+                Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetString(0)));
+                Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetSqlString(0).Value));
+                Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(await reader.GetFieldValueAsync<string>(0)));
             }
             else
             {
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Validate the output parameter
             var vector = (SqlVector<TElement>)outputParam.Value;
-            ValidateSqlVectorFloat32Object(vector.IsNull, vector, expectedValues, expectedLength);
+            ValidateSqlVectorObject(vector.IsNull, vector, expectedValues, expectedLength);
 
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
@@ -338,7 +338,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Validate the output parameter
             var vector = (SqlVector<TElement>)outputParam.Value;
-            ValidateSqlVectorFloat32Object(vector.IsNull, vector, expectedValues, expectedLength);
+            ValidateSqlVectorObject(vector.IsNull, vector, expectedValues, expectedLength);
 
             // Validate error for conventional way of setting output parameters
             command.Parameters.Clear();
