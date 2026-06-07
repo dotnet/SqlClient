@@ -11,25 +11,24 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlTypes;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
     public abstract class NativeVectorTestDataBase<TElement>
         where TElement : unmanaged
     {
-        public const int VectorHeaderSize = 8;
         public abstract TElement[] SampleScalarData { get; }
 
         public abstract TElement[,] SampleDataSet { get; }
 
-        public int ValidSampleScalarDataLength => SampleScalarData.Length;
         // Incorrect size for SqlParameter.Size
         public abstract int IncorrectScalarDataParameterSize { get; }
 
         public abstract bool IsSupported { get; }
 
         public abstract string SqlServerTypeName { get; }
+
+        public int ValidSampleScalarDataLength => SampleScalarData.Length;
 
         public IEnumerable<object[]> TestData =>
         [
