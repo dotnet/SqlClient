@@ -27,38 +27,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public abstract string SqlServerTypeName { get; }
 
-        public IEnumerable<object[]> TestData => GetVectorFloat32TestData();
-
-        public IEnumerable<object[]> GetVectorFloat32TestData()
-        {
+        public IEnumerable<object[]> TestData =>
+        [
             // Pattern 1-4 with SqlVector<TElement>(values: SampleScalarData)
-            yield return new object[] { 1, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
-            yield return new object[] { 2, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
-            yield return new object[] { 3, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
-            yield return new object[] { 4, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength };
+            [ 1, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength ],
+            [ 2, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength ],
+            [ 3, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength ],
+            [ 4, new SqlVector<TElement>(SampleScalarData), SampleScalarData, ValidSampleScalarDataLength ],
 
             // Pattern 1-4 with SqlVector<TElement>(n)
-            yield return new object[] { 1, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 2, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 3, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 4, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength };
+            [ 1, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 2, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 3, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 4, SqlVector<TElement>.CreateNull(ValidSampleScalarDataLength), Array.Empty<TElement>(), ValidSampleScalarDataLength ],
 
             // Pattern 1-4 with DBNull
-            yield return new object[] { 1, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 2, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 3, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 4, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength };
+            [ 1, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 2, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 3, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 4, DBNull.Value, Array.Empty<TElement>(), ValidSampleScalarDataLength ],
 
             // Pattern 1-4 with SqlVector<TElement>.Null
-            yield return new object[] { 1, SqlVector<TElement>.Null, Array.Empty<TElement>(), ValidSampleScalarDataLength };
+            [ 1, SqlVector<TElement>.Null, Array.Empty<TElement>(), ValidSampleScalarDataLength ],
 
             // Following scenario is not supported in SqlClient.
             // This can only be fixed with a behavior change that SqlParameter.Value is internally set to DBNull.Value if it is set to null.
-            //yield return new object[] { 2, SqlVector<TElement>.Null, Array.Empty<TElement>(), vectorColumnLength };
+            // [ 2, SqlVector<TElement>.Null, Array.Empty<TElement>(), vectorColumnLength ],
 
-            yield return new object[] { 3, SqlVector<TElement>.Null, Array.Empty<TElement>(), ValidSampleScalarDataLength };
-            yield return new object[] { 4, SqlVector<TElement>.Null, Array.Empty<TElement>(), ValidSampleScalarDataLength };
-        }
+            [ 3, SqlVector<TElement>.Null, Array.Empty<TElement>(), ValidSampleScalarDataLength ],
+            [ 4, SqlVector<TElement>.Null, Array.Empty<TElement>(), ValidSampleScalarDataLength ]
+        ];
     }
 
     public abstract class NativeVectorTestsBase<TElement, TTestData> : IDisposable
