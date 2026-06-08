@@ -211,7 +211,7 @@ jobs:
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           platformDisplayName: ${{ parameters.platformDisplayName }}
-          testDisplayName: ${{ parameters.testDisplayName }}
+          testDisplayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.testSet }}"
           testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
           testResultsPath: ${{ variables.testResultsPath }}
 
