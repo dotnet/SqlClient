@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    [Trait("Set", "2")]
     public class CopyAllFromReaderConnectionClosedOnEventAsync
     {
         [Trait("Category", "flaky")] // Hangs and crashes on occasion
