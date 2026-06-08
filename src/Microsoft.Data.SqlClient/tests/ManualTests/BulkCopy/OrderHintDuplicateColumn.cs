@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    [Trait("Set", "2")]
     public class OrderHintDuplicateColumn
     {
         private static readonly string sourceTable = "Customers";

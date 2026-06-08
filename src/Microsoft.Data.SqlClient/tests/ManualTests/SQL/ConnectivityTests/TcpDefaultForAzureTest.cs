@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     [OuterLoop("Takes minutes on some networks")]
     public static class TcpDefaultForAzureTest
     {
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Named Pipes not supported for Azure Synapse
         //          Expected protocol TCP Provider in the error message, but received: A network-related or instance-specific error occurred while establishing a connection to SQL Server.
-        //          The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. 
+        //          The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.
         //          (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [PlatformSpecific(TestPlatforms.Windows)]

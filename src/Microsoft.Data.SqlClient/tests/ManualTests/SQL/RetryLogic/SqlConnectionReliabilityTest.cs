@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class SqlConnectionReliabilityTest
     {
         internal const string InvalidInitialCatalog = "InvalidInitialCatalog_for_retry";
