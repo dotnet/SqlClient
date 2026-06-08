@@ -64,11 +64,11 @@ parameters:
 
   # Test Configuration Parameters ==========================================
 
-  # Azure Key Vault tenant ID that will be set in the config.json file.
+  # Azure Key Vault tenant ID that will be set in the config.jsonc file.
   - name: azureKeyVaultTenantId
     type: string
 
-  # Azure Key Vault URL that will be set in the config.json file.
+  # Azure Key Vault URL that will be set in the config.jsonc file.
   - name: azureKeyVaultUrl
     type: string
 
@@ -77,15 +77,15 @@ parameters:
   - name: configDisplayName
     type: string
 
-  # Connection string using named pipes that will be set in the config.json file.
+  # Connection string using named pipes that will be set in the config.jsonc file.
   - name: connectionStringNp
     type: string
 
-  # Connection string using TCP that will be set in the config.json file.
+  # Connection string using TCP that will be set in the config.jsonc file.
   - name: connectionStringTcp
     type: string
 
-  # Path to use for file stream tests, this value will be stored in the config.json file.
+  # Path to use for file stream tests, this value will be stored in the config.jsonc file.
   - name: fileStreamDirectory
     type: string
 
@@ -95,12 +95,12 @@ parameters:
     type: boolean
 
   # Name of the local DB application name for localdb tests, this value will be stored in the
-  # config.json
+  # config.jsonc
   - name: localDbAppName
     type: string
 
   # Name of the local DB shared instance name for localdb tests, this value will be stored in the
-  # config.json
+  # config.jsonc
   - name: localDbSharedInstanceName
     type: string
 
@@ -149,12 +149,12 @@ jobs:
           Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
         displayName: Set Connection String Password
 
-      # Write configuration information to the config.json file.
+      # Write configuration information to the config.jsonc file.
       - pwsh: |
           # Read existing default configuration from file
-          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
+          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc"
           $configDirectory = "$(Agent.TempDirectory)/mds-config"
-          $configPath = Join-Path $configDirectory "config.json"
+          $configPath = Join-Path $configDirectory "config.jsonc"
           $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
 
           # Update the config values

@@ -47,46 +47,46 @@ parameters:
 
   # Manual Test Configuration Parameters ==================================
 
-  # Azure Key Vault tenant ID that will be set in the config.json file for sqlclient manual tests.
+  # Azure Key Vault tenant ID that will be set in the config.jsonc file for sqlclient manual tests.
   - name: manualTestAzureKeyVaultTenantId
     type: string
 
-  # Azure Key Vault URL that will be set in the config.json file for sqlclient manual tests.
+  # Azure Key Vault URL that will be set in the config.jsonc file for sqlclient manual tests.
   - name: manualTestAzureKeyVaultUrl
     type: string
 
-  # Connection string to Azure SQL using named pipes that will be set in the config.json file for
+  # Connection string to Azure SQL using named pipes that will be set in the config.jsonc file for
   # sqlclient manual tests against Azure SQL.
   - name: manualTestConnectionStringNpAzure
     type: string
 
-  # Connection string to localhost using named pipes that will be set in the config.json file for
+  # Connection string to localhost using named pipes that will be set in the config.jsonc file for
   # sqlclient manual tests against a local box product.
   - name: manualTestConnectionStringNpLocalhost
     type: string
 
-  # Connection string to Azure SQL using TCP that will be set in the config.json file for sqlclient
+  # Connection string to Azure SQL using TCP that will be set in the config.jsonc file for sqlclient
   # manual tests against Azure SQL.
   - name: manualTestConnectionStringTcpAzure
     type: string
 
-  # Connection string to localhost using TCP that will be set in the config.json file for sqlclient
+  # Connection string to localhost using TCP that will be set in the config.jsonc file for sqlclient
   # manual tests against a local box product.
   - name: manualTestConnectionStringTcpLocalhost
     type: string
 
-  # Path to use for file stream tests, this value will be stored in the config.json for sqlclient
+  # Path to use for file stream tests, this value will be stored in the config.jsonc for sqlclient
   # manual tests.
   - name: manualTestFileStreamDirectory
     type: string
 
   # Name of the local DB application name for localdb tests, this value will be stored in the
-  # config.json for sqlclient manual tests.
+  # config.jsonc for sqlclient manual tests.
   - name: manualTestLocalDbAppName
     type: string
 
   # Name of the local DB shared instance name for localdb tests, this value will be stored in the
-  # config.json for sqlclient manual tests.
+  # config.jsonc for sqlclient manual tests.
   - name: manualTestLocalDbSharedInstanceName
     type: string
 
