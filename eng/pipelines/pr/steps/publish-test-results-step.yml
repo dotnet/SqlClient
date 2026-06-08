@@ -16,11 +16,6 @@ parameters:
       - Debug
       - Release
 
-  # True to emit debug information and steps.
-  - name: debug
-    type: boolean
-    default: false
-
   # Display name of the platform. This will be formatted into the test result name. As such, only
   # alphanumeric and _ characters are permitted.
   - name: platformDisplayName
@@ -41,11 +36,6 @@ parameters:
     type: string
 
 steps:
-  # Show the files in the test results directory
-  - pwsh: Show-Tree ${{ parameters.testResultsPath }}
-    displayName: Output Test Result Tree
-    condition: succeededOrFailed()
-
   # Publish the test results (trx files) to the pipeline
   - task: PublishTestResults@2
     displayName: 'Publish Test Results'
