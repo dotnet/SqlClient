@@ -58,7 +58,7 @@ steps:
     condition: succeededOrFailed()
 
   # Publish the test results as artifacts for the pipeline
-  - task: PublishPipelineArtifact
+  - task: PublishPipelineArtifact@1
     displayName: 'Publish Test Artifacts'
     inputs:
       artifact: ${{ parameters.testResultsArtifactName }}
