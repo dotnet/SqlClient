@@ -10,7 +10,6 @@ using System.Xml.XPath;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
-using Xunit.Abstractions;
 
 #nullable enable
 
@@ -97,6 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// even in error scenarios. This is important to ensure that customers can rely on activity IDs being present in
     /// XEvent sessions for troubleshooting and correlation purposes.
     /// </summary>
+    [Trait("Set", "3")]
     [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {

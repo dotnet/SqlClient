@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
+    [Trait("Set", "AE")]
     // @TODO: These tests are known to not run reliably in DEBUG mode.
     [ConditionalClass(typeof(DataTestUtility), nameof(DataTestUtility.IsNotDebugBuild))]
     public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
