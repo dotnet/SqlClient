@@ -42,7 +42,7 @@ parameters:
 
 steps:
   # Show the files in the test results directory
-  - script: tree /a /f ${{ parameters.testResultsPath }}
+  - pwsh: Show-Tree ${{ parameters.testResultsPath }}
     displayName: Output Test Result Tree
     condition: succeededOrFailed()
 
