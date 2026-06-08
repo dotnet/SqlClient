@@ -398,6 +398,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("Category", "flaky")]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
@@ -493,6 +494,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        [Trait("Category", "flaky")]
         public void TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange

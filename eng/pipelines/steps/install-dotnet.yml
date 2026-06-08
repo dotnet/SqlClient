@@ -57,8 +57,12 @@ steps:
   - ${{ if ne(parameters.architecture, 'arm64') }}:
   
     # Install the SDK listed in the global.json file.
+    #
+    # retryCountOnTaskFailure is set because UseDotNet@2 fails intermittently
+    # in CI due to transient network/CDN issues when downloading the SDK.
     - task: UseDotNet@2
       displayName: Install .NET SDK (global.json)
+      retryCountOnTaskFailure: 3
       inputs:
         installationPath: ${{ parameters.installDir }}
         packageType: sdk
@@ -71,6 +75,7 @@ steps:
     - ${{ each version in parameters.runtimes }}:
       - task: UseDotNet@2
         displayName: Install .NET ${{ version }} Runtime
+        retryCountOnTaskFailure: 3
         inputs:
           installationPath: ${{ parameters.installDir }}
           packageType: runtime
@@ -83,8 +88,13 @@ steps:
   - ${{ else }}:
 
     # Use the install script for ARM64.
+    #
+    # retryCountOnTaskFailure provides an outer retry around the script's
+    # internal retry loop, in case the script download itself or the entire
+    # step fails due to transient issues.
     - task: PowerShell@2
       displayName: Install .NET SDK and Runtimes for ARM64
+      retryCountOnTaskFailure: 3
       inputs:
         targetType: filePath
         pwsh: true
